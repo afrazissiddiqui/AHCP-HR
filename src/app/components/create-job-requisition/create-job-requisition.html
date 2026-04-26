@@ -1,0 +1,594 @@
+<div class="cjr-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>Create New Job Requisition</h1>
+    </div>
+  </div>
+
+  <div class="cjr-card">
+    <div class="cjr-options">
+      <div class="cjr-options-title">Options:</div>
+    </div>
+
+    <nav class="cjr-section-nav" aria-label="Recruitment sections">
+      <ul class="cjr-section-nav-list">
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'personal-info-section'" (click)="scrollToSection('personal-info-section')">Personal info</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'education-section'" (click)="scrollToSection('education-section')">Education</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'past-experience-section'" (click)="scrollToSection('past-experience-section')">Past Experience</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'remunation-section'" (click)="scrollToSection('remunation-section')">Remunation</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'login-detail-section'" (click)="scrollToSection('login-detail-section')">Login detail</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'loan-section'" (click)="scrollToSection('loan-section')">Loan</li>
+      </ul>
+    </nav>
+
+    <div class="cjr-personal" id="personal-info-section">
+      <div class="cjr-section-title">Personal Information</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Person Name:</label>
+            <input type="text" [ngModel]="personName()" (ngModelChange)="personName.set($event)" (blur)="touch('personName')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>First Name:</label>
+            <input type="text" [ngModel]="firstName()" (ngModelChange)="firstName.set($event)" (blur)="touch('firstName')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Middle Name:</label>
+            <input type="text" [ngModel]="middleName()" (ngModelChange)="middleName.set($event)" (blur)="touch('middleName')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Last Name:</label>
+            <input type="text" [ngModel]="lastName()" (ngModelChange)="lastName.set($event)" (blur)="touch('lastName')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Father / Husband Name:</label>
+            <input
+              type="text"
+              [ngModel]="fatherOrHusbandName()"
+              (ngModelChange)="fatherOrHusbandName.set($event)"
+              (blur)="touch('fatherOrHusbandName')"
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>Gender:</label>
+            <select [ngModel]="gender()" (ngModelChange)="gender.set($event)" (blur)="touch('gender')">
+              <option value="">No Selection</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Marital Status:</label>
+            <select [ngModel]="maritalStatus()" (ngModelChange)="maritalStatus.set($event)" (blur)="touch('maritalStatus')">
+              <option value="">No Selection</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Date of Birth:</label>
+            <input type="date" [ngModel]="dateOfBirth()" (ngModelChange)="dateOfBirth.set($event)" (blur)="touch('dateOfBirth')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Nationality:</label>
+            <input type="text" [ngModel]="nationality()" (ngModelChange)="nationality.set($event)" (blur)="touch('nationality')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Religion:</label>
+            <input type="text" [ngModel]="religion()" (ngModelChange)="religion.set($event)" (blur)="touch('religion')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Blood Group:</label>
+            <input type="text" [ngModel]="bloodGroup()" (ngModelChange)="bloodGroup.set($event)" (blur)="touch('bloodGroup')" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>National ID Card No:</label>
+            <div class="cjr-field">
+              <input
+                type="text"
+                placeholder="12345-1234567-1"
+                inputmode="numeric"
+                maxlength="15"
+                minlength="15"
+                [ngModel]="nationalIdCardNo()"
+                (ngModelChange)="onNationalIdCardNoChange($event)"
+                (blur)="touch('nationalIdCardNo')"
+              />
+              @if (touched()['nationalIdCardNo'] && nationalIdCardNoInvalid()) {
+                <div class="cjr-error">Format must be XXXXX-XXXXXXX-X</div>
+              }
+            </div>
+          </div>
+
+          <div class="cjr-row">
+            <label>Income Tax No:</label>
+            <div class="cjr-field">
+              <input
+                type="text"
+                placeholder="12345-1234567-1"
+                inputmode="numeric"
+                maxlength="15"
+                minlength="15"
+                [ngModel]="incomeTaxNo()"
+                (ngModelChange)="onIncomeTaxNoChange($event)"
+                (blur)="touch('incomeTaxNo')"
+              />
+              @if (touched()['incomeTaxNo'] && incomeTaxNoInvalid()) {
+                <div class="cjr-error">Format must be XXXXX-XXXXXXX-X</div>
+              }
+            </div>
+          </div>
+
+          <div class="cjr-row">
+            <label>Contact Number:</label>
+            <div class="cjr-field">
+              <input
+                type="text"
+                placeholder="0300-1234567"
+                inputmode="numeric"
+                maxlength="12"
+                minlength="12"
+                [ngModel]="contactNumber()"
+                (ngModelChange)="onContactNumberChange($event)"
+                (blur)="touch('contactNumber')"
+              />
+              @if (touched()['contactNumber'] && contactNumberInvalid()) {
+                <div class="cjr-error">Format must be XXXX-XXXXXXX</div>
+              }
+            </div>
+          </div>
+
+          <div class="cjr-row">
+            <label>Emergency Contact Number:</label>
+            <div class="cjr-field">
+              <input
+                type="text"
+                placeholder="0300-1234567"
+                inputmode="numeric"
+                maxlength="12"
+                minlength="12"
+                [ngModel]="emergencyContactNumber()"
+                (ngModelChange)="onEmergencyContactNumberChange($event)"
+                (blur)="touch('emergencyContactNumber')"
+              />
+              @if (touched()['emergencyContactNumber'] && emergencyContactNumberInvalid()) {
+                <div class="cjr-error">Format must be XXXX-XXXXXXX</div>
+              }
+            </div>
+          </div>
+
+          <div class="cjr-row">
+            <label>Street:</label>
+            <input type="text" [ngModel]="street()" (ngModelChange)="street.set($event)" (blur)="touch('street')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Street No:</label>
+            <input type="text" [ngModel]="streetNo()" (ngModelChange)="streetNo.set($event)" (blur)="touch('streetNo')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Building / Floor / Room:</label>
+            <input
+              type="text"
+              [ngModel]="buildingFloorRoom()"
+              (ngModelChange)="buildingFloorRoom.set($event)"
+              (blur)="touch('buildingFloorRoom')"
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>City:</label>
+            <input type="text" [ngModel]="city()" (ngModelChange)="city.set($event)" (blur)="touch('city')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>State:</label>
+            <select [ngModel]="state()" (ngModelChange)="state.set($event)" (blur)="touch('state')">
+              <option value="">No Selection</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Sindh">Sindh</option>
+              <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</option>
+              <option value="Balochistan">Balochistan</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Country:</label>
+            <input type="text" [ngModel]="country()" (ngModelChange)="country.set($event)" (blur)="touch('country')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Zip Code:</label>
+            <div class="cjr-field">
+              <input
+                type="text"
+                placeholder="54000"
+                inputmode="numeric"
+                maxlength="5"
+                minlength="5"
+                [ngModel]="zipCode()"
+                (ngModelChange)="onZipCodeChange($event)"
+                (blur)="touch('zipCode')"
+              />
+              @if (touched()['zipCode'] && zipCodeInvalid()) {
+                <div class="cjr-error">Format must be XXXXX</div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal cjr-education" id="education-section">
+      <div class="cjr-section-title">Education</div>
+
+      @for (edu of educationSections(); let i = $index; track i) {
+        <div class="cjr-education-section">
+          @if (i > 0) {
+            <div class="cjr-education-label">Section {{ i + 1 }}</div>
+          }
+
+          <div class="cjr-personal-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label>Institute:</label>
+                <input
+                  type="text"
+                  [ngModel]="edu.institute"
+                  (ngModelChange)="updateEducationField(i, 'institute', $event)"
+                  (blur)="touch('educationInstitute')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>From Date:</label>
+                <input
+                  type="date"
+                  [ngModel]="edu.fromDate"
+                  (ngModelChange)="updateEducationField(i, 'fromDate', $event)"
+                  (blur)="touch('educationFromDate')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>To Date:</label>
+                <input
+                  type="date"
+                  [ngModel]="edu.toDate"
+                  (ngModelChange)="updateEducationField(i, 'toDate', $event)"
+                  (blur)="touch('educationToDate')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>Subject:</label>
+                <input
+                  type="text"
+                  [ngModel]="edu.subject"
+                  (ngModelChange)="updateEducationField(i, 'subject', $event)"
+                  (blur)="touch('educationSubject')"
+                />
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label>Qualification:</label>
+                <input
+                  type="text"
+                  [ngModel]="edu.qualification"
+                  (ngModelChange)="updateEducationField(i, 'qualification', $event)"
+                  (blur)="touch('educationQualification')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>Awarded Qualification:</label>
+                <input
+                  type="text"
+                  [ngModel]="edu.awardedQualification"
+                  (ngModelChange)="updateEducationField(i, 'awardedQualification', $event)"
+                  (blur)="touch('educationAwardedQualification')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>Marks / Grades:</label>
+                <input
+                  type="text"
+                  [ngModel]="edu.marksGrades"
+                  (ngModelChange)="updateEducationField(i, 'marksGrades', $event)"
+                  (blur)="touch('educationMarksGrades')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>Notes:</label>
+                <input
+                  type="text"
+                  [ngModel]="edu.notes"
+                  (ngModelChange)="updateEducationField(i, 'notes', $event)"
+                  (blur)="touch('educationNotes')"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <button type="button" class="cjr-add-education-btn" (click)="addEducationSection()">
+        <span class="cjr-add-icon">+</span> Add Education Section
+      </button>
+    </div>
+
+    <div class="cjr-personal cjr-experience" id="past-experience-section">
+      <div class="cjr-section-title">Past Experience</div>
+
+      @for (exp of pastExperienceSections(); let i = $index; track i) {
+        <div class="cjr-experience-section">
+          @if (i > 0) {
+            <div class="cjr-experience-label">Section {{ i + 1 }}</div>
+          }
+
+          <div class="cjr-personal-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label>Company:</label>
+                <input
+                  type="text"
+                  [ngModel]="exp.company"
+                  (ngModelChange)="updatePastExperienceField(i, 'company', $event)"
+                  (blur)="touch('experienceCompany')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>From / To Date:</label>
+                <div class="cjr-date-range-inputs">
+                  <input
+                    type="date"
+                    [ngModel]="exp.fromDate"
+                    (ngModelChange)="updatePastExperienceField(i, 'fromDate', $event)"
+                    (blur)="touch('experienceFromDate')"
+                    placeholder="From"
+                  />
+                  <input
+                    type="date"
+                    [ngModel]="exp.toDate"
+                    (ngModelChange)="updatePastExperienceField(i, 'toDate', $event)"
+                    (blur)="touch('experienceToDate')"
+                    placeholder="To"
+                  />
+                </div>
+              </div>
+
+              <div class="cjr-row">
+                <label>Remarks:</label>
+                <input
+                  type="text"
+                  [ngModel]="exp.remarks"
+                  (ngModelChange)="updatePastExperienceField(i, 'remarks', $event)"
+                  (blur)="touch('experienceRemarks')"
+                />
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label>Position:</label>
+                <input
+                  type="text"
+                  [ngModel]="exp.position"
+                  (ngModelChange)="updatePastExperienceField(i, 'position', $event)"
+                  (blur)="touch('experiencePosition')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>Duties:</label>
+                <input
+                  type="text"
+                  [ngModel]="exp.duties"
+                  (ngModelChange)="updatePastExperienceField(i, 'duties', $event)"
+                  (blur)="touch('experienceDuties')"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label>Last Salary:</label>
+                <input
+                  type="number"
+                  [ngModel]="exp.lastSalary"
+                  (ngModelChange)="updatePastExperienceField(i, 'lastSalary', $event)"
+                  (blur)="touch('experienceLastSalary')"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <button type="button" class="cjr-add-education-btn" (click)="addPastExperienceSection()">
+        <span class="cjr-add-icon">+</span> Add Experience Section
+      </button>
+    </div>
+
+    <div class="cjr-personal cjr-attachments" id="attachments-section">
+      <div class="cjr-section-title">Attachments</div>
+
+      @for (attachment of attachments(); let i = $index; track i) {
+        <div class="cjr-attachment-row">
+          <div class="cjr-attachment-label">{{ attachment.type }}:</div>
+          <div class="cjr-attachment-field">
+            @if (attachment.fileName) {
+              <div class="cjr-attachment-info">
+                <span class="cjr-file-name">{{ attachment.fileName }}</span>
+                <button
+                  type="button"
+                  class="cjr-remove-attachment"
+                  (click)="removeAttachment(i)"
+                  aria-label="Remove attachment"
+                >
+                  ✕
+                </button>
+              </div>
+            } @else {
+              <input
+                type="file"
+                (change)="onAttachmentChange(i, $event)"
+                aria-label="Upload {{ attachment.type }}"
+                class="cjr-file-input"
+              />
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="cjr-personal cjr-remuneration" id="remunation-section">
+      <div class="cjr-section-title">Remuneration</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee Master (OHEM):</label>
+            <input
+              type="text"
+              [ngModel]="employeeMaster()"
+              (ngModelChange)="employeeMaster.set($event)"
+              (blur)="touch('employeeMaster')"
+              placeholder="Search employee..."
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>Salary Structure:</label>
+            <input
+              type="text"
+              [ngModel]="salaryStructure()"
+              (ngModelChange)="salaryStructure.set($event)"
+              (blur)="touch('salaryStructure')"
+              placeholder="Search salary structure..."
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>Attendance & Shift Management:</label>
+            <input
+              type="text"
+              [ngModel]="attendanceShiftManagement()"
+              (ngModelChange)="attendanceShiftManagement.set($event)"
+              (blur)="touch('attendanceShiftManagement')"
+              placeholder="Search attendance & shift..."
+            />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Leave Management:</label>
+            <input
+              type="text"
+              [ngModel]="leaveManagement()"
+              (ngModelChange)="leaveManagement.set($event)"
+              (blur)="touch('leaveManagement')"
+              placeholder="Search leave management..."
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>Loan & Advances Forms:</label>
+            <input
+              type="text"
+              [ngModel]="loanAdvancesForm()"
+              (ngModelChange)="loanAdvancesForm.set($event)"
+              (blur)="touch('loanAdvancesForm')"
+              placeholder="Search loan & advances..."
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal cjr-login-detail" id="login-detail-section">
+      <div class="cjr-section-title">Login Detail</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee Code:</label>
+            <input
+              type="text"
+              [ngModel]="employeeCode()"
+              (ngModelChange)="employeeCode.set($event)"
+              (blur)="touch('employeeCode')"
+              placeholder="Enter employee code..."
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>User ID:</label>
+            <input
+              type="text"
+              [ngModel]="userId()"
+              (ngModelChange)="userId.set($event)"
+              (blur)="touch('userId')"
+              placeholder="Enter user ID..."
+            />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee Name:</label>
+            <input
+              type="text"
+              [ngModel]="loginEmployeeName()"
+              (ngModelChange)="loginEmployeeName.set($event)"
+              (blur)="touch('loginEmployeeName')"
+              placeholder="Enter employee name..."
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>Password:</label>
+            <input
+              type="password"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+              (blur)="touch('password')"
+              placeholder="Enter password..."
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-actions-footer">
+      <button type="button" class="cjr-submit-btn" (click)="submitApplication()">
+        <span class="cjr-submit-icon">✓</span> Submit Application
+      </button>
+    </div>
+
+  </div>
+</div>
+
