@@ -1,0 +1,73 @@
+<div class="side-nav">
+  <div class="side-nav-header">
+    <h2 class="title" *ngIf="!isCollapsedState">{{ title }}</h2>
+  </div>
+
+  <ul class="nav-list">
+    @for (item of items; track item.id) {
+      <li class="nav-item"
+          [class.active]="selected() === item.id"
+          [title]="isCollapsedState ? item.label : ''">
+        @if (item.route) {
+          <a class="nav-link"
+             [routerLink]="item.route"
+             routerLinkActive="active-link"
+             [routerLinkActiveOptions]="{ exact: true }"
+             (click)="selectFolder(item)">
+            <span class="nav-icon" *ngIf="item.icon || isCollapsedState">{{ item.icon || item.label[0] }}</span>
+            <span class="nav-label" *ngIf="!isCollapsedState">{{ item.label }}</span>
+          </a>
+        } @else {
+          <button type="button" class="nav-button" (click)="selectFolder(item)">
+            <span class="nav-icon" *ngIf="item.icon || isCollapsedState">{{ item.icon || item.label[0] }}</span>
+            <span class="nav-label" *ngIf="!isCollapsedState">{{ item.label }}</span>
+          </button>
+        }
+      </li>
+    }
+
+    @for (section of sections; track section.id) {
+      <li class="nav-section">
+        <div class="section-header" (click)="toggle(section.id)" *ngIf="!isCollapsedState">
+          <span>{{ section.title }}</span>
+          <span class="chevron" [class.open]="isExpanded(section.id)">❯</span>
+        </div>
+
+        @if (isExpanded(section.id) || isCollapsedState) {
+          <ul class="nav-submenu">
+            @for (item of section.items; track item.id) {
+              <li class="nav-item"
+                  [class.active]="selected() === item.id"
+                  [title]="isCollapsedState ? item.label : ''">
+                @if (item.route) {
+                  <a class="nav-link"
+                     [routerLink]="item.route"
+                     routerLinkActive="active-link"
+                     [routerLinkActiveOptions]="{ exact: true }"
+                     (click)="selectFolder(item)">
+                    <span class="nav-icon" *ngIf="item.icon || isCollapsedState">{{ item.icon || item.label[0] }}</span>
+                    <span class="nav-label" *ngIf="!isCollapsedState">{{ item.label }}</span>
+                  </a>
+                } @else {
+                  <button type="button" class="nav-button" (click)="selectFolder(item)">
+                    <span class="nav-icon" *ngIf="item.icon || isCollapsedState">{{ item.icon || item.label[0] }}</span>
+                    <span class="nav-label" *ngIf="!isCollapsedState">{{ item.label }}</span>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (showManageButton && !isCollapsedState) {
+  <div class="footer">
+    <button class="manage-btn" (click)="manageFolders()">
+      <span class="icon">⚙</span>
+      <span>{{ manageButtonLabel }}</span>
+    </button>
+  </div>
+  }
+</div>

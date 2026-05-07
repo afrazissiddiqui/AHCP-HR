@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.employee-page {
+  display: flex;
+  height: 100vh;
+}
+
+.employee-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: auto;
+}
+
+.employee-header {
+  height: 56px;
+  border-bottom: 1px solid #d0d0d0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: #ffffff;
+}
+
+.employee-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.employee-header-left h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d2d3e;
+}
+
+.sapMBtnBase {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.sapMBtnBase:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.module-grid {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.module-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  background: #f8fbff;
+}
+
+.module-card h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.module-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+}

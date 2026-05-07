@@ -1,0 +1,338 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.cjr-personal-grid,
+.cjr-personal-col,
+.cjr-row,
+.rating-cell,
+.allowance-row,
+.extension-input-group,
+.total-salary-box {
+  min-width: 0;
+}
+
+.cjr-row--remarks {
+  align-items: start;
+}
+
+.cjr-row--remarks textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.cjr-row--remarks textarea:focus {
+  outline: none;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+.supervision-remark-gap {
+  margin-top: 16px;
+}
+
+.cjr-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f6f6f6;
+  border: 1px solid #d0d0d0;
+  color: #333;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cjr-cancel-btn:hover {
+  background: #efefef;
+}
+
+.probation-rating-table-wrapper {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.probation-rating-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
+}
+
+.probation-rating-table th,
+.probation-rating-table td {
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.probation-rating-table th {
+  background: #f8fafc;
+  text-align: left;
+  font-weight: 600;
+}
+
+.rating-cell {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+}
+
+.rating-cell input {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.rating-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #b42318;
+}
+
+.salary-adjustment-table-wrapper {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.salary-adjustment-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
+}
+
+.salary-adjustment-table th,
+.salary-adjustment-table td {
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.salary-adjustment-table th {
+  background: #f8fafc;
+  text-align: left;
+  font-weight: 600;
+}
+
+.salary-adjustment-table td input {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.allowances-section {
+  margin-top: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.allowances-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.allowances-header h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.add-allowance-btn {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.allowances-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.allowance-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 160px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.allowance-row label {
+  font-size: 12px;
+  color: #475569;
+}
+
+.allowance-row input {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.remove-allowance-btn {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.extension-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.extension-input-group select {
+  min-width: 180px;
+}
+
+.extension-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.extension-input-group--disabled select,
+.field-disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.disabled-row label {
+  color: #94a3b8;
+}
+
+.total-salary-box {
+  display: grid;
+  grid-template-columns: 140px 220px;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.total-salary-box label {
+  font-size: 13px;
+  color: #334155;
+}
+
+.total-salary-box input {
+  height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+@media (max-width: 1520px) {
+  .cjr-row {
+    grid-template-columns: 145px minmax(0, 1fr);
+  }
+
+  .total-salary-box {
+    grid-template-columns: 130px minmax(0, 220px);
+  }
+}
+
+@media (max-width: 1340px) {
+  .cjr-personal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cjr-row {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+
+  .allowance-row {
+    grid-template-columns: 100px minmax(0, 1fr) 130px minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 1120px) {
+  .rating-cell {
+    grid-template-columns: 1fr;
+  }
+
+  .extension-input-group {
+    flex-wrap: wrap;
+  }
+
+  .extension-input-group select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .allowance-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .allowance-row label {
+    grid-column: 1 / -1;
+  }
+
+  .remove-allowance-btn {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 920px) {
+  .cjr-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    align-items: start;
+  }
+
+  .cjr-row label {
+    text-align: left;
+    padding-right: 0;
+  }
+
+  .allowance-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .remove-allowance-btn {
+    justify-self: start;
+  }
+
+  .total-salary-box {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

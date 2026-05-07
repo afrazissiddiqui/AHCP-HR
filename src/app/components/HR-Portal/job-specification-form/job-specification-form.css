@@ -1,0 +1,702 @@
+/* =========================================================
+   GLOBAL PAGE LAYOUT WITH SIDEBAR
+========================================================= */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  font-family: Arial, sans-serif;
+  background: #ffffff;
+}
+
+/* Angular root */
+app-root {
+  display: block;
+  height: 100vh;
+  overflow: hidden !important;
+}
+
+/* All parent wrappers */
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Flex container for sidebar + content */
+:host ::ng-deep>div[style*="display: flex"] {
+  height: 100vh;
+  width: 100%;
+}
+
+/* Main content area */
+:host ::ng-deep>div[style*="display: flex"]>div[style*="flex: 1"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* =========================================================
+   TOP HEADER
+========================================================= */
+
+#sdk---sample--header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #d0d0d0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+/* Left / Center / Right */
+.sapMBarLeft,
+.sapMBarMiddle,
+.sapMBarRight {
+  display: flex;
+  align-items: center;
+}
+
+.sapMBarLeft {
+  min-width: 60px;
+}
+
+.sapMBarMiddle {
+  flex: 1;
+  justify-content: center;
+  position: relative;
+}
+
+.sapMBarRight {
+  gap: 6px;
+}
+
+/* Title */
+.sapMTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2d3e;
+  white-space: nowrap;
+}
+
+/* Buttons */
+.sapMBtnBase {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1d2d3e;
+  transition: background 0.2s ease;
+}
+
+.sapMBtnBase:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.sapMBtnBase:active {
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.sapUiIcon {
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* =========================================================
+   TABLE TOOLBAR
+========================================================= */
+
+#table-toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sapMTableTitle {
+  display: flex;
+  align-items: center;
+}
+
+.sapMTBSpacer {
+  flex: 1;
+}
+
+/* Search Field */
+.sapMSearchField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px 8px;
+  width: 200px;
+  transition: all 0.2s;
+}
+
+.sapMSearchField:focus-within {
+  background: #ffffff;
+  border-color: #0070f2;
+  box-shadow: 0 0 0 1px #0070f2;
+}
+
+.sapMSearchField input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  padding: 4px;
+  width: 100%;
+  color: #1d2d3e;
+}
+
+.search-icon {
+  font-size: 14px;
+  color: #6a6d70;
+}
+
+.sapMTBActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sapMTBActions .sapMBtnBase {
+  padding: 6px 8px;
+}
+
+
+/* =========================================================
+   TABLE AREA
+========================================================= */
+
+.table-wrapper {
+  height: calc(100vh - 104px);
+  /* header + toolbar */
+  padding: 12px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Only rows scroll */
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+/* Table */
+.mountain-table {
+  width: 100%;
+  min-width: 1000px; /* Ensure enough width for all columns */
+  border-collapse: collapse;
+}
+
+/* Sticky Header */
+.mountain-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f5f5f5;
+  font-weight: 600;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Sortable Header */
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.sortable-header:hover {
+  background: #ebebeb !important;
+}
+
+.sort-indicator {
+  margin-left: 4px;
+  font-size: 12px;
+  color: #0070f2;
+}
+
+/* Sticky first column (checkbox column) */
+.mountain-table th:first-child,
+.mountain-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 11;
+  background: #ffffff;
+  width: 40px;
+  text-align: center;
+}
+
+/* Sticky last column (Actions column) */
+.mountain-table th:last-child,
+.mountain-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 11;
+  background: #ffffff;
+  width: 100px;
+  text-align: center;
+  border-left: 1px solid #eee;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+}
+
+.mountain-table thead th:first-child {
+  z-index: 12;
+  background: #f5f5f5;
+}
+
+.mountain-table thead th:last-child {
+  z-index: 12;
+  background: #f5f5f5;
+}
+
+/* Pagination Footer */
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-top: 1px solid #ddd;
+  font-size: 13px;
+  color: #6a6d70;
+  flex-shrink: 0;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-controls button {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  color: #1d2d3e;
+  transition: all 0.2s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #0070f2;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.page-numbers button.active {
+  background: #0070f2;
+  color: #ffffff;
+  border-color: #0070f2;
+}
+
+.page-size-selector select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.page-size-selector select:focus {
+  border-color: #0070f2;
+}
+
+/* Cells */
+.mountain-table th,
+.mountain-table td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #eeeeee;
+  white-space: nowrap;
+}
+
+/* Hover */
+.mountain-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+
+/* =========================================================
+   COLUMN RESIZE HANDLE
+========================================================= */
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+}
+
+.resize-handle:hover {
+  background: #007acc;
+}
+
+
+/* =========================================================
+   COLUMN PANEL
+========================================================= */
+
+.column-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+}
+
+
+/* =========================================================
+   VIEW SETTINGS DIALOG
+========================================================= */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.30);
+  z-index: 999;
+}
+
+.view-settings-dialog {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.20);
+  z-index: 1000;
+}
+
+.dialog-header {
+  padding: 14px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.dialog-tabs {
+  display: flex;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.dialog-tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dialog-tabs button.active {
+  background: #ffffff;
+  border-bottom: 2px solid #0a6ed1;
+  font-weight: 600;
+}
+
+.dialog-body {
+  padding: 14px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px;
+  border-top: 1px solid #dddddd;
+}
+
+.primary {
+  background: #0a6ed1;
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+  .sapMTitle {
+    font-size: 14px;
+  }
+
+  .sapMBtnBase {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  #table-toolbar {
+    padding: 0 8px;
+  }
+}
+
+.btn-default {
+  background: #ffffff;
+  border: 1px solid black;
+  color: #0070f2;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.btn-default:hover {
+  background: #f0f7ff;
+  border-color: #002d7a;
+  color: #002d7a;
+}
+
+.btn-default:active {
+  background: #e1efff;
+}
+
+/* =========================================================
+   VIEW BUTTON & DETAIL MODAL
+========================================================= */
+
+.view-btn {
+  background: #0070f2;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.view-btn:hover {
+  background: #0056b3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.js-detail-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.js-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #eeeeee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+}
+
+.js-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1d2d3e;
+}
+
+.js-close-modal {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.js-close-modal:hover {
+  color: #333;
+}
+
+.js-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+.js-detail-section {
+  margin-bottom: 30px;
+}
+
+.js-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.js-detail-section h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #0070f2;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #f0f7ff;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.js-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.js-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.js-detail-item label {
+  font-size: 11px;
+  color: #6a6d70;
+  font-weight: 600;
+}
+
+.js-detail-item span {
+  font-size: 14px;
+  color: #1d2d3e;
+}
+
+.js-detail-full {
+  margin-top: 16px;
+}
+
+.js-detail-full label {
+  font-size: 11px;
+  color: #6a6d70;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.js-detail-full p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1d2d3e;
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.js-qual-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.js-qual-list li {
+  background: #eef5ff;
+  color: #0070f2;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #d0e5ff;
+}
+
+.js-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #eeeeee;
+  display: flex;
+  justify-content: flex-end;
+  background: #f8f9fa;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  color: #333;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #bbbbbb;
+}

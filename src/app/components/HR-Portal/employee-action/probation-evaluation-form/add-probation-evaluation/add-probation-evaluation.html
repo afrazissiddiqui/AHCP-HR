@@ -1,0 +1,274 @@
+<div class="cjr-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>Add Probation Evaluation</h1>
+    </div>
+  </div>
+
+  <div class="cjr-card">
+    <div class="cjr-options">
+      <div class="cjr-options-title">Options:</div>
+    </div>
+
+    <nav class="cjr-section-nav" aria-label="Probation sections">
+      <ul class="cjr-section-nav-list">
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'probation-info-section'"
+          (click)="scrollToSection('probation-info-section')">Probation info</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'probation-rating-section'"
+          (click)="scrollToSection('probation-rating-section')">Probation Rating</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'extension-of-probation-section'"
+          (click)="scrollToSection('extension-of-probation-section')">Extension of Probation</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'termination-of-probation-section'"
+          (click)="scrollToSection('termination-of-probation-section')">Termination of Probation</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'salary-adjustment-section'"
+          (click)="scrollToSection('salary-adjustment-section')">Salary Adjustment</li>
+      </ul>
+    </nav>
+
+    <div class="cjr-personal" id="probation-info-section">
+      <div class="cjr-section-title">Probation Information</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee Code:</label>
+            <input type="text" [ngModel]="employeeCode()" (ngModelChange)="employeeCode.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Name:</label>
+            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Department:</label>
+            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Location:</label>
+            <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Designation:</label>
+            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Reporting Manager:</label>
+            <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee Nature:</label>
+            <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Type:</label>
+            <input type="text" [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Grade Work Level:</label>
+            <input type="text" [ngModel]="gradeWorkLevel()" (ngModelChange)="gradeWorkLevel.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employment Category:</label>
+            <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Probation Start Date:</label>
+            <input type="date" [ngModel]="probationStartDate()" (ngModelChange)="probationStartDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Probation End Date:</label>
+            <input type="date" [ngModel]="probationEndDate()" (ngModelChange)="probationEndDate.set($event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="cjr-row cjr-row--remarks">
+        <label>Remarks:</label>
+        <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="probation-rating-section">
+      <div class="cjr-section-title">Probation Rating</div>
+
+      <div class="probation-rating-table-wrapper">
+        <table class="probation-rating-table">
+          <thead>
+            <tr>
+              <th>Evaluation parameter</th>
+              <th>Rating BenchMark</th>
+              <th>Employee Rating and rating remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of ratingParameters; track row.key) {
+            <tr>
+              <td>{{ row.label }}</td>
+              <td>0-100%</td>
+              <td>
+                <div class="rating-cell">
+                  <input type="number" min="0" max="100" placeholder="Rating (%)" [ngModel]="getRatingValue(row.key)"
+                    (keydown)="onRatingKeyDown($event)" (ngModelChange)="onPercentageChange(row.key, $event)" />
+                  <input type="text" placeholder="Rating remarks" [ngModel]="getRatingRemark(row.key)"
+                    (ngModelChange)="onRatingRemarkChange(row.key, $event)" />
+                </div>
+                @if (isRatingInvalid(row.key)) {
+                <div class="rating-error">Rating is required and must be between 0 and 100.</div>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cjr-row cjr-row--remarks supervision-remark-gap">
+        <label>Supervision Remark:</label>
+        <textarea rows="4" [ngModel]="supervisionRemark()" (ngModelChange)="supervisionRemark.set($event)"></textarea>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="extension-of-probation-section">
+      <div class="cjr-section-title">Extension of Probation</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Probation Start Date:</label>
+            <input type="date" [ngModel]="extensionProbationStartDate()"
+              (ngModelChange)="extensionProbationStartDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Probation End Date:</label>
+            <input type="date" [ngModel]="extensionProbationEndDate()"
+              (ngModelChange)="extensionProbationEndDate.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Extenstion Period In Probation:</label>
+            <div class="extension-input-group" [class.extension-input-group--disabled]="!isExtensionEnabled()">
+              <select [ngModel]="extensionPeriodInProbation()" (ngModelChange)="extensionPeriodInProbation.set($event)"
+                [disabled]="!isExtensionEnabled()">
+                <option value="">Select period</option>
+                @for (period of extensionPeriodOptions; track period) {
+                <option [value]="period">{{ period }}</option>
+                }
+              </select>
+              <label class="extension-toggle-label">
+                <input type="checkbox" [ngModel]="isExtensionEnabled()"
+                  (ngModelChange)="onExtensionToggle($event === true)" />
+                Enable
+              </label>
+            </div>
+          </div>
+          <div class="cjr-row" [class.disabled-row]="!isExtensionEnabled()">
+            <label>New Probation End Date:</label>
+            <input type="date" [ngModel]="newProbationEndDate()" (ngModelChange)="newProbationEndDate.set($event)"
+              [disabled]="!isExtensionEnabled()" [class.field-disabled]="!isExtensionEnabled()" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="termination-of-probation-section">
+      <div class="cjr-section-title">Termination of Probation</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Termination:</label>
+            <select [ngModel]="termination()" (ngModelChange)="termination.set($event)">
+              <option value="">Select option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Termination Effective Date:</label>
+            <input type="date" [ngModel]="terminationEffectiveDate()" (ngModelChange)="terminationEffectiveDate.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="salary-adjustment-section">
+      <div class="cjr-section-title">Salary Adjustment</div>
+
+      <div class="salary-adjustment-table-wrapper">
+        <table class="salary-adjustment-table">
+          <thead>
+            <tr>
+              <th>Current salary</th>
+              <th>Adjustment % in salary</th>
+              <th>Adjustment amount in salary</th>
+              <th>Effective date of revision</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <input type="text" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
+              </td>
+              <td>
+                <input type="text" [ngModel]="adjustmentInSalary()" (ngModelChange)="adjustmentInSalary.set($event)" />
+              </td>
+              <td>
+                <input type="text" [ngModel]="adjustmentAmountInSalary()"
+                  (ngModelChange)="adjustmentAmountInSalary.set($event)" />
+              </td>
+              <td>
+                <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="allowances-section">
+        <div class="allowances-header">
+          <h4>Allowances</h4>
+          <button type="button" class="add-allowance-btn" (click)="addAllowance()">+ Add Allowance</button>
+        </div>
+
+        <div class="allowances-list">
+          @for (allowance of allowances(); track $index; let i = $index) {
+          <div class="allowance-row">
+            <label>Allowance {{ i + 1 }}:</label>
+            <input type="text" placeholder="Allowance" [ngModel]="allowance.allowance"
+              (ngModelChange)="updateAllowance(i, 'allowance', $event)" />
+            <input type="text" placeholder="Amount in pkr" [ngModel]="allowance.amount"
+              (ngModelChange)="updateAllowance(i, 'amount', $event)" />
+            <input type="text" placeholder="Notes" [ngModel]="allowance.notes"
+              (ngModelChange)="updateAllowance(i, 'notes', $event)" />
+            <button type="button" class="remove-allowance-btn" (click)="removeAllowance(i)">Remove</button>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="total-salary-section">
+      <div class="cjr-section-title">Total Salary</div>
+      <div class="total-salary-box">
+        <label>Total Salary:</label>
+        <input type="text" [value]="totalSalary()" readonly />
+      </div>
+    </div>
+
+    <div class="cjr-actions-footer">
+      <button type="button" class="cjr-submit-btn" (click)="save()">
+        <span class="cjr-submit-icon">✓</span> Save Probation Evaluation
+      </button>
+    </div>
+  </div>
+</div>

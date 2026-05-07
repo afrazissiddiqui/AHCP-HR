@@ -1,0 +1,241 @@
+<!-- Recruitment Page with Sidebar -->
+<div style="display: flex; height: 100vh;">
+  <!-- Sidebar Component -->
+  <app-sidebar [title]="'Forms'" [items]="sidebarItems" [sections]="sidebarSections" [isCollapsed]="sidebarCollapsed()"
+    [activeItemId]="activeSidebarItemId" (folderSelected)="onFolderSelected($event)"
+    (manageFoldersClick)="onManageFolders()" (collapsedChange)="sidebarCollapsed.set($event)">
+  </app-sidebar>
+
+  <!-- Main Content -->
+  <div style="flex: 1; overflow-y: auto;">
+    <!-- app.component.html -->
+
+    <div id="sdk---sample--header"
+      class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
+      role="toolbar">
+
+      <!-- Left Section -->
+      <div class="sapMBarLeft sapMBarContainer">
+
+        <button class="sapMBtnBase sapMBtn sapMBarChild" (click)="toggleSidebar()" title="Toggle Sidebar">
+          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable">
+            <span class="sapUiIcon">☰</span>
+          </span>
+        </button>
+
+        <button class="sapMBtnBase sapMBtn sapMBarChild" aria-label="Back to samples" title="Back to samples">
+          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable sapMBtnBack sapMBtnIconFirst">
+            <span class="sapUiIcon sapMBtnIcon sapMBtnIconLeft">
+              ←
+            </span>
+          </span>
+        </button>
+
+      </div>
+
+      <!-- Middle Section -->
+      <div class="sapMBarMiddle">
+        <div class="sapMBarPH sapMBarContainer" style="left: 52px; position: absolute; width: 251px;">
+          <h1 class="sapMTitle sapMTitleStyleAuto sapMTitleNoWrap sapMTitleMaxWidth sapMBarChild"
+            title="Application Form">
+            Application Form
+          </h1>
+        </div>
+      </div>
+
+      <!-- Right Section -->
+      <div class="sapMBarRight sapMBarContainer">
+        <button class="btn-default" (click)="createNewSIR()">
+          Add New
+        </button>
+      </div>
+
+
+
+
+    </div>
+
+    <!-- table-toolbar.component.html -->
+
+    <div id="table-toolbar"
+      class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
+
+      <!-- Table Title -->
+      <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
+
+        <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
+
+          Line Items ({{ sirList.length }}) · Selected ({{ getSelectedCount() }})
+
+        </div>
+
+      </div>
+
+      <div class="sapMTBSpacer"></div>
+
+      <div class="sapMSearchField">
+        <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
+        <span class="sapUiIcon search-icon">🔍</span>
+      </div>
+
+      <div class="sapMTBActions">
+        <button class="sapMBtnBase sapMBtn" title="Download">
+          ⬇
+        </button>
+
+        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">
+          ⛶
+        </button>
+
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
+          ⚙
+        </button>
+      </div>
+
+
+      <!-- BACKDROP -->
+      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+
+      <!-- DIALOG -->
+      <div class="view-settings-dialog" *ngIf="showDialog">
+
+        <!-- HEADER -->
+        <div class="dialog-header">
+          <h3>View Settings</h3>
+        </div>
+
+        <!-- SEGMENTED TABS -->
+        <div class="dialog-tabs">
+          <button (click)="activeTab='sort'" [class.active]="activeTab==='sort'">Sort</button>
+          <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+          <button (click)="activeTab='group'" [class.active]="activeTab==='group'">Group</button>
+        </div>
+
+        <!-- BODY -->
+        <div class="dialog-body">
+
+          <!-- FILTER TAB -->
+          <div *ngIf="activeTab === 'filter'">
+            <div *ngFor="let col of columns">
+              <label>
+                <input type="checkbox" [(ngModel)]="col.visible" />
+                {{ col.label }}
+              </label>
+            </div>
+          </div>
+
+          <!-- SORT TAB -->
+          <div *ngIf="activeTab === 'sort'">
+            <p>Sort options go here</p>
+          </div>
+
+          <!-- GROUP TAB -->
+          <div *ngIf="activeTab === 'group'">
+            <p>Group options go here</p>
+          </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="dialog-footer">
+
+        </div>
+
+      </div>
+      <!-- Overflow Button -->
+    </div>
+
+    <!-- mountains-table.component.html -->
+
+    <div class="table-wrapper">
+
+      <div class="table-scroll">
+
+        <table class="mountain-table">
+
+          <!-- HEADER -->
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
+              </th>
+
+              <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)"
+                class="sortable-header">
+                {{ col.label }}
+                <span *ngIf="sortColumn === col.key" class="sort-indicator">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+            </tr>
+          </thead>
+
+          <!-- BODY -->
+          <tbody>
+            <tr *ngFor="let s of paginatedList">
+
+              <td>
+                <input type="checkbox" [(ngModel)]="s.selected" />
+              </td>
+
+              <td *ngFor="let col of columns" [hidden]="!col.visible">
+                <ng-container [ngSwitch]="col.key">
+                  <!-- Action Column -->
+                  <div *ngSwitchCase="'action'" class="action-buttons">
+                    <button class="btn-action btn-approve" (click)="approveApplication(s)" title="Approve">
+                      Approve
+                    </button>
+                    <button class="btn-action btn-reject" (click)="rejectApplication(s)" title="Reject">
+                      Reject
+                    </button>
+                  </div>
+
+                  <!-- Status Column -->
+                  <span *ngSwitchCase="'status'" [className]="'status-badge ' + s.status.toLowerCase()">
+                    {{ s.status }}
+                  </span>
+
+                  <!-- Default Column -->
+                  <span *ngSwitchDefault>
+                    {{ s[col.key] }}
+                  </span>
+                </ng-container>
+              </td>
+
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- PAGINATION FOOTER -->
+      <div class="table-pagination">
+        <div class="pagination-info">
+          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+          of {{ filteredList.length }} entries
+        </div>
+
+        <div class="pagination-controls">
+          <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+
+          <div class="page-numbers">
+            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
+              {{ page }}
+            </button>
+          </div>
+
+          <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+        </div>
+
+        <div class="page-size-selector">
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- Close main content div -->
+</div><!-- Close outer flex container -->

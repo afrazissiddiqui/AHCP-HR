@@ -1,0 +1,225 @@
+<!-- Job Specification Form with Sidebar -->
+<div style="display: flex; height: 100vh;">
+  <!-- Sidebar Component -->
+  <app-sidebar [title]="'Forms'" [items]="sidebarItems" [sections]="sidebarSections" [isCollapsed]="sidebarCollapsed()"
+    [activeItemId]="activeSidebarItemId" (folderSelected)="onFolderSelected($event)"
+    (collapsedChange)="sidebarCollapsed.set($event)">
+  </app-sidebar>
+
+  <!-- Main Content -->
+  <div style="flex: 1; overflow-y: auto;">
+
+    <div id="sdk---sample--header"
+      class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
+      role="toolbar">
+
+      <!-- Left Section -->
+      <div class="sapMBarLeft sapMBarContainer">
+        <button class="sapMBtnBase sapMBtn sapMBarChild" (click)="toggleSidebar()" title="Toggle Sidebar">
+          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable">
+            <span class="sapUiIcon">☰</span>
+          </span>
+        </button>
+
+        <button class="sapMBtnBase sapMBtn sapMBarChild" aria-label="Back" title="Back">
+          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable sapMBtnBack sapMBtnIconFirst">
+            <span class="sapUiIcon sapMBtnIcon sapMBtnIconLeft">
+              ←
+            </span>
+          </span>
+        </button>
+      </div>
+
+      <!-- Middle Section -->
+      <div class="sapMBarMiddle">
+        <div class="sapMBarPH sapMBarContainer" style="left: 52px; position: absolute; width: 350px;">
+          <h1 class="sapMTitle sapMTitleStyleAuto sapMTitleNoWrap sapMTitleMaxWidth sapMBarChild"
+            title="Job Specification Form">
+            Job Specification Form
+          </h1>
+        </div>
+      </div>
+
+      <!-- Right Section -->
+      <div class="sapMBarRight sapMBarContainer">
+        <button class="btn-default" (click)="createNewJobSpec()">
+          Add Job Specification
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Toolbar -->
+    <div id="table-toolbar"
+      class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
+
+      <!-- Table Title -->
+      <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
+        <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
+          Job Specifications ({{ jobSpecs.length }}) · Selected ({{ getSelectedCount() }})
+        </div>
+      </div>
+
+      <div class="sapMTBSpacer"></div>
+
+      <div class="sapMSearchField">
+        <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search specifications..." />
+        <span class="sapUiIcon search-icon">🔍</span>
+      </div>
+
+      <div class="sapMTBActions">
+        <button class="sapMBtnBase sapMBtn" title="Download">
+          ⬇
+        </button>
+        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">
+          ⛶
+        </button>
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
+          ⚙
+        </button>
+      </div>
+
+      <!-- Backdrop & Settings Dialog -->
+      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+      <div class="view-settings-dialog" *ngIf="showDialog">
+        <div class="dialog-header">
+          <h3>View Settings</h3>
+        </div>
+        <div class="dialog-tabs">
+          <button (click)="activeTab='sort'" [class.active]="activeTab==='sort'">Sort</button>
+          <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+        </div>
+        <div class="dialog-body">
+          <div *ngIf="activeTab === 'filter'">
+            <div *ngFor="let col of columns">
+              <label>
+                <input type="checkbox" [(ngModel)]="col.visible" />
+                {{ col.label }}
+              </label>
+            </div>
+          </div>
+          <div *ngIf="activeTab === 'sort'">
+            <p>Sort options go here</p>
+          </div>
+        </div>
+        <div class="dialog-footer">
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Content -->
+    <div class="table-wrapper">
+      <div class="table-scroll">
+        <table class="mountain-table">
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
+              </th>
+              <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)"
+                class="sortable-header">
+                {{ col.label }}
+                <span *ngIf="sortColumn === col.key" class="sort-indicator">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let j of paginatedList">
+              <td>
+                <input type="checkbox" [(ngModel)]="j.selected" />
+              </td>
+              <td *ngFor="let col of columns" [hidden]="!col.visible">
+                {{ j[col.key] }}
+              </td>
+              <td>
+                <button class="view-btn" (click)="viewDetails(j)" title="View Details">
+                  👁 View
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detail Modal -->
+      <div class="dialog-backdrop" *ngIf="showDetailDialog" (click)="closeDetailDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showDetailDialog && selectedJobSpec">
+        <div class="js-modal-header">
+          <h2>Job Specification Detail - {{ selectedJobSpec.jobTitle }}</h2>
+          <button class="js-close-modal" (click)="closeDetailDialog()">×</button>
+        </div>
+        <div class="js-modal-body">
+          <div class="js-detail-section">
+            <h3>General Details</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item"><label>Job Title:</label> <span>{{ selectedJobSpec.jobTitle }}</span></div>
+              <div class="js-detail-item"><label>Department:</label> <span>{{ selectedJobSpec.department }}</span></div>
+              <div class="js-detail-item"><label>Vacancy:</label> <span>{{ selectedJobSpec.vacancy }}</span></div>
+              <div class="js-detail-item"><label>Category:</label> <span>{{ selectedJobSpec.employmentCategory }}</span></div>
+              <div class="js-detail-item"><label>Nature:</label> <span>{{ selectedJobSpec.employmentNature }}</span></div>
+              <div class="js-detail-item"><label>Type:</label> <span>{{ selectedJobSpec.employmentType }}</span></div>
+              <div class="js-detail-item"><label>Experience:</label> <span>{{ selectedJobSpec.experienceRequirement }}</span></div>
+              <div class="js-detail-item"><label>Grade:</label> <span>{{ selectedJobSpec.gradeWorkLevel }}</span></div>
+            </div>
+            <div class="js-detail-full">
+              <label>Description:</label>
+              <p>{{ selectedJobSpec.jobDescription }}</p>
+            </div>
+            <div class="js-detail-full" *ngIf="selectedJobSpec.keyResponsibilities">
+              <label>Key Responsibilities:</label>
+              <p>{{ selectedJobSpec.keyResponsibilities }}</p>
+            </div>
+          </div>
+
+          <div class="js-detail-section" *ngIf="selectedJobSpec.basicSalary">
+            <h3>Remuneration</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item"><label>Basic Salary:</label> <span>{{ selectedJobSpec.basicSalary }}</span></div>
+              <div class="js-detail-item"><label>Medical Allowance:</label> <span>{{ selectedJobSpec.medicalAllowance }}</span></div>
+              <div class="js-detail-item"><label>Fuel Allowance:</label> <span>{{ selectedJobSpec.fuelAllowance }}</span></div>
+            </div>
+            <div class="js-detail-full" *ngIf="selectedJobSpec.packagePerks">
+              <label>Package / Perks:</label>
+              <p>{{ selectedJobSpec.packagePerks }}</p>
+            </div>
+          </div>
+
+          <div class="js-detail-section" *ngIf="selectedJobSpec.qualifications?.length">
+            <h3>Qualifications</h3>
+            <ul class="js-qual-list">
+              <li *ngFor="let qual of selectedJobSpec.qualifications">{{ qual }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="js-modal-footer">
+          <button class="btn-secondary" (click)="closeDetailDialog()">Close</button>
+        </div>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="table-pagination">
+        <div class="pagination-info">
+          Showing {{ filteredList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+          of {{ filteredList.length }} entries
+        </div>
+        <div class="pagination-controls">
+          <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+          <div class="page-numbers">
+            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
+              {{ page }}
+            </button>
+          </div>
+          <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+        </div>
+        <div class="page-size-selector">
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

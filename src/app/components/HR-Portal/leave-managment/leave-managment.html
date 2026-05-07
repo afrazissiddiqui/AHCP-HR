@@ -1,0 +1,121 @@
+<div class="leave-layout">
+  <app-sidebar
+    [title]="'Forms'"
+    [items]="sidebarItems"
+    [sections]="sidebarSections"
+    [activeItemId]="activeSidebarItemId()"
+    (folderSelected)="onFolderSelected($event)"
+    (manageFoldersClick)="onManageFolders()"
+  ></app-sidebar>
+
+  <div class="leave-main-content">
+    <div class="cjr-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>Leave Managment</h1>
+    </div>
+  </div>
+
+  <div class="cjr-card">
+    <div class="cjr-personal cjr-leave-header">
+      <div class="cjr-section-title">Leave Request Header</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Document No:</label>
+            <input
+              type="text"
+              [ngModel]="documentNo()"
+              (ngModelChange)="documentNo.set($event)"
+              placeholder="System generated unique leave request number"
+            />
+          </div>
+
+          <div class="cjr-row">
+            <label>Request Date:</label>
+            <input type="date" [ngModel]="requestDate()" (ngModelChange)="requestDate.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Employee ID:</label>
+            <input type="text" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Employee Name:</label>
+            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Department:</label>
+            <input type="text" [ngModel]="headerDepartment()" (ngModelChange)="headerDepartment.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Designation:</label>
+            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Location:</label>
+            <input type="text" [ngModel]="workLocation()" (ngModelChange)="workLocation.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Cause of Leave:</label>
+            <input type="text" [ngModel]="causeOfLeave()" (ngModelChange)="causeOfLeave.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Leave Type:</label>
+            <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>From Date:</label>
+            <input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>To Date:</label>
+            <input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Leave Days:</label>
+            <input type="number" min="0" step="0.5" [ngModel]="leaveDays()" (ngModelChange)="leaveDays.set($event)" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Request Status:</label>
+            <select [ngModel]="requestStatus()" (ngModelChange)="requestStatus.set($event)">
+              <option value="">No Selection</option>
+              <option value="Submitted">Submitted</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Remarks:</label>
+            <input type="text" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-options">
+      <div class="cjr-options-title">Options:</div>
+    </div>
+
+
+    </div>
+  </div>
+</div>
+

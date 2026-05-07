@@ -36,18 +36,18 @@ export class App {
 
   protected readonly hrMenuOptions: HrMenuOption[] = [
     { label: 'Home', value: 'dashboard', icon: 'home', route: '/dashboard' },
-    { label: 'Employment', value: 'compensation', icon: 'expense-report' },
+    { label: 'Leave managment', value: 'leave-managment/create', icon: 'expense-report', route: '/leave-managment/create' },
     { label: 'Termination', value: 'Termination', icon: 'feedback', },
     { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance', },
     { label: 'Development', value: 'development', icon: 'learning-assistant', },
-    { label: 'Employee Files', value: 'employee-files', icon: 'employee', },
+    { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
     { label: 'Goals', value: 'goals', icon: 'goal', },
     { label: 'Growth Portfolio', value: 'growth-portfolio', icon: 'journey-change', },
     { label: 'Learning', value: 'learning', icon: 'learning-assistant', },
     { label: 'Opportunity Marketplace', value: 'opportunity-marketplace', icon: 'opportunities', },
     { label: 'Org Chart', value: 'org-chart', icon: 'org-chart', },
     { label: 'Performance', value: 'performance', icon: 'performance', },
-    { label: 'Recruiting', value: 'recruitment', icon: 'recruiting', route: '/recruitment' },
+    { label: 'Recruitment', value: 'recruitment', icon: 'recruiting', route: '/recruitment' },
     { label: 'Succession', value: 'succession', icon: 'family-care', },
   ];
 
@@ -62,9 +62,9 @@ export class App {
 
         const mappedTitle =
           routeKey === 'recruitment' ? 'Recruiting'
-          : routeKey === 'dashboard' ? 'Home'
-          : routeKey === 'sample-inspection-request-sir' ? 'Sample Inspection Request'
-          : 'Home';
+            : routeKey.startsWith('employee-action') ? 'Employee Action'
+            : routeKey === 'dashboard' ? 'Home'
+              : 'Home';
 
         this.selectedHeaderTitle.set(mappedTitle);
         this.selectedHrOption.set(routeKey || 'dashboard');

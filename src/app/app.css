@@ -1,3 +1,9 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 /* Shellbar spacing */
 .shellbar {
   border-bottom: 1px solid #d9d9d9;
@@ -9,6 +15,7 @@
 /* Header wrapper */
 .header-wrapper {
   position: relative;
+  flex: 0 0 auto;
 }
 
 /* HR Portal header - make clickable */
@@ -82,4 +89,10 @@
 
 .hr-dropdown-label {
   line-height: 1.2;
+}
+
+.app-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: visible;
 }

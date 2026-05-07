@@ -1,0 +1,163 @@
+<div class="cjs-page">
+  <div class="cjs-header">
+    <div class="cjs-header-left">
+      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
+        <span class="cjs-back-icon">❮</span>
+      </button>
+      <h1>Create New Job Specification</h1>
+    </div>
+  </div>
+
+  <div class="cjs-card">
+    <div class="cjs-tabs">
+      <button type="button" class="cjs-tab-btn" [class.active]="activeTab === 'general'"
+        (click)="setActiveTab('general')">General Details</button>
+      <button type="button" class="cjs-tab-btn" [class.active]="activeTab === 'remuneration'"
+        (click)="setActiveTab('remuneration')">Remuneration</button>
+      <button type="button" class="cjs-tab-btn" [class.active]="activeTab === 'qualification'"
+        (click)="setActiveTab('qualification')">Qualification</button>
+    </div>
+
+    <div class="cjs-form-container">
+      <!-- General Tab Content -->
+      <div *ngIf="activeTab === 'general'">
+        <div class="cjs-section-title">Job Specification Details</div>
+
+        <div class="cjs-grid">
+          <!-- Left Column -->
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Job Title:</label>
+              <input type="text" [(ngModel)]="jobTitle" placeholder="Position title" />
+            </div>
+
+            <div class="cjs-row">
+              <label>Department:</label>
+              <select [(ngModel)]="department">
+                <option value="">No Selection</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Finance">Finance</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Operations">Operations</option>
+              </select>
+            </div>
+
+            <div class="cjs-row">
+              <label>Vacancy Count:</label>
+              <input type="number" [(ngModel)]="vacancyCount" placeholder="Number of positions" />
+            </div>
+
+            <div class="cjs-row">
+              <label>Job Purpose/ Description:</label>
+              <textarea [(ngModel)]="jobDescription" placeholder="Role description"></textarea>
+            </div>
+
+            <div class="cjs-row">
+              <label>Experience Requirement:</label>
+              <input type="text" [(ngModel)]="experienceRequirement" placeholder="Years of experience" />
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Employment Category:</label>
+              <select [(ngModel)]="employmentCategory">
+                <option value="">No Selection</option>
+                <option value="Executive">Executive</option>
+                <option value="Non-Executive">Non-Executive</option>
+                <option value="Daily Wagers">Daily Wagers</option>
+              </select>
+            </div>
+
+            <div class="cjs-row">
+              <label>Employment Nature:</label>
+              <select [(ngModel)]="employmentNature">
+                <option value="">No Selection</option>
+                <option value="Technical">Technical</option>
+                <option value="Non-Technical">Non-Technical</option>
+              </select>
+            </div>
+
+            <div class="cjs-row">
+              <label>Employment Type:</label>
+              <select [(ngModel)]="employmentType">
+                <option value="">No Selection</option>
+                <option value="Permanent">Permanent</option>
+                <option value="Temporary">Temporary</option>
+              </select>
+            </div>
+
+            <div class="cjs-row">
+              <label>Grade / Work Level:</label>
+              <select [(ngModel)]="gradeWorkLevel">
+                <option value="">No Selection</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+              </select>
+            </div>
+
+            <div class="cjs-row">
+              <label>Key Responsibility:</label>
+              <textarea [(ngModel)]="keyResponsibilities" placeholder="Key responsibilities of the role"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remuneration Tab Content -->
+      <div *ngIf="activeTab === 'remuneration'">
+        <div class="cjs-section-title">Remuneration Details</div>
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Basic Salary:</label>
+              <input type="text" [(ngModel)]="basicSalary" placeholder="Enter basic salary" />
+            </div>
+            <div class="cjs-row">
+              <label>Medical Allowance:</label>
+              <input type="text" [(ngModel)]="medicalAllowance" placeholder="Enter medical allowance" />
+            </div>
+          </div>
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Fuel Allowance:</label>
+              <input type="text" [(ngModel)]="fuelAllowance" placeholder="Enter fuel allowance" />
+            </div>
+            <div class="cjs-row">
+              <label>Package / Perks:</label>
+              <textarea [(ngModel)]="packagePerks" placeholder="Enter other perks and benefits"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Qualification Tab Content -->
+      <div *ngIf="activeTab === 'qualification'">
+        <div class="cjs-section-title">Qualification Requirements</div>
+        <div class="cjs-qualification-list">
+          <div class="cjs-row" *ngFor="let qual of qualifications; let i = index; trackBy: trackByIndex">
+            <label>Minimum Education Requirement:</label>
+            <div class="cjs-input-with-actions">
+              <input type="text" [(ngModel)]="qualifications[i]" placeholder="Education degree / certification" />
+              <button type="button" class="cjs-add-btn" (click)="addQualification()"
+                *ngIf="i === qualifications.length - 1">+</button>
+              <button type="button" class="cjs-remove-btn" (click)="removeQualification(i)"
+                *ngIf="qualifications.length > 1">-</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjs-actions-footer">
+      <button type="button" class="cjs-submit-btn" (click)="submitForm()">
+        <span class="cjs-submit-icon">✓</span> Save Job Specification
+      </button>
+    </div>
+  </div>
+</div>

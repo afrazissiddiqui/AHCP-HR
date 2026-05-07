@@ -1,0 +1,196 @@
+<div class="cjr-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>Add Performance Appraisal</h1>
+    </div>
+  </div>
+
+  <div class="cjr-card">
+    <div class="cjr-options">
+      <div class="cjr-options-title">Options:</div>
+    </div>
+
+    <nav class="cjr-section-nav" aria-label="Performance sections">
+      <ul class="cjr-section-nav-list">
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'increment-section'"
+          (click)="scrollToSection('increment-section')">Increment</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'promotion-section'"
+          (click)="scrollToSection('promotion-section')">Promotion</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'other-benefits-section'"
+          (click)="scrollToSection('other-benefits-section')">Other Benifits</li>
+      </ul>
+    </nav>
+
+    <div class="cjr-personal">
+      <div class="cjr-section-title">Performance Appraisal Info</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Form Number:</label>
+            <input type="text" [ngModel]="formNumber()" (ngModelChange)="formNumber.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee ID:</label>
+            <input type="text" [ngModel]="employeeID()" (ngModelChange)="employeeID.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Name:</label>
+            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Category:</label>
+            <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Work / Grade Level:</label>
+            <input type="text" [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employment Nature:</label>
+            <input type="text" [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Department:</label>
+            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Designation:</label>
+            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Date of Joining:</label>
+            <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employment Type:</label>
+            <input type="text" [ngModel]="employmentType()" (ngModelChange)="employmentType.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Job Title:</label>
+            <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Reporting Manager:</label>
+            <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Appraisal Authority:</label>
+            <input type="text" [ngModel]="appraisalAuthority()" (ngModelChange)="appraisalAuthority.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Appraisal Period:</label>
+            <input type="text" [ngModel]="appraisalPeriod()" (ngModelChange)="appraisalPeriod.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Current Salary:</label>
+            <input type="text" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Evaluation Date:</label>
+            <input type="date" [ngModel]="evaluationDate()" (ngModelChange)="evaluationDate.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="increment-section">
+      <div class="cjr-section-title">Increment</div>
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Current Salary:</label>
+            <input type="text" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Increment Percentage:</label>
+            <input type="text" [ngModel]="incrementPercentage()" (ngModelChange)="incrementPercentage.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Effective Date:</label>
+            <input type="date" [ngModel]="incrementEffectiveDate()" (ngModelChange)="incrementEffectiveDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Reason for Increment:</label>
+            <input type="text" [ngModel]="reasonForIncrement()" (ngModelChange)="reasonForIncrement.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Increment Amount:</label>
+            <input type="text" [ngModel]="incrementAmount()" (ngModelChange)="incrementAmount.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Revised Salary:</label>
+            <input type="text" [value]="revisedSalary()" readonly />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="promotion-section">
+      <div class="cjr-section-title">Promotion</div>
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Promotion Recommended:</label>
+            <select [ngModel]="promotionRecommended()" (ngModelChange)="promotionRecommended.set($event)">
+              <option value="">Select option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="cjr-row">
+            <label>New Designation:</label>
+            <input type="text" [ngModel]="newDesignation()" (ngModelChange)="newDesignation.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Promotion Effective Date:</label>
+            <input type="date" [ngModel]="promotionEffectiveDate()"
+              (ngModelChange)="promotionEffectiveDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Remarks:</label>
+            <input type="text" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="other-benefits-section">
+      <div class="cjr-section-title">Other Benifits</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row cjr-row--remarks">
+            <label>Existing Benefits Details (Editable):</label>
+            <textarea rows="4" [ngModel]="existingBenefitsDetails()"
+              (ngModelChange)="existingBenefitsDetails.set($event)"></textarea>
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row cjr-row--remarks">
+            <label>New Benefits:</label>
+            <textarea rows="4" [ngModel]="newBenefits()" (ngModelChange)="newBenefits.set($event)"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-actions-footer">
+      <button type="button" class="cjr-submit-btn" (click)="save()">
+        <span class="cjr-submit-icon">✓</span> Save Performance Appraisal
+      </button>
+    </div>
+  </div>
+</div>

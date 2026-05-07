@@ -1,6 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --app-font-family: "72", Arial, sans-serif;
+  --app-page-title-size: 1.5rem;
+}
+
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  font-family: "72", Arial, sans-serif;
+  font-family: var(--app-font-family);
   background: #aed9f3;
+  overflow-x: hidden;
+  overflow-y: auto;
 }

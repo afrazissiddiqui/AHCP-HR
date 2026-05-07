@@ -1,0 +1,255 @@
+:host {
+  display: block;
+}
+
+.cjs-page {
+  background: #f8f8f8;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.cjs-header {
+  background: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+}
+
+.cjs-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cjs-back {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cjs-back:hover {
+  background: #f7f7f7;
+}
+
+.cjs-back-icon {
+  color: #0052cc;
+  font-size: 14px;
+}
+
+.cjs-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #000;
+}
+
+.cjs-card {
+  background: #fff;
+  margin: 16px 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.cjs-tabs {
+  display: flex;
+  background: #fdfdfd;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.cjs-tab-btn {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cjs-tab-btn:hover {
+  color: #0052cc;
+  background: rgba(0, 82, 204, 0.05);
+}
+
+.cjs-tab-btn.active {
+  color: #0052cc;
+  border-bottom-color: #0052cc;
+  background: rgba(0, 82, 204, 0.08);
+}
+
+.cjs-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #000;
+  padding: 4px 0 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin: 4px 0 12px 0;
+}
+
+.cjs-form-container {
+  padding: 18px 24px;
+  min-height: 400px;
+}
+
+.cjs-input-with-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cjs-add-btn,
+.cjs-remove-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.cjs-add-btn {
+  color: #28a745;
+}
+
+.cjs-add-btn:hover {
+  background: #28a745;
+  color: #fff;
+  border-color: #28a745;
+}
+
+.cjs-remove-btn {
+  color: #dc3545;
+}
+
+.cjs-remove-btn:hover {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+
+.cjs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.cjs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cjs-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.cjs-row label {
+  font-size: 12px;
+  color: #444;
+  text-align: right;
+  padding-right: 6px;
+}
+
+.cjs-row input,
+.cjs-row select,
+.cjs-row textarea {
+  height: 32px;
+  padding: 6px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cjs-row textarea {
+  height: 80px;
+  resize: vertical;
+}
+
+.cjs-row input:focus,
+.cjs-row select:focus,
+.cjs-row textarea:focus {
+  outline: none;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+.cjs-actions-footer {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+  border-top: 1px solid #eee;
+  gap: 12px;
+}
+
+.cjs-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0052cc;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cjs-submit-btn:hover {
+  background: #0043a3;
+  box-shadow: 0 2px 8px rgba(0, 82, 204, 0.2);
+}
+
+.cjs-submit-btn:active {
+  background: #002d7a;
+  transform: scale(0.98);
+}
+
+.cjs-submit-icon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+@media (max-width: 1000px) {
+  .cjs-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .cjs-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .cjs-row label {
+    text-align: left;
+    padding-right: 0;
+  }
+}

@@ -1,0 +1,346 @@
+<div class="cjr-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>Add Loan/Advance</h1>
+    </div>
+  </div>
+
+  <div class="cjr-card">
+    <div class="cjr-options">
+      <div class="cjr-options-title">Options:</div>
+    </div>
+
+    <nav class="cjr-section-nav" aria-label="Loan sections">
+      <ul class="cjr-section-nav-list">
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'header-info-section'"
+          (click)="scrollToSection('header-info-section')">Header info</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'loan-detail-section'"
+          (click)="scrollToSection('loan-detail-section')">Loan detail</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'advance-detail-section'"
+          (click)="scrollToSection('advance-detail-section')">Advance Detail</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'repayment-schedule-section'"
+          (click)="scrollToSection('repayment-schedule-section')">Repayment Schedule</li>
+      </ul>
+    </nav>
+
+    <div class="cjr-personal" id="header-info-section">
+      <div class="cjr-section-title">Header info</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Document No:</label>
+            <input type="text" [ngModel]="documentNo()" (ngModelChange)="documentNo.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Nature:</label>
+            <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Department:</label>
+            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Request Type:</label>
+            <input type="text" [ngModel]="requestType()" (ngModelChange)="requestType.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee ID:</label>
+            <input type="text" [ngModel]="headerEmployeeID()" (ngModelChange)="headerEmployeeID.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employment Type:</label>
+            <input type="text" [ngModel]="employmentType()" (ngModelChange)="employmentType.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Designation:</label>
+            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Request Date:</label>
+            <input type="date" [ngModel]="requestDate()" (ngModelChange)="requestDate.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee Name:</label>
+            <input type="text" [ngModel]="headerEmployeeName()" (ngModelChange)="headerEmployeeName.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Work / Grade Level:</label>
+            <input type="text" [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Job Title:</label>
+            <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Status:</label>
+            <input type="text" [ngModel]="status()" (ngModelChange)="status.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee Category:</label>
+            <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Reporting Manager:</label>
+            <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Location:</label>
+            <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Joining Date:</label>
+            <input type="date" [ngModel]="joiningDate()" (ngModelChange)="joiningDate.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Years of Service:</label>
+            <input type="text" [value]="yearsOfService()" readonly />
+          </div>
+          <div class="cjr-row">
+            <label>Payroll Month:</label>
+            <input type="text" [ngModel]="payrollMonth()" (ngModelChange)="payrollMonth.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="loan-detail-section">
+      <div class="cjr-section-title">Loan detail</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Existing Loan (Yes/No):</label>
+            <select [ngModel]="existingLoan()" (ngModelChange)="existingLoan.set($event)">
+              <option value="">Select option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="cjr-row">
+            <label>Loan Acquired Date:</label>
+            <input type="date" [ngModel]="loanAcquiredDate()" (ngModelChange)="loanAcquiredDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Installment Number:</label>
+            <input type="text" [ngModel]="installmentNumber()" (ngModelChange)="installmentNumber.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Loan Ending Date:</label>
+            <input type="date" [ngModel]="loanEndingDate()" (ngModelChange)="loanEndingDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Precious Installment Amount:</label>
+            <input type="text" [ngModel]="previousInstallmentAmount()" (ngModelChange)="previousInstallmentAmount.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>PreviousLoan Purpose:</label>
+            <input type="text" [ngModel]="previousLoanPurpose()" (ngModelChange)="previousLoanPurpose.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Loan Amount:</label>
+            <input type="text" [ngModel]="loanAmount()" (ngModelChange)="loanAmount.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Loan Amount Deducted Till Now:</label>
+            <input type="text" [ngModel]="loanAmountDeductedTillNow()"
+              (ngModelChange)="loanAmountDeductedTillNow.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Loan Balance:</label>
+            <input type="text" [ngModel]="loanBalance()" (ngModelChange)="loanBalance.set($event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="cjr-section-title">New Loan Request</div>
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Purpose:</label>
+            <input type="text" [ngModel]="newLoanPurpose()" (ngModelChange)="newLoanPurpose.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Loan End Month:</label>
+            <input type="month" [ngModel]="loanEndMonth()" (ngModelChange)="loanEndMonth.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Loan Amount Requested:</label>
+            <input type="text" [ngModel]="loanAmountRequested()" (ngModelChange)="loanAmountRequested.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Loan Start Month:</label>
+            <input type="month" [ngModel]="loanStartMonth()" (ngModelChange)="loanStartMonth.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Installment Amount:</label>
+            <input type="text" [ngModel]="installmentAmount()" (ngModelChange)="installmentAmount.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Loan Tenure:</label>
+            <input type="text" [ngModel]="loanTenure()" (ngModelChange)="loanTenure.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>No of Installments:</label>
+            <input type="text" [ngModel]="noOfInstallments()" (ngModelChange)="noOfInstallments.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Eligible Amount:</label>
+            <input type="text" [ngModel]="eligibleAmount()" (ngModelChange)="eligibleAmount.set($event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="cjr-row cjr-row--remarks">
+        <label>Remarks:</label>
+        <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="advance-detail-section">
+      <div class="cjr-section-title">Advance Detail</div>
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Exiting Advance (Yes/No)</label>
+            <select [ngModel]="existingAdvance()" (ngModelChange)="existingAdvance.set($event)">
+              <option value="">Select option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="cjr-row">
+            <label>Advance Acquired Date</label>
+            <input type="date" [ngModel]="advanceAcquiredDate()" (ngModelChange)="advanceAcquiredDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Eligible Amount</label>
+            <input type="text" [ngModel]="advanceEligibleAmount()" (ngModelChange)="advanceEligibleAmount.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Previous Advance Purpose</label>
+            <input type="text" [ngModel]="previousAdvancePurpose()"
+              (ngModelChange)="previousAdvancePurpose.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Remarks</label>
+            <input type="text" [ngModel]="advanceRemarks()" (ngModelChange)="advanceRemarks.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Advance Amount</label>
+            <input type="text" [ngModel]="advanceAmount()" (ngModelChange)="advanceAmount.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Advance Amount To be Deducted This Month</label>
+            <input type="text" [ngModel]="advanceAmountToBeDeductedThisMonth()"
+              (ngModelChange)="advanceAmountToBeDeductedThisMonth.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Advance Balance</label>
+            <input type="text" [ngModel]="advanceBalance()" (ngModelChange)="advanceBalance.set($event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="cjr-section-title">New Advance Request</div>
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Purpose</label>
+            <input type="text" [ngModel]="newAdvancePurpose()" (ngModelChange)="newAdvancePurpose.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Advance Amount Eligible</label>
+            <input type="text" [ngModel]="newAdvanceAmountEligible()"
+              (ngModelChange)="newAdvanceAmountEligible.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Advance Amount Requested</label>
+            <input type="text" [ngModel]="newAdvanceAmountRequested()"
+              (ngModelChange)="newAdvanceAmountRequested.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="repayment-schedule-section">
+      <div class="cjr-section-title">Repayment Schedule</div>
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Repayment Start Date:</label>
+            <input type="date" [ngModel]="repaymentStartDate()" (ngModelChange)="repaymentStartDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Repayment Frequency:</label>
+            <input type="text" [ngModel]="repaymentFrequency()" (ngModelChange)="repaymentFrequency.set($event)" />
+          </div>
+        </div>
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Deduction Amount:</label>
+            <input type="text" [ngModel]="deductionAmount()" (ngModelChange)="deductionAmount.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Remarks:</label>
+            <input type="text" [ngModel]="repaymentRemarks()" (ngModelChange)="repaymentRemarks.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-actions-footer">
+      <button type="button" class="cjr-submit-btn" (click)="save()">
+        <span class="cjr-submit-icon">✓</span> Save Loan/Advance
+      </button>
+    </div>
+  </div>
+</div>
