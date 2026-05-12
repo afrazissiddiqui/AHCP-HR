@@ -28,7 +28,6 @@ export class App {
 
   @ViewChild('headerWrapper', { read: ElementRef })
   private headerWrapperRef?: ElementRef<HTMLElement>;
-
   protected readonly shellbarTitle = computed(() => {
     const label = this.hoveredHeaderTitle() ?? this.selectedHeaderTitle();
     return `${label} ▾`;
@@ -36,18 +35,18 @@ export class App {
 
   protected readonly hrMenuOptions: HrMenuOption[] = [
     { label: 'Home', value: 'dashboard', icon: 'home', route: '/dashboard' },
+    { label: 'Recruitment', value: 'recruitment', icon: 'recruiting', route: '/recruitment' },
+    { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
+    { label: 'Payroll Master', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
     { label: 'Leave managment', value: 'leave-managment/create', icon: 'expense-report', route: '/leave-managment/create' },
     { label: 'Termination', value: 'Termination', icon: 'feedback', },
     { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance', },
     { label: 'Development', value: 'development', icon: 'learning-assistant', },
-    { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
     { label: 'Goals', value: 'goals', icon: 'goal', },
     { label: 'Growth Portfolio', value: 'growth-portfolio', icon: 'journey-change', },
     { label: 'Learning', value: 'learning', icon: 'learning-assistant', },
-    { label: 'Opportunity Marketplace', value: 'opportunity-marketplace', icon: 'opportunities', },
     { label: 'Org Chart', value: 'org-chart', icon: 'org-chart', },
     { label: 'Performance', value: 'performance', icon: 'performance', },
-    { label: 'Recruitment', value: 'recruitment', icon: 'recruiting', route: '/recruitment' },
     { label: 'Succession', value: 'succession', icon: 'family-care', },
   ];
 
@@ -61,10 +60,13 @@ export class App {
         const routeKey = url.replace(/^\//, '');
 
         const mappedTitle =
-          routeKey === 'recruitment' ? 'Recruiting'
-            : routeKey.startsWith('employee-action') ? 'Employee Action'
-            : routeKey === 'dashboard' ? 'Home'
-              : 'Home';
+          routeKey === 'forms-hub' ? 'All Forms'
+            : routeKey === 'recruitment/create' ? 'Recruiting'
+              : routeKey === 'recruitment' ? 'Recruiting'
+                : routeKey.startsWith('employee-action') ? 'Employee Action'
+                  : routeKey.startsWith('payroll-master') ? 'Payroll Master'
+                    : routeKey === 'dashboard' ? 'Home'
+                      : 'Home';
 
         this.selectedHeaderTitle.set(mappedTitle);
         this.selectedHrOption.set(routeKey || 'dashboard');
@@ -73,6 +75,31 @@ export class App {
 
   toggleHrDropdown(): void {
     this.hrDropdownOpen.update(state => !state);
+  }
+
+  onShellbarClick(event: Event): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    const isBellClick = target.closest('.ui5-shellbar-bell-button');
+    const isActionClick = target.closest('.ui5-shellbar-action-button');
+    const isSearchClick = target.closest('.ui5-shellbar-search-field-area');
+    const isProfileClick = target.closest('[data-profile-btn]');
+
+    if (isBellClick || isActionClick || isSearchClick || isProfileClick) {
+      return;
+    }
+
+    this.toggleHrDropdown();
+  }
+
+  onNotificationsClick(event: Event): void {
+    event.stopPropagation();
+    this.hrDropdownOpen.set(false);
+    this.clearPreviewHrOption();
+    void this.router.navigate(['/forms-hub']);
   }
 
   previewHrOption(label: string): void {

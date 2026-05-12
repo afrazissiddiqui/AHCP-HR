@@ -1,0 +1,33 @@
+<div style="display: flex; height: 100vh;">
+  <app-sidebar [title]="'Forms'" [items]="sidebarItems" [sections]="sidebarSections" [isCollapsed]="sidebarCollapsed()"
+    [activeItemId]="activeSidebarItemId" (folderSelected)="onFolderSelected($event)"
+    (collapsedChange)="sidebarCollapsed.set($event)">
+  </app-sidebar>
+
+  <div style="flex: 1; overflow-y: auto;">
+    <div id="sdk---sample--header"
+      class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
+      role="toolbar">
+      <div class="sapMBarLeft sapMBarContainer">
+        <button class="sapMBtnBase sapMBtn sapMBarChild" (click)="toggleSidebar()" title="Toggle Sidebar">
+          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable">
+            <span class="sapUiIcon">☰</span>
+          </span>
+        </button>
+      </div>
+      <div class="sapMBarMiddle">
+        <div class="sapMBarPH sapMBarContainer" style="left: 52px; position: absolute; width: 300px;">
+          <h1 class="sapMTitle sapMTitleStyleAuto sapMTitleNoWrap sapMTitleMaxWidth sapMBarChild" title="Payroll Processing">
+            Payroll Processing
+          </h1>
+        </div>
+      </div>
+      <div class="sapMBarRight sapMBarContainer"></div>
+    </div>
+
+    <div class="table-wrapper" style="padding: 16px;">
+      <div class="sapMTitle sapMTitleStyleH5" role="heading" aria-level="5">Payroll Processing</div>
+      <div style="margin-top: 12px; color: #475569;">Payroll Processing component page is ready.</div>
+    </div>
+  </div>
+</div>

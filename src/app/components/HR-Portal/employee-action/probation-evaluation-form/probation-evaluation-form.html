@@ -36,6 +36,40 @@
         <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
         <span class="sapUiIcon search-icon">🔍</span>
       </div>
+
+      <div class="sapMTBActions">
+      
+        
+
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
+          ⚙
+        </button>
+      </div>
+
+      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+
+      <div class="view-settings-dialog" *ngIf="showDialog">
+        <div class="dialog-header">
+          <h3>View Settings</h3>
+        </div>
+
+        <div class="dialog-tabs">
+          <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+        </div>
+
+        <div class="dialog-body">
+          <div *ngIf="activeTab === 'filter'">
+            <div *ngFor="let col of columns">
+              <label>
+                <input type="checkbox" [(ngModel)]="col.visible" />
+                {{ col.label }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="dialog-footer"></div>
+      </div>
     </div>
 
     <div class="table-wrapper">
@@ -52,6 +86,7 @@
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -62,6 +97,11 @@
               </td>
               <td *ngFor="let col of columns" [hidden]="!col.visible">
                 {{ item[col.key] }}
+              </td>
+              <td>
+                <button class="view-btn" (click)="viewRecord(item)" title="View Details">
+                  👁 View
+                </button>
               </td>
             </tr>
           </tbody>
@@ -91,5 +131,30 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
+<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+  <div class="js-modal-header">
+    <h2>Probation Evaluation Detail - {{ selectedRecord.EmployeeName }}</h2>
+    <button class="js-close-modal" (click)="closeViewDialog()">×</button>
+  </div>
+  <div class="js-modal-body" *ngIf="selectedRecord">
+    <div class="js-detail-section">
+      <h3>General Details</h3>
+      <div class="js-detail-grid">
+        <div class="js-detail-item"><label>Employee Code:</label> <span>{{ selectedRecord.EmployeeCode }}</span></div>
+        <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
+        <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
+        <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
+        <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ selectedRecord.EmployeeNature }}</span></div>
+        <div class="js-detail-item"><label>Probation Start Date:</label> <span>{{ selectedRecord.ProbationStartDate }}</span></div>
+        <div class="js-detail-item"><label>Probation End Date:</label> <span>{{ selectedRecord.ProbationEndDate }}</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="js-modal-footer">
+    <button class="btn-secondary" (click)="closeViewDialog()">Close</button>
   </div>
 </div>

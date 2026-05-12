@@ -18,6 +18,12 @@ import { LoanAdvanceFormComponent } from './components/HR-Portal/employee-action
 import { AddLoanAdvanceComponent } from './components/HR-Portal/employee-action/loan-advance-form/add-loan-advance/add-loan-advance';
 import { LeaveApplicationFormComponent } from './components/HR-Portal/employee-action/leave-application-form/leave-application-form';
 import { AddLeaveApplicationComponent } from './components/HR-Portal/employee-action/leave-application-form/add-leave-application/add-leave-application';
+import { PayrollMasterComponent } from './components/HR-Portal/payroll-master/payroll-master';
+import { AttendanceManagmentComponent } from './components/HR-Portal/payroll-master/attendance-managment/attendance-managment';
+import { TaxManagmentComponent } from './components/HR-Portal/payroll-master/tax-managment/tax-managment';
+import { PayrollProcessingComponent } from './components/HR-Portal/payroll-master/payroll-processing/payroll-processing';
+import { PayrollSetupComponent } from './components/HR-Portal/payroll-master/payroll-setup/payroll-setup';
+import { FormsHubComponent } from './components/forms-hub/forms-hub';
 
 export const routes: Routes = [
   {
@@ -28,6 +34,10 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: dashboardComponent
+  },
+  {
+    path: 'forms-hub',
+    component: FormsHubComponent
   },
   {
     path: 'recruitment',
@@ -52,6 +62,26 @@ export const routes: Routes = [
   {
     path: 'employee-action',
     component: EmployeeActionComponent
+  },
+  {
+    path: 'payroll-master',
+    component: PayrollMasterComponent
+  },
+  {
+    path: 'payroll-master/attendance-managment',
+    component: AttendanceManagmentComponent
+  },
+  {
+    path: 'payroll-master/tax-managment',
+    component: TaxManagmentComponent
+  },
+  {
+    path: 'payroll-master/payroll-processing',
+    component: PayrollProcessingComponent
+  },
+  {
+    path: 'payroll-master/payroll-setup',
+    component: PayrollSetupComponent
   },
   {
     path: 'employee-action/probation-evaluation-form',
@@ -101,6 +131,4 @@ export const routes: Routes = [
     path: 'employee-action/leave-application-form/create',
     component: AddLeaveApplicationComponent
   },
-  
-    
 ];

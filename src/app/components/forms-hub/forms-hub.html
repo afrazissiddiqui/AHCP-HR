@@ -1,0 +1,36 @@
+<div class="forms-hub">
+  <header class="forms-hub-header">
+    <div>
+      <p class="forms-hub-eyebrow">HR Portal</p>
+      <h1 class="forms-hub-title">All Forms Workspace</h1>
+      <p class="forms-hub-subtitle">Open recruitment, employee action, leave, and payroll forms from one central page.</p>
+    </div>
+    <div class="forms-hub-stats">
+      <div class="forms-hub-stat-card">
+        <span class="forms-hub-stat-value">{{ totalForms }}</span>
+        <span class="forms-hub-stat-label">Forms</span>
+      </div>
+      <div class="forms-hub-stat-card">
+        <span class="forms-hub-stat-value">{{ totalCategories }}</span>
+        <span class="forms-hub-stat-label">Modules</span>
+      </div>
+    </div>
+  </header>
+
+  <ui5-tabcontainer class="forms-hub-tabs" header-background-design="Translucent">
+    @for (form of forms; track form.id) {
+      <ui5-tab [attr.text]="form.tabText">
+        <div class="forms-hub-panel">
+          <div class="forms-hub-panel-head">
+            <h2 class="forms-hub-panel-title">{{ form.title }}</h2>
+            <span class="forms-hub-badge">{{ form.category }}</span>
+          </div>
+          <p class="forms-hub-panel-desc">{{ form.description }}</p>
+          <div class="forms-hub-panel-actions">
+            <ui5-button design="Emphasis" (click)="openForm(form.route)">Open Form</ui5-button>
+          </div>
+        </div>
+      </ui5-tab>
+    }
+  </ui5-tabcontainer>
+</div>

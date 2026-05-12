@@ -79,6 +79,8 @@ export class PerformanceAppraisalFormComponent {
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   appraisalList: PerformanceAppraisalRecord[] = [];
+  showDialog = false;
+  activeTab: 'filter' = 'filter';
 
   get filteredList(): PerformanceAppraisalRecord[] {
     let list = [...this.appraisalList];
@@ -131,6 +133,8 @@ export class PerformanceAppraisalFormComponent {
   }
   setPage(page: number): void { if (page >= 1 && page <= this.totalPages) this.currentPage = page; }
   onPageSizeChange(): void { this.currentPage = 1; }
+  openDialog(): void { this.showDialog = true; }
+  closeDialog(): void { this.showDialog = false; }
   onFolderSelected(folderId: string): void { this.activeSidebarItemId = folderId; }
   toggleSidebar(): void { this.sidebarCollapsed.update((state) => !state); }
   createNewAppraisal(): void {

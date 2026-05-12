@@ -8,7 +8,8 @@
     show-product-switch
     show-nav-button
     show-menu-button
-    (click)="toggleHrDropdown()"
+    (click)="onShellbarClick($event)"
+    (notifications-click)="onNotificationsClick($event)"
     class="hr-portal-header"
   >
     <!-- Logo -->

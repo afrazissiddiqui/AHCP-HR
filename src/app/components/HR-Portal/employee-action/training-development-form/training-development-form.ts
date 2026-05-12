@@ -114,6 +114,8 @@ export class TrainingDevelopmentFormComponent {
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   trainingList: TrainingDevelopmentRecord[] = [];
+  showDialog = false;
+  activeTab: 'filter' = 'filter';
 
   get filteredList(): TrainingDevelopmentRecord[] {
     let list = [...this.trainingList];
@@ -191,6 +193,14 @@ export class TrainingDevelopmentFormComponent {
 
   onPageSizeChange(): void {
     this.currentPage = 1;
+  }
+
+  openDialog(): void {
+    this.showDialog = true;
+  }
+
+  closeDialog(): void {
+    this.showDialog = false;
   }
 
   onFolderSelected(folderId: string): void {

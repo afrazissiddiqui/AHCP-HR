@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { Router } from '@angular/router';
-import { AlertService } from '../../../services/alert.service';
 import { ApplicationFormService } from '../../../services/application-form.service';
 
 interface SampleInspectionRecord {
@@ -18,12 +17,16 @@ interface SampleInspectionRecord {
   EmploymentCategory: string;
   status: string;
   selected?: boolean;
-  action?: string;
 }
 interface ColumnConfig {
   key: keyof SampleInspectionRecord;
   label: string;
   visible: boolean;
+}
+
+interface DetailField {
+  key: keyof SampleInspectionRecord;
+  label: string;
 }
 
 
@@ -38,7 +41,6 @@ export class RecruitmentComponent {
 
   constructor(
     private router: Router,
-    private alertService: AlertService,
     private applicationFormService: ApplicationFormService
   ) { }
 
@@ -72,7 +74,6 @@ export class RecruitmentComponent {
     { key: "EmploymentType", label: "Employment Type", visible: true },
     { key: "EmploymentCategory", label: "Employment Category", visible: true },
     { key: "status", label: "Status", visible: true },
-    { key: "action", label: "Action", visible: true },
 
   ];
 
@@ -90,7 +91,20 @@ export class RecruitmentComponent {
 
   showColumnPanel = false;
   showDialog = false;
-  activeTab: 'sort' | 'filter' | 'group' = 'filter';
+  activeTab: 'filter' = 'filter';
+  detailRecord: SampleInspectionRecord | null = null;
+
+  detailFields: DetailField[] = [
+    { key: 'EmployeeCode', label: 'Employee Code' },
+    { key: 'EmployeeName', label: 'Employee Name' },
+    { key: 'Department', label: 'Department' },
+    { key: 'EmployeeNature', label: 'Employee Nature' },
+    { key: 'Designation', label: 'Designation' },
+    { key: 'ReportingManager', label: 'Reporting Manager' },
+    { key: 'EmploymentType', label: 'Employment Type' },
+    { key: 'EmploymentCategory', label: 'Employment Category' },
+    { key: 'status', label: 'Status' }
+  ];
 
   filterFields = ['Name', 'Range', 'First Ascent', 'Countries', 'Parent Mountain'];
 
@@ -173,6 +187,10 @@ export class RecruitmentComponent {
   }
 
   sortData(column: keyof SampleInspectionRecord) {
+    if (column === 'selected') {
+      return;
+    }
+
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -189,6 +207,19 @@ export class RecruitmentComponent {
 
   onPageSizeChange() {
     this.currentPage = 1;
+  }
+
+  openApplicationDetail(record: SampleInspectionRecord) {
+    this.detailRecord = record;
+  }
+
+  closeApplicationDetail() {
+    this.detailRecord = null;
+  }
+
+  getDetailValue(record: SampleInspectionRecord, key: keyof SampleInspectionRecord): string | number | boolean {
+    const value = record[key];
+    return value === undefined || value === null ? '-' : value;
   }
 
 
@@ -213,23 +244,4 @@ export class RecruitmentComponent {
     this.sidebarCollapsed.update(s => !s);
   }
 
-  approveApplication(record: SampleInspectionRecord) {
-    this.alertService.confirm('Approve Application', `Are you sure you want to approve application ${record.EmployeeName}?`)
-      .then((result) => {
-        if (result.isConfirmed) {
-          record.EmploymentCategory = 'Approved';
-          this.alertService.success('Success', 'Application approved successfully');
-        }
-      });
-  }
-
-  rejectApplication(record: SampleInspectionRecord) {
-    this.alertService.confirm('Reject Application', `Are you sure you want to reject application ${record.EmployeeName}?`)
-      .then((result) => {
-        if (result.isConfirmed) {
-          record.EmploymentCategory = 'Rejected';
-          this.alertService.success('Success', 'Application rejected successfully');
-        }
-      });
-  }
 }

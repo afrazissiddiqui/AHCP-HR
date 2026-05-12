@@ -7,6 +7,8 @@ import { App } from './app/app';
 import "@ui5/webcomponents/dist/Button.js";
 import "@ui5/webcomponents/dist/Input.js";
 import "@ui5/webcomponents/dist/Icon.js";
+import "@ui5/webcomponents/dist/TabContainer.js";
+import "@ui5/webcomponents/dist/Tab.js";
 
 // Fiori components (ShellBar is here!)
 import "@ui5/webcomponents-fiori/dist/ShellBar.js";

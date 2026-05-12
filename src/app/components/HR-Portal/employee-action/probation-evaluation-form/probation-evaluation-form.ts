@@ -61,6 +61,10 @@ export class ProbationEvaluationFormComponent {
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   probationList: ProbationEvaluationRecord[] = [];
+  showDialog = false;
+  activeTab: 'filter' = 'filter';
+  showViewDialog = false;
+  selectedRecord: ProbationEvaluationRecord | null = null;
 
   get filteredList(): ProbationEvaluationRecord[] {
     let list = [...this.probationList];
@@ -135,6 +139,24 @@ export class ProbationEvaluationFormComponent {
 
   onPageSizeChange(): void {
     this.currentPage = 1;
+  }
+
+  openDialog(): void {
+    this.showDialog = true;
+  }
+
+  closeDialog(): void {
+    this.showDialog = false;
+  }
+
+  viewRecord(record: ProbationEvaluationRecord): void {
+    this.selectedRecord = record;
+    this.showViewDialog = true;
+  }
+
+  closeViewDialog(): void {
+    this.showViewDialog = false;
+    this.selectedRecord = null;
   }
 
   onFolderSelected(folderId: string): void {
