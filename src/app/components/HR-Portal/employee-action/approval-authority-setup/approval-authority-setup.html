@@ -1,0 +1,118 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div
+      id="sdk---sample--header"
+      class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
+      role="toolbar">
+      <div class="sapMBarLeft sapMBarContainer"></div>
+      <div class="sapMBarRight sapMBarContainer"></div>
+    </div>
+
+    <div class="setup-body">
+      <div class="setup-intro">
+        <h2>Approval authority setup</h2>
+        <p>
+          <strong>Step</strong> = order in the chain (Sr. 1 → Sr. 2 → …). <strong>Person</strong> = someone who can act at that step.
+          One step can include several people (any of them may act, depending on your HR rules).
+        </p>
+      </div>
+
+      <!-- Document selection (full width, like reference) -->
+      <div class="doc-panel">
+        <label class="doc-label" for="documentName">Document Name</label>
+        <select
+          id="documentName"
+          class="doc-select"
+          name="documentName"
+          [(ngModel)]="documentName">
+          <option value="">Select document</option>
+          <option *ngFor="let formType of formTypes" [value]="formType">{{ formType }}</option>
+        </select>
+      </div>
+
+      <!-- Approver section: add step (row) vs add person (chip) inside row -->
+      <div class="approver-panel">
+        <div class="approver-panel-head">
+          <h3 class="approver-title">Approver</h3>
+          <button type="button" class="btn-add-approver" (click)="addApproverLevel()">Add approval step</button>
+        </div>
+        <p class="flow-hint">
+          Use <strong>Add approval step</strong> for the next stage in the chain (new row / Sr. #).
+          In each row, fill code + name and use <strong>Add to this step</strong> to attach more than one person to the same stage.
+        </p>
+
+        <div class="table-wrap" *ngIf="levels.length; else emptyLevels">
+          <table class="workflow-table">
+            <thead>
+              <tr>
+                <th class="col-sr">Sr. #</th>
+                <th class="col-approver">Approver Code</th>
+                <th class="col-action">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let level of levels; let sr = index">
+                <td class="col-sr">{{ sr + 1 }}</td>
+                <td class="approver-cell">
+                  <div class="chips" *ngIf="level.approvers.length">
+                    <span *ngFor="let chip of level.approvers" class="chip">
+                      <span class="chip-text">{{ chipLabel(chip) }}</span>
+                      <button type="button" class="chip-remove" (click)="removeChip(level, chip.id)" aria-label="Remove approver">×</button>
+                    </span>
+                  </div>
+
+                  <div class="add-chip-row">
+                    <input
+                      type="text"
+                      class="inline-input"
+                      placeholder="Approver Code"
+                      [(ngModel)]="level.draftCode"
+                      [ngModelOptions]="{ standalone: true }"
+                      [name]="'code-' + level.id" />
+                    <input
+                      type="text"
+                      class="inline-input"
+                      placeholder="Approver Name"
+                      [(ngModel)]="level.draftName"
+                      [ngModelOptions]="{ standalone: true }"
+                      [name]="'name-' + level.id" />
+                    <input
+                      type="text"
+                      class="inline-input"
+                      placeholder="Role / Designation"
+                      [(ngModel)]="level.draftRole"
+                      [ngModelOptions]="{ standalone: true }"
+                      [name]="'role-' + level.id" />
+                    <button type="button" class="btn-add-chip" (click)="addChip(level)">Add to this step</button>
+                  </div>
+
+                  <div class="level-perms">
+                    <label class="perm-label">
+                      <input type="checkbox" [(ngModel)]="level.canApprove" [ngModelOptions]="{ standalone: true }" />
+                      Can approve
+                    </label>
+                    <label class="perm-label">
+                      <input type="checkbox" [(ngModel)]="level.canReject" [ngModelOptions]="{ standalone: true }" />
+                      Can reject
+                    </label>
+                  </div>
+                </td>
+                <td class="col-action">
+                  <button type="button" class="btn-remove-row" (click)="removeLevel(level.id)" title="Remove level">×</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #emptyLevels>
+          <div class="empty-levels">No steps yet. Click <strong>Add approval step</strong> to create Sr. #1 (first stage in the chain).</div>
+        </ng-template>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn-submit-form" (click)="submitSetup()">Submit form</button>
+      </div>
+    </div>
+  </div>
+</div>

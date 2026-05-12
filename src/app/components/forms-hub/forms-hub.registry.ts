@@ -25,6 +25,7 @@ export const HR_FORM_TABS: HrFormTab[] = [
   { id: 'expense', tabText: 'Expense', title: 'Expense Reimbursement Form', category: 'Employee Action', description: 'Manage reimbursement submissions and approval flow.', route: '/employee-action/expense-reimbursement-form' },
   { id: 'loan', tabText: 'Loan', title: 'Loan / Advance Form', category: 'Employee Action', description: 'Process employee loan and salary advance requests.', route: '/employee-action/loan-advance-form' },
   { id: 'leave-app', tabText: 'Leave App.', title: 'Leave Application Form', category: 'Leave', description: 'Submit and review individual leave applications.', route: '/employee-action/leave-application-form' },
+  { id: 'approval-setup', tabText: 'Approval Setup', title: 'Approval Authority Setup', category: 'Employee Action', description: 'Assign who can approve or reject submitted forms.', route: '/employee-action/approval-authority-setup' },
   { id: 'payroll', tabText: 'Payroll', title: 'Payroll Master', category: 'Payroll', description: 'Access core payroll controls and master setup.', route: '/payroll-master' },
   { id: 'attendance', tabText: 'Attendance', title: 'Attendance Management', category: 'Payroll', description: 'Maintain attendance input used for payroll calculations.', route: '/payroll-master/attendance-managment' },
   { id: 'tax', tabText: 'Tax', title: 'Tax Management', category: 'Payroll', description: 'Configure tax slabs and statutory payroll deductions.', route: '/payroll-master/tax-managment' },

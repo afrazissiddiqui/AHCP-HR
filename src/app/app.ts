@@ -63,10 +63,11 @@ export class App {
           routeKey === 'forms-hub' ? 'All Forms'
             : routeKey === 'recruitment/create' ? 'Recruiting'
               : routeKey === 'recruitment' ? 'Recruiting'
-                : routeKey.startsWith('employee-action') ? 'Employee Action'
-                  : routeKey.startsWith('payroll-master') ? 'Payroll Master'
-                    : routeKey === 'dashboard' ? 'Home'
-                      : 'Home';
+                : routeKey === 'employee-action/approval-authority-setup' ? 'Approval Setup'
+                  : routeKey.startsWith('employee-action') ? 'Employee Action'
+                    : routeKey.startsWith('payroll-master') ? 'Payroll Master'
+                      : routeKey === 'dashboard' ? 'Home'
+                        : 'Home';
 
         this.selectedHeaderTitle.set(mappedTitle);
         this.selectedHrOption.set(routeKey || 'dashboard');
@@ -100,6 +101,13 @@ export class App {
     this.hrDropdownOpen.set(false);
     this.clearPreviewHrOption();
     void this.router.navigate(['/forms-hub']);
+  }
+
+  onProductSwitchClick(event: Event): void {
+    event.stopPropagation();
+    this.hrDropdownOpen.set(false);
+    this.clearPreviewHrOption();
+    void this.router.navigate(['/employee-action/approval-authority-setup']);
   }
 
   previewHrOption(label: string): void {

@@ -18,6 +18,7 @@ import { LoanAdvanceFormComponent } from './components/HR-Portal/employee-action
 import { AddLoanAdvanceComponent } from './components/HR-Portal/employee-action/loan-advance-form/add-loan-advance/add-loan-advance';
 import { LeaveApplicationFormComponent } from './components/HR-Portal/employee-action/leave-application-form/leave-application-form';
 import { AddLeaveApplicationComponent } from './components/HR-Portal/employee-action/leave-application-form/add-leave-application/add-leave-application';
+import { ApprovalAuthoritySetupComponent } from './components/HR-Portal/employee-action/approval-authority-setup/approval-authority-setup';
 import { PayrollMasterComponent } from './components/HR-Portal/payroll-master/payroll-master';
 import { AttendanceManagmentComponent } from './components/HR-Portal/payroll-master/attendance-managment/attendance-managment';
 import { TaxManagmentComponent } from './components/HR-Portal/payroll-master/tax-managment/tax-managment';
@@ -130,5 +131,9 @@ export const routes: Routes = [
   {
     path: 'employee-action/leave-application-form/create',
     component: AddLeaveApplicationComponent
+  },
+  {
+    path: 'employee-action/approval-authority-setup',
+    component: ApprovalAuthoritySetupComponent
   },
 ];

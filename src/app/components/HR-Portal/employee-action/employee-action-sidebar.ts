@@ -1,7 +1,8 @@
 import { SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 
 export const EMPLOYEE_ACTION_SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: 'employee-action-list', label: 'Employee Action List', route: '/employee-action' }
+  { id: 'employee-action-list', label: 'Employee Action List', route: '/employee-action' },
+  { id: 'approval-authority-setup', label: 'Approval Authority Setup', route: '/employee-action/approval-authority-setup' }
 ];
 
 export const EMPLOYEE_ACTION_SIDEBAR_SECTIONS: SidebarSection[] = [
