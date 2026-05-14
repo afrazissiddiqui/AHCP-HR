@@ -1,0 +1,231 @@
+<div style="display: flex; height: 100vh;">
+  <app-sidebar
+    [title]="'Forms'"
+    [items]="sidebarItems"
+    [sections]="sidebarSections"
+    [isCollapsed]="sidebarCollapsed()"
+    [activeItemId]="activeSidebarItemId"
+    (folderSelected)="onFolderSelected($event)"
+    (collapsedChange)="sidebarCollapsed.set($event)"
+  ></app-sidebar>
+
+  <div style="flex: 1; overflow-y: auto;">
+    <div
+      id="sdk---sample--header"
+      class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
+      role="toolbar"
+    >
+      <div class="sapMBarLeft sapMBarContainer">
+        <button class="sapMBtnBase sapMBtn sapMBarChild" (click)="toggleSidebar()" title="Toggle Sidebar" type="button">
+          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable">
+            <span class="sapUiIcon">☰</span>
+          </span>
+        </button>
+
+        <button class="sapMBtnBase sapMBtn sapMBarChild" aria-label="Back" title="Back" type="button">
+          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable sapMBtnBack sapMBtnIconFirst">
+            <span class="sapUiIcon sapMBtnIcon sapMBtnIconLeft">←</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="sapMBarMiddle">
+        <div class="sapMBarPH sapMBarContainer" style="left: 52px; position: absolute; width: 350px;">
+          <h1 class="sapMTitle sapMTitleStyleAuto sapMTitleNoWrap sapMTitleMaxWidth sapMBarChild" title="IGP">IGP (Inward Gate Pass)</h1>
+        </div>
+      </div>
+
+      <div class="sapMBarRight sapMBarContainer">
+        <button class="btn-default" type="button" (click)="createNew()">Add IGP</button>
+      </div>
+    </div>
+
+    <div
+      id="table-toolbar"
+      class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar"
+    >
+      <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
+        <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
+          IGP records ({{ rows.length }}) · Selected ({{ getSelectedCount() }})
+        </div>
+      </div>
+
+      <div class="sapMTBSpacer"></div>
+
+      <div class="sapMSearchField">
+        <input
+          type="text"
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search IGP records..."
+        />
+        <span class="sapUiIcon search-icon">🔍</span>
+      </div>
+
+      <div class="sapMTBActions"> 
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings" type="button">⚙</button>
+      </div>
+
+      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+      <div class="view-settings-dialog" *ngIf="showDialog">
+        <div class="dialog-header">
+          <h3>View Settings</h3>
+        </div>
+        <div class="dialog-tabs">
+          <button type="button" (click)="activeTab = 'sort'" [class.active]="activeTab === 'sort'">Sort</button>
+          <button type="button" (click)="activeTab = 'filter'" [class.active]="activeTab === 'filter'">Filter</button>
+        </div>
+        <div class="dialog-body">
+          <div *ngIf="activeTab === 'filter'">
+            <div *ngFor="let col of columns">
+              <label>
+                <input type="checkbox" [(ngModel)]="col.visible" />
+                {{ col.label }}
+              </label>
+            </div>
+          </div>
+          <div *ngIf="activeTab === 'sort'">
+            <p>Sort options go here</p>
+          </div>
+        </div>
+        <div class="dialog-footer"></div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <div class="table-scroll">
+        <table class="mountain-table">
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
+              </th>
+              <th
+                *ngFor="let col of columns"
+                [hidden]="!col.visible"
+                appColumnResize
+                (click)="sortData(col.key)"
+                class="sortable-header"
+              >
+                {{ col.label }}
+                <span *ngIf="sortColumn === col.key" class="sort-indicator">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let j of paginatedList">
+              <td>
+                <input type="checkbox" [(ngModel)]="j.selected" />
+              </td>
+              <td *ngFor="let col of columns" [hidden]="!col.visible">{{ j[col.key] }}</td>
+              <td>
+                <button class="view-btn" type="button" (click)="viewDetails(j)" title="View Details">👁 View</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="dialog-backdrop" *ngIf="showDetailDialog" (click)="closeDetailDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showDetailDialog && selectedRow">
+        <div class="js-modal-header">
+          <h2>IGP — {{ selectedRow.referenceNo }}</h2>
+          <button type="button" class="js-close-modal" (click)="closeDetailDialog()">×</button>
+        </div>
+        <div class="js-modal-body">
+          <div class="js-detail-section">
+            <h3>Header</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item"><label>Type:</label> <span>{{ selectedRow.type }}</span></div>
+              <div class="js-detail-item"><label>Date:</label> <span>{{ selectedRow.submittedDate }}</span></div>
+              <div class="js-detail-item"><label>IGP no.:</label> <span>{{ selectedRow.referenceNo }}</span></div>
+              <div class="js-detail-item"><label>Base doc no.:</label> <span>{{ selectedRow.baseDocNo }}</span></div>
+              <div class="js-detail-item"><label>BP code:</label> <span>{{ selectedRow.businessPartnerCode }}</span></div>
+              <div class="js-detail-item"><label>BP name:</label> <span>{{ selectedRow.businessPartnerName }}</span></div>
+              <div class="js-detail-item"><label>Vehicle:</label> <span>{{ selectedRow.vehicleNo }}</span></div>
+              <div class="js-detail-item"><label>From unit:</label> <span>{{ selectedRow.fromUnit }}</span></div>
+              <div class="js-detail-item"><label>Kanta slip:</label> <span>{{ selectedRow.kantaSlip }}</span></div>
+              <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRow.department }}</span></div>
+              <div class="js-detail-item"><label>Bilty no.:</label> <span>{{ selectedRow.biltyNo }}</span></div>
+              <div class="js-detail-item"><label>Store:</label> <span>{{ selectedRow.store }}</span></div>
+              <div class="js-detail-item"><label>Freight:</label> <span>{{ selectedRow.freight }}</span></div>
+              <div class="js-detail-item"><label>Weight machine:</label> <span>{{ selectedRow.weightMachineName }}</span></div>
+              <div class="js-detail-item"><label>Weight:</label> <span>{{ selectedRow.weight }}</span></div>
+              <div class="js-detail-item"><label>Location:</label> <span>{{ selectedRow.location }}</span></div>
+              <div class="js-detail-item"><label>Employee:</label> <span>{{ selectedRow.employee }}</span></div>
+              <div class="js-detail-item"><label>Status:</label> <span>{{ selectedRow.status }}</span></div>
+              <div class="js-detail-item"><label>Total qty:</label> <span>{{ selectedRow.totalQty }}</span></div>
+            </div>
+            <div class="js-detail-full" *ngIf="selectedRow.remarks">
+              <label>Remarks:</label>
+              <p>{{ selectedRow.remarks }}</p>
+            </div>
+          </div>
+
+          <div class="js-detail-section" *ngIf="selectedRow.lines.length">
+            <h3>Line items</h3>
+            <div class="table-scroll">
+              <table class="mountain-table">
+                <thead>
+                  <tr>
+                    <th>Sr.#</th>
+                    <th>Item code</th>
+                    <th>Item name</th>
+                    <th>Category</th>
+                    <th>Packing</th>
+                    <th>Quality</th>
+                    <th>UOM</th>
+                    <th>Qty</th>
+                    <th>Info</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let ln of selectedRow.lines; let idx = index">
+                    <td>{{ idx + 1 }}</td>
+                    <td>{{ ln.itemCode }}</td>
+                    <td>{{ ln.itemName }}</td>
+                    <td>{{ ln.category }}</td>
+                    <td>{{ ln.packingCondition }}</td>
+                    <td>{{ ln.productQuality }}</td>
+                    <td>{{ ln.uom }}</td>
+                    <td>{{ ln.qty }}</td>
+                    <td>{{ ln.info }}</td>
+                    <td>{{ ln.remarks }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="js-modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeDetailDialog()">Close</button>
+        </div>
+      </div>
+
+      <div class="table-pagination">
+        <div class="pagination-info">
+          Showing {{ filteredList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to
+          {{ Math.min(currentPage * pageSize, filteredList.length) }} of {{ filteredList.length }} entries
+        </div>
+        <div class="pagination-controls">
+          <button type="button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+          <div class="page-numbers">
+            <button type="button" *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
+              {{ page }}
+            </button>
+          </div>
+          <button type="button" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+        </div>
+        <div class="page-size-selector">
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

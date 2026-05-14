@@ -17,7 +17,7 @@ export const HR_FORM_TABS: HrFormTab[] = [
   { id: 'recruitment-create', tabText: 'Job Req.', title: 'Create Job Requisition', category: 'Recruitment', description: 'Raise a new requisition to initiate a hiring request.', route: '/recruitment/create' },
   { id: 'job-spec', tabText: 'Job Spec', title: 'Job Specification Form', category: 'Recruitment', description: 'Define role responsibilities, skills, and requirements.', route: '/job-specification-form' },
   { id: 'job-spec-create', tabText: 'New Job Spec', title: 'Create Job Specification', category: 'Recruitment', description: 'Create a fresh job specification for open positions.', route: '/job-specification-form/create' },
-  { id: 'leave-mgmt', tabText: 'Leave Mgmt', title: 'Leave Management', category: 'Leave', description: 'Configure and administer leave rules and requests.', route: '/leave-managment/create' },
+  { id: 'leave-mgmt', tabText: 'Leave Mgmt', title: 'Leave Management', category: 'Leave', description: 'Configure and administer leave rules and requests.', route: '/employee-action/leave-application-form' },
   { id: 'employee-action', tabText: 'Emp. Action', title: 'Employee Action List', category: 'Employee Action', description: 'Track all actionable employee forms in one queue.', route: '/employee-action' },
   { id: 'probation', tabText: 'Probation', title: 'Probation Evaluation Form', category: 'Employee Action', description: 'Evaluate probation outcomes for newly hired employees.', route: '/employee-action/probation-evaluation-form' },
   { id: 'training', tabText: 'Training', title: 'Training & Development Form', category: 'Employee Action', description: 'Capture capability-building and development needs.', route: '/employee-action/training-development-form' },

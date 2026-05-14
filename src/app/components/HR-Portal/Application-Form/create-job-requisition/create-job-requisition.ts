@@ -3,6 +3,11 @@ import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, OnD
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ViewportScroller } from '@angular/common';
+import {
+  ApplicationFormDetail,
+  ApplicationFormRecord,
+  ApplicationFormService,
+} from '../../../../services/application-form.service';
 
 @Component({
   selector: 'app-create-job-requisition',
@@ -328,7 +333,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.destroyIntersectionObserver();
   }
 
-  constructor(private readonly router: Router, private readonly viewportScroller: ViewportScroller) { }
+  constructor(
+    private readonly router: Router,
+    private readonly viewportScroller: ViewportScroller,
+    private readonly applicationFormService: ApplicationFormService
+  ) { }
 
   protected back(): void {
     void this.router.navigateByUrl('/recruitment');
@@ -356,8 +365,22 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   protected submitApplication(): void {
-    // Placeholder for future integration - will submit all form data
-    console.log('Application submitted', {
+    const noSelection = (value: string): string => (value === 'No Selection' ? '' : value);
+
+    const codeStr = this.employeeCode().trim();
+    const parsedCode = parseInt(codeStr, 10);
+    const employeeCodeNum =
+      Number.isFinite(parsedCode) && parsedCode > 0 ? parsedCode : this.applicationFormService.getNextEmployeeCode();
+
+    const loginName = this.loginEmployeeName().trim();
+    const composedName = [this.firstName(), this.middleName(), this.lastName()]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(' ');
+    const displayName =
+      loginName || composedName || this.personName().trim() || `Applicant-${employeeCodeNum}`;
+
+    const detail: ApplicationFormDetail = {
       personalInfo: {
         personName: this.personName(),
         firstName: this.firstName(),
@@ -382,8 +405,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         country: this.country(),
         zipCode: this.zipCode()
       },
-      education: this.educationSections(),
-      pastExperience: this.pastExperienceSections(),
+      education: this.educationSections().map((row) => ({ ...row })),
+      pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
       remuneration: {
         employeeMaster: this.employeeMaster(),
         salaryStructure: this.salaryStructure(),
@@ -397,9 +420,44 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         userId: this.userId(),
         password: this.password()
       },
-      attachments: this.attachments()
-    });
-    // TODO: Replace with actual API call to submit the application
+      attachments: this.attachments().map((a) => ({
+        type: a.type,
+        fileName: a.fileName || (a.file ? a.file.name : '')
+      })),
+      requisition: {
+        copyExisting: this.copyExisting(),
+        reqId: this.reqId(),
+        internalJobTitle: this.internalJobTitle(),
+        hiringManager: this.hiringManager(),
+        recruiter: this.recruiter(),
+        recruitmentCollaborator: this.recruitmentCollaborator(),
+        requisitionAdministrator: this.requisitionAdministrator(),
+        recruitmentCoordinator: this.recruitmentCoordinator(),
+        hrAdministrator: this.hrAdministrator(),
+        company: this.company(),
+        department: this.department(),
+        division: this.division(),
+        location: this.location(),
+        costCenter: this.costCenter()
+      }
+    };
+
+    const record: ApplicationFormRecord = {
+      EmployeeCode: employeeCodeNum,
+      EmployeeName: displayName,
+      Department: noSelection(this.department()) || '—',
+      EmployeeNature: noSelection(this.company()) || '—',
+      Designation: this.internalJobTitle().trim() || '—',
+      ReportingManager: this.hiringManager().trim() || '—',
+      EmploymentType: noSelection(this.division()) || '—',
+      EmploymentCategory: noSelection(this.costCenter()) || '—',
+      status: 'Submitted',
+      selected: false,
+      detail
+    };
+
+    this.applicationFormService.addApplicationRecord(record);
     alert('Application submitted successfully!');
+    void this.router.navigateByUrl('/recruitment');
   }
 }

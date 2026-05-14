@@ -4,11 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../services/application-form.service';
-import { AlertService } from '../../../services/alert.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from './employee-action-sidebar';
 
-type EmployeeActionDataColumnKey = Exclude<keyof ApplicationFormRecord, 'selected'>;
-type EmployeeActionColumnKey = EmployeeActionDataColumnKey | 'action';
+type EmployeeActionDataColumnKey = Exclude<keyof ApplicationFormRecord, 'selected' | 'detail'>;
 
 @Component({
   selector: 'app-employee-action',
@@ -19,13 +17,12 @@ type EmployeeActionColumnKey = EmployeeActionDataColumnKey | 'action';
 })
 export class EmployeeActionComponent {
   constructor(
-    private alertService: AlertService,
     private applicationFormService: ApplicationFormService
   ) { }
 
   Math = Math;
 
-  interfaceColumns: Array<{ key: EmployeeActionColumnKey; label: string; visible: boolean }> = [
+  interfaceColumns: Array<{ key: EmployeeActionDataColumnKey; label: string; visible: boolean }> = [
     { key: 'EmployeeCode', label: 'Employee Code', visible: true },
     { key: 'EmployeeName', label: 'Employee Name', visible: true },
     { key: 'Department', label: 'Department', visible: true },
@@ -34,8 +31,7 @@ export class EmployeeActionComponent {
     { key: 'ReportingManager', label: 'Reporting Manager', visible: true },
     { key: 'EmploymentType', label: 'Employment Type', visible: true },
     { key: 'EmploymentCategory', label: 'Employment Category', visible: true },
-    { key: 'status', label: 'Status', visible: true },
-    { key: 'action', label: 'Action', visible: true }
+    { key: 'status', label: 'Status', visible: true }
   ];
 
   sidebarItems: SidebarItem[] = EMPLOYEE_ACTION_SIDEBAR_ITEMS;
@@ -56,17 +52,11 @@ export class EmployeeActionComponent {
     return this.interfaceColumns;
   }
 
-  onHeaderClick(columnKey: EmployeeActionColumnKey): void {
-    if (columnKey === 'action') {
-      return;
-    }
+  onHeaderClick(columnKey: EmployeeActionDataColumnKey): void {
     this.sortData(columnKey);
   }
 
-  getCellValue(item: ApplicationFormRecord, columnKey: EmployeeActionColumnKey): string | number {
-    if (columnKey === 'action') {
-      return '';
-    }
+  getCellValue(item: ApplicationFormRecord, columnKey: EmployeeActionDataColumnKey): string | number {
     return item[columnKey] ?? '';
   }
 
@@ -167,23 +157,4 @@ export class EmployeeActionComponent {
     this.sidebarCollapsed.update((state) => !state);
   }
 
-  approveApplication(record: ApplicationFormRecord): void {
-    this.alertService.confirm('Approve Application', `Are you sure you want to approve application ${record.EmployeeName}?`)
-      .then((result) => {
-        if (result.isConfirmed) {
-          record.EmploymentCategory = 'Approved';
-          this.alertService.success('Success', 'Application approved successfully');
-        }
-      });
-  }
-
-  rejectApplication(record: ApplicationFormRecord): void {
-    this.alertService.confirm('Reject Application', `Are you sure you want to reject application ${record.EmployeeName}?`)
-      .then((result) => {
-        if (result.isConfirmed) {
-          record.EmploymentCategory = 'Rejected';
-          this.alertService.success('Success', 'Application rejected successfully');
-        }
-      });
-  }
 }

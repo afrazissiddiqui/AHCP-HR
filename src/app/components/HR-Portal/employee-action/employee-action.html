@@ -93,7 +93,7 @@
               <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize class="sortable-header"
                 (click)="onHeaderClick(col.key)">
                 {{ col.label }}
-                <span *ngIf="col.key !== 'action' && sortColumn === col.key" class="sort-indicator">
+                <span *ngIf="sortColumn === col.key" class="sort-indicator">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
@@ -108,15 +108,6 @@
 
               <td *ngFor="let col of columns" [hidden]="!col.visible">
                 <ng-container [ngSwitch]="col.key">
-                  <div *ngSwitchCase="'action'" class="action-buttons">
-                    <button class="btn-action btn-approve" (click)="approveApplication(item)" title="Approve">
-                      Approve
-                    </button>
-                    <button class="btn-action btn-reject" (click)="rejectApplication(item)" title="Reject">
-                      Reject
-                    </button>
-                  </div>
-
                   <span *ngSwitchCase="'status'" [className]="'status-badge ' + item.status.toLowerCase()">
                     {{ item.status }}
                   </span>

@@ -154,6 +154,7 @@
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
+              <th>View</th>
             </tr>
           </thead>
 
@@ -178,6 +179,11 @@
                   </span>
                 </ng-container>
               </td>
+              <td>
+                <button class="view-btn" (click)="openApplicationDetail(s)" title="View Details">
+                  👁 View
+                </button>
+              </td>
 
             </tr>
           </tbody>
@@ -189,8 +195,11 @@
       <!-- PAGINATION FOOTER -->
       <div class="table-pagination">
         <div class="pagination-info">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
-          of {{ filteredList.length }} entries
+          <ng-container *ngIf="filteredList.length > 0; else emptyPagination">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+            of {{ filteredList.length }} entries
+          </ng-container>
+          <ng-template #emptyPagination>No entries to display</ng-template>
         </div>
 
         <div class="pagination-controls">
@@ -202,7 +211,7 @@
             </button>
           </div>
 
-          <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+          <button [disabled]="currentPage >= totalPages" (click)="setPage(currentPage + 1)">Next</button>
         </div>
 
         <div class="page-size-selector">
@@ -212,6 +221,213 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- Application detail (Create Application Form fields) -->
+    <div class="dialog-backdrop application-detail-backdrop" *ngIf="detailRecord" (click)="closeApplicationDetail()">
+    </div>
+    <div class="application-detail-dialog" *ngIf="detailRecord" (click)="$event.stopPropagation()">
+      <div class="application-detail-header dialog-header">
+        <h3>Application details · {{ detailRecord.EmployeeName }} ({{ detailRecord.EmployeeCode }})</h3>
+        <button type="button" class="sapMBtnBase sapMBtn application-detail-close" (click)="closeApplicationDetail()"
+          title="Close">✕</button>
+      </div>
+      <div class="application-detail-body dialog-body">
+        <ng-container *ngIf="applicationDetail as d">
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Personal information</h4>
+            <dl class="application-detail-dl">
+              <dt>Person name</dt>
+              <dd>{{ displayDash(d.personalInfo.personName) }}</dd>
+              <dt>First name</dt>
+              <dd>{{ displayDash(d.personalInfo.firstName) }}</dd>
+              <dt>Middle name</dt>
+              <dd>{{ displayDash(d.personalInfo.middleName) }}</dd>
+              <dt>Last name</dt>
+              <dd>{{ displayDash(d.personalInfo.lastName) }}</dd>
+              <dt>Father / husband name</dt>
+              <dd>{{ displayDash(d.personalInfo.fatherOrHusbandName) }}</dd>
+              <dt>Gender</dt>
+              <dd>{{ displayDash(d.personalInfo.gender) }}</dd>
+              <dt>Marital status</dt>
+              <dd>{{ displayDash(d.personalInfo.maritalStatus) }}</dd>
+              <dt>Date of birth</dt>
+              <dd>{{ displayDash(d.personalInfo.dateOfBirth) }}</dd>
+              <dt>Nationality</dt>
+              <dd>{{ displayDash(d.personalInfo.nationality) }}</dd>
+              <dt>Religion</dt>
+              <dd>{{ displayDash(d.personalInfo.religion) }}</dd>
+              <dt>Blood group</dt>
+              <dd>{{ displayDash(d.personalInfo.bloodGroup) }}</dd>
+              <dt>National ID card no.</dt>
+              <dd>{{ displayDash(d.personalInfo.nationalIdCardNo) }}</dd>
+              <dt>Income tax no.</dt>
+              <dd>{{ displayDash(d.personalInfo.incomeTaxNo) }}</dd>
+              <dt>Contact number</dt>
+              <dd>{{ displayDash(d.personalInfo.contactNumber) }}</dd>
+              <dt>Emergency contact</dt>
+              <dd>{{ displayDash(d.personalInfo.emergencyContactNumber) }}</dd>
+              <dt>Street</dt>
+              <dd>{{ displayDash(d.personalInfo.street) }}</dd>
+              <dt>Street no.</dt>
+              <dd>{{ displayDash(d.personalInfo.streetNo) }}</dd>
+              <dt>Building / floor / room</dt>
+              <dd>{{ displayDash(d.personalInfo.buildingFloorRoom) }}</dd>
+              <dt>City</dt>
+              <dd>{{ displayDash(d.personalInfo.city) }}</dd>
+              <dt>State</dt>
+              <dd>{{ displayDash(d.personalInfo.state) }}</dd>
+              <dt>Country</dt>
+              <dd>{{ displayDash(d.personalInfo.country) }}</dd>
+              <dt>ZIP code</dt>
+              <dd>{{ displayDash(d.personalInfo.zipCode) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Education</h4>
+            <div class="application-detail-table-wrap" *ngIf="d.education.length">
+              <table class="application-detail-table">
+                <thead>
+                  <tr>
+                    <th>Institute</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Subject</th>
+                    <th>Qualification</th>
+                    <th>Awarded</th>
+                    <th>Marks / grades</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of d.education">
+                    <td>{{ displayDash(row.institute) }}</td>
+                    <td>{{ displayDash(row.fromDate) }}</td>
+                    <td>{{ displayDash(row.toDate) }}</td>
+                    <td>{{ displayDash(row.subject) }}</td>
+                    <td>{{ displayDash(row.qualification) }}</td>
+                    <td>{{ displayDash(row.awardedQualification) }}</td>
+                    <td>{{ displayDash(row.marksGrades) }}</td>
+                    <td>{{ displayDash(row.notes) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p *ngIf="!d.education.length" class="application-detail-empty">No education rows.</p>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Past experience</h4>
+            <div class="application-detail-table-wrap" *ngIf="d.pastExperience.length">
+              <table class="application-detail-table">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Position</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Duties</th>
+                    <th>Remarks</th>
+                    <th>Last salary</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of d.pastExperience">
+                    <td>{{ displayDash(row.company) }}</td>
+                    <td>{{ displayDash(row.position) }}</td>
+                    <td>{{ displayDash(row.fromDate) }}</td>
+                    <td>{{ displayDash(row.toDate) }}</td>
+                    <td>{{ displayDash(row.duties) }}</td>
+                    <td>{{ displayDash(row.remarks) }}</td>
+                    <td>{{ displayDash(row.lastSalary) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p *ngIf="!d.pastExperience.length" class="application-detail-empty">No past experience rows.</p>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Remuneration</h4>
+            <dl class="application-detail-dl">
+              <dt>Employee master</dt>
+              <dd>{{ displayDash(d.remuneration.employeeMaster) }}</dd>
+              <dt>Salary structure</dt>
+              <dd>{{ displayDash(d.remuneration.salaryStructure) }}</dd>
+              <dt>Attendance &amp; shift</dt>
+              <dd>{{ displayDash(d.remuneration.attendanceShiftManagement) }}</dd>
+              <dt>Leave management</dt>
+              <dd>{{ displayDash(d.remuneration.leaveManagement) }}</dd>
+              <dt>Loan &amp; advances</dt>
+              <dd>{{ displayDash(d.remuneration.loanAdvancesForm) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Login detail</h4>
+            <dl class="application-detail-dl">
+              <dt>Employee code</dt>
+              <dd>{{ displayDash(d.loginDetails.employeeCode) }}</dd>
+              <dt>Employee name</dt>
+              <dd>{{ displayDash(d.loginDetails.employeeName) }}</dd>
+              <dt>User ID</dt>
+              <dd>{{ displayDash(d.loginDetails.userId) }}</dd>
+              <dt>Password</dt>
+              <dd>{{ maskedPassword(d.loginDetails.password) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Attachments</h4>
+            <ul class="application-detail-attachments" *ngIf="d.attachments.length">
+              <li *ngFor="let a of d.attachments">
+                <strong>{{ a.type }}</strong>
+                <span> — {{ displayDash(a.fileName) }}</span>
+              </li>
+            </ul>
+            <p *ngIf="!d.attachments.length" class="application-detail-empty">No attachments listed.</p>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Requisition &amp; organization</h4>
+            <dl class="application-detail-dl">
+              <dt>Copy existing</dt>
+              <dd>{{ d.requisition.copyExisting ? 'Yes' : 'No' }}</dd>
+              <dt>Req. ID</dt>
+              <dd>{{ displayDash(d.requisition.reqId) }}</dd>
+              <dt>Internal job title</dt>
+              <dd>{{ displayDash(d.requisition.internalJobTitle) }}</dd>
+              <dt>Hiring manager</dt>
+              <dd>{{ displayDash(d.requisition.hiringManager) }}</dd>
+              <dt>Recruiter</dt>
+              <dd>{{ displayDash(d.requisition.recruiter) }}</dd>
+              <dt>Recruitment collaborator</dt>
+              <dd>{{ displayDash(d.requisition.recruitmentCollaborator) }}</dd>
+              <dt>Requisition administrator</dt>
+              <dd>{{ displayDash(d.requisition.requisitionAdministrator) }}</dd>
+              <dt>Recruitment coordinator</dt>
+              <dd>{{ displayDash(d.requisition.recruitmentCoordinator) }}</dd>
+              <dt>HR administrator</dt>
+              <dd>{{ displayDash(d.requisition.hrAdministrator) }}</dd>
+              <dt>Company</dt>
+              <dd>{{ displayDash(d.requisition.company) }}</dd>
+              <dt>Department</dt>
+              <dd>{{ displayDash(d.requisition.department) }}</dd>
+              <dt>Division</dt>
+              <dd>{{ displayDash(d.requisition.division) }}</dd>
+              <dt>Location</dt>
+              <dd>{{ displayDash(d.requisition.location) }}</dd>
+              <dt>Cost center</dt>
+              <dd>{{ displayDash(d.requisition.costCenter) }}</dd>
+            </dl>
+          </section>
+        </ng-container>
+
+        <p *ngIf="detailRecord && !applicationDetail" class="application-detail-empty">
+          No extended profile data for this application. Open an application created via Add New to see full details.
+        </p>
+      </div>
     </div>
 
   </div><!-- Close main content div -->

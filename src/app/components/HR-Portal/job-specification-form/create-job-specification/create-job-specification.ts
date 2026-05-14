@@ -14,9 +14,6 @@ import { AlertService } from '../../../../services/alert.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateJobSpecificationComponent {
-  // Navigation
-  activeTab = 'general';
-
   // Form Fields - General
   jobTitle = '';
   department = '';
@@ -44,10 +41,6 @@ export class CreateJobSpecificationComponent {
     private alertService: AlertService
   ) { }
 
-  setActiveTab(tab: string): void {
-    this.activeTab = tab;
-  }
-
   addQualification(): void {
     this.qualifications.push('');
   }
@@ -72,7 +65,6 @@ export class CreateJobSpecificationComponent {
     // Validation
     if (!this.jobTitle.trim() || !this.department.trim()) {
       this.alertService.validation('Please enter Job Title and Department at minimum.');
-      this.setActiveTab('general');
       return;
     }
 

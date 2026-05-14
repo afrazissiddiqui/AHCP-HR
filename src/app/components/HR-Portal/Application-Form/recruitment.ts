@@ -4,29 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { Router } from '@angular/router';
-import { ApplicationFormService } from '../../../services/application-form.service';
+import {
+  ApplicationFormDetail,
+  ApplicationFormRecord,
+  ApplicationFormService,
+} from '../../../services/application-form.service';
 
-interface SampleInspectionRecord {
-  EmployeeCode: number;
-  EmployeeName: string;
-  Department: string;
-  EmployeeNature: string;
-  Designation: string;
-  ReportingManager: string;
-  EmploymentType: string;
-  EmploymentCategory: string;
-  status: string;
-  selected?: boolean;
-}
+type ApplicationFormColumnKey = Exclude<keyof ApplicationFormRecord, 'detail' | 'selected'>;
+
 interface ColumnConfig {
-  key: keyof SampleInspectionRecord;
+  key: ApplicationFormColumnKey;
   label: string;
   visible: boolean;
-}
-
-interface DetailField {
-  key: keyof SampleInspectionRecord;
-  label: string;
 }
 
 
@@ -65,25 +54,25 @@ export class RecruitmentComponent {
   sidebarCollapsed = signal(false);
 
   columns: ColumnConfig[] = [
-    { key: "EmployeeCode", label: "Employee Code", visible: true },
-    { key: "EmployeeName", label: "Employee Name", visible: true },
-    { key: "Department", label: "Department", visible: true },
-    { key: "EmployeeNature", label: "Employee Nature", visible: true },
-    { key: "Designation", label: "Designation", visible: true },
-    { key: "ReportingManager", label: "Reporting Manager", visible: true },
-    { key: "EmploymentType", label: "Employment Type", visible: true },
-    { key: "EmploymentCategory", label: "Employment Category", visible: true },
-    { key: "status", label: "Status", visible: true },
+    { key: 'EmployeeCode', label: 'Employee Code', visible: true },
+    { key: 'EmployeeName', label: 'Employee Name', visible: true },
+    { key: 'Department', label: 'Department', visible: true },
+    { key: 'EmployeeNature', label: 'Employee Nature', visible: true },
+    { key: 'Designation', label: 'Designation', visible: true },
+    { key: 'ReportingManager', label: 'Reporting Manager', visible: true },
+    { key: 'EmploymentType', label: 'Employment Type', visible: true },
+    { key: 'EmploymentCategory', label: 'Employment Category', visible: true },
+    { key: 'status', label: 'Status', visible: true },
 
   ];
 
-  get sirList(): SampleInspectionRecord[] {
+  get sirList(): ApplicationFormRecord[] {
     return this.applicationFormService.getApplicationRecords();
   }
 
   // Searching, Sorting, Pagination State
   searchText: string = '';
-  sortColumn: keyof SampleInspectionRecord = 'EmployeeCode';
+  sortColumn: ApplicationFormColumnKey = 'EmployeeCode';
   sortDirection: 'asc' | 'desc' = 'asc';
   currentPage: number = 1;
   pageSize: number = 10;
@@ -92,21 +81,7 @@ export class RecruitmentComponent {
   showColumnPanel = false;
   showDialog = false;
   activeTab: 'filter' = 'filter';
-  detailRecord: SampleInspectionRecord | null = null;
-
-  detailFields: DetailField[] = [
-    { key: 'EmployeeCode', label: 'Employee Code' },
-    { key: 'EmployeeName', label: 'Employee Name' },
-    { key: 'Department', label: 'Department' },
-    { key: 'EmployeeNature', label: 'Employee Nature' },
-    { key: 'Designation', label: 'Designation' },
-    { key: 'ReportingManager', label: 'Reporting Manager' },
-    { key: 'EmploymentType', label: 'Employment Type' },
-    { key: 'EmploymentCategory', label: 'Employment Category' },
-    { key: 'status', label: 'Status' }
-  ];
-
-  filterFields = ['Name', 'Range', 'First Ascent', 'Countries', 'Parent Mountain'];
+  detailRecord: ApplicationFormRecord | null = null;
 
   toggleColumnPanel() {
     this.showColumnPanel = !this.showColumnPanel;
@@ -134,13 +109,14 @@ export class RecruitmentComponent {
   }
 
   // Getters for searching, sorting, and pagination
-  get filteredList(): SampleInspectionRecord[] {
+  get filteredList(): ApplicationFormRecord[] {
     let list = [...this.sirList];
 
     // Search
     if (this.searchText) {
       const search = this.searchText.toLowerCase();
       list = list.filter(item =>
+        String(item.EmployeeCode).toLowerCase().includes(search) ||
         item.EmployeeName.toLowerCase().includes(search) ||
         item.Department.toLowerCase().includes(search) ||
         item.EmployeeNature.toLowerCase().includes(search) ||
@@ -168,7 +144,7 @@ export class RecruitmentComponent {
     return list;
   }
 
-  get paginatedList(): SampleInspectionRecord[] {
+  get paginatedList(): ApplicationFormRecord[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredList.slice(start, start + this.pageSize);
   }
@@ -186,10 +162,7 @@ export class RecruitmentComponent {
     this.currentPage = 1; // Reset to first page on search
   }
 
-  sortData(column: keyof SampleInspectionRecord) {
-    if (column === 'selected') {
-      return;
-    }
+  sortData(column: ApplicationFormColumnKey) {
 
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -209,7 +182,7 @@ export class RecruitmentComponent {
     this.currentPage = 1;
   }
 
-  openApplicationDetail(record: SampleInspectionRecord) {
+  openApplicationDetail(record: ApplicationFormRecord) {
     this.detailRecord = record;
   }
 
@@ -217,9 +190,23 @@ export class RecruitmentComponent {
     this.detailRecord = null;
   }
 
-  getDetailValue(record: SampleInspectionRecord, key: keyof SampleInspectionRecord): string | number | boolean {
-    const value = record[key];
-    return value === undefined || value === null ? '-' : value;
+  get applicationDetail(): ApplicationFormDetail | null {
+    return this.detailRecord?.detail ?? null;
+  }
+
+  displayDash(value: string | number | undefined | null): string {
+    if (value === undefined || value === null) {
+      return '—';
+    }
+    const s = String(value).trim();
+    return s === '' ? '—' : s;
+  }
+
+  maskedPassword(password: string | undefined): string {
+    if (!password || !String(password).trim()) {
+      return '—';
+    }
+    return '••••••••';
   }
 
 

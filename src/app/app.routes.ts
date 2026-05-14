@@ -2,9 +2,9 @@ import { Routes } from '@angular/router';
 import { dashboardComponent } from './components/dashboard/dashboard';
 import { RecruitmentComponent } from './components/HR-Portal/Application-Form/recruitment';
 import { CreateJobRequisitionComponent } from './components/HR-Portal/Application-Form/create-job-requisition/create-job-requisition';
-import { LeaveManagmentComponent } from './components/HR-Portal/leave-managment/leave-managment';
 import { JobSpecificationFormComponent } from './components/HR-Portal/job-specification-form/job-specification-form';
 import { CreateJobSpecificationComponent } from './components/HR-Portal/job-specification-form/create-job-specification/create-job-specification';
+import { gatePassRoutes } from './components/gate-pass/gate-pass.routes';
 import { EmployeeActionComponent } from './components/HR-Portal/employee-action/employee-action';
 import { ProbationEvaluationFormComponent } from './components/HR-Portal/employee-action/probation-evaluation-form/probation-evaluation-form';
 import { AddProbationEvaluationComponent } from './components/HR-Portal/employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation';
@@ -56,10 +56,7 @@ export const routes: Routes = [
     path: 'job-specification-form/create',
     component: CreateJobSpecificationComponent
   },
-  {
-    path: 'leave-managment/create',
-    component: LeaveManagmentComponent
-  },
+  ...gatePassRoutes,
   {
     path: 'employee-action',
     component: EmployeeActionComponent

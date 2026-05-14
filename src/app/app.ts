@@ -38,7 +38,8 @@ export class App {
     { label: 'Recruitment', value: 'recruitment', icon: 'recruiting', route: '/recruitment' },
     { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
     { label: 'Payroll Master', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
-    { label: 'Leave managment', value: 'leave-managment/create', icon: 'expense-report', route: '/leave-managment/create' },
+    { label: 'IGP', value: 'gate-pass/igp', icon: 'expense-report', route: '/gate-pass/igp' },
+    { label: 'OGP', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass/ogp' },
     { label: 'Termination', value: 'Termination', icon: 'feedback', },
     { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance', },
     { label: 'Development', value: 'development', icon: 'learning-assistant', },
@@ -64,8 +65,13 @@ export class App {
             : routeKey === 'recruitment/create' ? 'Recruiting'
               : routeKey === 'recruitment' ? 'Recruiting'
                 : routeKey === 'employee-action/approval-authority-setup' ? 'Approval Setup'
+                  : routeKey.startsWith('employee-action/leave-application-form') ? 'Leave managment'
                   : routeKey.startsWith('employee-action') ? 'Employee Action'
                     : routeKey.startsWith('payroll-master') ? 'Payroll Master'
+                      : routeKey.startsWith('gate-pass/ogp') ? 'OGP'
+                      : routeKey.startsWith('gate-pass/igp') ? 'IGP'
+                      : routeKey.startsWith('gate-pass') ? 'Gate pass'
+                      : routeKey.startsWith('job-specification-form') ? 'Job Specification'
                       : routeKey === 'dashboard' ? 'Home'
                         : 'Home';
 

@@ -9,18 +9,8 @@
   </div>
 
   <div class="cjs-card">
-    <div class="cjs-tabs">
-      <button type="button" class="cjs-tab-btn" [class.active]="activeTab === 'general'"
-        (click)="setActiveTab('general')">General Details</button>
-      <button type="button" class="cjs-tab-btn" [class.active]="activeTab === 'remuneration'"
-        (click)="setActiveTab('remuneration')">Remuneration</button>
-      <button type="button" class="cjs-tab-btn" [class.active]="activeTab === 'qualification'"
-        (click)="setActiveTab('qualification')">Qualification</button>
-    </div>
-
     <div class="cjs-form-container">
-      <!-- General Tab Content -->
-      <div *ngIf="activeTab === 'general'">
+      <section class="cjs-section-block">
         <div class="cjs-section-title">Job Specification Details</div>
 
         <div class="cjs-grid">
@@ -107,10 +97,9 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Remuneration Tab Content -->
-      <div *ngIf="activeTab === 'remuneration'">
+      <section class="cjs-section-block">
         <div class="cjs-section-title">Remuneration Details</div>
         <div class="cjs-grid">
           <div class="cjs-col">
@@ -134,10 +123,9 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Qualification Tab Content -->
-      <div *ngIf="activeTab === 'qualification'">
+      <section class="cjs-section-block">
         <div class="cjs-section-title">Qualification Requirements</div>
         <div class="cjs-qualification-list">
           <div class="cjs-row" *ngFor="let qual of qualifications; let i = index; trackBy: trackByIndex">
@@ -151,7 +139,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
 
     <div class="cjs-actions-footer">

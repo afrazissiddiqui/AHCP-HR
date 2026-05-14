@@ -1,0 +1,206 @@
+<div class="cjs-page igp-create-page">
+  <div class="cjs-header">
+    <div class="cjs-header-left">
+      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
+        <span class="cjs-back-icon">❮</span>
+      </button>
+      <h1>Add OGP</h1>
+    </div>
+  </div>
+
+  <div class="cjs-card">
+    <div class="cjs-form-container">
+      <section class="cjs-section-block">
+        <div class="cjs-section-title">Outward gate pass</div>
+
+        <div class="igp-field-row cols-2">
+          <div class="cjs-row">
+            <label>Type</label>
+            <select [(ngModel)]="type">
+              <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="cjs-row">
+            <label>Date</label>
+            <input type="date" [(ngModel)]="documentDate" />
+          </div>
+        </div>
+
+        <div class="igp-field-row cols-3">
+          <div class="cjs-row">
+            <label>Business partner code</label>
+            <input type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" />
+          </div>
+          <div class="cjs-row">
+            <label>Base doc no.</label>
+            <input type="text" [(ngModel)]="baseDocNo" placeholder="Base document" />
+          </div>
+          <div class="cjs-row">
+            <label>OGP no.</label>
+            <input type="text" [(ngModel)]="referenceNo" placeholder="Auto if left blank" />
+          </div>
+        </div>
+
+        <div class="igp-field-row igp-partner-row">
+          <div class="cjs-row">
+            <label>Business partner name</label>
+            <input type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" />
+          </div>
+          <div class="cjs-row">
+            <label>Vehicle no.</label>
+            <input type="text" [(ngModel)]="vehicleNo" />
+          </div>
+        </div>
+
+        <div class="igp-field-row cols-2">
+          <div class="cjs-row">
+            <label>From unit</label>
+            <input type="text" [(ngModel)]="fromUnit" />
+          </div>
+          <div class="cjs-row">
+            <label>Kanta slip</label>
+            <input type="text" [(ngModel)]="kantaSlip" />
+          </div>
+        </div>
+
+        <div class="igp-field-row cols-2">
+          <div class="cjs-row">
+            <label>Department</label>
+            <select [(ngModel)]="department">
+              <option value="">No selection</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Finance">Finance</option>
+              <option value="Human Resources">Human resources</option>
+              <option value="Operations">Operations</option>
+              <option value="Procurement">Procurement</option>
+              <option value="Logistics">Logistics</option>
+              <option value="Sales">Sales</option>
+            </select>
+          </div>
+          <div class="cjs-row">
+            <label>Bilty no.</label>
+            <input type="text" [(ngModel)]="biltyNo" />
+          </div>
+        </div>
+
+        <div class="igp-field-row cols-2">
+          <div class="cjs-row">
+            <label>Store</label>
+            <input type="text" [(ngModel)]="store" />
+          </div>
+          <div class="cjs-row">
+            <label>Freight</label>
+            <input type="text" [(ngModel)]="freight" />
+          </div>
+        </div>
+
+        <div class="igp-field-row cols-3">
+          <div class="cjs-row">
+            <label>Weight machine (kanta) name</label>
+            <input type="text" [(ngModel)]="weightMachineName" />
+          </div>
+          <div class="cjs-row">
+            <label>Weight</label>
+            <input type="text" [(ngModel)]="weight" placeholder="e.g. 12.5" />
+          </div>
+          <div class="cjs-row">
+            <label>Location</label>
+            <select [(ngModel)]="location">
+              <option value="">No selection</option>
+              <option value="FSD">FSD</option>
+              <option value="PSH">PSH</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="igp-field-row cols-1">
+          <div class="cjs-row">
+            <label>Employee</label>
+            <input type="text" [(ngModel)]="employee" placeholder="Employee name or code" />
+          </div>
+        </div>
+
+        <div class="cjs-row igp-status-row">
+          <label>Status</label>
+          <select [(ngModel)]="status">
+            <option value="Draft">Draft</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="cjs-section-block igp-lines-section">
+        <div class="igp-lines-heading">
+          <div class="cjs-section-title">Line items</div>
+          <button type="button" class="igp-add-line-btn" (click)="addLine()">
+            <span class="igp-add-line-icon" aria-hidden="true">+</span>
+            <span class="igp-add-line-label">Add line</span>
+          </button>
+        </div>
+        <div class="igp-lines-scroll">
+          <table class="igp-lines-table">
+            <thead>
+              <tr>
+                <th class="igp-col-sr">Sr.#</th>
+                <th>Item code</th>
+                <th>Item name</th>
+                <th>Category</th>
+                <th>Packing condition</th>
+                <th>Product quality</th>
+                <th>UOM</th>
+                <th class="igp-col-qty">Qty</th>
+                <th>Info</th>
+                <th>Remarks</th>
+                <th class="igp-col-actions" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="lines.length === 0" class="igp-lines-empty">
+                <td colspan="11">No line items yet. Click “Add line” to add rows.</td>
+              </tr>
+              <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex">
+                <td class="igp-col-sr">{{ i + 1 }}</td>
+                <td><input type="text" [(ngModel)]="line.itemCode" /></td>
+                <td><input type="text" [(ngModel)]="line.itemName" /></td>
+                <td><input type="text" [(ngModel)]="line.category" /></td>
+                <td><input type="text" [(ngModel)]="line.packingCondition" /></td>
+                <td><input type="text" [(ngModel)]="line.productQuality" /></td>
+                <td><input type="text" [(ngModel)]="line.uom" /></td>
+                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qty" /></td>
+                <td><input type="text" [(ngModel)]="line.info" /></td>
+                <td><input type="text" [(ngModel)]="line.remarks" /></td>
+                <td class="igp-col-actions">
+                  <button type="button" class="igp-remove-line" (click)="removeLine(i)" title="Remove line">Remove</button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="igp-total-row">
+                <td colspan="7" class="igp-total-label">Total</td>
+                <td class="igp-col-qty"><strong>{{ totalQty }}</strong></td>
+                <td colspan="3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section class="cjs-section-block">
+        <div class="cjs-row igp-remarks-block">
+          <label>Remarks</label>
+          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks"></textarea>
+        </div>
+      </section>
+
+      <div class="cjs-actions-footer">
+        <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
+        <button type="button" class="cjs-submit-btn" (click)="submitForm()">
+          <span class="cjs-submit-icon">✓</span> Save OGP
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

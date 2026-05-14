@@ -27,12 +27,81 @@
       <div class="sapMBarRight sapMBarContainer"></div>
     </div>
 
-    <div class="table-wrapper" style="padding: 16px;">
-      <div class="sapMTitle sapMTitleStyleH5" role="heading" aria-level="5">
-        Payroll Master Sub Modules
+    <div id="table-toolbar"
+      class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
+      <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
+        <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
+          Payroll Master ({{ payrollMasterList.length }}) · Filtered ({{ filteredPayrollRows.length }})
+        </div>
       </div>
-      <div style="margin-top: 12px; color: #475569;">
-        Use the sidebar to open Attendance Managment, Tax Managment, Payroll Processing, and Payroll Setup.
+
+      <div class="sapMTBSpacer"></div>
+
+      <div style="display: flex; align-items: center; gap: 8px; margin-right: 8px;">
+        <label for="payroll-department-filter" class="sapMTitle sapMTitleStyleH6" style="white-space: nowrap;">
+          Department
+        </label>
+        <select id="payroll-department-filter" [(ngModel)]="selectedDepartment"
+          style="min-width: 160px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
+          <option value="">All departments</option>
+          <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+        </select>
+      </div>
+
+      <div class="sapMSearchField">
+        <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
+        <span class="sapUiIcon search-icon">🔍</span>
+      </div>
+
+      <div class="sapMTBActions">
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Filter">⚙</button>
+      </div>
+
+      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+      <div class="view-settings-dialog" *ngIf="showDialog">
+        <div class="dialog-header">
+          <h3>View Settings</h3>
+        </div>
+        <div class="dialog-tabs">
+          <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+        </div>
+        <div class="dialog-body">
+          <div *ngIf="activeTab === 'filter'">
+            <div *ngFor="let col of columns">
+              <label>
+                <input type="checkbox" [(ngModel)]="col.visible" />
+                {{ col.label }}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper" style="padding: 16px;">
+      <div style="overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 2800px;">
+          <thead style="background-color: #f8fafc;">
+            <tr>
+              <th *ngFor="let col of visibleColumns" style="border: 1px solid #e2e8f0; padding: 10px; text-align: left;">
+                {{ col.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="filteredPayrollRows.length === 0">
+              <td [attr.colspan]="visibleColumns.length || 1"
+                style="border: 1px solid #e2e8f0; padding: 14px; text-align: center; color: #64748b;">
+                No payroll records to display.
+              </td>
+            </tr>
+            <tr *ngFor="let row of filteredPayrollRows">
+              <td *ngFor="let col of visibleColumns" style="border: 1px solid #e2e8f0; padding: 10px; text-align: left;">
+                {{ getCellValue(row, col.key) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
