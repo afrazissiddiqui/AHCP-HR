@@ -25,6 +25,8 @@ import { TaxManagmentComponent } from './components/HR-Portal/payroll-master/tax
 import { PayrollProcessingComponent } from './components/HR-Portal/payroll-master/payroll-processing/payroll-processing';
 import { PayrollSetupComponent } from './components/HR-Portal/payroll-master/payroll-setup/payroll-setup';
 import { FormsHubComponent } from './components/forms-hub/forms-hub';
+import { loginRoutes } from './components/login/login.routes';
+import { EditProfileComponent } from './components/profile/edit-profile';
 
 export const routes: Routes = [
   {
@@ -35,6 +37,11 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: dashboardComponent
+  },
+  ...loginRoutes,
+  {
+    path: 'profile',
+    component: EditProfileComponent,
   },
   {
     path: 'forms-hub',

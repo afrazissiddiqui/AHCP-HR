@@ -1,4 +1,4 @@
-
+@if (showMainChrome()) {
 <div class="header-wrapper" #headerWrapper>
   <ui5-shellbar
     [attr.primary-title]="shellbarTitle()"
@@ -17,7 +17,15 @@
     <img slot="logo" src="assets/logo.png" (click)="onLogoClick($event)" />
 
     <!-- Profile -->
-    <ui5-avatar slot="profile" initials="UI"></ui5-avatar>
+    <span
+      slot="profile"
+      class="profile-trigger"
+      data-profile-btn
+      (click)="onProfileTriggerClick($event)"
+      title="Account"
+    >
+      <ui5-avatar initials="UI"></ui5-avatar>
+    </span>
 
     <!-- Search -->
     <ui5-input
@@ -25,6 +33,19 @@
       placeholder="Search"
     ></ui5-input>
   </ui5-shellbar>
+
+  @if (profileDropdownOpen()) {
+    <div class="profile-dropdown-menu" (click)="stopEvent($event)" role="menu">
+      <button type="button" class="profile-dropdown-item" (click)="onEditProfile($event)" role="menuitem">
+        <ui5-icon class="profile-dropdown-icon" name="employee"></ui5-icon>
+        <span>Edit profile</span>
+      </button>
+      <button type="button" class="profile-dropdown-item profile-dropdown-item--logout" (click)="onLogout($event)" role="menuitem">
+        <ui5-icon class="profile-dropdown-icon" name="log"></ui5-icon>
+        <span>Logout</span>
+      </button>
+    </div>
+  }
 
   <!-- HR Portal Dropdown Menu -->
   @if (hrDropdownOpen()) {
@@ -48,7 +69,8 @@
     </div>
   }
 </div>
+}
 
-<main class="app-content">
+<main class="app-content" [class.app-content--bare]="!showMainChrome()">
   <router-outlet />
 </main>

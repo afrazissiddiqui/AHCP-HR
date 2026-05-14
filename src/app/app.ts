@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { Router } from '@angular/router';
 import { NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AuthService } from './services/auth.service';
 
 type HrMenuOption = {
   label: string;
@@ -22,9 +23,12 @@ type HrMenuOption = {
 export class App {
   protected readonly title = signal('SAPQC');
   protected readonly hrDropdownOpen = signal(false);
+  protected readonly profileDropdownOpen = signal(false);
   protected readonly selectedHeaderTitle = signal('Home');
   protected readonly hoveredHeaderTitle = signal<string | null>(null);
   protected readonly selectedHrOption = signal<string>('dashboard');
+  /** Hide HR shellbar on full-page routes (e.g. login). */
+  protected readonly showMainChrome = signal(true);
 
   @ViewChild('headerWrapper', { read: ElementRef })
   private headerWrapperRef?: ElementRef<HTMLElement>;
@@ -49,9 +53,16 @@ export class App {
     { label: 'Org Chart', value: 'org-chart', icon: 'org-chart', },
     { label: 'Performance', value: 'performance', icon: 'performance', },
     { label: 'Succession', value: 'succession', icon: 'family-care', },
+    { label: 'Sign Out', value: 'login', icon: 'key', route: '/login' },
   ];
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private readonly authService: AuthService,
+  ) {
+    const initialKey = (this.router.url.split('?')[0] ?? '').replace(/^\//, '');
+    this.showMainChrome.set(initialKey !== 'login');
+
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
@@ -62,6 +73,8 @@ export class App {
 
         const mappedTitle =
           routeKey === 'forms-hub' ? 'All Forms'
+            : routeKey === 'login' ? 'Sign in'
+            : routeKey === 'profile' ? 'Edit profile'
             : routeKey === 'recruitment/create' ? 'Recruiting'
               : routeKey === 'recruitment' ? 'Recruiting'
                 : routeKey === 'employee-action/approval-authority-setup' ? 'Approval Setup'
@@ -77,11 +90,35 @@ export class App {
 
         this.selectedHeaderTitle.set(mappedTitle);
         this.selectedHrOption.set(routeKey || 'dashboard');
+        this.showMainChrome.set(routeKey !== 'login');
+        this.profileDropdownOpen.set(false);
       });
   }
 
   toggleHrDropdown(): void {
+    this.profileDropdownOpen.set(false);
     this.hrDropdownOpen.update(state => !state);
+  }
+
+  onProfileTriggerClick(event: MouseEvent): void {
+    event.stopPropagation();
+    this.hrDropdownOpen.set(false);
+    this.clearPreviewHrOption();
+    this.profileDropdownOpen.update(v => !v);
+  }
+
+  onEditProfile(event: Event): void {
+    event.stopPropagation();
+    this.profileDropdownOpen.set(false);
+    void this.router.navigateByUrl('/profile');
+  }
+
+  onLogout(event: Event): void {
+    event.stopPropagation();
+    this.profileDropdownOpen.set(false);
+    this.hrDropdownOpen.set(false);
+    this.clearPreviewHrOption();
+    this.authService.logout();
   }
 
   onShellbarClick(event: Event): void {
@@ -105,6 +142,7 @@ export class App {
   onNotificationsClick(event: Event): void {
     event.stopPropagation();
     this.hrDropdownOpen.set(false);
+    this.profileDropdownOpen.set(false);
     this.clearPreviewHrOption();
     void this.router.navigate(['/forms-hub']);
   }
@@ -112,6 +150,7 @@ export class App {
   onProductSwitchClick(event: Event): void {
     event.stopPropagation();
     this.hrDropdownOpen.set(false);
+    this.profileDropdownOpen.set(false);
     this.clearPreviewHrOption();
     void this.router.navigate(['/employee-action/approval-authority-setup']);
   }
@@ -131,6 +170,7 @@ export class App {
   onLogoClick(event: MouseEvent): void {
     event.stopPropagation();
     this.hrDropdownOpen.set(false);
+    this.profileDropdownOpen.set(false);
     this.clearPreviewHrOption();
     this.goHome();
   }
@@ -138,6 +178,7 @@ export class App {
   selectHrOption(option: HrMenuOption, event?: Event): void {
     event?.stopPropagation();
     this.hrDropdownOpen.set(false);
+    this.profileDropdownOpen.set(false);
     this.selectedHrOption.set(option.value);
     this.selectedHeaderTitle.set(option.label);
 
@@ -152,13 +193,26 @@ export class App {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.hrDropdownOpen()) return;
+    if (!this.hrDropdownOpen() && !this.profileDropdownOpen()) {
+      return;
+    }
     const wrapper = this.headerWrapperRef?.nativeElement;
-    const target = event.target as Node | null;
-    if (!wrapper || !target) return;
+    const target = event.target as HTMLElement | null;
+    if (!wrapper || !target) {
+      return;
+    }
     if (!wrapper.contains(target)) {
       this.hrDropdownOpen.set(false);
+      this.profileDropdownOpen.set(false);
       this.clearPreviewHrOption();
+      return;
+    }
+    if (this.profileDropdownOpen()) {
+      const inProfile =
+        target.closest('[data-profile-btn]') || target.closest('.profile-dropdown-menu');
+      if (!inProfile) {
+        this.profileDropdownOpen.set(false);
+      }
     }
   }
 }
