@@ -1,9 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
-import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
+import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { IgpService, IgpRecord } from './igp.service';
 
 type IgpSortableKey = Exclude<keyof IgpRecord, 'lines' | 'selected'>;
@@ -17,30 +17,18 @@ interface ColumnConfig {
 @Component({
   selector: 'app-igp',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective],
   templateUrl: './igp.html',
   styleUrl: './igp.css',
 })
 export class IgpComponent {
-  constructor(private readonly router: Router, private readonly igpService: IgpService) {}
+  constructor(
+    private readonly router: Router,
+    private readonly igpService: IgpService,
+    private readonly layout: GatePassLayoutService,
+  ) {}
 
   Math = Math;
-
-  sidebarItems: SidebarItem[] = [{ id: 'igp-registry', label: 'IGP registry', route: '/gate-pass/igp' }];
-
-  sidebarSections: SidebarSection[] = [
-    {
-      id: 'gate-pass-actions',
-      title: 'Gate pass',
-      items: [
-        { id: 'igp-list', label: 'IGP (inward)', route: '/gate-pass/igp' },
-        { id: 'ogp-list', label: 'OGP (outward)', route: '/gate-pass/ogp' },
-      ],
-    },
-  ];
-
-  activeSidebarItemId = 'igp-list';
-  sidebarCollapsed = signal(false);
 
   columns: ColumnConfig[] = [
     { key: 'Id', label: 'ID', visible: true },
@@ -186,11 +174,7 @@ export class IgpComponent {
     void this.router.navigateByUrl('/gate-pass/igp/create');
   }
 
-  onFolderSelected(folder: string): void {
-    this.activeSidebarItemId = folder;
-  }
-
   toggleSidebar(): void {
-    this.sidebarCollapsed.update(s => !s);
+    this.layout.toggleSidebar();
   }
 }

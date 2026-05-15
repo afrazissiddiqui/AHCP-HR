@@ -1,9 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
-import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
+import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { OgpRecord, OgpService } from './ogp.service';
 
 type OgpSortableKey = Exclude<keyof OgpRecord, 'lines' | 'selected'>;
@@ -17,30 +17,18 @@ interface ColumnConfig {
 @Component({
   selector: 'app-ogp',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective],
   templateUrl: './ogp.html',
   styleUrl: '../igp/igp.css',
 })
 export class OgpComponent {
-  constructor(private readonly router: Router, private readonly ogpService: OgpService) {}
+  constructor(
+    private readonly router: Router,
+    private readonly ogpService: OgpService,
+    private readonly layout: GatePassLayoutService,
+  ) {}
 
   Math = Math;
-
-  sidebarItems: SidebarItem[] = [{ id: 'ogp-registry', label: 'OGP registry', route: '/gate-pass/ogp' }];
-
-  sidebarSections: SidebarSection[] = [
-    {
-      id: 'gate-pass-actions',
-      title: 'Gate pass',
-      items: [
-        { id: 'igp-list', label: 'IGP (inward)', route: '/gate-pass/igp' },
-        { id: 'ogp-list', label: 'OGP (outward)', route: '/gate-pass/ogp' },
-      ],
-    },
-  ];
-
-  activeSidebarItemId = 'ogp-list';
-  sidebarCollapsed = signal(false);
 
   columns: ColumnConfig[] = [
     { key: 'Id', label: 'ID', visible: true },
@@ -186,11 +174,7 @@ export class OgpComponent {
     void this.router.navigateByUrl('/gate-pass/ogp/create');
   }
 
-  onFolderSelected(folder: string): void {
-    this.activeSidebarItemId = folder;
-  }
-
   toggleSidebar(): void {
-    this.sidebarCollapsed.update(s => !s);
+    this.layout.toggleSidebar();
   }
 }

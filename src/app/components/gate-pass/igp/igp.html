@@ -1,16 +1,4 @@
-<div style="display: flex; height: 100vh;">
-  <app-sidebar
-    [title]="'Forms'"
-    [items]="sidebarItems"
-    [sections]="sidebarSections"
-    [isCollapsed]="sidebarCollapsed()"
-    [activeItemId]="activeSidebarItemId"
-    (folderSelected)="onFolderSelected($event)"
-    (collapsedChange)="sidebarCollapsed.set($event)"
-  ></app-sidebar>
-
-  <div style="flex: 1; overflow-y: auto;">
-    <div
+<div
       id="sdk---sample--header"
       class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
       role="toolbar"
@@ -227,5 +215,3 @@
         </div>
       </div>
     </div>
-  </div>
-</div>

@@ -1,0 +1,16 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.gate-pass-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.gate-pass-content {
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+}

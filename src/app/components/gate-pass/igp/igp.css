@@ -21,8 +21,7 @@ app-root {
 /* All parent wrappers */
 :host {
   display: block;
-  height: 100vh;
-  overflow: hidden !important;
+  min-height: 0;
 }
 
 * {
