@@ -207,10 +207,21 @@
 
 .cjs-actions-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   padding: 24px 16px;
   border-top: 1px solid #eee;
   gap: 12px;
+  background: #fafbfc;
+}
+
+.cjs-actions-footer .btn-secondary {
+  order: 1;
+}
+
+.cjs-actions-footer .cjs-submit-btn {
+  order: 2;
 }
 
 .cjs-submit-btn {

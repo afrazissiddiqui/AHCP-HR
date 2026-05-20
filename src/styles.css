@@ -1,6 +1,73 @@
 :root {
   --app-font-family: "72", Arial, sans-serif;
   --app-page-title-size: 1.5rem;
+
+  --btn-primary: #0052cc;
+  --btn-primary-hover: #0043a3;
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-border: #c5cdd6;
+  --btn-secondary-color: #32363a;
+  --btn-secondary-hover-bg: #f5f7fa;
+  --btn-secondary-hover-border: #8c9bab;
+  --btn-secondary-active-bg: #eef1f4;
+}
+
+/* Cancel / close — shared across form footers and modals */
+.btn-secondary,
+.cjr-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 24px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--btn-secondary-color);
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btn-secondary:hover,
+.cjr-cancel-btn:hover {
+  background: var(--btn-secondary-hover-bg);
+  border-color: var(--btn-secondary-hover-border);
+  color: #1a1d21;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.btn-secondary:active,
+.cjr-cancel-btn:active {
+  background: var(--btn-secondary-active-bg);
+  border-color: var(--btn-secondary-hover-border);
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+.btn-secondary:focus-visible,
+.cjr-cancel-btn:focus-visible {
+  outline: none;
+  border-color: var(--btn-primary);
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.18);
+}
+
+.btn-secondary:disabled,
+.cjr-cancel-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 html,

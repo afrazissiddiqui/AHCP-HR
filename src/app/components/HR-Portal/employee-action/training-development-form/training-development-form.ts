@@ -116,6 +116,8 @@ export class TrainingDevelopmentFormComponent {
   trainingList: TrainingDevelopmentRecord[] = [];
   showDialog = false;
   activeTab: 'filter' = 'filter';
+  showViewDialog = false;
+  selectedRecord: TrainingDevelopmentRecord | null = null;
 
   get filteredList(): TrainingDevelopmentRecord[] {
     let list = [...this.trainingList];
@@ -201,6 +203,16 @@ export class TrainingDevelopmentFormComponent {
 
   closeDialog(): void {
     this.showDialog = false;
+  }
+
+  viewRecord(record: TrainingDevelopmentRecord): void {
+    this.selectedRecord = record;
+    this.showViewDialog = true;
+  }
+
+  closeViewDialog(): void {
+    this.showViewDialog = false;
+    this.selectedRecord = null;
   }
 
   onFolderSelected(folderId: string): void {

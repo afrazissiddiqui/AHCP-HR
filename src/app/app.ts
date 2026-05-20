@@ -82,6 +82,7 @@ export class App {
                   : routeKey.startsWith('employee-action') ? 'Employee Action'
                     : routeKey.startsWith('payroll-master') ? 'Payroll Master'
                       : routeKey.startsWith('gate-pass/ogp') ? 'OGP'
+                      : routeKey.startsWith('gate-pass/agp') ? 'AGP'
                       : routeKey.startsWith('gate-pass/igp') ? 'IGP'
                       : routeKey.startsWith('gate-pass') ? 'Gate pass'
                       : routeKey.startsWith('job-specification-form') ? 'Job Specification'
@@ -144,7 +145,7 @@ export class App {
     this.hrDropdownOpen.set(false);
     this.profileDropdownOpen.set(false);
     this.clearPreviewHrOption();
-    void this.router.navigate(['/forms-hub']);
+    void this.router.navigate(['/employee-action/approval-authority-setup']);
   }
 
   onProductSwitchClick(event: Event): void {
@@ -152,7 +153,7 @@ export class App {
     this.hrDropdownOpen.set(false);
     this.profileDropdownOpen.set(false);
     this.clearPreviewHrOption();
-    void this.router.navigate(['/employee-action/approval-authority-setup']);
+    void this.router.navigate(['/forms-hub']);
   }
 
   previewHrOption(label: string): void {

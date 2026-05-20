@@ -1,16 +1,18 @@
 <div class="gate-pass-layout">
-  <app-sidebar
-    [title]="'Gate pass'"
-    [items]="sidebarItems"
-    [sections]="sidebarSections"
-    [showManageButton]="false"
-    [isCollapsed]="layout.sidebarCollapsed()"
-    [activeItemId]="activeSidebarItemId()"
-    (folderSelected)="onFolderSelected($event)"
-    (collapsedChange)="layout.sidebarCollapsed.set($event)"
-  ></app-sidebar>
+  @if (showSidebar()) {
+    <app-sidebar
+      [title]="'Gate pass'"
+      [items]="sidebarItems"
+      [sections]="sidebarSections"
+      [showManageButton]="false"
+      [isCollapsed]="layout.sidebarCollapsed()"
+      [activeItemId]="activeSidebarItemId()"
+      (folderSelected)="onFolderSelected($event)"
+      (collapsedChange)="layout.sidebarCollapsed.set($event)"
+    ></app-sidebar>
+  }
 
-  <div class="gate-pass-content">
+  <div class="gate-pass-content" [class.gate-pass-content--full]="!showSidebar()">
     <router-outlet />
   </div>
 </div>

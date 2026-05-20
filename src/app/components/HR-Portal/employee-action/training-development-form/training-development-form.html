@@ -91,6 +91,7 @@
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -101,6 +102,9 @@
               </td>
               <td *ngFor="let col of columns" [hidden]="!col.visible">
                 {{ item[col.key] }}
+              </td>
+              <td>
+                <button type="button" class="view-btn" (click)="viewRecord(item)" title="View Details">👁 View</button>
               </td>
             </tr>
           </tbody>
@@ -130,5 +134,33 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
+<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+  <div class="js-modal-header">
+    <h2>Training &amp; Development — {{ selectedRecord.EmployeeName }}</h2>
+    <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
+  </div>
+  <div class="js-modal-body">
+    <div class="js-detail-section">
+      <h3>Training details</h3>
+      <div class="js-detail-grid">
+        <div class="js-detail-item"><label>Employee Code:</label> <span>{{ selectedRecord.EmployeeCode }}</span></div>
+        <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
+        <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
+        <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ selectedRecord.EmploymentNature }}</span></div>
+        <div class="js-detail-item"><label>Date of joining:</label> <span>{{ selectedRecord.DateOfJoining }}</span></div>
+        <div class="js-detail-item"><label>Training Title:</label> <span>{{ selectedRecord.TrainingTitle }}</span></div>
+        <div class="js-detail-item"><label>Training category:</label> <span>{{ selectedRecord.TrainingCategory }}</span></div>
+        <div class="js-detail-item"><label>Training stage:</label> <span>{{ selectedRecord.TrainingStage }}</span></div>
+        <div class="js-detail-item"><label>Training start date:</label> <span>{{ selectedRecord.TrainingStartDate }}</span></div>
+        <div class="js-detail-item"><label>Training end date:</label> <span>{{ selectedRecord.TrainingEndDate }}</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="js-modal-footer">
+    <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
   </div>
 </div>

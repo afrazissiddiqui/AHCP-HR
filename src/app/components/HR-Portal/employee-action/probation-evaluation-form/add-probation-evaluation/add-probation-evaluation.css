@@ -38,24 +38,6 @@
   margin-top: 16px;
 }
 
-.cjr-cancel-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #f6f6f6;
-  border: 1px solid #d0d0d0;
-  color: #333;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.cjr-cancel-btn:hover {
-  background: #efefef;
-}
-
 .probation-rating-table-wrapper {
   margin-top: 10px;
   overflow-x: auto;

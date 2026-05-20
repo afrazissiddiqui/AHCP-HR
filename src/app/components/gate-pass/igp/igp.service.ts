@@ -130,7 +130,7 @@ export class IgpService {
       referenceNo: 'IGP-2026-003',
       title: 'Internal transfer',
       department: 'Engineering',
-      status: 'Draft',
+      status: 'Pending',
       submittedDate: '2026-03-01',
       remarks: 'Stand-alone document',
       selected: false,

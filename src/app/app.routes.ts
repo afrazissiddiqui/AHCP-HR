@@ -24,6 +24,7 @@ import { AttendanceManagmentComponent } from './components/HR-Portal/payroll-mas
 import { TaxManagmentComponent } from './components/HR-Portal/payroll-master/tax-managment/tax-managment';
 import { PayrollProcessingComponent } from './components/HR-Portal/payroll-master/payroll-processing/payroll-processing';
 import { PayrollSetupComponent } from './components/HR-Portal/payroll-master/payroll-setup/payroll-setup';
+import { AddPayrollSetupComponent } from './components/HR-Portal/payroll-master/payroll-setup/add-payroll-setup/add-payroll-setup';
 import { FormsHubComponent } from './components/forms-hub/forms-hub';
 import { loginRoutes } from './components/login/login.routes';
 import { EditProfileComponent } from './components/profile/edit-profile';
@@ -87,6 +88,10 @@ export const routes: Routes = [
   {
     path: 'payroll-master/payroll-setup',
     component: PayrollSetupComponent
+  },
+  {
+    path: 'payroll-master/payroll-setup/create',
+    component: AddPayrollSetupComponent
   },
   {
     path: 'employee-action/probation-evaluation-form',

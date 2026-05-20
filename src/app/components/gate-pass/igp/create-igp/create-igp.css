@@ -1,11 +1,11 @@
 :host {
   display: block;
+  min-height: min-content;
 }
 
 .cjs-page {
   background: #f8f8f8;
-  height: 100%;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .cjs-header {
@@ -207,10 +207,21 @@
 
 .cjs-actions-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   padding: 24px 16px;
   border-top: 1px solid #eee;
   gap: 12px;
+  background: #fafbfc;
+}
+
+.cjs-actions-footer .btn-secondary {
+  order: 1;
+}
+
+.cjs-actions-footer .cjs-submit-btn {
+  order: 2;
 }
 
 .cjs-submit-btn {
@@ -262,12 +273,7 @@
   }
 }
 
-/* Add IGP — extended layout */
-.igp-create-page .cjs-card {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
+/* Add IGP — legacy field rows (still used if needed elsewhere) */
 .igp-field-row {
   display: grid;
   gap: 12px 20px;
@@ -297,11 +303,6 @@
 
 .igp-row-span {
   grid-column: 1;
-}
-
-.igp-status-row {
-  max-width: 360px;
-  margin-top: 8px;
 }
 
 .igp-lines-section {
@@ -476,4 +477,267 @@
   .igp-field-row.cols-3 {
     grid-template-columns: 1fr;
   }
+}
+
+/* Gate pass create — grouped header (IGP + OGP) */
+.igp-create-page .cjs-card,
+.ogp-create-page .cjs-card,
+.agp-create-page .cjs-card {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.ogp-create-page .ogp-header-section,
+.igp-create-page .ogp-header-section,
+.agp-create-page .ogp-header-section {
+  padding-bottom: 8px;
+}
+
+.ogp-header-panel {
+  border: 1px solid #e4e8ec;
+  border-radius: 6px;
+  background: #fafbfc;
+  overflow: hidden;
+}
+
+.ogp-header-group {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e4e8ec;
+}
+
+.ogp-header-group--last {
+  border-bottom: none;
+}
+
+.ogp-header-group-label {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5c6b7a;
+}
+
+.ogp-header-grid {
+  display: grid;
+  gap: 12px 16px;
+  align-items: start;
+}
+
+.ogp-header-grid--nested {
+  margin-top: 12px;
+}
+
+.ogp-header-grid--1 {
+  grid-template-columns: 1fr;
+}
+
+.ogp-header-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ogp-header-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ogp-header-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ogp-field--span-2 {
+  grid-column: span 2;
+}
+
+.ogp-field--span-3 {
+  grid-column: span 3;
+}
+
+.gate-pass-base-doc-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+}
+
+.gate-pass-base-doc-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.gate-pass-base-doc-btn {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0052cc;
+  background: #fff;
+  border: 1px solid #0052cc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.gate-pass-base-doc-btn:hover {
+  background: #f0f7ff;
+}
+
+.gate-pass-base-doc-summary {
+  font-size: 13px;
+  color: #333;
+}
+
+.gate-pass-base-doc-summary--muted {
+  color: #888;
+  font-style: italic;
+}
+
+.gate-pass-clear-base-doc {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.gate-pass-clear-base-doc:hover {
+  border-color: #999;
+  color: #222;
+}
+
+.ogp-field input:read-only,
+.ogp-field select:disabled,
+.ogp-field textarea:read-only {
+  background: #f3f4f6;
+  color: #333;
+  cursor: default;
+}
+
+.ogp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ogp-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+}
+
+.ogp-field input,
+.ogp-field select {
+  height: 32px;
+  padding: 6px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ogp-field input:focus,
+.ogp-field select:focus {
+  outline: none;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+@media (max-width: 1100px) {
+  .ogp-header-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ogp-header-grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ogp-field--span-2 {
+    grid-column: span 2;
+  }
+
+  .ogp-field--span-3 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .ogp-header-grid--4,
+  .ogp-header-grid--3,
+  .ogp-header-grid--2 {
+    grid-template-columns: 1fr;
+  }
+
+  .ogp-field--span-2 {
+    grid-column: span 1;
+  }
+
+  .ogp-field--span-3 {
+    grid-column: span 1;
+  }
+}
+
+/* AGP create — attachment & approval */
+.agp-attachment-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.agp-attachment-name {
+  font-size: 13px;
+  color: #333;
+}
+
+.agp-attachment-clear {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.agp-attachment-clear:hover {
+  background: #f5f5f5;
+}
+
+.agp-file-input {
+  font-size: 13px;
+  max-width: 100%;
+}
+
+.ogp-field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #888;
+}
+
+.agp-approval-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-top: 28px;
+  cursor: pointer;
+}
+
+.agp-approval-label input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.igp-lines-table--agp {
+  min-width: 1400px;
 }

@@ -1,0 +1,115 @@
+.gp-bdm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+}
+
+.gp-bdm-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(560px, calc(100vh - 48px));
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gp-bdm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #f8f9fa;
+}
+
+.gp-bdm-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d2d3e;
+}
+
+.gp-bdm-close {
+  border: none;
+  background: none;
+  font-size: 26px;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.gp-bdm-close:hover {
+  color: #333;
+}
+
+.gp-bdm-type-line {
+  margin: 0;
+  padding: 10px 20px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.gp-bdm-body {
+  padding: 12px 20px 20px;
+  overflow: auto;
+}
+
+.gp-bdm-empty {
+  margin: 16px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.gp-bdm-table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.gp-bdm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.gp-bdm-table th,
+.gp-bdm-table td {
+  border: 1px solid #e0e0e0;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.gp-bdm-table th {
+  background: #f0f4f8;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gp-bdm-col-action {
+  width: 96px;
+  text-align: center;
+}
+
+.gp-bdm-select-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #0052cc;
+  border-radius: 4px;
+  background: #0052cc;
+  color: #fff;
+  cursor: pointer;
+}
+
+.gp-bdm-select-btn:hover {
+  background: #0043a3;
+}

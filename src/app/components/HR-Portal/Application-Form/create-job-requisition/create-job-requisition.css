@@ -481,10 +481,23 @@
 
 .cjr-actions-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   padding: 24px 16px;
   border-top: 1px solid #eee;
   gap: 12px;
+  background: #fafbfc;
+}
+
+.cjr-actions-footer .btn-secondary,
+.cjr-actions-footer .cjr-cancel-btn {
+  order: 1;
+}
+
+.cjr-actions-footer .cjr-submit-btn,
+.cjr-actions-footer .cjs-submit-btn {
+  order: 2;
 }
 
 .cjr-submit-btn {

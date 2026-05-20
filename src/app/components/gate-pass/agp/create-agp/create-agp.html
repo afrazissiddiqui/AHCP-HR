@@ -1,25 +1,25 @@
-<div class="cjs-page ogp-create-page">
+<div class="cjs-page agp-create-page">
   <div class="cjs-header">
     <div class="cjs-header-left">
       <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
         <span class="cjs-back-icon">❮</span>
       </button>
-      <h1>Add OGP</h1>
+      <h1>Add AGP</h1>
     </div>
   </div>
 
   <div class="cjs-card">
     <div class="cjs-form-container">
       <section class="cjs-section-block ogp-header-section">
-        <div class="cjs-section-title">Outward gate pass</div>
+        <div class="cjs-section-title">Article gate pass</div>
 
         <div class="ogp-header-panel">
           <div class="ogp-header-group">
             <p class="ogp-header-group-label">Document details</p>
             <div class="ogp-header-grid ogp-header-grid--4">
               <div class="ogp-field">
-                <label for="ogp-type">Type</label>
-                <select id="ogp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked">
+                <label for="agp-type">Type</label>
+                <select id="agp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked">
                   <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
                 </select>
               </div>
@@ -46,13 +46,13 @@
             </div>
             <div class="ogp-header-grid ogp-header-grid--2 ogp-header-grid--nested">
               <div class="ogp-field">
-                <label for="ogp-date">Date</label>
-                <input id="ogp-date" type="date" [(ngModel)]="documentDate" [readonly]="headerLocked" />
+                <label for="agp-date">Date</label>
+                <input id="agp-date" type="date" [(ngModel)]="documentDate" [readonly]="headerLocked" />
               </div>
               <div class="ogp-field">
-                <label for="ogp-ref">OGP no.</label>
+                <label for="agp-ref">AGP no.</label>
                 <input
-                  id="ogp-ref"
+                  id="agp-ref"
                   type="text"
                   [(ngModel)]="referenceNo"
                   placeholder="Auto if left blank"
@@ -66,88 +66,106 @@
             <p class="ogp-header-group-label">Business partner</p>
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
-                <label for="ogp-bp-code">Business partner code</label>
-                <input id="ogp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" [readonly]="headerLocked" />
+                <label for="agp-bp-code">Business partner code</label>
+                <input id="agp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" [readonly]="headerLocked" />
               </div>
               <div class="ogp-field ogp-field--span-2">
-                <label for="ogp-bp-name">Business partner name</label>
-                <input id="ogp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" [readonly]="headerLocked" />
+                <label for="agp-bp-name">Business partner name</label>
+                <input id="agp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" [readonly]="headerLocked" />
               </div>
               <div class="ogp-field">
-                <label for="ogp-vehicle">Vehicle no.</label>
-                <input id="ogp-vehicle" type="text" [(ngModel)]="vehicleNo" [readonly]="headerLocked" />
-              </div>
-            </div>
-          </div>
-
-          <div class="ogp-header-group">
-            <p class="ogp-header-group-label">Shipment &amp; logistics</p>
-            <div class="ogp-header-grid ogp-header-grid--3">
-              <div class="ogp-field">
-                <label for="ogp-from-unit">From unit</label>
-                <input id="ogp-from-unit" type="text" [(ngModel)]="fromUnit" [readonly]="headerLocked" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-kanta-slip">Kanta slip</label>
-                <input id="ogp-kanta-slip" type="text" [(ngModel)]="kantaSlip" [readonly]="headerLocked" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-bilty">Bilty no.</label>
-                <input id="ogp-bilty" type="text" [(ngModel)]="biltyNo" [readonly]="headerLocked" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-store">Store</label>
-                <input id="ogp-store" type="text" [(ngModel)]="store" [readonly]="headerLocked" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-freight">Freight</label>
-                <input id="ogp-freight" type="text" [(ngModel)]="freight" [readonly]="headerLocked" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-department">Department</label>
-                <select id="ogp-department" [(ngModel)]="department" [disabled]="headerLocked">
-                  <option value="">No selection</option>
-                  <option value="Engineering">Engineering</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Human Resources">Human resources</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Procurement">Procurement</option>
-                  <option value="Logistics">Logistics</option>
-                  <option value="Sales">Sales</option>
-                </select>
+                <label for="agp-vehicle">Vehicle no.</label>
+                <input id="agp-vehicle" type="text" [(ngModel)]="vehicleNo" [readonly]="headerLocked" />
               </div>
             </div>
           </div>
 
           <div class="ogp-header-group">
-            <p class="ogp-header-group-label">Weighing &amp; location</p>
+            <p class="ogp-header-group-label">Movement &amp; request</p>
+            <div class="ogp-header-grid ogp-header-grid--3">
+              <div class="ogp-field ogp-field--span-3">
+                <label for="agp-reason">Reason for movement</label>
+                <input id="agp-reason" type="text" [(ngModel)]="reasonForMovement" placeholder="e.g. Purchase receipt, return, transfer" />
+              </div>
+              <div class="ogp-field">
+                <label for="agp-requesting-employee">Requesting employee</label>
+                <input id="agp-requesting-employee" type="text" [(ngModel)]="requestingEmployee" placeholder="Employee name or code" />
+              </div>
+              <div class="ogp-field">
+                <label for="agp-requesting-dept">Requesting department</label>
+                <select id="agp-requesting-dept" [(ngModel)]="requestingDepartment">
+                  <option value="">No selection</option>
+                  <option *ngFor="let d of departmentOptions" [value]="d">{{ d }}</option>
+                </select>
+              </div>
+              <div class="ogp-field">
+                <label for="agp-requested-by">Requested by</label>
+                <input id="agp-requested-by" type="text" [(ngModel)]="requestedBy" placeholder="Name of requester" />
+              </div>
+              <div class="ogp-field ogp-field--span-3">
+                <label for="agp-issued-to">Issued to (vendor or department)</label>
+                <input id="agp-issued-to" type="text" [(ngModel)]="issuedTo" placeholder="Vendor name or receiving department" />
+              </div>
+              <div class="ogp-field">
+                <label for="agp-article-out">Article out date</label>
+                <input id="agp-article-out" type="date" [(ngModel)]="articleOutDate" />
+              </div>
+              <div class="ogp-field">
+                <label for="agp-article-returned">Article returned date</label>
+                <input id="agp-article-returned" type="date" [(ngModel)]="articleReturnedDate" />
+              </div>
+            </div>
+          </div>
+
+          <div class="ogp-header-group">
+            <p class="ogp-header-group-label">Transporter &amp; freight</p>
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
-                <label for="ogp-weight-machine">Weight machine (kanta) name</label>
-                <input id="ogp-weight-machine" type="text" [(ngModel)]="weightMachineName" [readonly]="headerLocked" />
+                <label for="agp-transporter-name">Transporter name</label>
+                <input id="agp-transporter-name" type="text" [(ngModel)]="transporterName" placeholder="Transporter / driver name" />
               </div>
               <div class="ogp-field">
-                <label for="ogp-weight">Weight</label>
-                <input id="ogp-weight" type="text" [(ngModel)]="weight" placeholder="e.g. 12.5" [readonly]="headerLocked" />
+                <label for="agp-transporter-cnic">Transporter CNIC</label>
+                <input id="agp-transporter-cnic" type="text" [(ngModel)]="transporterCnic" placeholder="XXXXX-XXXXXXX-X" />
               </div>
               <div class="ogp-field">
-                <label for="ogp-location">Location</label>
-                <select id="ogp-location" [(ngModel)]="location" [disabled]="headerLocked">
-                  <option value="">No selection</option>
-                  <option value="FSD">FSD</option>
-                  <option value="PSH">PSH</option>
-                </select>
+                <label for="agp-transporter-phone">Transporter phone number</label>
+                <input id="agp-transporter-phone" type="tel" [(ngModel)]="transporterPhone" placeholder="03XX-XXXXXXX" />
+              </div>
+              <div class="ogp-field">
+                <label for="agp-bilty">Bilty number</label>
+                <input id="agp-bilty" type="text" [(ngModel)]="biltyNo" />
+              </div>
+              <div class="ogp-field">
+                <label for="agp-freight-amount">Freight amount</label>
+                <input id="agp-freight-amount" type="number" min="0" step="0.01" [(ngModel)]="freightAmount" placeholder="0.00" />
               </div>
             </div>
           </div>
 
           <div class="ogp-header-group ogp-header-group--last">
-            <p class="ogp-header-group-label">Responsible person</p>
+            <p class="ogp-header-group-label">Approval &amp; attachment</p>
             <div class="ogp-header-grid ogp-header-grid--2">
-              <div class="ogp-field ogp-field--span-2">
-                <label for="ogp-employee">Employee</label>
-                <input id="ogp-employee" type="text" [(ngModel)]="employee" placeholder="Employee name or code" />
+              <div class="ogp-field ogp-field--attachment">
+                <label for="agp-attachment">Attachment</label>
+                <div class="agp-attachment-row">
+                  <span *ngIf="attachmentFileName" class="agp-attachment-name">{{ attachmentFileName }}</span>
+                  <button *ngIf="attachmentFileName" type="button" class="agp-attachment-clear" (click)="clearAttachment()">Remove</button>
+                  <input
+                    id="agp-attachment"
+                    type="file"
+                    class="agp-file-input"
+                    (change)="onAttachmentChange($event)"
+                    aria-label="Upload attachment for invoice references"
+                  />
+                </div>
+                <span class="ogp-field-hint">Invoice references and supporting documents</span>
+              </div>
+              <div class="ogp-field ogp-field--approval">
+                <label class="agp-approval-label">
+                  <input type="checkbox" [(ngModel)]="headOfSupplyChainApproval" />
+                  Head of Supply Chain approval
+                </label>
               </div>
             </div>
           </div>
@@ -163,17 +181,20 @@
           </button>
         </div>
         <div class="igp-lines-scroll">
-          <table class="igp-lines-table">
+          <table class="igp-lines-table igp-lines-table--agp">
             <thead>
               <tr>
                 <th class="igp-col-sr">Sr.#</th>
+                <th>OITM / item master</th>
                 <th>Item code</th>
                 <th>Item name</th>
+                <th>Serial numbers</th>
                 <th>Category</th>
                 <th>Packing condition</th>
                 <th>Product quality</th>
                 <th>UOM</th>
-                <th class="igp-col-qty">Qty</th>
+                <th class="igp-col-qty">Qty sent</th>
+                <th class="igp-col-qty">Qty received</th>
                 <th>Info</th>
                 <th>Remarks</th>
                 <th class="igp-col-actions" aria-label="Actions"></th>
@@ -181,17 +202,20 @@
             </thead>
             <tbody>
               <tr *ngIf="lines.length === 0" class="igp-lines-empty">
-                <td colspan="11">No line items yet. Click “Add line” to add rows.</td>
+                <td colspan="14">No line items yet. Click “Add line” to add rows.</td>
               </tr>
               <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex">
                 <td class="igp-col-sr">{{ i + 1 }}</td>
+                <td><input type="text" [(ngModel)]="line.oitmCode" placeholder="OITM code" title="Item Master Data (OITM) linkage" /></td>
                 <td><input type="text" [(ngModel)]="line.itemCode" /></td>
                 <td><input type="text" [(ngModel)]="line.itemName" /></td>
+                <td><input type="text" [(ngModel)]="line.serialNumbers" placeholder="Comma-separated" /></td>
                 <td><input type="text" [(ngModel)]="line.category" /></td>
                 <td><input type="text" [(ngModel)]="line.packingCondition" /></td>
                 <td><input type="text" [(ngModel)]="line.productQuality" /></td>
                 <td><input type="text" [(ngModel)]="line.uom" /></td>
-                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qty" /></td>
+                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qtySent" /></td>
+                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qtyReceived" /></td>
                 <td><input type="text" [(ngModel)]="line.info" /></td>
                 <td><input type="text" [(ngModel)]="line.remarks" /></td>
                 <td class="igp-col-actions">
@@ -201,8 +225,9 @@
             </tbody>
             <tfoot>
               <tr class="igp-total-row">
-                <td colspan="7" class="igp-total-label">Total</td>
-                <td class="igp-col-qty"><strong>{{ totalQty }}</strong></td>
+                <td colspan="9" class="igp-total-label">Total</td>
+                <td class="igp-col-qty"><strong>{{ totalQtySent }}</strong></td>
+                <td class="igp-col-qty"><strong>{{ totalQtyReceived }}</strong></td>
                 <td colspan="3"></td>
               </tr>
             </tfoot>
@@ -220,7 +245,7 @@
       <div class="cjs-actions-footer">
         <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
         <button type="button" class="cjs-submit-btn" (click)="submitForm()">
-          <span class="cjs-submit-icon">✓</span> Save OGP
+          <span class="cjs-submit-icon">✓</span> Save AGP
         </button>
       </div>
     </div>

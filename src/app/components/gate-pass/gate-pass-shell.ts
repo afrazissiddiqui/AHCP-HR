@@ -26,22 +26,24 @@ export class GatePassShellComponent {
   readonly sidebarSections = GATE_PASS_SIDEBAR_SECTIONS;
 
   readonly activeSidebarItemId = signal('igp-list');
+  readonly showSidebar = signal(true);
 
   constructor() {
-    this.syncActiveItem(this.router.url);
+    this.syncRouteState(this.router.url);
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(e => this.syncActiveItem(e.urlAfterRedirects));
+      .subscribe(e => this.syncRouteState(e.urlAfterRedirects));
   }
 
   onFolderSelected(folderId: string): void {
     this.activeSidebarItemId.set(folderId);
   }
 
-  private syncActiveItem(url: string): void {
+  private syncRouteState(url: string): void {
+    this.showSidebar.set(!url.includes('/create'));
     this.activeSidebarItemId.set(gatePassActiveItemFromUrl(url));
   }
 }

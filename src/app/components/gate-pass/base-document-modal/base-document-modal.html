@@ -1,0 +1,42 @@
+<div class="gp-bdm-backdrop" *ngIf="open" (click)="onBackdropClick()" aria-hidden="true"></div>
+<div
+  class="gp-bdm-modal"
+  *ngIf="open"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'gp-bdm-title'"
+  (click)="onModalClick($event)"
+>
+  <div class="gp-bdm-header">
+    <h2 id="gp-bdm-title">Open base documents</h2>
+    <button type="button" class="gp-bdm-close" (click)="close()" aria-label="Close">×</button>
+  </div>
+  <p class="gp-bdm-type-line">Type: <strong>{{ documentType }}</strong></p>
+  <div class="gp-bdm-body">
+    <p class="gp-bdm-empty" *ngIf="documents.length === 0">No open documents for this type.</p>
+    <div class="gp-bdm-table-wrap" *ngIf="documents.length > 0">
+      <table class="gp-bdm-table">
+        <thead>
+          <tr>
+            <th>Document no.</th>
+            <th>Title</th>
+            <th>Partner</th>
+            <th>Date</th>
+            <th class="gp-bdm-col-action"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let doc of documents">
+            <td>{{ doc.number }}</td>
+            <td>{{ doc.title }}</td>
+                <td>{{ doc.businessPartnerName || doc.partner || '—' }}</td>
+            <td>{{ doc.date || '—' }}</td>
+            <td class="gp-bdm-col-action">
+              <button type="button" class="gp-bdm-select-btn" (click)="select(doc)">Select</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

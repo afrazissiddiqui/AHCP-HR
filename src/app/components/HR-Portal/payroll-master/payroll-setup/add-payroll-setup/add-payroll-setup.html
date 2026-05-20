@@ -1,0 +1,136 @@
+<div class="cjr-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>Payroll Setup Form</h1>
+    </div>
+  </div>
+
+  <div class="cjr-card">
+    <div class="cjr-options">
+      <div class="cjr-options-title">Options:</div>
+    </div>
+
+    <nav class="cjr-section-nav" aria-label="Payroll setup sections">
+      <ul class="cjr-section-nav-list">
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'header-info-section'"
+          (click)="scrollToSection('header-info-section')"
+        >
+          Header level info
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'payroll-data-section'"
+          (click)="scrollToSection('payroll-data-section')"
+        >
+          Payroll data
+        </li>
+      </ul>
+    </nav>
+
+    <div class="cjr-personal" id="header-info-section">
+      <div class="cjr-section-title">Header Level Info</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Form Number:</label>
+            <input type="text" [value]="formNumber()" readonly />
+          </div>
+          <div class="cjr-row">
+            <label>Employee ID:</label>
+            <select [ngModel]="employeeId()" (ngModelChange)="onEmployeeIdChange($event)">
+              <option value="">No Selection</option>
+              <option *ngFor="let emp of employeeOptions" [value]="emp.code">{{ emp.code }} — {{ emp.name }}</option>
+            </select>
+          </div>
+          <div class="cjr-row">
+            <label>Employee Name:</label>
+            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Category:</label>
+            <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employment Nature:</label>
+            <input type="text" [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employment Type:</label>
+            <input type="text" [ngModel]="employmentType()" (ngModelChange)="employmentType.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Work / Grade Level:</label>
+            <input type="text" [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Department:</label>
+            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Designation:</label>
+            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Job Title:</label>
+            <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Location:</label>
+            <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal cjr-remuneration" id="payroll-data-section">
+      <div class="cjr-section-title">Data</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row" *ngFor="let field of earningsFields">
+            <label>{{ field.label }}:</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              [ngModel]="getAmount(field.key)"
+              (ngModelChange)="setAmount(field.key, $event)"
+            />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row" *ngFor="let field of deductionFields">
+            <label>{{ field.label }}:</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              [ngModel]="getAmount(field.key)"
+              (ngModelChange)="setAmount(field.key, $event)"
+            />
+          </div>
+          <div class="cjr-row">
+            <label>Net Payable:</label>
+            <input type="number" [value]="netPayable()" readonly />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-actions-footer">
+      <button type="button" class="cjr-submit-btn" (click)="submitForm()">
+        <span class="cjr-submit-icon">✓</span> Save Payroll Setup
+      </button>
+    </div>
+  </div>
+</div>
