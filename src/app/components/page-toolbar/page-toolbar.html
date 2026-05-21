@@ -1,0 +1,13 @@
+<div class="page-toolbar" role="toolbar" aria-label="Page actions">
+  <div class="page-toolbar__left">
+    @if (showSidebarToggle()) {
+      <button type="button" class="page-toolbar__menu" (click)="onToggleSidebar()" title="Toggle Sidebar">
+        <span class="sapUiIcon" aria-hidden="true">☰</span>
+      </button>
+    }
+    <ng-content />
+  </div>
+  <div class="page-toolbar__actions">
+    <ng-content select="[pageToolbarActions]" />
+  </div>
+</div>

@@ -29,7 +29,7 @@ export class LoginComponent {
       void this.alertService.validation('Please enter User ID and Password.');
       return;
     }
-    this.authService.login();
+    this.authService.login(uid);
     void this.alertService.success('Welcome', `Signed in as ${uid}.`);
     void this.router.navigateByUrl('/dashboard');
   }

@@ -1,0 +1,156 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tax-allowance-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.tax-allowance-view #sdk---sample--header,
+.tax-allowance-view .page-toolbar {
+  flex-shrink: 0;
+}
+
+.tax-allowance-view .sapMBarLeft,
+.tax-allowance-view .sapMBarMiddle,
+.tax-allowance-view .sapMBarRight {
+  display: flex;
+  align-items: center;
+}
+
+.tax-allowance-view .sapMBarLeft {
+  min-width: 60px;
+}
+
+.tax-allowance-view .sapMBarMiddle {
+  flex: 1;
+  justify-content: center;
+  position: relative;
+}
+
+.tax-allowance-view .sapMTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2d3e;
+  white-space: nowrap;
+}
+
+.tax-allowance-view .sapMBtnBase {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1d2d3e;
+  transition: background 0.2s ease;
+}
+
+.tax-allowance-view .sapMBtnBase:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.tax-allowance-view .sapUiIcon {
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tax-allowance-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 12px 16px 16px;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.tax-allowance-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.tax-allowance-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2d3e;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tax-allowance-table tbody td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid #eef2f6;
+  font-size: 14px;
+  color: #334155;
+}
+
+.tax-allowance-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.tax-allowance-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tax-allowance-table .col-field {
+  width: 32%;
+  font-weight: 600;
+  color: #1d2d3e;
+}
+
+.tax-allowance-table .col-checkbox {
+  width: 110px;
+  text-align: center;
+}
+
+.tax-allowance-table .col-gl {
+  width: auto;
+}
+
+.tax-allowance-table .col-checkbox input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.tax-allowance-gl-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.tax-allowance-gl-input:focus {
+  outline: none;
+  border-color: #0070f2;
+  box-shadow: 0 0 0 2px rgba(0, 112, 242, 0.15);
+}
+
+.tax-allowance-gl-input::placeholder {
+  color: #94a3b8;
+}

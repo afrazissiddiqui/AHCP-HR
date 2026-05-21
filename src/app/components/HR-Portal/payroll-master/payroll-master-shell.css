@@ -1,0 +1,55 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.payroll-master-layout {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.payroll-master-layout > app-sidebar {
+  flex-shrink: 0;
+  align-self: stretch;
+  height: auto;
+  min-height: 100%;
+}
+
+.payroll-master-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.payroll-master-content--full {
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.payroll-master-content ::ng-deep .payroll-master-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.payroll-master-content ::ng-deep .payroll-master-view--scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+}

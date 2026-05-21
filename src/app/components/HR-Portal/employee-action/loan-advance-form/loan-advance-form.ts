@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { ApplicationFormRecord, ApplicationFormService } from '../../../../services/application-form.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
+import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
 
 interface LoanAdvanceRecord {
@@ -24,7 +25,7 @@ type LoanColumnKey = Exclude<keyof LoanAdvanceRecord, 'selected'>;
 @Component({
   selector: 'app-loan-advance-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
   templateUrl: './loan-advance-form.html',
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`

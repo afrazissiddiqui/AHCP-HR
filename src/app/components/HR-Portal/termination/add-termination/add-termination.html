@@ -1,0 +1,239 @@
+<div class="cjr-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>Termination Form</h1>
+    </div>
+  </div>
+
+  <div class="cjr-card">
+    <div class="cjr-options">
+      <div class="cjr-options-title">Options:</div>
+    </div>
+
+    <nav class="cjr-section-nav" aria-label="Termination sections">
+      <ul class="cjr-section-nav-list">
+        <li class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'header-section'"
+          (click)="scrollToSection('header-section')">Header Section</li>
+        <li class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'dues-payable-section'"
+          (click)="scrollToSection('dues-payable-section')">Dues Payable</li>
+        <li class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'recoverable-amount-section'"
+          (click)="scrollToSection('recoverable-amount-section')">Recoverable Amount Section</li>
+      </ul>
+    </nav>
+
+    <div class="cjr-personal" id="header-section">
+      <div class="cjr-section-title">Header Section</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Employee ID:</label>
+            <input type="number" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)"
+              [class.cjr-invalid]="isInvalid('employeeId')" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Name:</label>
+            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)"
+              [class.cjr-invalid]="isInvalid('employeeName')" />
+          </div>
+          <div class="cjr-row">
+            <label>Department:</label>
+            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Employee Category:</label>
+            <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Designation:</label>
+            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Branch / Location:</label>
+            <input type="text" [ngModel]="branchLocation()" (ngModelChange)="branchLocation.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Cost Center:</label>
+            <input type="text" [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Work / Grade Level:</label>
+            <input type="text" [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Last Working Day:</label>
+            <input type="date" [ngModel]="lastWorkingDay()" (ngModelChange)="lastWorkingDay.set($event)"
+              [class.cjr-invalid]="isInvalid('lastWorkingDay')" />
+          </div>
+          <div class="cjr-row">
+            <label>Year of Service:</label>
+            <input type="number" step="0.1" min="0" [ngModel]="yearOfService()" (ngModelChange)="yearOfService.set($event)"
+              [class.cjr-invalid]="isInvalid('yearOfService')" />
+          </div>
+          <div class="cjr-row">
+            <label>Releasing Date:</label>
+            <input type="date" [ngModel]="releasingDate()" (ngModelChange)="releasingDate.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Gross Monthly Salary:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="grossMonthlySalary()"
+              (ngModelChange)="grossMonthlySalary.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Committee Meeting Held:</label>
+            <select [ngModel]="committeeMeetingHeld()" (ngModelChange)="committeeMeetingHeld.set($event)">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="dues-payable-section">
+      <div class="cjr-section-title">Dues Payable</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row cjr-row--date-range">
+            <label>From / To Date:</label>
+            <div class="cjr-date-range-inputs">
+              <input type="date" aria-label="From date" [ngModel]="duesFromDate()"
+                (ngModelChange)="duesFromDate.set($event)" />
+              <span class="cjr-date-range-separator">to</span>
+              <input type="date" aria-label="To date" [ngModel]="duesToDate()" (ngModelChange)="duesToDate.set($event)" />
+            </div>
+          </div>
+          <div class="cjr-row">
+            <label>No of Days Salary not paid:</label>
+            <input type="number" min="0" step="1" [ngModel]="noOfDaysSalaryNotPaid()"
+              (ngModelChange)="noOfDaysSalaryNotPaid.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Salary Payable:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="salaryPayable()"
+              (ngModelChange)="salaryPayable.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Gratuity:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="gratuity()" (ngModelChange)="gratuity.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Overtime Amount:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="overtimeAmount()"
+              (ngModelChange)="overtimeAmount.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Notice Pay:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="noticePay()" (ngModelChange)="noticePay.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Leave Encashment Amount:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="leaveEncashmentAmount()"
+              (ngModelChange)="leaveEncashmentAmount.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Other Payables:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="otherPayables()"
+              (ngModelChange)="otherPayables.set($event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="termination-section-total">
+        <label>Total Dues Payable:</label>
+        <input type="text" [value]="totalDuesPayable().toFixed(2)" readonly />
+      </div>
+    </div>
+
+    <div class="cjr-personal" id="recoverable-amount-section">
+      <div class="cjr-section-title">Recoverable Amount Section</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Salary Advances:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="salaryAdvances()"
+              (ngModelChange)="salaryAdvances.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Outstanding Loan Balance:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="outstandingLoanBalance()"
+              (ngModelChange)="outstandingLoanBalance.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Income Tax Deductions:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="incomeTaxDeductions()"
+              (ngModelChange)="incomeTaxDeductions.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Notice Pay:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="recoverableNoticePay()"
+              (ngModelChange)="recoverableNoticePay.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Leave With-out Pay:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="leaveWithoutPay()"
+              (ngModelChange)="leaveWithoutPay.set($event)" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Assets Handled Over:</label>
+            <select [ngModel]="assetsHandledOver()" (ngModelChange)="assetsHandledOver.set($event)">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="cjr-row">
+            <label>Asset Recovered:</label>
+            <select [ngModel]="assetRecovered()" (ngModelChange)="assetRecovered.set($event)">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="cjr-row">
+            <label>Asset Recovery(name):</label>
+            <input type="text" [ngModel]="assetRecoveryName()" (ngModelChange)="assetRecoveryName.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>Other Recoverable Amounts:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="otherRecoverableAmounts()"
+              (ngModelChange)="otherRecoverableAmounts.set($event)" />
+          </div>
+          <div class="cjr-row">
+            <label>sss:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="sss()" (ngModelChange)="sss.set($event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="termination-section-total">
+        <label>Total Recoverable Amount:</label>
+        <input type="text" [value]="totalRecoverableAmount().toFixed(2)" readonly />
+      </div>
+    </div>
+
+    <div class="cjr-actions-footer">
+      <button type="button" class="cjr-submit-btn" (click)="save()">
+        <span class="cjr-submit-icon">✓</span> Save Termination
+      </button>
+    </div>
+  </div>
+</div>

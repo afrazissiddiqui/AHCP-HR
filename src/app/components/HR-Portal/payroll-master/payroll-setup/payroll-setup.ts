@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
-import { PAYROLL_MASTER_SIDEBAR_ITEMS, PAYROLL_MASTER_SIDEBAR_SECTIONS } from '../payroll-master-sidebar';
+import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
+import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
 import {
   PAYROLL_SETUP_TABLE_COLUMNS,
   PayrollSetupColumnKey,
@@ -14,20 +14,17 @@ import {
 @Component({
   selector: 'app-payroll-setup',
   standalone: true,
-  imports: [CommonModule, FormsModule, SidebarComponent],
+  imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './payroll-setup.html',
   styleUrl: '../../Application-Form/Application-Form.css',
 })
 export class PayrollSetupComponent {
+  private readonly layout = inject(PayrollMasterLayoutService);
+
   constructor(
     private readonly payrollSetupService: PayrollSetupService,
     private readonly router: Router,
   ) {}
-
-  sidebarItems: SidebarItem[] = PAYROLL_MASTER_SIDEBAR_ITEMS;
-  sidebarSections: SidebarSection[] = PAYROLL_MASTER_SIDEBAR_SECTIONS;
-  activeSidebarItemId = 'payroll-setup';
-  sidebarCollapsed = signal(false);
   searchText = '';
   selectedDepartment = '';
   showDialog = false;
@@ -90,12 +87,8 @@ export class PayrollSetupComponent {
     this.showDialog = false;
   }
 
-  onFolderSelected(folderId: string): void {
-    this.activeSidebarItemId = folderId;
-  }
-
   toggleSidebar(): void {
-    this.sidebarCollapsed.update((state) => !state);
+    this.layout.toggleSidebar();
   }
 
   createNew(): void {

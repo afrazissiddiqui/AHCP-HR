@@ -1,0 +1,180 @@
+<div class="termination-layout">
+  <app-page-toolbar>
+    <button class="btn-default" pageToolbarActions (click)="createNewTermination()">Add New</button>
+  </app-page-toolbar>
+
+  <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
+    <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
+      <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
+        Termination List ({{ filteredList.length }}<ng-container *ngIf="hasActiveTableFilters()"> of {{ terminationList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
+      </div>
+    </div>
+    <div class="sapMTBSpacer"></div>
+    <div class="sapMSearchField">
+      <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
+      <span class="sapUiIcon search-icon">🔍</span>
+    </div>
+
+    <div class="sapMTBActions">
+      <app-table-filter
+        [config]="terminationTableFilter"
+        [data]="terminationList"
+        (applied)="onTableFilterApplied()"
+      />
+      <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
+        ⚙
+      </button>
+    </div>
+
+    <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+
+    <div class="view-settings-dialog" *ngIf="showDialog">
+      <div class="dialog-header">
+        <h3>View Settings</h3>
+      </div>
+
+      <div class="dialog-tabs">
+        <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+      </div>
+
+      <div class="dialog-body">
+        <div *ngIf="activeTab === 'filter'">
+          <div *ngFor="let col of columns">
+            <label>
+              <input type="checkbox" [(ngModel)]="col.visible" />
+              {{ col.label }}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer"></div>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table class="mountain-table">
+        <thead>
+          <tr>
+            <th>
+              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
+            </th>
+            <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)" class="sortable-header">
+              {{ col.label }}
+              <span *ngIf="sortColumn === col.key" class="sort-indicator">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let item of paginatedList">
+            <td>
+              <input type="checkbox" [(ngModel)]="item.selected" />
+            </td>
+            <td *ngFor="let col of columns" [hidden]="!col.visible">
+              {{ formatCellValue(item, col.key) }}
+            </td>
+            <td>
+              <button class="view-btn" (click)="viewRecord(item)" title="View Details">
+                👁 View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-pagination">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+        of {{ filteredList.length }} entries
+      </div>
+
+      <div class="pagination-controls">
+        <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+        <div class="page-numbers">
+          <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
+            {{ page }}
+          </button>
+        </div>
+        <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+      </div>
+
+      <div class="page-size-selector">
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
+<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+  <div class="js-modal-header">
+    <h2>Termination Detail - {{ selectedRecord.EmployeeName }}</h2>
+    <button class="js-close-modal" (click)="closeViewDialog()">×</button>
+  </div>
+  <div class="js-modal-body" *ngIf="selectedRecord">
+    <div class="js-detail-section">
+      <h3>General Details</h3>
+      <div class="js-detail-grid">
+        <div class="js-detail-item"><label>Employee ID:</label> <span>{{ selectedRecord.EmployeeId }}</span></div>
+        <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
+        <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
+        <div class="js-detail-item"><label>Employee Category:</label> <span>{{ selectedRecord.EmployeeCategory }}</span></div>
+        <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
+        <div class="js-detail-item"><label>Branch / Location:</label> <span>{{ selectedRecord.BranchLocation }}</span></div>
+        <div class="js-detail-item"><label>Cost Center:</label> <span>{{ selectedRecord.CostCenter }}</span></div>
+        <div class="js-detail-item"><label>Work / Grade Level:</label> <span>{{ selectedRecord.WorkGradeLevel }}</span></div>
+        <div class="js-detail-item"><label>Last Working Day:</label> <span>{{ selectedRecord.LastWorkingDay }}</span></div>
+        <div class="js-detail-item"><label>Year of Service:</label> <span>{{ selectedRecord.YearOfService.toFixed(1) }}</span></div>
+        <div class="js-detail-item"><label>Releasing Date:</label> <span>{{ selectedRecord.ReleasingDate }}</span></div>
+        <div class="js-detail-item"><label>Gross Monthly Salary:</label> <span>{{ selectedRecord.GrossMonthlySalary }}</span></div>
+        <div class="js-detail-item"><label>Committee Meeting Held:</label> <span>{{ selectedRecord.CommitteeMeetingHeld }}</span></div>
+      </div>
+    </div>
+    @if (selectedRecord.detail?.duesPayable; as dues) {
+    <div class="js-detail-section">
+      <h3>Dues Payable</h3>
+      <div class="js-detail-grid">
+        <div class="js-detail-item"><label>From / To Date:</label>
+          <span>{{ dues.fromDate || '—' }} to {{ dues.toDate || '—' }}</span></div>
+        <div class="js-detail-item"><label>No of Days Salary not paid:</label> <span>{{ dues.noOfDaysSalaryNotPaid || '—' }}</span></div>
+        <div class="js-detail-item"><label>Salary Payable:</label> <span>{{ dues.salaryPayable || '—' }}</span></div>
+        <div class="js-detail-item"><label>Gratuity:</label> <span>{{ dues.gratuity || '—' }}</span></div>
+        <div class="js-detail-item"><label>Overtime Amount:</label> <span>{{ dues.overtimeAmount || '—' }}</span></div>
+        <div class="js-detail-item"><label>Notice Pay:</label> <span>{{ dues.noticePay || '—' }}</span></div>
+        <div class="js-detail-item"><label>Leave Encashment Amount:</label> <span>{{ dues.leaveEncashmentAmount || '—' }}</span></div>
+        <div class="js-detail-item"><label>Other Payables:</label> <span>{{ dues.otherPayables || '—' }}</span></div>
+        <div class="js-detail-item"><label>Total Dues Payable:</label> <span>{{ selectedRecord.detail?.totalDuesPayable?.toFixed(2) ?? '—' }}</span></div>
+      </div>
+    </div>
+    }
+    @if (selectedRecord.detail?.recoverableAmount; as recoverable) {
+    <div class="js-detail-section">
+      <h3>Recoverable Amount Section</h3>
+      <div class="js-detail-grid">
+        <div class="js-detail-item"><label>Salary Advances:</label> <span>{{ recoverable.salaryAdvances || '—' }}</span></div>
+        <div class="js-detail-item"><label>Outstanding Loan Balance:</label> <span>{{ recoverable.outstandingLoanBalance || '—' }}</span></div>
+        <div class="js-detail-item"><label>Income Tax Deductions:</label> <span>{{ recoverable.incomeTaxDeductions || '—' }}</span></div>
+        <div class="js-detail-item"><label>Notice Pay:</label> <span>{{ recoverable.noticePay || '—' }}</span></div>
+        <div class="js-detail-item"><label>Leave With-out Pay:</label> <span>{{ recoverable.leaveWithoutPay || '—' }}</span></div>
+        <div class="js-detail-item"><label>Assets Handled Over:</label> <span>{{ recoverable.assetsHandledOver || '—' }}</span></div>
+        <div class="js-detail-item"><label>Asset Recovered:</label> <span>{{ recoverable.assetRecovered || '—' }}</span></div>
+        <div class="js-detail-item"><label>Asset Recovery(name):</label> <span>{{ recoverable.assetRecoveryName || '—' }}</span></div>
+        <div class="js-detail-item"><label>Other Recoverable Amounts:</label> <span>{{ recoverable.otherRecoverableAmounts || '—' }}</span></div>
+        <div class="js-detail-item"><label>sss:</label> <span>{{ recoverable.sss || '—' }}</span></div>
+        <div class="js-detail-item"><label>Total Recoverable Amount:</label> <span>{{ selectedRecord.detail?.totalRecoverableAmount?.toFixed(2) ?? '—' }}</span></div>
+      </div>
+    </div>
+    }
+  </div>
+  <div class="js-modal-footer">
+    <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
+  </div>
+</div>

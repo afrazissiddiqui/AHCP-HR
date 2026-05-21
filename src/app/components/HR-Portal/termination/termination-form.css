@@ -1,0 +1,58 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.termination-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.termination-layout .table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.termination-layout .table-scroll {
+  flex: 0 0 auto;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.termination-layout .mountain-table {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  table-layout: fixed;
+}
+
+.termination-layout .mountain-table th,
+.termination-layout .mountain-table td {
+  max-width: none;
+}
+
+.termination-layout .mountain-table th:first-child,
+.termination-layout .mountain-table td:first-child {
+  width: 48px;
+}
+
+.termination-layout .mountain-table th:last-child,
+.termination-layout .mountain-table td:last-child {
+  width: 110px;
+}
+
+.termination-layout .table-pagination {
+  flex-shrink: 0;
+  margin-top: auto;
+}

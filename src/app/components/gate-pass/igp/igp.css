@@ -47,15 +47,16 @@ app-root {
    TOP HEADER
 ========================================================= */
 
-#sdk---sample--header {
+/* Legacy id kept for any remaining markup; prefer app-page-toolbar. */
+#sdk---sample--header,
+.page-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
-  padding: 0 16px;
+  min-height: 44px;
+  padding: 6px 16px;
   background: #ffffff;
   border-bottom: 1px solid #d0d0d0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
 }
 

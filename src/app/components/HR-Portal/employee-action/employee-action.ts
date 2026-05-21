@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
+import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../services/application-form.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from './employee-action-sidebar';
@@ -11,7 +12,7 @@ type EmployeeActionDataColumnKey = Exclude<keyof ApplicationFormRecord, 'selecte
 @Component({
   selector: 'app-employee-action',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
   templateUrl: './employee-action.html',
   styleUrl: '../Application-Form/Application-Form.css',
 })

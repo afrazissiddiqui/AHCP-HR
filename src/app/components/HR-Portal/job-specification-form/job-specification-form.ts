@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
+import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { JobSpecificationService, JobSpecificationRecord } from '../../../services/job-specification.service';
 
@@ -15,7 +16,7 @@ interface ColumnConfig {
 @Component({
   selector: 'app-job-specification-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
   templateUrl: './job-specification-form.html',
   styleUrl: './job-specification-form.css',
 })

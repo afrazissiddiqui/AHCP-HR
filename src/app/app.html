@@ -11,20 +11,15 @@
     (click)="onShellbarClick($event)"
     (product-switch-click)="onProductSwitchClick($event)"
     (notifications-click)="onNotificationsClick($event)"
+    (profile-click)="onProfileShellbarClick($event)"
     class="hr-portal-header"
   >
     <!-- Logo -->
     <img slot="logo" src="assets/logo.png" (click)="onLogoClick($event)" />
 
-    <!-- Profile -->
-    <span
-      slot="profile"
-      class="profile-trigger"
-      data-profile-btn
-      (click)="onProfileTriggerClick($event)"
-      title="Account"
-    >
-      <ui5-avatar initials="UI"></ui5-avatar>
+    <!-- Profile (slot content; toggle via shellbar profile-click) -->
+    <span slot="profile" class="profile-trigger" data-profile-btn title="Account">
+      <ui5-avatar [attr.initials]="profileAvatarInitials()"></ui5-avatar>
     </span>
 
     <!-- Search -->
@@ -36,13 +31,13 @@
 
   @if (profileDropdownOpen()) {
     <div class="profile-dropdown-menu" (click)="stopEvent($event)" role="menu">
-      <button type="button" class="profile-dropdown-item" (click)="onEditProfile($event)" role="menuitem">
+      <button type="button" class="profile-dropdown-item" (click)="onViewProfile($event)" role="menuitem">
         <ui5-icon class="profile-dropdown-icon" name="employee"></ui5-icon>
-        <span>Edit profile</span>
+        <span>View profile</span>
       </button>
-      <button type="button" class="profile-dropdown-item profile-dropdown-item--logout" (click)="onLogout($event)" role="menuitem">
+      <button type="button" class="profile-dropdown-item profile-dropdown-item--logout" (click)="onSignOut($event)" role="menuitem">
         <ui5-icon class="profile-dropdown-icon" name="log"></ui5-icon>
-        <span>Logout</span>
+        <span>Sign out</span>
       </button>
     </div>
   }
@@ -55,21 +50,46 @@
       (click)="stopEvent($event)"
     >
       @for (option of hrMenuOptions; track option.value) {
-        <button
-          class="hr-dropdown-item"
-          [class.is-selected]="option.value === selectedHrOption()"
-          (click)="selectHrOption(option, $event)"
-          (mouseenter)="previewHrOption(option.label)"
-          type="button"
-        >
-          <ui5-icon class="hr-dropdown-icon" [attr.name]="option.icon"></ui5-icon>
-          <span class="hr-dropdown-label">{{ option.label }}</span>
-        </button>
+        <div class="hr-dropdown-group">
+          <button
+            class="hr-dropdown-item"
+            [class.is-selected]="isHrOptionSelected(option)"
+            [class.has-children]="option.children?.length"
+            [class.is-expanded]="isHrOptionExpanded(option)"
+            (click)="selectHrOption(option, $event)"
+            (mouseenter)="previewHrOption(option.label)"
+            type="button"
+          >
+            <ui5-icon class="hr-dropdown-icon" [attr.name]="option.icon"></ui5-icon>
+            <span class="hr-dropdown-label">{{ option.label }}</span>
+            @if (option.children?.length) {
+              <ui5-icon class="hr-dropdown-chevron" name="slim-arrow-right"></ui5-icon>
+            }
+          </button>
+          @if (option.children?.length && isHrOptionExpanded(option)) {
+            <div class="hr-dropdown-submenu">
+              @for (child of option.children; track child.value) {
+                <button
+                  class="hr-dropdown-item hr-dropdown-item--child"
+                  [class.is-selected]="isHrOptionSelected(child)"
+                  (click)="selectHrOption(child, $event)"
+                  (mouseenter)="previewHrOption(child.label)"
+                  type="button"
+                >
+                  <ui5-icon class="hr-dropdown-icon" [attr.name]="child.icon"></ui5-icon>
+                  <span class="hr-dropdown-label">{{ child.label }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
       }
     </div>
   }
 </div>
 }
+
+<app-view-profile [open]="profileDrawerOpen()" (closed)="onProfileDrawerClosed()" />
 
 <main class="app-content" [class.app-content--bare]="!showMainChrome()">
   <router-outlet />

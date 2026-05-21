@@ -36,9 +36,12 @@ app-root {
 }
 
 /* Main content area */
+.page-content-column,
 :host ::ng-deep > div[style*="display: flex"] > div[style*="flex: 1"] {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  flex: 1;
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -48,15 +51,16 @@ app-root {
    TOP HEADER
 ========================================================= */
 
-#sdk---sample--header {
+/* Legacy id kept for any remaining markup; prefer app-page-toolbar. */
+#sdk---sample--header,
+.page-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
-  padding: 0 16px;
+  min-height: 44px;
+  padding: 6px 16px;
   background: #ffffff;
   border-bottom: 1px solid #d0d0d0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
 }
 
@@ -187,13 +191,14 @@ app-root {
   padding: 6px 8px;
 }
 
-
 /* =========================================================
    TABLE AREA
 ========================================================= */
 
 .table-wrapper {
-  height: calc(100vh - 104px); /* header + toolbar */
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
   padding: 12px;
   background: #ffffff;
   display: flex;

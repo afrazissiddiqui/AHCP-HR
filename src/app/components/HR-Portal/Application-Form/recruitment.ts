@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
+import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { Router } from '@angular/router';
 import {
@@ -9,6 +10,11 @@ import {
   ApplicationFormRecord,
   ApplicationFormService,
 } from '../../../services/application-form.service';
+import {
+  APPLICATION_FORM_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../table-filter';
 
 type ApplicationFormColumnKey = Exclude<keyof ApplicationFormRecord, 'detail' | 'selected'>;
 
@@ -18,19 +24,28 @@ interface ColumnConfig {
   visible: boolean;
 }
 
-
 @Component({
   selector: 'app-recruitment',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ColumnResizeDirective,
+    SidebarComponent,
+    PageToolbarComponent,
+    TableFilterComponent,
+  ],
   templateUrl: './application-form.html',
   styleUrls: ['./Application-Form.css'],
 })
 export class RecruitmentComponent {
 
+  readonly applicationTableFilter = APPLICATION_FORM_TABLE_FILTER;
+
   constructor(
     private router: Router,
-    private applicationFormService: ApplicationFormService
+    private applicationFormService: ApplicationFormService,
+    readonly tableFilter: TableFilterService
   ) { }
 
   Math = Math;
@@ -80,7 +95,7 @@ export class RecruitmentComponent {
 
   showColumnPanel = false;
   showDialog = false;
-  activeTab: 'filter' = 'filter';
+  activeTab: 'columns' = 'columns';
   detailRecord: ApplicationFormRecord | null = null;
 
   toggleColumnPanel() {
@@ -93,6 +108,14 @@ export class RecruitmentComponent {
 
   closeDialog() {
     this.showDialog = false;
+  }
+
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.applicationTableFilter);
+  }
+
+  onTableFilterApplied(): void {
+    this.currentPage = 1;
   }
 
   toggleAll(event: Event) {
@@ -110,7 +133,7 @@ export class RecruitmentComponent {
 
   // Getters for searching, sorting, and pagination
   get filteredList(): ApplicationFormRecord[] {
-    let list = [...this.sirList];
+    let list = this.tableFilter.filterItems([...this.sirList], this.applicationTableFilter);
 
     // Search
     if (this.searchText) {

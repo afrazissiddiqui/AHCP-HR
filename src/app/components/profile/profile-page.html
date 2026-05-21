@@ -1,0 +1,69 @@
+<div class="view-profile-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
+      </button>
+      <h1>View profile</h1>
+    </div>
+  </div>
+
+  <div class="view-profile-card">
+    <div class="view-profile-card__intro">
+      <span class="view-profile-card__avatar" aria-hidden="true">{{ avatarInitials() }}</span>
+      <div>
+        <p class="view-profile-card__name">{{ profileRecord()?.EmployeeName || 'User profile' }}</p>
+        <p class="view-profile-card__hint">Signed-in user · Application Form</p>
+      </div>
+    </div>
+
+    @if (profileRecord(); as record) {
+    <div class="view-profile-card__body">
+      <section class="view-profile-section">
+        <h3>Personal</h3>
+        <div class="view-profile-grid">
+          <div class="view-profile-item"><span class="view-profile-label">Name</span><span>{{ field(record, r => r.EmployeeName) }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Full name</span><span>{{ record.detail?.personalInfo?.personName || '—' }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Employee code</span><span>{{ record.EmployeeCode }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Department</span><span>{{ field(record, r => r.Department) }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Designation</span><span>{{ field(record, r => r.Designation) }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Reporting manager</span><span>{{ field(record, r => r.ReportingManager) }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Contact</span><span>{{ record.detail?.personalInfo?.contactNumber || '—' }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Email / User ID</span><span>{{ loginField(record, 'userId') }}</span></div>
+        </div>
+      </section>
+
+      <section class="view-profile-section">
+        <h3>Salary &amp; remuneration</h3>
+        <div class="view-profile-grid">
+          <div class="view-profile-item"><span class="view-profile-label">Salary</span><span>{{ displaySalary() }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Salary structure</span><span>{{ record.detail?.remuneration?.salaryStructure || '—' }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Employee master</span><span>{{ record.detail?.remuneration?.employeeMaster || '—' }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Employment type</span><span>{{ field(record, r => r.EmploymentType) }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Employment category</span><span>{{ field(record, r => r.EmploymentCategory) }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Company</span><span>{{ record.detail?.requisition?.company || field(record, r => r.EmployeeNature) }}</span></div>
+        </div>
+      </section>
+
+      <section class="view-profile-section view-profile-section--password">
+        <h3>Change password</h3>
+        <div class="view-profile-password-form">
+          <label>
+            <span>New password</span>
+            <input type="password" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" autocomplete="new-password" />
+          </label>
+          <label>
+            <span>Confirm password</span>
+            <input type="password" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" autocomplete="new-password" />
+          </label>
+          <button type="button" class="view-profile-save-btn" (click)="changePassword()">Update password</button>
+        </div>
+      </section>
+    </div>
+    } @else {
+    <div class="view-profile-card__body view-profile-card__body--empty">
+      <p>No Application Form profile was found for this user. Sign in with a valid User ID (e.g. <strong>ahmed.khan</strong>).</p>
+    </div>
+    }
+  </div>
+</div>

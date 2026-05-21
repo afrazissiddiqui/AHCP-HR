@@ -82,3 +82,18 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
 }
+
+/* Profile spotlight drawer — lock page scroll while open */
+html.profile-drawer-open,
+html.profile-drawer-open body {
+  overflow: hidden;
+}
+
+html.profile-drawer-open app-root .app-content {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+html.profile-drawer-open app-root .app-content > :not(router-outlet) {
+  overflow: hidden !important;
+}

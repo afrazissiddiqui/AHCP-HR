@@ -1,33 +1,38 @@
-<div style="display: flex; height: 100vh;">
-  <app-sidebar [title]="'Forms'" [items]="sidebarItems" [sections]="sidebarSections" [isCollapsed]="sidebarCollapsed()"
-    [activeItemId]="activeSidebarItemId" (folderSelected)="onFolderSelected($event)"
-    (collapsedChange)="sidebarCollapsed.set($event)">
-  </app-sidebar>
+<div class="payroll-master-view tax-allowance-view">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()"></app-page-toolbar>
 
-  <div style="flex: 1; overflow-y: auto;">
-    <div id="sdk---sample--header"
-      class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
-      role="toolbar">
-      <div class="sapMBarLeft sapMBarContainer">
-        <button class="sapMBtnBase sapMBtn sapMBarChild" (click)="toggleSidebar()" title="Toggle Sidebar">
-          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable">
-            <span class="sapUiIcon">☰</span>
-          </span>
-        </button>
-      </div>
-      <div class="sapMBarMiddle">
-        <div class="sapMBarPH sapMBarContainer" style="left: 52px; position: absolute; width: 280px;">
-          <h1 class="sapMTitle sapMTitleStyleAuto sapMTitleNoWrap sapMTitleMaxWidth sapMBarChild" title="Tax Managment">
-            Tax Managment
-          </h1>
-        </div>
-      </div>
-      <div class="sapMBarRight sapMBarContainer"></div>
-    </div>
-
-    <div class="table-wrapper" style="padding: 16px;">
-      <div class="sapMTitle sapMTitleStyleH5" role="heading" aria-level="5">Tax Managment</div>
-      <div style="margin-top: 12px; color: #475569;">Tax Managment component page is ready.</div>
-    </div>
+  <div class="tax-allowance-table-wrapper">
+    <table class="tax-allowance-table">
+      <thead>
+        <tr>
+          <th class="col-field">Field</th>
+          <th class="col-checkbox">Checkbox</th>
+          <th class="col-gl">GL Code</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of taxAllowance.rows()">
+          <td class="col-field">{{ row.label }}</td>
+          <td class="col-checkbox">
+            <input
+              type="checkbox"
+              [checked]="row.enabled"
+              (change)="onCheckboxChange(row, $event)"
+              [attr.aria-label]="'Enable ' + row.label"
+            />
+          </td>
+          <td class="col-gl">
+            <input
+              type="text"
+              class="tax-allowance-gl-input"
+              [ngModel]="row.glCode"
+              (ngModelChange)="onGlCodeChange(row.key, $event)"
+              placeholder="Enter GL code"
+              [attr.aria-label]="'GL Code for ' + row.label"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>

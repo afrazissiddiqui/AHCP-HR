@@ -19,15 +19,13 @@ import { AddLoanAdvanceComponent } from './components/HR-Portal/employee-action/
 import { LeaveApplicationFormComponent } from './components/HR-Portal/employee-action/leave-application-form/leave-application-form';
 import { AddLeaveApplicationComponent } from './components/HR-Portal/employee-action/leave-application-form/add-leave-application/add-leave-application';
 import { ApprovalAuthoritySetupComponent } from './components/HR-Portal/employee-action/approval-authority-setup/approval-authority-setup';
-import { PayrollMasterComponent } from './components/HR-Portal/payroll-master/payroll-master';
-import { AttendanceManagmentComponent } from './components/HR-Portal/payroll-master/attendance-managment/attendance-managment';
-import { TaxManagmentComponent } from './components/HR-Portal/payroll-master/tax-managment/tax-managment';
-import { PayrollProcessingComponent } from './components/HR-Portal/payroll-master/payroll-processing/payroll-processing';
-import { PayrollSetupComponent } from './components/HR-Portal/payroll-master/payroll-setup/payroll-setup';
-import { AddPayrollSetupComponent } from './components/HR-Portal/payroll-master/payroll-setup/add-payroll-setup/add-payroll-setup';
+import { payrollMasterRoutes } from './components/HR-Portal/payroll-master/payroll-master.routes';
 import { FormsHubComponent } from './components/forms-hub/forms-hub';
 import { loginRoutes } from './components/login/login.routes';
-import { EditProfileComponent } from './components/profile/edit-profile';
+import { ProfilePageComponent } from './components/profile/profile-page';
+import { TerminationFormComponent } from './components/HR-Portal/termination/termination-form';
+import { AddTerminationComponent } from './components/HR-Portal/termination/add-termination/add-termination';
+import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-maintenance.routes';
 
 export const routes: Routes = [
   {
@@ -42,7 +40,7 @@ export const routes: Routes = [
   ...loginRoutes,
   {
     path: 'profile',
-    component: EditProfileComponent,
+    component: ProfilePageComponent,
   },
   {
     path: 'forms-hub',
@@ -69,30 +67,7 @@ export const routes: Routes = [
     path: 'employee-action',
     component: EmployeeActionComponent
   },
-  {
-    path: 'payroll-master',
-    component: PayrollMasterComponent
-  },
-  {
-    path: 'payroll-master/attendance-managment',
-    component: AttendanceManagmentComponent
-  },
-  {
-    path: 'payroll-master/tax-managment',
-    component: TaxManagmentComponent
-  },
-  {
-    path: 'payroll-master/payroll-processing',
-    component: PayrollProcessingComponent
-  },
-  {
-    path: 'payroll-master/payroll-setup',
-    component: PayrollSetupComponent
-  },
-  {
-    path: 'payroll-master/payroll-setup/create',
-    component: AddPayrollSetupComponent
-  },
+  ...payrollMasterRoutes,
   {
     path: 'employee-action/probation-evaluation-form',
     component: ProbationEvaluationFormComponent
@@ -145,4 +120,13 @@ export const routes: Routes = [
     path: 'employee-action/approval-authority-setup',
     component: ApprovalAuthoritySetupComponent
   },
+  {
+    path: 'termination',
+    component: TerminationFormComponent
+  },
+  {
+    path: 'termination/create',
+    component: AddTerminationComponent
+  },
+  ...plantMaintenanceRoutes,
 ];

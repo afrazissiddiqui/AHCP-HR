@@ -1,26 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
-import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
-import { PAYROLL_MASTER_SIDEBAR_ITEMS, PAYROLL_MASTER_SIDEBAR_SECTIONS } from '../payroll-master-sidebar';
+import { Component, inject } from '@angular/core';
+import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
+import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
 
 @Component({
   selector: 'app-payroll-processing',
   standalone: true,
-  imports: [CommonModule, SidebarComponent],
+  imports: [CommonModule, PageToolbarComponent],
   templateUrl: './payroll-processing.html',
   styleUrl: '../../Application-Form/Application-Form.css',
 })
 export class PayrollProcessingComponent {
-  sidebarItems: SidebarItem[] = PAYROLL_MASTER_SIDEBAR_ITEMS;
-  sidebarSections: SidebarSection[] = PAYROLL_MASTER_SIDEBAR_SECTIONS;
-  activeSidebarItemId = 'payroll-processing';
-  sidebarCollapsed = signal(false);
-
-  onFolderSelected(folderId: string): void {
-    this.activeSidebarItemId = folderId;
-  }
+  private readonly layout = inject(PayrollMasterLayoutService);
 
   toggleSidebar(): void {
-    this.sidebarCollapsed.update((state) => !state);
+    this.layout.toggleSidebar();
   }
 }

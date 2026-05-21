@@ -1,0 +1,17 @@
+<div class="payroll-master-layout">
+  @if (showSidebar()) {
+    <app-sidebar
+      [title]="'Forms'"
+      [items]="sidebarItems"
+      [sections]="sidebarSections"
+      [isCollapsed]="layout.sidebarCollapsed()"
+      [activeItemId]="activeSidebarItemId()"
+      (folderSelected)="onFolderSelected($event)"
+      (collapsedChange)="layout.sidebarCollapsed.set($event)"
+    ></app-sidebar>
+  }
+
+  <div class="payroll-master-content" [class.payroll-master-content--full]="!showSidebar()">
+    <router-outlet />
+  </div>
+</div>

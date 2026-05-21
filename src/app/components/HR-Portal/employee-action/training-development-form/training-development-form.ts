@@ -3,6 +3,7 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
+import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../services/application-form.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
@@ -26,7 +27,7 @@ type TrainingColumnKey = Exclude<keyof TrainingDevelopmentRecord, 'selected'>;
 @Component({
   selector: 'app-training-development-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
   templateUrl: './training-development-form.html',
   styleUrls: [
     '../../Application-Form/Application-Form.css'

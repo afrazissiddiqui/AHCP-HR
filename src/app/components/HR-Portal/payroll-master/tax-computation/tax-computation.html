@@ -1,0 +1,150 @@
+<div class="payroll-master-view payroll-master-view--scroll tax-computation-view">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()"></app-page-toolbar>
+
+  <div class="tax-computation-content">
+    <section class="tax-computation-header">
+      <div class="tax-computation-section-title">Header</div>
+      <div class="tax-computation-header-fields">
+        <div class="tax-computation-field">
+          <label for="tc-form-number">Form Number</label>
+          <input id="tc-form-number" type="text" [value]="formNumber()" readonly />
+        </div>
+
+        <div class="tax-computation-field">
+          <label for="tc-employee-id">Employee ID</label>
+          <div class="tax-computation-search-wrap">
+            <input
+              id="tc-employee-id"
+              type="search"
+              role="combobox"
+              [attr.aria-expanded]="idSuggestionsOpen()"
+              aria-autocomplete="list"
+              aria-controls="tc-employee-id-listbox"
+              [ngModel]="employeeId()"
+              (ngModelChange)="onEmployeeIdInput($event)"
+              (focus)="openIdSuggestions()"
+              (blur)="onIdInputBlur()"
+              placeholder="Search by ID, name, or department"
+              autocomplete="off"
+            />
+            <ul
+              id="tc-employee-id-listbox"
+              class="tax-computation-suggestions"
+              role="listbox"
+              *ngIf="idSuggestionsOpen() && employeeId().trim()"
+            >
+              <li
+                *ngFor="let emp of idSuggestions()"
+                role="option"
+                class="tax-computation-suggestion-item"
+                (mousedown)="selectEmployeeFromSuggestion(emp)"
+              >
+                <span class="tax-computation-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
+                <span class="tax-computation-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
+              </li>
+              <li
+                *ngIf="idSuggestions().length === 0"
+                class="tax-computation-suggestion-empty"
+                role="presentation"
+              >
+                No matching employees
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="tax-computation-field">
+          <label for="tc-employee-name">Employee Name</label>
+          <div class="tax-computation-search-wrap">
+            <input
+              id="tc-employee-name"
+              type="search"
+              role="combobox"
+              [attr.aria-expanded]="nameSuggestionsOpen()"
+              aria-autocomplete="list"
+              aria-controls="tc-employee-name-listbox"
+              [ngModel]="employeeName()"
+              (ngModelChange)="onEmployeeNameInput($event)"
+              (focus)="openNameSuggestions()"
+              (blur)="onNameInputBlur()"
+              placeholder="Search by name, ID, or department"
+              autocomplete="off"
+            />
+            <ul
+              id="tc-employee-name-listbox"
+              class="tax-computation-suggestions"
+              role="listbox"
+              *ngIf="nameSuggestionsOpen() && employeeName().trim()"
+            >
+              <li
+                *ngFor="let emp of nameSuggestions()"
+                role="option"
+                class="tax-computation-suggestion-item"
+                (mousedown)="selectEmployeeFromSuggestion(emp)"
+              >
+                <span class="tax-computation-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
+                <span class="tax-computation-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
+              </li>
+              <li
+                *ngIf="nameSuggestions().length === 0"
+                class="tax-computation-suggestion-empty"
+                role="presentation"
+              >
+                No matching employees
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="tax-computation-field">
+          <label for="tc-department">Department</label>
+          <input id="tc-department" type="text" [ngModel]="department()" readonly />
+        </div>
+
+        <div class="tax-computation-field">
+          <label for="tc-designation">Designation</label>
+          <input id="tc-designation" type="text" [ngModel]="designation()" readonly />
+        </div>
+
+        <div class="tax-computation-field">
+          <label for="tc-category">Employee Category</label>
+          <input id="tc-category" type="text" [ngModel]="employeeCategory()" readonly />
+        </div>
+
+        <div class="tax-computation-field">
+          <label for="tc-tax-period">Tax Period</label>
+          <input
+            id="tc-tax-period"
+            type="month"
+            [ngModel]="taxPeriod()"
+            (ngModelChange)="taxPeriod.set($event)"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="tax-computation-body">
+      <div class="tax-computation-section-title">Tax Computation</div>
+      <div class="tax-computation-body-empty" *ngIf="bodyFields().length === 0">
+        No fields enabled. Check fields in
+        <a routerLink="/payroll-master/tax-managment">Tax Allowance Form</a>
+        to show them here.
+      </div>
+      <div class="tax-computation-body-list" *ngIf="bodyFields().length > 0">
+        <div class="tax-computation-body-row" *ngFor="let field of bodyFields()">
+          <span class="tax-computation-body-label">{{ field.label }}</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="tax-computation-body-input"
+            [readonly]="field.readonly"
+            [ngModel]="getAmount(field.key)"
+            (ngModelChange)="setAmount(field.key, $event)"
+            [attr.aria-label]="field.label"
+          />
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

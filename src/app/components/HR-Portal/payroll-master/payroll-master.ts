@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
-import { PAYROLL_MASTER_SIDEBAR_ITEMS, PAYROLL_MASTER_SIDEBAR_SECTIONS } from './payroll-master-sidebar';
 import { ApplicationFormService } from '../../../services/application-form.service';
+import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
+import { PayrollMasterLayoutService } from './payroll-master-layout.service';
 
 type PayrollMasterRow = {
   employeeCode: number;
@@ -39,17 +39,14 @@ type PayrollMasterColumnKey = keyof PayrollMasterRow;
 @Component({
   selector: 'app-payroll-master',
   standalone: true,
-  imports: [CommonModule, FormsModule, SidebarComponent],
+  imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './payroll-master.html',
   styleUrl: '../Application-Form/Application-Form.css',
 })
 export class PayrollMasterComponent {
-  constructor(private readonly applicationFormService: ApplicationFormService) { }
+  private readonly layout = inject(PayrollMasterLayoutService);
 
-  sidebarItems: SidebarItem[] = PAYROLL_MASTER_SIDEBAR_ITEMS;
-  sidebarSections: SidebarSection[] = PAYROLL_MASTER_SIDEBAR_SECTIONS;
-  activeSidebarItemId = 'payroll-master-list';
-  sidebarCollapsed = signal(false);
+  constructor(private readonly applicationFormService: ApplicationFormService) { }
   searchText = '';
   /** Empty string means all departments. */
   selectedDepartment = '';
@@ -174,11 +171,7 @@ export class PayrollMasterComponent {
     this.showDialog = false;
   }
 
-  onFolderSelected(folderId: string): void {
-    this.activeSidebarItemId = folderId;
-  }
-
   toggleSidebar(): void {
-    this.sidebarCollapsed.update((state) => !state);
+    this.layout.toggleSidebar();
   }
 }

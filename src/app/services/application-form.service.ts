@@ -479,6 +479,61 @@ export class ApplicationFormService {
     this.applicationRecords.update((list) => [...list, record]);
   }
 
+  findRecordByLoginUserId(userId: string): ApplicationFormRecord | undefined {
+    const normalized = userId.trim().toLowerCase();
+    if (!normalized) {
+      return undefined;
+    }
+    return this.applicationRecords().find((record) => {
+      const loginUserId = record.detail?.loginDetails.userId?.trim().toLowerCase() ?? '';
+      const employeeCode = String(record.EmployeeCode);
+      return loginUserId === normalized || employeeCode === normalized;
+    });
+  }
+
+  /** Profile for the signed-in user; falls back to the first application record. */
+  getSignedInUserRecord(sessionUserId: string | null): ApplicationFormRecord | undefined {
+    if (sessionUserId) {
+      const match = this.findRecordByLoginUserId(sessionUserId);
+      if (match) {
+        return match;
+      }
+    }
+    const records = this.applicationRecords();
+    return records.length > 0 ? records[0] : undefined;
+  }
+
+  updateLoginPassword(sessionUserId: string, newPassword: string): boolean {
+    const normalized = sessionUserId.trim().toLowerCase();
+    if (!normalized || !newPassword.trim()) {
+      return false;
+    }
+
+    let updated = false;
+    this.applicationRecords.update((list) =>
+      list.map((record) => {
+        const loginUserId = record.detail?.loginDetails.userId?.trim().toLowerCase() ?? '';
+        if (loginUserId !== normalized) {
+          return record;
+        }
+        updated = true;
+        return {
+          ...record,
+          detail: record.detail
+            ? {
+                ...record.detail,
+                loginDetails: {
+                  ...record.detail.loginDetails,
+                  password: newPassword,
+                },
+              }
+            : record.detail,
+        };
+      })
+    );
+    return updated;
+  }
+
   getEmployeeMasterDataRecords(): EmployeeMasterDataRecord[] {
     return this.applicationRecords().map((record) => ({
       EmployeeID: record.EmployeeCode,

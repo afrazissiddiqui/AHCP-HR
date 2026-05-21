@@ -1,32 +1,11 @@
-<div
-      id="sdk---sample--header"
-      class="sapMIBar sapMIBar-CTX sapMBar sapMContent-CTX sapMBar-CTX sapContrast sapContrastPlus sapMSubHeader-CTX sapMBarTitleAlignNone"
-      role="toolbar"
-    >
-      <div class="sapMBarLeft sapMBarContainer">
-        <button class="sapMBtnBase sapMBtn sapMBarChild" (click)="toggleSidebar()" title="Toggle Sidebar" type="button">
-          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable">
-            <span class="sapUiIcon">☰</span>
-          </span>
-        </button>
-
-        <button class="sapMBtnBase sapMBtn sapMBarChild" aria-label="Back" title="Back" type="button">
-          <span class="sapMBtnInner sapMBtnHoverable sapMFocusable sapMBtnBack sapMBtnIconFirst">
-            <span class="sapUiIcon sapMBtnIcon sapMBtnIconLeft">←</span>
-          </span>
-        </button>
-      </div>
-
-      <div class="sapMBarMiddle">
-        <div class="sapMBarPH sapMBarContainer" style="left: 52px; position: absolute; width: 350px;">
-          <h1 class="sapMTitle sapMTitleStyleAuto sapMTitleNoWrap sapMTitleMaxWidth sapMBarChild" title="IGP">IGP (Inward Gate Pass)</h1>
-        </div>
-      </div>
-
-      <div class="sapMBarRight sapMBarContainer">
-        <button class="btn-default" type="button" (click)="createNew()">Add IGP</button>
-      </div>
-    </div>
+    <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
+      <button class="sapMBtnBase sapMBtn sapMBarChild" aria-label="Back" title="Back" type="button">
+        <span class="sapMBtnInner sapMBtnHoverable sapMFocusable sapMBtnBack sapMBtnIconFirst">
+          <span class="sapUiIcon sapMBtnIcon sapMBtnIconLeft">←</span>
+        </span>
+      </button>
+      <button class="btn-default" type="button" pageToolbarActions (click)="createNew()">Add IGP</button>
+    </app-page-toolbar>
 
     <div
       id="table-toolbar"

@@ -1,0 +1,166 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.view-profile-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #f8f8f8;
+}
+
+.view-profile-card {
+  margin: 16px 24px 24px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: '72', Arial, sans-serif;
+}
+
+.view-profile-card__intro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.view-profile-card__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0064d9;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.view-profile-card__name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d2d3e;
+}
+
+.view-profile-card__hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #6a6d70;
+}
+
+.view-profile-card__body {
+  padding: 16px 20px 20px;
+}
+
+.view-profile-card__body--empty {
+  color: #556b82;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.view-profile-section {
+  margin-bottom: 20px;
+}
+
+.view-profile-section:last-child {
+  margin-bottom: 0;
+}
+
+.view-profile-section h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2d3e;
+  border-bottom: 1px solid #eef2f6;
+  padding-bottom: 6px;
+}
+
+.view-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+.view-profile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: #1d2d3e;
+}
+
+.view-profile-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6a6d70;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.view-profile-section--password {
+  background: #f8fafc;
+  margin: 0 -20px -20px;
+  padding: 16px 20px 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.view-profile-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+}
+
+.view-profile-password-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #556b82;
+}
+
+.view-profile-password-form input {
+  height: 32px;
+  padding: 4px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.view-profile-save-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #0064d9;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.view-profile-save-btn:hover {
+  background: #0052cc;
+}
+
+@media (max-width: 520px) {
+  .view-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .view-profile-card {
+    margin: 12px;
+  }
+}

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
+import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { OgpRecord, OgpService } from './ogp.service';
 
@@ -17,7 +18,7 @@ interface ColumnConfig {
 @Component({
   selector: 'app-ogp',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, PageToolbarComponent],
   templateUrl: './ogp.html',
   styleUrl: '../igp/igp.css',
 })

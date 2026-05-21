@@ -1,0 +1,118 @@
+<span class="table-filter-host">
+  <button
+    class="sapMBtnBase sapMBtn table-filter-trigger"
+    [class.table-filter-trigger--active]="hasActive()"
+    type="button"
+    title="Filter"
+    aria-label="Filter"
+    [attr.aria-expanded]="isOpen()"
+    (click)="openDialog()"
+  >
+    <span class="sapUiIcon table-filter-trigger__icon" aria-hidden="true">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false">
+        <path d="M2 3h12l-4.5 5.5v4.5L6.5 14V8.5L2 3z" />
+      </svg>
+    </span>
+  </button>
+</span>
+
+<ng-container *ngIf="isOpen()">
+  <div class="table-filter-overlay" (click)="closeDialog()" role="presentation">
+    <div
+      class="table-filter-panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="cfg.title || 'Filter'"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="table-filter-panel__header">
+        <h3 class="table-filter-panel__title">{{ cfg.title || 'Filter' }}</h3>
+        <button
+          type="button"
+          class="sapMBtnBase table-filter-panel__close"
+          aria-label="Close filter"
+          (click)="closeDialog()"
+        >
+          ✕
+        </button>
+      </header>
+
+      <div class="table-filter-panel__body">
+        <ng-container *ngFor="let field of cfg.fields">
+          <div *ngIf="field.type === 'select'" class="table-filter-field">
+            <label class="table-filter-field__label" [attr.for]="fieldDomId(field, 'select')">
+              {{ field.label }}
+            </label>
+            <select
+              class="table-filter-field__control"
+              [id]="fieldDomId(field, 'select')"
+              [ngModel]="getSelectValue(field)"
+              (ngModelChange)="setSelectValue(field, $event)"
+            >
+              <option value="">All</option>
+              <option *ngFor="let opt of selectOptions(field)" [value]="opt">{{ opt }}</option>
+            </select>
+          </div>
+
+          <div *ngIf="field.type === 'status'" class="table-filter-field">
+            <label class="table-filter-field__label" [attr.for]="fieldDomId(field, 'status')">
+              {{ field.label }}
+            </label>
+            <select
+              class="table-filter-field__control"
+              [id]="fieldDomId(field, 'status')"
+              [ngModel]="getStatusValue(field)"
+              (ngModelChange)="setStatusValue(field, $event)"
+            >
+              <option value="">All</option>
+              <option value="Active">Active</option>
+              <option value="NotActive">Not active</option>
+            </select>
+          </div>
+
+          <fieldset *ngIf="field.type === 'numberRange'" class="table-filter-field table-filter-field--range">
+            <legend class="table-filter-field__label">{{ field.label }}</legend>
+            <div class="table-filter-range">
+              <div class="table-filter-range__item">
+                <label class="table-filter-range__label" [attr.for]="fieldDomId(field, 'from')">
+                  {{ field.fromLabel || 'From' }}
+                </label>
+                <input
+                  class="table-filter-field__control"
+                  [id]="fieldDomId(field, 'from')"
+                  type="number"
+                  min="0"
+                  [placeholder]="field.fromPlaceholder || 'Min'"
+                  [ngModel]="getRangeValue(field).from"
+                  (ngModelChange)="setRangeFrom(field, $event)"
+                />
+              </div>
+              <div class="table-filter-range__item">
+                <label class="table-filter-range__label" [attr.for]="fieldDomId(field, 'to')">
+                  {{ field.toLabel || 'To' }}
+                </label>
+                <input
+                  class="table-filter-field__control"
+                  [id]="fieldDomId(field, 'to')"
+                  type="number"
+                  min="0"
+                  [placeholder]="field.toPlaceholder || 'Max'"
+                  [ngModel]="getRangeValue(field).to"
+                  (ngModelChange)="setRangeTo(field, $event)"
+                />
+              </div>
+            </div>
+          </fieldset>
+        </ng-container>
+      </div>
+
+      <footer class="table-filter-panel__footer">
+        <button type="button" class="sapMBtnBase table-filter-panel__btn" (click)="closeDialog()">Cancel</button>
+        <button type="button" class="sapMBtnBase table-filter-panel__btn" (click)="clear()">Clear</button>
+        <button type="button" class="sapMBtnBase table-filter-panel__btn table-filter-panel__btn--primary" (click)="apply()">
+          Apply
+        </button>
+      </footer>
+    </div>
+  </div>
+</ng-container>

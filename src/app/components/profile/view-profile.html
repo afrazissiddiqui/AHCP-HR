@@ -1,0 +1,208 @@
+@if (open()) {
+  <div
+    class="profile-drawer-overlay profile-drawer-overlay--open"
+    (click)="close()"
+    role="presentation"
+  >
+    <aside
+      class="profile-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Employee profile"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="profile-drawer__hero">
+        <div class="profile-drawer__banner" aria-hidden="true"></div>
+        <button
+          type="button"
+          class="profile-drawer__close"
+          aria-label="Close profile"
+          (click)="close()"
+        >
+          ✕
+        </button>
+        <span class="profile-drawer__avatar" aria-hidden="true">{{ avatarInitials() }}</span>
+      </header>
+
+      <div class="profile-drawer__body">
+        <!-- Left: personal sidebar -->
+        <div class="profile-drawer__identity">
+          <div class="profile-drawer__name-row">
+            <h2 class="profile-drawer__name">{{ profileRecord()?.EmployeeName || 'User profile' }}</h2>
+            <div class="profile-drawer__name-actions" aria-label="Profile actions">
+              <button type="button" class="profile-drawer__icon-btn" title="Edit profile" aria-label="Edit profile">
+                <ui5-icon name="edit"></ui5-icon>
+              </button>
+              <button type="button" class="profile-drawer__icon-btn" title="Share profile" aria-label="Share profile">
+                <ui5-icon name="share-2"></ui5-icon>
+              </button>
+            </div>
+          </div>
+
+          @if (profileRecord(); as record) {
+            @if (spotlight(); as spot) {
+              <p class="profile-drawer__title">{{ field(record, r => r.Designation) }}</p>
+              <p class="profile-drawer__dept">{{ spot.departmentLabel }}</p>
+              <p class="profile-drawer__meta">{{ spot.teamStats }}</p>
+
+              <ul class="profile-drawer__contact">
+                <li>
+                  <ui5-icon name="call" class="profile-drawer__contact-icon"></ui5-icon>
+                  <span>{{ record.detail?.personalInfo?.contactNumber || '—' }}</span>
+                </li>
+                <li>
+                  <ui5-icon name="email" class="profile-drawer__contact-icon"></ui5-icon>
+                  <a class="profile-drawer__link" [href]="'mailto:' + loginField(record, 'userId')">{{ loginField(record, 'userId') }}</a>
+                </li>
+                <li>
+                  <ui5-icon name="map-pin" class="profile-drawer__contact-icon"></ui5-icon>
+                  <span>{{ spot.location }}</span>
+                </li>
+                <li>
+                  <ui5-icon name="time-entry-request" class="profile-drawer__contact-icon"></ui5-icon>
+                  <span>{{ localTime() }}</span>
+                </li>
+              </ul>
+
+              <section class="profile-drawer__bio">
+                <p class="profile-drawer__bio-text" [class.profile-drawer__bio-text--expanded]="bioExpanded()">
+                  {{ spot.bio }}
+                </p>
+                <button type="button" class="profile-drawer__bio-toggle" (click)="toggleBio()">
+                  {{ bioExpanded() ? 'Show less' : '…Show more' }}
+                </button>
+              </section>
+
+              @if (field(record, r => r.ReportingManager) !== '—') {
+                <section class="profile-drawer__manager">
+                  <h3 class="profile-drawer__manager-label">Direct manager</h3>
+                  <div class="profile-drawer__manager-card">
+                    <span class="profile-drawer__manager-avatar" aria-hidden="true">{{ managerInitials(record) }}</span>
+                    <div>
+                      <p class="profile-drawer__manager-name">{{ field(record, r => r.ReportingManager) }}</p>
+                      <p class="profile-drawer__manager-role">Manager</p>
+                    </div>
+                    <button type="button" class="profile-drawer__icon-btn profile-drawer__icon-btn--msg" title="Message manager" aria-label="Message manager">
+                      <ui5-icon name="discussion"></ui5-icon>
+                    </button>
+                  </div>
+                </section>
+              }
+            }
+          } @else {
+            <p class="profile-drawer__empty">
+              No Application Form profile was found for this user. Sign in with a valid User ID (e.g. <strong>ahmed.khan</strong>).
+            </p>
+          }
+        </div>
+
+        <!-- Right: Spotlight -->
+        <div class="profile-drawer__spotlight">
+          <div class="profile-drawer__spotlight-header">
+            <div class="profile-drawer__spotlight-title-row">
+              <h3>Spotlight</h3>
+              <div class="profile-drawer__tabs" role="tablist" aria-label="Profile views">
+                <button type="button" class="profile-drawer__tab profile-drawer__tab--active" role="tab" aria-selected="true" title="Spotlight">
+                  <ui5-icon name="bbyd-dashboard"></ui5-icon>
+                </button>
+                <button type="button" class="profile-drawer__tab" role="tab" aria-selected="false" title="Timeline">
+                  <ui5-icon name="activity-items"></ui5-icon>
+                </button>
+                <button type="button" class="profile-drawer__tab" role="tab" aria-selected="false" title="Org chart">
+                  <ui5-icon name="org-chart"></ui5-icon>
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="profile-drawer__full-profile-btn"
+              (click)="openFullProfile()"
+            >
+              Full profile
+            </button>
+          </div>
+
+          @if (profileRecord(); as record) {
+            @if (spotlight(); as spot) {
+              <div class="profile-drawer__cards">
+                <!-- Skills -->
+                <article class="profile-drawer__card profile-drawer__card--skills">
+                  <div class="profile-drawer__card-head">
+                    <h4>Skills</h4>
+                  </div>
+                  <div class="profile-drawer__skills-layout">
+                    <svg class="profile-drawer__radar" viewBox="0 0 200 200" aria-hidden="true">
+                      @for (ring of [1, 2, 3, 4, 5]; track ring) {
+                        <circle cx="100" cy="100" [attr.r]="ring * 14" fill="none" stroke="#e8edf2" stroke-width="1" />
+                      }
+                      <polygon
+                        class="profile-drawer__radar-fill"
+                        [attr.points]="radarPoints()"
+                      />
+                    </svg>
+                    <ul class="profile-drawer__skill-legend">
+                      @for (skill of spot.skills; track skill.name) {
+                        <li>
+                          <span class="profile-drawer__skill-dot" [style.background]="skill.color"></span>
+                          <span class="profile-drawer__skill-name">{{ skill.name }}</span>
+                          <span class="profile-drawer__skill-level">{{ skill.level }}/5</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </article>
+
+                <!-- Competencies -->
+                <article class="profile-drawer__card">
+                  <h4>Competencies</h4>
+                  <ul class="profile-drawer__competency-list">
+                    @for (item of spot.competencies; track item.name) {
+                      <li class="profile-drawer__competency-row">
+                        <span class="profile-drawer__competency-name">{{ item.name }}</span>
+                        <div class="profile-drawer__competency-bar" role="img" [attr.aria-label]="item.name + ': ' + item.level + ' of 5'">
+                          @for (seg of [1, 2, 3, 4, 5]; track seg) {
+                            <span
+                              class="profile-drawer__competency-seg"
+                              [class.profile-drawer__competency-seg--filled]="seg <= item.level"
+                            ></span>
+                          }
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                </article>
+
+                <!-- Mentoring -->
+                <article class="profile-drawer__card profile-drawer__card--mentoring">
+                  <h4>Mentoring</h4>
+                  <p class="profile-drawer__mentor-label">I'm a mentor</p>
+                  <div class="profile-drawer__tags">
+                    @for (program of spot.mentoringPrograms; track program) {
+                      <span class="profile-drawer__tag">{{ program }}</span>
+                    }
+                  </div>
+                </article>
+
+                <!-- Bottom row -->
+                <div class="profile-drawer__cards-row">
+                  <article class="profile-drawer__card profile-drawer__card--compact">
+                    <h4>Organization information</h4>
+                    <p class="profile-drawer__card-text">{{ spot.organizationSummary }}</p>
+                  </article>
+                  <article class="profile-drawer__card profile-drawer__card--compact profile-drawer__card--absence">
+                    <h4>Upcoming absence</h4>
+                    @if (spot.upcomingAbsence) {
+                      <p class="profile-drawer__card-text">{{ spot.upcomingAbsence }}</p>
+                    } @else {
+                      <p class="profile-drawer__card-text profile-drawer__card-text--muted">No upcoming absence scheduled.</p>
+                    }
+                  </article>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </aside>
+  </div>
+}

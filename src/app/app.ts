@@ -3,18 +3,22 @@ import { RouterOutlet } from '@angular/router';
 import { Router } from '@angular/router';
 import { NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { ViewProfileComponent } from './components/profile/view-profile';
+import { ApplicationFormService } from './services/application-form.service';
 import { AuthService } from './services/auth.service';
+import { resolveShellbarTitle } from './utils/shellbar-title.util';
 
 type HrMenuOption = {
   label: string;
   value: string;
   icon: string;
   route?: string;
+  children?: HrMenuOption[];
 };
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ViewProfileComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -24,17 +28,38 @@ export class App {
   protected readonly title = signal('SAPQC');
   protected readonly hrDropdownOpen = signal(false);
   protected readonly profileDropdownOpen = signal(false);
+  protected readonly profileDrawerOpen = signal(false);
   protected readonly selectedHeaderTitle = signal('Home');
   protected readonly hoveredHeaderTitle = signal<string | null>(null);
   protected readonly selectedHrOption = signal<string>('dashboard');
+  /** Parent HR menu item whose child options are shown (e.g. plant maintenance). */
+  protected readonly expandedHrMenuValue = signal<string | null>(null);
   /** Hide HR shellbar on full-page routes (e.g. login). */
   protected readonly showMainChrome = signal(true);
 
   @ViewChild('headerWrapper', { read: ElementRef })
   private headerWrapperRef?: ElementRef<HTMLElement>;
+
+  /** Ignore document click-close briefly after opening profile menu (same click bubble). */
+  private profileMenuIgnoreCloseUntil = 0;
   protected readonly shellbarTitle = computed(() => {
     const label = this.hoveredHeaderTitle() ?? this.selectedHeaderTitle();
     return `${label} ▾`;
+  });
+
+  protected readonly profileAvatarInitials = computed(() => {
+    const record = this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId()
+    );
+    const name = record?.EmployeeName?.trim() ?? '';
+    if (!name) {
+      return 'UI';
+    }
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   });
 
   protected readonly hrMenuOptions: HrMenuOption[] = [
@@ -44,11 +69,29 @@ export class App {
     { label: 'Payroll Master', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
     // { label: 'IGP', value: 'gate-pass/igp', icon: 'expense-report', route: '/gate-pass/igp' },
     { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
-    { label: 'Termination', value: 'Termination', icon: 'feedback', },
+    { label: 'Termination', value: 'termination', icon: 'feedback', route: '/termination' },
     { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance', },
     { label: 'Development', value: 'development', icon: 'learning-assistant', },
     { label: 'Goals', value: 'goals', icon: 'goal', },
-    { label: 'Growth Portfolio', value: 'growth-portfolio', icon: 'journey-change', },
+    {
+      label: 'Plant maintenance',
+      value: 'plant-maintenance',
+      icon: 'factory',
+      children: [
+        {
+          label: 'Main Form',
+          value: 'plant-maintenance/main-form',
+          icon: 'form',
+          route: '/plant-maintenance/main-form',
+        },
+        {
+          label: 'Setup Form',
+          value: 'plant-maintenance/setup-form',
+          icon: 'settings',
+          route: '/plant-maintenance/setup-form',
+        },
+      ],
+    },
     { label: 'Learning', value: 'learning', icon: 'learning-assistant', },
     { label: 'Org Chart', value: 'org-chart', icon: 'org-chart', },
     { label: 'Performance', value: 'performance', icon: 'performance', },
@@ -59,6 +102,7 @@ export class App {
   constructor(
     private router: Router,
     private readonly authService: AuthService,
+    private readonly applicationFormService: ApplicationFormService,
   ) {
     const initialKey = (this.router.url.split('?')[0] ?? '').replace(/^\//, '');
     this.showMainChrome.set(initialKey !== 'login');
@@ -71,50 +115,53 @@ export class App {
         const url = e.urlAfterRedirects.split('?')[0] ?? '';
         const routeKey = url.replace(/^\//, '');
 
-        const mappedTitle =
-          routeKey === 'forms-hub' ? 'All Forms'
-            : routeKey === 'login' ? 'Sign in'
-            : routeKey === 'profile' ? 'Edit profile'
-            : routeKey === 'recruitment/create' ? 'Recruiting'
-              : routeKey === 'recruitment' ? 'Recruiting'
-                : routeKey === 'employee-action/approval-authority-setup' ? 'Approval Setup'
-                  : routeKey.startsWith('employee-action/leave-application-form') ? 'Leave managment'
-                  : routeKey.startsWith('employee-action') ? 'Employee Action'
-                    : routeKey.startsWith('payroll-master') ? 'Payroll Master'
-                      : routeKey.startsWith('gate-pass/ogp') ? 'OGP'
-                      : routeKey.startsWith('gate-pass/agp') ? 'AGP'
-                      : routeKey.startsWith('gate-pass/igp') ? 'IGP'
-                      : routeKey.startsWith('gate-pass') ? 'Gate pass'
-                      : routeKey.startsWith('job-specification-form') ? 'Job Specification'
-                      : routeKey === 'dashboard' ? 'Home'
-                        : 'Home';
+        const mappedTitle = resolveShellbarTitle(routeKey);
 
         this.selectedHeaderTitle.set(mappedTitle);
-        this.selectedHrOption.set(routeKey || 'dashboard');
+        this.selectedHrOption.set(this.resolveHrOptionValue(routeKey));
+        if (routeKey.startsWith('plant-maintenance')) {
+          this.expandedHrMenuValue.set('plant-maintenance');
+        }
         this.showMainChrome.set(routeKey !== 'login');
         this.profileDropdownOpen.set(false);
+        this.profileDrawerOpen.set(false);
       });
   }
 
   toggleHrDropdown(): void {
     this.profileDropdownOpen.set(false);
-    this.hrDropdownOpen.update(state => !state);
+    this.hrDropdownOpen.update((state) => {
+      if (state) {
+        this.collapseHrSubmenuUnlessActiveRoute();
+      }
+      return !state;
+    });
   }
 
-  onProfileTriggerClick(event: MouseEvent): void {
+  onProfileShellbarClick(event: Event): void {
     event.stopPropagation();
     this.hrDropdownOpen.set(false);
     this.clearPreviewHrOption();
-    this.profileDropdownOpen.update(v => !v);
+    this.profileDropdownOpen.update((open) => {
+      if (!open) {
+        this.profileMenuIgnoreCloseUntil = Date.now() + 200;
+      }
+      return !open;
+    });
   }
 
-  onEditProfile(event: Event): void {
+  onViewProfile(event: Event): void {
     event.stopPropagation();
     this.profileDropdownOpen.set(false);
-    void this.router.navigateByUrl('/profile');
+    this.hrDropdownOpen.set(false);
+    this.profileDrawerOpen.set(true);
   }
 
-  onLogout(event: Event): void {
+  onProfileDrawerClosed(): void {
+    this.profileDrawerOpen.set(false);
+  }
+
+  onSignOut(event: Event): void {
     event.stopPropagation();
     this.profileDropdownOpen.set(false);
     this.hrDropdownOpen.set(false);
@@ -131,7 +178,8 @@ export class App {
     const isBellClick = target.closest('.ui5-shellbar-bell-button');
     const isActionClick = target.closest('.ui5-shellbar-action-button');
     const isSearchClick = target.closest('.ui5-shellbar-search-field-area');
-    const isProfileClick = target.closest('[data-profile-btn]');
+    const isProfileClick =
+      target.closest('[data-profile-btn]') || target.closest('.profile-trigger');
 
     if (isBellClick || isActionClick || isSearchClick || isProfileClick) {
       return;
@@ -178,14 +226,53 @@ export class App {
 
   selectHrOption(option: HrMenuOption, event?: Event): void {
     event?.stopPropagation();
-    this.hrDropdownOpen.set(false);
     this.profileDropdownOpen.set(false);
+
+    if (option.children?.length) {
+      const isExpanded = this.expandedHrMenuValue() === option.value;
+      this.expandedHrMenuValue.set(isExpanded ? null : option.value);
+      this.selectedHrOption.set(option.value);
+      this.selectedHeaderTitle.set(option.label);
+      return;
+    }
+
+    this.hrDropdownOpen.set(false);
+    this.expandedHrMenuValue.set(null);
     this.selectedHrOption.set(option.value);
     this.selectedHeaderTitle.set(option.label);
 
     if (option.route) {
-      this.router.navigate([option.route]);
+      void this.router.navigate([option.route]);
     }
+  }
+
+  isHrOptionExpanded(option: HrMenuOption): boolean {
+    return !!option.children?.length && this.expandedHrMenuValue() === option.value;
+  }
+
+  isHrOptionSelected(option: HrMenuOption): boolean {
+    const selected = this.selectedHrOption();
+    if (option.children?.length) {
+      return selected === option.value || selected.startsWith(`${option.value}/`);
+    }
+    return selected === option.value;
+  }
+
+  private collapseHrSubmenuUnlessActiveRoute(): void {
+    const routeKey = (this.router.url.split('?')[0] ?? '').replace(/^\//, '');
+    if (!routeKey.startsWith('plant-maintenance')) {
+      this.expandedHrMenuValue.set(null);
+    }
+  }
+
+  private resolveHrOptionValue(routeKey: string): string {
+    if (routeKey.startsWith('plant-maintenance/')) {
+      return routeKey;
+    }
+    if (routeKey === 'plant-maintenance') {
+      return 'plant-maintenance';
+    }
+    return routeKey || 'dashboard';
   }
 
   goHome(): void {
@@ -197,23 +284,67 @@ export class App {
     if (!this.hrDropdownOpen() && !this.profileDropdownOpen()) {
       return;
     }
+
     const wrapper = this.headerWrapperRef?.nativeElement;
     const target = event.target as HTMLElement | null;
     if (!wrapper || !target) {
       return;
     }
+
+    if (
+      this.profileDropdownOpen() &&
+      Date.now() > this.profileMenuIgnoreCloseUntil &&
+      !this.eventInvolvesProfileUi(event)
+    ) {
+      this.profileDropdownOpen.set(false);
+    }
+
     if (!wrapper.contains(target)) {
       this.hrDropdownOpen.set(false);
       this.profileDropdownOpen.set(false);
+      this.collapseHrSubmenuUnlessActiveRoute();
       this.clearPreviewHrOption();
       return;
     }
-    if (this.profileDropdownOpen()) {
-      const inProfile =
-        target.closest('[data-profile-btn]') || target.closest('.profile-dropdown-menu');
-      if (!inProfile) {
-        this.profileDropdownOpen.set(false);
-      }
+
+    if (this.hrDropdownOpen() && !this.eventInvolvesHrMenuUi(event)) {
+      this.hrDropdownOpen.set(false);
+      this.collapseHrSubmenuUnlessActiveRoute();
+      this.clearPreviewHrOption();
     }
+  }
+
+  /** Includes shellbar profile control (shadow DOM) and our profile menu. */
+  private eventInvolvesProfileUi(event: Event): boolean {
+    return event.composedPath().some((node) => {
+      if (!(node instanceof HTMLElement)) {
+        return false;
+      }
+      return (
+        node.matches('[data-profile-btn]') ||
+        node.matches('.profile-trigger') ||
+        node.matches('.profile-dropdown-menu') ||
+        node.matches('ui5-avatar') ||
+        node.classList.contains('ui5-shellbar-profile') ||
+        node.classList.contains('ui5-shellbar-profile-avatar') ||
+        node.getAttribute('slot') === 'profile' ||
+        node.getAttribute('data-profile') !== null
+      );
+    });
+  }
+
+  private eventInvolvesHrMenuUi(event: Event): boolean {
+    return event.composedPath().some((node) => {
+      if (!(node instanceof HTMLElement)) {
+        return false;
+      }
+      return (
+        node.matches('.hr-dropdown-menu') ||
+        node.matches('.hr-dropdown-group') ||
+        node.matches('.hr-dropdown-submenu') ||
+        node.matches('.hr-portal-header') ||
+        node.classList.contains('hr-portal-header')
+      );
+    });
   }
 }
