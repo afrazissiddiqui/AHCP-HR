@@ -1,0 +1,178 @@
+<div class="plant-maintenance-setup-view scd-page-view">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()"></app-page-toolbar>
+
+  <div class="tax-computation-content scd-form-content">
+    <div class="cjr-page scd-add-page">
+      <div class="cjr-header">
+        <div class="cjr-header-left">
+          <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+            <span class="cjr-back-icon">❮</span>
+          </button>
+          <h1>{{ pageTitle() }}</h1>
+        </div>
+      </div>
+
+      <div class="cjr-card scd-form-card">
+        <div class="cjr-personal" id="sub-component-definition-section">
+          <div class="cjr-section-title">Sub Component Defination</div>
+
+          <div class="cjr-personal-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="scd-machine-id">Machine ID:</label>
+                <div class="tax-computation-search-wrap">
+                  <input
+                    id="scd-machine-id"
+                    type="search"
+                    role="combobox"
+                    [attr.aria-expanded]="idSuggestionsOpen()"
+                    aria-autocomplete="list"
+                    aria-controls="scd-machine-id-listbox"
+                    [ngModel]="machineId()"
+                    (ngModelChange)="onMachineIdInput($event)"
+                    (focus)="openIdSuggestions()"
+                    (blur)="onIdInputBlur()"
+                    placeholder="Search by ID, name, or machine type"
+                    autocomplete="off"
+                    name="machineId"
+                  />
+                  <ul
+                    id="scd-machine-id-listbox"
+                    class="tax-computation-suggestions"
+                    role="listbox"
+                    *ngIf="idSuggestionsOpen() && machineId().trim()"
+                  >
+                    <li
+                      *ngFor="let machine of idSuggestions()"
+                      role="option"
+                      class="tax-computation-suggestion-item"
+                      (mousedown)="selectMachineFromSuggestion(machine)"
+                    >
+                      <span class="tax-computation-suggestion-primary">{{ machine.machineId }} — {{ machine.machineName }}</span>
+                      <span class="tax-computation-suggestion-meta">{{ machine.defaultMachineType }}</span>
+                    </li>
+                    <li
+                      *ngIf="idSuggestions().length === 0"
+                      class="tax-computation-suggestion-empty"
+                      role="presentation"
+                    >
+                      No matching machines
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="cjr-row">
+                <label for="scd-machine-name">Machine Name:</label>
+                <div class="tax-computation-search-wrap">
+                  <input
+                    id="scd-machine-name"
+                    type="search"
+                    role="combobox"
+                    [attr.aria-expanded]="nameSuggestionsOpen()"
+                    aria-autocomplete="list"
+                    aria-controls="scd-machine-name-listbox"
+                    [ngModel]="machineName()"
+                    (ngModelChange)="onMachineNameInput($event)"
+                    (focus)="openNameSuggestions()"
+                    (blur)="onNameInputBlur()"
+                    placeholder="Search by name, ID, or machine type"
+                    autocomplete="off"
+                    name="machineName"
+                  />
+                  <ul
+                    id="scd-machine-name-listbox"
+                    class="tax-computation-suggestions"
+                    role="listbox"
+                    *ngIf="nameSuggestionsOpen() && machineName().trim()"
+                  >
+                    <li
+                      *ngFor="let machine of nameSuggestions()"
+                      role="option"
+                      class="tax-computation-suggestion-item"
+                      (mousedown)="selectMachineFromSuggestion(machine)"
+                    >
+                      <span class="tax-computation-suggestion-primary">{{ machine.machineId }} — {{ machine.machineName }}</span>
+                      <span class="tax-computation-suggestion-meta">{{ machine.defaultMachineType }}</span>
+                    </li>
+                    <li
+                      *ngIf="nameSuggestions().length === 0"
+                      class="tax-computation-suggestion-empty"
+                      role="presentation"
+                    >
+                      No matching machines
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="scd-machine-type">Machine Type:</label>
+                <input
+                  id="scd-machine-type"
+                  type="text"
+                  [ngModel]="machineType()"
+                  (ngModelChange)="onMachineTypeInput($event)"
+                  name="machineType"
+                  placeholder="Enter machine type"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="scd-sub-components">
+            <div class="cjr-section-title scd-sub-components__title">Sub-Components</div>
+            <div class="scd-sub-component-list">
+              <div
+                class="cjr-row scd-sub-component-row"
+                *ngFor="let sub of subComponents(); let i = index; trackBy: trackByIndex"
+              >
+                <label [attr.for]="'scd-sub-component-' + i">Sub-Component {{ i + 1 }}:</label>
+                <div class="scd-input-with-actions">
+                  <input
+                    [id]="'scd-sub-component-' + i"
+                    type="text"
+                    [ngModel]="subComponents()[i]"
+                    (ngModelChange)="updateSubComponent(i, $event)"
+                    [name]="'subComponent' + i"
+                    placeholder="Enter sub-component"
+                  />
+                  <button
+                    type="button"
+                    class="scd-add-btn"
+                    (click)="addSubComponent()"
+                    *ngIf="i === subComponents().length - 1"
+                    title="Add sub-component"
+                    aria-label="Add sub-component"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    class="scd-remove-btn"
+                    (click)="removeSubComponent(i)"
+                    *ngIf="subComponents().length > 1"
+                    title="Remove sub-component"
+                    [attr.aria-label]="'Remove sub-component ' + (i + 1)"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cjr-actions-footer">
+          <button type="button" class="btn-secondary" (click)="resetForm()">Reset</button>
+          <button type="button" class="cjr-submit-btn" (click)="saveForm()">
+            <span class="cjr-submit-icon">✓</span>
+            {{ editingRecordId() ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,271 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.scd-page-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.scd-page-view--table {
+  overflow: hidden;
+}
+
+.scd-form-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.scd-table-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.scd-table-back {
+  flex-shrink: 0;
+  padding: 8px 12px 0;
+}
+
+.scd-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #0052cc;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scd-back-btn:hover {
+  background: #f3f7fb;
+}
+
+.scd-back-icon {
+  font-size: 12px;
+}
+
+.scd-table-column .table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.scd-table-empty {
+  text-align: center;
+  color: #64748b;
+  padding: 24px 12px !important;
+}
+
+.scd-actions-header {
+  min-width: 220px;
+  white-space: nowrap;
+}
+
+.scd-actions-cell {
+  white-space: nowrap;
+}
+
+.scd-actions-cell .view-btn,
+.scd-actions-cell .scd-update-btn,
+.scd-actions-cell .scd-delete-btn {
+  margin-right: 6px;
+}
+
+.scd-actions-cell .scd-delete-btn:last-child,
+.scd-actions-cell .scd-update-btn:last-child,
+.scd-actions-cell .view-btn:last-child {
+  margin-right: 0;
+}
+
+.scd-update-btn {
+  background: #e9730c;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.scd-update-btn:hover {
+  background: #d1670a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scd-delete-btn {
+  background: #bb0000;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.scd-delete-btn:hover {
+  background: #a30000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scd-view-sub-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.scd-view-sub-list li {
+  margin-bottom: 6px;
+  color: #1d2d3e;
+}
+
+.scd-view-sub-empty {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* View modal footer — same compact style as View / Update / Delete in table */
+.js-detail-modal .js-modal-footer .btn-secondary.scd-modal-close-btn,
+.js-detail-modal .js-modal-footer .scd-update-btn {
+  min-height: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.scd-form-card {
+  margin: 0;
+}
+
+.cjr-row .tax-computation-search-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.cjr-row .tax-computation-search-wrap input[type='search'] {
+  height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 13px;
+  color: #333;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cjr-row .tax-computation-search-wrap input[type='search']:focus {
+  outline: none;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+.scd-sub-components {
+  margin-top: 8px;
+  padding-top: 4px;
+  border-top: 1px solid #eee;
+}
+
+.scd-sub-components__title {
+  margin-top: 12px;
+}
+
+.scd-add-page {
+  min-height: 100%;
+}
+
+.scd-add-page .cjr-card {
+  margin: 0 24px 16px;
+}
+
+.scd-sub-component-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scd-sub-component-row {
+  margin-bottom: 0;
+}
+
+.scd-input-with-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.scd-input-with-actions input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.scd-add-btn,
+.scd-remove-btn {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.scd-add-btn {
+  color: #28a745;
+}
+
+.scd-add-btn:hover {
+  background: #28a745;
+  color: #fff;
+  border-color: #28a745;
+}
+
+.scd-remove-btn {
+  color: #dc3545;
+}
+
+.scd-remove-btn:hover {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}

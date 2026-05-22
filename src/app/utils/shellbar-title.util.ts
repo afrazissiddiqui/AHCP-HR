@@ -36,6 +36,9 @@ const EXACT_TITLES: Record<string, string> = {
   'gate-pass/igp': 'IGP',
   'plant-maintenance/main-form': 'Main Form',
   'plant-maintenance/setup-form': 'Setup Form',
+  'plant-maintenance/setup-form/sub-component-definition': 'Sub Component Defination',
+  'plant-maintenance/setup-form/sub-component-definition/create': 'Add Machine',
+  'plant-maintenance/setup-form/maintenance-activity-definition': 'Maintenance Activity Defination',
 };
 
 const PREFIX_TITLES: Array<{ prefix: string; title: string }> = [
@@ -48,6 +51,7 @@ const PREFIX_TITLES: Array<{ prefix: string; title: string }> = [
   { prefix: 'job-specification-form', title: 'Job Specification' },
   { prefix: 'recruitment', title: 'Recruitment' },
   { prefix: 'gate-pass', title: 'Gate Pass' },
+  { prefix: 'plant-maintenance/setup-form/sub-component-definition/edit', title: 'Update Machine' },
   { prefix: 'plant-maintenance', title: 'Plant maintenance' },
 ];
 
