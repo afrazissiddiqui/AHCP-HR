@@ -2,11 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from '../../../../services/alert.service';
-import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
-import { PlantMaintenanceSetupLayoutService } from '../plant-maintenance-setup-layout.service';
-import { MachineSearchOption, SAP_MACHINE_MASTER } from '../plant-maintenance-machine.model';
-import { SubComponentDefinitionService } from './sub-component-definition.service';
+import { AlertService } from '../../../../../services/alert.service';
+import { PageToolbarComponent } from '../../../../page-toolbar/page-toolbar';
+import { PlantMaintenanceSetupLayoutService } from '../../plant-maintenance-setup-layout.service';
+import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
+import { SubComponentDefinitionService } from '../sub-component-definition.service';
 
 @Component({
   selector: 'app-add-sub-component-definition',
@@ -14,9 +14,9 @@ import { SubComponentDefinitionService } from './sub-component-definition.servic
   imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './add-sub-component-definition.html',
   styleUrls: [
-    '../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
-    '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../plant-maintenance-setup-form.css',
+    '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
+    '../../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
+    '../../plant-maintenance-setup-form.css',
   ],
 })
 export class AddSubComponentDefinitionComponent implements OnInit {

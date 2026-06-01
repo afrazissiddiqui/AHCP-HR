@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 import { PlantMaintenanceMainFormComponent } from './main-form/plant-maintenance-main-form';
 import { PlantMaintenanceSetupShellComponent } from './setup-form/plant-maintenance-setup-shell';
-import { SubComponentDefinitionListComponent } from './setup-form/sub-component-definition/sub-component-definition-list';
-import { AddSubComponentDefinitionComponent } from './setup-form/sub-component-definition/add-sub-component-definition';
-import { MaintenanceActivityDefinitionListComponent } from './setup-form/maintenance-activity-definition/maintenance-activity-definition-list';
-import { AddMaintenanceActivityDefinitionComponent } from './setup-form/maintenance-activity-definition/add-maintenance-activity-definition';
-import { PlantMaintenanceMasterFormListComponent } from './setup-form/plant-maintenance-master-form/plant-maintenance-master-form-list';
-import { AddPlantMaintenanceMasterFormComponent } from './setup-form/plant-maintenance-master-form/add-plant-maintenance-master-form';
+import { SubComponentDefinitionComponent } from './setup-form/sub-component-definition/sub-component-definition';
+import { AddSubComponentDefinitionComponent } from './setup-form/sub-component-definition/add-sub-component-definition/add-sub-component-definition';
+import { MaintenanceActivityDefinitionComponent } from './setup-form/maintenance-activity-definition/maintenance-activity-definition';
+import { AddMaintenanceActivityDefinitionComponent } from './setup-form/maintenance-activity-definition/add-maintenance-activity-definition/add-maintenance-activity-definition';
+import { PlantMaintenanceMasterFormComponent } from './setup-form/plant-maintenance-master-form/plant-maintenance-master-form';
+import { AddPlantMaintenanceMasterFormComponent } from './setup-form/plant-maintenance-master-form/add-plant-maintenance-master-form/add-plant-maintenance-master-form';
 
 export const plantMaintenanceRoutes: Routes = [
   {
@@ -18,7 +18,7 @@ export const plantMaintenanceRoutes: Routes = [
     component: PlantMaintenanceSetupShellComponent,
     children: [
       { path: '', redirectTo: 'sub-component-definition', pathMatch: 'full' },
-      { path: 'sub-component-definition', component: SubComponentDefinitionListComponent },
+      { path: 'sub-component-definition', component: SubComponentDefinitionComponent },
       {
         path: 'sub-component-definition/create',
         component: AddSubComponentDefinitionComponent,
@@ -29,7 +29,7 @@ export const plantMaintenanceRoutes: Routes = [
       },
       {
         path: 'maintenance-activity-definition',
-        component: MaintenanceActivityDefinitionListComponent,
+        component: MaintenanceActivityDefinitionComponent,
       },
       {
         path: 'maintenance-activity-definition/create',
@@ -41,7 +41,7 @@ export const plantMaintenanceRoutes: Routes = [
       },
       {
         path: 'plant-maintenance-master-form',
-        component: PlantMaintenanceMasterFormListComponent,
+        component: PlantMaintenanceMasterFormComponent,
       },
       {
         path: 'plant-maintenance-master-form/create',

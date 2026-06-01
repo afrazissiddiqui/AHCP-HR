@@ -14,10 +14,10 @@ import {
 type MachineTableColumnKey = 'machineId' | 'machineName' | 'machineType';
 
 @Component({
-  selector: 'app-sub-component-definition-list',
+  selector: 'app-sub-component-definition',
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent, ColumnResizeDirective],
-  templateUrl: './sub-component-definition-list.html',
+  templateUrl: './sub-component-definition.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/Application-Form.css',
     '../plant-maintenance-setup-form.css',
@@ -34,7 +34,7 @@ type MachineTableColumnKey = 'machineId' | 'machineName' | 'machineType';
     `,
   ],
 })
-export class SubComponentDefinitionListComponent {
+export class SubComponentDefinitionComponent {
   private readonly layout = inject(PlantMaintenanceSetupLayoutService);
   private readonly subComponentService = inject(SubComponentDefinitionService);
   private readonly alertService = inject(AlertService);

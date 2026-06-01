@@ -2,20 +2,20 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from '../../../../services/alert.service';
-import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
-import { PlantMaintenanceSetupLayoutService } from '../plant-maintenance-setup-layout.service';
-import { MachineSearchOption, SAP_MACHINE_MASTER } from '../plant-maintenance-machine.model';
+import { AlertService } from '../../../../../services/alert.service';
+import { PageToolbarComponent } from '../../../../page-toolbar/page-toolbar';
+import { PlantMaintenanceSetupLayoutService } from '../../plant-maintenance-setup-layout.service';
+import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
 import {
   MaintenanceActivityDefinitionService,
   MaintenanceActivityMachineRecord,
-} from '../maintenance-activity-definition/maintenance-activity-definition.service';
+} from '../../maintenance-activity-definition/maintenance-activity-definition.service';
 import {
   PlantMaintenanceMasterComponent,
   PlantMaintenanceMasterFormService,
   PlantMaintenanceMasterInspectionLine,
   PlantMaintenanceMasterRecord,
-} from './plant-maintenance-master-form.service';
+} from '../plant-maintenance-master-form.service';
 
 type InspectionLineField = keyof PlantMaintenanceMasterInspectionLine;
 
@@ -41,9 +41,9 @@ function createEmptyComponent(): PlantMaintenanceMasterComponent {
   imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './add-plant-maintenance-master-form.html',
   styleUrls: [
-    '../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
-    '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../plant-maintenance-setup-form.css',
+    '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
+    '../../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
+    '../../plant-maintenance-setup-form.css',
   ],
 })
 export class AddPlantMaintenanceMasterFormComponent implements OnInit {

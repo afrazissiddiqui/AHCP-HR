@@ -22,10 +22,10 @@ type MachineTableColumnKey =
 type RowActionKey = 'view' | 'update' | 'delete';
 
 @Component({
-  selector: 'app-maintenance-activity-definition-list',
+  selector: 'app-maintenance-activity-definition',
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent, ColumnResizeDirective],
-  templateUrl: './maintenance-activity-definition-list.html',
+  templateUrl: './maintenance-activity-definition.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/Application-Form.css',
     '../plant-maintenance-setup-form.css',
@@ -42,7 +42,7 @@ type RowActionKey = 'view' | 'update' | 'delete';
     `,
   ],
 })
-export class MaintenanceActivityDefinitionListComponent {
+export class MaintenanceActivityDefinitionComponent {
   private readonly layout = inject(PlantMaintenanceSetupLayoutService);
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
   private readonly alertService = inject(AlertService);

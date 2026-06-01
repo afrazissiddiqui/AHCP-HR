@@ -23,10 +23,10 @@ type MasterTableColumnKey =
 type RowActionKey = 'view' | 'update' | 'delete';
 
 @Component({
-  selector: 'app-plant-maintenance-master-form-list',
+  selector: 'app-plant-maintenance-master-form',
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent, ColumnResizeDirective],
-  templateUrl: './plant-maintenance-master-form-list.html',
+  templateUrl: './plant-maintenance-master-form.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/Application-Form.css',
     '../plant-maintenance-setup-form.css',
@@ -43,7 +43,7 @@ type RowActionKey = 'view' | 'update' | 'delete';
     `,
   ],
 })
-export class PlantMaintenanceMasterFormListComponent {
+export class PlantMaintenanceMasterFormComponent {
   private readonly layout = inject(PlantMaintenanceSetupLayoutService);
   private readonly masterService = inject(PlantMaintenanceMasterFormService);
   private readonly alertService = inject(AlertService);
