@@ -5,6 +5,8 @@ import { SubComponentDefinitionListComponent } from './setup-form/sub-component-
 import { AddSubComponentDefinitionComponent } from './setup-form/sub-component-definition/add-sub-component-definition';
 import { MaintenanceActivityDefinitionListComponent } from './setup-form/maintenance-activity-definition/maintenance-activity-definition-list';
 import { AddMaintenanceActivityDefinitionComponent } from './setup-form/maintenance-activity-definition/add-maintenance-activity-definition';
+import { PlantMaintenanceMasterFormListComponent } from './setup-form/plant-maintenance-master-form/plant-maintenance-master-form-list';
+import { AddPlantMaintenanceMasterFormComponent } from './setup-form/plant-maintenance-master-form/add-plant-maintenance-master-form';
 
 export const plantMaintenanceRoutes: Routes = [
   {
@@ -36,6 +38,18 @@ export const plantMaintenanceRoutes: Routes = [
       {
         path: 'maintenance-activity-definition/edit/:id',
         component: AddMaintenanceActivityDefinitionComponent,
+      },
+      {
+        path: 'plant-maintenance-master-form',
+        component: PlantMaintenanceMasterFormListComponent,
+      },
+      {
+        path: 'plant-maintenance-master-form/create',
+        component: AddPlantMaintenanceMasterFormComponent,
+      },
+      {
+        path: 'plant-maintenance-master-form/edit/:id',
+        component: AddPlantMaintenanceMasterFormComponent,
       },
     ],
   },

@@ -168,7 +168,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.closeNameSuggestions();
   }
 
-  saveForm(): void {
+  async saveForm(): Promise<void> {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
     const machineType = this.machineType().trim();
@@ -201,6 +201,12 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     } else {
       this.subComponentService.addRecord(payload);
     }
+
+    const successMessage = this.editingRecordId()
+      ? 'Sub Component Defination updated successfully.'
+      : 'Sub Component Defination saved successfully.';
+
+    await this.alertService.successAndWait('Success', successMessage);
 
     void this.router.navigate(['/plant-maintenance/setup-form/sub-component-definition']);
   }

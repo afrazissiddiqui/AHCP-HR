@@ -13,21 +13,21 @@
       </div>
 
       <div class="cjr-card scd-form-card">
-        <div class="cjr-personal" id="maintenance-activity-definition-section">
-          <div class="cjr-section-title">Maintenance Activity Defination</div>
+        <div class="cjr-personal" id="plant-maintenance-master-form-section">
+          <div class="cjr-section-title">Plant Maintenance Master Form</div>
 
           <div class="cjr-personal-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="mad-machine-id">Machine ID:</label>
+                <label for="pmm-machine-id">Machine ID:</label>
                 <div class="tax-computation-search-wrap">
                   <input
-                    id="mad-machine-id"
+                    id="pmm-machine-id"
                     type="search"
                     role="combobox"
                     [attr.aria-expanded]="idSuggestionsOpen()"
                     aria-autocomplete="list"
-                    aria-controls="mad-machine-id-listbox"
+                    aria-controls="pmm-machine-id-listbox"
                     [ngModel]="machineId()"
                     (ngModelChange)="onMachineIdInput($event)"
                     (focus)="openIdSuggestions()"
@@ -37,7 +37,7 @@
                     name="machineId"
                   />
                   <ul
-                    id="mad-machine-id-listbox"
+                    id="pmm-machine-id-listbox"
                     class="tax-computation-suggestions"
                     role="listbox"
                     *ngIf="idSuggestionsOpen() && machineId().trim()"
@@ -63,15 +63,15 @@
               </div>
 
               <div class="cjr-row">
-                <label for="mad-machine-name">Machine Name:</label>
+                <label for="pmm-machine-name">Machine Name:</label>
                 <div class="tax-computation-search-wrap">
                   <input
-                    id="mad-machine-name"
+                    id="pmm-machine-name"
                     type="search"
                     role="combobox"
                     [attr.aria-expanded]="nameSuggestionsOpen()"
                     aria-autocomplete="list"
-                    aria-controls="mad-machine-name-listbox"
+                    aria-controls="pmm-machine-name-listbox"
                     [ngModel]="machineName()"
                     (ngModelChange)="onMachineNameInput($event)"
                     (focus)="openNameSuggestions()"
@@ -81,7 +81,7 @@
                     name="machineName"
                   />
                   <ul
-                    id="mad-machine-name-listbox"
+                    id="pmm-machine-name-listbox"
                     class="tax-computation-suggestions"
                     role="listbox"
                     *ngIf="nameSuggestionsOpen() && machineName().trim()"
@@ -109,25 +109,27 @@
 
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="mad-machine-type">Machine Type:</label>
+                <label for="pmm-machine-type">Machine Type:</label>
                 <input
-                  id="mad-machine-type"
+                  id="pmm-machine-type"
                   type="text"
                   [ngModel]="machineType()"
                   (ngModelChange)="onMachineTypeInput($event)"
                   name="machineType"
                   placeholder="Enter machine type"
+                  [readonly]="isPopulatedFieldsReadOnly()"
                 />
               </div>
 
               <div class="cjr-row">
-                <label for="mad-maintenance-nature">Maintenance Nature:</label>
+                <label for="pmm-maintenance-nature">Maintenance Nature:</label>
                 <select
-                  id="mad-maintenance-nature"
+                  id="pmm-maintenance-nature"
                   class="mad-select"
                   [ngModel]="maintenanceNature()"
                   (ngModelChange)="onMaintenanceNatureInput($event)"
                   name="maintenanceNature"
+                  [disabled]="isPopulatedFieldsReadOnly()"
                 >
                   <option value="">Select maintenance nature</option>
                   <option *ngFor="let option of maintenanceNatureOptions" [value]="option">
@@ -139,13 +141,14 @@
 
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="mad-plant-maintenance-frequency">Plant Maintenance Frequency:</label>
+                <label for="pmm-plant-maintenance-frequency">Plant Maintenance Frequency:</label>
                 <select
-                  id="mad-plant-maintenance-frequency"
+                  id="pmm-plant-maintenance-frequency"
                   class="mad-select"
                   [ngModel]="plantMaintenanceFrequency()"
                   (ngModelChange)="onPlantMaintenanceFrequencyInput($event)"
                   name="plantMaintenanceFrequency"
+                  [disabled]="isPopulatedFieldsReadOnly()"
                 >
                   <option value="">Select plant maintenance frequency</option>
                   <option *ngFor="let option of plantMaintenanceFrequencyOptions" [value]="option">
@@ -155,13 +158,14 @@
               </div>
 
               <div class="cjr-row">
-                <label for="mad-plant-maintenance-type">Plant Maintenance Type:</label>
+                <label for="pmm-plant-maintenance-type">Plant Maintenance Type:</label>
                 <select
-                  id="mad-plant-maintenance-type"
+                  id="pmm-plant-maintenance-type"
                   class="mad-select"
                   [ngModel]="plantMaintenanceType()"
                   (ngModelChange)="onPlantMaintenanceTypeInput($event)"
                   name="plantMaintenanceType"
+                  [disabled]="isPopulatedFieldsReadOnly()"
                 >
                   <option value="">Select plant maintenance type</option>
                   <option *ngFor="let option of plantMaintenanceTypeOptions" [value]="option">
@@ -175,8 +179,22 @@
           <section class="mad-components-section">
             <div class="cjr-section-title scd-sub-components__title">Components</div>
 
-            <p class="mad-components-hint" *ngIf="isCreateMode() && !hasLoadedComponents()">
-              Select a machine to load components from Sub Component Definition.
+            <p class="mad-components-hint" *ngIf="isPopulatedFieldsReadOnly()">
+              Fields are populated from Maintenance Activity Defination and cannot be edited. Select Status for each line and save.
+            </p>
+
+            <p
+              class="mad-components-hint mad-components-hint--warning"
+              *ngIf="!isPopulatedFieldsReadOnly() && machineId().trim() && !hasLoadedComponents()"
+            >
+              No Maintenance Activity Defination found for this machine. Create one in Maintenance Activity Defination first.
+            </p>
+
+            <p
+              class="mad-components-hint"
+              *ngIf="!isPopulatedFieldsReadOnly() && !machineId().trim() && isCreateMode() && !hasLoadedComponents()"
+            >
+              Select a machine to load data from Maintenance Activity Defination.
             </p>
 
             <div
@@ -185,19 +203,19 @@
             >
               <article
                 class="mad-component-card"
-                [class.mad-component-card--readonly]="isCreateMode()"
+                [class.mad-component-card--readonly]="isPopulatedFieldsReadOnly() || isCreateMode()"
                 *ngFor="let component of components(); let ci = index; trackBy: trackByIndex"
               >
                 <header class="mad-component-card__header">
-                  @if (isCreateMode()) {
+                  @if (isPopulatedFieldsReadOnly() || isCreateMode()) {
                     <span class="mad-component-card__index">Component {{ ci + 1 }}</span>
                     <h3 class="mad-component-card__title">{{ component.name }}</h3>
                   } @else {
                     <div class="cjr-row mad-component-card__name-row">
-                      <label [attr.for]="'mad-component-' + ci">Component {{ ci + 1 }}:</label>
+                      <label [attr.for]="'pmm-component-' + ci">Component {{ ci + 1 }}:</label>
                       <div class="scd-input-with-actions">
                         <input
-                          [id]="'mad-component-' + ci"
+                          [id]="'pmm-component-' + ci"
                           type="text"
                           [ngModel]="component.name"
                           (ngModelChange)="updateComponentName(ci, $event)"
@@ -230,94 +248,98 @@
                 </header>
 
                 <div class="mad-component-card__body">
-                  <ng-container
-                    *ngTemplateOutlet="componentInspectionFields; context: { ci: ci, component: component }"
-                  ></ng-container>
+                  <div class="mad-inspection-lines">
+                    <div
+                      class="mad-inspection-line"
+                      *ngFor="let line of component.inspectionLines; let li = index; trackBy: trackByIndex"
+                    >
+                      <div class="mad-inspection-line__toolbar mad-inspection-line__toolbar--with-status">
+                        <span class="mad-inspection-line__badge">Line {{ li + 1 }}</span>
+                        <div class="mad-inspection-line__status cjr-row">
+                          <label [attr.for]="'pmm-line-status-' + ci + '-' + li">Status:</label>
+                          <select
+                            [id]="'pmm-line-status-' + ci + '-' + li"
+                            class="mad-select"
+                            [ngModel]="line.status"
+                            (ngModelChange)="updateInspectionLine(ci, li, 'status', $event)"
+                            [name]="'lineStatus' + ci + '_' + li"
+                          >
+                            <option value="">Select status</option>
+                            <option *ngFor="let option of lineStatusOptions" [value]="option">
+                              {{ option }}
+                            </option>
+                          </select>
+                        </div>
+                        <button
+                          type="button"
+                          class="mad-line-remove-btn"
+                          (click)="removeInspectionLine(ci, li)"
+                          *ngIf="!isPopulatedFieldsReadOnly() && component.inspectionLines.length > 1"
+                          title="Remove line"
+                          [attr.aria-label]="'Remove inspection line ' + (li + 1)"
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <div class="mad-inspection-fields mad-inspection-fields--columns">
+                        <div class="mad-inspection-col">
+                          <label [attr.for]="'pmm-items-' + ci + '-' + li">Items to be inspected</label>
+                          <input
+                            [id]="'pmm-items-' + ci + '-' + li"
+                            type="text"
+                            [ngModel]="line.itemsToBeInspected"
+                            (ngModelChange)="updateInspectionLine(ci, li, 'itemsToBeInspected', $event)"
+                            [name]="'itemsToBeInspected' + ci + '_' + li"
+                            placeholder="Enter items to be inspected"
+                            readonly
+                          />
+                        </div>
+                        <div class="mad-inspection-col">
+                          <label [attr.for]="'pmm-check-' + ci + '-' + li">What to check</label>
+                          <input
+                            [id]="'pmm-check-' + ci + '-' + li"
+                            type="text"
+                            [ngModel]="line.whatToCheck"
+                            (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
+                            [name]="'whatToCheck' + ci + '_' + li"
+                            placeholder="Enter what to check"
+                            readonly
+                          />
+                        </div>
+                        <div class="mad-inspection-col">
+                          <label [attr.for]="'pmm-instructions-' + ci + '-' + li">Instructions</label>
+                          <textarea
+                            [id]="'pmm-instructions-' + ci + '-' + li"
+                            class="mad-textarea"
+                            rows="3"
+                            [ngModel]="line.instructions"
+                            (ngModelChange)="updateInspectionLine(ci, li, 'instructions', $event)"
+                            [name]="'instructions' + ci + '_' + li"
+                            placeholder="Enter instructions"
+                            readonly
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mad-component-card__footer" *ngIf="!isPopulatedFieldsReadOnly()">
+                    <button
+                      type="button"
+                      class="mad-add-line-btn"
+                      (click)="addInspectionLine(ci)"
+                      title="Add line"
+                      aria-label="Add line"
+                    >
+                      <span class="mad-add-line-btn__icon" aria-hidden="true">+</span>
+                      <span>Add line</span>
+                    </button>
+                  </div>
                 </div>
               </article>
             </div>
           </section>
-
-            <ng-template #componentInspectionFields let-ci="ci" let-component="component">
-              <div class="mad-inspection-panel">
-                <div class="mad-inspection-panel__header">
-                  <span class="mad-inspection-panel__title">Inspection details</span>
-                </div>
-
-                <div class="mad-inspection-lines">
-                  <div
-                    class="mad-inspection-line"
-                    *ngFor="let line of component.inspectionLines; let li = index; trackBy: trackByIndex"
-                  >
-                    <div
-                      class="mad-inspection-line__toolbar"
-                      *ngIf="component.inspectionLines.length > 1"
-                    >
-                      <span class="mad-inspection-line__badge">Line {{ li + 1 }}</span>
-                      <button
-                        type="button"
-                        class="mad-line-remove-btn"
-                        (click)="removeInspectionLine(ci, li)"
-                        title="Remove line"
-                        [attr.aria-label]="'Remove inspection line ' + (li + 1)"
-                      >
-                        ×
-                      </button>
-                    </div>
-
-                    <div class="mad-inspection-fields mad-inspection-fields--columns">
-                      <div class="mad-inspection-col">
-                        <label [attr.for]="'mad-items-' + ci + '-' + li">Items to be inspected</label>
-                        <input
-                          [id]="'mad-items-' + ci + '-' + li"
-                          type="text"
-                          [ngModel]="line.itemsToBeInspected"
-                          (ngModelChange)="updateInspectionLine(ci, li, 'itemsToBeInspected', $event)"
-                          [name]="'itemsToBeInspected' + ci + '_' + li"
-                          placeholder="Enter items to be inspected"
-                        />
-                      </div>
-                      <div class="mad-inspection-col">
-                        <label [attr.for]="'mad-check-' + ci + '-' + li">What to check</label>
-                        <input
-                          [id]="'mad-check-' + ci + '-' + li"
-                          type="text"
-                          [ngModel]="line.whatToCheck"
-                          (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
-                          [name]="'whatToCheck' + ci + '_' + li"
-                          placeholder="Enter what to check"
-                        />
-                      </div>
-                      <div class="mad-inspection-col">
-                        <label [attr.for]="'mad-instructions-' + ci + '-' + li">Instructions</label>
-                        <textarea
-                          [id]="'mad-instructions-' + ci + '-' + li"
-                          class="mad-textarea"
-                          rows="3"
-                          [ngModel]="line.instructions"
-                          (ngModelChange)="updateInspectionLine(ci, li, 'instructions', $event)"
-                          [name]="'instructions' + ci + '_' + li"
-                          placeholder="Enter instructions"
-                        ></textarea>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mad-inspection-panel__footer">
-                  <button
-                    type="button"
-                    class="mad-add-line-btn"
-                    (click)="addInspectionLine(ci)"
-                    title="Add inspection line"
-                    aria-label="Add inspection line"
-                  >
-                    <span class="mad-add-line-btn__icon" aria-hidden="true">+</span>
-                    <span>Add line</span>
-                  </button>
-                </div>
-              </div>
-            </ng-template>
         </div>
 
         <div class="cjr-actions-footer">
