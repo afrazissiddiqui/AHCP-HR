@@ -9,28 +9,6 @@
   </div>
 
   <div class="cjr-card">
-    <div class="cjr-options">
-      <div class="cjr-options-title">Options:</div>
-    </div>
-
-    <nav class="cjr-section-nav" aria-label="Payroll setup sections">
-      <ul class="cjr-section-nav-list">
-        <li
-          class="cjr-section-nav-item"
-          [class.cjr-section-nav-item--active]="activeSection() === 'header-info-section'"
-          (click)="scrollToSection('header-info-section')"
-        >
-          Header level info
-        </li>
-        <li
-          class="cjr-section-nav-item"
-          [class.cjr-section-nav-item--active]="activeSection() === 'payroll-data-section'"
-          (click)="scrollToSection('payroll-data-section')"
-        >
-          Payroll data
-        </li>
-      </ul>
-    </nav>
 
     <div class="cjr-personal" id="header-info-section">
       <div class="cjr-section-title">Header Level Info</div>

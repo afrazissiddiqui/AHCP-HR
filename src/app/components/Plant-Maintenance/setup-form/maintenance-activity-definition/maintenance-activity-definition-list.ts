@@ -7,17 +7,25 @@ import { AlertService } from '../../../../services/alert.service';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PlantMaintenanceSetupLayoutService } from '../plant-maintenance-setup-layout.service';
 import {
-  SubComponentDefinitionService,
-  SubComponentMachineRecord,
-} from './sub-component-definition.service';
+  MaintenanceActivityDefinitionService,
+  MaintenanceActivityMachineRecord,
+} from './maintenance-activity-definition.service';
 
-type MachineTableColumnKey = 'machineId' | 'machineName' | 'machineType';
+type MachineTableColumnKey =
+  | 'machineId'
+  | 'machineName'
+  | 'machineType'
+  | 'maintenanceNature'
+  | 'plantMaintenanceFrequency'
+  | 'plantMaintenanceType';
+
+type RowActionKey = 'view' | 'update' | 'delete';
 
 @Component({
-  selector: 'app-sub-component-definition-list',
+  selector: 'app-maintenance-activity-definition-list',
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent, ColumnResizeDirective],
-  templateUrl: './sub-component-definition-list.html',
+  templateUrl: './maintenance-activity-definition-list.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/Application-Form.css',
     '../plant-maintenance-setup-form.css',
@@ -34,9 +42,9 @@ type MachineTableColumnKey = 'machineId' | 'machineName' | 'machineType';
     `,
   ],
 })
-export class SubComponentDefinitionListComponent {
+export class MaintenanceActivityDefinitionListComponent {
   private readonly layout = inject(PlantMaintenanceSetupLayoutService);
-  private readonly subComponentService = inject(SubComponentDefinitionService);
+  private readonly activityService = inject(MaintenanceActivityDefinitionService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
 
@@ -50,20 +58,33 @@ export class SubComponentDefinitionListComponent {
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   showViewDialog = false;
-  selectedRecord: SubComponentMachineRecord | null = null;
+  selectedRecord: MaintenanceActivityMachineRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
+
+  readonly rowActions: RowActionKey[] = ['view', 'update', 'delete'];
 
   readonly columns: Array<{ key: MachineTableColumnKey; label: string; visible: boolean }> = [
     { key: 'machineId', label: 'Machine ID', visible: true },
     { key: 'machineName', label: 'Machine Name', visible: true },
     { key: 'machineType', label: 'Machine Type', visible: true },
+    { key: 'maintenanceNature', label: 'Maintenance Nature', visible: true },
+    { key: 'plantMaintenanceFrequency', label: 'Plant Maintenance Frequency', visible: true },
+    { key: 'plantMaintenanceType', label: 'Plant Maintenance Type', visible: true },
   ];
 
-  get machineList(): SubComponentMachineRecord[] {
-    return this.subComponentService.records();
+  get showActionsColumn(): boolean {
+    return this.rowActions.length > 0;
   }
 
-  get filteredList(): SubComponentMachineRecord[] {
+  hasRowAction(action: RowActionKey): boolean {
+    return this.rowActions.includes(action);
+  }
+
+  get machineList(): MaintenanceActivityMachineRecord[] {
+    return this.activityService.records();
+  }
+
+  get filteredList(): MaintenanceActivityMachineRecord[] {
     let list = [...this.machineList];
     const search = this.searchText.trim().toLowerCase();
 
@@ -72,7 +93,10 @@ export class SubComponentDefinitionListComponent {
         (item) =>
           item.machineId.toLowerCase().includes(search) ||
           item.machineName.toLowerCase().includes(search) ||
-          item.machineType.toLowerCase().includes(search),
+          item.machineType.toLowerCase().includes(search) ||
+          item.maintenanceNature.toLowerCase().includes(search) ||
+          item.plantMaintenanceFrequency.toLowerCase().includes(search) ||
+          item.plantMaintenanceType.toLowerCase().includes(search),
       );
     }
 
@@ -91,7 +115,7 @@ export class SubComponentDefinitionListComponent {
     return list;
   }
 
-  get paginatedList(): SubComponentMachineRecord[] {
+  get paginatedList(): MaintenanceActivityMachineRecord[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredList.slice(start, start + this.pageSize);
   }
@@ -105,7 +129,11 @@ export class SubComponentDefinitionListComponent {
   }
 
   get visibleColumnCount(): number {
-    return this.columns.filter((c) => c.visible).length + 2;
+    let count = this.columns.filter((c) => c.visible).length + 1;
+    if (this.showActionsColumn) {
+      count += 1;
+    }
+    return count;
   }
 
   toggleSidebar(): void {
@@ -114,11 +142,11 @@ export class SubComponentDefinitionListComponent {
 
   addMachine(): void {
     void this.router.navigate([
-      '/plant-maintenance/setup-form/sub-component-definition/create',
+      '/plant-maintenance/setup-form/maintenance-activity-definition/create',
     ]);
   }
 
-  viewRecord(item: SubComponentMachineRecord): void {
+  viewRecord(item: MaintenanceActivityMachineRecord): void {
     this.selectedRecord = item;
     this.showViewDialog = true;
   }
@@ -128,14 +156,14 @@ export class SubComponentDefinitionListComponent {
     this.selectedRecord = null;
   }
 
-  updateRecord(item: SubComponentMachineRecord): void {
+  updateRecord(item: MaintenanceActivityMachineRecord): void {
     void this.router.navigate([
-      '/plant-maintenance/setup-form/sub-component-definition/edit',
+      '/plant-maintenance/setup-form/maintenance-activity-definition/edit',
       item.id,
     ]);
   }
 
-  async deleteRecord(item: SubComponentMachineRecord): Promise<void> {
+  async deleteRecord(item: MaintenanceActivityMachineRecord): Promise<void> {
     const result = await this.alertService.confirm(
       'Delete machine?',
       `Remove ${item.machineId} — ${item.machineName} from the list?`,
@@ -143,13 +171,13 @@ export class SubComponentDefinitionListComponent {
     if (!result.isConfirmed) {
       return;
     }
-    this.subComponentService.deleteRecord(item.id);
+    this.activityService.deleteRecord(item.id);
     if (this.paginatedList.length === 0 && this.currentPage > 1) {
       this.currentPage -= 1;
     }
   }
 
-  getCellValue(item: SubComponentMachineRecord, columnKey: MachineTableColumnKey): string {
+  getCellValue(item: MaintenanceActivityMachineRecord, columnKey: MachineTableColumnKey): string {
     return item[columnKey] ?? '';
   }
 
@@ -165,7 +193,7 @@ export class SubComponentDefinitionListComponent {
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     const ids = this.filteredList.map((r) => r.id);
-    this.subComponentService.setAllSelected(checked, ids);
+    this.activityService.setAllSelected(checked, ids);
   }
 
   isAllSelected(): boolean {
@@ -174,9 +202,9 @@ export class SubComponentDefinitionListComponent {
     );
   }
 
-  onRowSelectChange(item: SubComponentMachineRecord, event: Event): void {
+  onRowSelectChange(item: MaintenanceActivityMachineRecord, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.subComponentService.updateSelection(item.id, checked);
+    this.activityService.updateSelection(item.id, checked);
   }
 
   getSelectedCount(): number {

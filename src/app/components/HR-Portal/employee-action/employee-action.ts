@@ -6,19 +6,27 @@ import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../services/application-form.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from './employee-action-sidebar';
+import {
+  EMPLOYEE_ACTION_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../table-filter';
 
 type EmployeeActionDataColumnKey = Exclude<keyof ApplicationFormRecord, 'selected' | 'detail'>;
 
 @Component({
   selector: 'app-employee-action',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './employee-action.html',
   styleUrl: '../Application-Form/Application-Form.css',
 })
 export class EmployeeActionComponent {
+  readonly employeeActionTableFilter = EMPLOYEE_ACTION_TABLE_FILTER;
+
   constructor(
-    private applicationFormService: ApplicationFormService
+    private applicationFormService: ApplicationFormService,
+    readonly tableFilter: TableFilterService
   ) { }
 
   Math = Math;
@@ -66,7 +74,7 @@ export class EmployeeActionComponent {
   }
 
   get filteredList(): ApplicationFormRecord[] {
-    let list = [...this.employeeActionList];
+    let list = this.tableFilter.filterItems([...this.employeeActionList], this.employeeActionTableFilter);
 
     if (this.searchText) {
       const search = this.searchText.toLowerCase();
@@ -148,6 +156,14 @@ export class EmployeeActionComponent {
 
   closeDialog(): void {
     this.showDialog = false;
+  }
+
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.employeeActionTableFilter);
+  }
+
+  onTableFilterApplied(): void {
+    this.currentPage = 1;
   }
 
   onFolderSelected(folderId: string): void {

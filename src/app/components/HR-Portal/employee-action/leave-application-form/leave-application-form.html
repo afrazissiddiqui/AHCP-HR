@@ -12,13 +12,21 @@
     <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          Leave Application List ({{ leaveList.length }}) · Selected ({{ getSelectedCount() }})
+          Leave Application List ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ leaveList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
       <div class="sapMTBSpacer"></div>
       <div class="sapMSearchField">
         <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
         <span class="sapUiIcon search-icon">🔍</span>
+      </div>
+
+      <div class="sapMTBActions">
+        <app-table-filter
+          [config]="leaveTableFilter"
+          [data]="leaveList"
+          (applied)="onTableFilterApplied()"
+        />
       </div>
     </div>
 

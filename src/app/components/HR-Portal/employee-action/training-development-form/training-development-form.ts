@@ -7,6 +7,11 @@ import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../services/application-form.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
+import {
+  TRAINING_DEVELOPMENT_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../../table-filter';
 
 interface TrainingDevelopmentRecord {
   EmployeeCode: number;
@@ -27,7 +32,7 @@ type TrainingColumnKey = Exclude<keyof TrainingDevelopmentRecord, 'selected'>;
 @Component({
   selector: 'app-training-development-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './training-development-form.html',
   styleUrls: [
     '../../Application-Form/Application-Form.css'
@@ -79,9 +84,12 @@ type TrainingColumnKey = Exclude<keyof TrainingDevelopmentRecord, 'selected'>;
   `],
 })
 export class TrainingDevelopmentFormComponent {
+  readonly trainingTableFilter = TRAINING_DEVELOPMENT_TABLE_FILTER;
+
   constructor(
     private readonly applicationFormService: ApplicationFormService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly tableFilter: TableFilterService
   ) {
     this.trainingList = this.applicationFormService
       .getApplicationRecords()
@@ -121,7 +129,7 @@ export class TrainingDevelopmentFormComponent {
   selectedRecord: TrainingDevelopmentRecord | null = null;
 
   get filteredList(): TrainingDevelopmentRecord[] {
-    let list = [...this.trainingList];
+    let list = this.tableFilter.filterItems([...this.trainingList], this.trainingTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
       list = list.filter(item =>
@@ -176,6 +184,14 @@ export class TrainingDevelopmentFormComponent {
   }
 
   onSearchChange(): void {
+    this.currentPage = 1;
+  }
+
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.trainingTableFilter);
+  }
+
+  onTableFilterApplied(): void {
     this.currentPage = 1;
   }
 

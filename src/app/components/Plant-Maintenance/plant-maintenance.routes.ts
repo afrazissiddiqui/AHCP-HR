@@ -3,7 +3,8 @@ import { PlantMaintenanceMainFormComponent } from './main-form/plant-maintenance
 import { PlantMaintenanceSetupShellComponent } from './setup-form/plant-maintenance-setup-shell';
 import { SubComponentDefinitionListComponent } from './setup-form/sub-component-definition/sub-component-definition-list';
 import { AddSubComponentDefinitionComponent } from './setup-form/sub-component-definition/add-sub-component-definition';
-import { MaintenanceActivityDefinitionComponent } from './setup-form/maintenance-activity-definition/maintenance-activity-definition';
+import { MaintenanceActivityDefinitionListComponent } from './setup-form/maintenance-activity-definition/maintenance-activity-definition-list';
+import { AddMaintenanceActivityDefinitionComponent } from './setup-form/maintenance-activity-definition/add-maintenance-activity-definition';
 
 export const plantMaintenanceRoutes: Routes = [
   {
@@ -24,7 +25,18 @@ export const plantMaintenanceRoutes: Routes = [
         path: 'sub-component-definition/edit/:id',
         component: AddSubComponentDefinitionComponent,
       },
-      { path: 'maintenance-activity-definition', component: MaintenanceActivityDefinitionComponent },
+      {
+        path: 'maintenance-activity-definition',
+        component: MaintenanceActivityDefinitionListComponent,
+      },
+      {
+        path: 'maintenance-activity-definition/create',
+        component: AddMaintenanceActivityDefinitionComponent,
+      },
+      {
+        path: 'maintenance-activity-definition/edit/:id',
+        component: AddMaintenanceActivityDefinitionComponent,
+      },
     ],
   },
 ];

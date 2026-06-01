@@ -7,6 +7,11 @@ import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../services/application-form.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
+import {
+  PROBATION_EVALUATION_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../../table-filter';
 
 interface ProbationEvaluationRecord {
   EmployeeCode: number;
@@ -24,14 +29,17 @@ type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected'>;
 @Component({
   selector: 'app-probation-evaluation-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './probation-evaluation-form.html',
   styleUrl: '../../Application-Form/Application-Form.css',
 })
 export class ProbationEvaluationFormComponent {
+  readonly probationTableFilter = PROBATION_EVALUATION_TABLE_FILTER;
+
   constructor(
     private readonly applicationFormService: ApplicationFormService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly tableFilter: TableFilterService
   ) {
     this.probationList = this.applicationFormService
       .getApplicationRecords()
@@ -68,7 +76,7 @@ export class ProbationEvaluationFormComponent {
   selectedRecord: ProbationEvaluationRecord | null = null;
 
   get filteredList(): ProbationEvaluationRecord[] {
-    let list = [...this.probationList];
+    let list = this.tableFilter.filterItems([...this.probationList], this.probationTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
       list = list.filter(item =>
@@ -120,6 +128,14 @@ export class ProbationEvaluationFormComponent {
   }
 
   onSearchChange(): void {
+    this.currentPage = 1;
+  }
+
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.probationTableFilter);
+  }
+
+  onTableFilterApplied(): void {
     this.currentPage = 1;
   }
 

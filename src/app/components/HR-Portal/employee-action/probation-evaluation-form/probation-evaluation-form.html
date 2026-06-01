@@ -12,7 +12,7 @@
     <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          Probation Evaluation List ({{ probationList.length }}) · Selected ({{ getSelectedCount() }})
+          Probation Evaluation List ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ probationList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
       <div class="sapMTBSpacer"></div>
@@ -22,8 +22,11 @@
       </div>
 
       <div class="sapMTBActions">
-      
-        
+        <app-table-filter
+          [config]="probationTableFilter"
+          [data]="probationList"
+          (applied)="onTableFilterApplied()"
+        />
 
         <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
           ⚙

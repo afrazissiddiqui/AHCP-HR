@@ -6,6 +6,11 @@ import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { JobSpecificationService, JobSpecificationRecord } from '../../../services/job-specification.service';
+import {
+  JOB_SPECIFICATION_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../table-filter';
 
 interface ColumnConfig {
   key: keyof JobSpecificationRecord;
@@ -16,12 +21,25 @@ interface ColumnConfig {
 @Component({
   selector: 'app-job-specification-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ColumnResizeDirective,
+    SidebarComponent,
+    PageToolbarComponent,
+    TableFilterComponent,
+  ],
   templateUrl: './job-specification-form.html',
   styleUrl: './job-specification-form.css',
 })
 export class JobSpecificationFormComponent {
-  constructor(private router: Router, private jobSpecService: JobSpecificationService) { }
+  readonly jobSpecTableFilter = JOB_SPECIFICATION_TABLE_FILTER;
+
+  constructor(
+    private router: Router,
+    private jobSpecService: JobSpecificationService,
+    readonly tableFilter: TableFilterService
+  ) { }
 
   Math = Math;
 
@@ -76,6 +94,14 @@ export class JobSpecificationFormComponent {
     this.showDialog = false;
   }
 
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.jobSpecTableFilter);
+  }
+
+  onTableFilterApplied(): void {
+    this.currentPage = 1;
+  }
+
   viewDetails(record: JobSpecificationRecord): void {
     this.selectedJobSpec = record;
     this.showDetailDialog = true;
@@ -100,7 +126,7 @@ export class JobSpecificationFormComponent {
   }
 
   get filteredList(): JobSpecificationRecord[] {
-    let list = [...this.jobSpecs];
+    let list = this.tableFilter.filterItems([...this.jobSpecs], this.jobSpecTableFilter);
 
     if (this.searchText) {
       const search = this.searchText.toLowerCase();

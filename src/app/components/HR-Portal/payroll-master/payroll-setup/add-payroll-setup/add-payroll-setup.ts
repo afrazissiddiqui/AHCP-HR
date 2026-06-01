@@ -1,4 +1,4 @@
-import { CommonModule, ViewportScroller } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -20,8 +20,6 @@ interface PayrollDataField {
   styleUrl: '../../../Application-Form/create-job-requisition/create-job-requisition.css',
 })
 export class AddPayrollSetupComponent {
-  protected readonly activeSection = signal('header-info-section');
-
   formNumber = signal(this.generateFormNumber());
   employeeId = signal('');
   employeeName = signal('');
@@ -96,7 +94,6 @@ export class AddPayrollSetupComponent {
     private readonly alertService: AlertService,
     private readonly applicationFormService: ApplicationFormService,
     private readonly payrollSetupService: PayrollSetupService,
-    private readonly viewportScroller: ViewportScroller,
   ) {}
 
   get employeeOptions(): Array<{
@@ -119,14 +116,6 @@ export class AddPayrollSetupComponent {
       designation: r.Designation,
       location: '',
     }));
-  }
-
-  protected scrollToSection(sectionId: string): void {
-    this.activeSection.set(sectionId);
-    this.viewportScroller.scrollToPosition([0, 0]);
-    setTimeout(() => {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 0);
   }
 
   getAmount(key: string): number {
@@ -158,7 +147,7 @@ export class AddPayrollSetupComponent {
   }
 
   back(): void {
-    void this.router.navigateByUrl('/payroll-master/payroll-setup');
+    void this.router.navigateByUrl('/payroll-master');
   }
 
   submitForm(): void {

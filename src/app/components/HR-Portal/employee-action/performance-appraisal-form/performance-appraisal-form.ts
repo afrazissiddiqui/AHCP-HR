@@ -7,6 +7,11 @@ import { ApplicationFormRecord, ApplicationFormService } from '../../../../servi
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
+import {
+  PERFORMANCE_APPRAISAL_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../../table-filter';
 
 interface PerformanceAppraisalRecord {
   FormNumber: string;
@@ -26,7 +31,7 @@ type AppraisalColumnKey = Exclude<keyof PerformanceAppraisalRecord, 'selected'>;
 @Component({
   selector: 'app-performance-appraisal-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './performance-appraisal-form.html',
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`
@@ -45,9 +50,12 @@ type AppraisalColumnKey = Exclude<keyof PerformanceAppraisalRecord, 'selected'>;
   `]
 })
 export class PerformanceAppraisalFormComponent {
+  readonly appraisalTableFilter = PERFORMANCE_APPRAISAL_TABLE_FILTER;
+
   constructor(
     private readonly applicationFormService: ApplicationFormService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly tableFilter: TableFilterService
   ) {
     this.appraisalList = this.applicationFormService
       .getApplicationRecords()
@@ -84,7 +92,7 @@ export class PerformanceAppraisalFormComponent {
   activeTab: 'filter' = 'filter';
 
   get filteredList(): PerformanceAppraisalRecord[] {
-    let list = [...this.appraisalList];
+    let list = this.tableFilter.filterItems([...this.appraisalList], this.appraisalTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
       list = list.filter(item =>
@@ -124,6 +132,8 @@ export class PerformanceAppraisalFormComponent {
   isAllSelected(): boolean { return this.filteredList.length > 0 && this.filteredList.every(item => item.selected); }
   getSelectedCount(): number { return this.appraisalList.filter(item => item.selected).length; }
   onSearchChange(): void { this.currentPage = 1; }
+  hasActiveListFilters(): boolean { return this.tableFilter.hasActive(this.appraisalTableFilter); }
+  onTableFilterApplied(): void { this.currentPage = 1; }
   sortData(column: AppraisalColumnKey): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';

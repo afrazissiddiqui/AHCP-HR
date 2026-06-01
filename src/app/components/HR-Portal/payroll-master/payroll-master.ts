@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApplicationFormService } from '../../../services/application-form.service';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { PayrollMasterLayoutService } from './payroll-master-layout.service';
+import { PayrollSetupService } from './payroll-setup/payroll-setup.service';
 
 type PayrollMasterRow = {
   employeeCode: number;
@@ -46,7 +46,7 @@ type PayrollMasterColumnKey = keyof PayrollMasterRow;
 export class PayrollMasterComponent {
   private readonly layout = inject(PayrollMasterLayoutService);
 
-  constructor(private readonly applicationFormService: ApplicationFormService) { }
+  constructor(private readonly payrollSetupService: PayrollSetupService) {}
   searchText = '';
   /** Empty string means all departments. */
   selectedDepartment = '';
@@ -83,33 +83,33 @@ export class PayrollMasterComponent {
   ];
 
   get payrollMasterList(): PayrollMasterRow[] {
-    return this.applicationFormService.getApplicationRecords().map((record) => ({
-      employeeCode: record.EmployeeCode,
-      employeeName: record.EmployeeName,
-      employeeCategory: record.EmploymentCategory,
-      employementNature: record.EmployeeNature,
-      employmentType: record.EmploymentType,
-      department: record.Department,
-      designation: record.Designation,
-      jobTitle: record.Designation,
-      payrollPeriod: '-',
-      basicSalary: 0,
-      medicalAllowance: 0,
-      fuelAllowance: 0,
-      mobileAllowance: 0,
-      carAllowance: 0,
-      otherAllowance: 0,
-      overtime: 0,
-      bonus: 0,
-      arrears: 0,
-      provientFund: 0,
-      gratuity: 0,
-      eobi: 0,
-      loanInstallment: 0,
-      otherDeduction: 0,
-      netPayable: 0,
+    return this.payrollSetupService.records().map((record) => ({
+      employeeCode: Number(record.employeeId) || 0,
+      employeeName: record.employeeName,
+      employeeCategory: record.employeeCategory,
+      employementNature: record.employmentNature,
+      employmentType: record.employmentType,
+      department: record.department,
+      designation: record.designation,
+      jobTitle: record.jobTitle,
+      payrollPeriod: record.formNumber,
+      basicSalary: record.basicSalary,
+      medicalAllowance: record.medicalAllowance,
+      fuelAllowance: record.fuelAllowance,
+      mobileAllowance: record.mobileAllowance,
+      carAllowance: record.carAllowance,
+      otherAllowance: record.otherAllowances,
+      overtime: record.overtime,
+      bonus: record.bonus,
+      arrears: record.arrears,
+      provientFund: record.providentFund,
+      gratuity: record.gratuity,
+      eobi: record.eobi,
+      loanInstallment: record.loanInstallment,
+      otherDeduction: record.otherDeductions,
+      netPayable: record.netPayable,
       tax: 0,
-      taxableSalary: 0
+      taxableSalary: 0,
     }));
   }
 

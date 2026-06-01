@@ -7,6 +7,11 @@ import { ApplicationFormRecord, ApplicationFormService } from '../../../../servi
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
+import {
+  LEAVE_APPLICATION_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../../table-filter';
 
 interface LeaveApplicationRecord {
   FormNumber: string;
@@ -26,7 +31,7 @@ type LeaveColumnKey = Exclude<keyof LeaveApplicationRecord, 'selected'>;
 @Component({
   selector: 'app-leave-application-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './leave-application-form.html',
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`
@@ -45,9 +50,12 @@ type LeaveColumnKey = Exclude<keyof LeaveApplicationRecord, 'selected'>;
   `]
 })
 export class LeaveApplicationFormComponent {
+  readonly leaveTableFilter = LEAVE_APPLICATION_TABLE_FILTER;
+
   constructor(
     private readonly applicationFormService: ApplicationFormService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly tableFilter: TableFilterService
   ) {
     this.leaveList = this.applicationFormService
       .getApplicationRecords()
@@ -82,7 +90,7 @@ export class LeaveApplicationFormComponent {
   leaveList: LeaveApplicationRecord[] = [];
 
   get filteredList(): LeaveApplicationRecord[] {
-    let list = [...this.leaveList];
+    let list = this.tableFilter.filterItems([...this.leaveList], this.leaveTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
       list = list.filter(item =>
@@ -122,6 +130,8 @@ export class LeaveApplicationFormComponent {
   isAllSelected(): boolean { return this.filteredList.length > 0 && this.filteredList.every(item => item.selected); }
   getSelectedCount(): number { return this.leaveList.filter(item => item.selected).length; }
   onSearchChange(): void { this.currentPage = 1; }
+  hasActiveListFilters(): boolean { return this.tableFilter.hasActive(this.leaveTableFilter); }
+  onTableFilterApplied(): void { this.currentPage = 1; }
   sortData(column: LeaveColumnKey): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';

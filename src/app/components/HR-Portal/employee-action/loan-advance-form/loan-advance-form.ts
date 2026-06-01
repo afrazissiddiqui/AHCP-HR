@@ -7,6 +7,11 @@ import { ApplicationFormRecord, ApplicationFormService } from '../../../../servi
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
+import {
+  LOAN_ADVANCE_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../../table-filter';
 
 interface LoanAdvanceRecord {
   FormNumber: string;
@@ -25,7 +30,7 @@ type LoanColumnKey = Exclude<keyof LoanAdvanceRecord, 'selected'>;
 @Component({
   selector: 'app-loan-advance-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './loan-advance-form.html',
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`
@@ -44,9 +49,12 @@ type LoanColumnKey = Exclude<keyof LoanAdvanceRecord, 'selected'>;
   `]
 })
 export class LoanAdvanceFormComponent {
+  readonly loanTableFilter = LOAN_ADVANCE_TABLE_FILTER;
+
   constructor(
     private readonly applicationFormService: ApplicationFormService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly tableFilter: TableFilterService
   ) {
     this.loanList = this.applicationFormService
       .getApplicationRecords()
@@ -80,7 +88,7 @@ export class LoanAdvanceFormComponent {
   loanList: LoanAdvanceRecord[] = [];
 
   get filteredList(): LoanAdvanceRecord[] {
-    let list = [...this.loanList];
+    let list = this.tableFilter.filterItems([...this.loanList], this.loanTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
       list = list.filter(item =>
@@ -119,6 +127,8 @@ export class LoanAdvanceFormComponent {
   isAllSelected(): boolean { return this.filteredList.length > 0 && this.filteredList.every(item => item.selected); }
   getSelectedCount(): number { return this.loanList.filter(item => item.selected).length; }
   onSearchChange(): void { this.currentPage = 1; }
+  hasActiveListFilters(): boolean { return this.tableFilter.hasActive(this.loanTableFilter); }
+  onTableFilterApplied(): void { this.currentPage = 1; }
   sortData(column: LoanColumnKey): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';

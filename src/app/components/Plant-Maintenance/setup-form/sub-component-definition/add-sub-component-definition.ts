@@ -5,11 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PlantMaintenanceSetupLayoutService } from '../plant-maintenance-setup-layout.service';
-import {
-  MachineSearchOption,
-  SAP_MACHINE_MASTER,
-  SubComponentDefinitionService,
-} from './sub-component-definition.service';
+import { MachineSearchOption, SAP_MACHINE_MASTER } from '../plant-maintenance-machine.model';
+import { SubComponentDefinitionService } from './sub-component-definition.service';
 
 @Component({
   selector: 'app-add-sub-component-definition',
@@ -19,7 +16,7 @@ import {
   styleUrls: [
     '../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
     '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    './sub-component-definition.css',
+    '../plant-maintenance-setup-form.css',
   ],
 })
 export class AddSubComponentDefinitionComponent implements OnInit {

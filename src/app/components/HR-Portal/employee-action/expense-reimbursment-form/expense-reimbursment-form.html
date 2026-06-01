@@ -12,7 +12,7 @@
     <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          Expense Reimbursment List ({{ expenseList.length }}) · Selected ({{ getSelectedCount() }})
+          Expense Reimbursment List ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ expenseList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
       <div class="sapMTBSpacer"></div>
@@ -22,6 +22,12 @@
       </div>
 
       <div class="sapMTBActions">
+        <app-table-filter
+          [config]="expenseTableFilter"
+          [data]="expenseList"
+          (applied)="onTableFilterApplied()"
+        />
+
         <button class="sapMBtnBase sapMBtn" title="Download">
           ⬇
         </button>

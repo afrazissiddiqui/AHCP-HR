@@ -1,30 +1,9 @@
 import { Injectable, signal } from '@angular/core';
+import { PlantMaintenanceMachineRecordBase } from '../plant-maintenance-machine.model';
 
-export interface SapMachineRecord {
-  machineId: string;
-  machineName: string;
-  defaultMachineType: string;
-}
-
-export type MachineSearchOption = SapMachineRecord;
-
-export interface SubComponentMachineRecord {
-  id: string;
-  machineId: string;
-  machineName: string;
-  machineType: string;
+export interface SubComponentMachineRecord extends PlantMaintenanceMachineRecordBase {
   subComponents: string[];
-  selected: boolean;
 }
-
-/** Mock SAP machine master — replace with API integration when available. */
-export const SAP_MACHINE_MASTER: SapMachineRecord[] = [
-  { machineId: 'SAP-PM-001', machineName: 'H1', defaultMachineType: 'Injection' },
-  { machineId: 'SAP-PM-002', machineName: 'H2', defaultMachineType: 'Injection' },
-  { machineId: 'SAP-PM-003', machineName: 'H3', defaultMachineType: 'Blowing' },
-  { machineId: 'SAP-PM-004', machineName: 'H4', defaultMachineType: 'Blowing' },
-  { machineId: 'SAP-PM-005', machineName: 'H5', defaultMachineType: 'Auxiliaries' },
-];
 
 @Injectable({ providedIn: 'root' })
 export class SubComponentDefinitionService {
@@ -60,6 +39,14 @@ export class SubComponentDefinitionService {
 
   getById(id: string): SubComponentMachineRecord | undefined {
     return this._records().find((r) => r.id === id);
+  }
+
+  getByMachineId(machineId: string): SubComponentMachineRecord | undefined {
+    const key = machineId.trim().toLowerCase();
+    if (!key) {
+      return undefined;
+    }
+    return this._records().find((r) => r.machineId.trim().toLowerCase() === key);
   }
 
   updateRecord(

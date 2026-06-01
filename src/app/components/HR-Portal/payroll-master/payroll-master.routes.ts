@@ -5,7 +5,6 @@ import { AttendanceManagmentComponent } from './attendance-managment/attendance-
 import { TaxManagmentComponent } from './tax-managment/tax-managment';
 import { TaxComputationComponent } from './tax-computation/tax-computation';
 import { PayrollProcessingComponent } from './payroll-processing/payroll-processing';
-import { PayrollSetupComponent } from './payroll-setup/payroll-setup';
 import { AddPayrollSetupComponent } from './payroll-setup/add-payroll-setup/add-payroll-setup';
 
 export const payrollMasterRoutes: Routes = [
@@ -18,8 +17,8 @@ export const payrollMasterRoutes: Routes = [
       { path: 'tax-managment', component: TaxManagmentComponent },
       { path: 'tax-computation', component: TaxComputationComponent },
       { path: 'payroll-processing', component: PayrollProcessingComponent },
-      { path: 'payroll-setup', component: PayrollSetupComponent },
-      { path: 'payroll-setup/create', component: AddPayrollSetupComponent },
+      { path: 'payroll-setup', component: AddPayrollSetupComponent },
+      { path: 'payroll-setup/create', redirectTo: 'payroll-setup', pathMatch: 'full' },
     ],
   },
 ];

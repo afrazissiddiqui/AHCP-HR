@@ -7,6 +7,11 @@ import { ApplicationFormRecord, ApplicationFormService } from '../../../../servi
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
+import {
+  EXPENSE_REIMBURSEMENT_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../../table-filter';
 
 interface ExpenseReimbursmentRecord {
   FormNumber: string;
@@ -25,7 +30,7 @@ type ExpenseColumnKey = Exclude<keyof ExpenseReimbursmentRecord, 'selected'>;
 @Component({
   selector: 'app-expense-reimbursment-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './expense-reimbursment-form.html',
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`
@@ -44,9 +49,12 @@ type ExpenseColumnKey = Exclude<keyof ExpenseReimbursmentRecord, 'selected'>;
   `]
 })
 export class ExpenseReimbursmentFormComponent {
+  readonly expenseTableFilter = EXPENSE_REIMBURSEMENT_TABLE_FILTER;
+
   constructor(
     private readonly applicationFormService: ApplicationFormService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly tableFilter: TableFilterService
   ) {
     this.expenseList = this.applicationFormService
       .getApplicationRecords()
@@ -82,7 +90,7 @@ export class ExpenseReimbursmentFormComponent {
   activeTab: 'filter' = 'filter';
 
   get filteredList(): ExpenseReimbursmentRecord[] {
-    let list = [...this.expenseList];
+    let list = this.tableFilter.filterItems([...this.expenseList], this.expenseTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
       list = list.filter(item =>
@@ -121,6 +129,8 @@ export class ExpenseReimbursmentFormComponent {
   isAllSelected(): boolean { return this.filteredList.length > 0 && this.filteredList.every(item => item.selected); }
   getSelectedCount(): number { return this.expenseList.filter(item => item.selected).length; }
   onSearchChange(): void { this.currentPage = 1; }
+  hasActiveListFilters(): boolean { return this.tableFilter.hasActive(this.expenseTableFilter); }
+  onTableFilterApplied(): void { this.currentPage = 1; }
   sortData(column: ExpenseColumnKey): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';

@@ -24,7 +24,7 @@
       <!-- Table Title -->
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          Job Specifications ({{ jobSpecs.length }}) · Selected ({{ getSelectedCount() }})
+          Job Specifications ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ jobSpecs.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
 
@@ -36,6 +36,12 @@
       </div>
 
       <div class="sapMTBActions">
+        <app-table-filter
+          [config]="jobSpecTableFilter"
+          [data]="jobSpecs"
+          (applied)="onTableFilterApplied()"
+        />
+
         <button class="sapMBtnBase sapMBtn" title="Download">
           ⬇
         </button>

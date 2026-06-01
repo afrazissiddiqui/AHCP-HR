@@ -1,0 +1,294 @@
+<div class="plant-maintenance-setup-view scd-page-view">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()"></app-page-toolbar>
+
+  <div class="tax-computation-content scd-form-content">
+    <div class="cjr-page scd-add-page">
+      <div class="cjr-header">
+        <div class="cjr-header-left">
+          <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+            <span class="cjr-back-icon">❮</span>
+          </button>
+          <h1>{{ pageTitle() }}</h1>
+        </div>
+      </div>
+
+      <div class="cjr-card scd-form-card">
+        <div class="cjr-personal" id="maintenance-activity-definition-section">
+          <div class="cjr-section-title">Maintenance Activity Defination</div>
+
+          <div class="cjr-personal-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="mad-machine-id">Machine ID:</label>
+                <div class="tax-computation-search-wrap">
+                  <input
+                    id="mad-machine-id"
+                    type="search"
+                    role="combobox"
+                    [attr.aria-expanded]="idSuggestionsOpen()"
+                    aria-autocomplete="list"
+                    aria-controls="mad-machine-id-listbox"
+                    [ngModel]="machineId()"
+                    (ngModelChange)="onMachineIdInput($event)"
+                    (focus)="openIdSuggestions()"
+                    (blur)="onIdInputBlur()"
+                    placeholder="Search by ID, name, or machine type"
+                    autocomplete="off"
+                    name="machineId"
+                  />
+                  <ul
+                    id="mad-machine-id-listbox"
+                    class="tax-computation-suggestions"
+                    role="listbox"
+                    *ngIf="idSuggestionsOpen() && machineId().trim()"
+                  >
+                    <li
+                      *ngFor="let machine of idSuggestions()"
+                      role="option"
+                      class="tax-computation-suggestion-item"
+                      (mousedown)="selectMachineFromSuggestion(machine)"
+                    >
+                      <span class="tax-computation-suggestion-primary">{{ machine.machineId }} — {{ machine.machineName }}</span>
+                      <span class="tax-computation-suggestion-meta">{{ machine.defaultMachineType }}</span>
+                    </li>
+                    <li
+                      *ngIf="idSuggestions().length === 0"
+                      class="tax-computation-suggestion-empty"
+                      role="presentation"
+                    >
+                      No matching machines
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="cjr-row">
+                <label for="mad-machine-name">Machine Name:</label>
+                <div class="tax-computation-search-wrap">
+                  <input
+                    id="mad-machine-name"
+                    type="search"
+                    role="combobox"
+                    [attr.aria-expanded]="nameSuggestionsOpen()"
+                    aria-autocomplete="list"
+                    aria-controls="mad-machine-name-listbox"
+                    [ngModel]="machineName()"
+                    (ngModelChange)="onMachineNameInput($event)"
+                    (focus)="openNameSuggestions()"
+                    (blur)="onNameInputBlur()"
+                    placeholder="Search by name, ID, or machine type"
+                    autocomplete="off"
+                    name="machineName"
+                  />
+                  <ul
+                    id="mad-machine-name-listbox"
+                    class="tax-computation-suggestions"
+                    role="listbox"
+                    *ngIf="nameSuggestionsOpen() && machineName().trim()"
+                  >
+                    <li
+                      *ngFor="let machine of nameSuggestions()"
+                      role="option"
+                      class="tax-computation-suggestion-item"
+                      (mousedown)="selectMachineFromSuggestion(machine)"
+                    >
+                      <span class="tax-computation-suggestion-primary">{{ machine.machineId }} — {{ machine.machineName }}</span>
+                      <span class="tax-computation-suggestion-meta">{{ machine.defaultMachineType }}</span>
+                    </li>
+                    <li
+                      *ngIf="nameSuggestions().length === 0"
+                      class="tax-computation-suggestion-empty"
+                      role="presentation"
+                    >
+                      No matching machines
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="mad-machine-type">Machine Type:</label>
+                <input
+                  id="mad-machine-type"
+                  type="text"
+                  [ngModel]="machineType()"
+                  (ngModelChange)="onMachineTypeInput($event)"
+                  name="machineType"
+                  placeholder="Enter machine type"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label for="mad-maintenance-nature">Maintenance Nature:</label>
+                <select
+                  id="mad-maintenance-nature"
+                  class="mad-select"
+                  [ngModel]="maintenanceNature()"
+                  (ngModelChange)="onMaintenanceNatureInput($event)"
+                  name="maintenanceNature"
+                >
+                  <option value="">Select maintenance nature</option>
+                  <option *ngFor="let option of maintenanceNatureOptions" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="mad-plant-maintenance-frequency">Plant Maintenance Frequency:</label>
+                <select
+                  id="mad-plant-maintenance-frequency"
+                  class="mad-select"
+                  [ngModel]="plantMaintenanceFrequency()"
+                  (ngModelChange)="onPlantMaintenanceFrequencyInput($event)"
+                  name="plantMaintenanceFrequency"
+                >
+                  <option value="">Select plant maintenance frequency</option>
+                  <option *ngFor="let option of plantMaintenanceFrequencyOptions" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="cjr-row">
+                <label for="mad-plant-maintenance-type">Plant Maintenance Type:</label>
+                <select
+                  id="mad-plant-maintenance-type"
+                  class="mad-select"
+                  [ngModel]="plantMaintenanceType()"
+                  (ngModelChange)="onPlantMaintenanceTypeInput($event)"
+                  name="plantMaintenanceType"
+                >
+                  <option value="">Select plant maintenance type</option>
+                  <option *ngFor="let option of plantMaintenanceTypeOptions" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="scd-sub-components" [class.mad-components--readonly]="isCreateMode()">
+            <div class="cjr-section-title scd-sub-components__title">Components</div>
+
+            @if (isCreateMode()) {
+              <p class="mad-components-hint" *ngIf="!hasLoadedComponents()">
+                Select a machine to load components from Sub Component Definition.
+              </p>
+              <div class="mad-component-list" *ngIf="hasLoadedComponents()">
+                <div
+                  class="mad-component-block"
+                  *ngFor="let component of components(); let ci = index; trackBy: trackByIndex"
+                >
+                  <div class="mad-readonly-row mad-component-name--readonly">
+                    <span class="mad-readonly-label">Component {{ ci + 1 }}:</span>
+                    <span class="mad-readonly-value">{{ component.name }}</span>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="componentInspectionFields; context: { ci: ci, component: component }"
+                  ></ng-container>
+                </div>
+              </div>
+            } @else {
+              <div class="mad-component-list">
+                <div
+                  class="mad-component-block"
+                  *ngFor="let component of components(); let ci = index; trackBy: trackByIndex"
+                >
+                  <div class="cjr-row scd-sub-component-row mad-component-row">
+                    <label [attr.for]="'mad-component-' + ci">Component {{ ci + 1 }}:</label>
+                    <div class="scd-input-with-actions">
+                      <input
+                        [id]="'mad-component-' + ci"
+                        type="text"
+                        [ngModel]="component.name"
+                        (ngModelChange)="updateComponentName(ci, $event)"
+                        [name]="'component' + ci"
+                        placeholder="Enter component"
+                      />
+                      <button
+                        type="button"
+                        class="scd-add-btn"
+                        (click)="addComponent()"
+                        *ngIf="ci === components().length - 1"
+                        title="Add component"
+                        aria-label="Add component"
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        class="scd-remove-btn"
+                        (click)="removeComponent(ci)"
+                        *ngIf="components().length > 1"
+                        title="Remove component"
+                        [attr.aria-label]="'Remove component ' + (ci + 1)"
+                      >
+                        −
+                      </button>
+                    </div>
+                  </div>
+
+                  <ng-container
+                    *ngTemplateOutlet="componentInspectionFields; context: { ci: ci, component: component }"
+                  ></ng-container>
+                </div>
+              </div>
+            }
+
+            <ng-template #componentInspectionFields let-ci="ci" let-component="component">
+              <div class="mad-inspection-fields">
+                <div class="cjr-row">
+                  <label [attr.for]="'mad-items-' + ci">Items to be inspected:</label>
+                  <input
+                    [id]="'mad-items-' + ci"
+                    type="text"
+                    [ngModel]="component.itemsToBeInspected"
+                    (ngModelChange)="updateComponentInspection(ci, 'itemsToBeInspected', $event)"
+                    [name]="'itemsToBeInspected' + ci"
+                    placeholder="Enter items to be inspected"
+                  />
+                </div>
+                <div class="cjr-row">
+                  <label [attr.for]="'mad-check-' + ci">What to check:</label>
+                  <input
+                    [id]="'mad-check-' + ci"
+                    type="text"
+                    [ngModel]="component.whatToCheck"
+                    (ngModelChange)="updateComponentInspection(ci, 'whatToCheck', $event)"
+                    [name]="'whatToCheck' + ci"
+                    placeholder="Enter what to check"
+                  />
+                </div>
+                <div class="cjr-row mad-instructions-row">
+                  <label [attr.for]="'mad-instructions-' + ci">Instructions:</label>
+                  <textarea
+                    [id]="'mad-instructions-' + ci"
+                    class="mad-textarea"
+                    rows="3"
+                    [ngModel]="component.instructions"
+                    (ngModelChange)="updateComponentInspection(ci, 'instructions', $event)"
+                    [name]="'instructions' + ci"
+                    placeholder="Enter instructions"
+                  ></textarea>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="cjr-actions-footer">
+          <button type="button" class="btn-secondary" (click)="resetForm()">Reset</button>
+          <button type="button" class="cjr-submit-btn" (click)="saveForm()">
+            <span class="cjr-submit-icon">✓</span>
+            {{ editingRecordId() ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

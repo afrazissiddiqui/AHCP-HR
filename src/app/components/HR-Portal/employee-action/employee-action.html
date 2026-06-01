@@ -11,7 +11,7 @@
       class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          Employee Action List ({{ employeeActionList.length }}) · Selected ({{ getSelectedCount() }})
+          Employee Action List ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ employeeActionList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
 
@@ -23,6 +23,12 @@
       </div>
 
       <div class="sapMTBActions">
+        <app-table-filter
+          [config]="employeeActionTableFilter"
+          [data]="employeeActionList"
+          (applied)="onTableFilterApplied()"
+        />
+
         <button class="sapMBtnBase sapMBtn" title="Download">⬇</button>
         <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">⛶</button>
         <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">⚙</button>
