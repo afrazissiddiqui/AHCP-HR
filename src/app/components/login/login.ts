@@ -16,6 +16,7 @@ export class LoginComponent implements OnInit {
   userId = '';
   password = '';
   rememberMe = false;
+  isSubmitting = false;
 
   constructor(
     private readonly router: Router,
@@ -30,17 +31,26 @@ export class LoginComponent implements OnInit {
   }
 
   submit(): void {
-    const uid = this.userId.trim();
-    if (!uid || !this.password) {
-      void this.alertService.validation('Please enter User ID and Password.');
+    const email = this.userId.trim();
+    if (!email || !this.password) {
+      void this.alertService.validation('Please enter email and password.');
       return;
     }
-    this.authService.login(uid);
-    void this.alertService.success('Welcome', `Signed in as ${uid}.`);
-    void this.router.navigateByUrl('/dashboard');
-  }
-
-  goDashboard(): void {
-    void this.router.navigateByUrl('/dashboard');
+    this.isSubmitting = true;
+    this.authService.loginWithApi(email, this.password).subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
+        void this.router.navigateByUrl('/dashboard');
+      },
+      error: (error: unknown) => {
+        this.isSubmitting = false;
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Login failed. Please check your credentials.';
+        void this.alertService.error('Login failed', errorMessage);
+      },
+    });
   }
 }

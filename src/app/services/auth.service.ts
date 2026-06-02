@@ -1,14 +1,38 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Observable, tap } from 'rxjs';
 
 const AUTH_SESSION_KEY = 'sapqc_session_auth';
 const SESSION_USER_ID_KEY = 'sapqc_session_user_id';
+const SESSION_TOKEN_KEY = 'sapqc_session_token';
+const SESSION_USER_KEY = 'sapqc_session_user';
+const LOGIN_API_URL = 'http://ahcp.hr:8080/api/login';
+
+export interface LoginApiUser {
+  id: number;
+  name: string;
+  email: string;
+  email_verified_at: string | null;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface LoginApiResponse {
+  status: boolean;
+  message: string;
+  token: string;
+  user: LoginApiUser;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
 
   /** Mirrors session flag so UI can react if needed later. */
   readonly isLoggedIn = signal(this.readSession());
@@ -40,10 +64,30 @@ export class AuthService {
     return this.sessionUserId();
   }
 
+  loginWithApi(email: string, password: string): Observable<LoginApiResponse> {
+    return this.http
+      .post<LoginApiResponse>(LOGIN_API_URL, {
+        email: email.trim(),
+        password,
+      })
+      .pipe(
+        tap((response) => {
+          if (!response?.status || !response?.token || !response?.user?.email) {
+            throw new Error(response?.message || 'Login failed.');
+          }
+          this.login(response.user.email);
+          sessionStorage.setItem(SESSION_TOKEN_KEY, response.token);
+          sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(response.user));
+        }),
+      );
+  }
+
   /** Clears session and opens the login page. */
   logout(): void {
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_USER_ID_KEY);
+    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    sessionStorage.removeItem(SESSION_USER_KEY);
     this.isLoggedIn.set(false);
     this.sessionUserId.set(null);
     void this.router.navigateByUrl('/login');

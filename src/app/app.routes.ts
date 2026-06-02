@@ -70,13 +70,17 @@ export const routes: Routes = [
     component: CreateJobSpecificationComponent,
     canActivate: [authGuard],
   },
-  ...gatePassRoutes.map((route) => ({ ...route, canActivate: [authGuard] })),
+  ...gatePassRoutes.map((route) =>
+    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+  ),
   {
     path: 'employee-action',
     component: EmployeeActionComponent,
     canActivate: [authGuard],
   },
-  ...payrollMasterRoutes.map((route) => ({ ...route, canActivate: [authGuard] })),
+  ...payrollMasterRoutes.map((route) =>
+    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+  ),
   {
     path: 'employee-action/probation-evaluation-form',
     component: ProbationEvaluationFormComponent,
@@ -152,5 +156,7 @@ export const routes: Routes = [
     component: AddTerminationComponent,
     canActivate: [authGuard],
   },
-  ...plantMaintenanceRoutes.map((route) => ({ ...route, canActivate: [authGuard] })),
+  ...plantMaintenanceRoutes.map((route) =>
+    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+  ),
 ];

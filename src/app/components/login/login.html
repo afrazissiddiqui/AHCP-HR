@@ -8,14 +8,14 @@
 
     <form class="login-form" (ngSubmit)="submit()" autocomplete="on">
       <label class="login-field">
-        <span class="login-label">User ID</span>
+        <span class="login-label">Email</span>
         <input
-          type="text"
+          type="email"
           name="userId"
           [(ngModel)]="userId"
-          placeholder="Enter your user ID"
+          placeholder="Enter your email"
           autocapitalize="none"
-          autocomplete="username"
+          autocomplete="email"
         />
       </label>
 
@@ -35,12 +35,13 @@
           <input type="checkbox" [(ngModel)]="rememberMe" name="remember" />
           <span>Remember me</span>
         </label>
-        <button type="button" class="login-link" (click)="goDashboard()">Skip for now</button>
       </div>
 
-      <button type="submit" class="login-submit">Sign in</button>
+      <button type="submit" class="login-submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
+      </button>
     </form>
 
-    <p class="login-footnote">Use any non-empty User ID and Password for this demo.</p>
+    <p class="login-footnote">Sign in with your account credentials.</p>
   </div>
 </div>
