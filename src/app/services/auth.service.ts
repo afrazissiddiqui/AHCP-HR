@@ -64,6 +64,10 @@ export class AuthService {
     return this.sessionUserId();
   }
 
+  getAuthToken(): string | null {
+    return sessionStorage.getItem(SESSION_TOKEN_KEY);
+  }
+
   loginWithApi(email: string, password: string): Observable<LoginApiResponse> {
     return this.http
       .post<LoginApiResponse>(LOGIN_API_URL, {

@@ -3,10 +3,12 @@ import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, OnD
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ViewportScroller } from '@angular/common';
+import { AlertService } from '../../../../services/alert.service';
 import {
   ApplicationFormDetail,
   ApplicationFormRecord,
   ApplicationFormService,
+  EmployeeProfileAddPayload,
 } from '../../../../services/application-form.service';
 
 @Component({
@@ -336,7 +338,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   constructor(
     private readonly router: Router,
     private readonly viewportScroller: ViewportScroller,
-    private readonly applicationFormService: ApplicationFormService
+    private readonly applicationFormService: ApplicationFormService,
+    private readonly alertService: AlertService,
   ) { }
 
   protected back(): void {
@@ -456,8 +459,72 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       detail
     };
 
-    this.applicationFormService.addApplicationRecord(record);
-    alert('Application submitted successfully!');
-    void this.router.navigateByUrl('/recruitment');
+    const payload: EmployeeProfileAddPayload = {
+      personName: this.personName(),
+      firstName: this.firstName(),
+      middleName: this.middleName(),
+      lastName: this.lastName(),
+      fatherOrHusbandName: this.fatherOrHusbandName(),
+      gender: this.gender(),
+      maritalStatus: this.maritalStatus(),
+      dateOfBirth: this.dateOfBirth(),
+      nationality: this.nationality(),
+      religion: this.religion(),
+      bloodGroup: this.bloodGroup(),
+      nationalIdCardNo: this.nationalIdCardNo(),
+      incomeTaxNo: this.incomeTaxNo(),
+      contactNumber: this.contactNumber(),
+      emergencyContactNumber: this.emergencyContactNumber(),
+      street: this.street(),
+      streetNo: this.streetNo(),
+      buildingFloorRoom: this.buildingFloorRoom(),
+      city: this.city(),
+      state: this.state(),
+      country: this.country(),
+      zipCode: this.zipCode(),
+      educationSections: this.educationSections().map((row) => ({ ...row })),
+      pastExperienceSections: this.pastExperienceSections().map((row) => ({
+        company: row.company,
+        fromDate: row.fromDate,
+        toDate: row.toDate,
+        remarks: row.remarks,
+        position: row.position,
+        duties: row.duties,
+        lastSalary: Number.parseFloat(row.lastSalary || '0') || 0,
+      })),
+      attachments: this.attachments().map((a) => {
+        const fileName = a.fileName || (a.file ? a.file.name : '');
+        return {
+          type: a.type,
+          fileName,
+          // API sample expects string path; use selected file name/path token for now.
+          file: fileName,
+        };
+      }),
+      employeeMaster: this.employeeMaster(),
+      salaryStructure: this.salaryStructure(),
+      attendanceShiftManagement: this.attendanceShiftManagement(),
+      leaveManagement: this.leaveManagement(),
+      loanAdvancesForm: this.loanAdvancesForm(),
+      employeeCode: this.employeeCode(),
+      userId: this.userId(),
+      loginEmployeeName: this.loginEmployeeName(),
+      password: this.password(),
+    };
+
+    this.applicationFormService.addEmployeeProfile(payload).subscribe({
+      next: () => {
+        this.applicationFormService.addApplicationRecord(record);
+        this.alertService.success('Success', 'Application submitted successfully.');
+        void this.router.navigateByUrl('/recruitment');
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to submit application form.';
+        this.alertService.error('Submission Failed', errorMessage);
+      },
+    });
   }
 }
