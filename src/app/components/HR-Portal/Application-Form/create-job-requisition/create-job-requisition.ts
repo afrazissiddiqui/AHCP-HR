@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, OnDestroy, computed, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ViewportScroller } from '@angular/common';
 import { AlertService } from '../../../../services/alert.service';
 import {
@@ -21,6 +21,10 @@ import {
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
+  protected readonly editingApiId = signal<string | null>(null);
+  protected readonly submitButtonLabel = computed(() =>
+    this.editingApiId() ? 'Update Application' : 'Submit Application',
+  );
   protected readonly copyExisting = signal(true);
   protected readonly activeSection = signal('personal-info-section');
   // Personal Information (OHEM mappings where applicable)
@@ -329,6 +333,27 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupIntersectionObserver();
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+    this.editingApiId.set(editId);
+    this.applicationFormService.fetchEmployeeProfileDetail(editId).subscribe({
+      next: (record) => {
+        if (!record.detail) {
+          this.alertService.warning('Edit', 'No profile details found for this employee.');
+          return;
+        }
+        this.populateFromRecord(record);
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load employee profile for edit.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
   }
 
   ngOnDestroy(): void {
@@ -337,6 +362,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly viewportScroller: ViewportScroller,
     private readonly applicationFormService: ApplicationFormService,
     private readonly alertService: AlertService,
@@ -512,19 +538,99 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       password: this.password(),
     };
 
-    this.applicationFormService.addEmployeeProfile(payload).subscribe({
+    const editId = this.editingApiId();
+    const request$ = editId
+      ? this.applicationFormService.updateEmployeeProfile(editId, payload)
+      : this.applicationFormService.addEmployeeProfile(payload);
+
+    request$.subscribe({
       next: () => {
-        this.applicationFormService.addApplicationRecord(record);
-        this.alertService.success('Success', 'Application submitted successfully.');
+        if (!editId) {
+          this.applicationFormService.addApplicationRecord(record);
+        }
+        this.alertService.success(
+          'Success',
+          editId ? 'Employee profile updated successfully.' : 'Application submitted successfully.',
+        );
         void this.router.navigateByUrl('/recruitment');
       },
       error: (error: unknown) => {
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
-          'Failed to submit application form.';
-        this.alertService.error('Submission Failed', errorMessage);
+          (editId ? 'Failed to update employee profile.' : 'Failed to submit application form.');
+        this.alertService.error(editId ? 'Update Failed' : 'Submission Failed', errorMessage);
       },
     });
+  }
+
+  private populateFromRecord(record: ApplicationFormRecord): void {
+    const detail = record.detail;
+    if (!detail) {
+      return;
+    }
+
+    this.personName.set(detail.personalInfo.personName);
+    this.firstName.set(detail.personalInfo.firstName);
+    this.middleName.set(detail.personalInfo.middleName);
+    this.lastName.set(detail.personalInfo.lastName);
+    this.fatherOrHusbandName.set(detail.personalInfo.fatherOrHusbandName);
+    this.gender.set((detail.personalInfo.gender as 'Male' | 'Female' | '') ?? '');
+    this.maritalStatus.set((detail.personalInfo.maritalStatus as 'Single' | 'Married' | '') ?? '');
+    this.dateOfBirth.set(detail.personalInfo.dateOfBirth);
+    this.nationality.set(detail.personalInfo.nationality);
+    this.religion.set(detail.personalInfo.religion);
+    this.bloodGroup.set(detail.personalInfo.bloodGroup);
+    this.nationalIdCardNo.set(detail.personalInfo.nationalIdCardNo);
+    this.incomeTaxNo.set(detail.personalInfo.incomeTaxNo);
+    this.contactNumber.set(detail.personalInfo.contactNumber);
+    this.emergencyContactNumber.set(detail.personalInfo.emergencyContactNumber);
+    this.street.set(detail.personalInfo.street);
+    this.streetNo.set(detail.personalInfo.streetNo);
+    this.buildingFloorRoom.set(detail.personalInfo.buildingFloorRoom);
+    this.city.set(detail.personalInfo.city);
+    this.state.set((detail.personalInfo.state as 'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | '') ?? '');
+    this.country.set(detail.personalInfo.country);
+    this.zipCode.set(detail.personalInfo.zipCode);
+
+    this.educationSections.set(
+      detail.education.length
+        ? detail.education.map((row) => ({ ...row }))
+        : [{
+            institute: '',
+            fromDate: '',
+            toDate: '',
+            subject: '',
+            qualification: '',
+            awardedQualification: '',
+            marksGrades: '',
+            notes: '',
+          }],
+    );
+
+    this.pastExperienceSections.set(
+      detail.pastExperience.length
+        ? detail.pastExperience.map((row) => ({ ...row }))
+        : [{
+            company: '',
+            position: '',
+            fromDate: '',
+            toDate: '',
+            duties: '',
+            remarks: '',
+            lastSalary: '',
+          }],
+    );
+
+    this.employeeMaster.set(detail.remuneration.employeeMaster);
+    this.salaryStructure.set(detail.remuneration.salaryStructure);
+    this.attendanceShiftManagement.set(detail.remuneration.attendanceShiftManagement);
+    this.leaveManagement.set(detail.remuneration.leaveManagement);
+    this.loanAdvancesForm.set(detail.remuneration.loanAdvancesForm);
+
+    this.employeeCode.set(detail.loginDetails.employeeCode);
+    this.userId.set(detail.loginDetails.userId);
+    this.loginEmployeeName.set(detail.loginDetails.employeeName);
+    this.password.set(detail.loginDetails.password);
   }
 }

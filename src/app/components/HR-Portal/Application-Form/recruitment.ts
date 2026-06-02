@@ -276,6 +276,48 @@ export class RecruitmentComponent implements OnInit {
     this.router.navigate(["/recruitment/create"]);
   }
 
+  onUpdate(record: ApplicationFormRecord): void {
+    const id = record.apiId;
+    if (!id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing employee id.');
+      return;
+    }
+    void this.router.navigate(['/recruitment/edit', id]);
+  }
+
+  async onDelete(record: ApplicationFormRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete employee?',
+      `Remove ${record.EmployeeName} (${record.EmployeeCode}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    const id = record.apiId;
+    if (!id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing employee id.');
+      return;
+    }
+
+    this.applicationFormService.deleteEmployeeProfile(id).subscribe({
+      next: () => {
+        this.applicationFormService.removeApplicationRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'Employee removed successfully.');
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to delete employee.';
+        this.alertService.error('Delete Failed', errorMessage);
+      },
+    });
+  }
+
   // Sidebar event handlers
   onFolderSelected(folder: string): void {
     this.activeSidebarItemId = folder;

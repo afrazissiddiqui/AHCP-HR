@@ -61,6 +61,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'recruitment/edit/:id',
+    component: CreateJobRequisitionComponent,
+    canActivate: [authGuard],
+  },
+  {
     path: 'job-specification-form',
     component: JobSpecificationFormComponent,
     canActivate: [authGuard],

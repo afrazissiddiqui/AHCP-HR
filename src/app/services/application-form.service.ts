@@ -127,7 +127,9 @@ export interface EmployeeMasterDataRecord {
 
 const EMPLOYEE_PROFILE_ADD_URL = 'http://ahcp.hr:8080/api/employee-profile-add';
 const EMPLOYEE_PROFILE_LIST_URL = 'http://ahcp.hr:8080/api/employee-profile-list';
-const EMPLOYEE_PROFILE_VIEW_URL = 'http://ahcp.hr:8080/api/employee-profile-view';
+const EMPLOYEE_PROFILE_VIEW_URL = 'http://ahcp.hr:8080/api/employee-profile-detail';
+const EMPLOYEE_PROFILE_UPDATE_URL = 'http://ahcp.hr:8080/api/employee-profile-update';
+const EMPLOYEE_PROFILE_DELETE_URL = 'http://ahcp.hr:8080/api/employee-profile-delete';
 
 export interface EmployeeProfileAddPayload {
   personName: string;
@@ -201,8 +203,28 @@ export class ApplicationFormService {
     this.applicationRecords.update((list) => [...list, record]);
   }
 
+  removeApplicationRecord(record: ApplicationFormRecord): void {
+    this.applicationRecords.update((list) =>
+      list.filter((item) =>
+        record.apiId
+          ? item.apiId !== record.apiId
+          : item.EmployeeCode !== record.EmployeeCode,
+      ),
+    );
+  }
+
   addEmployeeProfile(payload: EmployeeProfileAddPayload): Observable<unknown> {
     return this.http.post(EMPLOYEE_PROFILE_ADD_URL, payload);
+  }
+
+  updateEmployeeProfile(id: string | number, payload: EmployeeProfileAddPayload): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post(`${EMPLOYEE_PROFILE_UPDATE_URL}/${identifier}`, payload);
+  }
+
+  deleteEmployeeProfile(id: string | number): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete(`${EMPLOYEE_PROFILE_DELETE_URL}/${identifier}`);
   }
 
   fetchEmployeeProfiles(): Observable<ApplicationFormRecord[]> {

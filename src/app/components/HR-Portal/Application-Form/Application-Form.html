@@ -104,7 +104,7 @@
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th>View</th>
+              <th>Action</th>
             </tr>
           </thead>
 
@@ -129,10 +129,18 @@
                   </span>
                 </ng-container>
               </td>
-              <td>
-                <button class="view-btn" (click)="openApplicationDetail(s)" title="View Details">
-                  👁 View
-                </button>
+              <td class="table-action-cell">
+                <div class="action-buttons">
+                  <button class="view-btn" (click)="openApplicationDetail(s)" title="View Details">
+                    View
+                  </button>
+                  <button class="update-btn" (click)="onUpdate(s)" title="Update Employee">
+                    Update
+                  </button>
+                  <button class="delete-btn" (click)="onDelete(s)" title="Delete Employee">
+                    Delete
+                  </button>
+                </div>
               </td>
 
             </tr>
