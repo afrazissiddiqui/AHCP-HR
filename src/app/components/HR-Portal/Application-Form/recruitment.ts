@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { Router } from '@angular/router';
+import { AlertService } from '../../../services/alert.service';
 import {
   ApplicationFormDetail,
   ApplicationFormRecord,
@@ -38,15 +39,28 @@ interface ColumnConfig {
   templateUrl: './application-form.html',
   styleUrls: ['./Application-Form.css'],
 })
-export class RecruitmentComponent {
+export class RecruitmentComponent implements OnInit {
 
   readonly applicationTableFilter = APPLICATION_FORM_TABLE_FILTER;
 
   constructor(
     private router: Router,
     private applicationFormService: ApplicationFormService,
+    private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService
   ) { }
+
+  ngOnInit(): void {
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load user list.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+  }
 
   Math = Math;
 

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 
 /** Extended payload captured from Create Application Form — shown in Application Form view modal only. */
 export interface ApplicationFormPersonalInfo {
@@ -124,6 +124,7 @@ export interface EmployeeMasterDataRecord {
 }
 
 const EMPLOYEE_PROFILE_ADD_URL = 'http://ahcp.hr:8080/api/employee-profile-add';
+const EMPLOYEE_PROFILE_LIST_URL = 'http://ahcp.hr:8080/api/employee-profile-list';
 
 export interface EmployeeProfileAddPayload {
   personName: string;
@@ -199,6 +200,59 @@ export class ApplicationFormService {
 
   addEmployeeProfile(payload: EmployeeProfileAddPayload): Observable<unknown> {
     return this.http.post(EMPLOYEE_PROFILE_ADD_URL, payload);
+  }
+
+  fetchEmployeeProfiles(): Observable<ApplicationFormRecord[]> {
+    return this.http.get<unknown>(EMPLOYEE_PROFILE_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      tap((records) => {
+        this.applicationRecords.set(records);
+      }),
+    );
+  }
+
+  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (Array.isArray(response)) {
+      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+    if (response && typeof response === 'object') {
+      const candidate = (response as { data?: unknown; users?: unknown }).data
+        ?? (response as { data?: unknown; users?: unknown }).users;
+      if (Array.isArray(candidate)) {
+        return candidate.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+    return [];
+  }
+
+  private mapApiItemToRecord(item: Record<string, unknown>): ApplicationFormRecord {
+    const asString = (value: unknown): string =>
+      value === undefined || value === null ? '' : String(value).trim();
+    const asNumber = (value: unknown, fallback: number): number => {
+      const parsed = Number.parseInt(asString(value), 10);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    const employeeCode = asString(item['employeeCode']) || asString(item['employee_code']) || asString(item['id']);
+    const employeeName =
+      asString(item['loginEmployeeName']) ||
+      asString(item['login_employee_name']) ||
+      asString(item['personName']) ||
+      asString(item['person_name']) ||
+      `${asString(item['firstName'])} ${asString(item['lastName'])}`.trim();
+
+    return {
+      EmployeeCode: asNumber(employeeCode, 0),
+      EmployeeName: employeeName || '—',
+      Department: asString(item['department']) || '—',
+      EmployeeNature: asString(item['employeeMaster']) || asString(item['employee_master']) || '—',
+      Designation: asString(item['designation']) || '—',
+      ReportingManager: asString(item['reportingManager']) || asString(item['reporting_manager']) || '—',
+      EmploymentType: asString(item['employmentType']) || asString(item['employment_type']) || '—',
+      EmploymentCategory: asString(item['employmentCategory']) || asString(item['employment_category']) || '—',
+      status: asString(item['status']) || 'Active',
+      selected: false,
+    };
   }
 
   findRecordByLoginUserId(userId: string): ApplicationFormRecord | undefined {
