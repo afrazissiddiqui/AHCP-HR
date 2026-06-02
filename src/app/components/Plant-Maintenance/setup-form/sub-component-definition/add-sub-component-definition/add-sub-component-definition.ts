@@ -3,15 +3,13 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
-import { PageToolbarComponent } from '../../../../page-toolbar/page-toolbar';
-import { PlantMaintenanceSetupLayoutService } from '../../plant-maintenance-setup-layout.service';
 import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
 import { SubComponentDefinitionService } from '../sub-component-definition.service';
 
 @Component({
   selector: 'app-add-sub-component-definition',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageToolbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './add-sub-component-definition.html',
   styleUrls: [
     '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
@@ -20,7 +18,6 @@ import { SubComponentDefinitionService } from '../sub-component-definition.servi
   ],
 })
 export class AddSubComponentDefinitionComponent implements OnInit {
-  private readonly layout = inject(PlantMaintenanceSetupLayoutService);
   private readonly subComponentService = inject(SubComponentDefinitionService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
@@ -63,10 +60,6 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.subComponents.set(
       record.subComponents.length ? [...record.subComponents] : [''],
     );
-  }
-
-  toggleSidebar(): void {
-    this.layout.toggleSidebar();
   }
 
   back(): void {

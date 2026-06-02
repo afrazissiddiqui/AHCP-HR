@@ -26,107 +26,131 @@ import { ProfilePageComponent } from './components/profile/profile-page';
 import { TerminationFormComponent } from './components/HR-Portal/termination/termination-form';
 import { AddTerminationComponent } from './components/HR-Portal/termination/add-termination/add-termination';
 import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-maintenance.routes';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'dashboard',
+    redirectTo: 'login',
     pathMatch: 'full'
   },
   {
     path: 'dashboard',
-    component: dashboardComponent
+    component: dashboardComponent,
+    canActivate: [authGuard],
   },
   ...loginRoutes,
   {
     path: 'profile',
     component: ProfilePageComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'forms-hub',
-    component: FormsHubComponent
+    component: FormsHubComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'recruitment',
-    component: RecruitmentComponent
+    component: RecruitmentComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'recruitment/create',
-    component: CreateJobRequisitionComponent
+    component: CreateJobRequisitionComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'job-specification-form',
-    component: JobSpecificationFormComponent
+    component: JobSpecificationFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'job-specification-form/create',
-    component: CreateJobSpecificationComponent
+    component: CreateJobSpecificationComponent,
+    canActivate: [authGuard],
   },
-  ...gatePassRoutes,
+  ...gatePassRoutes.map((route) => ({ ...route, canActivate: [authGuard] })),
   {
     path: 'employee-action',
-    component: EmployeeActionComponent
+    component: EmployeeActionComponent,
+    canActivate: [authGuard],
   },
-  ...payrollMasterRoutes,
+  ...payrollMasterRoutes.map((route) => ({ ...route, canActivate: [authGuard] })),
   {
     path: 'employee-action/probation-evaluation-form',
-    component: ProbationEvaluationFormComponent
+    component: ProbationEvaluationFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/probation-evaluation-form/create',
-    component: AddProbationEvaluationComponent
+    component: AddProbationEvaluationComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/training-development-form',
-    component: TrainingDevelopmentFormComponent
+    component: TrainingDevelopmentFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/training-development-form/create',
-    component: AddTrainingDevelopmentComponent
+    component: AddTrainingDevelopmentComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/performance-appraisal-form',
-    component: PerformanceAppraisalFormComponent
+    component: PerformanceAppraisalFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/performance-appraisal-form/create',
-    component: AddPerformanceAppraisalComponent
+    component: AddPerformanceAppraisalComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/expense-reimbursement-form',
-    component: ExpenseReimbursmentFormComponent
+    component: ExpenseReimbursmentFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/expense-reimbursement-form/create',
-    component: AddExpenseReimbursmentComponent
+    component: AddExpenseReimbursmentComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/loan-advance-form',
-    component: LoanAdvanceFormComponent
+    component: LoanAdvanceFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/leave-application-form',
-    component: LeaveApplicationFormComponent
+    component: LeaveApplicationFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/loan-advance-form/create',
-    component: AddLoanAdvanceComponent
+    component: AddLoanAdvanceComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/leave-application-form/create',
-    component: AddLeaveApplicationComponent
+    component: AddLeaveApplicationComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'employee-action/approval-authority-setup',
-    component: ApprovalAuthoritySetupComponent
+    component: ApprovalAuthoritySetupComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'termination',
-    component: TerminationFormComponent
+    component: TerminationFormComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'termination/create',
-    component: AddTerminationComponent
+    component: AddTerminationComponent,
+    canActivate: [authGuard],
   },
-  ...plantMaintenanceRoutes,
+  ...plantMaintenanceRoutes.map((route) => ({ ...route, canActivate: [authGuard] })),
 ];

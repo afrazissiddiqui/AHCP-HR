@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService } from '../../services/alert.service';
@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   userId = '';
   password = '';
   rememberMe = false;
@@ -22,6 +22,12 @@ export class LoginComponent {
     private readonly alertService: AlertService,
     private readonly authService: AuthService,
   ) {}
+
+  ngOnInit(): void {
+    if (this.authService.isLoggedIn()) {
+      void this.router.navigateByUrl('/dashboard');
+    }
+  }
 
   submit(): void {
     const uid = this.userId.trim();

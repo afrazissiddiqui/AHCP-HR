@@ -3,8 +3,6 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
-import { PageToolbarComponent } from '../../../../page-toolbar/page-toolbar';
-import { PlantMaintenanceSetupLayoutService } from '../../plant-maintenance-setup-layout.service';
 import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
 import {
   MaintenanceActivityDefinitionService,
@@ -38,7 +36,7 @@ function createEmptyComponent(): PlantMaintenanceMasterComponent {
 @Component({
   selector: 'app-add-plant-maintenance-master-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageToolbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './add-plant-maintenance-master-form.html',
   styleUrls: [
     '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
@@ -47,7 +45,6 @@ function createEmptyComponent(): PlantMaintenanceMasterComponent {
   ],
 })
 export class AddPlantMaintenanceMasterFormComponent implements OnInit {
-  private readonly layout = inject(PlantMaintenanceSetupLayoutService);
   private readonly masterService = inject(PlantMaintenanceMasterFormService);
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
   private readonly alertService = inject(AlertService);
@@ -119,10 +116,6 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
 
   hasLoadedComponents(): boolean {
     return this.components().some((c) => c.name.trim());
-  }
-
-  toggleSidebar(): void {
-    this.layout.toggleSidebar();
   }
 
   back(): void {

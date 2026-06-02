@@ -7,8 +7,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AlertService } from '../../../../../services/alert.service';
-import { PageToolbarComponent } from '../../../../page-toolbar/page-toolbar';
-import { PlantMaintenanceSetupLayoutService } from '../../plant-maintenance-setup-layout.service';
 import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
 import {
@@ -60,7 +58,7 @@ function createEmptyComponent(): MaintenanceActivityComponent {
 
   standalone: true,
 
-  imports: [CommonModule, FormsModule, PageToolbarComponent],
+  imports: [CommonModule, FormsModule],
 
   templateUrl: './add-maintenance-activity-definition.html',
 
@@ -73,9 +71,6 @@ function createEmptyComponent(): MaintenanceActivityComponent {
 })
 
 export class AddMaintenanceActivityDefinitionComponent implements OnInit {
-
-  private readonly layout = inject(PlantMaintenanceSetupLayoutService);
-
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
 
   private readonly subComponentService = inject(SubComponentDefinitionService);
@@ -211,14 +206,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
   hasLoadedComponents(): boolean {
 
     return this.components().some((c) => c.name.trim());
-
-  }
-
-
-
-  toggleSidebar(): void {
-
-    this.layout.toggleSidebar();
 
   }
 
