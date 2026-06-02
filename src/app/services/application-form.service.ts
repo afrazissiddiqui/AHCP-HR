@@ -107,7 +107,9 @@ export interface ApplicationFormRecord {
   EmploymentCategory: string;
   status: string;
   selected?: boolean;
-  /** Populated when the record is saved from Create Application Form */
+  /** Backend record id for view/detail API */
+  apiId?: string;
+  /** Populated when loaded from view API or saved locally */
   detail?: ApplicationFormDetail;
 }
 
@@ -125,6 +127,7 @@ export interface EmployeeMasterDataRecord {
 
 const EMPLOYEE_PROFILE_ADD_URL = 'http://ahcp.hr:8080/api/employee-profile-add';
 const EMPLOYEE_PROFILE_LIST_URL = 'http://ahcp.hr:8080/api/employee-profile-list';
+const EMPLOYEE_PROFILE_VIEW_URL = 'http://ahcp.hr:8080/api/employee-profile-view';
 
 export interface EmployeeProfileAddPayload {
   personName: string;
@@ -211,6 +214,44 @@ export class ApplicationFormService {
     );
   }
 
+  fetchEmployeeProfileDetail(id: string | number): Observable<ApplicationFormRecord> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.get<unknown>(`${EMPLOYEE_PROFILE_VIEW_URL}/${identifier}`).pipe(
+      map((response) => {
+        const item = this.extractApiSingle(response);
+        if (!item) {
+          throw new Error('Employee profile not found.');
+        }
+        return this.mapApiItemToFullRecord(item);
+      }),
+    );
+  }
+
+  private extractApiSingle(response: unknown): Record<string, unknown> | null {
+    if (!response || typeof response !== 'object') {
+      return null;
+    }
+    if (Array.isArray(response)) {
+      const first = response[0];
+      return first && typeof first === 'object' ? (first as Record<string, unknown>) : null;
+    }
+    const obj = response as Record<string, unknown>;
+    const nested = obj['data'] ?? obj['employee'] ?? obj['profile'] ?? obj['user'];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      return nested as Record<string, unknown>;
+    }
+    if (
+      obj['personName'] ||
+      obj['person_name'] ||
+      obj['employeeCode'] ||
+      obj['employee_code'] ||
+      obj['id']
+    ) {
+      return obj;
+    }
+    return null;
+  }
+
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
     if (Array.isArray(response)) {
       return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
@@ -241,6 +282,8 @@ export class ApplicationFormService {
       asString(item['person_name']) ||
       `${asString(item['firstName'])} ${asString(item['lastName'])}`.trim();
 
+    const apiId = asString(item['id']) || employeeCode;
+
     return {
       EmployeeCode: asNumber(employeeCode, 0),
       EmployeeName: employeeName || '—',
@@ -252,6 +295,130 @@ export class ApplicationFormService {
       EmploymentCategory: asString(item['employmentCategory']) || asString(item['employment_category']) || '—',
       status: asString(item['status']) || 'Active',
       selected: false,
+      apiId: apiId || undefined,
+    };
+  }
+
+  private mapApiItemToFullRecord(item: Record<string, unknown>): ApplicationFormRecord {
+    const summary = this.mapApiItemToRecord(item);
+    const asString = (value: unknown): string =>
+      value === undefined || value === null ? '' : String(value).trim();
+    const pick = (camel: string, snake?: string): string =>
+      asString(item[camel]) || (snake ? asString(item[snake]) : '');
+
+    const educationRaw =
+      item['educationSections'] ??
+      item['education_sections'] ??
+      item['education'] ??
+      [];
+    const experienceRaw =
+      item['pastExperienceSections'] ??
+      item['past_experience_sections'] ??
+      item['pastExperience'] ??
+      item['past_experience'] ??
+      [];
+    const attachmentsRaw = item['attachments'] ?? [];
+
+    const education = Array.isArray(educationRaw)
+      ? educationRaw
+          .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+          .map((row) => ({
+            institute: pickFrom(row, 'institute'),
+            fromDate: pickFrom(row, 'fromDate', 'from_date'),
+            toDate: pickFrom(row, 'toDate', 'to_date'),
+            subject: pickFrom(row, 'subject'),
+            qualification: pickFrom(row, 'qualification'),
+            awardedQualification: pickFrom(row, 'awardedQualification', 'awarded_qualification'),
+            marksGrades: pickFrom(row, 'marksGrades', 'marks_grades'),
+            notes: pickFrom(row, 'notes'),
+          }))
+      : [];
+
+    const pastExperience = Array.isArray(experienceRaw)
+      ? experienceRaw
+          .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+          .map((row) => ({
+            company: pickFrom(row, 'company'),
+            position: pickFrom(row, 'position'),
+            fromDate: pickFrom(row, 'fromDate', 'from_date'),
+            toDate: pickFrom(row, 'toDate', 'to_date'),
+            duties: pickFrom(row, 'duties'),
+            remarks: pickFrom(row, 'remarks'),
+            lastSalary: asString(row['lastSalary'] ?? row['last_salary']),
+          }))
+      : [];
+
+    const attachments = Array.isArray(attachmentsRaw)
+      ? attachmentsRaw
+          .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+          .map((row) => ({
+            type: pickFrom(row, 'type'),
+            fileName: pickFrom(row, 'fileName', 'file_name') || pickFrom(row, 'file'),
+          }))
+      : [];
+
+    const detail: ApplicationFormDetail = {
+      personalInfo: {
+        personName: pick('personName', 'person_name'),
+        firstName: pick('firstName', 'first_name'),
+        middleName: pick('middleName', 'middle_name'),
+        lastName: pick('lastName', 'last_name'),
+        fatherOrHusbandName: pick('fatherOrHusbandName', 'father_or_husband_name'),
+        gender: pick('gender'),
+        maritalStatus: pick('maritalStatus', 'marital_status'),
+        dateOfBirth: pick('dateOfBirth', 'date_of_birth'),
+        nationality: pick('nationality'),
+        religion: pick('religion'),
+        bloodGroup: pick('bloodGroup', 'blood_group'),
+        nationalIdCardNo: pick('nationalIdCardNo', 'national_id_card_no'),
+        incomeTaxNo: pick('incomeTaxNo', 'income_tax_no'),
+        contactNumber: pick('contactNumber', 'contact_number'),
+        emergencyContactNumber: pick('emergencyContactNumber', 'emergency_contact_number'),
+        street: pick('street'),
+        streetNo: pick('streetNo', 'street_no'),
+        buildingFloorRoom: pick('buildingFloorRoom', 'building_floor_room'),
+        city: pick('city'),
+        state: pick('state'),
+        country: pick('country'),
+        zipCode: pick('zipCode', 'zip_code'),
+      },
+      education,
+      pastExperience,
+      remuneration: {
+        employeeMaster: pick('employeeMaster', 'employee_master'),
+        salaryStructure: pick('salaryStructure', 'salary_structure'),
+        attendanceShiftManagement: pick('attendanceShiftManagement', 'attendance_shift_management'),
+        leaveManagement: pick('leaveManagement', 'leave_management'),
+        loanAdvancesForm: pick('loanAdvancesForm', 'loan_advances_form'),
+      },
+      loginDetails: {
+        employeeCode: pick('employeeCode', 'employee_code'),
+        employeeName: pick('loginEmployeeName', 'login_employee_name'),
+        userId: pick('userId', 'user_id'),
+        password: pick('password'),
+      },
+      attachments,
+      requisition: {
+        copyExisting: false,
+        reqId: '',
+        internalJobTitle: summary.Designation !== '—' ? summary.Designation : '',
+        hiringManager: summary.ReportingManager !== '—' ? summary.ReportingManager : '',
+        recruiter: '',
+        recruitmentCollaborator: '',
+        requisitionAdministrator: '',
+        recruitmentCoordinator: '',
+        hrAdministrator: '',
+        company: summary.EmployeeNature !== '—' ? summary.EmployeeNature : '',
+        department: summary.Department !== '—' ? summary.Department : '',
+        division: summary.EmploymentType !== '—' ? summary.EmploymentType : '',
+        location: '',
+        costCenter: summary.EmploymentCategory !== '—' ? summary.EmploymentCategory : '',
+      },
+    };
+
+    return {
+      ...summary,
+      detail,
     };
   }
 
@@ -323,4 +490,18 @@ export class ApplicationFormService {
       selected: record.selected ?? false
     }));
   }
+}
+
+function pickFrom(row: Record<string, unknown>, camel: string, snake?: string): string {
+  const camelValue = row[camel];
+  if (camelValue !== undefined && camelValue !== null && String(camelValue).trim() !== '') {
+    return String(camelValue).trim();
+  }
+  if (snake) {
+    const snakeValue = row[snake];
+    if (snakeValue !== undefined && snakeValue !== null) {
+      return String(snakeValue).trim();
+    }
+  }
+  return '';
 }

@@ -111,6 +111,7 @@ export class RecruitmentComponent implements OnInit {
   showDialog = false;
   activeTab: 'columns' = 'columns';
   detailRecord: ApplicationFormRecord | null = null;
+  detailLoading = false;
 
   toggleColumnPanel() {
     this.showColumnPanel = !this.showColumnPanel;
@@ -220,11 +221,32 @@ export class RecruitmentComponent implements OnInit {
   }
 
   openApplicationDetail(record: ApplicationFormRecord) {
+    const viewId = record.apiId ?? record.EmployeeCode;
     this.detailRecord = record;
+    this.detailLoading = true;
+
+    this.applicationFormService.fetchEmployeeProfileDetail(viewId).subscribe({
+      next: (fullRecord) => {
+        this.detailLoading = false;
+        this.detailRecord = {
+          ...fullRecord,
+          selected: record.selected,
+        };
+      },
+      error: (error: unknown) => {
+        this.detailLoading = false;
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load employee details.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
   }
 
   closeApplicationDetail() {
     this.detailRecord = null;
+    this.detailLoading = false;
   }
 
   get applicationDetail(): ApplicationFormDetail | null {

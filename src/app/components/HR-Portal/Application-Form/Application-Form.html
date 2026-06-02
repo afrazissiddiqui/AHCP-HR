@@ -183,6 +183,7 @@
           title="Close">✕</button>
       </div>
       <div class="application-detail-body dialog-body">
+        <p *ngIf="detailLoading" class="application-detail-empty">Loading employee details...</p>
         <ng-container *ngIf="applicationDetail as d">
           <section class="application-detail-section">
             <h4 class="application-detail-section-title">Personal information</h4>
@@ -374,8 +375,8 @@
           </section>
         </ng-container>
 
-        <p *ngIf="detailRecord && !applicationDetail" class="application-detail-empty">
-          No extended profile data for this application. Open an application created via Add New to see full details.
+        <p *ngIf="detailRecord && !applicationDetail && !detailLoading" class="application-detail-empty">
+          No extended profile data for this employee.
         </p>
       </div>
     </div>
