@@ -196,13 +196,14 @@ app-root {
 ========================================================= */
 
 .table-wrapper {
-  flex: 1 1 auto;
+  flex: 1;
   min-height: 0;
-  height: auto;
+  height: calc(100vh - 104px);
   padding: 12px;
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Only rows scroll */
@@ -217,10 +218,9 @@ app-root {
 
 /* Table */
 .mountain-table {
-  min-width: 1200px;
-  width: max-content;
+  width: 100%;
+  min-width: 1000px;
   border-collapse: collapse;
-  table-layout: auto;
 }
 
 /* Sticky Header */
@@ -262,6 +262,25 @@ app-root {
 }
 
 .mountain-table thead th:first-child {
+  z-index: 12;
+  background: #f5f5f5;
+}
+
+/* Sticky last column (Actions column) */
+.mountain-table th:last-child,
+.mountain-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 11;
+  background: #ffffff;
+  width: 1%;
+  white-space: nowrap;
+  text-align: left;
+  border-left: 1px solid #eee;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.mountain-table thead th:last-child {
   z-index: 12;
   background: #f5f5f5;
 }
@@ -391,7 +410,12 @@ app-root {
 }
 
 .table-action-cell {
-  text-align: center;
+  white-space: nowrap;
+}
+
+.table-action-cell .action-buttons {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
 }
 
 .btn-view-action {

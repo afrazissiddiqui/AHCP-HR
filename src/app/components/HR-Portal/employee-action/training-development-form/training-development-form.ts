@@ -1,11 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
-import { ApplicationFormService, ApplicationFormRecord } from '../../../../services/application-form.service';
+import {
+  TrainingDevelopmentRecord,
+  TrainingDevelopmentService,
+} from '../../../../services/training-development.service';
+import { AlertService } from '../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   TRAINING_DEVELOPMENT_TABLE_FILTER,
@@ -13,21 +18,23 @@ import {
   TableFilterService,
 } from '../../../table-filter';
 
-interface TrainingDevelopmentRecord {
-  EmployeeCode: number;
-  EmployeeName: string;
-  Department: string;
-  EmploymentNature: string;
-  DateOfJoining: string;
-  TrainingTitle: string;
-  TrainingCategory: string;
-  TrainingStage: string;
-  TrainingStartDate: string;
-  TrainingEndDate: string;
-  selected?: boolean;
-}
-
-type TrainingColumnKey = Exclude<keyof TrainingDevelopmentRecord, 'selected'>;
+type TrainingColumnKey = Exclude<
+  keyof TrainingDevelopmentRecord,
+  | 'selected'
+  | 'Id'
+  | 'Location'
+  | 'Designation'
+  | 'JobTitle'
+  | 'ReportingManager'
+  | 'EmployeeType'
+  | 'GradeWorkLevel'
+  | 'EmploymentCategory'
+  | 'Remarks'
+  | 'TrainingDetail'
+  | 'TrainingEvaluation'
+  | 'Salary'
+  | 'Promotion'
+>;
 
 @Component({
   selector: 'app-training-development-form',
@@ -43,8 +50,8 @@ type TrainingColumnKey = Exclude<keyof TrainingDevelopmentRecord, 'selected'>;
     }
 
     :host .mountain-table {
-      width: max-content;
-      min-width: 100%;
+      width: 100%;
+      min-width: 1000px;
       table-layout: auto;
     }
 
@@ -62,38 +69,41 @@ type TrainingColumnKey = Exclude<keyof TrainingDevelopmentRecord, 'selected'>;
       width: 40px;
     }
 
-    :host .mountain-table th:nth-child(2),
-    :host .mountain-table td:nth-child(2) {
-      min-width: 110px;
+    :host .mountain-table th:last-child,
+    :host .mountain-table td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 11;
+      background: #ffffff;
+      border-left: 1px solid #eee;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
     }
 
-    :host .mountain-table th:nth-child(3),
-    :host .mountain-table td:nth-child(3) {
-      min-width: 140px;
-    }
-
-    :host .mountain-table th:nth-child(4),
-    :host .mountain-table td:nth-child(4) {
-      min-width: 120px;
-    }
-
-    :host .mountain-table th:nth-child(5),
-    :host .mountain-table td:nth-child(5) {
-      min-width: 145px;
+    :host .mountain-table thead th:last-child {
+      z-index: 12;
+      background: #f5f5f5;
     }
   `],
 })
-export class TrainingDevelopmentFormComponent {
+export class TrainingDevelopmentFormComponent implements OnInit {
   readonly trainingTableFilter = TRAINING_DEVELOPMENT_TABLE_FILTER;
 
   constructor(
-    private readonly applicationFormService: ApplicationFormService,
+    private readonly trainingService: TrainingDevelopmentService,
     private readonly router: Router,
+    private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService
-  ) {
-    this.trainingList = this.applicationFormService
-      .getApplicationRecords()
-      .map((record) => this.toTrainingRecord(record));
+  ) {}
+
+  ngOnInit(): void {
+    this.trainingService.fetchTrainingDevelopments().subscribe({
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load training & development records.'),
+        );
+      },
+    });
   }
 
   Math = Math;
@@ -122,11 +132,19 @@ export class TrainingDevelopmentFormComponent {
   currentPage = 1;
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
-  trainingList: TrainingDevelopmentRecord[] = [];
   showDialog = false;
   activeTab: 'filter' = 'filter';
   showViewDialog = false;
+  viewLoading = false;
   selectedRecord: TrainingDevelopmentRecord | null = null;
+
+  get trainingList(): TrainingDevelopmentRecord[] {
+    return this.trainingService.trainings();
+  }
+
+  get visibleColumns(): Array<{ key: TrainingColumnKey; label: string; visible: boolean }> {
+    return this.columns.filter((col) => col.visible);
+  }
 
   get filteredList(): TrainingDevelopmentRecord[] {
     let list = this.tableFilter.filterItems([...this.trainingList], this.trainingTableFilter);
@@ -136,7 +154,7 @@ export class TrainingDevelopmentFormComponent {
         item.EmployeeName.toLowerCase().includes(search) ||
         item.Department.toLowerCase().includes(search) ||
         item.EmploymentNature.toLowerCase().includes(search) ||
-        item.EmployeeCode.toString().includes(search) ||
+        item.EmployeeCode.toLowerCase().includes(search) ||
         item.DateOfJoining.toLowerCase().includes(search) ||
         item.TrainingTitle.toLowerCase().includes(search) ||
         item.TrainingCategory.toLowerCase().includes(search) ||
@@ -223,13 +241,74 @@ export class TrainingDevelopmentFormComponent {
   }
 
   viewRecord(record: TrainingDevelopmentRecord): void {
-    this.selectedRecord = record;
+    if (!record.Id) {
+      this.alertService.warning('View', 'Unable to view this row: missing training & development id.');
+      return;
+    }
+
     this.showViewDialog = true;
+    this.selectedRecord = null;
+    this.viewLoading = true;
+
+    this.trainingService.fetchTrainingDevelopmentDetail(record.Id).subscribe({
+      next: (detail) => {
+        this.selectedRecord = detail;
+        this.viewLoading = false;
+      },
+      error: (error: unknown) => {
+        this.viewLoading = false;
+        this.showViewDialog = false;
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load training & development details.'),
+        );
+      },
+    });
+  }
+
+  onUpdate(record: TrainingDevelopmentRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing training & development id.');
+      return;
+    }
+    void this.router.navigate(['/employee-action/training-development-form/edit', record.Id]);
+  }
+
+  async onDelete(record: TrainingDevelopmentRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete training & development?',
+      `Remove ${record.EmployeeName} (${record.EmployeeCode}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing training & development id.');
+      return;
+    }
+
+    this.trainingService.deleteTrainingDevelopment(record.Id).subscribe({
+      next: () => {
+        this.trainingService.removeTrainingRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'Training & development record removed successfully.');
+      },
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete training & development record.'),
+        );
+      },
+    });
   }
 
   closeViewDialog(): void {
     this.showViewDialog = false;
     this.selectedRecord = null;
+    this.viewLoading = false;
   }
 
   onFolderSelected(folderId: string): void {
@@ -242,30 +321,5 @@ export class TrainingDevelopmentFormComponent {
 
   createNewTraining(): void {
     void this.router.navigateByUrl('/employee-action/training-development-form/create');
-  }
-
-  private toTrainingRecord(record: ApplicationFormRecord): TrainingDevelopmentRecord {
-    const month = (record.EmployeeCode % 12) + 1;
-    const joinDate = `2025-${month.toString().padStart(2, '0')}-15`;
-    const startDate = `2026-${month.toString().padStart(2, '0')}-05`;
-    const endDate = `2026-${month.toString().padStart(2, '0')}-20`;
-    const stages = ['Nomination', 'In Progress', 'Completed'] as const;
-    const categories = ['Technical', 'Behavioral', 'Compliance'] as const;
-    const stage = stages[record.EmployeeCode % stages.length];
-    const category = categories[record.EmployeeCode % categories.length];
-
-    return {
-      EmployeeCode: record.EmployeeCode,
-      EmployeeName: record.EmployeeName,
-      Department: record.Department,
-      EmploymentNature: record.EmployeeNature,
-      DateOfJoining: joinDate,
-      TrainingTitle: `${record.Department} Skills Program`,
-      TrainingCategory: category,
-      TrainingStage: stage,
-      TrainingStartDate: startDate,
-      TrainingEndDate: endDate,
-      selected: record.selected ?? false
-    };
   }
 }

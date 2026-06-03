@@ -1,8 +1,24 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, computed, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
+import {
+  TrainingDevelopmentRecord,
+  TrainingDevelopmentService,
+  buildTrainingDevelopmentDraftFromForm,
+  buildTrainingDevelopmentSubmitPayload,
+} from '../../../../../services/training-development.service';
+import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 
 @Component({
   selector: 'app-add-training-development',
@@ -15,7 +31,11 @@ import { AlertService } from '../../../../../services/alert.service';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AddTrainingDevelopmentComponent implements AfterViewInit, OnDestroy {
+export class AddTrainingDevelopmentComponent implements OnInit, AfterViewInit, OnDestroy {
+  editingId: string | null = null;
+  pageTitle = 'Add Training Development';
+  submitButtonLabel = 'Save Training Development';
+
   private readonly sectionIds = [
     'probation-info-section',
     'probation-rating-section',
@@ -27,8 +47,35 @@ export class AddTrainingDevelopmentComponent implements AfterViewInit, OnDestroy
 
   constructor(
     private readonly router: Router,
-    private readonly alertService: AlertService
+    private readonly route: ActivatedRoute,
+    private readonly alertService: AlertService,
+    private readonly trainingService: TrainingDevelopmentService,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
+
+  ngOnInit(): void {
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+
+    this.editingId = editId;
+    this.pageTitle = 'Update Training Development';
+    this.submitButtonLabel = 'Update Training Development';
+
+    this.trainingService.fetchTrainingDevelopmentDetail(editId).subscribe({
+      next: (record) => {
+        this.populateFromRecord(record);
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load training & development record for edit.'),
+        );
+      },
+    });
+  }
 
   protected readonly ratingParameters = [
     { key: 'performanceRating', label: 'Performance Rating' },
@@ -368,85 +415,149 @@ export class AddTrainingDevelopmentComponent implements AfterViewInit, OnDestroy
     this.cancel();
   }
 
-  protected async save(): Promise<void> {
-    // TODO: connect to API/service once endpoint is ready.
-    console.log('Training development payload:', {
+  protected save(): void {
+    if (!this.employeeCode().trim() || !this.employeeName().trim()) {
+      void this.alertService.warning('Validation', 'Employee Code and Employee Name are required.');
+      return;
+    }
+
+    if (!this.trainingTitle().trim()) {
+      void this.alertService.warning('Validation', 'Training Title is required.');
+      return;
+    }
+
+    const draft = buildTrainingDevelopmentDraftFromForm({
       employeeCode: this.employeeCode(),
       employeeName: this.employeeName(),
       department: this.department(),
       location: this.location(),
       designation: this.designation(),
       jobTitle: this.jobTitle(),
-      dateOfJoining: this.dateOfJoining(),
       reportingManager: this.reportingManager(),
       employeeNature: this.employeeNature(),
       employeeType: this.employeeType(),
       gradeWorkLevel: this.gradeWorkLevel(),
       employmentCategory: this.employmentCategory(),
-      trainingDetail: {
-        trainingTitle: this.trainingTitle(),
-        trainingCategory: this.trainingCategory(),
-        trainingType: this.trainingType(),
-        trainingStage: this.trainingStage(),
-        trainingStartDate: this.trainingStartDate(),
-        trainingEndDate: this.trainingEndDate(),
-        trainingDuration: this.trainingDuration(),
-        trainer: this.trainer(),
-        trainingObjectives: this.trainingObjectives(),
-        skillsCovered: this.skillsCovered(),
-        remarks: this.trainingDetailRemarks()
-      },
-      probationStartDate: this.probationStartDate(),
-      probationEndDate: this.probationEndDate(),
-      extensionOfProbation: {
-        enabled: this.isExtensionEnabled(),
-        probationStartDate: this.extensionProbationStartDate(),
-        probationEndDate: this.extensionProbationEndDate(),
-        extensionPeriodInProbation: this.extensionPeriodInProbation(),
-        newProbationEndDate: this.newProbationEndDate()
-      },
-      trainingEvaluation: {
-        evaluationCycleNumber: this.evaluationCycleNumber(),
-        evaluationDate: this.evaluationDate(),
-        evaluationPeriod: this.evaluationPeriod(),
-        evaluatorName: this.evaluatorName(),
-        evaluationParameter: this.evaluationParameter(),
-        parameterRating: this.parameterRating(),
-        overallScore: this.overallScore(),
-        performanceRemarks: this.performanceRemarks()
-      },
-      salaryAdjustment: {
-        currentSalary: this.currentSalary(),
-        incrementAmount: this.incrementAmount(),
-        incrementPercentage: this.incrementPercentage(),
-        revisedSalary: this.revisedSalary(),
-        effectiveDateOfRevision: this.effectiveDateOfRevision(),
-        reasonForIncrement: this.reasonForIncrement(),
-        approvalAuthority: this.approvalAuthority()
-      },
-      promotion: {
-        promotionRecommended: this.promotionRecommended(),
-        newDesignation: this.newDesignation(),
-        promotionEffectiveDate: this.promotionEffectiveDate(),
-        performanceEligibilityCheck: this.performanceEligibilityCheck(),
-        trainingCompletionVerification: this.trainingCompletionVerification(),
-        remarks: this.promotionRemarks()
-      },
+      dateOfJoining: this.dateOfJoining(),
       remarks: this.remarks(),
-      probationRating: {
-        performanceRating: this.performanceRating(),
-        workQuality: this.workQuality(),
-        attendance: this.attendance(),
-        behaviour: this.behaviour(),
-        performanceRatingRemark: this.performanceRatingRemark(),
-        workQualityRemark: this.workQualityRemark(),
-        attendanceRemark: this.attendanceRemark(),
-        behaviourRemark: this.behaviourRemark(),
-        supervisionRemark: this.supervisionRemark()
-      }
+      trainingTitle: this.trainingTitle(),
+      trainingCategory: this.trainingCategory(),
+      trainingType: this.trainingType(),
+      trainingStage: this.trainingStage(),
+      trainingStartDate: this.trainingStartDate(),
+      trainingEndDate: this.trainingEndDate(),
+      trainingDuration: this.trainingDuration(),
+      trainer: this.trainer(),
+      trainingObjectives: this.trainingObjectives(),
+      skillsCovered: this.skillsCovered(),
+      trainingDetailRemarks: this.trainingDetailRemarks(),
+      evaluationCycleNumber: this.evaluationCycleNumber(),
+      evaluationDate: this.evaluationDate(),
+      evaluationPeriod: this.evaluationPeriod(),
+      evaluatorName: this.evaluatorName(),
+      evaluationParameter: this.evaluationParameter(),
+      parameterRating: this.parameterRating(),
+      overallScore: this.overallScore(),
+      performanceRemarks: this.performanceRemarks(),
+      currentSalary: this.currentSalary(),
+      incrementAmount: this.incrementAmount(),
+      incrementPercentage: this.incrementPercentage(),
+      revisedSalary: this.revisedSalary(),
+      effectiveDateOfRevision: this.effectiveDateOfRevision(),
+      reasonForIncrement: this.reasonForIncrement(),
+      approvalAuthority: this.approvalAuthority(),
+      promotionRecommended: this.promotionRecommended(),
+      newDesignation: this.newDesignation(),
+      promotionEffectiveDate: this.promotionEffectiveDate(),
+      performanceEligibilityCheck: this.performanceEligibilityCheck(),
+      trainingCompletionVerification: this.trainingCompletionVerification(),
+      promotionRemarks: this.promotionRemarks(),
     });
 
-    await this.alertService.successAndWait('Saved', 'Training development form submitted successfully.');
-    void this.router.navigateByUrl('/employee-action/training-development-form');
+    const payload = buildTrainingDevelopmentSubmitPayload(draft);
+    const request$ = this.editingId
+      ? this.trainingService.updateTrainingDevelopment(this.editingId, payload)
+      : this.trainingService.addTrainingDevelopment(payload);
+
+    request$.subscribe({
+      next: async () => {
+        const message = this.editingId
+          ? 'Training & development record updated successfully.'
+          : 'Training & development record saved successfully.';
+        await this.alertService.successAndWait(this.editingId ? 'Updated' : 'Saved', message);
+        this.trainingService.fetchTrainingDevelopments().subscribe();
+        void this.router.navigateByUrl('/employee-action/training-development-form');
+      },
+      error: (error: unknown) => {
+        const fallback = this.editingId
+          ? 'Failed to update training & development record.'
+          : 'Failed to save training & development record.';
+        void this.alertService.error(
+          this.editingId ? 'Update Failed' : 'Save Failed',
+          formatApiErrorMessage(error, fallback),
+        );
+      },
+    });
+  }
+
+  private populateFromRecord(record: TrainingDevelopmentRecord): void {
+    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const yesNo = (value: string): 'Yes' | 'No' | '' =>
+      value === 'Yes' || value === 'No' ? value : '';
+
+    this.employeeCode.set(emptyIfDash(record.EmployeeCode));
+    this.employeeName.set(emptyIfDash(record.EmployeeName));
+    this.department.set(emptyIfDash(record.Department));
+    this.location.set(emptyIfDash(record.Location));
+    this.designation.set(emptyIfDash(record.Designation));
+    this.jobTitle.set(emptyIfDash(record.JobTitle));
+    this.reportingManager.set(emptyIfDash(record.ReportingManager));
+    this.employeeNature.set(emptyIfDash(record.EmployeeNature));
+    this.employeeType.set(emptyIfDash(record.EmployeeType));
+    this.gradeWorkLevel.set(emptyIfDash(record.GradeWorkLevel));
+    this.employmentCategory.set(emptyIfDash(record.EmploymentCategory));
+    this.dateOfJoining.set(emptyIfDash(record.DateOfJoining));
+    this.remarks.set(emptyIfDash(record.Remarks));
+
+    const detail = record.TrainingDetail;
+    this.trainingTitle.set(emptyIfDash(detail.training_title));
+    this.trainingCategory.set(emptyIfDash(detail.training_category));
+    this.trainingType.set(emptyIfDash(detail.training_type));
+    this.trainingStage.set(emptyIfDash(detail.training_stage));
+    this.trainingStartDate.set(emptyIfDash(detail.training_start_date));
+    this.trainingEndDate.set(emptyIfDash(detail.training_end_date));
+    this.trainer.set(emptyIfDash(detail.trainer));
+    this.trainingObjectives.set(emptyIfDash(detail.training_objectives));
+    this.skillsCovered.set(emptyIfDash(detail.skills_covered));
+    this.trainingDetailRemarks.set(emptyIfDash(detail.remarks));
+
+    const evaluation = record.TrainingEvaluation;
+    this.evaluationCycleNumber.set(emptyIfDash(evaluation.evaluation_cycle_number));
+    this.evaluationDate.set(emptyIfDash(evaluation.evaluation_date));
+    this.evaluationPeriod.set(emptyIfDash(evaluation.evaluation_period) || '6 months');
+    this.evaluatorName.set(emptyIfDash(evaluation.evaluator_name));
+    this.evaluationParameter.set(emptyIfDash(evaluation.evaluation_parameter));
+    this.parameterRating.set(
+      evaluation.parameter_rating ? String(evaluation.parameter_rating) : '',
+    );
+    this.overallScore.set(emptyIfDash(evaluation.overall_score));
+    this.performanceRemarks.set(emptyIfDash(evaluation.performance_remarks));
+
+    const salary = record.Salary;
+    this.currentSalary.set(salary.current_salary ? String(salary.current_salary) : '');
+    this.incrementAmount.set(salary.increment_amount ? String(salary.increment_amount) : '');
+    this.incrementPercentage.set(
+      salary.increment_percentage ? String(salary.increment_percentage) : '',
+    );
+    this.effectiveDateOfRevision.set(emptyIfDash(salary.effective_date_of_revision));
+    this.reasonForIncrement.set(emptyIfDash(salary.reason_for_increment));
+    this.approvalAuthority.set(emptyIfDash(salary.approval_authority));
+
+    const promotion = record.Promotion;
+    this.promotionRecommended.set(yesNo(promotion.promotion_recommended));
+    this.newDesignation.set(emptyIfDash(promotion.new_designation));
+    this.promotionEffectiveDate.set(emptyIfDash(promotion.promotion_effective_date));
+    this.trainingCompletionVerification.set(yesNo(promotion.training_completion_verification));
+    this.promotionRemarks.set(emptyIfDash(promotion.remarks));
   }
 }

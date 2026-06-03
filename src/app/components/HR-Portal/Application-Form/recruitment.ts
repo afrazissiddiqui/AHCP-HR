@@ -99,6 +99,10 @@ export class RecruitmentComponent implements OnInit {
     return this.applicationFormService.getApplicationRecords();
   }
 
+  get visibleColumns(): ColumnConfig[] {
+    return this.columns.filter((col) => col.visible);
+  }
+
   // Searching, Sorting, Pagination State
   searchText: string = '';
   sortColumn: ApplicationFormColumnKey = 'EmployeeCode';

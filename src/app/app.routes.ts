@@ -117,6 +117,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'employee-action/training-development-form/edit/:id',
+    component: AddTrainingDevelopmentComponent,
+    canActivate: [authGuard],
+  },
+  {
     path: 'employee-action/performance-appraisal-form',
     component: PerformanceAppraisalFormComponent,
     canActivate: [authGuard],

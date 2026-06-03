@@ -97,14 +97,14 @@
                 <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
               </th>
 
-              <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)"
+              <th *ngFor="let col of visibleColumns" appColumnResize (click)="sortData(col.key)"
                 class="sortable-header">
                 {{ col.label }}
                 <span *ngIf="sortColumn === col.key" class="sort-indicator">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th>Action</th>
+              <th class="application-actions-header">Actions</th>
             </tr>
           </thead>
 
@@ -116,7 +116,7 @@
                 <input type="checkbox" [(ngModel)]="s.selected" />
               </td>
 
-              <td *ngFor="let col of columns" [hidden]="!col.visible">
+              <td *ngFor="let col of visibleColumns">
                 <ng-container [ngSwitch]="col.key">
                   <!-- Status Column -->
                   <span *ngSwitchCase="'status'" [className]="'status-badge ' + s.status.toLowerCase()">
@@ -129,7 +129,7 @@
                   </span>
                 </ng-container>
               </td>
-              <td class="table-action-cell">
+              <td class="table-action-cell application-actions-cell">
                 <div class="action-buttons">
                   <button class="view-btn" (click)="openApplicationDetail(s)" title="View Details">
                     View
