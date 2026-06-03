@@ -29,6 +29,15 @@ export const JOB_SPECIFICATION_TABLE_FILTER: TableFilterConfig = {
     { type: 'select', key: 'employmentCategory', label: 'Employment category', fieldKey: 'employmentCategory' },
     { type: 'select', key: 'employmentNature', label: 'Employment nature', fieldKey: 'employmentNature' },
     { type: 'select', key: 'employmentType', label: 'Employment type', fieldKey: 'employmentType' },
+    { type: 'select', key: 'gradeWorkLevel', label: 'Grade / work level', fieldKey: 'gradeWorkLevel' },
+    {
+      type: 'numberRange',
+      key: 'vacancyCount',
+      label: 'Vacancy count range',
+      fieldKey: 'vacancyCount',
+      fromPlaceholder: 'Min count',
+      toPlaceholder: 'Max count',
+    },
     {
       type: 'numberRange',
       key: 'jobId',

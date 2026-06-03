@@ -6,20 +6,20 @@ export interface JobSpecificationRecord {
   Id: number;
   jobTitle: string;
   department: string;
-  vacancy: number;
+  vacancyCount: number;
+  jobDescription: string;
+  experienceRequirement: string;
   employmentCategory: string;
   employmentNature: string;
   employmentType: string;
   gradeWorkLevel: string;
-  jobDescription: string;
-  experienceRequirement: string;
+  keyResponsibilities: string;
+  basicSalary: number;
+  medicalAllowance: number;
+  fuelAllowance: number;
+  packagePerks: string;
+  qualifications: string[];
   selected?: boolean;
-  keyResponsibilities?: string;
-  basicSalary?: string;
-  medicalAllowance?: string;
-  fuelAllowance?: string;
-  packagePerks?: string;
-  qualifications?: string[];
 }
 
 const JOB_SPECIFICATION_LIST_URL = 'http://ahcp.hr:8080/api/job-specification-list';
@@ -122,13 +122,22 @@ export class JobSpecificationService {
       return [];
     };
 
+    const asFloat = (value: unknown, fallback = 0): number => {
+      const parsed = Number.parseFloat(asString(value));
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
     const id = asString(item['id']) || asString(item['Id']) || asString(item['jobId']) || asString(item['job_id']);
 
     return {
       Id: asNumber(id, 0),
       jobTitle: asString(item['jobTitle']) || asString(item['job_title']) || asString(item['title']) || '—',
       department: asString(item['department']) || '—',
-      vacancy: asNumber(item['vacancyCount'] ?? item['vacancy'], 0),
+      vacancyCount: asNumber(item['vacancyCount'] ?? item['vacancy'], 0),
+      jobDescription:
+        asString(item['jobDescription']) || asString(item['job_description']) || asString(item['description']) || '—',
+      experienceRequirement:
+        asString(item['experienceRequirement']) || asString(item['experience_requirement']) || asString(item['experience']) || '—',
       employmentCategory:
         asString(item['employmentCategory']) || asString(item['employment_category']) || asString(item['category']) || '—',
       employmentNature:
@@ -136,16 +145,12 @@ export class JobSpecificationService {
       employmentType: asString(item['employmentType']) || asString(item['employment_type']) || asString(item['type']) || '—',
       gradeWorkLevel:
         asString(item['gradeWorkLevel']) || asString(item['grade_work_level']) || asString(item['grade']) || '—',
-      jobDescription:
-        asString(item['jobDescription']) || asString(item['job_description']) || asString(item['description']) || '—',
-      experienceRequirement:
-        asString(item['experienceRequirement']) || asString(item['experience_requirement']) || asString(item['experience']) || '—',
       keyResponsibilities:
-        asString(item['keyResponsibilities']) || asString(item['key_responsibilities']) || asString(item['responsibilities']) || undefined,
-      basicSalary: asString(item['basicSalary']) || asString(item['basic_salary']) || undefined,
-      medicalAllowance: asString(item['medicalAllowance']) || asString(item['medical_allowance']) || undefined,
-      fuelAllowance: asString(item['fuelAllowance']) || asString(item['fuel_allowance']) || undefined,
-      packagePerks: asString(item['packagePerks']) || asString(item['package_perks']) || undefined,
+        asString(item['keyResponsibilities']) || asString(item['key_responsibilities']) || asString(item['responsibilities']) || '—',
+      basicSalary: asFloat(item['basicSalary'] ?? item['basic_salary']),
+      medicalAllowance: asFloat(item['medicalAllowance'] ?? item['medical_allowance']),
+      fuelAllowance: asFloat(item['fuelAllowance'] ?? item['fuel_allowance']),
+      packagePerks: asString(item['packagePerks']) || asString(item['package_perks']) || '—',
       qualifications: asStringArray(item['qualifications']),
       selected: false,
     };

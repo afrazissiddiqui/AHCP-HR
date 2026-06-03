@@ -158,18 +158,18 @@ export class CreateJobSpecificationComponent implements OnInit {
   private populateFromRecord(record: JobSpecificationRecord): void {
     this.jobTitle = record.jobTitle === '—' ? '' : record.jobTitle;
     this.department = record.department === '—' ? '' : record.department;
-    this.vacancyCount = record.vacancy || null;
+    this.vacancyCount = record.vacancyCount || null;
     this.jobDescription = record.jobDescription === '—' ? '' : record.jobDescription;
     this.experienceRequirement = record.experienceRequirement === '—' ? '' : record.experienceRequirement;
     this.employmentCategory = record.employmentCategory === '—' ? '' : record.employmentCategory;
     this.employmentNature = record.employmentNature === '—' ? '' : record.employmentNature;
     this.employmentType = record.employmentType === '—' ? '' : record.employmentType;
     this.gradeWorkLevel = record.gradeWorkLevel === '—' ? '' : record.gradeWorkLevel;
-    this.keyResponsibilities = record.keyResponsibilities ?? '';
-    this.basicSalary = record.basicSalary ?? '';
-    this.medicalAllowance = record.medicalAllowance ?? '';
-    this.fuelAllowance = record.fuelAllowance ?? '';
-    this.packagePerks = record.packagePerks ?? '';
-    this.qualifications = record.qualifications?.length ? [...record.qualifications] : [''];
+    this.keyResponsibilities = record.keyResponsibilities === '—' ? '' : record.keyResponsibilities;
+    this.basicSalary = record.basicSalary ? String(record.basicSalary) : '';
+    this.medicalAllowance = record.medicalAllowance ? String(record.medicalAllowance) : '';
+    this.fuelAllowance = record.fuelAllowance ? String(record.fuelAllowance) : '';
+    this.packagePerks = record.packagePerks === '—' ? '' : record.packagePerks;
+    this.qualifications = record.qualifications.length ? [...record.qualifications] : [''];
   }
 }

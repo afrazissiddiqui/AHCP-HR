@@ -106,7 +106,7 @@
                 <input type="checkbox" [(ngModel)]="j.selected" />
               </td>
               <td *ngFor="let col of columns" [hidden]="!col.visible">
-                {{ j[col.key] }}
+                {{ formatCellValue(j, col.key) }}
               </td>
               <td class="table-action-cell">
                 <div class="action-buttons">
@@ -139,7 +139,7 @@
             <div class="js-detail-grid">
               <div class="js-detail-item"><label>Job Title:</label> <span>{{ selectedJobSpec.jobTitle }}</span></div>
               <div class="js-detail-item"><label>Department:</label> <span>{{ selectedJobSpec.department }}</span></div>
-              <div class="js-detail-item"><label>Vacancy:</label> <span>{{ selectedJobSpec.vacancy }}</span></div>
+              <div class="js-detail-item"><label>Vacancy Count:</label> <span>{{ selectedJobSpec.vacancyCount }}</span></div>
               <div class="js-detail-item"><label>Category:</label> <span>{{ selectedJobSpec.employmentCategory }}</span></div>
               <div class="js-detail-item"><label>Nature:</label> <span>{{ selectedJobSpec.employmentNature }}</span></div>
               <div class="js-detail-item"><label>Type:</label> <span>{{ selectedJobSpec.employmentType }}</span></div>
@@ -156,7 +156,7 @@
             </div>
           </div>
 
-          <div class="js-detail-section" *ngIf="selectedJobSpec.basicSalary">
+          <div class="js-detail-section" *ngIf="selectedJobSpec.basicSalary || selectedJobSpec.medicalAllowance || selectedJobSpec.fuelAllowance">
             <h3>Remuneration</h3>
             <div class="js-detail-grid">
               <div class="js-detail-item"><label>Basic Salary:</label> <span>{{ selectedJobSpec.basicSalary }}</span></div>
@@ -169,7 +169,7 @@
             </div>
           </div>
 
-          <div class="js-detail-section" *ngIf="selectedJobSpec.qualifications?.length">
+          <div class="js-detail-section" *ngIf="selectedJobSpec.qualifications.length">
             <h3>Qualifications</h3>
             <ul class="js-qual-list">
               <li *ngFor="let qual of selectedJobSpec.qualifications">{{ qual }}</li>

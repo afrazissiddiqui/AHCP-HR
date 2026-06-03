@@ -13,8 +13,10 @@ import {
   TableFilterService,
 } from '../../table-filter';
 
+type JobSpecificationColumnKey = Exclude<keyof JobSpecificationRecord, 'selected'>;
+
 interface ColumnConfig {
-  key: keyof JobSpecificationRecord;
+  key: JobSpecificationColumnKey;
   label: string;
   visible: boolean;
 }
@@ -76,12 +78,21 @@ export class JobSpecificationFormComponent implements OnInit {
   sidebarCollapsed = signal(false);
 
   columns: ColumnConfig[] = [
-    { key: "Id", label: "Job ID", visible: true },
-    { key: "jobTitle", label: "Job Title", visible: true },
-    { key: "department", label: "Department", visible: true },
-    { key: "vacancy", label: "Vacancy", visible: true },
-    { key: "employmentCategory", label: "Employment Category", visible: true },
-    { key: "employmentNature", label: "Employment Nature", visible: true },
+    { key: 'jobTitle', label: 'Job Title', visible: true },
+    { key: 'department', label: 'Department', visible: true },
+    { key: 'vacancyCount', label: 'Vacancy Count', visible: true },
+    { key: 'experienceRequirement', label: 'Experience Requirement', visible: true },
+    { key: 'employmentCategory', label: 'Employment Category', visible: true },
+    { key: 'employmentNature', label: 'Employment Nature', visible: true },
+    { key: 'employmentType', label: 'Employment Type', visible: true },
+    { key: 'gradeWorkLevel', label: 'Grade / Work Level', visible: true },
+    { key: 'basicSalary', label: 'Basic Salary', visible: true },
+    { key: 'medicalAllowance', label: 'Medical Allowance', visible: true },
+    { key: 'fuelAllowance', label: 'Fuel Allowance', visible: true },
+    { key: 'jobDescription', label: 'Job Description', visible: false },
+    { key: 'keyResponsibilities', label: 'Key Responsibilities', visible: false },
+    { key: 'packagePerks', label: 'Package / Perks', visible: false },
+    { key: 'qualifications', label: 'Qualifications', visible: false },
   ];
 
   get jobSpecs(): JobSpecificationRecord[] {
@@ -89,7 +100,7 @@ export class JobSpecificationFormComponent implements OnInit {
   }
 
   searchText: string = '';
-  sortColumn: keyof JobSpecificationRecord = 'Id';
+  sortColumn: JobSpecificationColumnKey = 'jobTitle';
   sortDirection: 'asc' | 'desc' = 'asc';
   currentPage: number = 1;
   pageSize: number = 10;
@@ -179,6 +190,21 @@ export class JobSpecificationFormComponent implements OnInit {
     return this.jobSpecs.filter(x => x.selected).length;
   }
 
+  formatCellValue(record: JobSpecificationRecord, key: JobSpecificationColumnKey): string {
+    const value = record[key];
+    if (value === undefined || value === null) {
+      return '—';
+    }
+    if (Array.isArray(value)) {
+      return value.length ? value.join(', ') : '—';
+    }
+    if (typeof value === 'number') {
+      return String(value);
+    }
+    const text = String(value).trim();
+    return text === '' || text === '—' ? '—' : text;
+  }
+
   get filteredList(): JobSpecificationRecord[] {
     let list = this.tableFilter.filterItems([...this.jobSpecs], this.jobSpecTableFilter);
 
@@ -187,9 +213,16 @@ export class JobSpecificationFormComponent implements OnInit {
       list = list.filter(item =>
         item.jobTitle.toLowerCase().includes(search) ||
         item.department.toLowerCase().includes(search) ||
-        item.vacancy.toString().includes(search) ||
+        item.vacancyCount.toString().includes(search) ||
+        item.experienceRequirement.toLowerCase().includes(search) ||
         item.employmentCategory.toLowerCase().includes(search) ||
-        item.Id.toString().includes(search)
+        item.employmentNature.toLowerCase().includes(search) ||
+        item.employmentType.toLowerCase().includes(search) ||
+        item.gradeWorkLevel.toLowerCase().includes(search) ||
+        item.keyResponsibilities.toLowerCase().includes(search) ||
+        item.packagePerks.toLowerCase().includes(search) ||
+        item.qualifications.some((qual) => qual.toLowerCase().includes(search)) ||
+        String(item.Id).includes(search)
       );
     }
 
@@ -223,7 +256,7 @@ export class JobSpecificationFormComponent implements OnInit {
     this.currentPage = 1;
   }
 
-  sortData(column: keyof JobSpecificationRecord) {
+  sortData(column: JobSpecificationColumnKey) {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
