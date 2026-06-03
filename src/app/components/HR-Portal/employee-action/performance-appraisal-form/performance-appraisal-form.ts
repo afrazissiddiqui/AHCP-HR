@@ -1,32 +1,38 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
-import { ApplicationFormRecord, ApplicationFormService } from '../../../../services/application-form.service';
-import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
+import {
+  PerformanceAppraisalRecord,
+  PerformanceAppraisalService,
+} from '../../../../services/performance-appraisal.service';
+import { AlertService } from '../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   PERFORMANCE_APPRAISAL_TABLE_FILTER,
   TableFilterComponent,
   TableFilterService,
 } from '../../../table-filter';
 
-interface PerformanceAppraisalRecord {
-  FormNumber: string;
-  EmployeeID: number;
-  EmployeeName: string;
-  EmployeeCategory: string;
-  EmploymentType: string;
-  AppraisalAuthority: string;
-  AppraisalPeriod: string;
-  CurrentSalary: string;
-  EvaluationDate: string;
-  selected?: boolean;
-}
-
-type AppraisalColumnKey = Exclude<keyof PerformanceAppraisalRecord, 'selected'>;
+type AppraisalColumnKey = Exclude<
+  keyof PerformanceAppraisalRecord,
+  | 'selected'
+  | 'Id'
+  | 'WorkGradeLevel'
+  | 'EmploymentNature'
+  | 'Department'
+  | 'Designation'
+  | 'DateOfJoining'
+  | 'JobTitle'
+  | 'ReportingManager'
+  | 'Increment'
+  | 'Promotion'
+  | 'OtherBenefits'
+>;
 
 @Component({
   selector: 'app-performance-appraisal-form',
@@ -36,7 +42,7 @@ type AppraisalColumnKey = Exclude<keyof PerformanceAppraisalRecord, 'selected'>;
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`
     :host .table-scroll { overflow-x: auto; }
-    :host .mountain-table { width: max-content; min-width: 100%; table-layout: auto; }
+    :host .mountain-table { width: 100%; min-width: 1000px; table-layout: auto; }
     :host .mountain-table th, :host .mountain-table td {
       min-width: 120px;
       white-space: nowrap;
@@ -47,33 +53,53 @@ type AppraisalColumnKey = Exclude<keyof PerformanceAppraisalRecord, 'selected'>;
       min-width: 40px;
       width: 40px;
     }
-  `]
+    :host .mountain-table th:last-child, :host .mountain-table td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 11;
+      background: #ffffff;
+      border-left: 1px solid #eee;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+    }
+    :host .mountain-table thead th:last-child {
+      z-index: 12;
+      background: #f5f5f5;
+    }
+  `],
 })
-export class PerformanceAppraisalFormComponent {
+export class PerformanceAppraisalFormComponent implements OnInit {
   readonly appraisalTableFilter = PERFORMANCE_APPRAISAL_TABLE_FILTER;
 
   constructor(
-    private readonly applicationFormService: ApplicationFormService,
+    private readonly appraisalService: PerformanceAppraisalService,
     private readonly router: Router,
-    readonly tableFilter: TableFilterService
-  ) {
-    this.appraisalList = this.applicationFormService
-      .getApplicationRecords()
-      .map((record) => this.toAppraisalRecord(record));
+    private readonly alertService: AlertService,
+    readonly tableFilter: TableFilterService,
+  ) {}
+
+  ngOnInit(): void {
+    this.appraisalService.fetchPerformanceAppraisals().subscribe({
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load performance appraisals.'),
+        );
+      },
+    });
   }
 
   Math = Math;
 
   columns: Array<{ key: AppraisalColumnKey; label: string; visible: boolean }> = [
     { key: 'FormNumber', label: 'Form Number', visible: true },
-    { key: 'EmployeeID', label: 'Employee ID', visible: true },
+    { key: 'EmployeeId', label: 'Employee ID', visible: true },
     { key: 'EmployeeName', label: 'Employee Name', visible: true },
     { key: 'EmployeeCategory', label: 'Employee Category', visible: true },
     { key: 'EmploymentType', label: 'Employment Type', visible: true },
     { key: 'AppraisalAuthority', label: 'Appraisal Authority', visible: true },
     { key: 'AppraisalPeriod', label: 'Appraisal Period', visible: true },
     { key: 'CurrentSalary', label: 'Current Salary', visible: true },
-    { key: 'EvaluationDate', label: 'Evaluation Date', visible: true }
+    { key: 'EvaluationDate', label: 'Evaluation Date', visible: true },
   ];
 
   sidebarItems: SidebarItem[] = EMPLOYEE_ACTION_SIDEBAR_ITEMS;
@@ -87,24 +113,35 @@ export class PerformanceAppraisalFormComponent {
   currentPage = 1;
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
-  appraisalList: PerformanceAppraisalRecord[] = [];
   showDialog = false;
   activeTab: 'filter' = 'filter';
+  showViewDialog = false;
+  viewLoading = false;
+  selectedRecord: PerformanceAppraisalRecord | null = null;
+
+  get appraisalList(): PerformanceAppraisalRecord[] {
+    return this.appraisalService.appraisals();
+  }
+
+  get visibleColumns(): Array<{ key: AppraisalColumnKey; label: string; visible: boolean }> {
+    return this.columns.filter((col) => col.visible);
+  }
 
   get filteredList(): PerformanceAppraisalRecord[] {
     let list = this.tableFilter.filterItems([...this.appraisalList], this.appraisalTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
-      list = list.filter(item =>
-        item.EmployeeName.toLowerCase().includes(search) ||
-        item.FormNumber.toLowerCase().includes(search) ||
-        item.EmployeeCategory.toLowerCase().includes(search) ||
-        item.EmploymentType.toLowerCase().includes(search) ||
-        item.AppraisalAuthority.toLowerCase().includes(search) ||
-        item.AppraisalPeriod.toLowerCase().includes(search) ||
-        item.CurrentSalary.toLowerCase().includes(search) ||
-        item.EvaluationDate.toLowerCase().includes(search) ||
-        item.EmployeeID.toString().includes(search)
+      list = list.filter(
+        (item) =>
+          item.EmployeeName.toLowerCase().includes(search) ||
+          item.FormNumber.toLowerCase().includes(search) ||
+          item.EmployeeId.toLowerCase().includes(search) ||
+          item.EmployeeCategory.toLowerCase().includes(search) ||
+          item.EmploymentType.toLowerCase().includes(search) ||
+          item.AppraisalAuthority.toLowerCase().includes(search) ||
+          item.AppraisalPeriod.toLowerCase().includes(search) ||
+          item.EvaluationDate.toLowerCase().includes(search) ||
+          String(item.CurrentSalary).includes(search),
       );
     }
     list.sort((a, b) => {
@@ -122,18 +159,39 @@ export class PerformanceAppraisalFormComponent {
     return this.filteredList.slice(start, start + this.pageSize);
   }
 
-  get totalPages(): number { return Math.ceil(this.filteredList.length / this.pageSize); }
-  get pages(): number[] { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
+  get totalPages(): number {
+    return Math.ceil(this.filteredList.length / this.pageSize);
+  }
+
+  get pages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
 
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.filteredList.forEach(item => item.selected = checked);
+    this.filteredList.forEach((item) => (item.selected = checked));
   }
-  isAllSelected(): boolean { return this.filteredList.length > 0 && this.filteredList.every(item => item.selected); }
-  getSelectedCount(): number { return this.appraisalList.filter(item => item.selected).length; }
-  onSearchChange(): void { this.currentPage = 1; }
-  hasActiveListFilters(): boolean { return this.tableFilter.hasActive(this.appraisalTableFilter); }
-  onTableFilterApplied(): void { this.currentPage = 1; }
+
+  isAllSelected(): boolean {
+    return this.filteredList.length > 0 && this.filteredList.every((item) => item.selected);
+  }
+
+  getSelectedCount(): number {
+    return this.appraisalList.filter((item) => item.selected).length;
+  }
+
+  onSearchChange(): void {
+    this.currentPage = 1;
+  }
+
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.appraisalTableFilter);
+  }
+
+  onTableFilterApplied(): void {
+    this.currentPage = 1;
+  }
+
   sortData(column: AppraisalColumnKey): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -142,32 +200,114 @@ export class PerformanceAppraisalFormComponent {
     this.sortColumn = column;
     this.sortDirection = 'asc';
   }
-  setPage(page: number): void { if (page >= 1 && page <= this.totalPages) this.currentPage = page; }
-  onPageSizeChange(): void { this.currentPage = 1; }
-  openDialog(): void { this.showDialog = true; }
-  closeDialog(): void { this.showDialog = false; }
-  onFolderSelected(folderId: string): void { this.activeSidebarItemId = folderId; }
-  toggleSidebar(): void { this.sidebarCollapsed.update((state) => !state); }
+
+  setPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
+
+  openDialog(): void {
+    this.showDialog = true;
+  }
+
+  closeDialog(): void {
+    this.showDialog = false;
+  }
+
+  viewRecord(record: PerformanceAppraisalRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('View', 'Unable to view this row: missing performance appraisal id.');
+      return;
+    }
+
+    this.showViewDialog = true;
+    this.selectedRecord = null;
+    this.viewLoading = true;
+
+    this.appraisalService.fetchPerformanceAppraisalDetail(record.Id).subscribe({
+      next: (detail) => {
+        this.selectedRecord = detail;
+        this.viewLoading = false;
+      },
+      error: (error: unknown) => {
+        this.viewLoading = false;
+        this.showViewDialog = false;
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load performance appraisal details.'),
+        );
+      },
+    });
+  }
+
+  onUpdate(record: PerformanceAppraisalRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing performance appraisal id.');
+      return;
+    }
+    void this.router.navigate(['/employee-action/performance-appraisal-form/edit', record.Id]);
+  }
+
+  async onDelete(record: PerformanceAppraisalRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete performance appraisal?',
+      `Remove ${record.EmployeeName} (${record.FormNumber}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing performance appraisal id.');
+      return;
+    }
+
+    this.appraisalService.deletePerformanceAppraisal(record.Id).subscribe({
+      next: () => {
+        this.appraisalService.removeAppraisalRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'Performance appraisal removed successfully.');
+      },
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete performance appraisal.'),
+        );
+      },
+    });
+  }
+
+  closeViewDialog(): void {
+    this.showViewDialog = false;
+    this.selectedRecord = null;
+    this.viewLoading = false;
+  }
+
+  onFolderSelected(folderId: string): void {
+    this.activeSidebarItemId = folderId;
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update((state) => !state);
+  }
+
   createNewAppraisal(): void {
     void this.router.navigateByUrl('/employee-action/performance-appraisal-form/create');
   }
 
-  private toAppraisalRecord(record: ApplicationFormRecord): PerformanceAppraisalRecord {
-    const categories = ['Permanent', 'Contract', 'Probation'] as const;
-    const employmentTypes = ['Full-time', 'Part-time', 'Intern'] as const;
-    const appraisalAuthorities = ['HOD', 'Manager', 'Supervisor'] as const;
-    const month = ((record.EmployeeCode % 12) + 1).toString().padStart(2, '0');
-    return {
-      FormNumber: `PAF-${record.EmployeeCode.toString().padStart(4, '0')}`,
-      EmployeeID: record.EmployeeCode,
-      EmployeeName: record.EmployeeName,
-      EmployeeCategory: categories[record.EmployeeCode % categories.length],
-      EmploymentType: employmentTypes[record.EmployeeCode % employmentTypes.length],
-      AppraisalAuthority: appraisalAuthorities[record.EmployeeCode % appraisalAuthorities.length],
-      AppraisalPeriod: '6 months',
-      CurrentSalary: `${50000 + (record.EmployeeCode % 10) * 5000}`,
-      EvaluationDate: `2026-${month}-01`,
-      selected: record.selected ?? false
-    };
+  formatCellValue(record: PerformanceAppraisalRecord, key: AppraisalColumnKey): string {
+    const value = record[key];
+    if (value === undefined || value === null) {
+      return '—';
+    }
+    const text = String(value).trim();
+    return text === '' || text === '—' ? '—' : text;
   }
 }

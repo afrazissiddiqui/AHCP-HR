@@ -27,44 +27,29 @@
           [data]="appraisalList"
           (applied)="onTableFilterApplied()"
         />
-
-        <button class="sapMBtnBase sapMBtn" title="Download">
-          ⬇
-        </button>
-
-        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">
-          ⛶
-        </button>
-
-        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
-          ⚙
-        </button>
+        <button class="sapMBtnBase sapMBtn" title="Download">⬇</button>
+        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">⛶</button>
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">⚙</button>
       </div>
+    </div>
 
-      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
-
-      <div class="view-settings-dialog" *ngIf="showDialog">
-        <div class="dialog-header">
-          <h3>View Settings</h3>
-        </div>
-
-        <div class="dialog-tabs">
-          <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
-        </div>
-
-        <div class="dialog-body">
-          <div *ngIf="activeTab === 'filter'">
-            <div *ngFor="let col of columns">
-              <label>
-                <input type="checkbox" [(ngModel)]="col.visible" />
-                {{ col.label }}
-              </label>
-            </div>
+    <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+    <div class="view-settings-dialog" *ngIf="showDialog">
+      <div class="dialog-header"><h3>View Settings</h3></div>
+      <div class="dialog-tabs">
+        <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+      </div>
+      <div class="dialog-body">
+        <div *ngIf="activeTab === 'filter'">
+          <div *ngFor="let col of columns">
+            <label>
+              <input type="checkbox" [(ngModel)]="col.visible" />
+              {{ col.label }}
+            </label>
           </div>
         </div>
-
-        <div class="dialog-footer"></div>
       </div>
+      <div class="dialog-footer"></div>
     </div>
 
     <div class="table-wrapper">
@@ -75,44 +60,124 @@
               <th>
                 <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
               </th>
-              <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)" class="sortable-header">
+              <th *ngFor="let col of visibleColumns" appColumnResize (click)="sortData(col.key)" class="sortable-header">
                 {{ col.label }}
                 <span *ngIf="sortColumn === col.key" class="sort-indicator">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
+              <th>Actions</th>
             </tr>
           </thead>
-
           <tbody>
             <tr *ngFor="let item of paginatedList">
               <td>
                 <input type="checkbox" [(ngModel)]="item.selected" />
               </td>
-              <td *ngFor="let col of columns" [hidden]="!col.visible">
-                {{ item[col.key] }}
+              <td *ngFor="let col of visibleColumns">
+                {{ formatCellValue(item, col.key) }}
+              </td>
+              <td class="table-action-cell">
+                <div class="action-buttons">
+                  <button type="button" class="view-btn" (click)="viewRecord(item)" title="View Details">View</button>
+                  <button type="button" class="update-btn" (click)="onUpdate(item)" title="Update Performance Appraisal">Update</button>
+                  <button type="button" class="delete-btn" (click)="onDelete(item)" title="Delete Performance Appraisal">Delete</button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showViewDialog">
+        <div class="js-modal-header">
+          <h2>Performance Appraisal Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+          <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
+        </div>
+        <div class="js-modal-body">
+          <p *ngIf="viewLoading">Loading details…</p>
+          <ng-container *ngIf="selectedRecord && !viewLoading">
+            <div class="js-detail-section">
+              <h3>Appraisal Information</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Form Number:</label> <span>{{ selectedRecord.FormNumber }}</span></div>
+                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ selectedRecord.EmployeeId }}</span></div>
+                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
+                <div class="js-detail-item"><label>Employee Category:</label> <span>{{ selectedRecord.EmployeeCategory }}</span></div>
+                <div class="js-detail-item"><label>Work / Grade Level:</label> <span>{{ selectedRecord.WorkGradeLevel }}</span></div>
+                <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ selectedRecord.EmploymentNature }}</span></div>
+                <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
+                <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
+                <div class="js-detail-item"><label>Date of Joining:</label> <span>{{ selectedRecord.DateOfJoining }}</span></div>
+                <div class="js-detail-item"><label>Employment Type:</label> <span>{{ selectedRecord.EmploymentType }}</span></div>
+                <div class="js-detail-item"><label>Job Title:</label> <span>{{ selectedRecord.JobTitle }}</span></div>
+                <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ selectedRecord.ReportingManager }}</span></div>
+                <div class="js-detail-item"><label>Appraisal Authority:</label> <span>{{ selectedRecord.AppraisalAuthority }}</span></div>
+                <div class="js-detail-item"><label>Appraisal Period:</label> <span>{{ selectedRecord.AppraisalPeriod }}</span></div>
+                <div class="js-detail-item"><label>Current Salary:</label> <span>{{ selectedRecord.CurrentSalary }}</span></div>
+                <div class="js-detail-item"><label>Evaluation Date:</label> <span>{{ selectedRecord.EvaluationDate }}</span></div>
+              </div>
+            </div>
+
+            <div class="js-detail-section">
+              <h3>Increment</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Current Salary:</label> <span>{{ selectedRecord.Increment.current_salary }}</span></div>
+                <div class="js-detail-item"><label>Increment %:</label> <span>{{ selectedRecord.Increment.increment_percentage }}</span></div>
+                <div class="js-detail-item"><label>Increment Amount:</label> <span>{{ selectedRecord.Increment.increment_amount }}</span></div>
+                <div class="js-detail-item"><label>Revised Salary:</label> <span>{{ selectedRecord.Increment.revised_salary }}</span></div>
+                <div class="js-detail-item"><label>Effective Date:</label> <span>{{ selectedRecord.Increment.increment_effective_date }}</span></div>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.Increment.reason_for_increment">
+                <label>Reason for Increment:</label>
+                <p>{{ selectedRecord.Increment.reason_for_increment }}</p>
+              </div>
+            </div>
+
+            <div class="js-detail-section">
+              <h3>Promotion</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Promotion Recommended:</label> <span>{{ selectedRecord.Promotion.promotion_recommended }}</span></div>
+                <div class="js-detail-item"><label>New Designation:</label> <span>{{ selectedRecord.Promotion.new_designation }}</span></div>
+                <div class="js-detail-item"><label>Effective Date:</label> <span>{{ selectedRecord.Promotion.promotion_effective_date }}</span></div>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.Promotion.remarks">
+                <label>Remarks:</label>
+                <p>{{ selectedRecord.Promotion.remarks }}</p>
+              </div>
+            </div>
+
+            <div class="js-detail-section">
+              <h3>Other Benefits</h3>
+              <div class="js-detail-full" *ngIf="selectedRecord.OtherBenefits.existing_benefits_details">
+                <label>Existing Benefits:</label>
+                <p>{{ selectedRecord.OtherBenefits.existing_benefits_details }}</p>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.OtherBenefits.new_benefits">
+                <label>New Benefits:</label>
+                <p>{{ selectedRecord.OtherBenefits.new_benefits }}</p>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+        <div class="js-modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
+        </div>
+      </div>
+
       <div class="table-pagination">
         <div class="pagination-info">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+          Showing {{ filteredList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
           of {{ filteredList.length }} entries
         </div>
-
         <div class="pagination-controls">
           <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
           <div class="page-numbers">
-            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
-              {{ page }}
-            </button>
+            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">{{ page }}</button>
           </div>
           <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
         </div>
-
         <div class="page-size-selector">
           <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
             <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>

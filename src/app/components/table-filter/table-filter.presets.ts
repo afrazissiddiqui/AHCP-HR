@@ -137,14 +137,7 @@ export const PERFORMANCE_APPRAISAL_TABLE_FILTER: TableFilterConfig = {
     { type: 'select', key: 'employeeCategory', label: 'Employee category', fieldKey: 'EmployeeCategory' },
     { type: 'select', key: 'employmentType', label: 'Employment type', fieldKey: 'EmploymentType' },
     { type: 'select', key: 'appraisalAuthority', label: 'Appraisal authority', fieldKey: 'AppraisalAuthority' },
-    {
-      type: 'numberRange',
-      key: 'employeeId',
-      label: 'Employee ID range',
-      fieldKey: 'EmployeeID',
-      fromPlaceholder: 'Min ID',
-      toPlaceholder: 'Max ID',
-    },
+    { type: 'select', key: 'employeeId', label: 'Employee ID', fieldKey: 'EmployeeId' },
   ],
 };
 

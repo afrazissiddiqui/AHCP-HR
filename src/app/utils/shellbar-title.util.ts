@@ -19,6 +19,7 @@ const EXACT_TITLES: Record<string, string> = {
   'employee-action/training-development-form/edit': 'Update Training & Development',
   'employee-action/performance-appraisal-form': 'Performance Appraisal Form',
   'employee-action/performance-appraisal-form/create': 'Performance Appraisal Form',
+  'employee-action/performance-appraisal-form/edit': 'Update Performance Appraisal',
   'employee-action/expense-reimbursement-form': 'Expense Reimbursement Form',
   'employee-action/expense-reimbursement-form/create': 'Expense Reimbursement Form',
   'employee-action/loan-advance-form': 'Loan / Advance Form',
