@@ -347,6 +347,33 @@ export class AddProbationEvaluationComponent implements OnInit {
     return Number.isFinite(numeric) ? numeric : 0;
   }
 
+  protected onCurrentSalaryChange(value: string): void {
+    this.currentSalary.set(value);
+    this.recalculateAdjustmentAmountFromPercent();
+  }
+
+  protected onAdjustmentPercentChange(value: string): void {
+    const sanitized = value.replace(/[^0-9.\-]/g, '');
+    this.adjustmentInSalary.set(sanitized);
+    this.recalculateAdjustmentAmountFromPercent();
+  }
+
+  private recalculateAdjustmentAmountFromPercent(): void {
+    const current = this.toAmount(this.currentSalary());
+    const percentRaw = this.adjustmentInSalary().trim();
+    if (!percentRaw) {
+      this.adjustmentAmountInSalary.set('');
+      return;
+    }
+    const percent = Number.parseFloat(percentRaw);
+    if (!Number.isFinite(current) || !Number.isFinite(percent)) {
+      this.adjustmentAmountInSalary.set('');
+      return;
+    }
+    const amount = Math.round(current * (percent / 100));
+    this.adjustmentAmountInSalary.set(String(amount));
+  }
+
   protected onExtensionToggle(checked: boolean): void {
     this.isExtensionEnabled.set(checked);
     if (!checked) {

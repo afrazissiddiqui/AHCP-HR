@@ -176,9 +176,7 @@ export function buildProbationEvaluationSubmitPayload(
     total_salary: Math.round(draft.total_salary),
   };
 
-  if (allowances.length > 0) {
-    body.allowances = allowances;
-  }
+  body.allowances = allowances;
 
   return body;
 }

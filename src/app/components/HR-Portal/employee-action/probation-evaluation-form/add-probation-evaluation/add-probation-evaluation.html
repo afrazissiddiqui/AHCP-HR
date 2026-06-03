@@ -283,14 +283,15 @@
             <tbody>
               <tr>
                 <td>
-                  <input type="text" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
+                  <input type="text" [ngModel]="currentSalary()" (ngModelChange)="onCurrentSalaryChange($event)"
+                    placeholder="e.g. 150000" />
                 </td>
                 <td>
-                  <input type="text" [ngModel]="adjustmentInSalary()" (ngModelChange)="adjustmentInSalary.set($event)" />
+                  <input type="text" [ngModel]="adjustmentInSalary()" (ngModelChange)="onAdjustmentPercentChange($event)"
+                    placeholder="e.g. 5 or -5" />
                 </td>
                 <td>
-                  <input type="text" [ngModel]="adjustmentAmountInSalary()"
-                    (ngModelChange)="adjustmentAmountInSalary.set($event)" />
+                  <input type="text" [ngModel]="adjustmentAmountInSalary()" readonly placeholder="Auto-calculated" />
                 </td>
                 <td>
                   <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />
@@ -324,7 +325,7 @@
 
         <div class="cjs-row total-salary-row">
           <label>Total Salary:</label>
-          <input type="text" [value]="totalSalary()" readonly />
+          <input type="text" [value]="totalSalary() | number:'1.0-0'" readonly />
         </div>
       </section>
     </div>
