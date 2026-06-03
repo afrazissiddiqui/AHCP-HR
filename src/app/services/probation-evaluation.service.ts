@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../config/api.config';
 
 export interface ProbationRatingItem {
   rating: number;
@@ -76,10 +77,10 @@ export interface ProbationEvaluationRecord {
   selected?: boolean;
 }
 
-const PROBATION_EVALUATION_LIST_URL = 'http://ahcp.hr:8080/api/probation-evaluation-list';
-const PROBATION_EVALUATION_ADD_URL = 'http://ahcp.hr:8080/api/probation-evaluation-add';
-const PROBATION_EVALUATION_UPDATE_URL = 'http://ahcp.hr:8080/api/probation-evaluation-update';
-const PROBATION_EVALUATION_DELETE_URL = 'http://ahcp.hr:8080/api/probation-evaluation-delete';
+const PROBATION_EVALUATION_LIST_URL = apiUrl('probation-evaluation-list');
+const PROBATION_EVALUATION_ADD_URL = apiUrl('probation-evaluation-add');
+const PROBATION_EVALUATION_UPDATE_URL = apiUrl('probation-evaluation-update');
+const PROBATION_EVALUATION_DELETE_URL = apiUrl('probation-evaluation-delete');
 
 @Injectable({
   providedIn: 'root',

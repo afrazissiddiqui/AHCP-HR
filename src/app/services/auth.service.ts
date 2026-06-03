@@ -2,12 +2,13 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { apiUrl } from '../config/api.config';
 
 const AUTH_SESSION_KEY = 'sapqc_session_auth';
 const SESSION_USER_ID_KEY = 'sapqc_session_user_id';
 const SESSION_TOKEN_KEY = 'sapqc_session_token';
 const SESSION_USER_KEY = 'sapqc_session_user';
-const LOGIN_API_URL = 'http://ahcp.hr:8080/api/login';
+const LOGIN_API_URL = apiUrl('login');
 
 export interface LoginApiUser {
   id: number;

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../config/api.config';
 
 /** Extended payload captured from Create Application Form — shown in Application Form view modal only. */
 export interface ApplicationFormPersonalInfo {
@@ -125,11 +126,11 @@ export interface EmployeeMasterDataRecord {
   selected: boolean;
 }
 
-const EMPLOYEE_PROFILE_ADD_URL = 'http://ahcp.hr:8080/api/employee-profile-add';
-const EMPLOYEE_PROFILE_LIST_URL = 'http://ahcp.hr:8080/api/employee-profile-list';
-const EMPLOYEE_PROFILE_VIEW_URL = 'http://ahcp.hr:8080/api/employee-profile-detail';
-const EMPLOYEE_PROFILE_UPDATE_URL = 'http://ahcp.hr:8080/api/employee-profile-update';
-const EMPLOYEE_PROFILE_DELETE_URL = 'http://ahcp.hr:8080/api/employee-profile-delete';
+const EMPLOYEE_PROFILE_ADD_URL = apiUrl('employee-profile-add');
+const EMPLOYEE_PROFILE_LIST_URL = apiUrl('employee-profile-list');
+const EMPLOYEE_PROFILE_VIEW_URL = apiUrl('employee-profile-detail');
+const EMPLOYEE_PROFILE_UPDATE_URL = apiUrl('employee-profile-update');
+const EMPLOYEE_PROFILE_DELETE_URL = apiUrl('employee-profile-delete');
 
 export interface EmployeeProfileAddPayload {
   personName: string;

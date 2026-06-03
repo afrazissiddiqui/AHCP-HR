@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../config/api.config';
 
 export interface JobSpecificationRecord {
   Id: number;
@@ -22,10 +23,10 @@ export interface JobSpecificationRecord {
   selected?: boolean;
 }
 
-const JOB_SPECIFICATION_LIST_URL = 'http://ahcp.hr:8080/api/job-specification-list';
-const JOB_SPECIFICATION_ADD_URL = 'http://ahcp.hr:8080/api/job-specification-add';
-const JOB_SPECIFICATION_UPDATE_URL = 'http://ahcp.hr:8080/api/job-specification-update';
-const JOB_SPECIFICATION_DELETE_URL = 'http://ahcp.hr:8080/api/job-specification-delete';
+const JOB_SPECIFICATION_LIST_URL = apiUrl('job-specification-list');
+const JOB_SPECIFICATION_ADD_URL = apiUrl('job-specification-add');
+const JOB_SPECIFICATION_UPDATE_URL = apiUrl('job-specification-update');
+const JOB_SPECIFICATION_DELETE_URL = apiUrl('job-specification-delete');
 
 export interface JobSpecificationAddPayload {
   jobTitle: string;
