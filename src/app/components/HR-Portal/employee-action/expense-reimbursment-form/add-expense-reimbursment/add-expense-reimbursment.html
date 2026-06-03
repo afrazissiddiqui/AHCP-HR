@@ -11,21 +11,19 @@
   <div class="cjs-card">
     <div class="cjs-form-container">
       <section class="cjs-section-block" id="er-header-section">
-        <div class="cjs-section-title">Header Fields</div>
+        <div class="cjs-section-title">headerFields</div>
         <div class="cjs-grid">
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Employee Code:</label>
+              <label>employeeCode:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
-                  role="combobox"
-                  [attr.aria-expanded]="codeSuggestionsOpen()"
                   [ngModel]="employeeCode()"
                   (ngModelChange)="onEmployeeCodeInput($event)"
                   (focus)="openCodeSuggestions()"
                   (blur)="onCodeInputBlur()"
-                  placeholder="e.g. EMP-001"
+                  placeholder="EMP-001"
                   autocomplete="off"
                   [readonly]="!!editingId"
                 />
@@ -38,15 +36,15 @@
               </div>
             </div>
             <div class="cjs-row">
-              <label>Employee Name:</label>
+              <label>employeeName:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
                   [ngModel]="headerEmployeeName()"
-                  (ngModelChange)="onEmployeeNameInput($event)"
+                  (ngModelChange)="onHeaderEmployeeNameInput($event)"
                   (focus)="openNameSuggestions()"
                   (blur)="onNameInputBlur()"
-                  placeholder="Employee full name"
+                  placeholder="Muhammad Khan"
                   autocomplete="off"
                   [readonly]="!!editingId"
                 />
@@ -58,29 +56,29 @@
               </div>
             </div>
             <div class="cjs-row">
-              <label>Department:</label>
-              <input type="text" [ngModel]="headerDepartment()" (ngModelChange)="headerDepartment.set($event)" />
+              <label>department:</label>
+              <input type="text" [ngModel]="headerDepartment()" (ngModelChange)="onHeaderDepartmentInput($event)" placeholder="IT" />
             </div>
             <div class="cjs-row">
-              <label>Designation:</label>
-              <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+              <label>designation:</label>
+              <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" placeholder="Software Developer" />
             </div>
           </div>
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Cost Center:</label>
-              <input type="text" [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)" placeholder="e.g. CC-1001" />
+              <label>costCenter:</label>
+              <input type="text" [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)" placeholder="CC-1001" />
             </div>
             <div class="cjs-row">
-              <label>Claim Month:</label>
+              <label>claimMonth:</label>
               <input type="date" [ngModel]="claimMonth()" (ngModelChange)="claimMonth.set($event)" />
             </div>
             <div class="cjs-row">
-              <label>Form Number:</label>
-              <input type="text" [ngModel]="formNumber()" (ngModelChange)="onFormNumberChange($event)" placeholder="e.g. FRM-1001" />
+              <label>formNumber:</label>
+              <input type="text" [ngModel]="formNumber()" (ngModelChange)="onFormNumberChange($event)" placeholder="FRM-1001" />
             </div>
             <div class="cjs-row">
-              <label>Submission Date:</label>
+              <label>submissionDate:</label>
               <input type="date" [ngModel]="submissionDate()" (ngModelChange)="submissionDate.set($event)" />
             </div>
           </div>
@@ -88,25 +86,29 @@
       </section>
 
       <section class="cjs-section-block" id="er-expense-detail-section">
-        <div class="cjs-section-title">Expense Detail</div>
+        <div class="cjs-section-title">expenseDetail</div>
         <div class="cjs-grid">
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Employee ID:</label>
-              <input type="text" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)" placeholder="e.g. EMP-001" />
+              <label>formNumber:</label>
+              <input type="text" [value]="formNumber()" readonly placeholder="FRM-1001" />
             </div>
             <div class="cjs-row">
-              <label>Employee Name:</label>
-              <input type="text" [ngModel]="detailEmployeeName()" (ngModelChange)="detailEmployeeName.set($event)" />
+              <label>employeeID:</label>
+              <input type="text" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)" placeholder="EMP-001" />
             </div>
             <div class="cjs-row">
-              <label>Department:</label>
+              <label>employeeName:</label>
+              <input type="text" [ngModel]="detailEmployeeName()" (ngModelChange)="onDetailEmployeeNameInput($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>department:</label>
               <input type="text" [ngModel]="detailDepartment()" (ngModelChange)="detailDepartment.set($event)" />
             </div>
             <div class="cjs-row">
-              <label>Expense Type:</label>
+              <label>expenseType:</label>
               <select [ngModel]="expenseType()" (ngModelChange)="expenseType.set($event)">
-                <option value="">Select type</option>
+                <option value="">Select expenseType</option>
                 @for (type of expenseTypeOptions; track type) {
                   <option [value]="type">{{ type }}</option>
                 }
@@ -115,15 +117,15 @@
           </div>
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Claim Amount:</label>
-              <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" placeholder="e.g. 5000" />
+              <label>claimAmount:</label>
+              <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" placeholder="5000" />
             </div>
             <div class="cjs-row">
-              <label>Claim Date:</label>
+              <label>claimDate:</label>
               <input type="date" [ngModel]="claimDate()" (ngModelChange)="claimDate.set($event)" />
             </div>
             <div class="cjs-row">
-              <label>Approval Status:</label>
+              <label>approvalStatus:</label>
               <select [ngModel]="approvalStatus()" (ngModelChange)="approvalStatus.set($event)">
                 @for (status of approvalStatusOptions; track status) {
                   <option [value]="status">{{ status }}</option>
@@ -133,25 +135,25 @@
           </div>
         </div>
         <div class="cjs-row cjs-row--full">
-          <label>Remarks:</label>
-          <textarea rows="3" [ngModel]="expenseRemarks()" (ngModelChange)="expenseRemarks.set($event)"></textarea>
+          <label>remarks:</label>
+          <textarea rows="3" [ngModel]="expenseRemarks()" (ngModelChange)="expenseRemarks.set($event)" placeholder="Client visit expense"></textarea>
         </div>
       </section>
 
       <section class="cjs-section-block" id="er-travel-section">
-        <div class="cjs-section-title">Travel</div>
+        <div class="cjs-section-title">travel</div>
         <div class="cjs-grid">
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Travel From Date:</label>
+              <label>travelFromDate:</label>
               <input type="date" [ngModel]="travelFromDate()" (ngModelChange)="travelFromDate.set($event)" />
             </div>
             <div class="cjs-row">
-              <label>Travel To Date:</label>
+              <label>travelToDate:</label>
               <input type="date" [ngModel]="travelToDate()" (ngModelChange)="travelToDate.set($event)" />
             </div>
             <div class="cjs-row">
-              <label>Daily Allowance Applicable:</label>
+              <label>dailyAllowanceApplicable:</label>
               <select [ngModel]="dailyAllowanceApplicable()" (ngModelChange)="dailyAllowanceApplicable.set($event)">
                 <option value="">Select</option>
                 <option value="Yes">Yes</option>
@@ -161,22 +163,22 @@
           </div>
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Daily Allowance Rate:</label>
-              <input type="text" [ngModel]="dailyAllowanceRate()" (ngModelChange)="dailyAllowanceRate.set($event)" [disabled]="dailyAllowanceApplicable() !== 'Yes'" />
+              <label>dailyAllowanceRate:</label>
+              <input type="text" [ngModel]="dailyAllowanceRate()" (ngModelChange)="dailyAllowanceRate.set($event)" placeholder="3000" [disabled]="dailyAllowanceApplicable() !== 'Yes'" />
             </div>
             <div class="cjs-row">
-              <label>Number of Days:</label>
+              <label>numberOfDays:</label>
               <input type="text" [value]="numberOfDays()" readonly />
             </div>
             <div class="cjs-row">
-              <label>Daily Allowance Amount:</label>
+              <label>dailyAllowanceAmount:</label>
               <input type="text" [value]="dailyAllowanceAmount()" readonly />
             </div>
           </div>
         </div>
         <div class="cjs-row cjs-row--full">
-          <label>Remarks (travel):</label>
-          <textarea rows="3" [ngModel]="travelRemarks()" (ngModelChange)="travelRemarks.set($event)"></textarea>
+          <label>remarks:</label>
+          <textarea rows="3" [ngModel]="travelRemarks()" (ngModelChange)="travelRemarks.set($event)" placeholder="Official travel"></textarea>
         </div>
       </section>
 

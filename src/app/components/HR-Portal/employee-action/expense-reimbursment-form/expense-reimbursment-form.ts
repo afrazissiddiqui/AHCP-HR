@@ -80,14 +80,25 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   Math = Math;
 
   columns: Array<{ key: ExpenseColumnKey; label: string; visible: boolean }> = [
-    { key: 'FormNumber', label: 'Form Number', visible: true },
-    { key: 'EmployeeId', label: 'Employee ID', visible: true },
-    { key: 'EmployeeName', label: 'Employee Name', visible: true },
-    { key: 'Department', label: 'Department', visible: true },
-    { key: 'ExpenseType', label: 'Expense Type', visible: true },
-    { key: 'ClaimAmount', label: 'Claim Amount', visible: true },
-    { key: 'ClaimDate', label: 'Claim Date', visible: true },
-    { key: 'ApprovalStatus', label: 'Approval Status', visible: true },
+    { key: 'FormNumber', label: 'formNumber', visible: true },
+    { key: 'EmployeeCode', label: 'employeeCode', visible: true },
+    { key: 'EmployeeId', label: 'employeeID', visible: false },
+    { key: 'EmployeeName', label: 'employeeName', visible: true },
+    { key: 'Department', label: 'department', visible: true },
+    { key: 'Designation', label: 'designation', visible: false },
+    { key: 'CostCenter', label: 'costCenter', visible: false },
+    { key: 'ClaimMonth', label: 'claimMonth', visible: false },
+    { key: 'SubmissionDate', label: 'submissionDate', visible: false },
+    { key: 'ExpenseType', label: 'expenseType', visible: true },
+    { key: 'ClaimAmount', label: 'claimAmount', visible: true },
+    { key: 'ClaimDate', label: 'claimDate', visible: true },
+    { key: 'ApprovalStatus', label: 'approvalStatus', visible: true },
+    { key: 'TravelFromDate', label: 'travelFromDate', visible: false },
+    { key: 'TravelToDate', label: 'travelToDate', visible: false },
+    { key: 'DailyAllowanceApplicable', label: 'dailyAllowanceApplicable', visible: false },
+    { key: 'DailyAllowanceRate', label: 'dailyAllowanceRate', visible: false },
+    { key: 'NumberOfDays', label: 'numberOfDays', visible: false },
+    { key: 'DailyAllowanceAmount', label: 'dailyAllowanceAmount', visible: false },
   ];
 
   sidebarItems: SidebarItem[] = EMPLOYEE_ACTION_SIDEBAR_ITEMS;
@@ -119,17 +130,29 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
     let list = this.tableFilter.filterItems([...this.expenseList], this.expenseTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
-      list = list.filter(
-        (item) =>
-          item.EmployeeName.toLowerCase().includes(search) ||
-          item.FormNumber.toLowerCase().includes(search) ||
-          item.EmployeeId.toLowerCase().includes(search) ||
-          item.Department.toLowerCase().includes(search) ||
-          item.ExpenseType.toLowerCase().includes(search) ||
-          item.ClaimAmount.toLowerCase().includes(search) ||
-          item.ClaimDate.toLowerCase().includes(search) ||
-          item.ApprovalStatus.toLowerCase().includes(search),
-      );
+      list = list.filter((item) => {
+        const haystack = [
+          item.FormNumber,
+          item.EmployeeCode,
+          item.EmployeeId,
+          item.EmployeeName,
+          item.Department,
+          item.Designation,
+          item.CostCenter,
+          item.ClaimMonth,
+          item.SubmissionDate,
+          item.ExpenseType,
+          item.ClaimAmount,
+          item.ClaimDate,
+          item.ApprovalStatus,
+          item.TravelFromDate,
+          item.TravelToDate,
+          item.DailyAllowanceApplicable,
+        ]
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(search);
+      });
     }
     list.sort((a, b) => {
       const valueA = a[this.sortColumn];

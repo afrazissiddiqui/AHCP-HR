@@ -46,7 +46,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
   pageTitle = 'Add Expense Reimbursement';
   submitButtonLabel = 'Save Expense Reimbursement';
 
-  protected readonly expenseTypeOptions = ['Fuel', 'Travel', 'Medical', 'Meals', 'Utilities', 'Other'] as const;
+  protected readonly expenseTypeOptions = ['Fuel', 'Travel', 'Medical', 'Meals', 'Utilities', 'Lodging', 'Other'] as const;
   protected readonly approvalStatusOptions = ['Pending', 'Approved', 'Rejected'] as const;
 
   protected readonly employeeCode = signal('');
@@ -169,7 +169,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.closeNameSuggestions();
   }
 
-  protected onEmployeeNameInput(name: string): void {
+  protected onHeaderEmployeeNameInput(name: string): void {
     this.headerEmployeeName.set(name);
     this.detailEmployeeName.set(name);
     if (this.editingId) {
@@ -177,6 +177,15 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     }
     this.nameSuggestionsOpen.set(name.trim().length > 0);
     this.closeCodeSuggestions();
+  }
+
+  protected onDetailEmployeeNameInput(name: string): void {
+    this.detailEmployeeName.set(name);
+  }
+
+  protected onHeaderDepartmentInput(department: string): void {
+    this.headerDepartment.set(department);
+    this.detailDepartment.set(department);
   }
 
   protected onFormNumberChange(value: string): void {

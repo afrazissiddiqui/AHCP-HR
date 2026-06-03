@@ -46,14 +46,44 @@ export type ExpenseReimbursementSubmitBody = ExpenseReimbursementAddPayload;
 
 export interface ExpenseReimbursementRecord {
   Id: number;
+  /** headerFields.formNumber / expenseDetail.formNumber */
   FormNumber: string;
+  /** headerFields.employeeCode */
+  EmployeeCode: string;
+  /** expenseDetail.employeeID */
   EmployeeId: string;
+  /** expenseDetail.employeeName / headerFields.employeeName */
   EmployeeName: string;
+  /** expenseDetail.department / headerFields.department */
   Department: string;
+  /** headerFields.designation */
+  Designation: string;
+  /** headerFields.costCenter */
+  CostCenter: string;
+  /** headerFields.claimMonth */
+  ClaimMonth: string;
+  /** headerFields.submissionDate */
+  SubmissionDate: string;
+  /** expenseDetail.expenseType */
   ExpenseType: string;
+  /** expenseDetail.claimAmount */
   ClaimAmount: string;
+  /** expenseDetail.claimDate */
   ClaimDate: string;
+  /** expenseDetail.approvalStatus */
   ApprovalStatus: string;
+  /** travel.travelFromDate */
+  TravelFromDate: string;
+  /** travel.travelToDate */
+  TravelToDate: string;
+  /** travel.dailyAllowanceApplicable */
+  DailyAllowanceApplicable: string;
+  /** travel.dailyAllowanceRate */
+  DailyAllowanceRate: string;
+  /** travel.numberOfDays */
+  NumberOfDays: string;
+  /** travel.dailyAllowanceAmount */
+  DailyAllowanceAmount: string;
   HeaderFields: ExpenseHeaderFieldsPayload;
   ExpenseDetail: ExpenseDetailPayload;
   Travel: ExpenseTravelPayload;
@@ -391,13 +421,24 @@ export class ExpenseReimbursementService {
     return {
       Id: Number.parseInt(id, 10) || 0,
       FormNumber: expenseDetail.formNumber || headerFields.formNumber || '—',
+      EmployeeCode: headerFields.employeeCode || '—',
       EmployeeId: expenseDetail.employeeID || headerFields.employeeCode || '—',
       EmployeeName: expenseDetail.employeeName || headerFields.employeeName || '—',
       Department: expenseDetail.department || headerFields.department || '—',
+      Designation: headerFields.designation || '—',
+      CostCenter: headerFields.costCenter || '—',
+      ClaimMonth: headerFields.claimMonth || '—',
+      SubmissionDate: headerFields.submissionDate || '—',
       ExpenseType: expenseDetail.expenseType || '—',
       ClaimAmount: expenseDetail.claimAmount || '—',
       ClaimDate: expenseDetail.claimDate || '—',
       ApprovalStatus: expenseDetail.approvalStatus || '—',
+      TravelFromDate: travel.travelFromDate || '—',
+      TravelToDate: travel.travelToDate || '—',
+      DailyAllowanceApplicable: travel.dailyAllowanceApplicable || '—',
+      DailyAllowanceRate: travel.dailyAllowanceRate || '—',
+      NumberOfDays: travel.numberOfDays || '—',
+      DailyAllowanceAmount: travel.dailyAllowanceAmount || '—',
       HeaderFields: headerFields,
       ExpenseDetail: expenseDetail,
       Travel: travel,
