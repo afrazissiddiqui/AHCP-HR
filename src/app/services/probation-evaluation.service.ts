@@ -176,8 +176,15 @@ export function buildProbationEvaluationSubmitPayload(
     total_salary: Math.round(draft.total_salary),
   };
 
-  body.allowances = allowances;
+  body.allowances = allowances.length > 0 ? allowances : null;
 
+  return body;
+}
+
+function serializeProbationPayloadForApi(payload: ProbationEvaluationSubmitBody): Record<string, unknown> {
+  const body = { ...payload } as Record<string, unknown>;
+  const rows = payload.allowances;
+  body['allowances'] = rows && rows.length > 0 ? rows : null;
   return body;
 }
 
@@ -198,12 +205,15 @@ export class ProbationEvaluationService {
   }
 
   addProbationEvaluation(payload: ProbationEvaluationSubmitBody): Observable<unknown> {
-    return this.http.post(PROBATION_EVALUATION_ADD_URL, payload);
+    return this.http.post(PROBATION_EVALUATION_ADD_URL, serializeProbationPayloadForApi(payload));
   }
 
   updateProbationEvaluation(id: string | number, payload: ProbationEvaluationSubmitBody): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.post(`${PROBATION_EVALUATION_UPDATE_URL}/${identifier}`, payload);
+    return this.http.post(
+      `${PROBATION_EVALUATION_UPDATE_URL}/${identifier}`,
+      serializeProbationPayloadForApi(payload),
+    );
   }
 
   deleteProbationEvaluation(id: string | number): Observable<unknown> {

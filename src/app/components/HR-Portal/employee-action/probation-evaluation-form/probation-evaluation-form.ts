@@ -77,6 +77,10 @@ export class ProbationEvaluationFormComponent implements OnInit {
     return this.probationService.probations();
   }
 
+  get visibleColumns(): Array<{ key: ProbationColumnKey; label: string; visible: boolean }> {
+    return this.columns.filter((col) => col.visible);
+  }
+
   get filteredList(): ProbationEvaluationRecord[] {
     let list = this.tableFilter.filterItems([...this.probationList], this.probationTableFilter);
     if (this.searchText) {

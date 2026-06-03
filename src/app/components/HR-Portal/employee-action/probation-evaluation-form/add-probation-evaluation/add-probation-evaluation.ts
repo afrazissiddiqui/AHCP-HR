@@ -326,6 +326,17 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.employmentCategory.set(employee.employmentCategory);
   }
 
+  private buildAllowancesForPayload(): ProbationEvaluationAddPayload['allowances'] {
+    const rows = this.allowances()
+      .filter((item) => item.allowance.trim() !== '')
+      .map((item) => ({
+        allowance: item.allowance.trim(),
+        amount: this.toAmount(item.amount),
+        notes: item.notes.trim(),
+      }));
+    return rows.length > 0 ? rows : null;
+  }
+
   protected addAllowance(): void {
     this.allowances.update((items) => [...items, { allowance: '', amount: '', notes: '' }]);
   }
@@ -525,13 +536,7 @@ export class AddProbationEvaluationComponent implements OnInit {
         adjustmentAmountInSalary: this.toAmount(this.adjustmentAmountInSalary()),
         effectiveDateOfRevision: this.effectiveDateOfRevision(),
       },
-      allowances: this.allowances()
-        .filter((item) => item.allowance.trim() !== '')
-        .map((item) => ({
-          allowance: item.allowance.trim(),
-          amount: this.toAmount(item.amount),
-          notes: item.notes.trim(),
-        })),
+      allowances: this.buildAllowancesForPayload(),
       total_salary: this.totalSalary(),
     };
 

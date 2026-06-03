@@ -227,6 +227,12 @@
   font-size: 14px;
 }
 
+.allowances-optional {
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+}
+
 .add-allowance-btn {
   border: 1px solid #cbd5e1;
   background: #f8fafc;

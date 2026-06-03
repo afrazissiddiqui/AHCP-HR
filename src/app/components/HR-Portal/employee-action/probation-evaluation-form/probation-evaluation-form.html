@@ -49,13 +49,13 @@
               <th>
                 <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
               </th>
-              <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)" class="sortable-header">
+              <th *ngFor="let col of visibleColumns" appColumnResize (click)="sortData(col.key)" class="sortable-header">
                 {{ col.label }}
                 <span *ngIf="sortColumn === col.key" class="sort-indicator">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th>Actions</th>
+              <th class="probation-actions-header">Actions</th>
             </tr>
           </thead>
 
@@ -64,10 +64,10 @@
               <td>
                 <input type="checkbox" [(ngModel)]="item.selected" />
               </td>
-              <td *ngFor="let col of columns" [hidden]="!col.visible">
+              <td *ngFor="let col of visibleColumns">
                 {{ formatCellValue(item, col.key) }}
               </td>
-              <td class="table-action-cell">
+              <td class="table-action-cell probation-actions-cell">
                 <div class="action-buttons">
                   <button class="view-btn" (click)="viewRecord(item)" title="View Details">View</button>
                   <button class="update-btn" (click)="onUpdate(item)" title="Update Probation Evaluation">Update</button>
