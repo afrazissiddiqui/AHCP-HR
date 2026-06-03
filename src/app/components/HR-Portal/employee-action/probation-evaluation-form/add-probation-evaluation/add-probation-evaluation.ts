@@ -1,7 +1,30 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, computed, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ProbationEvaluationAddPayload,
+  ProbationEvaluationRecord,
+  ProbationEvaluationService,
+} from '../../../../../services/probation-evaluation.service';
+import { AlertService } from '../../../../../services/alert.service';
+
+type RatingKey =
+  | 'communication_skills'
+  | 'technical_skills'
+  | 'attendance'
+  | 'discipline'
+  | 'teamwork'
+  | 'productivity';
 
 @Component({
   selector: 'app-add-probation-evaluation',
@@ -10,28 +33,40 @@ import { Router } from '@angular/router';
   templateUrl: './add-probation-evaluation.html',
   styleUrls: [
     '../../../Application-Form/create-job-requisition/create-job-requisition.css',
-    './add-probation-evaluation.css'
+    './add-probation-evaluation.css',
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy {
+export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly sectionIds = [
     'probation-info-section',
     'probation-rating-section',
     'extension-of-probation-section',
     'termination-of-probation-section',
-    'salary-adjustment-section'
+    'salary-adjustment-section',
   ] as const;
   private sectionObserver: IntersectionObserver | null = null;
 
-  constructor(private readonly router: Router) {}
+  editingId: string | null = null;
+  pageTitle = 'Add Probation Evaluation';
+  submitButtonLabel = 'Save Probation Evaluation';
 
-  protected readonly ratingParameters = [
-    { key: 'performanceRating', label: 'Performance Rating' },
-    { key: 'workQuality', label: 'Work Quality' },
+  constructor(
+    private readonly router: Router,
+    private readonly route: ActivatedRoute,
+    private readonly probationService: ProbationEvaluationService,
+    private readonly alertService: AlertService,
+    private readonly cdr: ChangeDetectorRef,
+  ) {}
+
+  protected readonly ratingParameters: Array<{ key: RatingKey; label: string }> = [
+    { key: 'communication_skills', label: 'Communication Skills' },
+    { key: 'technical_skills', label: 'Technical Skills' },
     { key: 'attendance', label: 'Attendance' },
-    { key: 'behaviour', label: 'Behaviour' }
-  ] as const;
+    { key: 'discipline', label: 'Discipline' },
+    { key: 'teamwork', label: 'Teamwork' },
+    { key: 'productivity', label: 'Productivity' },
+  ];
 
   protected readonly activeSection = signal('probation-info-section');
   protected readonly employeeCode = signal('');
@@ -66,15 +101,57 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
     return current + adjustment + allowancesTotal;
   });
 
+  protected readonly ratings = signal<Record<RatingKey, { rating: string; remarks: string }>>({
+    communication_skills: { rating: '', remarks: '' },
+    technical_skills: { rating: '', remarks: '' },
+    attendance: { rating: '', remarks: '' },
+    discipline: { rating: '', remarks: '' },
+    teamwork: { rating: '', remarks: '' },
+    productivity: { rating: '', remarks: '' },
+  });
+
+  ngOnInit(): void {
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+
+    this.editingId = editId;
+    this.pageTitle = 'Update Probation Evaluation';
+    this.submitButtonLabel = 'Update Probation Evaluation';
+
+    const existing = this.probationService.findProbationById(editId);
+    if (existing) {
+      this.populateFromRecord(existing);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.probationService.fetchProbationEvaluations().subscribe({
+      next: (records) => {
+        const record = records.find((item) => String(item.Id) === editId);
+        if (record) {
+          this.populateFromRecord(record);
+        } else {
+          this.alertService.warning('Edit', 'Probation evaluation not found.');
+        }
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load probation evaluation for edit.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+  }
+
   protected addAllowance(): void {
     this.allowances.update((items) => [...items, { allowance: '', amount: '', notes: '' }]);
   }
 
-  protected updateAllowance(
-    index: number,
-    field: 'allowance' | 'amount' | 'notes',
-    value: string
-  ): void {
+  protected updateAllowance(index: number, field: 'allowance' | 'amount' | 'notes', value: string): void {
     this.allowances.update((items) => {
       const updated = [...items];
       updated[index] = { ...updated[index], [field]: value };
@@ -83,15 +160,14 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
   }
 
   protected removeAllowance(index: number): void {
-    this.allowances.update((items) => {
-      return items.filter((_, itemIndex) => itemIndex !== index);
-    });
+    this.allowances.update((items) => items.filter((_, itemIndex) => itemIndex !== index));
   }
 
   private toAmount(value: string): number {
     const numeric = Number((value ?? '').toString().replace(/,/g, '').trim());
     return Number.isFinite(numeric) ? numeric : 0;
   }
+
   protected onExtensionToggle(checked: boolean): void {
     this.isExtensionEnabled.set(checked);
     if (!checked) {
@@ -101,14 +177,6 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
   }
 
   protected readonly remarks = signal('');
-  protected readonly performanceRating = signal('');
-  protected readonly workQuality = signal('');
-  protected readonly attendance = signal('');
-  protected readonly behaviour = signal('');
-  protected readonly performanceRatingRemark = signal('');
-  protected readonly workQualityRemark = signal('');
-  protected readonly attendanceRemark = signal('');
-  protected readonly behaviourRemark = signal('');
   protected readonly supervisionRemark = signal('');
   protected readonly ratingValidationTouched = signal(false);
 
@@ -121,28 +189,16 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
     this.sectionObserver = null;
   }
 
-  protected onPercentageChange(
-    field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour',
-    value: string | number | null
-  ): void {
+  protected onPercentageChange(key: RatingKey, value: string | number | null): void {
     const rawValue = value === null ? '' : String(value);
     const digitsOnly = rawValue.replace(/\D/g, '');
     const numericValue = Math.min(100, Math.max(0, Number(digitsOnly || '0')));
     const normalized = digitsOnly === '' ? '' : numericValue.toString();
 
-    if (field === 'performanceRating') {
-      this.performanceRating.set(normalized);
-      return;
-    }
-    if (field === 'workQuality') {
-      this.workQuality.set(normalized);
-      return;
-    }
-    if (field === 'attendance') {
-      this.attendance.set(normalized);
-      return;
-    }
-    this.behaviour.set(normalized);
+    this.ratings.update((current) => ({
+      ...current,
+      [key]: { ...current[key], rating: normalized },
+    }));
   }
 
   protected onRatingKeyDown(event: KeyboardEvent): void {
@@ -159,60 +215,22 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
     return Number.isFinite(numericValue) && numericValue >= 0 && numericValue <= 100;
   }
 
-  protected isRatingInvalid(field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour'): boolean {
+  protected isRatingInvalid(key: RatingKey): boolean {
     if (!this.ratingValidationTouched()) {
       return false;
     }
-    return !this.isRatingValidValue(this.getRatingValue(field));
+    return !this.isRatingValidValue(this.ratings()[key].rating);
   }
 
   protected areAllRatingsValid(): boolean {
-    return this.ratingParameters.every((row) => this.isRatingValidValue(this.getRatingValue(row.key)));
+    return this.ratingParameters.every((row) => this.isRatingValidValue(this.ratings()[row.key].rating));
   }
 
-  protected getRatingValue(field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour'): string {
-    if (field === 'performanceRating') {
-      return this.performanceRating();
-    }
-    if (field === 'workQuality') {
-      return this.workQuality();
-    }
-    if (field === 'attendance') {
-      return this.attendance();
-    }
-    return this.behaviour();
-  }
-
-  protected getRatingRemark(field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour'): string {
-    if (field === 'performanceRating') {
-      return this.performanceRatingRemark();
-    }
-    if (field === 'workQuality') {
-      return this.workQualityRemark();
-    }
-    if (field === 'attendance') {
-      return this.attendanceRemark();
-    }
-    return this.behaviourRemark();
-  }
-
-  protected onRatingRemarkChange(
-    field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour',
-    value: string
-  ): void {
-    if (field === 'performanceRating') {
-      this.performanceRatingRemark.set(value);
-      return;
-    }
-    if (field === 'workQuality') {
-      this.workQualityRemark.set(value);
-      return;
-    }
-    if (field === 'attendance') {
-      this.attendanceRemark.set(value);
-      return;
-    }
-    this.behaviourRemark.set(value);
+  protected onRatingRemarkChange(key: RatingKey, value: string): void {
+    this.ratings.update((current) => ({
+      ...current,
+      [key]: { ...current[key], remarks: value },
+    }));
   }
 
   protected scrollToSection(sectionId: string): void {
@@ -250,9 +268,7 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
           return;
         }
 
-        const nextActiveSection = [...visibleSections.entries()].sort((left, right) => {
-          return right[1] - left[1];
-        })[0]?.[0];
+        const nextActiveSection = [...visibleSections.entries()].sort((left, right) => right[1] - left[1])[0]?.[0];
 
         if (nextActiveSection) {
           this.activeSection.set(nextActiveSection);
@@ -261,8 +277,8 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
       {
         root: null,
         rootMargin: '-120px 0px -55% 0px',
-        threshold: [0.2, 0.35, 0.5, 0.7]
-      }
+        threshold: [0.2, 0.35, 0.5, 0.7],
+      },
     );
 
     for (const section of sections) {
@@ -279,6 +295,11 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
   }
 
   protected save(): void {
+    if (!this.employeeCode().trim() || !this.employeeName().trim()) {
+      this.alertService.validation('Please enter Employee Code and Employee Name at minimum.');
+      return;
+    }
+
     this.ratingValidationTouched.set(true);
     if (!this.areAllRatingsValid()) {
       this.activeSection.set('probation-rating-section');
@@ -291,52 +312,178 @@ export class AddProbationEvaluationComponent implements AfterViewInit, OnDestroy
       return;
     }
 
-    // TODO: connect to API/service once endpoint is ready.
-    console.log('Probation evaluation payload:', {
-      employeeCode: this.employeeCode(),
-      employeeName: this.employeeName(),
-      department: this.department(),
-      location: this.location(),
-      designation: this.designation(),
-      reportingManager: this.reportingManager(),
-      employeeNature: this.employeeNature(),
-      employeeType: this.employeeType(),
-      gradeWorkLevel: this.gradeWorkLevel(),
-      employmentCategory: this.employmentCategory(),
-      probationStartDate: this.probationStartDate(),
-      probationEndDate: this.probationEndDate(),
-      extensionOfProbation: {
-        enabled: this.isExtensionEnabled(),
-        probationStartDate: this.extensionProbationStartDate(),
-        probationEndDate: this.extensionProbationEndDate(),
-        extensionPeriodInProbation: this.extensionPeriodInProbation(),
-        newProbationEndDate: this.newProbationEndDate()
+    const ratingValues = this.ratings();
+    const payload: ProbationEvaluationAddPayload = {
+      employee_code: this.employeeCode().trim(),
+      employee_name: this.employeeName().trim(),
+      department: this.department().trim(),
+      location: this.location().trim(),
+      designation: this.designation().trim(),
+      reporting_manager: this.reportingManager().trim(),
+      employee_nature: this.employeeNature().trim(),
+      employee_type: this.employeeType().trim(),
+      grade_work_level: this.gradeWorkLevel().trim(),
+      employment_category: this.employmentCategory().trim(),
+      probation_start_date: this.probationStartDate(),
+      probation_end_date: this.probationEndDate(),
+      remarks: this.remarks().trim(),
+      probation_rating: {
+        communication_skills: {
+          rating: Number(ratingValues.communication_skills.rating),
+          remarks: ratingValues.communication_skills.remarks.trim(),
+        },
+        technical_skills: {
+          rating: Number(ratingValues.technical_skills.rating),
+          remarks: ratingValues.technical_skills.remarks.trim(),
+        },
+        attendance: {
+          rating: Number(ratingValues.attendance.rating),
+          remarks: ratingValues.attendance.remarks.trim(),
+        },
+        discipline: {
+          rating: Number(ratingValues.discipline.rating),
+          remarks: ratingValues.discipline.remarks.trim(),
+        },
+        teamwork: {
+          rating: Number(ratingValues.teamwork.rating),
+          remarks: ratingValues.teamwork.remarks.trim(),
+        },
+        productivity: {
+          rating: Number(ratingValues.productivity.rating),
+          remarks: ratingValues.productivity.remarks.trim(),
+        },
       },
-      terminationOfProbation: {
-        termination: this.termination(),
-        terminationEffectiveDate: this.terminationEffectiveDate()
+      supervision_remark: this.supervisionRemark().trim(),
+      extension_of_probation: {
+        probation_start_date: this.extensionProbationStartDate(),
+        probation_end_date: this.extensionProbationEndDate(),
+        is_extension_enabled: this.isExtensionEnabled(),
+        extension_period_in_probation: this.extensionPeriodInProbation(),
+        new_probation_end_date: this.newProbationEndDate(),
       },
-      salaryAdjustment: {
-        currentSalary: this.currentSalary(),
-        adjustmentInSalary: this.adjustmentInSalary(),
-        adjustmentAmountInSalary: this.adjustmentAmountInSalary(),
+      termination_of_probation: {
+        termination: this.termination() || 'No',
+        termination_effective_date: this.terminationEffectiveDate() || null,
+      },
+      salary_adjustment: {
+        currentSalary: this.toAmount(this.currentSalary()),
+        adjustmentInSalary: this.toAmount(this.adjustmentInSalary()),
+        adjustmentAmountInSalary: this.toAmount(this.adjustmentAmountInSalary()),
         effectiveDateOfRevision: this.effectiveDateOfRevision(),
-        allowances: this.allowances(),
-        totalSalary: this.totalSalary()
       },
-      remarks: this.remarks(),
-      probationRating: {
-        performanceRating: this.performanceRating(),
-        workQuality: this.workQuality(),
-        attendance: this.attendance(),
-        behaviour: this.behaviour(),
-        performanceRatingRemark: this.performanceRatingRemark(),
-        workQualityRemark: this.workQualityRemark(),
-        attendanceRemark: this.attendanceRemark(),
-        behaviourRemark: this.behaviourRemark(),
-        supervisionRemark: this.supervisionRemark()
-      }
+      allowances: this.allowances()
+        .filter((item) => item.allowance.trim() !== '')
+        .map((item) => ({
+          allowance: item.allowance.trim(),
+          amount: this.toAmount(item.amount),
+          notes: item.notes.trim(),
+        })),
+      total_salary: this.totalSalary(),
+    };
+
+    const request$ = this.editingId
+      ? this.probationService.updateProbationEvaluation(this.editingId, payload)
+      : this.probationService.addProbationEvaluation(payload);
+
+    request$.subscribe({
+      next: () => {
+        this.alertService.success(
+          'Success',
+          this.editingId
+            ? 'Probation evaluation updated successfully!'
+            : 'Probation evaluation saved successfully!',
+        );
+        this.cancel();
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          (this.editingId ? 'Failed to update probation evaluation.' : 'Failed to save probation evaluation.');
+        this.alertService.error(this.editingId ? 'Update Failed' : 'Save Failed', errorMessage);
+      },
     });
-    void this.router.navigateByUrl('/employee-action/probation-evaluation-form');
+  }
+
+  private populateFromRecord(record: ProbationEvaluationRecord): void {
+    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+
+    this.employeeCode.set(emptyIfDash(record.EmployeeCode));
+    this.employeeName.set(emptyIfDash(record.EmployeeName));
+    this.department.set(emptyIfDash(record.Department));
+    this.location.set(emptyIfDash(record.Location));
+    this.designation.set(emptyIfDash(record.Designation));
+    this.reportingManager.set(emptyIfDash(record.ReportingManager));
+    this.employeeNature.set(emptyIfDash(record.EmployeeNature));
+    this.employeeType.set(emptyIfDash(record.EmployeeType));
+    this.gradeWorkLevel.set(emptyIfDash(record.GradeWorkLevel));
+    this.employmentCategory.set(emptyIfDash(record.EmploymentCategory));
+    this.probationStartDate.set(emptyIfDash(record.ProbationStartDate));
+    this.probationEndDate.set(emptyIfDash(record.ProbationEndDate));
+    this.remarks.set(emptyIfDash(record.Remarks));
+    this.supervisionRemark.set(emptyIfDash(record.SupervisionRemark));
+
+    this.ratings.set({
+      communication_skills: {
+        rating: record.ProbationRating.communication_skills.rating
+          ? String(record.ProbationRating.communication_skills.rating)
+          : '',
+        remarks: record.ProbationRating.communication_skills.remarks,
+      },
+      technical_skills: {
+        rating: record.ProbationRating.technical_skills.rating
+          ? String(record.ProbationRating.technical_skills.rating)
+          : '',
+        remarks: record.ProbationRating.technical_skills.remarks,
+      },
+      attendance: {
+        rating: record.ProbationRating.attendance.rating ? String(record.ProbationRating.attendance.rating) : '',
+        remarks: record.ProbationRating.attendance.remarks,
+      },
+      discipline: {
+        rating: record.ProbationRating.discipline.rating ? String(record.ProbationRating.discipline.rating) : '',
+        remarks: record.ProbationRating.discipline.remarks,
+      },
+      teamwork: {
+        rating: record.ProbationRating.teamwork.rating ? String(record.ProbationRating.teamwork.rating) : '',
+        remarks: record.ProbationRating.teamwork.remarks,
+      },
+      productivity: {
+        rating: record.ProbationRating.productivity.rating ? String(record.ProbationRating.productivity.rating) : '',
+        remarks: record.ProbationRating.productivity.remarks,
+      },
+    });
+
+    this.extensionProbationStartDate.set(emptyIfDash(record.ExtensionOfProbation.probation_start_date));
+    this.extensionProbationEndDate.set(emptyIfDash(record.ExtensionOfProbation.probation_end_date));
+    this.isExtensionEnabled.set(record.ExtensionOfProbation.is_extension_enabled);
+    this.extensionPeriodInProbation.set(emptyIfDash(record.ExtensionOfProbation.extension_period_in_probation));
+    this.newProbationEndDate.set(emptyIfDash(record.ExtensionOfProbation.new_probation_end_date));
+
+    this.termination.set(
+      record.TerminationOfProbation.termination === 'Yes' || record.TerminationOfProbation.termination === 'No'
+        ? record.TerminationOfProbation.termination
+        : '',
+    );
+    this.terminationEffectiveDate.set(record.TerminationOfProbation.termination_effective_date ?? '');
+
+    this.currentSalary.set(record.SalaryAdjustment.currentSalary ? String(record.SalaryAdjustment.currentSalary) : '');
+    this.adjustmentInSalary.set(
+      record.SalaryAdjustment.adjustmentInSalary ? String(record.SalaryAdjustment.adjustmentInSalary) : '',
+    );
+    this.adjustmentAmountInSalary.set(
+      record.SalaryAdjustment.adjustmentAmountInSalary ? String(record.SalaryAdjustment.adjustmentAmountInSalary) : '',
+    );
+    this.effectiveDateOfRevision.set(emptyIfDash(record.SalaryAdjustment.effectiveDateOfRevision));
+
+    this.allowances.set(
+      record.Allowances.length
+        ? record.Allowances.map((item) => ({
+            allowance: item.allowance,
+            amount: item.amount ? String(item.amount) : '',
+            notes: item.notes,
+          }))
+        : [],
+    );
   }
 }

@@ -4,7 +4,7 @@
       <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
         <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>Add Probation Evaluation</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
@@ -112,9 +112,9 @@
               <td>0-100%</td>
               <td>
                 <div class="rating-cell">
-                  <input type="number" min="0" max="100" placeholder="Rating (%)" [ngModel]="getRatingValue(row.key)"
+                  <input type="number" min="0" max="100" placeholder="Rating (%)" [ngModel]="ratings()[row.key].rating"
                     (keydown)="onRatingKeyDown($event)" (ngModelChange)="onPercentageChange(row.key, $event)" />
-                  <input type="text" placeholder="Rating remarks" [ngModel]="getRatingRemark(row.key)"
+                  <input type="text" placeholder="Rating remarks" [ngModel]="ratings()[row.key].remarks"
                     (ngModelChange)="onRatingRemarkChange(row.key, $event)" />
                 </div>
                 @if (isRatingInvalid(row.key)) {
@@ -267,7 +267,7 @@
 
     <div class="cjr-actions-footer">
       <button type="button" class="cjr-submit-btn" (click)="save()">
-        <span class="cjr-submit-icon">✓</span> Save Probation Evaluation
+        <span class="cjr-submit-icon">✓</span> {{ submitButtonLabel }}
       </button>
     </div>
   </div>

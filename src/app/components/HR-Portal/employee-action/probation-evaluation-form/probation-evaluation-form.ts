@@ -1,11 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
-import { ApplicationFormService, ApplicationFormRecord } from '../../../../services/application-form.service';
+import {
+  ProbationEvaluationRecord,
+  ProbationEvaluationService,
+} from '../../../../services/probation-evaluation.service';
+import { AlertService } from '../../../../services/alert.service';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   PROBATION_EVALUATION_TABLE_FILTER,
@@ -13,18 +17,7 @@ import {
   TableFilterService,
 } from '../../../table-filter';
 
-interface ProbationEvaluationRecord {
-  EmployeeCode: number;
-  EmployeeName: string;
-  Department: string;
-  Designation: string;
-  EmployeeNature: string;
-  ProbationStartDate: string;
-  ProbationEndDate: string;
-  selected?: boolean;
-}
-
-type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected'>;
+type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 'Location' | 'ReportingManager' | 'EmployeeType' | 'GradeWorkLevel' | 'EmploymentCategory' | 'Remarks' | 'ProbationRating' | 'SupervisionRemark' | 'ExtensionOfProbation' | 'TerminationOfProbation' | 'SalaryAdjustment' | 'Allowances' | 'TotalSalary'>;
 
 @Component({
   selector: 'app-probation-evaluation-form',
@@ -33,17 +26,26 @@ type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected'>;
   templateUrl: './probation-evaluation-form.html',
   styleUrl: '../../Application-Form/Application-Form.css',
 })
-export class ProbationEvaluationFormComponent {
+export class ProbationEvaluationFormComponent implements OnInit {
   readonly probationTableFilter = PROBATION_EVALUATION_TABLE_FILTER;
 
   constructor(
-    private readonly applicationFormService: ApplicationFormService,
+    private readonly probationService: ProbationEvaluationService,
     private readonly router: Router,
-    readonly tableFilter: TableFilterService
-  ) {
-    this.probationList = this.applicationFormService
-      .getApplicationRecords()
-      .map((record) => this.toProbationRecord(record));
+    private readonly alertService: AlertService,
+    readonly tableFilter: TableFilterService,
+  ) {}
+
+  ngOnInit(): void {
+    this.probationService.fetchProbationEvaluations().subscribe({
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load probation evaluations.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
   }
 
   Math = Math;
@@ -55,7 +57,7 @@ export class ProbationEvaluationFormComponent {
     { key: 'Designation', label: 'Designation', visible: true },
     { key: 'EmployeeNature', label: 'Employment Nature', visible: true },
     { key: 'ProbationStartDate', label: 'Probation Start Date', visible: true },
-    { key: 'ProbationEndDate', label: 'Probation End Date', visible: true }
+    { key: 'ProbationEndDate', label: 'Probation End Date', visible: true },
   ];
 
   sidebarItems: SidebarItem[] = EMPLOYEE_ACTION_SIDEBAR_ITEMS;
@@ -69,24 +71,28 @@ export class ProbationEvaluationFormComponent {
   currentPage = 1;
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
-  probationList: ProbationEvaluationRecord[] = [];
   showDialog = false;
   activeTab: 'filter' = 'filter';
   showViewDialog = false;
   selectedRecord: ProbationEvaluationRecord | null = null;
 
+  get probationList(): ProbationEvaluationRecord[] {
+    return this.probationService.probations();
+  }
+
   get filteredList(): ProbationEvaluationRecord[] {
     let list = this.tableFilter.filterItems([...this.probationList], this.probationTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
-      list = list.filter(item =>
-        item.EmployeeName.toLowerCase().includes(search) ||
-        item.Department.toLowerCase().includes(search) ||
-        item.Designation.toLowerCase().includes(search) ||
-        item.EmployeeNature.toLowerCase().includes(search) ||
-        item.EmployeeCode.toString().includes(search) ||
-        item.ProbationStartDate.toLowerCase().includes(search) ||
-        item.ProbationEndDate.toLowerCase().includes(search)
+      list = list.filter(
+        (item) =>
+          item.EmployeeName.toLowerCase().includes(search) ||
+          item.Department.toLowerCase().includes(search) ||
+          item.Designation.toLowerCase().includes(search) ||
+          item.EmployeeNature.toLowerCase().includes(search) ||
+          item.EmployeeCode.toLowerCase().includes(search) ||
+          item.ProbationStartDate.toLowerCase().includes(search) ||
+          item.ProbationEndDate.toLowerCase().includes(search),
       );
     }
 
@@ -116,15 +122,15 @@ export class ProbationEvaluationFormComponent {
 
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.filteredList.forEach(item => item.selected = checked);
+    this.filteredList.forEach((item) => (item.selected = checked));
   }
 
   isAllSelected(): boolean {
-    return this.filteredList.length > 0 && this.filteredList.every(item => item.selected);
+    return this.filteredList.length > 0 && this.filteredList.every((item) => item.selected);
   }
 
   getSelectedCount(): number {
-    return this.probationList.filter(item => item.selected).length;
+    return this.probationList.filter((item) => item.selected).length;
   }
 
   onSearchChange(): void {
@@ -176,6 +182,46 @@ export class ProbationEvaluationFormComponent {
     this.selectedRecord = null;
   }
 
+  onUpdate(record: ProbationEvaluationRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing probation evaluation id.');
+      return;
+    }
+    void this.router.navigate(['/employee-action/probation-evaluation-form/edit', record.Id]);
+  }
+
+  async onDelete(record: ProbationEvaluationRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete probation evaluation?',
+      `Remove ${record.EmployeeName} (${record.EmployeeCode}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing probation evaluation id.');
+      return;
+    }
+
+    this.probationService.deleteProbationEvaluation(record.Id).subscribe({
+      next: () => {
+        this.probationService.removeProbationRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'Probation evaluation removed successfully.');
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to delete probation evaluation.';
+        this.alertService.error('Delete Failed', errorMessage);
+      },
+    });
+  }
+
   onFolderSelected(folderId: string): void {
     this.activeSidebarItemId = folderId;
   }
@@ -186,22 +232,5 @@ export class ProbationEvaluationFormComponent {
 
   createNewProbation(): void {
     void this.router.navigateByUrl('/employee-action/probation-evaluation-form/create');
-  }
-
-  private toProbationRecord(record: ApplicationFormRecord): ProbationEvaluationRecord {
-    const startMonth = (record.EmployeeCode % 12) + 1;
-    const startDate = `2026-${startMonth.toString().padStart(2, '0')}-01`;
-    const endDate = `2026-${startMonth.toString().padStart(2, '0')}-30`;
-
-    return {
-      EmployeeCode: record.EmployeeCode,
-      EmployeeName: record.EmployeeName,
-      Department: record.Department,
-      Designation: record.Designation,
-      EmployeeNature: record.EmployeeNature,
-      ProbationStartDate: startDate,
-      ProbationEndDate: endDate,
-      selected: record.selected ?? false
-    };
   }
 }

@@ -13,6 +13,7 @@ const EXACT_TITLES: Record<string, string> = {
   'employee-action/approval-authority-setup': 'Approval Setup',
   'employee-action/probation-evaluation-form': 'Probation Evaluation Form',
   'employee-action/probation-evaluation-form/create': 'Probation Evaluation Form',
+  'employee-action/probation-evaluation-form/edit': 'Update Probation Evaluation',
   'employee-action/training-development-form': 'Training & Development Form',
   'employee-action/training-development-form/create': 'Training & Development Form',
   'employee-action/performance-appraisal-form': 'Performance Appraisal Form',
