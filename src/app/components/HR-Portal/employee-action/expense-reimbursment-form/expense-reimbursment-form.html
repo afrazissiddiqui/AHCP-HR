@@ -83,47 +83,47 @@
           <p *ngIf="viewLoading">Loading details…</p>
           <ng-container *ngIf="selectedRecord && !viewLoading">
             <div class="js-detail-section">
-              <h3>headerFields</h3>
+              <h3>Header Information</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>employeeCode:</label> <span>{{ selectedRecord.HeaderFields.employeeCode }}</span></div>
-                <div class="js-detail-item"><label>employeeName:</label> <span>{{ selectedRecord.HeaderFields.employeeName }}</span></div>
-                <div class="js-detail-item"><label>department:</label> <span>{{ selectedRecord.HeaderFields.department }}</span></div>
-                <div class="js-detail-item"><label>designation:</label> <span>{{ selectedRecord.HeaderFields.designation }}</span></div>
-                <div class="js-detail-item"><label>costCenter:</label> <span>{{ selectedRecord.HeaderFields.costCenter }}</span></div>
-                <div class="js-detail-item"><label>claimMonth:</label> <span>{{ selectedRecord.HeaderFields.claimMonth }}</span></div>
-                <div class="js-detail-item"><label>formNumber:</label> <span>{{ selectedRecord.HeaderFields.formNumber }}</span></div>
-                <div class="js-detail-item"><label>submissionDate:</label> <span>{{ selectedRecord.HeaderFields.submissionDate }}</span></div>
+                <div class="js-detail-item"><label>Employee Code:</label> <span>{{ selectedRecord.HeaderFields.employeeCode }}</span></div>
+                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.HeaderFields.employeeName }}</span></div>
+                <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.HeaderFields.department }}</span></div>
+                <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.HeaderFields.designation }}</span></div>
+                <div class="js-detail-item"><label>Cost Center:</label> <span>{{ selectedRecord.HeaderFields.costCenter }}</span></div>
+                <div class="js-detail-item"><label>Claim Month:</label> <span>{{ selectedRecord.HeaderFields.claimMonth }}</span></div>
+                <div class="js-detail-item"><label>Form Number:</label> <span>{{ selectedRecord.HeaderFields.formNumber }}</span></div>
+                <div class="js-detail-item"><label>Submission Date:</label> <span>{{ selectedRecord.HeaderFields.submissionDate }}</span></div>
               </div>
             </div>
             <div class="js-detail-section">
-              <h3>expenseDetail</h3>
+              <h3>Expense Detail</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>formNumber:</label> <span>{{ selectedRecord.ExpenseDetail.formNumber }}</span></div>
-                <div class="js-detail-item"><label>employeeID:</label> <span>{{ selectedRecord.ExpenseDetail.employeeID }}</span></div>
-                <div class="js-detail-item"><label>employeeName:</label> <span>{{ selectedRecord.ExpenseDetail.employeeName }}</span></div>
-                <div class="js-detail-item"><label>department:</label> <span>{{ selectedRecord.ExpenseDetail.department }}</span></div>
-                <div class="js-detail-item"><label>expenseType:</label> <span>{{ selectedRecord.ExpenseDetail.expenseType }}</span></div>
-                <div class="js-detail-item"><label>claimAmount:</label> <span>{{ selectedRecord.ExpenseDetail.claimAmount }}</span></div>
-                <div class="js-detail-item"><label>claimDate:</label> <span>{{ selectedRecord.ExpenseDetail.claimDate }}</span></div>
-                <div class="js-detail-item"><label>approvalStatus:</label> <span>{{ selectedRecord.ExpenseDetail.approvalStatus }}</span></div>
+                <div class="js-detail-item"><label>Form Number:</label> <span>{{ selectedRecord.ExpenseDetail.formNumber }}</span></div>
+                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ selectedRecord.ExpenseDetail.employeeID }}</span></div>
+                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.ExpenseDetail.employeeName }}</span></div>
+                <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.ExpenseDetail.department }}</span></div>
+                <div class="js-detail-item"><label>Expense Type:</label> <span>{{ selectedRecord.ExpenseDetail.expenseType }}</span></div>
+                <div class="js-detail-item"><label>Claim Amount:</label> <span>{{ selectedRecord.ExpenseDetail.claimAmount }}</span></div>
+                <div class="js-detail-item"><label>Claim Date:</label> <span>{{ selectedRecord.ExpenseDetail.claimDate }}</span></div>
+                <div class="js-detail-item"><label>Approval Status:</label> <span>{{ selectedRecord.ExpenseDetail.approvalStatus }}</span></div>
               </div>
               <div class="js-detail-full" *ngIf="selectedRecord.ExpenseDetail.remarks">
-                <label>remarks:</label>
+                <label>Remarks:</label>
                 <p>{{ selectedRecord.ExpenseDetail.remarks }}</p>
               </div>
             </div>
             <div class="js-detail-section">
-              <h3>travel</h3>
+              <h3>Travel</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>travelFromDate:</label> <span>{{ selectedRecord.Travel.travelFromDate }}</span></div>
-                <div class="js-detail-item"><label>travelToDate:</label> <span>{{ selectedRecord.Travel.travelToDate }}</span></div>
-                <div class="js-detail-item"><label>dailyAllowanceApplicable:</label> <span>{{ selectedRecord.Travel.dailyAllowanceApplicable }}</span></div>
-                <div class="js-detail-item"><label>dailyAllowanceRate:</label> <span>{{ selectedRecord.Travel.dailyAllowanceRate }}</span></div>
-                <div class="js-detail-item"><label>numberOfDays:</label> <span>{{ selectedRecord.Travel.numberOfDays }}</span></div>
-                <div class="js-detail-item"><label>dailyAllowanceAmount:</label> <span>{{ selectedRecord.Travel.dailyAllowanceAmount }}</span></div>
+                <div class="js-detail-item"><label>Travel From Date:</label> <span>{{ selectedRecord.Travel.travelFromDate }}</span></div>
+                <div class="js-detail-item"><label>Travel To Date:</label> <span>{{ selectedRecord.Travel.travelToDate }}</span></div>
+                <div class="js-detail-item"><label>Daily Allowance Applicable:</label> <span>{{ selectedRecord.Travel.dailyAllowanceApplicable }}</span></div>
+                <div class="js-detail-item"><label>Daily Allowance Rate:</label> <span>{{ selectedRecord.Travel.dailyAllowanceRate }}</span></div>
+                <div class="js-detail-item"><label>Number of Days:</label> <span>{{ selectedRecord.Travel.numberOfDays }}</span></div>
+                <div class="js-detail-item"><label>Daily Allowance Amount:</label> <span>{{ selectedRecord.Travel.dailyAllowanceAmount }}</span></div>
               </div>
               <div class="js-detail-full" *ngIf="selectedRecord.Travel.remarks">
-                <label>remarks:</label>
+                <label>Remarks:</label>
                 <p>{{ selectedRecord.Travel.remarks }}</p>
               </div>
             </div>
