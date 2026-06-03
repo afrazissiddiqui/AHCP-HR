@@ -1,16 +1,18 @@
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  OnDestroy,
   OnInit,
   computed,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ApplicationFormRecord,
+  ApplicationFormService,
+} from '../../../../../services/application-form.service';
 import {
   ProbationEvaluationAddPayload,
   ProbationEvaluationRecord,
@@ -26,27 +28,32 @@ type RatingKey =
   | 'teamwork'
   | 'productivity';
 
+interface ProbationEmployeeOption {
+  code: string;
+  name: string;
+  department: string;
+  location: string;
+  designation: string;
+  reportingManager: string;
+  employeeNature: string;
+  employeeType: string;
+  gradeWorkLevel: string;
+  employmentCategory: string;
+  apiId?: string;
+}
+
 @Component({
   selector: 'app-add-probation-evaluation',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-probation-evaluation.html',
   styleUrls: [
-    '../../../Application-Form/create-job-requisition/create-job-requisition.css',
+    '../../../job-specification-form/create-job-specification/create-job-specification.css',
     './add-probation-evaluation.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly sectionIds = [
-    'probation-info-section',
-    'probation-rating-section',
-    'extension-of-probation-section',
-    'termination-of-probation-section',
-    'salary-adjustment-section',
-  ] as const;
-  private sectionObserver: IntersectionObserver | null = null;
-
+export class AddProbationEvaluationComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add Probation Evaluation';
   submitButtonLabel = 'Save Probation Evaluation';
@@ -55,6 +62,7 @@ export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, O
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly probationService: ProbationEvaluationService,
+    private readonly applicationFormService: ApplicationFormService,
     private readonly alertService: AlertService,
     private readonly cdr: ChangeDetectorRef,
   ) {}
@@ -68,7 +76,6 @@ export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, O
     { key: 'productivity', label: 'Productivity' },
   ];
 
-  protected readonly activeSection = signal('probation-info-section');
   protected readonly employeeCode = signal('');
   protected readonly employeeName = signal('');
   protected readonly department = signal('');
@@ -110,7 +117,33 @@ export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, O
     productivity: { rating: '', remarks: '' },
   });
 
+  private readonly employeeOptions = signal<ProbationEmployeeOption[]>([]);
+  protected readonly codeSuggestionsOpen = signal(false);
+  protected readonly nameSuggestionsOpen = signal(false);
+
+  protected readonly codeSuggestions = computed(() =>
+    this.filterEmployeeSuggestions(this.employeeCode()),
+  );
+
+  protected readonly nameSuggestions = computed(() =>
+    this.filterEmployeeSuggestions(this.employeeName()),
+  );
+
   ngOnInit(): void {
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => {
+        this.employeeOptions.set(this.buildEmployeeOptions());
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load employees for search.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       return;
@@ -147,6 +180,148 @@ export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, O
     });
   }
 
+  protected onEmployeeCodeInput(code: string): void {
+    this.employeeCode.set(code);
+    if (this.editingId) {
+      return;
+    }
+    this.codeSuggestionsOpen.set(code.trim().length > 0);
+    this.closeNameSuggestions();
+  }
+
+  protected onEmployeeNameInput(name: string): void {
+    this.employeeName.set(name);
+    if (this.editingId) {
+      return;
+    }
+    this.nameSuggestionsOpen.set(name.trim().length > 0);
+    this.closeCodeSuggestions();
+  }
+
+  protected openCodeSuggestions(): void {
+    if (this.editingId || !this.employeeCode().trim()) {
+      return;
+    }
+    this.codeSuggestionsOpen.set(true);
+    this.closeNameSuggestions();
+  }
+
+  protected openNameSuggestions(): void {
+    if (this.editingId || !this.employeeName().trim()) {
+      return;
+    }
+    this.nameSuggestionsOpen.set(true);
+    this.closeCodeSuggestions();
+  }
+
+  protected closeCodeSuggestions(): void {
+    this.codeSuggestionsOpen.set(false);
+  }
+
+  protected closeNameSuggestions(): void {
+    this.nameSuggestionsOpen.set(false);
+  }
+
+  protected onCodeInputBlur(): void {
+    setTimeout(() => this.closeCodeSuggestions(), 150);
+  }
+
+  protected onNameInputBlur(): void {
+    setTimeout(() => this.closeNameSuggestions(), 150);
+  }
+
+  protected selectEmployeeFromSuggestion(employee: ProbationEmployeeOption): void {
+    this.closeCodeSuggestions();
+    this.closeNameSuggestions();
+    this.populateFromEmployeeOption(employee);
+
+    if (!employee.apiId) {
+      return;
+    }
+
+    this.applicationFormService.fetchEmployeeProfileDetail(employee.apiId).subscribe({
+      next: (record) => {
+        this.populateFromApplicationRecord(record);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private buildEmployeeOptions(): ProbationEmployeeOption[] {
+    return this.applicationFormService
+      .getApplicationRecords()
+      .map((record) => this.toEmployeeOption(record))
+      .filter((option) => option.code || option.name);
+  }
+
+  private toEmployeeOption(record: ApplicationFormRecord): ProbationEmployeeOption {
+    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+
+    return {
+      code: this.resolveEmployeeCode(record),
+      name: emptyIfDash(record.EmployeeName),
+      department: emptyIfDash(record.Department),
+      location:
+        emptyIfDash(record.detail?.requisition.location ?? '') ||
+        emptyIfDash(record.detail?.personalInfo.city ?? ''),
+      designation: emptyIfDash(record.Designation),
+      reportingManager: emptyIfDash(record.ReportingManager),
+      employeeNature: emptyIfDash(record.EmployeeNature),
+      employeeType: emptyIfDash(record.EmploymentType),
+      gradeWorkLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
+      employmentCategory: emptyIfDash(record.EmploymentCategory),
+      apiId: record.apiId,
+    };
+  }
+
+  private resolveEmployeeCode(record: ApplicationFormRecord): string {
+    const fromLogin = record.detail?.loginDetails.employeeCode?.trim();
+    if (fromLogin) {
+      return fromLogin;
+    }
+    if (record.apiId?.trim()) {
+      return record.apiId.trim();
+    }
+    if (record.EmployeeCode) {
+      return String(record.EmployeeCode);
+    }
+    return '';
+  }
+
+  private filterEmployeeSuggestions(query: string): ProbationEmployeeOption[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [];
+    }
+
+    return this.employeeOptions()
+      .filter(
+        (employee) =>
+          employee.code.toLowerCase().includes(q) ||
+          employee.name.toLowerCase().includes(q) ||
+          employee.department.toLowerCase().includes(q) ||
+          employee.designation.toLowerCase().includes(q),
+      )
+      .slice(0, 10);
+  }
+
+  private populateFromEmployeeOption(employee: ProbationEmployeeOption): void {
+    this.employeeCode.set(employee.code);
+    this.employeeName.set(employee.name);
+    this.department.set(employee.department);
+    this.location.set(employee.location);
+    this.designation.set(employee.designation);
+    this.reportingManager.set(employee.reportingManager);
+    this.employeeNature.set(employee.employeeNature);
+    this.employeeType.set(employee.employeeType);
+    this.gradeWorkLevel.set(employee.gradeWorkLevel);
+    this.employmentCategory.set(employee.employmentCategory);
+  }
+
+  private populateFromApplicationRecord(record: ApplicationFormRecord): void {
+    this.populateFromEmployeeOption(this.toEmployeeOption(record));
+  }
+
   protected addAllowance(): void {
     this.allowances.update((items) => [...items, { allowance: '', amount: '', notes: '' }]);
   }
@@ -179,15 +354,6 @@ export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, O
   protected readonly remarks = signal('');
   protected readonly supervisionRemark = signal('');
   protected readonly ratingValidationTouched = signal(false);
-
-  ngAfterViewInit(): void {
-    this.initializeSectionObserver();
-  }
-
-  ngOnDestroy(): void {
-    this.sectionObserver?.disconnect();
-    this.sectionObserver = null;
-  }
 
   protected onPercentageChange(key: RatingKey, value: string | number | null): void {
     const rawValue = value === null ? '' : String(value);
@@ -233,57 +399,10 @@ export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, O
     }));
   }
 
-  protected scrollToSection(sectionId: string): void {
-    this.activeSection.set(sectionId);
+  private scrollToSectionById(sectionId: string): void {
     setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 0);
-  }
-
-  private initializeSectionObserver(): void {
-    const sections = this.sectionIds
-      .map((sectionId) => document.getElementById(sectionId))
-      .filter((section): section is HTMLElement => section !== null);
-
-    if (!sections.length) {
-      return;
-    }
-
-    const visibleSections = new Map<string, number>();
-    this.sectionObserver = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const sectionId = (entry.target as HTMLElement).id;
-          if (entry.isIntersecting) {
-            visibleSections.set(sectionId, entry.intersectionRatio);
-          } else {
-            visibleSections.delete(sectionId);
-          }
-        }
-
-        if (!visibleSections.size) {
-          return;
-        }
-
-        const nextActiveSection = [...visibleSections.entries()].sort((left, right) => right[1] - left[1])[0]?.[0];
-
-        if (nextActiveSection) {
-          this.activeSection.set(nextActiveSection);
-        }
-      },
-      {
-        root: null,
-        rootMargin: '-120px 0px -55% 0px',
-        threshold: [0.2, 0.35, 0.5, 0.7],
-      },
-    );
-
-    for (const section of sections) {
-      this.sectionObserver.observe(section);
-    }
   }
 
   protected cancel(): void {
@@ -302,13 +421,7 @@ export class AddProbationEvaluationComponent implements OnInit, AfterViewInit, O
 
     this.ratingValidationTouched.set(true);
     if (!this.areAllRatingsValid()) {
-      this.activeSection.set('probation-rating-section');
-      setTimeout(() => {
-        const element = document.getElementById('probation-rating-section');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 0);
+      this.scrollToSectionById('probation-rating-section');
       return;
     }
 

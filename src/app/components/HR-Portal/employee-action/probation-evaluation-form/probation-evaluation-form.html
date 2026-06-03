@@ -1,23 +1,30 @@
-<div style="display: flex; height: 100vh;">
-  <app-sidebar [title]="'Forms'" [items]="sidebarItems" [sections]="sidebarSections" [isCollapsed]="sidebarCollapsed()"
-    [activeItemId]="activeSidebarItemId" (folderSelected)="onFolderSelected($event)"
-    (collapsedChange)="sidebarCollapsed.set($event)">
-  </app-sidebar>
+<div class="probation-layout">
+  <app-sidebar
+    [title]="'Forms'"
+    [items]="sidebarItems"
+    [sections]="sidebarSections"
+    [isCollapsed]="sidebarCollapsed()"
+    [activeItemId]="activeSidebarItemId"
+    (folderSelected)="onFolderSelected($event)"
+    (collapsedChange)="sidebarCollapsed.set($event)"
+  ></app-sidebar>
 
   <div class="page-content-column">
     <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
-      <button class="btn-default" pageToolbarActions (click)="createNewProbation()">New probation</button>
+      <button class="btn-default" pageToolbarActions (click)="createNewProbation()">Add Probation Evaluation</button>
     </app-page-toolbar>
 
     <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          Probation Evaluation List ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ probationList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
+          Probation Evaluations ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ probationList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
+
       <div class="sapMTBSpacer"></div>
+
       <div class="sapMSearchField">
-        <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
+        <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search evaluations..." />
         <span class="sapUiIcon search-icon">🔍</span>
       </div>
 
@@ -28,34 +35,9 @@
           (applied)="onTableFilterApplied()"
         />
 
-        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="View Settings">
           ⚙
         </button>
-      </div>
-
-      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
-
-      <div class="view-settings-dialog" *ngIf="showDialog">
-        <div class="dialog-header">
-          <h3>View Settings</h3>
-        </div>
-
-        <div class="dialog-tabs">
-          <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
-        </div>
-
-        <div class="dialog-body">
-          <div *ngIf="activeTab === 'filter'">
-            <div *ngFor="let col of columns">
-              <label>
-                <input type="checkbox" [(ngModel)]="col.visible" />
-                {{ col.label }}
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="dialog-footer"></div>
       </div>
     </div>
 
@@ -83,19 +65,13 @@
                 <input type="checkbox" [(ngModel)]="item.selected" />
               </td>
               <td *ngFor="let col of columns" [hidden]="!col.visible">
-                {{ item[col.key] }}
+                {{ formatCellValue(item, col.key) }}
               </td>
               <td class="table-action-cell">
                 <div class="action-buttons">
-                  <button class="view-btn" (click)="viewRecord(item)" title="View Details">
-                    View
-                  </button>
-                  <button class="edit-btn" (click)="onUpdate(item)" title="Edit">
-                    Edit
-                  </button>
-                  <button class="delete-btn" (click)="onDelete(item)" title="Delete">
-                    Delete
-                  </button>
+                  <button class="view-btn" (click)="viewRecord(item)" title="View Details">View</button>
+                  <button class="update-btn" (click)="onUpdate(item)" title="Update Probation Evaluation">Update</button>
+                  <button class="delete-btn" (click)="onDelete(item)" title="Delete Probation Evaluation">Delete</button>
                 </div>
               </td>
             </tr>
@@ -103,9 +79,48 @@
         </table>
       </div>
 
+      <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+        <div class="js-modal-header">
+          <h2>Probation Evaluation Detail — {{ selectedRecord.EmployeeName }}</h2>
+          <button class="js-close-modal" (click)="closeViewDialog()">×</button>
+        </div>
+        <div class="js-modal-body">
+          <div class="js-detail-section">
+            <h3>General Details</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item"><label>Employee Code:</label> <span>{{ selectedRecord.EmployeeCode }}</span></div>
+              <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
+              <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
+              <div class="js-detail-item"><label>Location:</label> <span>{{ selectedRecord.Location }}</span></div>
+              <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
+              <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ selectedRecord.ReportingManager }}</span></div>
+              <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ selectedRecord.EmployeeNature }}</span></div>
+              <div class="js-detail-item"><label>Employment Type:</label> <span>{{ selectedRecord.EmployeeType }}</span></div>
+              <div class="js-detail-item"><label>Grade / Work Level:</label> <span>{{ selectedRecord.GradeWorkLevel }}</span></div>
+              <div class="js-detail-item"><label>Employment Category:</label> <span>{{ selectedRecord.EmploymentCategory }}</span></div>
+              <div class="js-detail-item"><label>Probation Start Date:</label> <span>{{ selectedRecord.ProbationStartDate }}</span></div>
+              <div class="js-detail-item"><label>Probation End Date:</label> <span>{{ selectedRecord.ProbationEndDate }}</span></div>
+              <div class="js-detail-item"><label>Total Salary:</label> <span>{{ selectedRecord.TotalSalary }}</span></div>
+            </div>
+            <div class="js-detail-full" *ngIf="selectedRecord.Remarks && selectedRecord.Remarks !== '—'">
+              <label>Remarks:</label>
+              <p>{{ selectedRecord.Remarks }}</p>
+            </div>
+            <div class="js-detail-full" *ngIf="selectedRecord.SupervisionRemark && selectedRecord.SupervisionRemark !== '—'">
+              <label>Supervision Remark:</label>
+              <p>{{ selectedRecord.SupervisionRemark }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="js-modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
+        </div>
+      </div>
+
       <div class="table-pagination">
         <div class="pagination-info">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+          Showing {{ filteredList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
           of {{ filteredList.length }} entries
         </div>
 
@@ -129,27 +144,26 @@
   </div>
 </div>
 
-<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
-  <div class="js-modal-header">
-    <h2>Probation Evaluation Detail - {{ selectedRecord.EmployeeName }}</h2>
-    <button class="js-close-modal" (click)="closeViewDialog()">×</button>
+<div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+<div class="view-settings-dialog" *ngIf="showDialog">
+  <div class="dialog-header">
+    <h3>View Settings</h3>
   </div>
-  <div class="js-modal-body" *ngIf="selectedRecord">
-    <div class="js-detail-section">
-      <h3>General Details</h3>
-      <div class="js-detail-grid">
-        <div class="js-detail-item"><label>Employee Code:</label> <span>{{ selectedRecord.EmployeeCode }}</span></div>
-        <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
-        <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
-        <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
-        <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ selectedRecord.EmployeeNature }}</span></div>
-        <div class="js-detail-item"><label>Probation Start Date:</label> <span>{{ selectedRecord.ProbationStartDate }}</span></div>
-        <div class="js-detail-item"><label>Probation End Date:</label> <span>{{ selectedRecord.ProbationEndDate }}</span></div>
+
+  <div class="dialog-tabs">
+    <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+  </div>
+
+  <div class="dialog-body">
+    <div *ngIf="activeTab === 'filter'">
+      <div *ngFor="let col of columns">
+        <label>
+          <input type="checkbox" [(ngModel)]="col.visible" />
+          {{ col.label }}
+        </label>
       </div>
     </div>
   </div>
-  <div class="js-modal-footer">
-    <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
-  </div>
+
+  <div class="dialog-footer"></div>
 </div>

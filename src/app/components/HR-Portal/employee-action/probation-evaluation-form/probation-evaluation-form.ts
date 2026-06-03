@@ -24,7 +24,7 @@ type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 
   standalone: true,
   imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './probation-evaluation-form.html',
-  styleUrl: '../../Application-Form/Application-Form.css',
+  styleUrls: ['./probation-evaluation-form.css', '../../Application-Form/Application-Form.css'],
 })
 export class ProbationEvaluationFormComponent implements OnInit {
   readonly probationTableFilter = PROBATION_EVALUATION_TABLE_FILTER;
@@ -232,5 +232,14 @@ export class ProbationEvaluationFormComponent implements OnInit {
 
   createNewProbation(): void {
     void this.router.navigateByUrl('/employee-action/probation-evaluation-form/create');
+  }
+
+  formatCellValue(record: ProbationEvaluationRecord, key: ProbationColumnKey): string {
+    const value = record[key];
+    if (value === undefined || value === null) {
+      return '—';
+    }
+    const text = String(value).trim();
+    return text === '' || text === '—' ? '—' : text;
   }
 }
