@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { JobSpecificationService, JobSpecificationRecord } from '../../../services/job-specification.service';
+import { AlertService } from '../../../services/alert.service';
 import {
   JOB_SPECIFICATION_TABLE_FILTER,
   TableFilterComponent,
@@ -32,14 +33,27 @@ interface ColumnConfig {
   templateUrl: './job-specification-form.html',
   styleUrl: './job-specification-form.css',
 })
-export class JobSpecificationFormComponent {
+export class JobSpecificationFormComponent implements OnInit {
   readonly jobSpecTableFilter = JOB_SPECIFICATION_TABLE_FILTER;
 
   constructor(
     private router: Router,
     private jobSpecService: JobSpecificationService,
+    private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService
   ) { }
+
+  ngOnInit(): void {
+    this.jobSpecService.fetchPostedJobSpecifications().subscribe({
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load posted job specifications.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+  }
 
   Math = Math;
 

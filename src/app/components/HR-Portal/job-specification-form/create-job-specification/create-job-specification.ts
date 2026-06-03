@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { JobSpecificationService } from '../../../../services/job-specification.service';
+import { JobSpecificationAddPayload, JobSpecificationService } from '../../../../services/job-specification.service';
 import { AlertService } from '../../../../services/alert.service';
 
 @Component({
@@ -68,7 +68,7 @@ export class CreateJobSpecificationComponent {
       return;
     }
 
-    this.jobSpecService.addJobSpec({
+    const payload: JobSpecificationAddPayload = {
       jobTitle: this.jobTitle,
       department: this.department,
       vacancy: this.vacancyCount || 0,
@@ -84,11 +84,20 @@ export class CreateJobSpecificationComponent {
       fuelAllowance: this.fuelAllowance,
       packagePerks: this.packagePerks,
       qualifications: this.qualifications.filter(q => q.trim() !== ''),
+    };
+
+    this.jobSpecService.addJobSpec(payload).subscribe({
+      next: () => {
+        this.alertService.success('Success', 'Job Specification saved successfully!');
+        this.back();
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to save job specification.';
+        this.alertService.error('Save Failed', errorMessage);
+      },
     });
-
-    console.log('Job Specification Added');
-
-    this.alertService.success('Success', 'Job Specification saved successfully!');
-    this.back();
   }
 }
