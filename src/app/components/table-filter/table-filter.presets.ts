@@ -118,14 +118,7 @@ export const EXPENSE_REIMBURSEMENT_TABLE_FILTER: TableFilterConfig = {
     { type: 'select', key: 'department', label: 'Department', fieldKey: 'Department' },
     { type: 'select', key: 'expenseType', label: 'Expense type', fieldKey: 'ExpenseType' },
     { type: 'select', key: 'approvalStatus', label: 'Approval status', fieldKey: 'ApprovalStatus' },
-    {
-      type: 'numberRange',
-      key: 'employeeId',
-      label: 'Employee ID range',
-      fieldKey: 'EmployeeID',
-      fromPlaceholder: 'Min ID',
-      toPlaceholder: 'Max ID',
-    },
+    { type: 'select', key: 'employeeId', label: 'Employee ID', fieldKey: 'EmployeeId' },
   ],
 };
 

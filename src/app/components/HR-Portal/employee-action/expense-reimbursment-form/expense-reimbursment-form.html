@@ -12,7 +12,7 @@
     <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          Expense Reimbursment List ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ expenseList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
+          Expense Reimbursement List ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ expenseList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
       <div class="sapMTBSpacer"></div>
@@ -20,51 +20,28 @@
         <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
         <span class="sapUiIcon search-icon">🔍</span>
       </div>
-
       <div class="sapMTBActions">
-        <app-table-filter
-          [config]="expenseTableFilter"
-          [data]="expenseList"
-          (applied)="onTableFilterApplied()"
-        />
-
-        <button class="sapMBtnBase sapMBtn" title="Download">
-          ⬇
-        </button>
-
-        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">
-          ⛶
-        </button>
-
-        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
-          ⚙
-        </button>
+        <app-table-filter [config]="expenseTableFilter" [data]="expenseList" (applied)="onTableFilterApplied()" />
+        <button class="sapMBtnBase sapMBtn" title="Download">⬇</button>
+        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">⛶</button>
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">⚙</button>
       </div>
+    </div>
 
-      <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
-
-      <div class="view-settings-dialog" *ngIf="showDialog">
-        <div class="dialog-header">
-          <h3>View Settings</h3>
-        </div>
-
-        <div class="dialog-tabs">
-          <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
-        </div>
-
-        <div class="dialog-body">
-          <div *ngIf="activeTab === 'filter'">
-            <div *ngFor="let col of columns">
-              <label>
-                <input type="checkbox" [(ngModel)]="col.visible" />
-                {{ col.label }}
-              </label>
-            </div>
+    <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+    <div class="view-settings-dialog" *ngIf="showDialog">
+      <div class="dialog-header"><h3>View Settings</h3></div>
+      <div class="dialog-tabs">
+        <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+      </div>
+      <div class="dialog-body">
+        <div *ngIf="activeTab === 'filter'">
+          <div *ngFor="let col of columns">
+            <label><input type="checkbox" [(ngModel)]="col.visible" /> {{ col.label }}</label>
           </div>
         </div>
-
-        <div class="dialog-footer"></div>
       </div>
+      <div class="dialog-footer"></div>
     </div>
 
     <div class="table-wrapper">
@@ -72,47 +49,99 @@
         <table class="mountain-table">
           <thead>
             <tr>
-              <th>
-                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
-              </th>
-              <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)" class="sortable-header">
+              <th><input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" /></th>
+              <th *ngFor="let col of visibleColumns" appColumnResize (click)="sortData(col.key)" class="sortable-header">
                 {{ col.label }}
-                <span *ngIf="sortColumn === col.key" class="sort-indicator">
-                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                </span>
+                <span *ngIf="sortColumn === col.key" class="sort-indicator">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
               </th>
+              <th>Actions</th>
             </tr>
           </thead>
-
           <tbody>
             <tr *ngFor="let item of paginatedList">
-              <td>
-                <input type="checkbox" [(ngModel)]="item.selected" />
-              </td>
-              <td *ngFor="let col of columns" [hidden]="!col.visible">
-                {{ item[col.key] }}
+              <td><input type="checkbox" [(ngModel)]="item.selected" /></td>
+              <td *ngFor="let col of visibleColumns">{{ formatCellValue(item, col.key) }}</td>
+              <td class="table-action-cell">
+                <div class="action-buttons">
+                  <button type="button" class="view-btn" (click)="viewRecord(item)">View</button>
+                  <button type="button" class="update-btn" (click)="onUpdate(item)">Update</button>
+                  <button type="button" class="delete-btn" (click)="onDelete(item)">Delete</button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showViewDialog">
+        <div class="js-modal-header">
+          <h2>Expense Reimbursement Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+          <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
+        </div>
+        <div class="js-modal-body">
+          <p *ngIf="viewLoading">Loading details…</p>
+          <ng-container *ngIf="selectedRecord && !viewLoading">
+            <div class="js-detail-section">
+              <h3>Header Fields</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Employee Code:</label> <span>{{ selectedRecord.HeaderFields.employeeCode }}</span></div>
+                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.HeaderFields.employeeName }}</span></div>
+                <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.HeaderFields.department }}</span></div>
+                <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.HeaderFields.designation }}</span></div>
+                <div class="js-detail-item"><label>Cost Center:</label> <span>{{ selectedRecord.HeaderFields.costCenter }}</span></div>
+                <div class="js-detail-item"><label>Claim Month:</label> <span>{{ selectedRecord.HeaderFields.claimMonth }}</span></div>
+                <div class="js-detail-item"><label>Form Number:</label> <span>{{ selectedRecord.HeaderFields.formNumber }}</span></div>
+                <div class="js-detail-item"><label>Submission Date:</label> <span>{{ selectedRecord.HeaderFields.submissionDate }}</span></div>
+              </div>
+            </div>
+            <div class="js-detail-section">
+              <h3>Expense Detail</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Expense Type:</label> <span>{{ selectedRecord.ExpenseDetail.expenseType }}</span></div>
+                <div class="js-detail-item"><label>Claim Amount:</label> <span>{{ selectedRecord.ExpenseDetail.claimAmount }}</span></div>
+                <div class="js-detail-item"><label>Claim Date:</label> <span>{{ selectedRecord.ExpenseDetail.claimDate }}</span></div>
+                <div class="js-detail-item"><label>Approval Status:</label> <span>{{ selectedRecord.ExpenseDetail.approvalStatus }}</span></div>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.ExpenseDetail.remarks">
+                <label>Remarks:</label>
+                <p>{{ selectedRecord.ExpenseDetail.remarks }}</p>
+              </div>
+            </div>
+            <div class="js-detail-section">
+              <h3>Travel</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>From Date:</label> <span>{{ selectedRecord.Travel.travelFromDate }}</span></div>
+                <div class="js-detail-item"><label>To Date:</label> <span>{{ selectedRecord.Travel.travelToDate }}</span></div>
+                <div class="js-detail-item"><label>Daily Allowance:</label> <span>{{ selectedRecord.Travel.dailyAllowanceApplicable }}</span></div>
+                <div class="js-detail-item"><label>Rate:</label> <span>{{ selectedRecord.Travel.dailyAllowanceRate }}</span></div>
+                <div class="js-detail-item"><label>Days:</label> <span>{{ selectedRecord.Travel.numberOfDays }}</span></div>
+                <div class="js-detail-item"><label>Amount:</label> <span>{{ selectedRecord.Travel.dailyAllowanceAmount }}</span></div>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.Travel.remarks">
+                <label>Travel Remarks:</label>
+                <p>{{ selectedRecord.Travel.remarks }}</p>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+        <div class="js-modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
+        </div>
+      </div>
+
       <div class="table-pagination">
         <div class="pagination-info">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+          Showing {{ filteredList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
           of {{ filteredList.length }} entries
         </div>
-
         <div class="pagination-controls">
           <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
           <div class="page-numbers">
-            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
-              {{ page }}
-            </button>
+            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">{{ page }}</button>
           </div>
           <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
         </div>
-
         <div class="page-size-selector">
           <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
             <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>

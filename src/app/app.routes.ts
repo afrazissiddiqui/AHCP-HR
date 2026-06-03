@@ -147,6 +147,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'employee-action/expense-reimbursement-form/edit/:id',
+    component: AddExpenseReimbursmentComponent,
+    canActivate: [authGuard],
+  },
+  {
     path: 'employee-action/loan-advance-form',
     component: LoanAdvanceFormComponent,
     canActivate: [authGuard],

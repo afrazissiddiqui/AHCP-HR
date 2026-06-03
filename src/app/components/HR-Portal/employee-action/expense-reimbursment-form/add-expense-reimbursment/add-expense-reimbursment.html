@@ -1,173 +1,190 @@
-<div class="cjr-page">
-  <div class="cjr-header">
-    <div class="cjr-header-left">
-      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
-        <span class="cjr-back-icon">❮</span>
+<div class="cjs-page">
+  <div class="cjs-header">
+    <div class="cjs-header-left">
+      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
+        <span class="cjs-back-icon">❮</span>
       </button>
-      <h1>Add Expense Reimbursment</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
-  <div class="cjr-card">
-    <div class="cjr-options">
-      <div class="cjr-options-title">Options:</div>
-    </div>
-
-    <nav class="cjr-section-nav" aria-label="Expense sections">
-      <ul class="cjr-section-nav-list">
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'header-feilds-section'"
-          (click)="scrollToSection('header-feilds-section')">Header feilds</li>
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'expense-detail-section'"
-          (click)="scrollToSection('expense-detail-section')">Expense Detail</li>
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'travel-section'"
-          (click)="scrollToSection('travel-section')">Travel</li>
-      </ul>
-    </nav>
-
-    <div class="cjr-personal" id="header-feilds-section">
-      <div class="cjr-section-title">Header feilds</div>
-
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Employee Code:</label>
-            <input type="text" [ngModel]="employeeCode()" (ngModelChange)="employeeCode.set($event)" />
+  <div class="cjs-card">
+    <div class="cjs-form-container">
+      <section class="cjs-section-block" id="er-header-section">
+        <div class="cjs-section-title">Header Fields</div>
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Employee Code:</label>
+              <div class="employee-search-wrap">
+                <input
+                  type="search"
+                  role="combobox"
+                  [attr.aria-expanded]="codeSuggestionsOpen()"
+                  [ngModel]="employeeCode()"
+                  (ngModelChange)="onEmployeeCodeInput($event)"
+                  (focus)="openCodeSuggestions()"
+                  (blur)="onCodeInputBlur()"
+                  placeholder="e.g. EMP-001"
+                  autocomplete="off"
+                  [readonly]="!!editingId"
+                />
+                <ul class="employee-search-suggestions" role="listbox" *ngIf="!editingId && codeSuggestionsOpen() && employeeCode().trim()">
+                  <li *ngFor="let emp of codeSuggestions()" role="option" class="employee-search-suggestion-item" (mousedown)="selectEmployeeFromSuggestion(emp)">
+                    <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
+                    <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="cjs-row">
+              <label>Employee Name:</label>
+              <div class="employee-search-wrap">
+                <input
+                  type="search"
+                  [ngModel]="headerEmployeeName()"
+                  (ngModelChange)="onEmployeeNameInput($event)"
+                  (focus)="openNameSuggestions()"
+                  (blur)="onNameInputBlur()"
+                  placeholder="Employee full name"
+                  autocomplete="off"
+                  [readonly]="!!editingId"
+                />
+                <ul class="employee-search-suggestions" role="listbox" *ngIf="!editingId && nameSuggestionsOpen() && headerEmployeeName().trim()">
+                  <li *ngFor="let emp of nameSuggestions()" role="option" class="employee-search-suggestion-item" (mousedown)="selectEmployeeFromSuggestion(emp)">
+                    <span class="employee-search-suggestion-primary">{{ emp.name }} — {{ emp.code }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="cjs-row">
+              <label>Department:</label>
+              <input type="text" [ngModel]="headerDepartment()" (ngModelChange)="headerDepartment.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Designation:</label>
+              <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+            </div>
           </div>
-          <div class="cjr-row">
-            <label>Employee Name:</label>
-            <input type="text" [ngModel]="headerEmployeeName()" (ngModelChange)="headerEmployeeName.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Department:</label>
-            <input type="text" [value]="departmentAuto()" readonly />
-          </div>
-          <div class="cjr-row">
-            <label>Designation:</label>
-            <input type="text" [value]="designationAuto()" readonly />
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Cost Center:</label>
+              <input type="text" [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)" placeholder="e.g. CC-1001" />
+            </div>
+            <div class="cjs-row">
+              <label>Claim Month:</label>
+              <input type="date" [ngModel]="claimMonth()" (ngModelChange)="claimMonth.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Form Number:</label>
+              <input type="text" [ngModel]="formNumber()" (ngModelChange)="onFormNumberChange($event)" placeholder="e.g. FRM-1001" />
+            </div>
+            <div class="cjs-row">
+              <label>Submission Date:</label>
+              <input type="date" [ngModel]="submissionDate()" (ngModelChange)="submissionDate.set($event)" />
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Cost Center:</label>
-            <input type="text" [value]="costCenterAuto()" readonly />
+      <section class="cjs-section-block" id="er-expense-detail-section">
+        <div class="cjs-section-title">Expense Detail</div>
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Employee ID:</label>
+              <input type="text" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)" placeholder="e.g. EMP-001" />
+            </div>
+            <div class="cjs-row">
+              <label>Employee Name:</label>
+              <input type="text" [ngModel]="detailEmployeeName()" (ngModelChange)="detailEmployeeName.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Department:</label>
+              <input type="text" [ngModel]="detailDepartment()" (ngModelChange)="detailDepartment.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Expense Type:</label>
+              <select [ngModel]="expenseType()" (ngModelChange)="expenseType.set($event)">
+                <option value="">Select type</option>
+                @for (type of expenseTypeOptions; track type) {
+                  <option [value]="type">{{ type }}</option>
+                }
+              </select>
+            </div>
           </div>
-          <div class="cjr-row">
-            <label>Claim Month:</label>
-            <input type="date" [ngModel]="claimMonth()" (ngModelChange)="claimMonth.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Form Number:</label>
-            <input type="text" [value]="headerFormNumber()" readonly />
-          </div>
-          <div class="cjr-row">
-            <label>Submission Date:</label>
-            <input type="date" [value]="submissionDate()" readonly />
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Claim Amount:</label>
+              <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" placeholder="e.g. 5000" />
+            </div>
+            <div class="cjs-row">
+              <label>Claim Date:</label>
+              <input type="date" [ngModel]="claimDate()" (ngModelChange)="claimDate.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Approval Status:</label>
+              <select [ngModel]="approvalStatus()" (ngModelChange)="approvalStatus.set($event)">
+                @for (status of approvalStatusOptions; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </div>
           </div>
         </div>
+        <div class="cjs-row cjs-row--full">
+          <label>Remarks:</label>
+          <textarea rows="3" [ngModel]="expenseRemarks()" (ngModelChange)="expenseRemarks.set($event)"></textarea>
+        </div>
+      </section>
+
+      <section class="cjs-section-block" id="er-travel-section">
+        <div class="cjs-section-title">Travel</div>
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Travel From Date:</label>
+              <input type="date" [ngModel]="travelFromDate()" (ngModelChange)="travelFromDate.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Travel To Date:</label>
+              <input type="date" [ngModel]="travelToDate()" (ngModelChange)="travelToDate.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Daily Allowance Applicable:</label>
+              <select [ngModel]="dailyAllowanceApplicable()" (ngModelChange)="dailyAllowanceApplicable.set($event)">
+                <option value="">Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+          </div>
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Daily Allowance Rate:</label>
+              <input type="text" [ngModel]="dailyAllowanceRate()" (ngModelChange)="dailyAllowanceRate.set($event)" [disabled]="dailyAllowanceApplicable() !== 'Yes'" />
+            </div>
+            <div class="cjs-row">
+              <label>Number of Days:</label>
+              <input type="text" [value]="numberOfDays()" readonly />
+            </div>
+            <div class="cjs-row">
+              <label>Daily Allowance Amount:</label>
+              <input type="text" [value]="dailyAllowanceAmount()" readonly />
+            </div>
+          </div>
+        </div>
+        <div class="cjs-row cjs-row--full">
+          <label>Remarks (travel):</label>
+          <textarea rows="3" [ngModel]="travelRemarks()" (ngModelChange)="travelRemarks.set($event)"></textarea>
+        </div>
+      </section>
+
+      <div class="cjs-actions-footer">
+        <button type="button" class="cjs-submit-btn" (click)="save()">
+          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
+        </button>
       </div>
-    </div>
-
-    <div class="cjr-personal" id="expense-detail-section">
-      <div class="cjr-section-title">Expense detail</div>
-
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Form Number:</label>
-            <input type="text" [ngModel]="formNumber()" (ngModelChange)="formNumber.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Employee ID:</label>
-            <input type="text" [ngModel]="employeeID()" (ngModelChange)="employeeID.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Employee Name:</label>
-            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Department:</label>
-            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
-          </div>
-        </div>
-
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Expense Type:</label>
-            <input type="text" [ngModel]="expenseType()" (ngModelChange)="expenseType.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Claim Amount:</label>
-            <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Claim Date:</label>
-            <input type="date" [ngModel]="claimDate()" (ngModelChange)="claimDate.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Approval Status:</label>
-            <input type="text" [ngModel]="approvalStatus()" (ngModelChange)="approvalStatus.set($event)" />
-          </div>
-        </div>
-      </div>
-
-      <div class="cjr-row cjr-row--remarks">
-        <label>Remarks:</label>
-        <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
-      </div>
-    </div>
-
-    <div class="cjr-personal" id="travel-section">
-      <div class="cjr-section-title">Travel</div>
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Travel From Date:</label>
-            <input type="date" [ngModel]="travelFrom()" (ngModelChange)="travelFrom.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Travel To Date:</label>
-            <input type="date" [ngModel]="travelTo()" (ngModelChange)="travelTo.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Daily Allowance Applicable:</label>
-            <select [ngModel]="dailyAllowanceApplicable()" (ngModelChange)="dailyAllowanceApplicable.set($event)">
-              <option value="">Select option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-        </div>
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Daily Allowance Rate:</label>
-            <select [ngModel]="dailyAllowanceRate()" (ngModelChange)="dailyAllowanceRate.set($event)">
-              <option value="">Select rate</option>
-              @for (rate of dailyAllowanceRateOptions; track rate) {
-              <option [value]="rate">Rs {{ rate }}</option>
-              }
-            </select>
-          </div>
-          <div class="cjr-row">
-            <label>Number of Days:</label>
-            <input type="text" [value]="numberOfDays()" readonly />
-          </div>
-          <div class="cjr-row">
-            <label>Daily Allowance Amount:</label>
-            <input type="text" [value]="dailyAllowanceAmount()" readonly />
-          </div>
-        </div>
-      </div>
-      <div class="cjr-row cjr-row--remarks">
-        <label>Remarks:</label>
-        <textarea rows="4" [ngModel]="travelRemarks()" (ngModelChange)="travelRemarks.set($event)"></textarea>
-      </div>
-    </div>
-
-    <div class="cjr-actions-footer">
-      <button type="button" class="cjr-submit-btn" (click)="save()">
-        <span class="cjr-submit-icon">✓</span> Save Expense Reimbursment
-      </button>
     </div>
   </div>
 </div>
