@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 
 export interface JobSpecificationRecord {
@@ -55,8 +55,7 @@ export class JobSpecificationService {
   readonly jobSpecs = this.jobSpecsList.asReadonly();
 
   fetchPostedJobSpecifications(): Observable<JobSpecificationRecord[]> {
-    const params = new HttpParams().set('status', '2');
-    return this.http.get<unknown>(JOB_SPECIFICATION_LIST_URL, { params }).pipe(
+    return this.http.get<unknown>(JOB_SPECIFICATION_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
       tap((records) => this.jobSpecsList.set(records)),
     );
@@ -86,16 +85,48 @@ export class JobSpecificationService {
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (!response) {
+      return [];
+    }
+
     if (Array.isArray(response)) {
       return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
     }
 
-    if (response && typeof response === 'object') {
-      const obj = response as Record<string, unknown>;
-      const candidate = obj['data'] ?? obj['items'] ?? obj['jobSpecifications'] ?? obj['job_specifications'];
-      if (Array.isArray(candidate)) {
-        return candidate.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = [
+      'data',
+      'items',
+      'results',
+      'records',
+      'list',
+      'jobSpecifications',
+      'job_specifications',
+      'job_specification_list',
+      'jobSpecificationList',
+    ];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
       }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (obj['jobTitle'] || obj['job_title']) {
+      return [obj];
     }
 
     return [];
@@ -114,7 +145,18 @@ export class JobSpecificationService {
         return value.map((entry) => asString(entry)).filter(Boolean);
       }
       if (typeof value === 'string') {
-        return value
+        const trimmed = value.trim();
+        if (trimmed.startsWith('[')) {
+          try {
+            const parsed = JSON.parse(trimmed) as unknown;
+            if (Array.isArray(parsed)) {
+              return parsed.map((entry) => asString(entry)).filter(Boolean);
+            }
+          } catch {
+            // Fall through to comma-separated parsing.
+          }
+        }
+        return trimmed
           .split(',')
           .map((entry) => entry.trim())
           .filter(Boolean);

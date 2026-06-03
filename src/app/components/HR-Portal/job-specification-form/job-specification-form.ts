@@ -51,7 +51,7 @@ export class JobSpecificationFormComponent implements OnInit {
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
-          'Failed to load posted job specifications.';
+          'Failed to load job specifications.';
         this.alertService.error('Load Failed', errorMessage);
       },
     });
