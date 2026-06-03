@@ -142,16 +142,6 @@
               <label>Employment Category:</label>
               <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
             </div>
-
-            <div class="cjs-row">
-              <label>Probation Start Date:</label>
-              <input type="date" [ngModel]="probationStartDate()" (ngModelChange)="probationStartDate.set($event)" />
-            </div>
-
-            <div class="cjs-row">
-              <label>Probation End Date:</label>
-              <input type="date" [ngModel]="probationEndDate()" (ngModelChange)="probationEndDate.set($event)" />
-            </div>
           </div>
         </div>
 
@@ -254,7 +244,7 @@
           <div class="cjs-col">
             <div class="cjs-row">
               <label>Termination:</label>
-              <select [ngModel]="termination()" (ngModelChange)="termination.set($event)">
+              <select [ngModel]="termination()" (ngModelChange)="onTerminationChange($event)">
                 <option value="">Select option</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
@@ -263,9 +253,15 @@
           </div>
 
           <div class="cjs-col">
-            <div class="cjs-row">
+            <div class="cjs-row" [class.disabled-row]="!isTerminationYes()">
               <label>Termination Effective Date:</label>
-              <input type="date" [ngModel]="terminationEffectiveDate()" (ngModelChange)="terminationEffectiveDate.set($event)" />
+              <input
+                type="date"
+                [ngModel]="terminationEffectiveDate()"
+                (ngModelChange)="terminationEffectiveDate.set($event)"
+                [disabled]="!isTerminationYes()"
+                [class.field-disabled]="!isTerminationYes()"
+              />
             </div>
           </div>
         </div>

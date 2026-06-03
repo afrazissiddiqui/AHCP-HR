@@ -82,6 +82,95 @@ const PROBATION_EVALUATION_ADD_URL = apiUrl('probation-evaluation-add');
 const PROBATION_EVALUATION_UPDATE_URL = apiUrl('probation-evaluation-update');
 const PROBATION_EVALUATION_DELETE_URL = apiUrl('probation-evaluation-delete');
 
+function normalizeRatingItem(item: ProbationRatingItem): ProbationRatingItem {
+  return {
+    rating: Math.round(Number(item.rating)),
+    remarks: (item.remarks ?? '').trim(),
+  };
+}
+
+/** Builds API-ready body: valid dates, null termination date, integer ratings. */
+export function buildProbationEvaluationSubmitPayload(
+  draft: ProbationEvaluationAddPayload,
+): ProbationEvaluationAddPayload {
+  const extensionEnabled = draft.extension_of_probation.is_extension_enabled;
+
+  let extensionStart = draft.extension_of_probation.probation_start_date.trim();
+  let extensionEnd = draft.extension_of_probation.probation_end_date.trim();
+  const newProbationEnd = draft.extension_of_probation.new_probation_end_date.trim();
+
+  let probationStart = draft.probation_start_date.trim() || extensionStart;
+  let probationEnd = draft.probation_end_date.trim() || extensionEnd || newProbationEnd;
+
+  if (!extensionStart) {
+    extensionStart = probationStart;
+  }
+  if (!extensionEnd) {
+    extensionEnd = probationEnd;
+  }
+
+  const termination = draft.termination_of_probation.termination === 'Yes' ? 'Yes' : 'No';
+  let terminationEffectiveDate: string | null = draft.termination_of_probation.termination_effective_date?.trim() || null;
+  if (termination === 'No') {
+    terminationEffectiveDate = null;
+  }
+
+  let effectiveDateOfRevision = draft.salary_adjustment.effectiveDateOfRevision.trim();
+  if (!effectiveDateOfRevision) {
+    effectiveDateOfRevision = probationEnd || extensionEnd || newProbationEnd;
+  }
+
+  return {
+    employee_code: draft.employee_code.trim(),
+    employee_name: draft.employee_name.trim(),
+    department: draft.department.trim(),
+    location: draft.location.trim(),
+    designation: draft.designation.trim(),
+    reporting_manager: draft.reporting_manager.trim(),
+    employee_nature: draft.employee_nature.trim(),
+    employee_type: draft.employee_type.trim(),
+    grade_work_level: draft.grade_work_level.trim(),
+    employment_category: draft.employment_category.trim(),
+    probation_start_date: probationStart,
+    probation_end_date: probationEnd,
+    remarks: draft.remarks.trim(),
+    probation_rating: {
+      communication_skills: normalizeRatingItem(draft.probation_rating.communication_skills),
+      technical_skills: normalizeRatingItem(draft.probation_rating.technical_skills),
+      attendance: normalizeRatingItem(draft.probation_rating.attendance),
+      discipline: normalizeRatingItem(draft.probation_rating.discipline),
+      teamwork: normalizeRatingItem(draft.probation_rating.teamwork),
+      productivity: normalizeRatingItem(draft.probation_rating.productivity),
+    },
+    supervision_remark: draft.supervision_remark.trim(),
+    extension_of_probation: {
+      probation_start_date: extensionStart,
+      probation_end_date: extensionEnd,
+      is_extension_enabled: extensionEnabled,
+      extension_period_in_probation: extensionEnabled
+        ? draft.extension_of_probation.extension_period_in_probation.trim()
+        : '',
+      new_probation_end_date: extensionEnabled ? draft.extension_of_probation.new_probation_end_date.trim() : '',
+    },
+    termination_of_probation: {
+      termination,
+      termination_effective_date: terminationEffectiveDate,
+    },
+    salary_adjustment: {
+      currentSalary: Math.round(draft.salary_adjustment.currentSalary),
+      adjustmentInSalary: Math.round(draft.salary_adjustment.adjustmentInSalary),
+      adjustmentAmountInSalary: Math.round(draft.salary_adjustment.adjustmentAmountInSalary),
+      effectiveDateOfRevision: effectiveDateOfRevision,
+    },
+    allowances: draft.allowances.map((item) => ({
+      allowance: item.allowance.trim(),
+      amount: Math.round(item.amount),
+      notes: item.notes.trim(),
+    })),
+    total_salary: Math.round(draft.total_salary),
+  };
+}
+
 @Injectable({
   providedIn: 'root',
 })

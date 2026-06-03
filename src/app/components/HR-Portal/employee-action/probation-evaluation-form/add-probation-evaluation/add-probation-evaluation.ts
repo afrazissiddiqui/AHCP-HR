@@ -17,8 +17,10 @@ import {
   ProbationEvaluationAddPayload,
   ProbationEvaluationRecord,
   ProbationEvaluationService,
+  buildProbationEvaluationSubmitPayload,
 } from '../../../../../services/probation-evaluation.service';
 import { AlertService } from '../../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 
 type RatingKey =
   | 'communication_skills'
@@ -86,8 +88,6 @@ export class AddProbationEvaluationComponent implements OnInit {
   protected readonly employeeType = signal('');
   protected readonly gradeWorkLevel = signal('');
   protected readonly employmentCategory = signal('');
-  protected readonly probationStartDate = signal('');
-  protected readonly probationEndDate = signal('');
   protected readonly extensionProbationStartDate = signal('');
   protected readonly extensionProbationEndDate = signal('');
   protected readonly isExtensionEnabled = signal(false);
@@ -351,6 +351,15 @@ export class AddProbationEvaluationComponent implements OnInit {
     }
   }
 
+  protected readonly isTerminationYes = computed(() => this.termination() === 'Yes');
+
+  protected onTerminationChange(value: 'Yes' | 'No' | ''): void {
+    this.termination.set(value);
+    if (value !== 'Yes') {
+      this.terminationEffectiveDate.set('');
+    }
+  }
+
   protected readonly remarks = signal('');
   protected readonly supervisionRemark = signal('');
   protected readonly ratingValidationTouched = signal(false);
@@ -414,8 +423,9 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   protected save(): void {
-    if (!this.employeeCode().trim() || !this.employeeName().trim()) {
-      this.alertService.validation('Please enter Employee Code and Employee Name at minimum.');
+    const validationMessage = this.validateBeforeSubmit();
+    if (validationMessage) {
+      this.alertService.validation(validationMessage);
       return;
     }
 
@@ -426,7 +436,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     }
 
     const ratingValues = this.ratings();
-    const payload: ProbationEvaluationAddPayload = {
+    const draft: ProbationEvaluationAddPayload = {
       employee_code: this.employeeCode().trim(),
       employee_name: this.employeeName().trim(),
       department: this.department().trim(),
@@ -437,8 +447,8 @@ export class AddProbationEvaluationComponent implements OnInit {
       employee_type: this.employeeType().trim(),
       grade_work_level: this.gradeWorkLevel().trim(),
       employment_category: this.employmentCategory().trim(),
-      probation_start_date: this.probationStartDate(),
-      probation_end_date: this.probationEndDate(),
+      probation_start_date: '',
+      probation_end_date: '',
       remarks: this.remarks().trim(),
       probation_rating: {
         communication_skills: {
@@ -494,6 +504,8 @@ export class AddProbationEvaluationComponent implements OnInit {
       total_salary: this.totalSalary(),
     };
 
+    const payload = buildProbationEvaluationSubmitPayload(draft);
+
     const request$ = this.editingId
       ? this.probationService.updateProbationEvaluation(this.editingId, payload)
       : this.probationService.addProbationEvaluation(payload);
@@ -509,13 +521,47 @@ export class AddProbationEvaluationComponent implements OnInit {
         this.cancel();
       },
       error: (error: unknown) => {
-        const errorMessage =
-          (error as { error?: { message?: string } })?.error?.message ||
-          (error as { message?: string })?.message ||
-          (this.editingId ? 'Failed to update probation evaluation.' : 'Failed to save probation evaluation.');
-        this.alertService.error(this.editingId ? 'Update Failed' : 'Save Failed', errorMessage);
+        const fallback = this.editingId
+          ? 'Failed to update probation evaluation.'
+          : 'Failed to save probation evaluation.';
+        this.alertService.error(
+          this.editingId ? 'Update Failed' : 'Save Failed',
+          formatApiErrorMessage(error, fallback),
+        );
       },
     });
+  }
+
+  private validateBeforeSubmit(): string | null {
+    if (!this.employeeCode().trim() || !this.employeeName().trim()) {
+      return 'Please select or enter Employee Code and Employee Name.';
+    }
+    if (!this.department().trim()) {
+      return 'Please enter Department.';
+    }
+    if (!this.designation().trim()) {
+      return 'Please enter Designation.';
+    }
+    if (this.termination() === 'Yes' && !this.terminationEffectiveDate().trim()) {
+      return 'Please enter Termination Effective Date when termination is Yes.';
+    }
+    if (this.isExtensionEnabled()) {
+      if (!this.extensionPeriodInProbation().trim()) {
+        return 'Please select Extension Period when extension is enabled.';
+      }
+      if (!this.newProbationEndDate().trim()) {
+        return 'Please enter New Probation End Date when extension is enabled.';
+      }
+    }
+    if (
+      this.toAmount(this.currentSalary()) > 0 &&
+      !this.effectiveDateOfRevision().trim() &&
+      !this.extensionProbationEndDate().trim() &&
+      !this.newProbationEndDate().trim()
+    ) {
+      return 'Please enter Effective Date of Revision or a probation end date in Extension of Probation for salary adjustment.';
+    }
+    return null;
   }
 
   private populateFromRecord(record: ProbationEvaluationRecord): void {
@@ -531,8 +577,6 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.employeeType.set(emptyIfDash(record.EmployeeType));
     this.gradeWorkLevel.set(emptyIfDash(record.GradeWorkLevel));
     this.employmentCategory.set(emptyIfDash(record.EmploymentCategory));
-    this.probationStartDate.set(emptyIfDash(record.ProbationStartDate));
-    this.probationEndDate.set(emptyIfDash(record.ProbationEndDate));
     this.remarks.set(emptyIfDash(record.Remarks));
     this.supervisionRemark.set(emptyIfDash(record.SupervisionRemark));
 
@@ -567,8 +611,12 @@ export class AddProbationEvaluationComponent implements OnInit {
       },
     });
 
-    this.extensionProbationStartDate.set(emptyIfDash(record.ExtensionOfProbation.probation_start_date));
-    this.extensionProbationEndDate.set(emptyIfDash(record.ExtensionOfProbation.probation_end_date));
+    this.extensionProbationStartDate.set(
+      emptyIfDash(record.ExtensionOfProbation.probation_start_date) || emptyIfDash(record.ProbationStartDate),
+    );
+    this.extensionProbationEndDate.set(
+      emptyIfDash(record.ExtensionOfProbation.probation_end_date) || emptyIfDash(record.ProbationEndDate),
+    );
     this.isExtensionEnabled.set(record.ExtensionOfProbation.is_extension_enabled);
     this.extensionPeriodInProbation.set(emptyIfDash(record.ExtensionOfProbation.extension_period_in_probation));
     this.newProbationEndDate.set(emptyIfDash(record.ExtensionOfProbation.new_probation_end_date));

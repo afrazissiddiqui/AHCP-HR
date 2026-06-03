@@ -10,6 +10,7 @@ import {
   ProbationEvaluationService,
 } from '../../../../services/probation-evaluation.service';
 import { AlertService } from '../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   PROBATION_EVALUATION_TABLE_FILTER,
@@ -39,11 +40,7 @@ export class ProbationEvaluationFormComponent implements OnInit {
   ngOnInit(): void {
     this.probationService.fetchProbationEvaluations().subscribe({
       error: (error: unknown) => {
-        const errorMessage =
-          (error as { error?: { message?: string } })?.error?.message ||
-          (error as { message?: string })?.message ||
-          'Failed to load probation evaluations.';
-        this.alertService.error('Load Failed', errorMessage);
+        this.alertService.error('Load Failed', formatApiErrorMessage(error, 'Failed to load probation evaluations.'));
       },
     });
   }
@@ -213,11 +210,7 @@ export class ProbationEvaluationFormComponent implements OnInit {
         this.alertService.success('Deleted', 'Probation evaluation removed successfully.');
       },
       error: (error: unknown) => {
-        const errorMessage =
-          (error as { error?: { message?: string } })?.error?.message ||
-          (error as { message?: string })?.message ||
-          'Failed to delete probation evaluation.';
-        this.alertService.error('Delete Failed', errorMessage);
+        this.alertService.error('Delete Failed', formatApiErrorMessage(error, 'Failed to delete probation evaluation.'));
       },
     });
   }
