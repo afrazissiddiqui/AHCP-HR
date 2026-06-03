@@ -136,16 +136,13 @@ export class AddProbationEvaluationComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
-        const errorMessage =
-          (error as { error?: { message?: string } })?.error?.message ||
-          (error as { message?: string })?.message ||
-          'Failed to load employees for search.';
-        this.alertService.error('Load Failed', errorMessage);
+        this.alertService.error('Load Failed', formatApiErrorMessage(error, 'Failed to load employees for search.'));
       },
     });
 
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
+      this.probationService.fetchProbationEvaluations().subscribe();
       return;
     }
 
@@ -234,17 +231,28 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
     this.populateFromEmployeeOption(employee);
+    this.applyExistingProbationForEmployee(employee.code);
+    this.cdr.markForCheck();
+  }
 
-    if (!employee.apiId) {
+  /** If this employee already has a probation evaluation, load it for update (avoids duplicate API error). */
+  private applyExistingProbationForEmployee(employeeCode: string): void {
+    if (this.route.snapshot.paramMap.get('id')) {
       return;
     }
 
-    this.applicationFormService.fetchEmployeeProfileDetail(employee.apiId).subscribe({
-      next: (record) => {
-        this.populateFromApplicationRecord(record);
-        this.cdr.markForCheck();
-      },
-    });
+    const existing = this.probationService.findProbationByEmployeeCode(employeeCode);
+    if (existing?.Id) {
+      this.editingId = String(existing.Id);
+      this.pageTitle = 'Update Probation Evaluation';
+      this.submitButtonLabel = 'Update Probation Evaluation';
+      this.populateFromRecord(existing);
+      return;
+    }
+
+    this.editingId = null;
+    this.pageTitle = 'Add Probation Evaluation';
+    this.submitButtonLabel = 'Save Probation Evaluation';
   }
 
   private buildEmployeeOptions(): ProbationEmployeeOption[] {
@@ -316,10 +324,6 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.employeeType.set(employee.employeeType);
     this.gradeWorkLevel.set(employee.gradeWorkLevel);
     this.employmentCategory.set(employee.employmentCategory);
-  }
-
-  private populateFromApplicationRecord(record: ApplicationFormRecord): void {
-    this.populateFromEmployeeOption(this.toEmployeeOption(record));
   }
 
   protected addAllowance(): void {
@@ -506,28 +510,31 @@ export class AddProbationEvaluationComponent implements OnInit {
 
     const payload = buildProbationEvaluationSubmitPayload(draft);
 
-    const request$ = this.editingId
-      ? this.probationService.updateProbationEvaluation(this.editingId, payload)
+    let saveId = this.editingId;
+    if (!saveId) {
+      const existing = this.probationService.findProbationByEmployeeCode(payload.employee_code);
+      if (existing?.Id) {
+        saveId = String(existing.Id);
+      }
+    }
+
+    const request$ = saveId
+      ? this.probationService.updateProbationEvaluation(saveId, payload)
       : this.probationService.addProbationEvaluation(payload);
 
     request$.subscribe({
       next: () => {
         this.alertService.success(
           'Success',
-          this.editingId
-            ? 'Probation evaluation updated successfully!'
-            : 'Probation evaluation saved successfully!',
+          saveId ? 'Probation evaluation updated successfully!' : 'Probation evaluation saved successfully!',
         );
         this.cancel();
       },
       error: (error: unknown) => {
-        const fallback = this.editingId
+        const fallback = saveId
           ? 'Failed to update probation evaluation.'
           : 'Failed to save probation evaluation.';
-        this.alertService.error(
-          this.editingId ? 'Update Failed' : 'Save Failed',
-          formatApiErrorMessage(error, fallback),
-        );
+        this.alertService.error(saveId ? 'Update Failed' : 'Save Failed', formatApiErrorMessage(error, fallback));
       },
     });
   }
@@ -637,9 +644,10 @@ export class AddProbationEvaluationComponent implements OnInit {
     );
     this.effectiveDateOfRevision.set(emptyIfDash(record.SalaryAdjustment.effectiveDateOfRevision));
 
+    const allowanceList = record.Allowances ?? [];
     this.allowances.set(
-      record.Allowances.length
-        ? record.Allowances.map((item) => ({
+      allowanceList.length
+        ? allowanceList.map((item) => ({
             allowance: item.allowance,
             amount: item.amount ? String(item.amount) : '',
             notes: item.notes,

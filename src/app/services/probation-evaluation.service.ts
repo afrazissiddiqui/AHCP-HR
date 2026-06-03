@@ -48,9 +48,12 @@ export interface ProbationEvaluationAddPayload {
     adjustmentAmountInSalary: number;
     effectiveDateOfRevision: string;
   };
-  allowances: Array<{ allowance: string; amount: number; notes: string }>;
+  allowances?: Array<{ allowance: string; amount: number; notes: string }> | null;
   total_salary: number;
 }
+
+/** Body sent to add/update API (allowances omitted when none). */
+export type ProbationEvaluationSubmitBody = ProbationEvaluationAddPayload;
 
 export interface ProbationEvaluationRecord {
   Id: number;
@@ -72,7 +75,7 @@ export interface ProbationEvaluationRecord {
   ExtensionOfProbation: ProbationEvaluationAddPayload['extension_of_probation'];
   TerminationOfProbation: ProbationEvaluationAddPayload['termination_of_probation'];
   SalaryAdjustment: ProbationEvaluationAddPayload['salary_adjustment'];
-  Allowances: ProbationEvaluationAddPayload['allowances'];
+  Allowances: Array<{ allowance: string; amount: number; notes: string }>;
   TotalSalary: number;
   selected?: boolean;
 }
@@ -120,7 +123,15 @@ export function buildProbationEvaluationSubmitPayload(
     effectiveDateOfRevision = probationEnd || extensionEnd || newProbationEnd;
   }
 
-  return {
+  const allowances = draft.allowances
+    ?.filter((item) => item.allowance.trim() !== '')
+    .map((item) => ({
+      allowance: item.allowance.trim(),
+      amount: Math.round(item.amount),
+      notes: item.notes.trim(),
+    })) ?? [];
+
+  const body: ProbationEvaluationSubmitBody = {
     employee_code: draft.employee_code.trim(),
     employee_name: draft.employee_name.trim(),
     department: draft.department.trim(),
@@ -162,13 +173,14 @@ export function buildProbationEvaluationSubmitPayload(
       adjustmentAmountInSalary: Math.round(draft.salary_adjustment.adjustmentAmountInSalary),
       effectiveDateOfRevision: effectiveDateOfRevision,
     },
-    allowances: draft.allowances.map((item) => ({
-      allowance: item.allowance.trim(),
-      amount: Math.round(item.amount),
-      notes: item.notes.trim(),
-    })),
     total_salary: Math.round(draft.total_salary),
   };
+
+  if (allowances.length > 0) {
+    body.allowances = allowances;
+  }
+
+  return body;
 }
 
 @Injectable({
@@ -187,11 +199,11 @@ export class ProbationEvaluationService {
     );
   }
 
-  addProbationEvaluation(payload: ProbationEvaluationAddPayload): Observable<unknown> {
+  addProbationEvaluation(payload: ProbationEvaluationSubmitBody): Observable<unknown> {
     return this.http.post(PROBATION_EVALUATION_ADD_URL, payload);
   }
 
-  updateProbationEvaluation(id: string | number, payload: ProbationEvaluationAddPayload): Observable<unknown> {
+  updateProbationEvaluation(id: string | number, payload: ProbationEvaluationSubmitBody): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
     return this.http.post(`${PROBATION_EVALUATION_UPDATE_URL}/${identifier}`, payload);
   }
@@ -204,6 +216,14 @@ export class ProbationEvaluationService {
   findProbationById(id: string | number): ProbationEvaluationRecord | undefined {
     const numericId = Number.parseInt(String(id), 10);
     return this.probationList().find((item) => item.Id === numericId);
+  }
+
+  findProbationByEmployeeCode(employeeCode: string): ProbationEvaluationRecord | undefined {
+    const normalized = employeeCode.trim().toLowerCase();
+    if (!normalized) {
+      return undefined;
+    }
+    return this.probationList().find((item) => item.EmployeeCode.trim().toLowerCase() === normalized);
   }
 
   removeProbationRecord(record: ProbationEvaluationRecord): void {
