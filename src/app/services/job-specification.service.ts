@@ -23,12 +23,14 @@ export interface JobSpecificationRecord {
 }
 
 const JOB_SPECIFICATION_LIST_URL = 'http://ahcp.hr:8080/api/job-specification-list';
-const JOB_SPECIFICATION_ADD_URL = 'http://ahcp.hr:8080/api/api/job-specification-add';
+const JOB_SPECIFICATION_ADD_URL = 'http://ahcp.hr:8080/api/job-specification-add';
+const JOB_SPECIFICATION_UPDATE_URL = 'http://ahcp.hr:8080/api/job-specification-update';
+const JOB_SPECIFICATION_DELETE_URL = 'http://ahcp.hr:8080/api/job-specification-delete';
 
 export interface JobSpecificationAddPayload {
   jobTitle: string;
   department: string;
-  vacancy: number;
+  vacancyCount: number;
   jobDescription: string;
   experienceRequirement: string;
   employmentCategory: string;
@@ -36,9 +38,9 @@ export interface JobSpecificationAddPayload {
   employmentType: string;
   gradeWorkLevel: string;
   keyResponsibilities: string;
-  basicSalary: string;
-  medicalAllowance: string;
-  fuelAllowance: string;
+  basicSalary: number;
+  medicalAllowance: number;
+  fuelAllowance: number;
   packagePerks: string;
   qualifications: string[];
 }
@@ -62,6 +64,25 @@ export class JobSpecificationService {
 
   addJobSpec(payload: JobSpecificationAddPayload): Observable<unknown> {
     return this.http.post(JOB_SPECIFICATION_ADD_URL, payload);
+  }
+
+  updateJobSpec(id: string | number, payload: JobSpecificationAddPayload): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post(`${JOB_SPECIFICATION_UPDATE_URL}/${identifier}`, payload);
+  }
+
+  findJobSpecById(id: string | number): JobSpecificationRecord | undefined {
+    const numericId = Number.parseInt(String(id), 10);
+    return this.jobSpecsList().find((item) => item.Id === numericId);
+  }
+
+  deleteJobSpec(id: string | number): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete(`${JOB_SPECIFICATION_DELETE_URL}/${identifier}`);
+  }
+
+  removeJobSpecRecord(record: JobSpecificationRecord): void {
+    this.jobSpecsList.update((list) => list.filter((item) => item.Id !== record.Id));
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
@@ -107,7 +128,7 @@ export class JobSpecificationService {
       Id: asNumber(id, 0),
       jobTitle: asString(item['jobTitle']) || asString(item['job_title']) || asString(item['title']) || '—',
       department: asString(item['department']) || '—',
-      vacancy: asNumber(item['vacancy'], 0),
+      vacancy: asNumber(item['vacancyCount'] ?? item['vacancy'], 0),
       employmentCategory:
         asString(item['employmentCategory']) || asString(item['employment_category']) || asString(item['category']) || '—',
       employmentNature:

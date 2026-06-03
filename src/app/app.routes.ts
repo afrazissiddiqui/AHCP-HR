@@ -75,6 +75,11 @@ export const routes: Routes = [
     component: CreateJobSpecificationComponent,
     canActivate: [authGuard],
   },
+  {
+    path: 'job-specification-form/edit/:id',
+    component: CreateJobSpecificationComponent,
+    canActivate: [authGuard],
+  },
   ...gatePassRoutes.map((route) =>
     route.redirectTo ? route : { ...route, canActivate: [authGuard] }
   ),

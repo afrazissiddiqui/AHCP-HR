@@ -8,6 +8,7 @@ const EXACT_TITLES: Record<string, string> = {
   'recruitment/create': 'Application Form',
   'job-specification-form': 'Job Specification',
   'job-specification-form/create': 'Create Job Specification',
+  'job-specification-form/edit': 'Update Job Specification',
   'employee-action': 'Employee Action',
   'employee-action/approval-authority-setup': 'Approval Setup',
   'employee-action/probation-evaluation-form': 'Probation Evaluation Form',

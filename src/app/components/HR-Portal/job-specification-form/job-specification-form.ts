@@ -121,6 +121,46 @@ export class JobSpecificationFormComponent implements OnInit {
     this.showDetailDialog = true;
   }
 
+  onUpdate(record: JobSpecificationRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing job specification id.');
+      return;
+    }
+    void this.router.navigate(['/job-specification-form/edit', record.Id]);
+  }
+
+  async onDelete(record: JobSpecificationRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete job specification?',
+      `Remove ${record.jobTitle} (${record.Id}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing job specification id.');
+      return;
+    }
+
+    this.jobSpecService.deleteJobSpec(record.Id).subscribe({
+      next: () => {
+        this.jobSpecService.removeJobSpecRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'Job specification removed successfully.');
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to delete job specification.';
+        this.alertService.error('Delete Failed', errorMessage);
+      },
+    });
+  }
+
   closeDetailDialog(): void {
     this.selectedJobSpec = null;
     this.showDetailDialog = false;

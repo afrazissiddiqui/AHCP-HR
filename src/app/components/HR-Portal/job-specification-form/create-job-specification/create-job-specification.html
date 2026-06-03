@@ -4,7 +4,7 @@
       <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
         <span class="cjs-back-icon">❮</span>
       </button>
-      <h1>Create New Job Specification</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
@@ -144,7 +144,7 @@
 
     <div class="cjs-actions-footer">
       <button type="button" class="cjs-submit-btn" (click)="submitForm()">
-        <span class="cjs-submit-icon">✓</span> Save Job Specification
+        <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
       </button>
     </div>
   </div>

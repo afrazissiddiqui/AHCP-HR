@@ -1,8 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { JobSpecificationAddPayload, JobSpecificationService } from '../../../../services/job-specification.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+  JobSpecificationAddPayload,
+  JobSpecificationRecord,
+  JobSpecificationService,
+} from '../../../../services/job-specification.service';
 import { AlertService } from '../../../../services/alert.service';
 
 @Component({
@@ -13,10 +17,13 @@ import { AlertService } from '../../../../services/alert.service';
   styleUrl: './create-job-specification.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateJobSpecificationComponent {
+export class CreateJobSpecificationComponent implements OnInit {
+  editingId: string | null = null;
+  pageTitle = 'Create New Job Specification';
+  submitButtonLabel = 'Save Job Specification';
+
   // Form Fields - General
-  jobTitle = '';
-  department = '';
+  jobTitle = '';  department = '';
   vacancyCount: number | null = null;
   jobDescription = '';
   experienceRequirement = '';
@@ -37,10 +44,48 @@ export class CreateJobSpecificationComponent {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private jobSpecService: JobSpecificationService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private cdr: ChangeDetectorRef,
   ) { }
 
+  ngOnInit(): void {
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+
+    this.editingId = editId;
+    this.pageTitle = 'Update Job Specification';
+    this.submitButtonLabel = 'Update Job Specification';
+
+    const existing = this.jobSpecService.findJobSpecById(editId);
+    if (existing) {
+      this.populateFromRecord(existing);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.jobSpecService.fetchPostedJobSpecifications().subscribe({
+      next: (records) => {
+        const record = records.find((item) => String(item.Id) === editId);
+        if (record) {
+          this.populateFromRecord(record);
+        } else {
+          this.alertService.warning('Edit', 'Job specification not found.');
+        }
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load job specification for edit.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+  }
   addQualification(): void {
     this.qualifications.push('');
   }
@@ -69,35 +114,62 @@ export class CreateJobSpecificationComponent {
     }
 
     const payload: JobSpecificationAddPayload = {
-      jobTitle: this.jobTitle,
-      department: this.department,
-      vacancy: this.vacancyCount || 0,
-      jobDescription: this.jobDescription,
-      experienceRequirement: this.experienceRequirement,
+      jobTitle: this.jobTitle.trim(),
+      department: this.department.trim(),
+      vacancyCount: this.vacancyCount ?? 0,
+      jobDescription: this.jobDescription.trim(),
+      experienceRequirement: this.experienceRequirement.trim(),
       employmentCategory: this.employmentCategory,
       employmentNature: this.employmentNature,
       employmentType: this.employmentType,
       gradeWorkLevel: this.gradeWorkLevel,
-      keyResponsibilities: this.keyResponsibilities,
-      basicSalary: this.basicSalary,
-      medicalAllowance: this.medicalAllowance,
-      fuelAllowance: this.fuelAllowance,
-      packagePerks: this.packagePerks,
+      keyResponsibilities: this.keyResponsibilities.trim(),
+      basicSalary: Number.parseFloat(this.basicSalary) || 0,
+      medicalAllowance: Number.parseFloat(this.medicalAllowance) || 0,
+      fuelAllowance: Number.parseFloat(this.fuelAllowance) || 0,
+      packagePerks: this.packagePerks.trim(),
       qualifications: this.qualifications.filter(q => q.trim() !== ''),
     };
 
-    this.jobSpecService.addJobSpec(payload).subscribe({
+    const request$ = this.editingId
+      ? this.jobSpecService.updateJobSpec(this.editingId, payload)
+      : this.jobSpecService.addJobSpec(payload);
+
+    request$.subscribe({
       next: () => {
-        this.alertService.success('Success', 'Job Specification saved successfully!');
+        this.alertService.success(
+          'Success',
+          this.editingId
+            ? 'Job specification updated successfully!'
+            : 'Job specification saved successfully!',
+        );
         this.back();
       },
       error: (error: unknown) => {
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
-          'Failed to save job specification.';
-        this.alertService.error('Save Failed', errorMessage);
+          (this.editingId ? 'Failed to update job specification.' : 'Failed to save job specification.');
+        this.alertService.error(this.editingId ? 'Update Failed' : 'Save Failed', errorMessage);
       },
     });
+  }
+
+  private populateFromRecord(record: JobSpecificationRecord): void {
+    this.jobTitle = record.jobTitle === '—' ? '' : record.jobTitle;
+    this.department = record.department === '—' ? '' : record.department;
+    this.vacancyCount = record.vacancy || null;
+    this.jobDescription = record.jobDescription === '—' ? '' : record.jobDescription;
+    this.experienceRequirement = record.experienceRequirement === '—' ? '' : record.experienceRequirement;
+    this.employmentCategory = record.employmentCategory === '—' ? '' : record.employmentCategory;
+    this.employmentNature = record.employmentNature === '—' ? '' : record.employmentNature;
+    this.employmentType = record.employmentType === '—' ? '' : record.employmentType;
+    this.gradeWorkLevel = record.gradeWorkLevel === '—' ? '' : record.gradeWorkLevel;
+    this.keyResponsibilities = record.keyResponsibilities ?? '';
+    this.basicSalary = record.basicSalary ?? '';
+    this.medicalAllowance = record.medicalAllowance ?? '';
+    this.fuelAllowance = record.fuelAllowance ?? '';
+    this.packagePerks = record.packagePerks ?? '';
+    this.qualifications = record.qualifications?.length ? [...record.qualifications] : [''];
   }
 }
