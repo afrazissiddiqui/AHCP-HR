@@ -1,16 +1,18 @@
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  OnDestroy,
   OnInit,
   computed,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ApplicationFormRecord,
+  ApplicationFormService,
+} from '../../../../../services/application-form.service';
 import { AlertService } from '../../../../../services/alert.service';
 import {
   TrainingDevelopmentRecord,
@@ -20,48 +22,167 @@ import {
 } from '../../../../../services/training-development.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 
+interface TrainingEmployeeOption {
+  code: string;
+  name: string;
+  department: string;
+  location: string;
+  designation: string;
+  jobTitle: string;
+  reportingManager: string;
+  employeeNature: string;
+  employeeType: string;
+  gradeWorkLevel: string;
+  employmentCategory: string;
+  dateOfJoining: string;
+}
+
 @Component({
   selector: 'app-add-training-development',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-training-development.html',
   styleUrls: [
-    '../../../Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css'
+    '../../../job-specification-form/create-job-specification/create-job-specification.css',
+    '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddTrainingDevelopmentComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AddTrainingDevelopmentComponent implements OnInit {
   editingId: string | null = null;
-  pageTitle = 'Add Training Development';
-  submitButtonLabel = 'Save Training Development';
+  pageTitle = 'Add Training & Development';
+  submitButtonLabel = 'Save Training & Development';
 
-  private readonly sectionIds = [
-    'probation-info-section',
-    'probation-rating-section',
-    'termination-of-probation-section',
-    'salary-adjustment-section',
-    'promotion-section'
+  protected readonly trainingCategoryOptions = [
+    'Technical',
+    'Behavioral',
+    'Compliance',
+    'Leadership',
   ] as const;
-  private sectionObserver: IntersectionObserver | null = null;
+
+  protected readonly trainingTypeOptions = ['Internal', 'External'] as const;
+  protected readonly trainingStageOptions = ['Beginner', 'Intermediate', 'Advanced'] as const;
+  protected readonly overallScoreOptions = ['A', 'B', 'C', 'D', 'E'] as const;
+  protected readonly performanceEligibilityOptions = ['Eligible', 'Not Eligible'] as const;
+
+  protected readonly employeeCode = signal('');
+  protected readonly employeeName = signal('');
+  protected readonly department = signal('');
+  protected readonly location = signal('');
+  protected readonly designation = signal('');
+  protected readonly jobTitle = signal('');
+  protected readonly dateOfJoining = signal('');
+  protected readonly reportingManager = signal('');
+  protected readonly employeeNature = signal('');
+  protected readonly employeeType = signal('');
+  protected readonly gradeWorkLevel = signal('');
+  protected readonly employmentCategory = signal('');
+  protected readonly remarks = signal('');
+
+  protected readonly trainingTitle = signal('');
+  protected readonly trainingCategory = signal('');
+  protected readonly trainingType = signal('');
+  protected readonly trainingStage = signal('');
+  protected readonly trainingStartDate = signal('');
+  protected readonly trainingEndDate = signal('');
+  protected readonly trainer = signal('');
+  protected readonly trainingObjectives = signal('');
+  protected readonly skillsCovered = signal('');
+  protected readonly trainingDetailRemarks = signal('');
+
+  protected readonly evaluationCycleNumber = signal('');
+  protected readonly evaluationDate = signal('');
+  protected readonly evaluationPeriod = signal('');
+  protected readonly evaluatorName = signal('');
+  protected readonly evaluationParameter = signal('');
+  protected readonly parameterRating = signal('');
+  protected readonly overallScore = signal('');
+  protected readonly performanceRemarks = signal('');
+
+  protected readonly currentSalary = signal('');
+  protected readonly incrementAmount = signal('');
+  protected readonly incrementPercentage = signal('');
+  protected readonly effectiveDateOfRevision = signal('');
+  protected readonly reasonForIncrement = signal('');
+  protected readonly approvalAuthority = signal('');
+
+  protected readonly promotionRecommended = signal<'Yes' | 'No' | ''>('');
+  protected readonly newDesignation = signal('');
+  protected readonly promotionEffectiveDate = signal('');
+  protected readonly performanceEligibilityCheck = signal('');
+  protected readonly trainingCompletionVerification = signal<'Yes' | 'No' | ''>('');
+  protected readonly promotionRemarks = signal('');
+
+  private readonly employeeOptions = signal<TrainingEmployeeOption[]>([]);
+  protected readonly codeSuggestionsOpen = signal(false);
+  protected readonly nameSuggestionsOpen = signal(false);
+
+  protected readonly codeSuggestions = computed(() =>
+    this.filterEmployeeSuggestions(this.employeeCode()),
+  );
+
+  protected readonly nameSuggestions = computed(() =>
+    this.filterEmployeeSuggestions(this.employeeName()),
+  );
+
+  protected readonly trainingDuration = computed(() => {
+    const start = this.trainingStartDate();
+    const end = this.trainingEndDate();
+    if (!start || !end) {
+      return '';
+    }
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
+      return '';
+    }
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    return `${days} Day${days === 1 ? '' : 's'}`;
+  });
+
+  protected readonly revisedSalary = computed(() => {
+    const current = this.toAmount(this.currentSalary());
+    const amount = this.toAmount(this.incrementAmount());
+    const percentage = this.toAmount(this.incrementPercentage());
+    if (current === 0) {
+      return '';
+    }
+    const increment = amount > 0 ? amount : percentage > 0 ? (current * percentage) / 100 : 0;
+    return String(Math.round(current + increment));
+  });
 
   constructor(
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly alertService: AlertService,
     private readonly trainingService: TrainingDevelopmentService,
+    private readonly applicationFormService: ApplicationFormService,
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => {
+        this.employeeOptions.set(this.buildEmployeeOptions());
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load employees for search.'),
+        );
+      },
+    });
+
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       return;
     }
 
     this.editingId = editId;
-    this.pageTitle = 'Update Training Development';
-    this.submitButtonLabel = 'Update Training Development';
+    this.pageTitle = 'Update Training & Development';
+    this.submitButtonLabel = 'Update Training & Development';
 
     this.trainingService.fetchTrainingDevelopmentDetail(editId).subscribe({
       next: (record) => {
@@ -77,205 +198,65 @@ export class AddTrainingDevelopmentComponent implements OnInit, AfterViewInit, O
     });
   }
 
-  protected readonly ratingParameters = [
-    { key: 'performanceRating', label: 'Performance Rating' },
-    { key: 'workQuality', label: 'Work Quality' },
-    { key: 'attendance', label: 'Attendance' },
-    { key: 'behaviour', label: 'Behaviour' }
-  ] as const;
-
-  protected readonly activeSection = signal('probation-info-section');
-  protected readonly employeeCode = signal('');
-  protected readonly employeeName = signal('');
-  protected readonly department = signal('');
-  protected readonly location = signal('');
-  protected readonly designation = signal('');
-  protected readonly jobTitle = signal('');
-  protected readonly dateOfJoining = signal('');
-  protected readonly reportingManager = signal('');
-  protected readonly employeeNature = signal('');
-  protected readonly employeeType = signal('');
-  protected readonly gradeWorkLevel = signal('');
-  protected readonly employmentCategory = signal('');
-  protected readonly trainingTitle = signal('');
-  protected readonly trainingCategory = signal('');
-  protected readonly trainingType = signal('');
-  protected readonly trainingStage = signal('');
-  protected readonly trainingStartDate = signal('');
-  protected readonly trainingEndDate = signal('');
-  protected readonly trainer = signal('');
-  protected readonly trainingObjectives = signal('');
-  protected readonly skillsCovered = signal('');
-  protected readonly trainingDetailRemarks = signal('');
-  protected readonly trainingCategoryOptions = [
-    'Technical',
-    'Non-Technical',
-    'Other Training'
-  ] as const;
-  protected readonly trainingTypeOptions = [
-    'Drop-down',
-    'Internship',
-    'Training',
-    'External'
-  ] as const;
-  protected readonly trainingStageOptions = [
-    'Drop-down',
-    'Training',
-    'On-job Training'
-  ] as const;
-  protected readonly trainingDuration = computed(() => {
-    const start = this.trainingStartDate();
-    const end = this.trainingEndDate();
-    if (!start || !end) {
-      return '';
-    }
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
-      return '';
-    }
-    const diffMs = endDate.getTime() - startDate.getTime();
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    return `${days} day${days === 1 ? '' : 's'}`;
-  });
-  protected readonly probationStartDate = signal('');
-  protected readonly probationEndDate = signal('');
-  protected readonly extensionProbationStartDate = signal('');
-  protected readonly extensionProbationEndDate = signal('');
-  protected readonly isExtensionEnabled = signal(false);
-  protected readonly extensionPeriodOptions = ['3 months', '6 months', '9 months'] as const;
-  protected readonly extensionPeriodInProbation = signal('');
-  protected readonly newProbationEndDate = signal('');
-  protected readonly evaluationCycleOptions = ['1', '2', '3', '4', '5', '6'] as const;
-  protected readonly evaluationCycleNumber = signal('');
-  protected readonly evaluationDate = signal('');
-  protected readonly evaluationPeriod = signal('6 months');
-  protected readonly evaluatorNameOptions = ['HOD', 'Manager', 'Supervisor'] as const;
-  protected readonly evaluatorName = signal('');
-  protected readonly evaluationParameter = signal('');
-  protected readonly parameterRating = signal('');
-  protected readonly overallScore = signal('');
-  protected readonly performanceRemarks = signal('');
-  protected readonly currentSalary = signal('');
-  protected readonly incrementAmount = signal('');
-  protected readonly incrementPercentage = signal('');
-  protected readonly effectiveDateOfRevision = signal('');
-  protected readonly reasonForIncrement = signal('');
-  protected readonly approvalAuthority = signal('');
-  protected readonly promotionRecommended = signal<'Yes' | 'No' | ''>('');
-  protected readonly newDesignation = signal('');
-  protected readonly promotionEffectiveDate = signal('');
-  protected readonly performanceEligibilityCheck = computed(() => {
-    const rating = this.toAmount(this.parameterRating());
-    if (rating >= 75) {
-      return 'Eligible';
-    }
-    if (rating > 0) {
-      return 'Not Eligible';
-    }
-    return '';
-  });
-  protected readonly trainingCompletionVerification = signal<'Yes' | 'No' | ''>('');
-  protected readonly promotionRemarks = signal('');
-  protected readonly allowances = signal<Array<{ allowance: string; amount: string; notes: string }>>([]);
-  protected readonly totalSalary = computed(() => {
-    const current = this.toAmount(this.currentSalary());
-    const adjustment = this.toAmount(this.incrementAmount());
-    const allowancesTotal = this.allowances().reduce((sum, item) => sum + this.toAmount(item.amount), 0);
-    return current + adjustment + allowancesTotal;
-  });
-  protected readonly revisedSalary = computed(() => {
-    const current = this.toAmount(this.currentSalary());
-    const amount = this.toAmount(this.incrementAmount());
-    const percentage = this.toAmount(this.incrementPercentage());
-    if (current === 0) {
-      return '';
-    }
-    const increment = amount > 0 ? amount : percentage > 0 ? (current * percentage) / 100 : 0;
-    return (current + increment).toFixed(2);
-  });
-
-  protected addAllowance(): void {
-    this.allowances.update((items) => [...items, { allowance: '', amount: '', notes: '' }]);
-  }
-
-  protected updateAllowance(
-    index: number,
-    field: 'allowance' | 'amount' | 'notes',
-    value: string
-  ): void {
-    this.allowances.update((items) => {
-      const updated = [...items];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
-    });
-  }
-
-  protected removeAllowance(index: number): void {
-    this.allowances.update((items) => {
-      return items.filter((_, itemIndex) => itemIndex !== index);
-    });
-  }
-
-  private toAmount(value: string): number {
-    const numeric = Number((value ?? '').toString().replace(/,/g, '').trim());
-    return Number.isFinite(numeric) ? numeric : 0;
-  }
-  protected onExtensionToggle(checked: boolean): void {
-    this.isExtensionEnabled.set(checked);
-    if (!checked) {
-      this.extensionPeriodInProbation.set('');
-      this.newProbationEndDate.set('');
-    }
-  }
-
-  protected readonly remarks = signal('');
-  protected readonly performanceRating = signal('');
-  protected readonly workQuality = signal('');
-  protected readonly attendance = signal('');
-  protected readonly behaviour = signal('');
-  protected readonly performanceRatingRemark = signal('');
-  protected readonly workQualityRemark = signal('');
-  protected readonly attendanceRemark = signal('');
-  protected readonly behaviourRemark = signal('');
-  protected readonly supervisionRemark = signal('');
-  protected readonly ratingValidationTouched = signal(false);
-
-  ngAfterViewInit(): void {
-    this.initializeSectionObserver();
-  }
-
-  ngOnDestroy(): void {
-    this.sectionObserver?.disconnect();
-    this.sectionObserver = null;
-  }
-
-  protected onPercentageChange(
-    field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour',
-    value: string | number | null
-  ): void {
-    const rawValue = value === null ? '' : String(value);
-    const digitsOnly = rawValue.replace(/\D/g, '');
-    const numericValue = Math.min(100, Math.max(0, Number(digitsOnly || '0')));
-    const normalized = digitsOnly === '' ? '' : numericValue.toString();
-
-    if (field === 'performanceRating') {
-      this.performanceRating.set(normalized);
+  protected onEmployeeCodeInput(code: string): void {
+    this.employeeCode.set(code);
+    if (this.editingId) {
       return;
     }
-    if (field === 'workQuality') {
-      this.workQuality.set(normalized);
+    this.codeSuggestionsOpen.set(code.trim().length > 0);
+    this.closeNameSuggestions();
+  }
+
+  protected onEmployeeNameInput(name: string): void {
+    this.employeeName.set(name);
+    if (this.editingId) {
       return;
     }
-    if (field === 'attendance') {
-      this.attendance.set(normalized);
+    this.nameSuggestionsOpen.set(name.trim().length > 0);
+    this.closeCodeSuggestions();
+  }
+
+  protected openCodeSuggestions(): void {
+    if (this.editingId || !this.employeeCode().trim()) {
       return;
     }
-    this.behaviour.set(normalized);
+    this.codeSuggestionsOpen.set(true);
+    this.closeNameSuggestions();
+  }
+
+  protected openNameSuggestions(): void {
+    if (this.editingId || !this.employeeName().trim()) {
+      return;
+    }
+    this.nameSuggestionsOpen.set(true);
+    this.closeCodeSuggestions();
+  }
+
+  protected closeCodeSuggestions(): void {
+    this.codeSuggestionsOpen.set(false);
+  }
+
+  protected closeNameSuggestions(): void {
+    this.nameSuggestionsOpen.set(false);
+  }
+
+  protected onCodeInputBlur(): void {
+    setTimeout(() => this.closeCodeSuggestions(), 150);
+  }
+
+  protected onNameInputBlur(): void {
+    setTimeout(() => this.closeNameSuggestions(), 150);
+  }
+
+  protected selectEmployeeFromSuggestion(employee: TrainingEmployeeOption): void {
+    this.closeCodeSuggestions();
+    this.closeNameSuggestions();
+    this.populateFromEmployeeOption(employee);
+    this.cdr.markForCheck();
   }
 
   protected onRatingKeyDown(event: KeyboardEvent): void {
-    if (['-', '+', 'e', 'E', '.'].includes(event.key)) {
+    if (['-', '+', 'e', 'E'].includes(event.key)) {
       event.preventDefault();
     }
   }
@@ -286,133 +267,28 @@ export class AddTrainingDevelopmentComponent implements OnInit, AfterViewInit, O
     const numericValue = Math.min(100, Math.max(0, Number(digitsOnly || '0')));
     const normalized = digitsOnly === '' ? '' : numericValue.toString();
     this.parameterRating.set(normalized);
-  }
 
-  private isRatingValidValue(value: string): boolean {
-    if (value.trim() === '') {
-      return false;
-    }
-    const numericValue = Number(value);
-    return Number.isFinite(numericValue) && numericValue >= 0 && numericValue <= 100;
-  }
-
-  protected isRatingInvalid(field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour'): boolean {
-    if (!this.ratingValidationTouched()) {
-      return false;
-    }
-    return !this.isRatingValidValue(this.getRatingValue(field));
-  }
-
-  protected areAllRatingsValid(): boolean {
-    return this.ratingParameters.every((row) => this.isRatingValidValue(this.getRatingValue(row.key)));
-  }
-
-  protected getRatingValue(field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour'): string {
-    if (field === 'performanceRating') {
-      return this.performanceRating();
-    }
-    if (field === 'workQuality') {
-      return this.workQuality();
-    }
-    if (field === 'attendance') {
-      return this.attendance();
-    }
-    return this.behaviour();
-  }
-
-  protected getRatingRemark(field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour'): string {
-    if (field === 'performanceRating') {
-      return this.performanceRatingRemark();
-    }
-    if (field === 'workQuality') {
-      return this.workQualityRemark();
-    }
-    if (field === 'attendance') {
-      return this.attendanceRemark();
-    }
-    return this.behaviourRemark();
-  }
-
-  protected onRatingRemarkChange(
-    field: 'performanceRating' | 'workQuality' | 'attendance' | 'behaviour',
-    value: string
-  ): void {
-    if (field === 'performanceRating') {
-      this.performanceRatingRemark.set(value);
-      return;
-    }
-    if (field === 'workQuality') {
-      this.workQualityRemark.set(value);
-      return;
-    }
-    if (field === 'attendance') {
-      this.attendanceRemark.set(value);
-      return;
-    }
-    this.behaviourRemark.set(value);
-  }
-
-  protected scrollToSection(sectionId: string): void {
-    this.activeSection.set(sectionId);
-    setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 0);
-  }
-
-  private initializeSectionObserver(): void {
-    const sections = this.sectionIds
-      .map((sectionId) => document.getElementById(sectionId))
-      .filter((section): section is HTMLElement => section !== null);
-
-    if (!sections.length) {
-      return;
-    }
-
-    const visibleSections = new Map<string, number>();
-    this.sectionObserver = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const sectionId = (entry.target as HTMLElement).id;
-          if (entry.isIntersecting) {
-            visibleSections.set(sectionId, entry.intersectionRatio);
-          } else {
-            visibleSections.delete(sectionId);
-          }
-        }
-
-        if (!visibleSections.size) {
-          return;
-        }
-
-        const nextActiveSection = [...visibleSections.entries()].sort((left, right) => {
-          return right[1] - left[1];
-        })[0]?.[0];
-
-        if (nextActiveSection) {
-          this.activeSection.set(nextActiveSection);
-        }
-      },
-      {
-        root: null,
-        rootMargin: '-120px 0px -55% 0px',
-        threshold: [0.2, 0.35, 0.5, 0.7]
-      }
-    );
-
-    for (const section of sections) {
-      this.sectionObserver.observe(section);
+    if (!this.performanceEligibilityCheck()) {
+      this.performanceEligibilityCheck.set(numericValue >= 75 ? 'Eligible' : numericValue > 0 ? 'Not Eligible' : '');
     }
   }
 
-  protected cancel(): void {
-    void this.router.navigateByUrl('/employee-action/training-development-form');
+  protected onIncrementAmountChange(value: string | number | null): void {
+    this.incrementAmount.set(value === null ? '' : String(value));
+    if (this.toAmount(this.incrementAmount()) > 0) {
+      this.incrementPercentage.set('');
+    }
+  }
+
+  protected onIncrementPercentageChange(value: string | number | null): void {
+    this.incrementPercentage.set(value === null ? '' : String(value));
+    if (this.toAmount(this.incrementPercentage()) > 0) {
+      this.incrementAmount.set('');
+    }
   }
 
   protected back(): void {
-    this.cancel();
+    void this.router.navigateByUrl('/employee-action/training-development-form');
   }
 
   protected save(): void {
@@ -500,6 +376,83 @@ export class AddTrainingDevelopmentComponent implements OnInit, AfterViewInit, O
     });
   }
 
+  private buildEmployeeOptions(): TrainingEmployeeOption[] {
+    return this.applicationFormService
+      .getApplicationRecords()
+      .map((record) => this.toEmployeeOption(record))
+      .filter((option) => option.code || option.name);
+  }
+
+  private toEmployeeOption(record: ApplicationFormRecord): TrainingEmployeeOption {
+    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const designation = emptyIfDash(record.Designation);
+
+    return {
+      code: this.resolveEmployeeCode(record),
+      name: emptyIfDash(record.EmployeeName),
+      department: emptyIfDash(record.Department),
+      location:
+        emptyIfDash(record.detail?.requisition.location ?? '') ||
+        emptyIfDash(record.detail?.personalInfo.city ?? ''),
+      designation,
+      jobTitle: designation,
+      reportingManager: emptyIfDash(record.ReportingManager),
+      employeeNature: emptyIfDash(record.EmployeeNature),
+      employeeType: emptyIfDash(record.EmploymentType),
+      gradeWorkLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
+      employmentCategory: emptyIfDash(record.EmploymentCategory),
+      dateOfJoining: '',
+    };
+  }
+
+  private resolveEmployeeCode(record: ApplicationFormRecord): string {
+    const fromLogin = record.detail?.loginDetails.employeeCode?.trim();
+    if (fromLogin) {
+      return fromLogin;
+    }
+    if (record.apiId?.trim()) {
+      return record.apiId.trim();
+    }
+    if (record.EmployeeCode) {
+      return String(record.EmployeeCode);
+    }
+    return '';
+  }
+
+  private filterEmployeeSuggestions(query: string): TrainingEmployeeOption[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [];
+    }
+
+    return this.employeeOptions()
+      .filter(
+        (employee) =>
+          employee.code.toLowerCase().includes(q) ||
+          employee.name.toLowerCase().includes(q) ||
+          employee.department.toLowerCase().includes(q) ||
+          employee.designation.toLowerCase().includes(q),
+      )
+      .slice(0, 10);
+  }
+
+  private populateFromEmployeeOption(employee: TrainingEmployeeOption): void {
+    this.employeeCode.set(employee.code);
+    this.employeeName.set(employee.name);
+    this.department.set(employee.department);
+    this.location.set(employee.location);
+    this.designation.set(employee.designation);
+    this.jobTitle.set(employee.jobTitle);
+    this.reportingManager.set(employee.reportingManager);
+    this.employeeNature.set(employee.employeeNature);
+    this.employeeType.set(employee.employeeType);
+    this.gradeWorkLevel.set(employee.gradeWorkLevel);
+    this.employmentCategory.set(employee.employmentCategory);
+    if (employee.dateOfJoining) {
+      this.dateOfJoining.set(employee.dateOfJoining);
+    }
+  }
+
   private populateFromRecord(record: TrainingDevelopmentRecord): void {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
     const yesNo = (value: string): 'Yes' | 'No' | '' =>
@@ -534,7 +487,7 @@ export class AddTrainingDevelopmentComponent implements OnInit, AfterViewInit, O
     const evaluation = record.TrainingEvaluation;
     this.evaluationCycleNumber.set(emptyIfDash(evaluation.evaluation_cycle_number));
     this.evaluationDate.set(emptyIfDash(evaluation.evaluation_date));
-    this.evaluationPeriod.set(emptyIfDash(evaluation.evaluation_period) || '6 months');
+    this.evaluationPeriod.set(emptyIfDash(evaluation.evaluation_period));
     this.evaluatorName.set(emptyIfDash(evaluation.evaluator_name));
     this.evaluationParameter.set(emptyIfDash(evaluation.evaluation_parameter));
     this.parameterRating.set(
@@ -557,7 +510,13 @@ export class AddTrainingDevelopmentComponent implements OnInit, AfterViewInit, O
     this.promotionRecommended.set(yesNo(promotion.promotion_recommended));
     this.newDesignation.set(emptyIfDash(promotion.new_designation));
     this.promotionEffectiveDate.set(emptyIfDash(promotion.promotion_effective_date));
+    this.performanceEligibilityCheck.set(emptyIfDash(promotion.performance_eligibility_check));
     this.trainingCompletionVerification.set(yesNo(promotion.training_completion_verification));
     this.promotionRemarks.set(emptyIfDash(promotion.remarks));
+  }
+
+  private toAmount(value: string): number {
+    const numeric = Number((value ?? '').toString().replace(/,/g, '').trim());
+    return Number.isFinite(numeric) ? numeric : 0;
   }
 }

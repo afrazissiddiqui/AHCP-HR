@@ -1,315 +1,379 @@
-<div class="cjr-page">
-  <div class="cjr-header">
-    <div class="cjr-header-left">
-      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
-        <span class="cjr-back-icon">❮</span>
+<div class="cjs-page">
+  <div class="cjs-header">
+    <div class="cjs-header-left">
+      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
+        <span class="cjs-back-icon">❮</span>
       </button>
       <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
-  <div class="cjr-card">
-    <div class="cjr-options">
-      <div class="cjr-options-title">Options:</div>
-    </div>
+  <div class="cjs-card">
+    <div class="cjs-form-container">
+      <section class="cjs-section-block" id="training-info-section">
+        <div class="cjs-section-title">Employee Information</div>
 
-    <nav class="cjr-section-nav" aria-label="Training sections">
-      <ul class="cjr-section-nav-list">
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'probation-info-section'"
-          (click)="scrollToSection('probation-info-section')">Training info</li>
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'probation-rating-section'"
-          (click)="scrollToSection('probation-rating-section')">Training Detail</li>
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'termination-of-probation-section'"
-          (click)="scrollToSection('termination-of-probation-section')">Training Evaluation</li>
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'salary-adjustment-section'"
-          (click)="scrollToSection('salary-adjustment-section')">Salary</li>
-        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'promotion-section'"
-          (click)="scrollToSection('promotion-section')">Promotion</li>
-      </ul>
-    </nav>
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Employee Code:</label>
+              <div class="employee-search-wrap">
+                <input
+                  type="search"
+                  role="combobox"
+                  [attr.aria-expanded]="codeSuggestionsOpen()"
+                  aria-autocomplete="list"
+                  aria-controls="td-employee-code-listbox"
+                  [ngModel]="employeeCode()"
+                  (ngModelChange)="onEmployeeCodeInput($event)"
+                  (focus)="openCodeSuggestions()"
+                  (blur)="onCodeInputBlur()"
+                  placeholder="e.g. EMP-001"
+                  autocomplete="off"
+                  [readonly]="!!editingId"
+                />
+                <ul
+                  id="td-employee-code-listbox"
+                  class="employee-search-suggestions"
+                  role="listbox"
+                  *ngIf="!editingId && codeSuggestionsOpen() && employeeCode().trim()"
+                >
+                  <li
+                    *ngFor="let emp of codeSuggestions()"
+                    role="option"
+                    class="employee-search-suggestion-item"
+                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                  >
+                    <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
+                    <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
+                  </li>
+                  <li
+                    *ngIf="codeSuggestions().length === 0"
+                    class="employee-search-suggestion-empty"
+                    role="presentation"
+                  >
+                    No matching employees
+                  </li>
+                </ul>
+              </div>
+            </div>
 
-    <div class="cjr-personal" id="probation-info-section">
-      <div class="cjr-section-title">Training Information</div>
+            <div class="cjs-row">
+              <label>Employee Name:</label>
+              <div class="employee-search-wrap">
+                <input
+                  type="search"
+                  role="combobox"
+                  [attr.aria-expanded]="nameSuggestionsOpen()"
+                  aria-autocomplete="list"
+                  aria-controls="td-employee-name-listbox"
+                  [ngModel]="employeeName()"
+                  (ngModelChange)="onEmployeeNameInput($event)"
+                  (focus)="openNameSuggestions()"
+                  (blur)="onNameInputBlur()"
+                  placeholder="Employee full name"
+                  autocomplete="off"
+                  [readonly]="!!editingId"
+                />
+                <ul
+                  id="td-employee-name-listbox"
+                  class="employee-search-suggestions"
+                  role="listbox"
+                  *ngIf="!editingId && nameSuggestionsOpen() && employeeName().trim()"
+                >
+                  <li
+                    *ngFor="let emp of nameSuggestions()"
+                    role="option"
+                    class="employee-search-suggestion-item"
+                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                  >
+                    <span class="employee-search-suggestion-primary">{{ emp.name }} — {{ emp.code }}</span>
+                    <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
+                  </li>
+                  <li
+                    *ngIf="nameSuggestions().length === 0"
+                    class="employee-search-suggestion-empty"
+                    role="presentation"
+                  >
+                    No matching employees
+                  </li>
+                </ul>
+              </div>
+            </div>
 
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Employee Code:</label>
-            <input type="text" [ngModel]="employeeCode()" (ngModelChange)="employeeCode.set($event)" />
+            <div class="cjs-row">
+              <label>Department:</label>
+              <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Location:</label>
+              <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Designation:</label>
+              <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Job Title:</label>
+              <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
+            </div>
           </div>
-          <div class="cjr-row">
-            <label>Employee Name:</label>
-            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Department:</label>
-            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Location:</label>
-            <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Designation:</label>
-            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Job Title:</label>
-            <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
+
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Reporting Manager:</label>
+              <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Employee Nature:</label>
+              <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" placeholder="e.g. Permanent" />
+            </div>
+            <div class="cjs-row">
+              <label>Employee Type:</label>
+              <input type="text" [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)" placeholder="e.g. Full Time" />
+            </div>
+            <div class="cjs-row">
+              <label>Grade Work Level:</label>
+              <input type="text" [ngModel]="gradeWorkLevel()" (ngModelChange)="gradeWorkLevel.set($event)" placeholder="e.g. GWL-5" />
+            </div>
+            <div class="cjs-row">
+              <label>Employment Category:</label>
+              <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Date of Joining:</label>
+              <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)" />
+            </div>
           </div>
         </div>
 
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Reporting Manager:</label>
-            <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
+        <div class="cjs-row cjs-row--full">
+          <label>Remarks:</label>
+          <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
+        </div>
+      </section>
+
+      <section class="cjs-section-block" id="training-detail-section">
+        <div class="cjs-section-title">Training Detail</div>
+
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Training Title:</label>
+              <input type="text" [ngModel]="trainingTitle()" (ngModelChange)="trainingTitle.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Training Category:</label>
+              <select [ngModel]="trainingCategory()" (ngModelChange)="trainingCategory.set($event)">
+                <option value="">Select category</option>
+                @for (item of trainingCategoryOptions; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+            <div class="cjs-row">
+              <label>Training Type:</label>
+              <select [ngModel]="trainingType()" (ngModelChange)="trainingType.set($event)">
+                <option value="">Select type</option>
+                @for (item of trainingTypeOptions; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+            <div class="cjs-row">
+              <label>Training Stage:</label>
+              <select [ngModel]="trainingStage()" (ngModelChange)="trainingStage.set($event)">
+                <option value="">Select stage</option>
+                @for (item of trainingStageOptions; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+            <div class="cjs-row">
+              <label>Training Start Date:</label>
+              <input type="date" [ngModel]="trainingStartDate()" (ngModelChange)="trainingStartDate.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Training End Date:</label>
+              <input type="date" [ngModel]="trainingEndDate()" (ngModelChange)="trainingEndDate.set($event)" />
+            </div>
           </div>
-          <div class="cjr-row">
-            <label>Employee Nature:</label>
-            <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Employee Type:</label>
-            <input type="text" [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Grade Work Level:</label>
-            <input type="text" [ngModel]="gradeWorkLevel()" (ngModelChange)="gradeWorkLevel.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Employment Category:</label>
-            <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Date of Joining:</label>
-            <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)" />
+
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Training Duration:</label>
+              <input type="text" [value]="trainingDuration()" readonly placeholder="Auto-calculated from dates" />
+            </div>
+            <div class="cjs-row">
+              <label>Trainer:</label>
+              <input type="text" [ngModel]="trainer()" (ngModelChange)="trainer.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Training Objectives:</label>
+              <input type="text" [ngModel]="trainingObjectives()" (ngModelChange)="trainingObjectives.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Skills Covered:</label>
+              <input type="text" [ngModel]="skillsCovered()" (ngModelChange)="skillsCovered.set($event)" />
+            </div>
           </div>
         </div>
+
+        <div class="cjs-row cjs-row--full">
+          <label>Remarks (training detail):</label>
+          <textarea rows="3" [ngModel]="trainingDetailRemarks()" (ngModelChange)="trainingDetailRemarks.set($event)"></textarea>
+        </div>
+      </section>
+
+      <section class="cjs-section-block" id="training-evaluation-section">
+        <div class="cjs-section-title">Training Evaluation</div>
+
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Evaluation Cycle Number:</label>
+              <input type="text" [ngModel]="evaluationCycleNumber()" (ngModelChange)="evaluationCycleNumber.set($event)" placeholder="e.g. Cycle-1" />
+            </div>
+            <div class="cjs-row">
+              <label>Evaluation Date:</label>
+              <input type="date" [ngModel]="evaluationDate()" (ngModelChange)="evaluationDate.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Evaluation Period:</label>
+              <input type="text" [ngModel]="evaluationPeriod()" (ngModelChange)="evaluationPeriod.set($event)" placeholder="e.g. May 2026" />
+            </div>
+            <div class="cjs-row">
+              <label>Evaluator Name:</label>
+              <input type="text" [ngModel]="evaluatorName()" (ngModelChange)="evaluatorName.set($event)" />
+            </div>
+          </div>
+
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Evaluation Parameter:</label>
+              <input type="text" [ngModel]="evaluationParameter()" (ngModelChange)="evaluationParameter.set($event)" placeholder="e.g. Technical Skills" />
+            </div>
+            <div class="cjs-row">
+              <label>Parameter Rating:</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                [ngModel]="parameterRating()"
+                (keydown)="onRatingKeyDown($event)"
+                (ngModelChange)="onParameterRatingChange($event)"
+              />
+            </div>
+            <div class="cjs-row">
+              <label>Overall Score:</label>
+              <select [ngModel]="overallScore()" (ngModelChange)="overallScore.set($event)">
+                <option value="">Select score</option>
+                @for (score of overallScoreOptions; track score) {
+                  <option [value]="score">{{ score }}</option>
+                }
+              </select>
+            </div>
+            <div class="cjs-row">
+              <label>Performance Remarks:</label>
+              <input type="text" [ngModel]="performanceRemarks()" (ngModelChange)="performanceRemarks.set($event)" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cjs-section-block" id="training-salary-section">
+        <div class="cjs-section-title">Salary</div>
+
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Current Salary:</label>
+              <input type="number" min="0" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Increment Amount:</label>
+              <input type="number" min="0" [ngModel]="incrementAmount()" (ngModelChange)="onIncrementAmountChange($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Increment Percentage:</label>
+              <input type="number" min="0" step="0.1" [ngModel]="incrementPercentage()" (ngModelChange)="onIncrementPercentageChange($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Revised Salary:</label>
+              <input type="text" [value]="revisedSalary()" readonly />
+            </div>
+          </div>
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Effective Date of Revision:</label>
+              <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Reason for Increment:</label>
+              <input type="text" [ngModel]="reasonForIncrement()" (ngModelChange)="reasonForIncrement.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Approval Authority:</label>
+              <input type="text" [ngModel]="approvalAuthority()" (ngModelChange)="approvalAuthority.set($event)" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cjs-section-block" id="training-promotion-section">
+        <div class="cjs-section-title">Promotion</div>
+
+        <div class="cjs-grid">
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Promotion Recommended:</label>
+              <select [ngModel]="promotionRecommended()" (ngModelChange)="promotionRecommended.set($event)">
+                <option value="">Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="cjs-row">
+              <label>New Designation:</label>
+              <input type="text" [ngModel]="newDesignation()" (ngModelChange)="newDesignation.set($event)" />
+            </div>
+            <div class="cjs-row">
+              <label>Promotion Effective Date:</label>
+              <input type="date" [ngModel]="promotionEffectiveDate()" (ngModelChange)="promotionEffectiveDate.set($event)" />
+            </div>
+          </div>
+
+          <div class="cjs-col">
+            <div class="cjs-row">
+              <label>Performance Eligibility Check:</label>
+              <select [ngModel]="performanceEligibilityCheck()" (ngModelChange)="performanceEligibilityCheck.set($event)">
+                <option value="">Select</option>
+                @for (item of performanceEligibilityOptions; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+            <div class="cjs-row">
+              <label>Training Completion Verification:</label>
+              <select [ngModel]="trainingCompletionVerification()" (ngModelChange)="trainingCompletionVerification.set($event)">
+                <option value="">Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="cjs-row">
+              <label>Remarks (promotion):</label>
+              <input type="text" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="cjs-actions-footer">
+        <button type="button" class="cjs-submit-btn" (click)="save()">
+          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
+        </button>
       </div>
-
-      <div class="cjr-row cjr-row--remarks">
-        <label>Remarks:</label>
-        <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
-      </div>
-    </div>
-
-    <div class="cjr-personal" id="probation-rating-section">
-      <div class="cjr-section-title">Training Detail</div>
-
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Training Title:</label>
-            <input type="text" [ngModel]="trainingTitle()" (ngModelChange)="trainingTitle.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Training Category:</label>
-            <select [ngModel]="trainingCategory()" (ngModelChange)="trainingCategory.set($event)">
-              <option value="">Select category</option>
-              @for (item of trainingCategoryOptions; track item) {
-              <option [value]="item">{{ item }}</option>
-              }
-            </select>
-          </div>
-          <div class="cjr-row">
-            <label>Training Type:</label>
-            <select [ngModel]="trainingType()" (ngModelChange)="trainingType.set($event)">
-              <option value="">Select type</option>
-              @for (item of trainingTypeOptions; track item) {
-              <option [value]="item">{{ item }}</option>
-              }
-            </select>
-          </div>
-          <div class="cjr-row">
-            <label>Training Stage:</label>
-            <select [ngModel]="trainingStage()" (ngModelChange)="trainingStage.set($event)">
-              <option value="">Select stage</option>
-              @for (item of trainingStageOptions; track item) {
-              <option [value]="item">{{ item }}</option>
-              }
-            </select>
-          </div>
-          <div class="cjr-row">
-            <label>Training Start Date:</label>
-            <input type="date" [ngModel]="trainingStartDate()" (ngModelChange)="trainingStartDate.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Training End Date:</label>
-            <input type="date" [ngModel]="trainingEndDate()" (ngModelChange)="trainingEndDate.set($event)" />
-          </div>
-        </div>
-
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Training Duration:</label>
-            <input type="text" [value]="trainingDuration()" readonly />
-          </div>
-          <div class="cjr-row">
-            <label>Trainer:</label>
-            <input type="text" [ngModel]="trainer()" (ngModelChange)="trainer.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Training Objectives:</label>
-            <input type="text" [ngModel]="trainingObjectives()" (ngModelChange)="trainingObjectives.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Skills Covered:</label>
-            <input type="text" [ngModel]="skillsCovered()" (ngModelChange)="skillsCovered.set($event)" />
-          </div>
-        </div>
-      </div>
-
-      <div class="cjr-row cjr-row--remarks">
-        <label>Remarks:</label>
-        <textarea rows="4" [ngModel]="trainingDetailRemarks()"
-          (ngModelChange)="trainingDetailRemarks.set($event)"></textarea>
-      </div>
-    </div>
-
-    <div class="cjr-personal" id="termination-of-probation-section">
-      <div class="cjr-section-title">Training Evaluation</div>
-
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Evaluation Cycle Number:</label>
-            <select [ngModel]="evaluationCycleNumber()" (ngModelChange)="evaluationCycleNumber.set($event)">
-              <option value="">Select cycle</option>
-              @for (cycle of evaluationCycleOptions; track cycle) {
-              <option [value]="cycle">{{ cycle }}</option>
-              }
-            </select>
-          </div>
-          <div class="cjr-row">
-            <label>Evaluation Date:</label>
-            <input type="date" [ngModel]="evaluationDate()" (ngModelChange)="evaluationDate.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Evaluation Period:</label>
-            <input type="text" [ngModel]="evaluationPeriod()" (ngModelChange)="evaluationPeriod.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Evaluator Name:</label>
-            <select [ngModel]="evaluatorName()" (ngModelChange)="evaluatorName.set($event)">
-              <option value="">Select evaluator</option>
-              @for (name of evaluatorNameOptions; track name) {
-              <option [value]="name">{{ name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Evaluation Parameter:</label>
-            <input type="text" [ngModel]="evaluationParameter()" (ngModelChange)="evaluationParameter.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Parameter Rating:</label>
-            <input type="number" min="0" max="100" [ngModel]="parameterRating()"
-              (keydown)="onRatingKeyDown($event)" (ngModelChange)="onParameterRatingChange($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Overall Score:</label>
-            <input type="text" [ngModel]="overallScore()" (ngModelChange)="overallScore.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Performance Remarks:</label>
-            <input type="text" [ngModel]="performanceRemarks()" (ngModelChange)="performanceRemarks.set($event)" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="cjr-personal" id="salary-adjustment-section">
-      <div class="cjr-section-title">Salary</div>
-
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Current Salary:</label>
-            <input type="text" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Increment Amount:</label>
-            <input type="text" [ngModel]="incrementAmount()" (ngModelChange)="incrementAmount.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Increment Percentage:</label>
-            <input type="text" [ngModel]="incrementPercentage()" (ngModelChange)="incrementPercentage.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Revised Salary:</label>
-            <input type="text" [value]="revisedSalary()" readonly />
-          </div>
-        </div>
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Effective Date:</label>
-            <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Reason for Increment:</label>
-            <input type="text" [ngModel]="reasonForIncrement()" (ngModelChange)="reasonForIncrement.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Approval Authority:</label>
-            <input type="text" [ngModel]="approvalAuthority()" (ngModelChange)="approvalAuthority.set($event)" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="cjr-personal" id="promotion-section">
-      <div class="cjr-section-title">Promotion</div>
-
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Promotion Recommended:</label>
-            <select [ngModel]="promotionRecommended()" (ngModelChange)="promotionRecommended.set($event)">
-              <option value="">Select option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div class="cjr-row">
-            <label>New Designation:</label>
-            <input type="text" [ngModel]="newDesignation()" (ngModelChange)="newDesignation.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Promotion Effective Date:</label>
-            <input type="date" [ngModel]="promotionEffectiveDate()"
-              (ngModelChange)="promotionEffectiveDate.set($event)" />
-          </div>
-        </div>
-
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Performance Eligibility Check:</label>
-            <input type="text" [value]="performanceEligibilityCheck()" readonly />
-          </div>
-          <div class="cjr-row">
-            <label>Training Completion Verification:</label>
-            <select [ngModel]="trainingCompletionVerification()"
-              (ngModelChange)="trainingCompletionVerification.set($event)">
-              <option value="">Select option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div class="cjr-row">
-            <label>Remarks:</label>
-            <input type="text" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="cjr-actions-footer">
-      <button type="button" class="cjr-submit-btn" (click)="save()">
-        <span class="cjr-submit-icon">✓</span> {{ submitButtonLabel }}
-      </button>
     </div>
   </div>
 </div>
