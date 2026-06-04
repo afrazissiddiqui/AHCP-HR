@@ -27,7 +27,10 @@ export class MaintenanceActivityDefinitionService {
 
   addRecord(
     entry: Omit<MaintenanceActivityMachineRecord, 'id' | 'selected'>,
-  ): MaintenanceActivityMachineRecord {
+  ): MaintenanceActivityMachineRecord | null {
+    if (this.hasDuplicateMachineId(entry.machineId)) {
+      return null;
+    }
     const record: MaintenanceActivityMachineRecord = {
       ...entry,
       id: `MAM-${Date.now()}`,
@@ -70,6 +73,9 @@ export class MaintenanceActivityDefinitionService {
     if (!exists) {
       return false;
     }
+    if (this.hasDuplicateMachineId(entry.machineId, id)) {
+      return false;
+    }
     this._records.update((list) =>
       list.map((r) => (r.id === id ? { ...r, ...entry, id, selected: r.selected } : r)),
     );
@@ -89,4 +95,4 @@ export class MaintenanceActivityDefinitionService {
     );
   }
 }
-
+

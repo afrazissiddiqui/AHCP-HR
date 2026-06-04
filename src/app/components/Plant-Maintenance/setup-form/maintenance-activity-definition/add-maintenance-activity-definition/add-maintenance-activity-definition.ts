@@ -113,6 +113,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
   readonly nameSuggestionsOpen = signal(false);
 
+  private readonly isSaving = signal(false);
+
 
 
   readonly maintenanceNatureOptions = ['Electrical', 'Mechanical'] as const;
@@ -479,6 +481,18 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.closeNameSuggestions();
 
+    if (this.isCreateMode() && this.isMachineAlreadyDefined(machine.machineId)) {
+
+      this.alertService.validation(
+
+        'This machine is already in Maintenance Activity Defination.',
+
+      );
+
+      return;
+
+    }
+
     this.populateFromMachine(machine);
 
   }
@@ -536,6 +550,12 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
   async saveForm(): Promise<void> {
+
+    if (this.isSaving()) {
+
+      return;
+
+    }
 
     const machineId = this.machineId().trim();
 
@@ -653,6 +673,22 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
+    const duplicateComponentNames = this.findDuplicateComponentNames(components);
+
+    if (duplicateComponentNames.length > 0) {
+
+      this.alertService.validation(
+
+        `Duplicate component name(s): ${duplicateComponentNames.join(', ')}. Each component must be unique for this machine.`,
+
+      );
+
+      return;
+
+    }
+
+
+
     const excludeId = this.editingRecordId() ?? undefined;
 
     if (this.activityService.hasDuplicateMachineId(machineId, excludeId)) {
@@ -685,19 +721,52 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
-    if (this.editingRecordId()) {
-      this.activityService.updateRecord(this.editingRecordId()!, payload);
-    } else {
-      this.activityService.addRecord(payload);
+    this.isSaving.set(true);
+
+    try {
+
+      if (this.editingRecordId()) {
+
+        const updated = this.activityService.updateRecord(this.editingRecordId()!, payload);
+
+        if (!updated) {
+
+          this.alertService.validation('This Machine ID is already in the list.');
+
+          return;
+
+        }
+
+      } else {
+
+        const added = this.activityService.addRecord(payload);
+
+        if (!added) {
+
+          this.alertService.validation('This Machine ID is already in the list.');
+
+          return;
+
+        }
+
+      }
+
+      const successMessage = this.editingRecordId()
+
+        ? 'Maintenance Activity Defination updated successfully.'
+
+        : 'Maintenance Activity Defination saved successfully.';
+
+      await this.alertService.successAndWait('Success', successMessage);
+
+      void this.router.navigate(['/plant-maintenance/setup-form/maintenance-activity-definition']);
+
+    } finally {
+
+      this.isSaving.set(false);
+
     }
 
-    const successMessage = this.editingRecordId()
-      ? 'Maintenance Activity Defination updated successfully.'
-      : 'Maintenance Activity Defination saved successfully.';
-
-    await this.alertService.successAndWait('Success', successMessage);
-
-    void this.router.navigate(['/plant-maintenance/setup-form/maintenance-activity-definition']);
   }
 
 
@@ -726,7 +795,55 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
       )
 
+      .filter((m) => !this.isMachineAlreadyDefined(m.machineId))
+
       .slice(0, 10);
+
+  }
+
+
+
+  private isMachineAlreadyDefined(machineId: string): boolean {
+
+    if (!this.isCreateMode()) {
+
+      return false;
+
+    }
+
+    return this.activityService.hasDuplicateMachineId(machineId);
+
+  }
+
+
+
+  private findDuplicateComponentNames(
+
+    components: Array<{ name: string }>,
+
+  ): string[] {
+
+    const seen = new Set<string>();
+
+    const duplicates = new Set<string>();
+
+    for (const component of components) {
+
+      const key = component.name.toLowerCase();
+
+      if (seen.has(key)) {
+
+        duplicates.add(component.name);
+
+      } else {
+
+        seen.add(key);
+
+      }
+
+    }
+
+    return [...duplicates];
 
   }
 
@@ -758,9 +875,11 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     const subComponentRecord = this.subComponentService.getByMachineId(machineId);
 
-    const definedComponents =
+    const definedComponents = this.uniqueComponentNames(
 
-      subComponentRecord?.subComponents.map((s) => s.trim()).filter(Boolean) ?? [];
+      subComponentRecord?.subComponents.map((s) => s.trim()).filter(Boolean) ?? [],
+
+    );
 
 
 
@@ -785,6 +904,34 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
     this.components.set([]);
+
+  }
+
+
+
+  private uniqueComponentNames(names: string[]): string[] {
+
+    const seen = new Set<string>();
+
+    const unique: string[] = [];
+
+    for (const name of names) {
+
+      const key = name.toLowerCase();
+
+      if (seen.has(key)) {
+
+        continue;
+
+      }
+
+      seen.add(key);
+
+      unique.push(name);
+
+    }
+
+    return unique;
 
   }
 

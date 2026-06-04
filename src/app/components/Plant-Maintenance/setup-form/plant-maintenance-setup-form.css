@@ -50,9 +50,14 @@
 
 .scd-page-view--table .mountain-table {
   width: 100%;
-  min-width: 100%;
-  max-width: 100%;
-  table-layout: fixed;
+  min-width: 1000px;
+  max-width: none;
+  table-layout: auto;
+}
+
+.scd-page-view--table .mountain-table.scd-machine-table,
+.scd-page-view--table .mountain-table.mad-machine-table {
+  min-width: 1280px;
 }
 
 .scd-page-view--table .mountain-table th,
@@ -60,6 +65,8 @@
   max-width: none;
 }
 
+.scd-page-view--table .mountain-table th.scd-select-header,
+.scd-page-view--table .mountain-table td.scd-select-cell,
 .scd-page-view--table .mountain-table th:first-child,
 .scd-page-view--table .mountain-table td:first-child {
   width: 48px;
@@ -655,6 +662,52 @@
   font-size: 14px;
   font-weight: 600;
   color: #1d2d3e;
+}
+
+.mad-detail-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mad-view-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.mad-view-inspection-table {
+  width: 100%;
+  min-width: 720px;
+  margin: 0;
+  table-layout: auto;
+}
+
+.mad-view-inspection-table thead th,
+.mad-view-inspection-table tbody td {
+  position: static;
+  box-shadow: none;
+}
+
+.mad-view-inspection-table thead th {
+  background: #f5f5f5;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mad-view-inspection-table tbody td {
+  white-space: normal;
+  vertical-align: top;
+  max-width: none;
+}
+
+.mad-view-inspection-table__line-col {
+  width: 56px;
+  min-width: 56px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mad-view-inspection-table__instructions {
+  min-width: 200px;
 }
 
 .cjr-row .mad-select {

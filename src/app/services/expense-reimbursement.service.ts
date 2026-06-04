@@ -310,15 +310,67 @@ export class ExpenseReimbursementService {
     if (
       obj['headerFields'] ||
       obj['header_fields'] ||
+      obj['HeaderFields'] ||
       obj['expenseDetail'] ||
       obj['expense_detail'] ||
+      obj['ExpenseDetail'] ||
       obj['formNumber'] ||
-      obj['form_number']
+      obj['form_number'] ||
+      obj['FormNumber'] ||
+      obj['employee_code'] ||
+      obj['employeeCode'] ||
+      obj['expense_type'] ||
+      obj['expenseType'] ||
+      obj['ExpenseType']
     ) {
       return [obj];
     }
 
     return [];
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    if (value === undefined || value === null) {
+      return {};
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return {};
+      }
+      try {
+        const parsed: unknown = JSON.parse(trimmed);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+      } catch {
+        return {};
+      }
+      return {};
+    }
+    if (Array.isArray(value)) {
+      const first = value[0];
+      return first && typeof first === 'object' ? (first as Record<string, unknown>) : {};
+    }
+    if (typeof value === 'object') {
+      return value as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
+    const asString = (value: unknown): string =>
+      value === undefined || value === null ? '' : String(value).trim();
+
+    for (const source of sources) {
+      for (const key of keys) {
+        const text = asString(source[key]);
+        if (text) {
+          return text;
+        }
+      }
+    }
+    return '';
   }
 
   private mapDetailResponse(response: unknown): ExpenseReimbursementRecord {
@@ -338,84 +390,87 @@ export class ExpenseReimbursementService {
     const asString = (value: unknown): string =>
       value === undefined || value === null ? '' : String(value).trim();
 
-    const id =
-      asString(item['id']) ||
-      asString(item['Id']) ||
-      asString(item['expense_reimbursement_id']);
+    const id = this.pickString([item], ['id', 'Id', 'expense_reimbursement_id']);
 
-    const headerSource =
-      (item['headerFields'] as Record<string, unknown> | undefined) ??
-      (item['header_fields'] as Record<string, unknown> | undefined) ??
-      {};
+    const headerSource = this.asRecord(
+      item['headerFields'] ?? item['header_fields'] ?? item['HeaderFields'],
+    );
+    const detailSource = this.asRecord(
+      item['expenseDetail'] ??
+        item['expense_detail'] ??
+        item['ExpenseDetail'] ??
+        item['expense_details'] ??
+        item['expenseDetails'],
+    );
+    const travelSource = this.asRecord(item['travel'] ?? item['Travel']);
 
-    const detailSource =
-      (item['expenseDetail'] as Record<string, unknown> | undefined) ??
-      (item['expense_detail'] as Record<string, unknown> | undefined) ??
-      {};
-
-    const travelSource =
-      (item['travel'] as Record<string, unknown> | undefined) ?? {};
+    const sources = [detailSource, headerSource, travelSource, item];
 
     const headerFields: ExpenseHeaderFieldsPayload = {
-      employeeCode:
-        asString(headerSource['employeeCode']) || asString(headerSource['employee_code']) || asString(item['employee_code']),
-      employeeName:
-        asString(headerSource['employeeName']) || asString(headerSource['employee_name']) || asString(item['employee_name']),
-      department: asString(headerSource['department']) || asString(item['department']),
-      designation: asString(headerSource['designation']) || asString(item['designation']),
-      costCenter: asString(headerSource['costCenter']) || asString(headerSource['cost_center']),
-      claimMonth: asString(headerSource['claimMonth']) || asString(headerSource['claim_month']),
-      formNumber:
-        asString(headerSource['formNumber']) ||
-        asString(headerSource['form_number']) ||
-        asString(detailSource['formNumber']) ||
-        asString(detailSource['form_number']),
-      submissionDate:
-        asString(headerSource['submissionDate']) || asString(headerSource['submission_date']),
+      employeeCode: this.pickString(sources, ['employeeCode', 'employee_code', 'EmployeeCode']),
+      employeeName: this.pickString(sources, ['employeeName', 'employee_name', 'EmployeeName']),
+      department: this.pickString(sources, ['department', 'Department']),
+      designation: this.pickString(sources, ['designation', 'Designation']),
+      costCenter: this.pickString(sources, ['costCenter', 'cost_center', 'CostCenter']),
+      claimMonth: this.pickString(sources, ['claimMonth', 'claim_month', 'ClaimMonth']),
+      formNumber: this.pickString(sources, ['formNumber', 'form_number', 'FormNumber']),
+      submissionDate: this.pickString(sources, [
+        'submissionDate',
+        'submission_date',
+        'SubmissionDate',
+      ]),
     };
 
     const expenseDetail: ExpenseDetailPayload = {
       formNumber:
-        asString(detailSource['formNumber']) ||
-        asString(detailSource['form_number']) ||
+        this.pickString([detailSource, item], ['formNumber', 'form_number', 'FormNumber']) ||
         headerFields.formNumber,
       employeeID:
-        asString(detailSource['employeeID']) ||
-        asString(detailSource['employee_id']) ||
-        asString(detailSource['employeeId']) ||
+        this.pickString(sources, ['employeeID', 'employee_id', 'employeeId', 'EmployeeId']) ||
         headerFields.employeeCode,
       employeeName:
-        asString(detailSource['employeeName']) ||
-        asString(detailSource['employee_name']) ||
-        headerFields.employeeName,
-      department: asString(detailSource['department']) || headerFields.department,
-      expenseType: asString(detailSource['expenseType']) || asString(detailSource['expense_type']),
-      claimAmount: asString(detailSource['claimAmount']) || asString(detailSource['claim_amount']),
-      claimDate: asString(detailSource['claimDate']) || asString(detailSource['claim_date']),
+        this.pickString([detailSource, headerSource, item], [
+          'employeeName',
+          'employee_name',
+          'EmployeeName',
+        ]) || headerFields.employeeName,
+      department:
+        this.pickString([detailSource, headerSource, item], ['department', 'Department']) ||
+        headerFields.department,
+      expenseType: this.pickString(sources, ['expenseType', 'expense_type', 'ExpenseType']),
+      claimAmount: this.pickString(sources, ['claimAmount', 'claim_amount', 'ClaimAmount']),
+      claimDate: this.pickString(sources, ['claimDate', 'claim_date', 'ClaimDate']),
       approvalStatus:
-        asString(detailSource['approvalStatus']) ||
-        asString(detailSource['approval_status']) ||
+        this.pickString(sources, ['approvalStatus', 'approval_status', 'ApprovalStatus']) ||
         'Pending',
-      remarks: asString(detailSource['remarks']),
+      remarks: this.pickString(sources, ['remarks', 'Remarks']),
     };
 
     const travel: ExpenseTravelPayload = {
-      travelFromDate:
-        asString(travelSource['travelFromDate']) || asString(travelSource['travel_from_date']),
-      travelToDate:
-        asString(travelSource['travelToDate']) || asString(travelSource['travel_to_date']),
+      travelFromDate: this.pickString(sources, [
+        'travelFromDate',
+        'travel_from_date',
+        'TravelFromDate',
+      ]),
+      travelToDate: this.pickString(sources, ['travelToDate', 'travel_to_date', 'TravelToDate']),
       dailyAllowanceApplicable:
-        asString(travelSource['dailyAllowanceApplicable']) ||
-        asString(travelSource['daily_allowance_applicable']) ||
-        'No',
-      dailyAllowanceRate:
-        asString(travelSource['dailyAllowanceRate']) || asString(travelSource['daily_allowance_rate']),
-      numberOfDays:
-        asString(travelSource['numberOfDays']) || asString(travelSource['number_of_days']),
-      dailyAllowanceAmount:
-        asString(travelSource['dailyAllowanceAmount']) ||
-        asString(travelSource['daily_allowance_amount']),
-      remarks: asString(travelSource['remarks']),
+        this.pickString(sources, [
+          'dailyAllowanceApplicable',
+          'daily_allowance_applicable',
+          'DailyAllowanceApplicable',
+        ]) || 'No',
+      dailyAllowanceRate: this.pickString(sources, [
+        'dailyAllowanceRate',
+        'daily_allowance_rate',
+        'DailyAllowanceRate',
+      ]),
+      numberOfDays: this.pickString(sources, ['numberOfDays', 'number_of_days', 'NumberOfDays']),
+      dailyAllowanceAmount: this.pickString(sources, [
+        'dailyAllowanceAmount',
+        'daily_allowance_amount',
+        'DailyAllowanceAmount',
+      ]),
+      remarks: this.pickString([travelSource, item], ['remarks', 'Remarks']),
     };
 
     return {

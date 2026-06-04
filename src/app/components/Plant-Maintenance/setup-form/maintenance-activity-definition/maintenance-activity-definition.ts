@@ -68,9 +68,13 @@ export class MaintenanceActivityDefinitionComponent {
     { key: 'machineName', label: 'Machine Name', visible: true },
     { key: 'machineType', label: 'Machine Type', visible: true },
     { key: 'maintenanceNature', label: 'Maintenance Nature', visible: true },
-    { key: 'plantMaintenanceFrequency', label: 'Plant Maintenance Frequency', visible: true },
-    { key: 'plantMaintenanceType', label: 'Plant Maintenance Type', visible: true },
+    { key: 'plantMaintenanceFrequency', label: 'Plant Maint. Frequency', visible: true },
+    { key: 'plantMaintenanceType', label: 'Plant Maint. Type', visible: true },
   ];
+
+  get visibleColumns(): Array<{ key: MachineTableColumnKey; label: string; visible: boolean }> {
+    return this.columns.filter((col) => col.visible);
+  }
 
   get showActionsColumn(): boolean {
     return this.rowActions.length > 0;
@@ -129,7 +133,7 @@ export class MaintenanceActivityDefinitionComponent {
   }
 
   get visibleColumnCount(): number {
-    let count = this.columns.filter((c) => c.visible).length + 1;
+    let count = this.visibleColumns.length + 1;
     if (this.showActionsColumn) {
       count += 1;
     }
