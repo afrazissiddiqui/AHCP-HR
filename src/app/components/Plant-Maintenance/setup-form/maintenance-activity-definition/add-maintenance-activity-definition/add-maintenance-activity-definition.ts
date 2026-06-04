@@ -485,14 +485,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.closeNameSuggestions();
 
-    if (this.isCreateMode() && this.isMachineAlreadyDefined(machine.machineId, machine.machineName)) {
-
-      this.alertService.validation(this.duplicateMachineMessage);
-
-      return;
-
-    }
-
     this.populateFromMachine(machine);
 
   }
@@ -691,18 +683,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     const resolved = resolveMachineIdentity(machineId, machineName);
 
-    const excludeId = this.editingRecordId() ?? undefined;
-
-    if (this.activityService.hasDuplicateMachine(resolved.machineId, resolved.machineName, excludeId)) {
-
-      this.alertService.validation(this.duplicateMachineMessage);
-
-      return;
-
-    }
-
-
-
     const payload = {
 
       machineId: resolved.machineId,
@@ -733,7 +713,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
         if (!updated) {
 
-          this.alertService.validation(this.duplicateMachineMessage);
+          this.alertService.validation('Machine record not found.');
 
           return;
 
@@ -741,15 +721,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
       } else {
 
-        const added = this.activityService.addRecord(payload);
-
-        if (!added) {
-
-          this.alertService.validation(this.duplicateMachineMessage);
-
-          return;
-
-        }
+        this.activityService.addRecord(payload);
 
       }
 
@@ -797,31 +769,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
       )
 
-      .filter((m) => !this.isMachineAlreadyDefined(m.machineId, m.machineName))
-
       .slice(0, 10);
-
-  }
-
-
-
-  private readonly duplicateMachineMessage =
-
-    'This machine is already in Maintenance Activity Defination. Each machine can only be added once.';
-
-
-
-  private isMachineAlreadyDefined(machineId: string, machineName: string): boolean {
-
-    if (!this.isCreateMode()) {
-
-      return false;
-
-    }
-
-    const resolved = resolveMachineIdentity(machineId, machineName);
-
-    return this.activityService.hasDuplicateMachine(resolved.machineId, resolved.machineName);
 
   }
 
