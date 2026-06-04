@@ -695,9 +695,9 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     }
 
     const excludeId = this.editingRecordId() ?? undefined;
-    const sparePartsResult = this.normalizeSparePartsForSave();
-    if (sparePartsResult.error) {
-      this.alertService.validation(sparePartsResult.error);
+    const { spareParts, sparePartsError } = this.normalizeSparePartsForSave();
+    if (sparePartsError) {
+      this.alertService.validation(sparePartsError);
       return;
     }
 
@@ -711,7 +711,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       startDate: this.startDate().trim(),
       endDate: this.endDate().trim(),
       duration: this.durationDays(),
-      spareParts: sparePartsResult.lines,
+      spareParts,
       remarks: '',
       components,
     };
@@ -849,9 +849,10 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     );
   }
 
-  private normalizeSparePartsForSave():
-    | { lines: PlantMaintenanceMasterSparePartLine[]; error?: undefined }
-    | { lines?: undefined; error: string } {
+  private normalizeSparePartsForSave(): {
+    spareParts: PlantMaintenanceMasterSparePartLine[];
+    sparePartsError?: string;
+  } {
     const filledRows = this.spareParts().filter(
       (row) =>
         row.sparePartId.trim() ||
@@ -862,10 +863,10 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     );
 
     if (filledRows.length === 0) {
-      return { lines: [] };
+      return { spareParts: [] };
     }
 
-    const lines: PlantMaintenanceMasterSparePartLine[] = [];
+    const spareParts: PlantMaintenanceMasterSparePartLine[] = [];
 
     for (let index = 0; index < filledRows.length; index++) {
       const row = filledRows[index];
@@ -878,29 +879,33 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
 
       if (!sparePartId || !sparePartDescription) {
         return {
-          error: `Spare Parts row ${index + 1}: enter Spare Part ID and Description from SAP.`,
+          spareParts: [],
+          sparePartsError: `Spare Parts row ${index + 1}: enter Spare Part ID and Description from SAP.`,
         };
       }
 
       if (quantity === null || quantity <= 0) {
         return {
-          error: `Spare Parts row ${index + 1}: enter a valid Quantity.`,
+          spareParts: [],
+          sparePartsError: `Spare Parts row ${index + 1}: enter a valid Quantity.`,
         };
       }
 
       if (!warehouseCode) {
         return {
-          error: `Spare Parts row ${index + 1}: select a Warehouse.`,
+          spareParts: [],
+          sparePartsError: `Spare Parts row ${index + 1}: select a Warehouse.`,
         };
       }
 
       if (!uomCode) {
         return {
-          error: `Spare Parts row ${index + 1}: select a UOM.`,
+          spareParts: [],
+          sparePartsError: `Spare Parts row ${index + 1}: select a UOM.`,
         };
       }
 
-      lines.push({
+      spareParts.push({
         sparePartId,
         sparePartDescription,
         quantity,
@@ -909,7 +914,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       });
     }
 
-    return { lines };
+    return { spareParts };
   }
 
   private cloneSpareParts(record: PlantMaintenanceMasterRecord): PlantMaintenanceMasterSparePartLine[] {

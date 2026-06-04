@@ -225,7 +225,7 @@
     </div>
     <div class="js-detail-section">
       <h3>Spare Parts</h3>
-      <div *ngIf="selectedRecord.spareParts?.length; else noSpareParts">
+      <div *ngIf="(selectedRecord.spareParts ?? []).length; else noSpareParts">
         <table class="mountain-table pmm-view-spare-parts-table">
           <thead>
             <tr>
@@ -237,7 +237,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of selectedRecord.spareParts">
+            <tr *ngFor="let row of selectedRecord.spareParts ?? []">
               <td>{{ row.sparePartId }}</td>
               <td>{{ row.sparePartDescription }}</td>
               <td>{{ row.quantity }}</td>
