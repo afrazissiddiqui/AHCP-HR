@@ -307,29 +307,26 @@
                   }
                 </header>
 
-                <div class="mad-component-card__body">
-                  <div class="mad-inspection-lines">
-                    <div
+                <div class="mad-component-card__body pmm-component-card__body">
+                    <section
                       class="mad-inspection-line"
                       *ngFor="let line of component.inspectionLines; let li = index; trackBy: trackByIndex"
                     >
-                      <div class="mad-inspection-line__toolbar mad-inspection-line__toolbar--with-status">
+                      <header class="mad-inspection-line__toolbar">
                         <span class="mad-inspection-line__badge">Line {{ li + 1 }}</span>
-                        <div class="mad-inspection-line__status cjr-row">
-                          <label [attr.for]="'pmm-line-status-' + ci + '-' + li">Status:</label>
-                          <select
-                            [id]="'pmm-line-status-' + ci + '-' + li"
-                            class="mad-select"
-                            [ngModel]="line.status"
-                            (ngModelChange)="updateInspectionLine(ci, li, 'status', $event)"
-                            [name]="'lineStatus' + ci + '_' + li"
-                          >
-                            <option value="">Select status</option>
-                            <option *ngFor="let option of lineStatusOptions" [value]="option">
-                              {{ option }}
-                            </option>
-                          </select>
-                        </div>
+                        <label [attr.for]="'pmm-line-status-' + ci + '-' + li">Status:</label>
+                        <select
+                          [id]="'pmm-line-status-' + ci + '-' + li"
+                          class="mad-select mad-inspection-line__status"
+                          [ngModel]="line.status"
+                          (ngModelChange)="updateInspectionLine(ci, li, 'status', $event)"
+                          [name]="'lineStatus' + ci + '_' + li"
+                        >
+                          <option value="">Select status</option>
+                          <option *ngFor="let option of lineStatusOptions" [value]="option">
+                            {{ option }}
+                          </option>
+                        </select>
                         <button
                           type="button"
                           class="mad-line-remove-btn"
@@ -340,115 +337,102 @@
                         >
                           ×
                         </button>
+                      </header>
+
+                      <div class="mad-line-fields mad-line-fields--inspect">
+                        <label [attr.for]="'pmm-items-' + ci + '-' + li">Items to be inspected</label>
+                        <input
+                          [id]="'pmm-items-' + ci + '-' + li"
+                          type="text"
+                          class="mad-input-readonly"
+                          [ngModel]="line.itemsToBeInspected"
+                          (ngModelChange)="updateInspectionLine(ci, li, 'itemsToBeInspected', $event)"
+                          [name]="'itemsToBeInspected' + ci + '_' + li"
+                          placeholder="Enter items to be inspected"
+                          readonly
+                        />
+                        <label [attr.for]="'pmm-check-' + ci + '-' + li">What to check</label>
+                        <input
+                          [id]="'pmm-check-' + ci + '-' + li"
+                          type="text"
+                          class="mad-input-readonly"
+                          [ngModel]="line.whatToCheck"
+                          (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
+                          [name]="'whatToCheck' + ci + '_' + li"
+                          placeholder="Enter what to check"
+                          readonly
+                        />
+                        <label [attr.for]="'pmm-instructions-' + ci + '-' + li">Instructions</label>
+                        <textarea
+                          [id]="'pmm-instructions-' + ci + '-' + li"
+                          class="mad-textarea mad-input-readonly"
+                          rows="3"
+                          [ngModel]="line.instructions"
+                          (ngModelChange)="updateInspectionLine(ci, li, 'instructions', $event)"
+                          [name]="'instructions' + ci + '_' + li"
+                          placeholder="Enter instructions"
+                          readonly
+                        ></textarea>
                       </div>
 
-                      <div class="mad-inspection-fields mad-inspection-fields--columns mad-inspection-fields--readonly">
-                        <div class="mad-inspection-col">
-                          <label [attr.for]="'pmm-items-' + ci + '-' + li">Items to be inspected</label>
-                          <input
-                            [id]="'pmm-items-' + ci + '-' + li"
-                            type="text"
-                            class="mad-input-readonly"
-                            [ngModel]="line.itemsToBeInspected"
-                            (ngModelChange)="updateInspectionLine(ci, li, 'itemsToBeInspected', $event)"
-                            [name]="'itemsToBeInspected' + ci + '_' + li"
-                            placeholder="Enter items to be inspected"
-                            readonly
-                          />
-                        </div>
-                        <div class="mad-inspection-col">
-                          <label [attr.for]="'pmm-check-' + ci + '-' + li">What to check</label>
-                          <input
-                            [id]="'pmm-check-' + ci + '-' + li"
-                            type="text"
-                            class="mad-input-readonly"
-                            [ngModel]="line.whatToCheck"
-                            (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
-                            [name]="'whatToCheck' + ci + '_' + li"
-                            placeholder="Enter what to check"
-                            readonly
-                          />
-                        </div>
-                        <div class="mad-inspection-col">
-                          <label [attr.for]="'pmm-instructions-' + ci + '-' + li">Instructions</label>
-                          <textarea
-                            [id]="'pmm-instructions-' + ci + '-' + li"
-                            class="mad-textarea mad-input-readonly"
-                            rows="3"
-                            [ngModel]="line.instructions"
-                            (ngModelChange)="updateInspectionLine(ci, li, 'instructions', $event)"
-                            [name]="'instructions' + ci + '_' + li"
-                            placeholder="Enter instructions"
-                            readonly
-                          ></textarea>
-                        </div>
-                      </div>
+                      <div class="mad-line-fields mad-line-fields--results">
+                        <label [attr.for]="'pmm-recommendation-' + ci + '-' + li">Recommendation</label>
+                        <textarea
+                          [id]="'pmm-recommendation-' + ci + '-' + li"
+                          class="mad-textarea mad-textarea--compact"
+                          rows="3"
+                          [ngModel]="line.recommendation"
+                          (ngModelChange)="updateInspectionLine(ci, li, 'recommendation', $event)"
+                          [name]="'recommendation' + ci + '_' + li"
+                          placeholder="Enter recommendation for this line"
+                        ></textarea>
 
-                      <div class="mad-inspection-line__results">
-                        <div class="mad-inspection-fields mad-inspection-fields--results">
-                          <div class="mad-inspection-col">
-                            <label [attr.for]="'pmm-recommendation-' + ci + '-' + li">Recommendation</label>
-                            <textarea
-                              [id]="'pmm-recommendation-' + ci + '-' + li"
-                              class="mad-textarea mad-textarea--compact"
-                              rows="3"
-                              [ngModel]="line.recommendation"
-                              (ngModelChange)="updateInspectionLine(ci, li, 'recommendation', $event)"
-                              [name]="'recommendation' + ci + '_' + li"
-                              placeholder="Enter recommendation for this line"
-                            ></textarea>
-                          </div>
-
-                          <div class="mad-inspection-col">
-                            <label [attr.for]="'pmm-attachments-' + ci + '-' + li">Attachments (pictures)</label>
-                            <div class="mad-attachment-panel">
-                              <article
-                                class="mad-attachment-card"
-                                *ngFor="let attachment of line.attachments; let ai = index; trackBy: trackByIndex"
+                        <label [attr.for]="'pmm-attachments-' + ci + '-' + li">Attachments (pictures)</label>
+                        <div class="mad-attachment-panel">
+                          <figure
+                            class="mad-attachment-card"
+                            *ngFor="let attachment of line.attachments; let ai = index; trackBy: trackByIndex"
+                          >
+                            <img
+                              class="mad-attachment-card__image"
+                              [src]="attachment.dataUrl"
+                              [alt]="attachment.fileName"
+                            />
+                            <figcaption class="mad-attachment-card__caption">
+                              <span class="mad-attachment-card__name" [title]="attachment.fileName">
+                                {{ attachment.fileName }}
+                              </span>
+                              <button
+                                type="button"
+                                class="mad-attachment-card__remove"
+                                (click)="removeLineAttachment(ci, li, ai)"
+                                title="Remove picture"
+                                [attr.aria-label]="'Remove ' + attachment.fileName"
                               >
-                                <img
-                                  class="mad-attachment-card__image"
-                                  [src]="attachment.dataUrl"
-                                  [alt]="attachment.fileName"
-                                />
-                                <div class="mad-attachment-card__footer">
-                                  <span class="mad-attachment-card__name" [title]="attachment.fileName">
-                                    {{ attachment.fileName }}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    class="mad-attachment-card__remove"
-                                    (click)="removeLineAttachment(ci, li, ai)"
-                                    title="Remove picture"
-                                    [attr.aria-label]="'Remove ' + attachment.fileName"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              </article>
+                                ×
+                              </button>
+                            </figcaption>
+                          </figure>
 
-                              <label
-                                class="mad-attachment-upload"
-                                [attr.for]="'pmm-attachments-' + ci + '-' + li"
-                              >
-                                <span class="mad-attachment-upload__icon" aria-hidden="true">+</span>
-                                <span class="mad-attachment-upload__title">Upload picture</span>
-                                <span class="mad-attachment-upload__hint">JPEG, PNG, or WEBP</span>
-                              </label>
-                              <input
-                                [id]="'pmm-attachments-' + ci + '-' + li"
-                                type="file"
-                                accept="image/*"
-                                class="mad-attachment-upload__input"
-                                (change)="onLineAttachmentChange(ci, li, $event)"
-                                [attr.aria-label]="'Upload picture for line ' + (li + 1)"
-                              />
-                            </div>
-                          </div>
+                          <label
+                            class="mad-attachment-upload"
+                            [attr.for]="'pmm-attachments-' + ci + '-' + li"
+                          >
+                            <span class="mad-attachment-upload__icon" aria-hidden="true">+</span>
+                            <span class="mad-attachment-upload__title">Upload picture</span>
+                            <span class="mad-attachment-upload__hint">JPEG, PNG, or WEBP</span>
+                            <input
+                              [id]="'pmm-attachments-' + ci + '-' + li"
+                              type="file"
+                              accept="image/*"
+                              class="mad-attachment-upload__input"
+                              (change)="onLineAttachmentChange(ci, li, $event)"
+                              [attr.aria-label]="'Upload picture for line ' + (li + 1)"
+                            />
+                          </label>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </section>
 
                   <div class="mad-component-card__footer" *ngIf="!hasLoadedActivityData()">
                     <button
