@@ -64,10 +64,34 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly plantMaintenanceFrequency = signal('');
   readonly plantMaintenanceType = signal('');
   readonly components = signal<PlantMaintenanceMasterComponent[]>([]);
+  readonly availableActivityRecords = signal<MaintenanceActivityMachineRecord[]>([]);
   readonly populatedFromActivityDefinition = signal(false);
   readonly isPopulatedFieldsReadOnly = computed(() => this.populatedFromActivityDefinition());
+  readonly hasActivityDefinitionsForMachine = computed(
+    () => this.availableActivityRecords().length > 0,
+  );
   readonly idSuggestionsOpen = signal(false);
   readonly nameSuggestionsOpen = signal(false);
+
+  readonly machineTypeOptions = computed(() =>
+    this.activityService.getProfileFieldValues(this.availableActivityRecords(), 'machineType', {
+      maintenanceNature: this.maintenanceNature(),
+      plantMaintenanceFrequency: this.plantMaintenanceFrequency(),
+      plantMaintenanceType: this.plantMaintenanceType(),
+    }),
+  );
+
+  readonly maintenanceNatureSelectOptions = computed(() =>
+    this.getProfileSelectOptions('maintenanceNature', this.maintenanceNatureOptions),
+  );
+
+  readonly plantMaintenanceFrequencySelectOptions = computed(() =>
+    this.getProfileSelectOptions('plantMaintenanceFrequency', this.plantMaintenanceFrequencyOptions),
+  );
+
+  readonly plantMaintenanceTypeSelectOptions = computed(() =>
+    this.getProfileSelectOptions('plantMaintenanceType', this.plantMaintenanceTypeOptions),
+  );
 
   readonly maintenanceNatureOptions = ['Electrical', 'Mechanical'] as const;
   readonly plantMaintenanceFrequencyOptions = [
@@ -123,8 +147,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   }
 
   onMachineIdInput(value: string): void {
-    if (this.populatedFromActivityDefinition()) {
-      this.clearActivityPopulatedFields();
+    if (this.machineId() !== value) {
+      this.clearActivityProfileFields();
     }
     this.machineId.set(value);
     this.idSuggestionsOpen.set(value.trim().length > 0);
@@ -132,8 +156,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   }
 
   onMachineNameInput(value: string): void {
-    if (this.populatedFromActivityDefinition()) {
-      this.clearActivityPopulatedFields();
+    if (this.machineName() !== value) {
+      this.clearActivityProfileFields();
     }
     this.machineName.set(value);
     this.nameSuggestionsOpen.set(value.trim().length > 0);
@@ -141,31 +165,23 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   }
 
   onMachineTypeInput(value: string): void {
-    if (this.isPopulatedFieldsReadOnly()) {
-      return;
-    }
     this.machineType.set(value);
+    this.tryApplyMatchingActivityDefinition();
   }
 
   onMaintenanceNatureInput(value: string): void {
-    if (this.isPopulatedFieldsReadOnly()) {
-      return;
-    }
     this.maintenanceNature.set(value);
+    this.tryApplyMatchingActivityDefinition();
   }
 
   onPlantMaintenanceFrequencyInput(value: string): void {
-    if (this.isPopulatedFieldsReadOnly()) {
-      return;
-    }
     this.plantMaintenanceFrequency.set(value);
+    this.tryApplyMatchingActivityDefinition();
   }
 
   onPlantMaintenanceTypeInput(value: string): void {
-    if (this.isPopulatedFieldsReadOnly()) {
-      return;
-    }
     this.plantMaintenanceType.set(value);
+    this.tryApplyMatchingActivityDefinition();
   }
 
   updateComponentName(componentIndex: number, value: string): void {
@@ -314,6 +330,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.plantMaintenanceFrequency.set('');
     this.plantMaintenanceType.set('');
     this.components.set([]);
+    this.availableActivityRecords.set([]);
     this.closeIdSuggestions();
     this.closeNameSuggestions();
   }
@@ -358,7 +375,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
 
     if (components.length === 0) {
       const message = this.isCreateMode()
-        ? 'No Maintenance Activity Defination found for this machine. Create one in Maintenance Activity Defination first.'
+        ? 'No matching Maintenance Activity Defination found. Select Machine Type, Maintenance Nature, Plant Maintenance Frequency, and Plant Maintenance Type that match an existing activity definition.'
         : 'Enter at least one component for this machine.';
       this.alertService.validation(message);
       return;
@@ -387,11 +404,6 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     }
 
     const excludeId = this.editingRecordId() ?? undefined;
-    if (this.masterService.hasDuplicateMachineId(machineId, excludeId)) {
-      this.alertService.validation('This Machine ID is already in the list.');
-      return;
-    }
-
     const payload = {
       machineId,
       machineName,
@@ -402,6 +414,13 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       remarks: '',
       components,
     };
+
+    if (this.masterService.hasDuplicateProfile(payload, excludeId)) {
+      this.alertService.validation(
+        'A master form entry with this machine and maintenance profile already exists.',
+      );
+      return;
+    }
 
     if (this.editingRecordId()) {
       const existing = this.masterService.getById(this.editingRecordId()!);
@@ -440,40 +459,109 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   private populateFromMachine(machine: MachineSearchOption): void {
     this.machineId.set(machine.machineId);
     this.machineName.set(machine.machineName);
-    this.applyFromMaintenanceActivityDefinition(machine.machineId, machine);
+    this.loadActivityProfilesForMachine(machine.machineId, machine.machineName);
   }
 
-  private applyFromMaintenanceActivityDefinition(
-    machineId: string,
-    machine?: MachineSearchOption,
-  ): void {
-    const activityRecord = this.activityService.getByMachineId(machineId);
+  private loadActivityProfilesForMachine(machineId: string, machineName: string): void {
+    this.clearActivityProfileFields();
 
-    if (!activityRecord) {
+    const records = this.activityService.getAllByMachineId(machineId, machineName);
+    this.availableActivityRecords.set(records);
+
+    if (records.length === 0) {
+      this.machineType.set(this.getSapDefaultMachineType(machineId, machineName));
+      return;
+    }
+
+    if (records.length === 1) {
+      this.applyActivityProfile(records[0]);
+      return;
+    }
+
+    this.machineType.set(this.getSapDefaultMachineType(machineId, machineName));
+  }
+
+  private tryApplyMatchingActivityDefinition(): void {
+    if (!this.isCreateMode() || !this.machineId().trim()) {
+      return;
+    }
+
+    const machineType = this.machineType().trim();
+    const maintenanceNature = this.maintenanceNature().trim();
+    const plantMaintenanceFrequency = this.plantMaintenanceFrequency().trim();
+    const plantMaintenanceType = this.plantMaintenanceType().trim();
+
+    if (!machineType || !maintenanceNature || !plantMaintenanceFrequency || !plantMaintenanceType) {
       this.populatedFromActivityDefinition.set(false);
-      this.machineType.set(machine?.defaultMachineType ?? '');
-      this.maintenanceNature.set('');
-      this.plantMaintenanceFrequency.set('');
-      this.plantMaintenanceType.set('');
       this.components.set([]);
       return;
     }
 
-    this.populatedFromActivityDefinition.set(true);
+    const activityRecord = this.activityService.findByCriteria({
+      machineId: this.machineId(),
+      machineName: this.machineName(),
+      machineType,
+      maintenanceNature,
+      plantMaintenanceFrequency,
+      plantMaintenanceType,
+    });
+
+    if (!activityRecord) {
+      this.populatedFromActivityDefinition.set(false);
+      this.components.set([]);
+      return;
+    }
+
+    this.applyActivityProfile(activityRecord);
+  }
+
+  private applyActivityProfile(activityRecord: MaintenanceActivityMachineRecord): void {
     this.machineType.set(activityRecord.machineType);
     this.maintenanceNature.set(activityRecord.maintenanceNature);
     this.plantMaintenanceFrequency.set(activityRecord.plantMaintenanceFrequency);
     this.plantMaintenanceType.set(activityRecord.plantMaintenanceType);
+    this.populatedFromActivityDefinition.set(true);
     this.components.set(this.cloneComponentsFromActivity(activityRecord));
   }
 
-  private clearActivityPopulatedFields(): void {
+  private clearActivityProfileFields(): void {
     this.populatedFromActivityDefinition.set(false);
+    this.availableActivityRecords.set([]);
     this.machineType.set('');
     this.maintenanceNature.set('');
     this.plantMaintenanceFrequency.set('');
     this.plantMaintenanceType.set('');
     this.components.set([]);
+  }
+
+  private getSapDefaultMachineType(machineId: string, machineName: string): string {
+    const sap = this.machineOptions.find(
+      (m) =>
+        m.machineId.toLowerCase() === machineId.trim().toLowerCase() ||
+        m.machineName.toLowerCase() === machineName.trim().toLowerCase(),
+    );
+    return sap?.defaultMachineType ?? '';
+  }
+
+  private getProfileSelectOptions<T extends string>(
+    field: 'maintenanceNature' | 'plantMaintenanceFrequency' | 'plantMaintenanceType',
+    fallback: readonly T[],
+  ): T[] {
+    if (!this.isCreateMode() || this.availableActivityRecords().length === 0) {
+      return [...fallback];
+    }
+
+    return this.activityService.getProfileFieldValues(
+      this.availableActivityRecords(),
+      field,
+      {
+        machineType: this.machineType(),
+        maintenanceNature: field === 'maintenanceNature' ? '' : this.maintenanceNature(),
+        plantMaintenanceFrequency:
+          field === 'plantMaintenanceFrequency' ? '' : this.plantMaintenanceFrequency(),
+        plantMaintenanceType: field === 'plantMaintenanceType' ? '' : this.plantMaintenanceType(),
+      },
+    ) as T[];
   }
 
   private cloneComponentsFromActivity(

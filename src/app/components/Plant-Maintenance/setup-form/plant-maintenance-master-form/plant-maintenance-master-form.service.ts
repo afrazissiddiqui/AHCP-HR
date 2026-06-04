@@ -85,4 +85,25 @@ export class PlantMaintenanceMasterFormService {
       (r) => r.machineId.trim().toLowerCase() === key && r.id !== excludeId,
     );
   }
+
+  hasDuplicateProfile(
+    entry: Omit<PlantMaintenanceMasterRecord, 'id' | 'selected' | 'remarks' | 'components'>,
+    excludeId?: string,
+  ): boolean {
+    return this._records().some((r) => {
+      if (r.id === excludeId) {
+        return false;
+      }
+      return (
+        r.machineId.trim().toLowerCase() === entry.machineId.trim().toLowerCase() &&
+        r.machineName.trim().toLowerCase() === entry.machineName.trim().toLowerCase() &&
+        r.machineType.trim().toLowerCase() === entry.machineType.trim().toLowerCase() &&
+        r.maintenanceNature.trim().toLowerCase() === entry.maintenanceNature.trim().toLowerCase() &&
+        r.plantMaintenanceFrequency.trim().toLowerCase() ===
+          entry.plantMaintenanceFrequency.trim().toLowerCase() &&
+        r.plantMaintenanceType.trim().toLowerCase() ===
+          entry.plantMaintenanceType.trim().toLowerCase()
+      );
+    });
+  }
 }

@@ -1,5 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { PlantMaintenanceMachineRecordBase } from '../plant-maintenance-machine.model';
+import {
+  PlantMaintenanceMachineRecordBase,
+  resolveMachineIdentity,
+} from '../plant-maintenance-machine.model';
 
 export interface MaintenanceActivityInspectionLine {
   itemsToBeInspected: string;
@@ -18,6 +21,21 @@ export interface MaintenanceActivityMachineRecord extends PlantMaintenanceMachin
   plantMaintenanceType: string;
   components: MaintenanceActivityComponent[];
 }
+
+export interface MaintenanceActivityMatchCriteria {
+  machineId: string;
+  machineName?: string;
+  machineType: string;
+  maintenanceNature: string;
+  plantMaintenanceFrequency: string;
+  plantMaintenanceType: string;
+}
+
+type MaintenanceActivityProfileField =
+  | 'machineType'
+  | 'maintenanceNature'
+  | 'plantMaintenanceFrequency'
+  | 'plantMaintenanceType';
 
 @Injectable({ providedIn: 'root' })
 export class MaintenanceActivityDefinitionService {
@@ -58,8 +76,63 @@ export class MaintenanceActivityDefinitionService {
   }
 
   getByMachineId(machineId: string): MaintenanceActivityMachineRecord | undefined {
-    const key = machineId.trim().toLowerCase();
-    return this._records().find((r) => r.machineId.trim().toLowerCase() === key);
+    return this.getAllByMachineId(machineId)[0];
+  }
+
+  getAllByMachineId(machineId: string, machineName = ''): MaintenanceActivityMachineRecord[] {
+    const identity = resolveMachineIdentity(machineId, machineName);
+    const idKey = identity.machineId.toLowerCase();
+    const nameKey = identity.machineName.toLowerCase();
+    return this._records().filter((r) => {
+      const existing = resolveMachineIdentity(r.machineId, r.machineName);
+      return (
+        existing.machineId.toLowerCase() === idKey ||
+        existing.machineName.toLowerCase() === nameKey
+      );
+    });
+  }
+
+  findByCriteria(
+    criteria: MaintenanceActivityMatchCriteria,
+  ): MaintenanceActivityMachineRecord | undefined {
+    const identity = resolveMachineIdentity(criteria.machineId, criteria.machineName ?? '');
+    const idKey = identity.machineId.toLowerCase();
+    const nameKey = identity.machineName.toLowerCase();
+    return this._records().find((r) => {
+      const existing = resolveMachineIdentity(r.machineId, r.machineName);
+      const sameMachine =
+        existing.machineId.toLowerCase() === idKey ||
+        existing.machineName.toLowerCase() === nameKey;
+      if (!sameMachine) {
+        return false;
+      }
+      return (
+        this.normalizeKey(r.machineType) === this.normalizeKey(criteria.machineType) &&
+        this.normalizeKey(r.maintenanceNature) === this.normalizeKey(criteria.maintenanceNature) &&
+        this.normalizeKey(r.plantMaintenanceFrequency) ===
+          this.normalizeKey(criteria.plantMaintenanceFrequency) &&
+        this.normalizeKey(r.plantMaintenanceType) ===
+          this.normalizeKey(criteria.plantMaintenanceType)
+      );
+    });
+  }
+
+  getProfileFieldValues(
+    records: MaintenanceActivityMachineRecord[],
+    field: MaintenanceActivityProfileField,
+    filters: Partial<Record<MaintenanceActivityProfileField, string>> = {},
+  ): string[] {
+    const filtered = records.filter((record) =>
+      (Object.entries(filters) as Array<[MaintenanceActivityProfileField, string]>).every(
+        ([key, value]) => !value.trim() || this.normalizeKey(record[key]) === this.normalizeKey(value),
+      ),
+    );
+    const values = filtered.map((record) => record[field].trim()).filter(Boolean);
+    return [...new Set(values)];
+  }
+
+  private normalizeKey(value: string): string {
+    return value.trim().toLowerCase();
   }
 
   updateRecord(

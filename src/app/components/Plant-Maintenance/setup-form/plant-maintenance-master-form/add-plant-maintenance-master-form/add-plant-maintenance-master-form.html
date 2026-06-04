@@ -106,15 +106,30 @@
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="pmm-machine-type">Machine Type:</label>
-                <input
+                <select
+                  *ngIf="isCreateMode() && hasActivityDefinitionsForMachine(); else pmmMachineTypeInput"
                   id="pmm-machine-type"
-                  type="text"
+                  class="mad-select"
                   [ngModel]="machineType()"
                   (ngModelChange)="onMachineTypeInput($event)"
                   name="machineType"
-                  placeholder="Enter machine type"
-                  [readonly]="isPopulatedFieldsReadOnly()"
-                />
+                >
+                  <option value="">Select machine type</option>
+                  <option *ngFor="let option of machineTypeOptions()" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+                <ng-template #pmmMachineTypeInput>
+                  <input
+                    id="pmm-machine-type"
+                    type="text"
+                    [ngModel]="machineType()"
+                    (ngModelChange)="onMachineTypeInput($event)"
+                    name="machineType"
+                    placeholder="Enter machine type"
+                    [readonly]="isPopulatedFieldsReadOnly()"
+                  />
+                </ng-template>
               </div>
 
               <div class="cjr-row">
@@ -125,10 +140,9 @@
                   [ngModel]="maintenanceNature()"
                   (ngModelChange)="onMaintenanceNatureInput($event)"
                   name="maintenanceNature"
-                  [disabled]="isPopulatedFieldsReadOnly()"
                 >
                   <option value="">Select maintenance nature</option>
-                  <option *ngFor="let option of maintenanceNatureOptions" [value]="option">
+                  <option *ngFor="let option of maintenanceNatureSelectOptions()" [value]="option">
                     {{ option }}
                   </option>
                 </select>
@@ -144,10 +158,9 @@
                   [ngModel]="plantMaintenanceFrequency()"
                   (ngModelChange)="onPlantMaintenanceFrequencyInput($event)"
                   name="plantMaintenanceFrequency"
-                  [disabled]="isPopulatedFieldsReadOnly()"
                 >
                   <option value="">Select plant maintenance frequency</option>
-                  <option *ngFor="let option of plantMaintenanceFrequencyOptions" [value]="option">
+                  <option *ngFor="let option of plantMaintenanceFrequencySelectOptions()" [value]="option">
                     {{ option }}
                   </option>
                 </select>
@@ -161,10 +174,9 @@
                   [ngModel]="plantMaintenanceType()"
                   (ngModelChange)="onPlantMaintenanceTypeInput($event)"
                   name="plantMaintenanceType"
-                  [disabled]="isPopulatedFieldsReadOnly()"
                 >
                   <option value="">Select plant maintenance type</option>
-                  <option *ngFor="let option of plantMaintenanceTypeOptions" [value]="option">
+                  <option *ngFor="let option of plantMaintenanceTypeSelectOptions()" [value]="option">
                     {{ option }}
                   </option>
                 </select>
@@ -176,21 +188,28 @@
             <div class="cjr-section-title scd-sub-components__title">Components</div>
 
             <p class="mad-components-hint" *ngIf="isPopulatedFieldsReadOnly()">
-              Fields are populated from Maintenance Activity Defination and cannot be edited. Select Status for each line and save.
+              Inspection details are loaded from the matching Maintenance Activity Defination. Select Status for each line and save.
             </p>
 
             <p
               class="mad-components-hint mad-components-hint--warning"
-              *ngIf="!isPopulatedFieldsReadOnly() && machineId().trim() && !hasLoadedComponents()"
+              *ngIf="!isPopulatedFieldsReadOnly() && machineId().trim() && !hasActivityDefinitionsForMachine()"
             >
               No Maintenance Activity Defination found for this machine. Create one in Maintenance Activity Defination first.
+            </p>
+
+            <p
+              class="mad-components-hint mad-components-hint--warning"
+              *ngIf="!isPopulatedFieldsReadOnly() && hasActivityDefinitionsForMachine() && !hasLoadedComponents()"
+            >
+              Select Machine Type, Maintenance Nature, Plant Maintenance Frequency, and Plant Maintenance Type to load the matching inspection details.
             </p>
 
             <p
               class="mad-components-hint"
               *ngIf="!isPopulatedFieldsReadOnly() && !machineId().trim() && isCreateMode() && !hasLoadedComponents()"
             >
-              Select a machine to load data from Maintenance Activity Defination.
+              Select a machine, then choose the maintenance profile to load data from Maintenance Activity Defination.
             </p>
 
             <div
