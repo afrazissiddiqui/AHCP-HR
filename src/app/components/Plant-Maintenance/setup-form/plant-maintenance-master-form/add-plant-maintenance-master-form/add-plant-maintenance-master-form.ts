@@ -23,6 +23,8 @@ function createEmptyInspectionLine(): PlantMaintenanceMasterInspectionLine {
     whatToCheck: '',
     instructions: '',
     status: '',
+    recommendation: '',
+    attachments: [],
   };
 }
 
@@ -31,6 +33,36 @@ function createEmptyComponent(): PlantMaintenanceMasterComponent {
     name: '',
     inspectionLines: [createEmptyInspectionLine()],
   };
+}
+
+function formatDateValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateValue(value: string): Date | null {
+  if (!value.trim()) {
+    return null;
+  }
+  const parsed = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function addDaysToDate(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function inclusiveDurationDays(start: Date, end: Date): number {
+  const diffMs = end.getTime() - start.getTime();
+  return Math.floor(diffMs / 86_400_000) + 1;
+}
+
+function todayDateValue(): string {
+  return formatDateValue(new Date());
 }
 
 @Component({
@@ -63,6 +95,9 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly maintenanceNature = signal('');
   readonly plantMaintenanceFrequency = signal('');
   readonly plantMaintenanceType = signal('');
+  readonly startDate = signal('');
+  readonly endDate = signal('');
+  readonly durationDays = signal<number | null>(null);
   readonly components = signal<PlantMaintenanceMasterComponent[]>([]);
   readonly availableActivityRecords = signal<MaintenanceActivityMachineRecord[]>([]);
   readonly hasLoadedActivityData = signal(false);
@@ -112,6 +147,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     return SAP_MACHINE_MASTER;
   }
 
+  private syncingScheduleFields = false;
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -130,6 +167,9 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.maintenanceNature.set(record.maintenanceNature);
     this.plantMaintenanceFrequency.set(record.plantMaintenanceFrequency);
     this.plantMaintenanceType.set(record.plantMaintenanceType);
+    this.startDate.set(record.startDate ?? '');
+    this.endDate.set(record.endDate ?? '');
+    this.durationDays.set(record.duration ?? null);
     this.components.set(this.cloneComponents(record));
   }
 
@@ -179,6 +219,30 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.tryApplyMatchingActivityDefinition();
   }
 
+  onStartDateInput(value: string): void {
+    this.startDate.set(value);
+    this.syncScheduleFromStartDate();
+  }
+
+  onEndDateInput(value: string): void {
+    this.endDate.set(value);
+    this.syncScheduleFromEndDate();
+  }
+
+  onDurationInput(value: number | string | null): void {
+    if (value === null || value === '') {
+      this.durationDays.set(null);
+      return;
+    }
+
+    const days = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
+    if (!Number.isFinite(days) || days < 1) {
+      return;
+    }
+
+    this.syncScheduleFromDuration(days);
+  }
+
   updateComponentName(componentIndex: number, value: string): void {
     if (this.hasLoadedActivityData()) {
       return;
@@ -196,7 +260,11 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     field: InspectionLineField,
     value: string,
   ): void {
-    if (field !== 'status' && this.hasLoadedActivityData()) {
+    if (
+      field !== 'status' &&
+      field !== 'recommendation' &&
+      this.hasLoadedActivityData()
+    ) {
       return;
     }
     this.components.update((list) =>
@@ -266,6 +334,73 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     return index;
   }
 
+  onLineAttachmentChange(componentIndex: number, lineIndex: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.alertService.validation('Please upload an image file.');
+      input.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+      if (!dataUrl) {
+        return;
+      }
+
+      this.components.update((list) =>
+        list.map((component, ci) => {
+          if (ci !== componentIndex) {
+            return component;
+          }
+          const inspectionLines = component.inspectionLines.map((line, li) =>
+            li === lineIndex
+              ? {
+                  ...line,
+                  attachments: [
+                    ...line.attachments,
+                    { fileName: file.name, dataUrl },
+                  ],
+                }
+              : line,
+          );
+          return { ...component, inspectionLines };
+        }),
+      );
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeLineAttachment(
+    componentIndex: number,
+    lineIndex: number,
+    attachmentIndex: number,
+  ): void {
+    this.components.update((list) =>
+      list.map((component, ci) => {
+        if (ci !== componentIndex) {
+          return component;
+        }
+        const inspectionLines = component.inspectionLines.map((line, li) =>
+          li === lineIndex
+            ? {
+                ...line,
+                attachments: line.attachments.filter((_, ai) => ai !== attachmentIndex),
+              }
+            : line,
+        );
+        return { ...component, inspectionLines };
+      }),
+    );
+  }
+
   openIdSuggestions(): void {
     if (this.machineId().trim()) {
       this.idSuggestionsOpen.set(true);
@@ -312,6 +447,9 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
         this.maintenanceNature.set(record.maintenanceNature);
         this.plantMaintenanceFrequency.set(record.plantMaintenanceFrequency);
         this.plantMaintenanceType.set(record.plantMaintenanceType);
+        this.startDate.set(record.startDate ?? '');
+        this.endDate.set(record.endDate ?? '');
+        this.durationDays.set(record.duration ?? null);
         this.components.set(this.cloneComponents(record));
         this.hasLoadedActivityData.set(false);
       }
@@ -324,6 +462,9 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.maintenanceNature.set('');
     this.plantMaintenanceFrequency.set('');
     this.plantMaintenanceType.set('');
+    this.startDate.set('');
+    this.endDate.set('');
+    this.durationDays.set(null);
     this.components.set([]);
     this.availableActivityRecords.set([]);
     this.closeIdSuggestions();
@@ -347,6 +488,11 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
             whatToCheck: line.whatToCheck.trim(),
             instructions: line.instructions.trim(),
             status: line.status.trim(),
+            recommendation: line.recommendation.trim(),
+            attachments: line.attachments.map((attachment) => ({
+              fileName: attachment.fileName.trim(),
+              dataUrl: attachment.dataUrl,
+            })),
           }))
           .filter(
             (line) => line.itemsToBeInspected || line.whatToCheck || line.instructions,
@@ -406,6 +552,9 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       maintenanceNature,
       plantMaintenanceFrequency,
       plantMaintenanceType,
+      startDate: this.startDate().trim(),
+      endDate: this.endDate().trim(),
+      duration: this.durationDays(),
       remarks: '',
       components,
     };
@@ -434,6 +583,78 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     await this.alertService.successAndWait('Success', successMessage);
 
     void this.router.navigate(['/plant-maintenance/setup-form/plant-maintenance-master-form']);
+  }
+
+  private syncScheduleFromDuration(days: number): void {
+    if (this.syncingScheduleFields) {
+      return;
+    }
+
+    this.syncingScheduleFields = true;
+    try {
+      const start = parseDateValue(todayDateValue());
+      if (!start) {
+        return;
+      }
+
+      const end = addDaysToDate(start, days - 1);
+      this.durationDays.set(days);
+      this.startDate.set(formatDateValue(start));
+      this.endDate.set(formatDateValue(end));
+    } finally {
+      this.syncingScheduleFields = false;
+    }
+  }
+
+  private syncScheduleFromStartDate(): void {
+    if (this.syncingScheduleFields) {
+      return;
+    }
+
+    const start = parseDateValue(this.startDate());
+    if (!start) {
+      return;
+    }
+
+    this.syncingScheduleFields = true;
+    try {
+      const end = parseDateValue(this.endDate());
+      const duration = this.durationDays();
+
+      if (end && end >= start) {
+        this.durationDays.set(inclusiveDurationDays(start, end));
+        return;
+      }
+
+      if (duration && duration > 0) {
+        this.endDate.set(formatDateValue(addDaysToDate(start, duration - 1)));
+      }
+    } finally {
+      this.syncingScheduleFields = false;
+    }
+  }
+
+  private syncScheduleFromEndDate(): void {
+    if (this.syncingScheduleFields) {
+      return;
+    }
+
+    const start = parseDateValue(this.startDate());
+    const end = parseDateValue(this.endDate());
+    if (!start || !end) {
+      return;
+    }
+
+    this.syncingScheduleFields = true;
+    try {
+      if (end >= start) {
+        this.durationDays.set(inclusiveDurationDays(start, end));
+      } else {
+        this.durationDays.set(null);
+      }
+    } finally {
+      this.syncingScheduleFields = false;
+    }
   }
 
   private filterMachineSuggestions(query: string): MachineSearchOption[] {
@@ -560,6 +781,11 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       whatToCheck: line.whatToCheck ?? '',
       instructions: line.instructions ?? '',
       status: line.status ?? '',
+      recommendation: line.recommendation ?? '',
+      attachments: (line.attachments ?? []).map((attachment) => ({
+        fileName: attachment.fileName ?? '',
+        dataUrl: attachment.dataUrl ?? '',
+      })),
     };
   }
 

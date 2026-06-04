@@ -1,11 +1,18 @@
 import { Injectable, signal } from '@angular/core';
 import { PlantMaintenanceMachineRecordBase } from '../plant-maintenance-machine.model';
 
+export interface PlantMaintenanceMasterLineAttachment {
+  fileName: string;
+  dataUrl: string;
+}
+
 export interface PlantMaintenanceMasterInspectionLine {
   itemsToBeInspected: string;
   whatToCheck: string;
   instructions: string;
   status: string;
+  recommendation: string;
+  attachments: PlantMaintenanceMasterLineAttachment[];
 }
 
 export interface PlantMaintenanceMasterComponent {
@@ -17,6 +24,9 @@ export interface PlantMaintenanceMasterRecord extends PlantMaintenanceMachineRec
   maintenanceNature: string;
   plantMaintenanceFrequency: string;
   plantMaintenanceType: string;
+  startDate: string;
+  endDate: string;
+  duration: number | null;
   remarks: string;
   components: PlantMaintenanceMasterComponent[];
 }

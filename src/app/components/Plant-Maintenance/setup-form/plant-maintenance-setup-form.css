@@ -616,6 +616,118 @@
   box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
 }
 
+.mad-inspection-line__extra-fields {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mad-inspection-col--full {
+  width: 100%;
+}
+
+.mad-line-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.mad-line-attachment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 96px;
+}
+
+.mad-line-attachment-thumb {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.mad-line-attachment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.mad-line-attachment-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mad-line-attachment-remove {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #dc3545;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mad-line-attachment-remove:hover {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+
+.mad-line-attachment-input {
+  width: 100%;
+  max-width: 280px;
+  font-size: 12px;
+}
+
+.mad-view-inspection-item--full {
+  grid-column: 1 / -1;
+}
+
+.mad-view-attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mad-view-attachment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 96px;
+}
+
+.mad-view-attachment-thumb {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.mad-view-attachment-name {
+  font-size: 11px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mad-view-inspection-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -731,6 +843,36 @@
 
 .scd-sub-components__title {
   margin-top: 12px;
+}
+
+.pmm-schedule-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pmm-schedule-grid {
+  margin-top: 8px;
+}
+
+.pmm-schedule-grid .cjr-row input[type='date'],
+.pmm-schedule-grid .cjr-row input[type='number'] {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 13px;
+  color: #333;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.pmm-schedule-grid .cjr-row input:focus {
+  outline: none;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
 }
 
 .pmm-profile-grid,

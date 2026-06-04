@@ -106,6 +106,7 @@ export class PlantMaintenanceMasterFormComponent {
               c.inspectionLines.some(
                 (line) =>
                   line.status.toLowerCase().includes(search) ||
+                  (line.recommendation ?? '').toLowerCase().includes(search) ||
                   line.itemsToBeInspected.toLowerCase().includes(search) ||
                   line.whatToCheck.toLowerCase().includes(search) ||
                   line.instructions.toLowerCase().includes(search),
