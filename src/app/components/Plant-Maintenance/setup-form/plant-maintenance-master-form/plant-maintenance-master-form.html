@@ -256,26 +256,31 @@
                 <label>Recommendation:</label>
                 <span>{{ line.recommendation || '—' }}</span>
               </div>
-              <div class="mad-view-inspection-item mad-view-inspection-item--full">
-                <label>Attachments:</label>
-                <div class="mad-view-attachment-list" *ngIf="line.attachments?.length; else noLineAttachments">
-                  <div
-                    class="mad-view-attachment-item"
-                    *ngFor="let attachment of line.attachments"
-                  >
-                    <img
-                      class="mad-view-attachment-thumb"
-                      [src]="attachment.dataUrl"
-                      [alt]="attachment.fileName"
-                    />
-                    <span class="mad-view-attachment-name">{{ attachment.fileName }}</span>
-                  </div>
-                </div>
-                <ng-template #noLineAttachments>
-                  <span>—</span>
-                </ng-template>
+            </div>
+            <div class="mad-view-attachments-block" *ngIf="line.attachments?.length; else noLineAttachments">
+              <label class="mad-view-attachments-block__label">Attachments:</label>
+              <div class="mad-view-attachment-list">
+                <article
+                  class="mad-view-attachment-card"
+                  *ngFor="let attachment of line.attachments"
+                >
+                  <img
+                    class="mad-view-attachment-card__image"
+                    [src]="attachment.dataUrl"
+                    [alt]="attachment.fileName"
+                  />
+                  <span class="mad-view-attachment-card__name" [title]="attachment.fileName">
+                    {{ attachment.fileName }}
+                  </span>
+                </article>
               </div>
             </div>
+            <ng-template #noLineAttachments>
+              <div class="mad-view-attachments-block mad-view-attachments-block--empty">
+                <label class="mad-view-attachments-block__label">Attachments:</label>
+                <span>—</span>
+              </div>
+            </ng-template>
           </div>
         </div>
       </div>

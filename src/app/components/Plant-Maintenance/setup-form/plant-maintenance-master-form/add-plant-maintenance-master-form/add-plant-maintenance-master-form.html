@@ -342,12 +342,13 @@
                         </button>
                       </div>
 
-                      <div class="mad-inspection-fields mad-inspection-fields--columns">
+                      <div class="mad-inspection-fields mad-inspection-fields--columns mad-inspection-fields--readonly">
                         <div class="mad-inspection-col">
                           <label [attr.for]="'pmm-items-' + ci + '-' + li">Items to be inspected</label>
                           <input
                             [id]="'pmm-items-' + ci + '-' + li"
                             type="text"
+                            class="mad-input-readonly"
                             [ngModel]="line.itemsToBeInspected"
                             (ngModelChange)="updateInspectionLine(ci, li, 'itemsToBeInspected', $event)"
                             [name]="'itemsToBeInspected' + ci + '_' + li"
@@ -360,6 +361,7 @@
                           <input
                             [id]="'pmm-check-' + ci + '-' + li"
                             type="text"
+                            class="mad-input-readonly"
                             [ngModel]="line.whatToCheck"
                             (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
                             [name]="'whatToCheck' + ci + '_' + li"
@@ -371,7 +373,7 @@
                           <label [attr.for]="'pmm-instructions-' + ci + '-' + li">Instructions</label>
                           <textarea
                             [id]="'pmm-instructions-' + ci + '-' + li"
-                            class="mad-textarea"
+                            class="mad-textarea mad-input-readonly"
                             rows="3"
                             [ngModel]="line.instructions"
                             (ngModelChange)="updateInspectionLine(ci, li, 'instructions', $event)"
@@ -382,53 +384,66 @@
                         </div>
                       </div>
 
-                      <div class="mad-inspection-fields mad-inspection-line__extra-fields">
-                        <div class="mad-inspection-col mad-inspection-col--full">
-                          <label [attr.for]="'pmm-recommendation-' + ci + '-' + li">Recommendation</label>
-                          <textarea
-                            [id]="'pmm-recommendation-' + ci + '-' + li"
-                            class="mad-textarea"
-                            rows="2"
-                            [ngModel]="line.recommendation"
-                            (ngModelChange)="updateInspectionLine(ci, li, 'recommendation', $event)"
-                            [name]="'recommendation' + ci + '_' + li"
-                            placeholder="Enter recommendation"
-                          ></textarea>
-                        </div>
+                      <div class="mad-inspection-line__results">
+                        <div class="mad-inspection-fields mad-inspection-fields--results">
+                          <div class="mad-inspection-col">
+                            <label [attr.for]="'pmm-recommendation-' + ci + '-' + li">Recommendation</label>
+                            <textarea
+                              [id]="'pmm-recommendation-' + ci + '-' + li"
+                              class="mad-textarea mad-textarea--compact"
+                              rows="3"
+                              [ngModel]="line.recommendation"
+                              (ngModelChange)="updateInspectionLine(ci, li, 'recommendation', $event)"
+                              [name]="'recommendation' + ci + '_' + li"
+                              placeholder="Enter recommendation for this line"
+                            ></textarea>
+                          </div>
 
-                        <div class="mad-inspection-col mad-inspection-col--full">
-                          <label [attr.for]="'pmm-attachments-' + ci + '-' + li">Attachments (pictures)</label>
-                          <div class="mad-line-attachments">
-                            <div
-                              class="mad-line-attachment-item"
-                              *ngFor="let attachment of line.attachments; let ai = index; trackBy: trackByIndex"
-                            >
-                              <img
-                                class="mad-line-attachment-thumb"
-                                [src]="attachment.dataUrl"
-                                [alt]="attachment.fileName"
+                          <div class="mad-inspection-col">
+                            <label [attr.for]="'pmm-attachments-' + ci + '-' + li">Attachments (pictures)</label>
+                            <div class="mad-attachment-panel">
+                              <article
+                                class="mad-attachment-card"
+                                *ngFor="let attachment of line.attachments; let ai = index; trackBy: trackByIndex"
+                              >
+                                <img
+                                  class="mad-attachment-card__image"
+                                  [src]="attachment.dataUrl"
+                                  [alt]="attachment.fileName"
+                                />
+                                <div class="mad-attachment-card__footer">
+                                  <span class="mad-attachment-card__name" [title]="attachment.fileName">
+                                    {{ attachment.fileName }}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    class="mad-attachment-card__remove"
+                                    (click)="removeLineAttachment(ci, li, ai)"
+                                    title="Remove picture"
+                                    [attr.aria-label]="'Remove ' + attachment.fileName"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </article>
+
+                              <label
+                                class="mad-attachment-upload"
+                                [attr.for]="'pmm-attachments-' + ci + '-' + li"
+                              >
+                                <span class="mad-attachment-upload__icon" aria-hidden="true">+</span>
+                                <span class="mad-attachment-upload__title">Upload picture</span>
+                                <span class="mad-attachment-upload__hint">JPEG, PNG, or WEBP</span>
+                              </label>
+                              <input
+                                [id]="'pmm-attachments-' + ci + '-' + li"
+                                type="file"
+                                accept="image/*"
+                                class="mad-attachment-upload__input"
+                                (change)="onLineAttachmentChange(ci, li, $event)"
+                                [attr.aria-label]="'Upload picture for line ' + (li + 1)"
                               />
-                              <div class="mad-line-attachment-meta">
-                                <span class="mad-line-attachment-name">{{ attachment.fileName }}</span>
-                                <button
-                                  type="button"
-                                  class="mad-line-attachment-remove"
-                                  (click)="removeLineAttachment(ci, li, ai)"
-                                  title="Remove picture"
-                                  [attr.aria-label]="'Remove ' + attachment.fileName"
-                                >
-                                  ×
-                                </button>
-                              </div>
                             </div>
-                            <input
-                              [id]="'pmm-attachments-' + ci + '-' + li"
-                              type="file"
-                              accept="image/*"
-                              class="mad-line-attachment-input"
-                              (change)="onLineAttachmentChange(ci, li, $event)"
-                              [attr.aria-label]="'Upload picture for line ' + (li + 1)"
-                            />
                           </div>
                         </div>
                       </div>
