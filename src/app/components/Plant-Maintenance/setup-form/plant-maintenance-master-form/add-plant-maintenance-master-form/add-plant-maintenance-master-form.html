@@ -236,6 +236,180 @@
             </div>
           </section>
 
+          <section class="pmm-spare-parts-section">
+            <div class="cjr-section-title">Spare Parts</div>
+            <p class="mad-components-hint">
+              Search Spare Part ID or Description from SAP. Enter quantity manually. Select Warehouse and UOM from SAP.
+            </p>
+
+            <div
+              class="pmm-spare-part-row"
+              *ngFor="let row of spareParts(); let ri = index; trackBy: trackByIndex"
+            >
+              <div class="pmm-spare-part-row__header">
+                <span class="pmm-spare-part-row__badge">Row {{ ri + 1 }}</span>
+                <button
+                  type="button"
+                  class="mad-line-remove-btn"
+                  (click)="removeSparePartRow(ri)"
+                  title="Remove row"
+                  aria-label="Remove spare parts row"
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div class="pmm-spare-part-grid">
+                <div class="pmm-spare-part-field">
+                  <label [attr.for]="'pmm-spare-part-id-' + ri">Spare Part ID:</label>
+                  <div class="tax-computation-search-wrap">
+                    <input
+                      [id]="'pmm-spare-part-id-' + ri"
+                      type="search"
+                      role="combobox"
+                      [attr.aria-expanded]="isSparePartIdSuggestionsOpen(ri)"
+                      aria-autocomplete="list"
+                      [attr.aria-controls]="'pmm-spare-part-id-listbox-' + ri"
+                      [ngModel]="row.sparePartId"
+                      (ngModelChange)="onSparePartIdInput(ri, $event)"
+                      (focus)="openSparePartIdSuggestions(ri)"
+                      (blur)="onSparePartIdBlur()"
+                      placeholder="Search by ID or description"
+                      autocomplete="off"
+                      [name]="'sparePartId-' + ri"
+                    />
+                    <ul
+                      [id]="'pmm-spare-part-id-listbox-' + ri"
+                      class="tax-computation-suggestions"
+                      role="listbox"
+                      *ngIf="isSparePartIdSuggestionsOpen(ri)"
+                    >
+                      <li
+                        *ngFor="let part of getSparePartIdSuggestions(ri)"
+                        role="option"
+                        class="tax-computation-suggestion-item"
+                        (mousedown)="selectSparePartFromSuggestion(ri, part)"
+                      >
+                        <span class="tax-computation-suggestion-primary">
+                          {{ part.sparePartId }} — {{ part.sparePartDescription }}
+                        </span>
+                      </li>
+                      <li
+                        *ngIf="getSparePartIdSuggestions(ri).length === 0"
+                        class="tax-computation-suggestion-empty"
+                        role="presentation"
+                      >
+                        No matching spare parts
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="pmm-spare-part-field">
+                  <label [attr.for]="'pmm-spare-part-desc-' + ri">Spare Part Description:</label>
+                  <div class="tax-computation-search-wrap">
+                    <input
+                      [id]="'pmm-spare-part-desc-' + ri"
+                      type="search"
+                      role="combobox"
+                      [attr.aria-expanded]="isSparePartDescSuggestionsOpen(ri)"
+                      aria-autocomplete="list"
+                      [attr.aria-controls]="'pmm-spare-part-desc-listbox-' + ri"
+                      [ngModel]="row.sparePartDescription"
+                      (ngModelChange)="onSparePartDescriptionInput(ri, $event)"
+                      (focus)="openSparePartDescSuggestions(ri)"
+                      (blur)="onSparePartDescBlur()"
+                      placeholder="Search by description or ID"
+                      autocomplete="off"
+                      [name]="'sparePartDescription-' + ri"
+                    />
+                    <ul
+                      [id]="'pmm-spare-part-desc-listbox-' + ri"
+                      class="tax-computation-suggestions"
+                      role="listbox"
+                      *ngIf="isSparePartDescSuggestionsOpen(ri)"
+                    >
+                      <li
+                        *ngFor="let part of getSparePartDescSuggestions(ri)"
+                        role="option"
+                        class="tax-computation-suggestion-item"
+                        (mousedown)="selectSparePartFromSuggestion(ri, part)"
+                      >
+                        <span class="tax-computation-suggestion-primary">
+                          {{ part.sparePartId }} — {{ part.sparePartDescription }}
+                        </span>
+                      </li>
+                      <li
+                        *ngIf="getSparePartDescSuggestions(ri).length === 0"
+                        class="tax-computation-suggestion-empty"
+                        role="presentation"
+                      >
+                        No matching spare parts
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="pmm-spare-part-field">
+                  <label [attr.for]="'pmm-spare-part-qty-' + ri">Quantity:</label>
+                  <input
+                    [id]="'pmm-spare-part-qty-' + ri"
+                    type="number"
+                    min="0"
+                    step="any"
+                    [ngModel]="row.quantity"
+                    (ngModelChange)="onSparePartQuantityInput(ri, $event)"
+                    placeholder="Enter quantity"
+                    [name]="'sparePartQuantity-' + ri"
+                  />
+                </div>
+
+                <div class="pmm-spare-part-field">
+                  <label [attr.for]="'pmm-spare-part-wh-' + ri">Warehouse:</label>
+                  <select
+                    [id]="'pmm-spare-part-wh-' + ri"
+                    class="mad-select"
+                    [ngModel]="row.warehouseCode"
+                    (ngModelChange)="onSparePartWarehouseInput(ri, $event)"
+                    [name]="'sparePartWarehouse-' + ri"
+                  >
+                    <option value="">Select warehouse</option>
+                    <option *ngFor="let wh of sapWarehouseOptions" [value]="wh.warehouseCode">
+                      {{ wh.warehouseCode }} — {{ wh.warehouseName }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="pmm-spare-part-field">
+                  <label [attr.for]="'pmm-spare-part-uom-' + ri">UOM:</label>
+                  <select
+                    [id]="'pmm-spare-part-uom-' + ri"
+                    class="mad-select"
+                    [ngModel]="row.uomCode"
+                    (ngModelChange)="onSparePartUomInput(ri, $event)"
+                    [name]="'sparePartUom-' + ri"
+                  >
+                    <option value="">Select UOM</option>
+                    <option *ngFor="let uom of sapUomOptions" [value]="uom.uomCode">
+                      {{ uom.uomCode }} — {{ uom.uomDescription }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="mad-add-line-btn pmm-spare-parts-add-row"
+              (click)="addSparePartRow()"
+              title="Add row"
+              aria-label="Add spare parts row"
+            >
+              <span class="mad-add-line-btn__icon" aria-hidden="true">+</span>
+              <span>Add row</span>
+            </button>
+          </section>
+
           <section class="mad-components-section">
             <div class="cjr-section-title scd-sub-components__title">Components</div>
 

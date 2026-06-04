@@ -20,6 +20,14 @@ export interface PlantMaintenanceMasterComponent {
   inspectionLines: PlantMaintenanceMasterInspectionLine[];
 }
 
+export interface PlantMaintenanceMasterSparePartLine {
+  sparePartId: string;
+  sparePartDescription: string;
+  quantity: number | null;
+  warehouseCode: string;
+  uomCode: string;
+}
+
 export interface PlantMaintenanceMasterRecord extends PlantMaintenanceMachineRecordBase {
   maintenanceNature: string;
   plantMaintenanceFrequency: string;
@@ -27,6 +35,7 @@ export interface PlantMaintenanceMasterRecord extends PlantMaintenanceMachineRec
   startDate: string;
   endDate: string;
   duration: number | null;
+  spareParts: PlantMaintenanceMasterSparePartLine[];
   remarks: string;
   components: PlantMaintenanceMasterComponent[];
 }

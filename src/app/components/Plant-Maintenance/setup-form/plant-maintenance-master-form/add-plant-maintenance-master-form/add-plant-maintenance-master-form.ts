@@ -3,7 +3,15 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
-import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
+import {
+  MachineSearchOption,
+  resolveSparePartIdentity,
+  SAP_MACHINE_MASTER,
+  SAP_SPARE_PARTS_MASTER,
+  SAP_UOM_MASTER,
+  SAP_WAREHOUSE_MASTER,
+  SparePartSearchOption,
+} from '../../plant-maintenance-machine.model';
 import {
   MaintenanceActivityDefinitionService,
   MaintenanceActivityMachineRecord,
@@ -13,6 +21,7 @@ import {
   PlantMaintenanceMasterFormService,
   PlantMaintenanceMasterInspectionLine,
   PlantMaintenanceMasterRecord,
+  PlantMaintenanceMasterSparePartLine,
 } from '../plant-maintenance-master-form.service';
 
 type InspectionLineField = keyof PlantMaintenanceMasterInspectionLine;
@@ -32,6 +41,16 @@ function createEmptyComponent(): PlantMaintenanceMasterComponent {
   return {
     name: '',
     inspectionLines: [createEmptyInspectionLine()],
+  };
+}
+
+function createEmptySparePartLine(): PlantMaintenanceMasterSparePartLine {
+  return {
+    sparePartId: '',
+    sparePartDescription: '',
+    quantity: null,
+    warehouseCode: '',
+    uomCode: '',
   };
 }
 
@@ -98,6 +117,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly startDate = signal('');
   readonly endDate = signal('');
   readonly durationDays = signal<number | null>(null);
+  readonly spareParts = signal<PlantMaintenanceMasterSparePartLine[]>([createEmptySparePartLine()]);
   readonly components = signal<PlantMaintenanceMasterComponent[]>([]);
   readonly availableActivityRecords = signal<MaintenanceActivityMachineRecord[]>([]);
   readonly hasLoadedActivityData = signal(false);
@@ -142,9 +162,18 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
 
   readonly idSuggestions = computed(() => this.filterMachineSuggestions(this.machineId()));
   readonly nameSuggestions = computed(() => this.filterMachineSuggestions(this.machineName()));
+  readonly sparePartIdSuggestionsRow = signal<number | null>(null);
+  readonly sparePartDescSuggestionsRow = signal<number | null>(null);
+
+  readonly sapWarehouseOptions = SAP_WAREHOUSE_MASTER;
+  readonly sapUomOptions = SAP_UOM_MASTER;
 
   private get machineOptions(): MachineSearchOption[] {
     return SAP_MACHINE_MASTER;
+  }
+
+  private get sparePartOptions(): SparePartSearchOption[] {
+    return SAP_SPARE_PARTS_MASTER;
   }
 
   private syncingScheduleFields = false;
@@ -170,6 +199,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.startDate.set(record.startDate ?? '');
     this.endDate.set(record.endDate ?? '');
     this.durationDays.set(record.duration ?? null);
+    this.spareParts.set(this.cloneSpareParts(record));
     this.components.set(this.cloneComponents(record));
   }
 
@@ -245,6 +275,106 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   onEndDateInput(value: string): void {
     this.endDate.set(value);
     this.syncScheduleFromEndDate();
+  }
+
+  getSparePartIdSuggestions(rowIndex: number): SparePartSearchOption[] {
+    const row = this.spareParts()[rowIndex];
+    return row ? this.filterSparePartSuggestions(row.sparePartId) : [];
+  }
+
+  getSparePartDescSuggestions(rowIndex: number): SparePartSearchOption[] {
+    const row = this.spareParts()[rowIndex];
+    return row ? this.filterSparePartSuggestions(row.sparePartDescription) : [];
+  }
+
+  isSparePartIdSuggestionsOpen(rowIndex: number): boolean {
+    return (
+      this.sparePartIdSuggestionsRow() === rowIndex &&
+      (this.spareParts()[rowIndex]?.sparePartId.trim() ?? '').length > 0
+    );
+  }
+
+  isSparePartDescSuggestionsOpen(rowIndex: number): boolean {
+    return (
+      this.sparePartDescSuggestionsRow() === rowIndex &&
+      (this.spareParts()[rowIndex]?.sparePartDescription.trim() ?? '').length > 0
+    );
+  }
+
+  onSparePartIdInput(rowIndex: number, value: string): void {
+    this.updateSparePartRow(rowIndex, { sparePartId: value });
+    this.sparePartIdSuggestionsRow.set(value.trim() ? rowIndex : null);
+    this.sparePartDescSuggestionsRow.set(null);
+  }
+
+  onSparePartDescriptionInput(rowIndex: number, value: string): void {
+    this.updateSparePartRow(rowIndex, { sparePartDescription: value });
+    this.sparePartDescSuggestionsRow.set(value.trim() ? rowIndex : null);
+    this.sparePartIdSuggestionsRow.set(null);
+  }
+
+  onSparePartQuantityInput(rowIndex: number, value: number | string | null): void {
+    if (value === null || value === '') {
+      this.updateSparePartRow(rowIndex, { quantity: null });
+      return;
+    }
+    const quantity = typeof value === 'number' ? value : Number.parseFloat(String(value));
+    if (!Number.isFinite(quantity) || quantity < 0) {
+      return;
+    }
+    this.updateSparePartRow(rowIndex, { quantity });
+  }
+
+  onSparePartWarehouseInput(rowIndex: number, warehouseCode: string): void {
+    this.updateSparePartRow(rowIndex, { warehouseCode });
+  }
+
+  onSparePartUomInput(rowIndex: number, uomCode: string): void {
+    this.updateSparePartRow(rowIndex, { uomCode });
+  }
+
+  openSparePartIdSuggestions(rowIndex: number): void {
+    if (this.spareParts()[rowIndex]?.sparePartId.trim()) {
+      this.sparePartIdSuggestionsRow.set(rowIndex);
+      this.sparePartDescSuggestionsRow.set(null);
+    }
+  }
+
+  openSparePartDescSuggestions(rowIndex: number): void {
+    if (this.spareParts()[rowIndex]?.sparePartDescription.trim()) {
+      this.sparePartDescSuggestionsRow.set(rowIndex);
+      this.sparePartIdSuggestionsRow.set(null);
+    }
+  }
+
+  onSparePartIdBlur(): void {
+    setTimeout(() => this.sparePartIdSuggestionsRow.set(null), 150);
+  }
+
+  onSparePartDescBlur(): void {
+    setTimeout(() => this.sparePartDescSuggestionsRow.set(null), 150);
+  }
+
+  selectSparePartFromSuggestion(rowIndex: number, part: SparePartSearchOption): void {
+    this.sparePartIdSuggestionsRow.set(null);
+    this.sparePartDescSuggestionsRow.set(null);
+    this.updateSparePartRow(rowIndex, {
+      sparePartId: part.sparePartId,
+      sparePartDescription: part.sparePartDescription,
+      uomCode: this.spareParts()[rowIndex]?.uomCode.trim()
+        ? this.spareParts()[rowIndex].uomCode
+        : part.defaultUomCode,
+    });
+  }
+
+  addSparePartRow(): void {
+    this.spareParts.update((list) => [...list, createEmptySparePartLine()]);
+  }
+
+  removeSparePartRow(rowIndex: number): void {
+    this.spareParts.update((list) =>
+      list.length > 1 ? list.filter((_, i) => i !== rowIndex) : [createEmptySparePartLine()],
+    );
   }
 
   onDurationInput(value: number | string | null): void {
@@ -468,6 +598,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
         this.startDate.set(record.startDate ?? '');
         this.endDate.set(record.endDate ?? '');
         this.durationDays.set(record.duration ?? null);
+        this.spareParts.set(this.cloneSpareParts(record));
         this.components.set(this.cloneComponents(record));
         this.hasLoadedActivityData.set(false);
       }
@@ -483,6 +614,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.startDate.set('');
     this.endDate.set('');
     this.durationDays.set(null);
+    this.spareParts.set([createEmptySparePartLine()]);
     this.components.set([]);
     this.availableActivityRecords.set([]);
     this.closeIdSuggestions();
@@ -563,6 +695,12 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     }
 
     const excludeId = this.editingRecordId() ?? undefined;
+    const sparePartsResult = this.normalizeSparePartsForSave();
+    if (sparePartsResult.error) {
+      this.alertService.validation(sparePartsResult.error);
+      return;
+    }
+
     const payload = {
       machineId,
       machineName,
@@ -573,6 +711,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       startDate: this.startDate().trim(),
       endDate: this.endDate().trim(),
       duration: this.durationDays(),
+      spareParts: sparePartsResult.lines,
       remarks: '',
       components,
     };
@@ -699,6 +838,105 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     }
 
     return '';
+  }
+
+  private updateSparePartRow(
+    rowIndex: number,
+    patch: Partial<PlantMaintenanceMasterSparePartLine>,
+  ): void {
+    this.spareParts.update((list) =>
+      list.map((row, i) => (i === rowIndex ? { ...row, ...patch } : row)),
+    );
+  }
+
+  private normalizeSparePartsForSave():
+    | { lines: PlantMaintenanceMasterSparePartLine[]; error?: undefined }
+    | { lines?: undefined; error: string } {
+    const filledRows = this.spareParts().filter(
+      (row) =>
+        row.sparePartId.trim() ||
+        row.sparePartDescription.trim() ||
+        row.quantity !== null ||
+        row.warehouseCode.trim() ||
+        row.uomCode.trim(),
+    );
+
+    if (filledRows.length === 0) {
+      return { lines: [] };
+    }
+
+    const lines: PlantMaintenanceMasterSparePartLine[] = [];
+
+    for (let index = 0; index < filledRows.length; index++) {
+      const row = filledRows[index];
+      const identity = resolveSparePartIdentity(row.sparePartId, row.sparePartDescription);
+      const sparePartId = identity.sparePartId;
+      const sparePartDescription = identity.sparePartDescription;
+      const warehouseCode = row.warehouseCode.trim();
+      const uomCode = row.uomCode.trim();
+      const quantity = row.quantity;
+
+      if (!sparePartId || !sparePartDescription) {
+        return {
+          error: `Spare Parts row ${index + 1}: enter Spare Part ID and Description from SAP.`,
+        };
+      }
+
+      if (quantity === null || quantity <= 0) {
+        return {
+          error: `Spare Parts row ${index + 1}: enter a valid Quantity.`,
+        };
+      }
+
+      if (!warehouseCode) {
+        return {
+          error: `Spare Parts row ${index + 1}: select a Warehouse.`,
+        };
+      }
+
+      if (!uomCode) {
+        return {
+          error: `Spare Parts row ${index + 1}: select a UOM.`,
+        };
+      }
+
+      lines.push({
+        sparePartId,
+        sparePartDescription,
+        quantity,
+        warehouseCode,
+        uomCode,
+      });
+    }
+
+    return { lines };
+  }
+
+  private cloneSpareParts(record: PlantMaintenanceMasterRecord): PlantMaintenanceMasterSparePartLine[] {
+    if (record.spareParts?.length) {
+      return record.spareParts.map((row) => ({
+        sparePartId: row.sparePartId ?? '',
+        sparePartDescription: row.sparePartDescription ?? '',
+        quantity: row.quantity ?? null,
+        warehouseCode: row.warehouseCode ?? '',
+        uomCode: row.uomCode ?? '',
+      }));
+    }
+    return [createEmptySparePartLine()];
+  }
+
+  private filterSparePartSuggestions(query: string): SparePartSearchOption[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [];
+    }
+    return this.sparePartOptions
+      .filter(
+        (p) =>
+          p.sparePartId.toLowerCase().includes(q) ||
+          p.sparePartDescription.toLowerCase().includes(q),
+      )
+      .slice(0, 10);
   }
 
   private filterMachineSuggestions(query: string): MachineSearchOption[] {

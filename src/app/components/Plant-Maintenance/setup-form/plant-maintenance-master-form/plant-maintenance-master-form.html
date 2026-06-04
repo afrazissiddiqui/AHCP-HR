@@ -224,6 +224,34 @@
       </div>
     </div>
     <div class="js-detail-section">
+      <h3>Spare Parts</h3>
+      <div *ngIf="selectedRecord.spareParts?.length; else noSpareParts">
+        <table class="mountain-table pmm-view-spare-parts-table">
+          <thead>
+            <tr>
+              <th>Spare Part ID</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Warehouse</th>
+              <th>UOM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of selectedRecord.spareParts">
+              <td>{{ row.sparePartId }}</td>
+              <td>{{ row.sparePartDescription }}</td>
+              <td>{{ row.quantity }}</td>
+              <td>{{ row.warehouseCode }}</td>
+              <td>{{ row.uomCode }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noSpareParts>
+        <p class="scd-view-sub-empty">No spare parts added.</p>
+      </ng-template>
+    </div>
+    <div class="js-detail-section">
       <h3>Components</h3>
       <div *ngIf="selectedRecord.components.length; else noComponents">
         <div class="mad-view-component" *ngFor="let component of selectedRecord.components">
