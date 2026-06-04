@@ -7,7 +7,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AlertService } from '../../../../../services/alert.service';
-import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
+import {
+  MachineSearchOption,
+  resolveMachineIdentity,
+  SAP_MACHINE_MASTER,
+} from '../../plant-maintenance-machine.model';
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
 import {
   MaintenanceActivityComponent,
@@ -481,13 +485,9 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.closeNameSuggestions();
 
-    if (this.isCreateMode() && this.isMachineAlreadyDefined(machine.machineId)) {
+    if (this.isCreateMode() && this.isMachineAlreadyDefined(machine.machineId, machine.machineName)) {
 
-      this.alertService.validation(
-
-        'This machine is already in Maintenance Activity Defination.',
-
-      );
+      this.alertService.validation(this.duplicateMachineMessage);
 
       return;
 
@@ -689,11 +689,13 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
+    const resolved = resolveMachineIdentity(machineId, machineName);
+
     const excludeId = this.editingRecordId() ?? undefined;
 
-    if (this.activityService.hasDuplicateMachineId(machineId, excludeId)) {
+    if (this.activityService.hasDuplicateMachine(resolved.machineId, resolved.machineName, excludeId)) {
 
-      this.alertService.validation('This Machine ID is already in the list.');
+      this.alertService.validation(this.duplicateMachineMessage);
 
       return;
 
@@ -703,9 +705,9 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     const payload = {
 
-      machineId,
+      machineId: resolved.machineId,
 
-      machineName,
+      machineName: resolved.machineName,
 
       machineType,
 
@@ -731,7 +733,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
         if (!updated) {
 
-          this.alertService.validation('This Machine ID is already in the list.');
+          this.alertService.validation(this.duplicateMachineMessage);
 
           return;
 
@@ -743,7 +745,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
         if (!added) {
 
-          this.alertService.validation('This Machine ID is already in the list.');
+          this.alertService.validation(this.duplicateMachineMessage);
 
           return;
 
@@ -795,7 +797,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
       )
 
-      .filter((m) => !this.isMachineAlreadyDefined(m.machineId))
+      .filter((m) => !this.isMachineAlreadyDefined(m.machineId, m.machineName))
 
       .slice(0, 10);
 
@@ -803,7 +805,13 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
-  private isMachineAlreadyDefined(machineId: string): boolean {
+  private readonly duplicateMachineMessage =
+
+    'This machine is already in Maintenance Activity Defination. Each machine can only be added once.';
+
+
+
+  private isMachineAlreadyDefined(machineId: string, machineName: string): boolean {
 
     if (!this.isCreateMode()) {
 
@@ -811,7 +819,9 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     }
 
-    return this.activityService.hasDuplicateMachineId(machineId);
+    const resolved = resolveMachineIdentity(machineId, machineName);
+
+    return this.activityService.hasDuplicateMachine(resolved.machineId, resolved.machineName);
 
   }
 

@@ -22,3 +22,33 @@ export interface PlantMaintenanceMachineRecordBase {
   machineType: string;
   selected: boolean;
 }
+
+export interface MachineIdentity {
+  machineId: string;
+  machineName: string;
+}
+
+/** Resolve entered values to SAP master when ID or name matches. */
+export function resolveMachineIdentity(machineId: string, machineName: string): MachineIdentity {
+  const idKey = machineId.trim().toLowerCase();
+  const nameKey = machineName.trim().toLowerCase();
+  const sap = SAP_MACHINE_MASTER.find(
+    (m) => m.machineId.toLowerCase() === idKey || m.machineName.toLowerCase() === nameKey,
+  );
+  if (sap) {
+    return { machineId: sap.machineId, machineName: sap.machineName };
+  }
+  return { machineId: machineId.trim(), machineName: machineName.trim() };
+}
+
+/** Same machine if ID or name matches (case-insensitive). */
+export function isSameMachine(a: MachineIdentity, b: MachineIdentity): boolean {
+  const aId = a.machineId.trim().toLowerCase();
+  const aName = a.machineName.trim().toLowerCase();
+  const bId = b.machineId.trim().toLowerCase();
+  const bName = b.machineName.trim().toLowerCase();
+  if (!aId && !aName) {
+    return false;
+  }
+  return (!!aId && aId === bId) || (!!aName && aName === bName);
+}

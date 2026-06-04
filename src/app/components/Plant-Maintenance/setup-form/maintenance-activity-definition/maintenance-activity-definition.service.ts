@@ -1,5 +1,9 @@
 import { Injectable, signal } from '@angular/core';
-import { PlantMaintenanceMachineRecordBase } from '../plant-maintenance-machine.model';
+import {
+  isSameMachine,
+  PlantMaintenanceMachineRecordBase,
+  resolveMachineIdentity,
+} from '../plant-maintenance-machine.model';
 
 export interface MaintenanceActivityInspectionLine {
   itemsToBeInspected: string;
@@ -28,7 +32,7 @@ export class MaintenanceActivityDefinitionService {
   addRecord(
     entry: Omit<MaintenanceActivityMachineRecord, 'id' | 'selected'>,
   ): MaintenanceActivityMachineRecord | null {
-    if (this.hasDuplicateMachineId(entry.machineId)) {
+    if (this.hasDuplicateMachine(entry.machineId, entry.machineName)) {
       return null;
     }
     const record: MaintenanceActivityMachineRecord = {
@@ -73,7 +77,7 @@ export class MaintenanceActivityDefinitionService {
     if (!exists) {
       return false;
     }
-    if (this.hasDuplicateMachineId(entry.machineId, id)) {
+    if (this.hasDuplicateMachine(entry.machineId, entry.machineName, id)) {
       return false;
     }
     this._records.update((list) =>
@@ -93,6 +97,17 @@ export class MaintenanceActivityDefinitionService {
     return this._records().some(
       (r) => r.machineId.trim().toLowerCase() === key && r.id !== excludeId,
     );
+  }
+
+  hasDuplicateMachine(machineId: string, machineName: string, excludeId?: string): boolean {
+    const candidate = resolveMachineIdentity(machineId, machineName);
+    return this._records().some((r) => {
+      if (r.id === excludeId) {
+        return false;
+      }
+      const existing = resolveMachineIdentity(r.machineId, r.machineName);
+      return isSameMachine(candidate, existing);
+    });
   }
 }
 
