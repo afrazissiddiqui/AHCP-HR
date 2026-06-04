@@ -733,8 +733,24 @@
   margin-top: 12px;
 }
 
-.scd-add-page {
-  min-height: 100%;
+.pmm-profile-grid,
+.pmm-profile-grid .cjr-personal-col,
+#plant-maintenance-master-form-section .cjr-personal {
+  overflow: visible;
+}
+
+.pmm-profile-grid .mad-select {
+  position: relative;
+  z-index: 2;
+}
+
+.mad-components-section {
+  position: relative;
+  z-index: 1;
+}
+
+.scd-add-page .cjr-card {
+  overflow: visible;
 }
 
 .scd-add-page .cjr-card {

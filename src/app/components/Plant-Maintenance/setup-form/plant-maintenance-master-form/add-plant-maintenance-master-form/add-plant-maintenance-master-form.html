@@ -12,7 +12,7 @@
         <div class="cjr-personal" id="plant-maintenance-master-form-section">
           <div class="cjr-section-title">Plant Maintenance Master Form</div>
 
-          <div class="cjr-personal-grid">
+          <div class="cjr-personal-grid pmm-profile-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="pmm-machine-id">Machine ID:</label>
@@ -105,52 +105,6 @@
 
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="pmm-machine-type">Machine Type:</label>
-                <select
-                  *ngIf="isCreateMode() && hasActivityDefinitionsForMachine(); else pmmMachineTypeInput"
-                  id="pmm-machine-type"
-                  class="mad-select"
-                  [ngModel]="machineType()"
-                  (ngModelChange)="onMachineTypeInput($event)"
-                  name="machineType"
-                >
-                  <option value="">Select machine type</option>
-                  <option *ngFor="let option of machineTypeOptions()" [value]="option">
-                    {{ option }}
-                  </option>
-                </select>
-                <ng-template #pmmMachineTypeInput>
-                  <input
-                    id="pmm-machine-type"
-                    type="text"
-                    [ngModel]="machineType()"
-                    (ngModelChange)="onMachineTypeInput($event)"
-                    name="machineType"
-                    placeholder="Enter machine type"
-                    [readonly]="isPopulatedFieldsReadOnly()"
-                  />
-                </ng-template>
-              </div>
-
-              <div class="cjr-row">
-                <label for="pmm-maintenance-nature">Maintenance Nature:</label>
-                <select
-                  id="pmm-maintenance-nature"
-                  class="mad-select"
-                  [ngModel]="maintenanceNature()"
-                  (ngModelChange)="onMaintenanceNatureInput($event)"
-                  name="maintenanceNature"
-                >
-                  <option value="">Select maintenance nature</option>
-                  <option *ngFor="let option of maintenanceNatureSelectOptions()" [value]="option">
-                    {{ option }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div class="cjr-personal-col">
-              <div class="cjr-row">
                 <label for="pmm-plant-maintenance-frequency">Plant Maintenance Frequency:</label>
                 <select
                   id="pmm-plant-maintenance-frequency"
@@ -182,32 +136,78 @@
                 </select>
               </div>
             </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="pmm-machine-type">Machine Type:</label>
+                <select
+                  *ngIf="isCreateMode() && hasActivityDefinitionsForMachine(); else pmmMachineTypeInput"
+                  id="pmm-machine-type"
+                  class="mad-select"
+                  [ngModel]="machineType()"
+                  (ngModelChange)="onMachineTypeInput($event)"
+                  name="machineType"
+                >
+                  <option value="">Select machine type</option>
+                  <option *ngFor="let option of machineTypeSelectOptions()" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+                <ng-template #pmmMachineTypeInput>
+                  <input
+                    id="pmm-machine-type"
+                    type="text"
+                    [ngModel]="machineType()"
+                    (ngModelChange)="onMachineTypeInput($event)"
+                    name="machineType"
+                    placeholder="Enter machine type"
+                    [readonly]="hasLoadedActivityData()"
+                  />
+                </ng-template>
+              </div>
+
+              <div class="cjr-row">
+                <label for="pmm-maintenance-nature">Maintenance Nature:</label>
+                <select
+                  id="pmm-maintenance-nature"
+                  class="mad-select"
+                  [ngModel]="maintenanceNature()"
+                  (ngModelChange)="onMaintenanceNatureInput($event)"
+                  name="maintenanceNature"
+                >
+                  <option value="">Select maintenance nature</option>
+                  <option *ngFor="let option of maintenanceNatureSelectOptions()" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+            </div>
           </div>
+
+          <p
+            class="mad-components-hint"
+            *ngIf="isCreateMode() && machineId().trim() && hasActivityDefinitionsForMachine() && !hasLoadedActivityData()"
+          >
+            Select Plant Maintenance Frequency, Plant Maintenance Type, Machine Type, and Maintenance Nature. Change any dropdown to load a different activity profile when a match exists.
+          </p>
 
           <section class="mad-components-section">
             <div class="cjr-section-title scd-sub-components__title">Components</div>
 
-            <p class="mad-components-hint" *ngIf="isPopulatedFieldsReadOnly()">
-              Inspection details are loaded from the matching Maintenance Activity Defination. Select Status for each line and save.
+            <p class="mad-components-hint" *ngIf="hasLoadedActivityData()">
+              Inspection details are loaded from the matching Maintenance Activity Defination. Change the profile dropdowns above to switch profiles. Select Status for each line and save.
             </p>
 
             <p
               class="mad-components-hint mad-components-hint--warning"
-              *ngIf="!isPopulatedFieldsReadOnly() && machineId().trim() && !hasActivityDefinitionsForMachine()"
+              *ngIf="!hasLoadedActivityData() && machineId().trim() && !hasActivityDefinitionsForMachine()"
             >
               No Maintenance Activity Defination found for this machine. Create one in Maintenance Activity Defination first.
             </p>
 
             <p
-              class="mad-components-hint mad-components-hint--warning"
-              *ngIf="!isPopulatedFieldsReadOnly() && hasActivityDefinitionsForMachine() && !hasLoadedComponents()"
-            >
-              Select Machine Type, Maintenance Nature, Plant Maintenance Frequency, and Plant Maintenance Type to load the matching inspection details.
-            </p>
-
-            <p
               class="mad-components-hint"
-              *ngIf="!isPopulatedFieldsReadOnly() && !machineId().trim() && isCreateMode() && !hasLoadedComponents()"
+              *ngIf="!hasLoadedActivityData() && !machineId().trim() && isCreateMode() && !hasLoadedComponents()"
             >
               Select a machine, then choose the maintenance profile to load data from Maintenance Activity Defination.
             </p>
@@ -218,11 +218,11 @@
             >
               <article
                 class="mad-component-card"
-                [class.mad-component-card--readonly]="isPopulatedFieldsReadOnly() || isCreateMode()"
+                [class.mad-component-card--readonly]="hasLoadedActivityData() || isCreateMode()"
                 *ngFor="let component of components(); let ci = index; trackBy: trackByIndex"
               >
                 <header class="mad-component-card__header">
-                  @if (isPopulatedFieldsReadOnly() || isCreateMode()) {
+                  @if (hasLoadedActivityData() || isCreateMode()) {
                     <span class="mad-component-card__index">Component {{ ci + 1 }}</span>
                     <h3 class="mad-component-card__title">{{ component.name }}</h3>
                   } @else {
@@ -289,7 +289,7 @@
                           type="button"
                           class="mad-line-remove-btn"
                           (click)="removeInspectionLine(ci, li)"
-                          *ngIf="!isPopulatedFieldsReadOnly() && component.inspectionLines.length > 1"
+                          *ngIf="!hasLoadedActivityData() && component.inspectionLines.length > 1"
                           title="Remove line"
                           [attr.aria-label]="'Remove inspection line ' + (li + 1)"
                         >
@@ -339,7 +339,7 @@
                     </div>
                   </div>
 
-                  <div class="mad-component-card__footer" *ngIf="!isPopulatedFieldsReadOnly()">
+                  <div class="mad-component-card__footer" *ngIf="!hasLoadedActivityData()">
                     <button
                       type="button"
                       class="mad-add-line-btn"
