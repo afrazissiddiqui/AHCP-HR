@@ -266,7 +266,10 @@
                 [class.mad-component-card--readonly]="hasLoadedActivityData() || isCreateMode()"
                 *ngFor="let component of components(); let ci = index; trackBy: trackByIndex"
               >
-                <header class="mad-component-card__header">
+                <header
+                  class="mad-component-card__header"
+                  [ngClass]="getComponentHeaderStatusClass(component)"
+                >
                   @if (hasLoadedActivityData() || isCreateMode()) {
                     <span class="mad-component-card__index">Component {{ ci + 1 }}</span>
                     <h3 class="mad-component-card__title">{{ component.name }}</h3>
@@ -308,16 +311,18 @@
                 </header>
 
                 <div class="mad-component-card__body pmm-component-card__body">
-                    <section
-                      class="mad-inspection-line"
-                      *ngFor="let line of component.inspectionLines; let li = index; trackBy: trackByIndex"
-                    >
-                      <header class="mad-inspection-line__toolbar">
-                        <span class="mad-inspection-line__badge">Line {{ li + 1 }}</span>
-                        <label [attr.for]="'pmm-line-status-' + ci + '-' + li">Status:</label>
+                  <section
+                    class="pmm-inspection-line"
+                    *ngFor="let line of component.inspectionLines; let li = index; trackBy: trackByIndex"
+                  >
+                    <div class="pmm-line-toolbar">
+                      <span class="mad-inspection-line__badge">Line {{ li + 1 }}</span>
+                      <div class="pmm-line-status">
+                        <label [attr.for]="'pmm-line-status-' + ci + '-' + li">Status</label>
                         <select
                           [id]="'pmm-line-status-' + ci + '-' + li"
-                          class="mad-select mad-inspection-line__status"
+                          class="mad-select"
+                          [ngClass]="getLineStatusSelectClass(line.status)"
                           [ngModel]="line.status"
                           (ngModelChange)="updateInspectionLine(ci, li, 'status', $event)"
                           [name]="'lineStatus' + ci + '_' + li"
@@ -327,19 +332,21 @@
                             {{ option }}
                           </option>
                         </select>
-                        <button
-                          type="button"
-                          class="mad-line-remove-btn"
-                          (click)="removeInspectionLine(ci, li)"
-                          *ngIf="!hasLoadedActivityData() && component.inspectionLines.length > 1"
-                          title="Remove line"
-                          [attr.aria-label]="'Remove inspection line ' + (li + 1)"
-                        >
-                          ×
-                        </button>
-                      </header>
+                      </div>
+                      <button
+                        type="button"
+                        class="mad-line-remove-btn"
+                        (click)="removeInspectionLine(ci, li)"
+                        *ngIf="!hasLoadedActivityData() && component.inspectionLines.length > 1"
+                        title="Remove line"
+                        [attr.aria-label]="'Remove inspection line ' + (li + 1)"
+                      >
+                        ×
+                      </button>
+                    </div>
 
-                      <div class="mad-line-fields mad-line-fields--inspect">
+                    <div class="pmm-line-grid pmm-line-grid--inspect">
+                      <div class="pmm-line-field">
                         <label [attr.for]="'pmm-items-' + ci + '-' + li">Items to be inspected</label>
                         <input
                           [id]="'pmm-items-' + ci + '-' + li"
@@ -351,6 +358,8 @@
                           placeholder="Enter items to be inspected"
                           readonly
                         />
+                      </div>
+                      <div class="pmm-line-field">
                         <label [attr.for]="'pmm-check-' + ci + '-' + li">What to check</label>
                         <input
                           [id]="'pmm-check-' + ci + '-' + li"
@@ -362,6 +371,8 @@
                           placeholder="Enter what to check"
                           readonly
                         />
+                      </div>
+                      <div class="pmm-line-field">
                         <label [attr.for]="'pmm-instructions-' + ci + '-' + li">Instructions</label>
                         <textarea
                           [id]="'pmm-instructions-' + ci + '-' + li"
@@ -374,8 +385,10 @@
                           readonly
                         ></textarea>
                       </div>
+                    </div>
 
-                      <div class="mad-line-fields mad-line-fields--results">
+                    <div class="pmm-line-grid pmm-line-grid--results">
+                      <div class="pmm-line-field">
                         <label [attr.for]="'pmm-recommendation-' + ci + '-' + li">Recommendation</label>
                         <textarea
                           [id]="'pmm-recommendation-' + ci + '-' + li"
@@ -386,7 +399,8 @@
                           [name]="'recommendation' + ci + '_' + li"
                           placeholder="Enter recommendation for this line"
                         ></textarea>
-
+                      </div>
+                      <div class="pmm-line-field pmm-line-field--attachments">
                         <label [attr.for]="'pmm-attachments-' + ci + '-' + li">Attachments (pictures)</label>
                         <div class="mad-attachment-panel">
                           <figure
@@ -413,7 +427,6 @@
                               </button>
                             </figcaption>
                           </figure>
-
                           <label
                             class="mad-attachment-upload"
                             [attr.for]="'pmm-attachments-' + ci + '-' + li"
@@ -432,7 +445,8 @@
                           </label>
                         </div>
                       </div>
-                    </section>
+                    </div>
+                  </section>
 
                   <div class="mad-component-card__footer" *ngIf="!hasLoadedActivityData()">
                     <button

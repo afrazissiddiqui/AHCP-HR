@@ -177,6 +177,24 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     return this.components().some((c) => c.name.trim());
   }
 
+  getComponentHeaderStatusClass(component: PlantMaintenanceMasterComponent): string {
+    const status = this.resolveComponentHeaderStatus(component);
+    return status ? `mad-component-card__header--${status}` : '';
+  }
+
+  getLineStatusSelectClass(status: string): string {
+    switch (status.trim()) {
+      case 'Pass':
+        return 'mad-select--status-pass';
+      case 'Fail':
+        return 'mad-select--status-fail';
+      case 'N/A':
+        return 'mad-select--status-na';
+      default:
+        return 'mad-select--status-empty';
+    }
+  }
+
   back(): void {
     void this.router.navigate(['/plant-maintenance/setup-form/plant-maintenance-master-form']);
   }
@@ -655,6 +673,32 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     } finally {
       this.syncingScheduleFields = false;
     }
+  }
+
+  private resolveComponentHeaderStatus(
+    component: PlantMaintenanceMasterComponent,
+  ): 'pass' | 'fail' | 'na' | '' {
+    const statuses = component.inspectionLines
+      .map((line) => line.status.trim())
+      .filter(Boolean);
+
+    if (!statuses.length) {
+      return '';
+    }
+
+    if (statuses.some((status) => status === 'Fail')) {
+      return 'fail';
+    }
+
+    if (statuses.some((status) => status === 'N/A')) {
+      return 'na';
+    }
+
+    if (statuses.every((status) => status === 'Pass')) {
+      return 'pass';
+    }
+
+    return '';
   }
 
   private filterMachineSuggestions(query: string): MachineSearchOption[] {
