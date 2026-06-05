@@ -239,23 +239,26 @@
           <section class="pmm-spare-parts-section">
             <div class="cjr-section-title">Spare Parts</div>
             <p class="mad-components-hint">
-              Search Spare Part ID or Description from SAP. Enter quantity manually. Select Warehouse and UOM from SAP.
+              Search Spare Part ID or Description from SAP. Enter quantity manually. Select Warehouse and UOM from SAP. Spare parts are optional.
+            </p>
+            <p class="mad-components-hint" *ngIf="spareParts().length === 0">
+              No spare parts rows. Use <strong>Add row</strong> when needed.
             </p>
 
             <div
               class="pmm-spare-part-row"
               *ngFor="let row of spareParts(); let ri = index; trackBy: trackByIndex"
             >
-              <div class="pmm-spare-part-row__header">
-                <span class="pmm-spare-part-row__badge">Row {{ ri + 1 }}</span>
+              <div class="pmm-spare-part-row__header pmm-line-toolbar">
+                <span class="mad-inspection-line__badge">Row {{ ri + 1 }}</span>
                 <button
                   type="button"
                   class="mad-line-remove-btn"
                   (click)="removeSparePartRow(ri)"
                   title="Remove row"
-                  aria-label="Remove spare parts row"
+                  [attr.aria-label]="'Remove spare parts row ' + (ri + 1)"
                 >
-                  Remove
+                  ×
                 </button>
               </div>
 

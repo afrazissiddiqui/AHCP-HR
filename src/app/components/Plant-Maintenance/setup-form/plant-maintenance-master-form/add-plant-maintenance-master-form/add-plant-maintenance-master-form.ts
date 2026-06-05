@@ -117,7 +117,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly startDate = signal('');
   readonly endDate = signal('');
   readonly durationDays = signal<number | null>(null);
-  readonly spareParts = signal<PlantMaintenanceMasterSparePartLine[]>([createEmptySparePartLine()]);
+  readonly spareParts = signal<PlantMaintenanceMasterSparePartLine[]>([]);
   readonly components = signal<PlantMaintenanceMasterComponent[]>([]);
   readonly availableActivityRecords = signal<MaintenanceActivityMachineRecord[]>([]);
   readonly hasLoadedActivityData = signal(false);
@@ -372,9 +372,23 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   }
 
   removeSparePartRow(rowIndex: number): void {
-    this.spareParts.update((list) =>
-      list.length > 1 ? list.filter((_, i) => i !== rowIndex) : [createEmptySparePartLine()],
-    );
+    this.spareParts.update((list) => list.filter((_, i) => i !== rowIndex));
+    if (this.sparePartIdSuggestionsRow() === rowIndex) {
+      this.sparePartIdSuggestionsRow.set(null);
+    } else if (
+      this.sparePartIdSuggestionsRow() !== null &&
+      this.sparePartIdSuggestionsRow()! > rowIndex
+    ) {
+      this.sparePartIdSuggestionsRow.update((i) => (i === null ? null : i - 1));
+    }
+    if (this.sparePartDescSuggestionsRow() === rowIndex) {
+      this.sparePartDescSuggestionsRow.set(null);
+    } else if (
+      this.sparePartDescSuggestionsRow() !== null &&
+      this.sparePartDescSuggestionsRow()! > rowIndex
+    ) {
+      this.sparePartDescSuggestionsRow.update((i) => (i === null ? null : i - 1));
+    }
   }
 
   onDurationInput(value: number | string | null): void {
@@ -614,7 +628,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.startDate.set('');
     this.endDate.set('');
     this.durationDays.set(null);
-    this.spareParts.set([createEmptySparePartLine()]);
+    this.spareParts.set([]);
     this.components.set([]);
     this.availableActivityRecords.set([]);
     this.closeIdSuggestions();
@@ -927,7 +941,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
         uomCode: row.uomCode ?? '',
       }));
     }
-    return [createEmptySparePartLine()];
+    return [];
   }
 
   private filterSparePartSuggestions(query: string): SparePartSearchOption[] {

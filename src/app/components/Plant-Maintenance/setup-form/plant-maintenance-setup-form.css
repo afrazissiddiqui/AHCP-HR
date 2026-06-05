@@ -1161,16 +1161,13 @@
 }
 
 .pmm-spare-part-row__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e8eef5;
 }
 
-.pmm-spare-part-row__badge {
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
+.pmm-spare-part-row__header .mad-line-remove-btn {
+  margin-left: auto;
 }
 
 .pmm-spare-part-grid {
