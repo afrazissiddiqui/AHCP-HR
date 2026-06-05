@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
 import { LoanAdvanceService } from '../../../../../services/loan-advance.service';
+import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
 
 @Component({
   selector: 'app-add-loan-advance',
@@ -28,7 +29,8 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
   constructor(
     private readonly router: Router,
     private readonly alertService: AlertService,
-    private readonly loanAdvanceService: LoanAdvanceService
+    private readonly loanAdvanceService: LoanAdvanceService,
+    private readonly applicationFormService: ApplicationFormService
   ) {}
 
   protected readonly formNumber = signal('');
@@ -36,6 +38,17 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
   protected readonly documentNo = signal('');
   protected readonly headerEmployeeID = signal('');
   protected readonly headerEmployeeName = signal('');
+  protected readonly employeeSearchText = signal('');
+  protected readonly showEmployeeDropdown = signal(false);
+  protected readonly filteredEmployees = computed(() => {
+    const searchText = this.employeeSearchText().trim().toLowerCase();
+    if (!searchText) return [];
+    const employees = this.applicationFormService.getApplicationRecords();
+    return employees.filter((emp) =>
+      emp.EmployeeName.toLowerCase().includes(searchText) ||
+      emp.EmployeeCode.toString().includes(searchText)
+    );
+  });
   protected readonly employeeCategory = signal('');
   protected readonly employeeNature = signal('');
   protected readonly employmentType = signal('');
@@ -114,6 +127,32 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
 
   protected back(): void {
     void this.router.navigateByUrl('/employee-action/loan-advance-form');
+  }
+
+  protected onEmployeeSearchChange(text: string): void {
+    this.employeeSearchText.set(text);
+    this.showEmployeeDropdown.set(text.trim().length > 0);
+  }
+
+  protected selectEmployee(employee: ApplicationFormRecord): void {
+    this.headerEmployeeID.set(employee.EmployeeCode.toString());
+    this.headerEmployeeName.set(employee.EmployeeName);
+    this.employeeSearchText.set('');
+    this.showEmployeeDropdown.set(false);
+    this.department.set(employee.Department);
+    this.designation.set(employee.Designation);
+    this.jobTitle.set(employee.Designation);
+    this.employeeCategory.set(employee.EmploymentCategory);
+    this.employeeNature.set(employee.EmployeeNature);
+    this.employmentType.set(employee.EmploymentType);
+    this.reportingManager.set(employee.ReportingManager);
+    this.workGradeLevel.set('');
+    this.location.set('');
+  }
+
+  protected closeEmployeeDropdown(): void {
+    this.showEmployeeDropdown.set(false);
+    this.employeeSearchText.set('');
   }
 
   protected scrollToSection(sectionId: string): void {
@@ -239,11 +278,10 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     };
 
     this.loanAdvanceService.submitLoanAdvance(payload).subscribe({
-      next: (response) => {
+      next: async (response) => {
         if (response.status) {
-          this.alertService.success('Saved', response.message || 'Loan/Advance submitted successfully.').then(() => {
-            void this.router.navigateByUrl('/employee-action/loan-advance-form');
-          });
+          await this.alertService.successAndWait('Saved', response.message || 'Loan/Advance submitted successfully.');
+          void this.router.navigateByUrl('/employee-action/loan-advance-form');
         } else {
           this.alertService.error('Error', response.message || 'Failed to submit loan/advance request.');
         }
