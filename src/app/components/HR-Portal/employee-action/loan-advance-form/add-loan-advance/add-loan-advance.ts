@@ -3,6 +3,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, computed,
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
+import { LoanAdvanceService } from '../../../../../services/loan-advance.service';
 
 @Component({
   selector: 'app-add-loan-advance',
@@ -26,7 +27,8 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     private readonly router: Router,
-    private readonly alertService: AlertService
+    private readonly alertService: AlertService,
+    private readonly loanAdvanceService: LoanAdvanceService
   ) {}
 
   protected readonly formNumber = signal('');
@@ -170,31 +172,27 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
   }
 
   protected async save(): Promise<void> {
-    console.log('Loan advance payload:', {
+    const payload = {
       headerInfo: {
         documentNo: this.documentNo(),
-        employeeID: this.headerEmployeeID(),
-        employeeName: this.headerEmployeeName(),
-        employeeCategory: this.employeeCategory(),
         employeeNature: this.employeeNature(),
-        employmentType: this.employmentType(),
         department: this.department(),
+        requestType: this.requestType(),
+        employeeID: this.headerEmployeeID(),
+        employmentType: this.employmentType(),
         designation: this.designation(),
+        requestDate: this.requestDate(),
+        employeeName: this.headerEmployeeName(),
+        workGradeLevel: this.workGradeLevel(),
         jobTitle: this.jobTitle(),
+        status: this.status(),
+        employeeCategory: this.employeeCategory(),
         reportingManager: this.reportingManager(),
         location: this.location(),
-        requestType: this.requestType(),
-        requestDate: this.requestDate(),
-        status: this.status(),
         joiningDate: this.joiningDate(),
-        workGradeLevel: this.workGradeLevel(),
         yearsOfService: this.yearsOfService(),
         payrollMonth: this.payrollMonth()
       },
-      formNumber: this.formNumber(),
-      employeeID: this.employeeID(),
-      employeeName: this.employeeName(),
-      department: this.department(),
       loanDetail: {
         existingLoan: this.existingLoan(),
         loanAcquiredDate: this.loanAcquiredDate(),
@@ -214,18 +212,18 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
           loanStartMonth: this.loanStartMonth(),
           loanTenure: this.loanTenure(),
           eligibleAmount: this.eligibleAmount()
-        }
+        },
+        remarks: this.remarks()
       },
-      remarks: this.remarks(),
       advanceDetail: {
         existingAdvance: this.existingAdvance(),
         advanceAcquiredDate: this.advanceAcquiredDate(),
+        advanceEligibleAmount: this.advanceEligibleAmount(),
         previousAdvancePurpose: this.previousAdvancePurpose(),
+        advanceRemarks: this.advanceRemarks(),
         advanceAmount: this.advanceAmount(),
         advanceAmountToBeDeductedThisMonth: this.advanceAmountToBeDeductedThisMonth(),
         advanceBalance: this.advanceBalance(),
-        eligibleAmount: this.advanceEligibleAmount(),
-        remarks: this.advanceRemarks(),
         newAdvanceRequest: {
           purpose: this.newAdvancePurpose(),
           advanceAmountEligible: this.newAdvanceAmountEligible(),
@@ -238,8 +236,22 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
         deductionAmount: this.deductionAmount(),
         remarks: this.repaymentRemarks()
       }
+    };
+
+    this.loanAdvanceService.submitLoanAdvance(payload).subscribe({
+      next: (response) => {
+        if (response.status) {
+          this.alertService.success('Saved', response.message || 'Loan/Advance submitted successfully.').then(() => {
+            void this.router.navigateByUrl('/employee-action/loan-advance-form');
+          });
+        } else {
+          this.alertService.error('Error', response.message || 'Failed to submit loan/advance request.');
+        }
+      },
+      error: (error: any) => {
+        const errorMessage = error?.error?.message || error?.message || 'Failed to submit loan/advance request.';
+        this.alertService.error('Error', errorMessage);
+      }
     });
-    await this.alertService.successAndWait('Saved', 'Loan/Advance submitted successfully.');
-    void this.router.navigateByUrl('/employee-action/loan-advance-form');
   }
 }
