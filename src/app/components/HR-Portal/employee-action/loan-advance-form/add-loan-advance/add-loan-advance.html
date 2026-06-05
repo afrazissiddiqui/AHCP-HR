@@ -33,25 +33,35 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Document No:</label>
-            <input type="text" [ngModel]="documentNo()" (ngModelChange)="documentNo.set($event)" />
+            <input type="text" [value]="documentNo()" readonly />
           </div>
           <div class="cjr-row">
-            <label>Employee Nature:</label>
-            <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Department:</label>
-            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+            <label>Request Date:</label>
+            <input type="date" [value]="requestDate()" readonly />
           </div>
           <div class="cjr-row">
             <label>Request Type:</label>
-            <input type="text" [ngModel]="requestType()" (ngModelChange)="requestType.set($event)" />
+            <select [ngModel]="requestType()" (ngModelChange)="requestType.set($event)">
+              <option value="">Select Type</option>
+              <option value="Loan">Loan</option>
+              <option value="Salary Advance">Salary Advance</option>
+            </select>
+          </div>
+          <div class="cjr-row">
+            <label>Status:</label>
+            <select [ngModel]="status()" (ngModelChange)="status.set($event)">
+              <option value="Draft">Draft</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Closed">Closed</option>
+            </select>
           </div>
         </div>
 
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Employee ID:</label>
+            <label>Employee Code:</label>
             <div style="position: relative;">
               <input 
                 type="text" 
@@ -61,21 +71,6 @@
                 readonly />
             </div>
           </div>
-          <div class="cjr-row">
-            <label>Employment Type:</label>
-            <input type="text" [ngModel]="employmentType()" (ngModelChange)="employmentType.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Designation:</label>
-            <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Request Date:</label>
-            <input type="date" [ngModel]="requestDate()" (ngModelChange)="requestDate.set($event)" />
-          </div>
-        </div>
-
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee Name:</label>
             <div style="position: relative;">
@@ -99,28 +94,16 @@
             </div>
           </div>
           <div class="cjr-row">
-            <label>Work / Grade Level:</label>
-            <input type="text" [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)" />
+            <label>Department:</label>
+            <input type="text" [ngModel]="department()" readonly />
           </div>
           <div class="cjr-row">
-            <label>Job Title:</label>
-            <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Status:</label>
-            <input type="text" [ngModel]="status()" (ngModelChange)="status.set($event)" />
+            <label>Designation:</label>
+            <input type="text" [ngModel]="designation()" readonly />
           </div>
         </div>
 
         <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Employee Category:</label>
-            <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
-          </div>
-          <div class="cjr-row">
-            <label>Reporting Manager:</label>
-            <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
-          </div>
           <div class="cjr-row">
             <label>Location:</label>
             <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
@@ -129,16 +112,13 @@
             <label>Joining Date:</label>
             <input type="date" [ngModel]="joiningDate()" (ngModelChange)="joiningDate.set($event)" />
           </div>
-        </div>
-
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Years of Service:</label>
             <input type="text" [value]="yearsOfService()" readonly />
           </div>
           <div class="cjr-row">
             <label>Payroll Month:</label>
-            <input type="text" [ngModel]="payrollMonth()" (ngModelChange)="payrollMonth.set($event)" />
+            <input type="month" [ngModel]="payrollMonth()" (ngModelChange)="payrollMonth.set($event)" />
           </div>
         </div>
       </div>

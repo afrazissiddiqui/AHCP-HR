@@ -33,9 +33,8 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     private readonly applicationFormService: ApplicationFormService
   ) {}
 
-  protected readonly formNumber = signal('');
   protected readonly activeSection = signal('header-info-section');
-  protected readonly documentNo = signal('');
+  protected readonly documentNo = signal(this.generateDocumentNo());
   protected readonly headerEmployeeID = signal('');
   protected readonly headerEmployeeName = signal('');
   protected readonly employeeSearchText = signal('');
@@ -49,19 +48,14 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
       emp.EmployeeCode.toString().includes(searchText)
     );
   });
-  protected readonly employeeCategory = signal('');
-  protected readonly employeeNature = signal('');
-  protected readonly employmentType = signal('');
-  protected readonly workGradeLevel = signal('');
   protected readonly designation = signal('');
-  protected readonly jobTitle = signal('');
-  protected readonly reportingManager = signal('');
   protected readonly location = signal('');
   protected readonly requestType = signal('');
-  protected readonly requestDate = signal('');
-  protected readonly status = signal('');
+  protected readonly requestDate = signal(this.getTodayDate());
+  protected readonly status = signal('Draft');
   protected readonly joiningDate = signal('');
-  protected readonly payrollMonth = signal('');
+  protected readonly department = signal('');
+  protected readonly payrollMonth = signal(this.getCurrentPayrollMonth());
   protected readonly yearsOfService = computed(() => {
     const joining = this.joiningDate();
     if (!joining) {
@@ -79,9 +73,6 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     }
     return years < 0 ? '' : `${years}`;
   });
-  protected readonly employeeID = signal('');
-  protected readonly employeeName = signal('');
-  protected readonly department = signal('');
   protected readonly existingLoan = signal<'Yes' | 'No' | ''>('');
   protected readonly loanAcquiredDate = signal('');
   protected readonly installmentNumber = signal('');
@@ -141,18 +132,25 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     this.showEmployeeDropdown.set(false);
     this.department.set(employee.Department);
     this.designation.set(employee.Designation);
-    this.jobTitle.set(employee.Designation);
-    this.employeeCategory.set(employee.EmploymentCategory);
-    this.employeeNature.set(employee.EmployeeNature);
-    this.employmentType.set(employee.EmploymentType);
-    this.reportingManager.set(employee.ReportingManager);
-    this.workGradeLevel.set('');
-    this.location.set('');
   }
 
   protected closeEmployeeDropdown(): void {
     this.showEmployeeDropdown.set(false);
     this.employeeSearchText.set('');
+  }
+
+  private generateDocumentNo(): string {
+    return `LA-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  }
+
+  private getTodayDate(): string {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
+
+  private getCurrentPayrollMonth(): string {
+    const today = new Date();
+    return today.toISOString().slice(0, 7);
   }
 
   protected scrollToSection(sectionId: string): void {
@@ -214,23 +212,23 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     const payload = {
       headerInfo: {
         documentNo: this.documentNo(),
-        employeeNature: this.employeeNature(),
-        department: this.department(),
         requestType: this.requestType(),
         employeeID: this.headerEmployeeID(),
-        employmentType: this.employmentType(),
-        designation: this.designation(),
-        requestDate: this.requestDate(),
         employeeName: this.headerEmployeeName(),
-        workGradeLevel: this.workGradeLevel(),
-        jobTitle: this.jobTitle(),
-        status: this.status(),
-        employeeCategory: this.employeeCategory(),
-        reportingManager: this.reportingManager(),
+        department: this.department(),
+        designation: this.designation(),
         location: this.location(),
         joiningDate: this.joiningDate(),
         yearsOfService: this.yearsOfService(),
-        payrollMonth: this.payrollMonth()
+        requestDate: this.requestDate(),
+        payrollMonth: this.payrollMonth(),
+        status: this.status(),
+        employeeNature: '',
+        employmentType: '',
+        workGradeLevel: '',
+        jobTitle: '',
+        employeeCategory: '',
+        reportingManager: ''
       },
       loanDetail: {
         existingLoan: this.existingLoan(),
