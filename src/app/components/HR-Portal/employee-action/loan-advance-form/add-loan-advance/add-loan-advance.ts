@@ -1,10 +1,34 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, computed, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
 import { LoanAdvanceService } from '../../../../../services/loan-advance.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
+import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+
+interface LoanEmployeeOption {
+  code: string;
+  name: string;
+  department: string;
+  designation: string;
+  location: string;
+  employeeNature: string;
+  employmentType: string;
+  workGradeLevel: string;
+  jobTitle: string;
+  employeeCategory: string;
+  reportingManager: string;
+}
 
 @Component({
   selector: 'app-add-loan-advance',
@@ -17,7 +41,7 @@ import { ApplicationFormService, ApplicationFormRecord } from '../../../../../se
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
+export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly sectionIds = [
     'header-info-section',
     'loan-detail-section',
@@ -30,8 +54,11 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     private readonly router: Router,
     private readonly alertService: AlertService,
     private readonly loanAdvanceService: LoanAdvanceService,
-    private readonly applicationFormService: ApplicationFormService
+    private readonly applicationFormService: ApplicationFormService,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
+
+  private readonly employeeOptions = signal<LoanEmployeeOption[]>([]);
 
   protected readonly activeSection = signal('header-info-section');
   protected readonly documentNo = signal(this.generateDocumentNo());
@@ -40,13 +67,19 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
   protected readonly codeSuggestionsOpen = signal(false);
   protected readonly nameSuggestionsOpen = signal(false);
   protected readonly codeSuggestions = computed(() =>
-    this.filterEmployeeSuggestions(this.headerEmployeeID())
+    this.filterEmployeeSuggestions(this.headerEmployeeID()),
   );
   protected readonly nameSuggestions = computed(() =>
-    this.filterEmployeeSuggestions(this.headerEmployeeName())
+    this.filterEmployeeSuggestions(this.headerEmployeeName()),
   );
   protected readonly designation = signal('');
   protected readonly location = signal('');
+  protected readonly employeeNature = signal('');
+  protected readonly employmentType = signal('');
+  protected readonly workGradeLevel = signal('');
+  protected readonly jobTitle = signal('');
+  protected readonly employeeCategory = signal('');
+  protected readonly reportingManager = signal('');
   protected readonly requestType = signal('');
   protected readonly requestDate = signal(this.getTodayDate());
   protected readonly status = signal('Draft');
@@ -104,6 +137,21 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
   protected readonly deductionAmount = signal('');
   protected readonly repaymentRemarks = signal('');
 
+  ngOnInit(): void {
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => {
+        this.employeeOptions.set(this.buildEmployeeOptions());
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load employees for search.'),
+        );
+      },
+    });
+  }
+
   ngAfterViewInit(): void {
     this.initializeSectionObserver();
   }
@@ -117,13 +165,11 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     void this.router.navigateByUrl('/employee-action/loan-advance-form');
   }
 
-  protected selectEmployee(employee: ApplicationFormRecord): void {
-    this.headerEmployeeID.set(employee.EmployeeCode.toString());
-    this.headerEmployeeName.set(employee.EmployeeName);
+  protected selectEmployee(employee: LoanEmployeeOption): void {
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
-    this.department.set(employee.Department);
-    this.designation.set(employee.Designation);
+    this.populateFromEmployeeOption(employee);
+    this.cdr.markForCheck();
   }
 
   protected onEmployeeCodeChange(code: string): void {
@@ -170,22 +216,78 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     setTimeout(() => this.closeNameSuggestions(), 150);
   }
 
-  private filterEmployeeSuggestions(query: string): ApplicationFormRecord[] {
+  private buildEmployeeOptions(): LoanEmployeeOption[] {
+    return this.applicationFormService
+      .getApplicationRecords()
+      .map((record) => this.toEmployeeOption(record))
+      .filter((option) => option.code || option.name);
+  }
+
+  private toEmployeeOption(record: ApplicationFormRecord): LoanEmployeeOption {
+    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+
+    return {
+      code: this.resolveEmployeeCode(record),
+      name: emptyIfDash(record.EmployeeName),
+      department: emptyIfDash(record.Department),
+      designation: emptyIfDash(record.Designation),
+      location:
+        emptyIfDash(record.detail?.requisition.location ?? '') ||
+        emptyIfDash(record.detail?.personalInfo.city ?? ''),
+      employeeNature: emptyIfDash(record.EmployeeNature),
+      employmentType: emptyIfDash(record.EmploymentType),
+      workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
+      jobTitle:
+        emptyIfDash(record.detail?.requisition.internalJobTitle ?? '') ||
+        emptyIfDash(record.Designation),
+      employeeCategory: emptyIfDash(record.EmploymentCategory),
+      reportingManager: emptyIfDash(record.ReportingManager),
+    };
+  }
+
+  private resolveEmployeeCode(record: ApplicationFormRecord): string {
+    const fromLogin = record.detail?.loginDetails.employeeCode?.trim();
+    if (fromLogin) {
+      return fromLogin;
+    }
+    if (record.apiId?.trim()) {
+      return record.apiId.trim();
+    }
+    if (record.EmployeeCode) {
+      return String(record.EmployeeCode);
+    }
+    return '';
+  }
+
+  private filterEmployeeSuggestions(query: string): LoanEmployeeOption[] {
     const q = query.trim().toLowerCase();
     if (!q) {
       return [];
     }
 
-    return this.applicationFormService
-      .getApplicationRecords()
+    return this.employeeOptions()
       .filter(
         (employee) =>
-          employee.EmployeeCode.toString().toLowerCase().includes(q) ||
-          employee.EmployeeName.toLowerCase().includes(q) ||
-          employee.Department.toLowerCase().includes(q) ||
-          employee.Designation.toLowerCase().includes(q)
+          employee.code.toLowerCase().includes(q) ||
+          employee.name.toLowerCase().includes(q) ||
+          employee.department.toLowerCase().includes(q) ||
+          employee.designation.toLowerCase().includes(q),
       )
       .slice(0, 10);
+  }
+
+  private populateFromEmployeeOption(employee: LoanEmployeeOption): void {
+    this.headerEmployeeID.set(employee.code);
+    this.headerEmployeeName.set(employee.name);
+    this.department.set(employee.department);
+    this.designation.set(employee.designation);
+    this.location.set(employee.location);
+    this.employeeNature.set(employee.employeeNature);
+    this.employmentType.set(employee.employmentType);
+    this.workGradeLevel.set(employee.workGradeLevel);
+    this.jobTitle.set(employee.jobTitle);
+    this.employeeCategory.set(employee.employeeCategory);
+    this.reportingManager.set(employee.reportingManager);
   }
 
   private generateDocumentNo(): string {
@@ -272,12 +374,12 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
         requestDate: this.requestDate(),
         payrollMonth: this.payrollMonth(),
         status: this.status(),
-        employeeNature: '',
-        employmentType: '',
-        workGradeLevel: '',
-        jobTitle: '',
-        employeeCategory: '',
-        reportingManager: ''
+        employeeNature: this.employeeNature(),
+        employmentType: this.employmentType(),
+        workGradeLevel: this.workGradeLevel(),
+        jobTitle: this.jobTitle(),
+        employeeCategory: this.employeeCategory(),
+        reportingManager: this.reportingManager(),
       },
       loanDetail: {
         existingLoan: this.existingLoan(),

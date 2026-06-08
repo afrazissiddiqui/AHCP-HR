@@ -80,7 +80,7 @@
                 id="la-employee-code-listbox"
                 class="employee-search-suggestions"
                 role="listbox"
-                *ngIf="codeSuggestionsOpen() && codeSuggestions().length > 0"
+                *ngIf="codeSuggestionsOpen() && headerEmployeeID().trim()"
               >
                 <li
                   *ngFor="let emp of codeSuggestions()"
@@ -88,8 +88,8 @@
                   class="employee-search-suggestion-item"
                   (mousedown)="selectEmployee(emp)"
                 >
-                  <span class="employee-search-suggestion-primary">{{ emp.EmployeeCode }} — {{ emp.EmployeeName }}</span>
-                  <span class="employee-search-suggestion-meta">{{ emp.Department }} · {{ emp.Designation }}</span>
+                  <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
                 </li>
                 <li
                   *ngIf="codeSuggestions().length === 0"
@@ -122,7 +122,7 @@
                 id="la-employee-name-listbox"
                 class="employee-search-suggestions"
                 role="listbox"
-                *ngIf="nameSuggestionsOpen() && nameSuggestions().length > 0"
+                *ngIf="nameSuggestionsOpen() && headerEmployeeName().trim()"
               >
                 <li
                   *ngFor="let emp of nameSuggestions()"
@@ -130,8 +130,8 @@
                   class="employee-search-suggestion-item"
                   (mousedown)="selectEmployee(emp)"
                 >
-                  <span class="employee-search-suggestion-primary">{{ emp.EmployeeCode }} — {{ emp.EmployeeName }}</span>
-                  <span class="employee-search-suggestion-meta">{{ emp.Department }} · {{ emp.Designation }}</span>
+                  <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
                 </li>
                 <li
                   *ngIf="nameSuggestions().length === 0"
