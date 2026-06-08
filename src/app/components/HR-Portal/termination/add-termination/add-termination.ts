@@ -13,6 +13,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import {
+  ApplicationFormRecord,
+  ApplicationFormService,
+} from '../../../../services/application-form.service';
+import {
   FinalSettlementAddPayload,
   TerminationRecord,
   TerminationService,
@@ -23,6 +27,17 @@ function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
 }
 
+interface TerminationEmployeeOption {
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  employeeCategory: string;
+  designation: string;
+  branchLocation: string;
+  costCenter: string;
+  workGradeLevel: string;
+}
+
 @Component({
   selector: 'app-add-termination',
   standalone: true,
@@ -30,6 +45,7 @@ function emptyIfDash(value: string): string {
   templateUrl: './add-termination.html',
   styleUrls: [
     '../../Application-Form/create-job-requisition/create-job-requisition.css',
+    '../../employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
     './add-termination.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,11 +67,18 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly terminationService: TerminationService,
+    private readonly applicationFormService: ApplicationFormService,
     private readonly alertService: AlertService,
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
+  private readonly employeeOptions = signal<TerminationEmployeeOption[]>([]);
+
   protected readonly activeSection = signal('header-section');
+  protected readonly codeSuggestionsOpen = signal(false);
+  protected readonly nameSuggestionsOpen = signal(false);
+  protected readonly codeSuggestions = computed(() => this.filterEmployeeSuggestions(this.employeeId()));
+  protected readonly nameSuggestions = computed(() => this.filterEmployeeSuggestions(this.employeeName()));
 
   protected readonly employeeId = signal('');
   protected readonly employeeName = signal('');
@@ -118,6 +141,19 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
   protected readonly validationTouched = signal(false);
 
   ngOnInit(): void {
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => {
+        this.employeeOptions.set(this.buildEmployeeOptions());
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load employees for search.'),
+        );
+      },
+    });
+
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       return;
@@ -162,6 +198,63 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
 
   protected back(): void {
     void this.router.navigateByUrl('/termination');
+  }
+
+  protected onEmployeeIdInput(value: string): void {
+    this.employeeId.set(value);
+    if (this.editingId) {
+      return;
+    }
+    this.codeSuggestionsOpen.set(value.trim().length > 0);
+    this.closeNameSuggestions();
+  }
+
+  protected onEmployeeNameInput(value: string): void {
+    this.employeeName.set(value);
+    if (this.editingId) {
+      return;
+    }
+    this.nameSuggestionsOpen.set(value.trim().length > 0);
+    this.closeCodeSuggestions();
+  }
+
+  protected openCodeSuggestions(): void {
+    if (this.editingId || !this.employeeId().trim()) {
+      return;
+    }
+    this.codeSuggestionsOpen.set(true);
+    this.closeNameSuggestions();
+  }
+
+  protected openNameSuggestions(): void {
+    if (this.editingId || !this.employeeName().trim()) {
+      return;
+    }
+    this.nameSuggestionsOpen.set(true);
+    this.closeCodeSuggestions();
+  }
+
+  protected closeCodeSuggestions(): void {
+    this.codeSuggestionsOpen.set(false);
+  }
+
+  protected closeNameSuggestions(): void {
+    this.nameSuggestionsOpen.set(false);
+  }
+
+  protected onCodeInputBlur(): void {
+    setTimeout(() => this.closeCodeSuggestions(), 150);
+  }
+
+  protected onNameInputBlur(): void {
+    setTimeout(() => this.closeNameSuggestions(), 150);
+  }
+
+  protected selectEmployee(employee: TerminationEmployeeOption): void {
+    this.closeCodeSuggestions();
+    this.closeNameSuggestions();
+    this.populateFromEmployeeOption(employee);
+    this.cdr.markForCheck();
   }
 
   protected save(): void {
@@ -237,6 +330,70 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     }
     const years = Number(this.yearOfService().trim());
     return !Number.isFinite(years) || years < 0;
+  }
+
+  private buildEmployeeOptions(): TerminationEmployeeOption[] {
+    return this.applicationFormService
+      .getApplicationRecords()
+      .map((record) => this.toEmployeeOption(record))
+      .filter((option) => option.employeeId || option.employeeName);
+  }
+
+  private toEmployeeOption(record: ApplicationFormRecord): TerminationEmployeeOption {
+    return {
+      employeeId: this.resolveEmployeeId(record),
+      employeeName: emptyIfDash(record.EmployeeName),
+      department: emptyIfDash(record.Department),
+      employeeCategory: emptyIfDash(record.EmploymentCategory),
+      designation: emptyIfDash(record.Designation),
+      branchLocation:
+        emptyIfDash(record.detail?.requisition.location ?? '') ||
+        emptyIfDash(record.detail?.personalInfo.city ?? ''),
+      costCenter: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
+      workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
+    };
+  }
+
+  private resolveEmployeeId(record: ApplicationFormRecord): string {
+    const fromLogin = record.detail?.loginDetails.employeeCode?.trim();
+    if (fromLogin) {
+      return fromLogin;
+    }
+    if (record.apiId?.trim()) {
+      return record.apiId.trim();
+    }
+    if (record.EmployeeCode) {
+      return String(record.EmployeeCode);
+    }
+    return '';
+  }
+
+  private filterEmployeeSuggestions(query: string): TerminationEmployeeOption[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [];
+    }
+
+    return this.employeeOptions()
+      .filter(
+        (employee) =>
+          employee.employeeId.toLowerCase().includes(q) ||
+          employee.employeeName.toLowerCase().includes(q) ||
+          employee.department.toLowerCase().includes(q) ||
+          employee.designation.toLowerCase().includes(q),
+      )
+      .slice(0, 10);
+  }
+
+  private populateFromEmployeeOption(employee: TerminationEmployeeOption): void {
+    this.employeeId.set(employee.employeeId);
+    this.employeeName.set(employee.employeeName);
+    this.department.set(employee.department);
+    this.employeeCategory.set(employee.employeeCategory);
+    this.designation.set(employee.designation);
+    this.branchLocation.set(employee.branchLocation);
+    this.costCenter.set(employee.costCenter);
+    this.workGradeLevel.set(employee.workGradeLevel);
   }
 
   private populateFromRecord(record: TerminationRecord): void {

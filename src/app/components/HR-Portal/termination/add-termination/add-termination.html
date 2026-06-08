@@ -33,14 +33,82 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Employee ID:</label>
-            <input type="number" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)"
-              [class.cjr-invalid]="isInvalid('employeeId')" />
+            <label>Employee Code:</label>
+            <div class="employee-search-wrap">
+              <input
+                type="search"
+                role="combobox"
+                [attr.aria-expanded]="codeSuggestionsOpen()"
+                aria-autocomplete="list"
+                aria-controls="term-employee-code-listbox"
+                [ngModel]="employeeId()"
+                (ngModelChange)="onEmployeeIdInput($event)"
+                (focus)="openCodeSuggestions()"
+                (blur)="onCodeInputBlur()"
+                placeholder="Search by code, name, or department"
+                autocomplete="off"
+                [readonly]="!!editingId"
+                [class.cjr-invalid]="isInvalid('employeeId')"
+              />
+              <ul
+                id="term-employee-code-listbox"
+                class="employee-search-suggestions"
+                role="listbox"
+                *ngIf="!editingId && codeSuggestionsOpen() && employeeId().trim()"
+              >
+                <li
+                  *ngFor="let emp of codeSuggestions()"
+                  role="option"
+                  class="employee-search-suggestion-item"
+                  (mousedown)="selectEmployee(emp)"
+                >
+                  <span class="employee-search-suggestion-primary">{{ emp.employeeId }} — {{ emp.employeeName }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
+                </li>
+                <li *ngIf="codeSuggestions().length === 0" class="employee-search-suggestion-empty" role="presentation">
+                  No matching employees
+                </li>
+              </ul>
+            </div>
           </div>
           <div class="cjr-row">
             <label>Employee Name:</label>
-            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)"
-              [class.cjr-invalid]="isInvalid('employeeName')" />
+            <div class="employee-search-wrap">
+              <input
+                type="search"
+                role="combobox"
+                [attr.aria-expanded]="nameSuggestionsOpen()"
+                aria-autocomplete="list"
+                aria-controls="term-employee-name-listbox"
+                [ngModel]="employeeName()"
+                (ngModelChange)="onEmployeeNameInput($event)"
+                (focus)="openNameSuggestions()"
+                (blur)="onNameInputBlur()"
+                placeholder="Search by name, code, or department"
+                autocomplete="off"
+                [readonly]="!!editingId"
+                [class.cjr-invalid]="isInvalid('employeeName')"
+              />
+              <ul
+                id="term-employee-name-listbox"
+                class="employee-search-suggestions"
+                role="listbox"
+                *ngIf="!editingId && nameSuggestionsOpen() && employeeName().trim()"
+              >
+                <li
+                  *ngFor="let emp of nameSuggestions()"
+                  role="option"
+                  class="employee-search-suggestion-item"
+                  (mousedown)="selectEmployee(emp)"
+                >
+                  <span class="employee-search-suggestion-primary">{{ emp.employeeId }} — {{ emp.employeeName }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
+                </li>
+                <li *ngIf="nameSuggestions().length === 0" class="employee-search-suggestion-empty" role="presentation">
+                  No matching employees
+                </li>
+              </ul>
+            </div>
           </div>
           <div class="cjr-row">
             <label>Department:</label>
