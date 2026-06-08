@@ -139,6 +139,16 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     this.employeeSearchText.set('');
   }
 
+  protected onEmployeeCodeChange(code: string): void {
+    this.employeeSearchText.set(code);
+    this.showEmployeeDropdown.set(code.trim().length > 0);
+  }
+
+  protected onEmployeeNameChange(name: string): void {
+    this.employeeSearchText.set(name);
+    this.showEmployeeDropdown.set(name.trim().length > 0);
+  }
+
   private generateDocumentNo(): string {
     return `LA-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   }

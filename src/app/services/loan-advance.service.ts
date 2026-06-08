@@ -84,4 +84,12 @@ export class LoanAdvanceService {
   submitLoanAdvance(payload: LoanAdvancePayload): Observable<LoanAdvanceResponse> {
     return this.http.post<LoanAdvanceResponse>(apiUrl('loan-advance-add'), payload);
   }
+
+  updateLoanAdvance(id: string | number, payload: LoanAdvancePayload): Observable<LoanAdvanceResponse> {
+    return this.http.put<LoanAdvanceResponse>(apiUrl(`loan-advance-update/${id}`), payload);
+  }
+
+  deleteLoanAdvance(id: string | number): Observable<LoanAdvanceResponse> {
+    return this.http.delete<LoanAdvanceResponse>(apiUrl(`loan-advance-delete/${id}`));
+  }
 }
