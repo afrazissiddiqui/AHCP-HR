@@ -37,17 +37,14 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
   protected readonly documentNo = signal(this.generateDocumentNo());
   protected readonly headerEmployeeID = signal('');
   protected readonly headerEmployeeName = signal('');
-  protected readonly employeeSearchText = signal('');
-  protected readonly showEmployeeDropdown = signal(false);
-  protected readonly filteredEmployees = computed(() => {
-    const searchText = this.employeeSearchText().trim().toLowerCase();
-    if (!searchText) return [];
-    const employees = this.applicationFormService.getApplicationRecords();
-    return employees.filter((emp) =>
-      emp.EmployeeName.toLowerCase().includes(searchText) ||
-      emp.EmployeeCode.toString().includes(searchText)
-    );
-  });
+  protected readonly codeSuggestionsOpen = signal(false);
+  protected readonly nameSuggestionsOpen = signal(false);
+  protected readonly codeSuggestions = computed(() =>
+    this.filterEmployeeSuggestions(this.headerEmployeeID())
+  );
+  protected readonly nameSuggestions = computed(() =>
+    this.filterEmployeeSuggestions(this.headerEmployeeName())
+  );
   protected readonly designation = signal('');
   protected readonly location = signal('');
   protected readonly requestType = signal('');
@@ -120,33 +117,75 @@ export class AddLoanAdvanceComponent implements AfterViewInit, OnDestroy {
     void this.router.navigateByUrl('/employee-action/loan-advance-form');
   }
 
-  protected onEmployeeSearchChange(text: string): void {
-    this.employeeSearchText.set(text);
-    this.showEmployeeDropdown.set(text.trim().length > 0);
-  }
-
   protected selectEmployee(employee: ApplicationFormRecord): void {
     this.headerEmployeeID.set(employee.EmployeeCode.toString());
     this.headerEmployeeName.set(employee.EmployeeName);
-    this.employeeSearchText.set('');
-    this.showEmployeeDropdown.set(false);
+    this.closeCodeSuggestions();
+    this.closeNameSuggestions();
     this.department.set(employee.Department);
     this.designation.set(employee.Designation);
   }
 
-  protected closeEmployeeDropdown(): void {
-    this.showEmployeeDropdown.set(false);
-    this.employeeSearchText.set('');
-  }
-
   protected onEmployeeCodeChange(code: string): void {
-    this.employeeSearchText.set(code);
-    this.showEmployeeDropdown.set(code.trim().length > 0);
+    this.headerEmployeeID.set(code);
+    this.codeSuggestionsOpen.set(code.trim().length > 0);
+    this.closeNameSuggestions();
   }
 
   protected onEmployeeNameChange(name: string): void {
-    this.employeeSearchText.set(name);
-    this.showEmployeeDropdown.set(name.trim().length > 0);
+    this.headerEmployeeName.set(name);
+    this.nameSuggestionsOpen.set(name.trim().length > 0);
+    this.closeCodeSuggestions();
+  }
+
+  protected openCodeSuggestions(): void {
+    if (!this.headerEmployeeID().trim()) {
+      return;
+    }
+    this.codeSuggestionsOpen.set(true);
+    this.closeNameSuggestions();
+  }
+
+  protected openNameSuggestions(): void {
+    if (!this.headerEmployeeName().trim()) {
+      return;
+    }
+    this.nameSuggestionsOpen.set(true);
+    this.closeCodeSuggestions();
+  }
+
+  protected closeCodeSuggestions(): void {
+    this.codeSuggestionsOpen.set(false);
+  }
+
+  protected closeNameSuggestions(): void {
+    this.nameSuggestionsOpen.set(false);
+  }
+
+  protected onCodeInputBlur(): void {
+    setTimeout(() => this.closeCodeSuggestions(), 150);
+  }
+
+  protected onNameInputBlur(): void {
+    setTimeout(() => this.closeNameSuggestions(), 150);
+  }
+
+  private filterEmployeeSuggestions(query: string): ApplicationFormRecord[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [];
+    }
+
+    return this.applicationFormService
+      .getApplicationRecords()
+      .filter(
+        (employee) =>
+          employee.EmployeeCode.toString().toLowerCase().includes(q) ||
+          employee.EmployeeName.toLowerCase().includes(q) ||
+          employee.Department.toLowerCase().includes(q) ||
+          employee.Designation.toLowerCase().includes(q)
+      )
+      .slice(0, 10);
   }
 
   private generateDocumentNo(): string {

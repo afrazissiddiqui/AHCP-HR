@@ -62,46 +62,85 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee Code:</label>
-            <div style="position: relative;">
-              <input 
-                type="text" 
-                [ngModel]="headerEmployeeID() || employeeSearchText()" 
+            <div class="employee-search-wrap">
+              <input
+                type="search"
+                role="combobox"
+                [attr.aria-expanded]="codeSuggestionsOpen()"
+                aria-autocomplete="list"
+                aria-controls="la-employee-code-listbox"
+                [ngModel]="headerEmployeeID()"
                 (ngModelChange)="onEmployeeCodeChange($event)"
-                placeholder="Search by employee code..."
-                (focus)="showEmployeeDropdown.set(true)" />
-              @if (showEmployeeDropdown() && filteredEmployees().length > 0) {
-                <div style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                  @for (emp of filteredEmployees(); track emp.EmployeeCode) {
-                    <div 
-                      (click)="selectEmployee(emp)"
-                      style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; hover: background-color #f5f5f5";>
-                      <strong>{{ emp.EmployeeCode }}</strong> - {{ emp.EmployeeName }} ({{ emp.Department }})
-                    </div>
-                  }
-                </div>
-              }
+                (focus)="openCodeSuggestions()"
+                (blur)="onCodeInputBlur()"
+                placeholder="Search by code, name, or department"
+                autocomplete="off"
+              />
+              <ul
+                id="la-employee-code-listbox"
+                class="employee-search-suggestions"
+                role="listbox"
+                *ngIf="codeSuggestionsOpen() && codeSuggestions().length > 0"
+              >
+                <li
+                  *ngFor="let emp of codeSuggestions()"
+                  role="option"
+                  class="employee-search-suggestion-item"
+                  (mousedown)="selectEmployee(emp)"
+                >
+                  <span class="employee-search-suggestion-primary">{{ emp.EmployeeCode }} — {{ emp.EmployeeName }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.Department }} · {{ emp.Designation }}</span>
+                </li>
+                <li
+                  *ngIf="codeSuggestions().length === 0"
+                  class="employee-search-suggestion-empty"
+                  role="presentation"
+                >
+                  No matching employees
+                </li>
+              </ul>
             </div>
           </div>
+
           <div class="cjr-row">
             <label>Employee Name:</label>
-            <div style="position: relative;">
-              <input 
-                type="text" 
-                [ngModel]="headerEmployeeName() || employeeSearchText()" 
+            <div class="employee-search-wrap">
+              <input
+                type="search"
+                role="combobox"
+                [attr.aria-expanded]="nameSuggestionsOpen()"
+                aria-autocomplete="list"
+                aria-controls="la-employee-name-listbox"
+                [ngModel]="headerEmployeeName()"
                 (ngModelChange)="onEmployeeNameChange($event)"
-                placeholder="Search by employee name..."
-                (focus)="showEmployeeDropdown.set(true)" />
-              @if (showEmployeeDropdown() && filteredEmployees().length > 0) {
-                <div style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                  @for (emp of filteredEmployees(); track emp.EmployeeCode) {
-                    <div 
-                      (click)="selectEmployee(emp)"
-                      style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; hover: background-color: #f5f5f5;">
-                      <strong>{{ emp.EmployeeName }}</strong> ({{ emp.EmployeeCode }}) - {{ emp.Department }}
-                    </div>
-                  }
-                </div>
-              }
+                (focus)="openNameSuggestions()"
+                (blur)="onNameInputBlur()"
+                placeholder="Search by name, code, or department"
+                autocomplete="off"
+              />
+              <ul
+                id="la-employee-name-listbox"
+                class="employee-search-suggestions"
+                role="listbox"
+                *ngIf="nameSuggestionsOpen() && nameSuggestions().length > 0"
+              >
+                <li
+                  *ngFor="let emp of nameSuggestions()"
+                  role="option"
+                  class="employee-search-suggestion-item"
+                  (mousedown)="selectEmployee(emp)"
+                >
+                  <span class="employee-search-suggestion-primary">{{ emp.EmployeeCode }} — {{ emp.EmployeeName }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.Department }} · {{ emp.Designation }}</span>
+                </li>
+                <li
+                  *ngIf="nameSuggestions().length === 0"
+                  class="employee-search-suggestion-empty"
+                  role="presentation"
+                >
+                  No matching employees
+                </li>
+              </ul>
             </div>
           </div>
           <div class="cjr-row">
