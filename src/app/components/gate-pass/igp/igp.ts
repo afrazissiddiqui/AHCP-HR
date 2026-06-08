@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
+import { AlertService } from '../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { IgpService, IgpRecord } from './igp.service';
 
@@ -22,12 +24,24 @@ interface ColumnConfig {
   templateUrl: './igp.html',
   styleUrl: './igp.css',
 })
-export class IgpComponent {
+export class IgpComponent implements OnInit {
   constructor(
     private readonly router: Router,
     private readonly igpService: IgpService,
     private readonly layout: GatePassLayoutService,
+    private readonly alertService: AlertService,
   ) {}
+
+  ngOnInit(): void {
+    this.igpService.fetchInwardGatePasses().subscribe({
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load IGP records.'),
+        );
+      },
+    });
+  }
 
   Math = Math;
 
@@ -57,6 +71,7 @@ export class IgpComponent {
 
   showDialog = false;
   showDetailDialog = false;
+  detailLoading = false;
   selectedRow: IgpRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
@@ -69,26 +84,94 @@ export class IgpComponent {
   }
 
   viewDetails(record: IgpRecord): void {
-    this.selectedRow = record;
+    if (!record.Id) {
+      this.alertService.warning('View', 'Unable to view this row: missing IGP id.');
+      return;
+    }
+
     this.showDetailDialog = true;
+    this.selectedRow = null;
+    this.detailLoading = true;
+
+    this.igpService.fetchInwardGatePassDetail(record.Id).subscribe({
+      next: (detail) => {
+        this.selectedRow = detail;
+        this.detailLoading = false;
+      },
+      error: (error: unknown) => {
+        this.detailLoading = false;
+        this.showDetailDialog = false;
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load IGP details.'),
+        );
+      },
+    });
+  }
+
+  onUpdate(record: IgpRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing IGP id.');
+      return;
+    }
+    void this.router.navigate(['/gate-pass/igp/edit', record.Id]);
+  }
+
+  async onDelete(record: IgpRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete IGP?',
+      `Remove ${record.referenceNo} (${record.businessPartnerName}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing IGP id.');
+      return;
+    }
+
+    this.igpService.deleteInwardGatePass(record.Id).subscribe({
+      next: () => {
+        this.igpService.removeIgpRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'IGP record removed successfully.');
+      },
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete IGP record.'),
+        );
+      },
+    });
   }
 
   closeDetailDialog(): void {
     this.selectedRow = null;
     this.showDetailDialog = false;
+    this.detailLoading = false;
+  }
+
+  formatDetail(value: string | number | null | undefined): string {
+    if (value === null || value === undefined || value === '' || value === '—') {
+      return '—';
+    }
+    return String(value);
   }
 
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.filteredList.forEach(s => (s.selected = checked));
+    this.filteredList.forEach((s) => (s.selected = checked));
   }
 
   isAllSelected(): boolean {
-    return this.filteredList.length > 0 && this.filteredList.every(s => s.selected);
+    return this.filteredList.length > 0 && this.filteredList.every((s) => s.selected);
   }
 
   getSelectedCount(): number {
-    return this.rows.filter(x => x.selected).length;
+    return this.rows.filter((x) => x.selected).length;
   }
 
   get filteredList(): IgpRecord[] {
@@ -96,7 +179,7 @@ export class IgpComponent {
 
     if (this.searchText) {
       const search = this.searchText.toLowerCase();
-      list = list.filter(item => {
+      list = list.filter((item) => {
         const hay = [
           item.title,
           item.department,

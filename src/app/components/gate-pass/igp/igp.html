@@ -88,8 +88,10 @@
                 <input type="checkbox" [(ngModel)]="j.selected" />
               </td>
               <td *ngFor="let col of columns" [hidden]="!col.visible">{{ j[col.key] }}</td>
-              <td>
-                <button class="view-btn" type="button" (click)="viewDetails(j)" title="View Details">👁 View</button>
+              <td class="igp-actions">
+                <button type="button" class="view-btn" (click)="viewDetails(j)" title="View Details">View</button>
+                <button type="button" class="update-btn" (click)="onUpdate(j)" title="Update">Update</button>
+                <button type="button" class="delete-btn" (click)="onDelete(j)" title="Delete">Delete</button>
               </td>
             </tr>
           </tbody>
@@ -97,12 +99,14 @@
       </div>
 
       <div class="dialog-backdrop" *ngIf="showDetailDialog" (click)="closeDetailDialog()"></div>
-      <div class="js-detail-modal" *ngIf="showDetailDialog && selectedRow">
+      <div class="js-detail-modal" *ngIf="showDetailDialog">
         <div class="js-modal-header">
-          <h2>IGP — {{ selectedRow.referenceNo }}</h2>
+          <h2>IGP<ng-container *ngIf="selectedRow"> — {{ selectedRow.referenceNo }}</ng-container></h2>
           <button type="button" class="js-close-modal" (click)="closeDetailDialog()">×</button>
         </div>
         <div class="js-modal-body">
+          <p *ngIf="detailLoading">Loading details…</p>
+          <ng-container *ngIf="selectedRow && !detailLoading">
           <div class="js-detail-section">
             <h3>Header</h3>
             <div class="js-detail-grid">
@@ -167,6 +171,7 @@
               </table>
             </div>
           </div>
+          </ng-container>
         </div>
         <div class="js-modal-footer">
           <button type="button" class="btn-secondary" (click)="closeDetailDialog()">Close</button>

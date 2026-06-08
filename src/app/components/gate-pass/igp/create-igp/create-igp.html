@@ -4,7 +4,7 @@
       <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
         <span class="cjs-back-icon">❮</span>
       </button>
-      <h1>Add IGP</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
@@ -19,14 +19,14 @@
             <div class="ogp-header-grid ogp-header-grid--4">
               <div class="ogp-field">
                 <label for="igp-type">Type</label>
-                <select id="igp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked">
+                <select id="igp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked || !!editingId">
                   <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
                 </select>
               </div>
               <div class="ogp-field ogp-field--span-3">
                 <span class="gate-pass-base-doc-label">Base document</span>
                 <div class="gate-pass-base-doc-row">
-                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()">
+                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()" [disabled]="!!editingId">
                     Choose base document…
                   </button>
                   <span
@@ -34,7 +34,7 @@
                     [class.gate-pass-base-doc-summary--muted]="!baseDocNo"
                     >{{ baseDocNo || 'None selected' }}</span>
                   <button
-                    *ngIf="headerLocked"
+                    *ngIf="headerLocked && !editingId"
                     type="button"
                     class="gate-pass-clear-base-doc"
                     (click)="clearBaseDocumentSelection()"
@@ -47,7 +47,7 @@
             <div class="ogp-header-grid ogp-header-grid--2 ogp-header-grid--nested">
               <div class="ogp-field">
                 <label for="igp-date">Date</label>
-                <input id="igp-date" type="date" [(ngModel)]="documentDate" [readonly]="headerLocked" />
+                <input id="igp-date" type="date" [(ngModel)]="documentDate" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-ref">IGP no.</label>
@@ -56,7 +56,7 @@
                   type="text"
                   [(ngModel)]="referenceNo"
                   placeholder="Auto if left blank"
-                  [readonly]="headerLocked"
+                  [readonly]="headerLocked && !editingId"
                 />
               </div>
             </div>
@@ -67,15 +67,15 @@
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
                 <label for="igp-bp-code">Business partner code</label>
-                <input id="igp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" [readonly]="headerLocked" />
+                <input id="igp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field ogp-field--span-2">
                 <label for="igp-bp-name">Business partner name</label>
-                <input id="igp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" [readonly]="headerLocked" />
+                <input id="igp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-vehicle">Vehicle no.</label>
-                <input id="igp-vehicle" type="text" [(ngModel)]="vehicleNo" [readonly]="headerLocked" />
+                <input id="igp-vehicle" type="text" [(ngModel)]="vehicleNo" [readonly]="headerLocked && !editingId" />
               </div>
             </div>
           </div>
@@ -85,27 +85,27 @@
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
                 <label for="igp-from-unit">From unit</label>
-                <input id="igp-from-unit" type="text" [(ngModel)]="fromUnit" [readonly]="headerLocked" />
+                <input id="igp-from-unit" type="text" [(ngModel)]="fromUnit" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-kanta-slip">Kanta slip</label>
-                <input id="igp-kanta-slip" type="text" [(ngModel)]="kantaSlip" [readonly]="headerLocked" />
+                <input id="igp-kanta-slip" type="text" [(ngModel)]="kantaSlip" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-bilty">Bilty no.</label>
-                <input id="igp-bilty" type="text" [(ngModel)]="biltyNo" [readonly]="headerLocked" />
+                <input id="igp-bilty" type="text" [(ngModel)]="biltyNo" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-store">Store</label>
-                <input id="igp-store" type="text" [(ngModel)]="store" [readonly]="headerLocked" />
+                <input id="igp-store" type="text" [(ngModel)]="store" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-freight">Freight</label>
-                <input id="igp-freight" type="text" [(ngModel)]="freight" [readonly]="headerLocked" />
+                <input id="igp-freight" type="text" [(ngModel)]="freight" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-department">Department</label>
-                <select id="igp-department" [(ngModel)]="department" [disabled]="headerLocked">
+                <select id="igp-department" [(ngModel)]="department" [disabled]="headerLocked && !editingId">
                   <option value="">No selection</option>
                   <option value="Engineering">Engineering</option>
                   <option value="Marketing">Marketing</option>
@@ -125,15 +125,15 @@
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
                 <label for="igp-weight-machine">Weight machine (kanta) name</label>
-                <input id="igp-weight-machine" type="text" [(ngModel)]="weightMachineName" [readonly]="headerLocked" />
+                <input id="igp-weight-machine" type="text" [(ngModel)]="weightMachineName" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-weight">Weight</label>
-                <input id="igp-weight" type="text" [(ngModel)]="weight" placeholder="e.g. 12.5" [readonly]="headerLocked" />
+                <input id="igp-weight" type="text" [(ngModel)]="weight" placeholder="e.g. 12.5" [readonly]="headerLocked && !editingId" />
               </div>
               <div class="ogp-field">
                 <label for="igp-location">Location</label>
-                <select id="igp-location" [(ngModel)]="location" [disabled]="headerLocked">
+                <select id="igp-location" [(ngModel)]="location" [disabled]="headerLocked && !editingId">
                   <option value="">No selection</option>
                   <option value="FSD">FSD</option>
                   <option value="PSH">PSH</option>
@@ -213,14 +213,14 @@
       <section class="cjs-section-block">
         <div class="cjs-row igp-remarks-block">
           <label>Remarks</label>
-          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks" [readonly]="headerLocked"></textarea>
+          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks" [readonly]="headerLocked && !editingId"></textarea>
         </div>
       </section>
 
       <div class="cjs-actions-footer">
         <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
         <button type="button" class="cjs-submit-btn" (click)="submitForm()">
-          <span class="cjs-submit-icon">✓</span> Save IGP
+          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
         </button>
       </div>
     </div>

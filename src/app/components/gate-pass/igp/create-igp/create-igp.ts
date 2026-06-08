@@ -1,11 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { OpenBaseDocument } from '../../open-base-documents.service';
-import { createEmptyIgpLineItem, IgpLineItem, IgpService } from '../igp.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import {
+  createEmptyIgpLineItem,
+  IgpAddPayload,
+  IgpLineItem,
+  IgpRecord,
+  IgpService,
+} from '../igp.service';
+
+function emptyIfDash(value: string): string {
+  return value === '—' ? '' : value;
+}
 
 @Component({
   selector: 'app-create-igp',
@@ -14,7 +25,11 @@ import { createEmptyIgpLineItem, IgpLineItem, IgpService } from '../igp.service'
   templateUrl: './create-igp.html',
   styleUrl: './create-igp.css',
 })
-export class CreateIgpComponent {
+export class CreateIgpComponent implements OnInit {
+  editingId: string | null = null;
+  pageTitle = 'Add IGP';
+  submitButtonLabel = 'Save IGP';
+
   type = 'Purchase Order';
   documentDate = '';
   businessPartnerCode = '';
@@ -44,11 +59,35 @@ export class CreateIgpComponent {
 
   constructor(
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly igpService: IgpService,
-    private readonly alertService: AlertService
+    private readonly alertService: AlertService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
+  }
+
+  ngOnInit(): void {
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+
+    this.editingId = editId;
+    this.pageTitle = 'Update IGP';
+    this.submitButtonLabel = 'Update IGP';
+
+    this.igpService.fetchInwardGatePassDetail(editId).subscribe({
+      next: (record) => {
+        this.populateFromRecord(record);
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load IGP for edit.'),
+        );
+      },
+    });
   }
 
   get totalQty(): number {
@@ -72,10 +111,16 @@ export class CreateIgpComponent {
   }
 
   onBaseDocumentTypeChange(): void {
+    if (this.editingId) {
+      return;
+    }
     this.resetAfterTypeOrClearBaseDoc();
   }
 
   clearBaseDocumentSelection(): void {
+    if (this.editingId) {
+      return;
+    }
     this.resetAfterTypeOrClearBaseDoc();
   }
 
@@ -103,6 +148,9 @@ export class CreateIgpComponent {
   }
 
   openBaseDocumentModal(): void {
+    if (this.editingId) {
+      return;
+    }
     if (!this.type?.trim()) {
       void this.alertService.validation('Select a document type first.');
       return;
@@ -135,7 +183,7 @@ export class CreateIgpComponent {
     this.location = doc.location?.trim() ?? '';
     this.remarks = doc.remarks?.trim() ?? '';
     this.lines =
-      doc.lines?.map(l => ({
+      doc.lines?.map((l) => ({
         itemCode: l.itemCode,
         itemName: l.itemName,
         category: l.category,
@@ -150,34 +198,81 @@ export class CreateIgpComponent {
 
   submitForm(): void {
     if (!this.type?.trim() || !this.documentDate?.trim() || !this.department?.trim() || !this.businessPartnerName?.trim()) {
-      void this.alertService.validation('Please select Type, choose a base document, and ensure required header data is present.');
+      void this.alertService.validation('Please ensure Type, Date, Department, and Business partner name are filled.');
       return;
     }
 
-    if (!this.baseDocNo?.trim()) {
+    if (!this.editingId && !this.baseDocNo?.trim()) {
       void this.alertService.validation('Please choose a base document using the Base document button.');
       return;
     }
 
     if (this.lines.length === 0) {
-      void this.alertService.validation('The base document must include at least one line item.');
+      void this.alertService.validation('At least one line item is required.');
       return;
     }
 
-    const ref =
+    const payload = this.buildPayload();
+    const request$ = this.editingId
+      ? this.igpService.updateInwardGatePass(this.editingId, payload)
+      : this.igpService.addInwardGatePass(payload);
+
+    request$.subscribe({
+      next: async (response) => {
+        if (response?.status === false || response?.success === false) {
+          const fallback = this.editingId ? 'Failed to update IGP.' : 'Failed to save IGP.';
+          this.alertService.error('Error', response.message || fallback);
+          return;
+        }
+
+        const title = this.editingId ? 'Updated' : 'Success';
+        const message = this.editingId
+          ? response?.message || 'IGP record updated successfully.'
+          : response?.message || 'IGP record saved successfully.';
+        await this.alertService.successAndWait(title, message);
+        this.igpService.fetchInwardGatePasses().subscribe();
+        this.back();
+      },
+      error: (error: unknown) => {
+        const fallback = this.editingId ? 'Failed to update IGP.' : 'Failed to save IGP.';
+        this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+      },
+    });
+  }
+
+  private populateFromRecord(record: IgpRecord): void {
+    this.type = emptyIfDash(record.type) || 'Purchase Order';
+    this.documentDate = emptyIfDash(record.submittedDate) || this.documentDate;
+    this.referenceNo = emptyIfDash(record.referenceNo);
+    this.businessPartnerCode = emptyIfDash(record.businessPartnerCode);
+    this.baseDocNo = emptyIfDash(record.baseDocNo);
+    this.businessPartnerName = emptyIfDash(record.businessPartnerName);
+    this.vehicleNo = emptyIfDash(record.vehicleNo);
+    this.fromUnit = emptyIfDash(record.fromUnit);
+    this.kantaSlip = emptyIfDash(record.kantaSlip);
+    this.biltyNo = emptyIfDash(record.biltyNo);
+    this.store = emptyIfDash(record.store);
+    this.freight = emptyIfDash(record.freight);
+    this.department = emptyIfDash(record.department);
+    this.weightMachineName = emptyIfDash(record.weightMachineName);
+    this.weight = emptyIfDash(record.weight);
+    this.location = emptyIfDash(record.location);
+    this.employee = emptyIfDash(record.employee);
+    this.remarks = emptyIfDash(record.remarks ?? '');
+    this.lines = record.lines.length ? record.lines.map((line) => ({ ...line })) : [];
+  }
+
+  private buildPayload(): IgpAddPayload {
+    const referenceNo =
       this.referenceNo.trim() ||
       `IGP-${new Date().getFullYear()}-${String(this.igpService.records().length + 1).padStart(3, '0')}`;
 
-    this.igpService.addIgp({
-      referenceNo: ref,
-      title: this.businessPartnerName.trim(),
-      department: this.department.trim(),
-      status: 'Pending',
-      submittedDate: this.documentDate,
-      remarks: this.remarks.trim() || undefined,
-      type: this.type,
-      businessPartnerCode: this.businessPartnerCode.trim(),
+    return {
+      type: this.type.trim(),
       baseDocNo: this.baseDocNo.trim(),
+      documentDate: this.documentDate.trim(),
+      referenceNo,
+      businessPartnerCode: this.businessPartnerCode.trim(),
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
       fromUnit: this.fromUnit.trim(),
@@ -185,18 +280,24 @@ export class CreateIgpComponent {
       biltyNo: this.biltyNo.trim(),
       store: this.store.trim(),
       freight: this.freight.trim(),
+      department: this.department.trim(),
       weightMachineName: this.weightMachineName.trim(),
       weight: this.weight.trim(),
       location: this.location,
       employee: this.employee.trim(),
-      lines: this.lines.map(l => ({
-        ...l,
-        qty: Number(l.qty) || 0,
+      remarks: this.remarks.trim(),
+      lines: this.lines.map((line) => ({
+        itemCode: line.itemCode.trim(),
+        itemName: line.itemName.trim(),
+        category: line.category.trim(),
+        packingCondition: line.packingCondition.trim(),
+        productQuality: line.productQuality.trim(),
+        uom: line.uom.trim(),
+        qty: Number(line.qty) || 0,
+        info: line.info.trim(),
+        remarks: line.remarks.trim(),
       })),
       totalQty: this.totalQty,
-    });
-
-    void this.alertService.success('Success', 'IGP record saved successfully.');
-    this.back();
+    };
   }
 }
