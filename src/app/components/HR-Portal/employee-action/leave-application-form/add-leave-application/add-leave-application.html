@@ -4,7 +4,7 @@
       <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
         <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>Add Leave Request</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
@@ -32,56 +32,112 @@
             <label>Form Number:</label>
             <input type="text" [ngModel]="formNumber()" (ngModelChange)="formNumber.set($event)" />
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee ID:</label>
-            <input type="text" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)" />
+            <div class="employee-search-wrap">
+              <input
+                type="search"
+                role="combobox"
+                [attr.aria-expanded]="codeSuggestionsOpen()"
+                aria-autocomplete="list"
+                aria-controls="la-employee-id-listbox"
+                [ngModel]="employeeId()"
+                (ngModelChange)="onEmployeeIdInput($event)"
+                (focus)="openCodeSuggestions()"
+                (blur)="onCodeInputBlur()"
+                placeholder="Search by ID, name, or department"
+                autocomplete="off"
+                [readonly]="!!editingId"
+              />
+              <ul
+                id="la-employee-id-listbox"
+                class="employee-search-suggestions"
+                role="listbox"
+                *ngIf="!editingId && codeSuggestionsOpen() && employeeId().trim()"
+              >
+                <li
+                  *ngFor="let emp of codeSuggestions()"
+                  role="option"
+                  class="employee-search-suggestion-item"
+                  (mousedown)="selectEmployee(emp)"
+                >
+                  <span class="employee-search-suggestion-primary">{{ emp.employeeId }} — {{ emp.employeeName }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.jobTitle }}</span>
+                </li>
+                <li *ngIf="codeSuggestions().length === 0" class="employee-search-suggestion-empty" role="presentation">
+                  No matching employees
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee Name:</label>
-            <input type="text" [ngModel]="employeeName()" (ngModelChange)="employeeName.set($event)" />
+            <div class="employee-search-wrap">
+              <input
+                type="search"
+                role="combobox"
+                [attr.aria-expanded]="nameSuggestionsOpen()"
+                aria-autocomplete="list"
+                aria-controls="la-employee-name-listbox"
+                [ngModel]="employeeName()"
+                (ngModelChange)="onEmployeeNameInput($event)"
+                (focus)="openNameSuggestions()"
+                (blur)="onNameInputBlur()"
+                placeholder="Search by name, ID, or department"
+                autocomplete="off"
+                [readonly]="!!editingId"
+              />
+              <ul
+                id="la-employee-name-listbox"
+                class="employee-search-suggestions"
+                role="listbox"
+                *ngIf="!editingId && nameSuggestionsOpen() && employeeName().trim()"
+              >
+                <li
+                  *ngFor="let emp of nameSuggestions()"
+                  role="option"
+                  class="employee-search-suggestion-item"
+                  (mousedown)="selectEmployee(emp)"
+                >
+                  <span class="employee-search-suggestion-primary">{{ emp.employeeId }} — {{ emp.employeeName }}</span>
+                  <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.jobTitle }}</span>
+                </li>
+                <li *ngIf="nameSuggestions().length === 0" class="employee-search-suggestion-empty" role="presentation">
+                  No matching employees
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
+
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee Category:</label>
             <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employment Nature:</label>
             <input type="text" [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)" />
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employment Type:</label>
             <input type="text" [ngModel]="employmentType()" (ngModelChange)="employmentType.set($event)" />
           </div>
         </div>
+
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Work / Grade Level:</label>
             <input type="text" [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)" />
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Department:</label>
             <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Job Title:</label>
             <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Location:</label>
             <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
@@ -100,34 +156,39 @@
           </div>
           <div class="cjr-row">
             <label>Leave Type:</label>
-            <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)" />
+            <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)" placeholder="e.g. Annual Leave" />
           </div>
-        </div>
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Cause of Leave:</label>
             <input type="text" [ngModel]="causeOfLeave()" (ngModelChange)="causeOfLeave.set($event)" />
           </div>
-          <div class="cjr-row">
-            <label>From Date:</label>
-            <input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" />
-          </div>
         </div>
+
         <div class="cjr-personal-col">
           <div class="cjr-row">
+            <label>From Date:</label>
+            <input type="date" [ngModel]="fromDate()" (ngModelChange)="onFromDateChange($event)" />
+          </div>
+          <div class="cjr-row">
             <label>To Date:</label>
-            <input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" />
+            <input type="date" [ngModel]="toDate()" (ngModelChange)="onToDateChange($event)" />
           </div>
           <div class="cjr-row">
             <label>Total Leave Days Requested:</label>
-            <input type="number" min="0" step="0.5" [ngModel]="totalLeaveDaysRequested()" (ngModelChange)="totalLeaveDaysRequested.set($event)" />
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              [ngModel]="totalLeaveDaysRequested()"
+              (ngModelChange)="onTotalLeaveDaysChange($event)"
+            />
           </div>
         </div>
+
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Request Status:</label>
             <select [ngModel]="requestStatus()" (ngModelChange)="requestStatus.set($event)">
-              <option value="">Select option</option>
               <option value="Submitted">Submitted</option>
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
@@ -135,7 +196,7 @@
           </div>
           <div class="cjr-row">
             <label>Remarks:</label>
-            <input type="text" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" />
+            <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
           </div>
         </div>
       </div>
@@ -147,15 +208,25 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Total Leaves:</label>
-            <input type="number" min="0" [ngModel]="totalLeaves()" (ngModelChange)="totalLeaves.set($event)" />
+            <input
+              type="number"
+              min="0"
+              [ngModel]="totalLeaves()"
+              (ngModelChange)="onTotalLeavesChange($event)"
+            />
           </div>
           <div class="cjr-row">
             <label>Leaves Availed:</label>
-            <input type="number" min="0" [ngModel]="leavesAvailed()" (ngModelChange)="leavesAvailed.set($event)" />
+            <input
+              type="number"
+              min="0"
+              [ngModel]="leavesAvailed()"
+              (ngModelChange)="onLeavesAvailedChange($event)"
+            />
           </div>
           <div class="cjr-row">
             <label>Remaining Leaves:</label>
-            <input type="number" min="0" [ngModel]="remainingLeaves()" (ngModelChange)="remainingLeaves.set($event)" />
+            <input type="number" min="0" [ngModel]="remainingLeaves()" readonly />
           </div>
         </div>
       </div>
@@ -163,7 +234,7 @@
 
     <div class="cjr-actions-footer">
       <button type="button" class="cjr-submit-btn" (click)="save()">
-        <span class="cjr-submit-icon">✓</span> Save Leave Request
+        <span class="cjr-submit-icon">✓</span> {{ submitButtonLabel }}
       </button>
     </div>
   </div>

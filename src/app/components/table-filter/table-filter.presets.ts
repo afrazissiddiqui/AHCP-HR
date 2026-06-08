@@ -79,15 +79,9 @@ export const LEAVE_APPLICATION_TABLE_FILTER: TableFilterConfig = {
   fields: [
     { type: 'select', key: 'department', label: 'Department', fieldKey: 'Department' },
     { type: 'select', key: 'leaveType', label: 'Leave type', fieldKey: 'LeaveType' },
-    { type: 'select', key: 'approvalStatus', label: 'Approval status', fieldKey: 'ApprovalStatus' },
-    {
-      type: 'numberRange',
-      key: 'employeeId',
-      label: 'Employee ID range',
-      fieldKey: 'EmployeeID',
-      fromPlaceholder: 'Min ID',
-      toPlaceholder: 'Max ID',
-    },
+    { type: 'select', key: 'requestStatus', label: 'Request status', fieldKey: 'RequestStatus' },
+    { type: 'select', key: 'employeeCategory', label: 'Employee category', fieldKey: 'EmployeeCategory' },
+    { type: 'select', key: 'employeeId', label: 'Employee ID', fieldKey: 'EmployeeId' },
   ],
 };
 

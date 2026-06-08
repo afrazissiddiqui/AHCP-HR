@@ -27,6 +27,7 @@ const EXACT_TITLES: Record<string, string> = {
   'employee-action/loan-advance-form/create': 'Loan / Advance Form',
   'employee-action/leave-application-form': 'Leave Application Form',
   'employee-action/leave-application-form/create': 'Leave Application Form',
+  'employee-action/leave-application-form/edit': 'Update Leave Request',
   termination: 'Termination',
   'termination/create': 'Termination Form',
   'payroll-master': 'Payroll Master',

@@ -172,6 +172,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'employee-action/leave-application-form/edit/:id',
+    component: AddLeaveApplicationComponent,
+    canActivate: [authGuard],
+  },
+  {
     path: 'employee-action/approval-authority-setup',
     component: ApprovalAuthoritySetupComponent,
     canActivate: [authGuard],
