@@ -98,15 +98,11 @@ export const LOAN_ADVANCE_TABLE_FILTER: TableFilterConfig = {
   fields: [
     { type: 'select', key: 'department', label: 'Department', fieldKey: 'Department' },
     { type: 'select', key: 'requestType', label: 'Request type', fieldKey: 'RequestType' },
-    { type: 'select', key: 'approvalStatus', label: 'Approval status', fieldKey: 'ApprovalStatus' },
-    {
-      type: 'numberRange',
-      key: 'employeeId',
-      label: 'Employee ID range',
-      fieldKey: 'EmployeeID',
-      fromPlaceholder: 'Min ID',
-      toPlaceholder: 'Max ID',
-    },
+    { type: 'select', key: 'status', label: 'Status', fieldKey: 'Status' },
+    { type: 'select', key: 'employeeNature', label: 'Employee nature', fieldKey: 'EmployeeNature' },
+    { type: 'select', key: 'employmentType', label: 'Employment type', fieldKey: 'EmploymentType' },
+    { type: 'select', key: 'designation', label: 'Designation', fieldKey: 'Designation' },
+    { type: 'select', key: 'payrollMonth', label: 'Payroll month', fieldKey: 'PayrollMonth' },
   ],
 };
 

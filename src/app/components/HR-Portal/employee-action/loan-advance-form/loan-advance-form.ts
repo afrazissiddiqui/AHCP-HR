@@ -1,31 +1,24 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
-import { ApplicationFormRecord, ApplicationFormService } from '../../../../services/application-form.service';
-import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
+import { LoanAdvanceRecord, LoanAdvanceService } from '../../../../services/loan-advance.service';
+import { AlertService } from '../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   LOAN_ADVANCE_TABLE_FILTER,
   TableFilterComponent,
   TableFilterService,
 } from '../../../table-filter';
 
-interface LoanAdvanceRecord {
-  FormNumber: string;
-  EmployeeID: number;
-  EmployeeName: string;
-  Department: string;
-  RequestType: string;
-  RequestedAmount: string;
-  Installments: string;
-  ApprovalStatus: string;
-  selected?: boolean;
-}
-
-type LoanColumnKey = Exclude<keyof LoanAdvanceRecord, 'selected'>;
+type LoanColumnKey = Exclude<
+  keyof LoanAdvanceRecord,
+  'selected' | 'Id' | 'HeaderInfo' | 'LoanDetail' | 'AdvanceDetail' | 'RepaymentSchedule'
+>;
 
 @Component({
   selector: 'app-loan-advance-form',
@@ -35,7 +28,7 @@ type LoanColumnKey = Exclude<keyof LoanAdvanceRecord, 'selected'>;
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`
     :host .table-scroll { overflow-x: auto; }
-    :host .mountain-table { width: max-content; min-width: 100%; table-layout: auto; }
+    :host .mountain-table { width: 100%; min-width: 1200px; table-layout: auto; }
     :host .mountain-table th, :host .mountain-table td {
       min-width: 120px;
       white-space: nowrap;
@@ -46,32 +39,75 @@ type LoanColumnKey = Exclude<keyof LoanAdvanceRecord, 'selected'>;
       min-width: 40px;
       width: 40px;
     }
-  `]
+    :host .mountain-table th:last-child, :host .mountain-table td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 11;
+      background: #ffffff;
+      border-left: 1px solid #eee;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+    }
+    :host .mountain-table thead th:last-child {
+      z-index: 12;
+      background: #f5f5f5;
+    }
+  `],
 })
-export class LoanAdvanceFormComponent {
+export class LoanAdvanceFormComponent implements OnInit {
   readonly loanTableFilter = LOAN_ADVANCE_TABLE_FILTER;
 
   constructor(
-    private readonly applicationFormService: ApplicationFormService,
+    private readonly loanService: LoanAdvanceService,
     private readonly router: Router,
-    readonly tableFilter: TableFilterService
-  ) {
-    this.loanList = this.applicationFormService
-      .getApplicationRecords()
-      .map((record) => this.toLoanRecord(record));
+    private readonly alertService: AlertService,
+    readonly tableFilter: TableFilterService,
+  ) {}
+
+  ngOnInit(): void {
+    this.loanService.fetchLoanAdvances().subscribe({
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load loan / advance requests.'),
+        );
+      },
+    });
   }
 
   Math = Math;
 
   columns: Array<{ key: LoanColumnKey; label: string; visible: boolean }> = [
-    { key: 'FormNumber', label: 'Form Number', visible: true },
+    { key: 'DocumentNo', label: 'Document No', visible: true },
     { key: 'EmployeeID', label: 'Employee ID', visible: true },
     { key: 'EmployeeName', label: 'Employee Name', visible: true },
     { key: 'Department', label: 'Department', visible: true },
     { key: 'RequestType', label: 'Request Type', visible: true },
-    { key: 'RequestedAmount', label: 'Requested Amount', visible: true },
-    { key: 'Installments', label: 'Installments', visible: true },
-    { key: 'ApprovalStatus', label: 'Approval Status', visible: true }
+    { key: 'RequestDate', label: 'Request Date', visible: true },
+    { key: 'Status', label: 'Status', visible: true },
+    { key: 'LoanAmountRequested', label: 'Loan Amount Requested', visible: true },
+    { key: 'AdvanceAmountRequested', label: 'Advance Amount Requested', visible: true },
+    { key: 'NoOfInstallments', label: 'No. of Installments', visible: true },
+    { key: 'EmployeeNature', label: 'Employee Nature', visible: false },
+    { key: 'EmploymentType', label: 'Employment Type', visible: false },
+    { key: 'Designation', label: 'Designation', visible: false },
+    { key: 'WorkGradeLevel', label: 'Work Grade Level', visible: false },
+    { key: 'JobTitle', label: 'Job Title', visible: false },
+    { key: 'EmployeeCategory', label: 'Employee Category', visible: false },
+    { key: 'ReportingManager', label: 'Reporting Manager', visible: false },
+    { key: 'Location', label: 'Location', visible: false },
+    { key: 'JoiningDate', label: 'Joining Date', visible: false },
+    { key: 'YearsOfService', label: 'Years of Service', visible: false },
+    { key: 'PayrollMonth', label: 'Payroll Month', visible: false },
+    { key: 'ExistingLoan', label: 'Existing Loan', visible: false },
+    { key: 'LoanInstallmentAmount', label: 'Loan Installment Amount', visible: false },
+    { key: 'LoanPurpose', label: 'Loan Purpose', visible: false },
+    { key: 'LoanEligibleAmount', label: 'Loan Eligible Amount', visible: false },
+    { key: 'ExistingAdvance', label: 'Existing Advance', visible: false },
+    { key: 'AdvancePurpose', label: 'Advance Purpose', visible: false },
+    { key: 'AdvanceEligibleAmount', label: 'Advance Eligible Amount', visible: false },
+    { key: 'RepaymentStartDate', label: 'Repayment Start Date', visible: false },
+    { key: 'RepaymentFrequency', label: 'Repayment Frequency', visible: false },
+    { key: 'DeductionAmount', label: 'Deduction Amount', visible: false },
   ];
 
   sidebarItems: SidebarItem[] = EMPLOYEE_ACTION_SIDEBAR_ITEMS;
@@ -80,27 +116,57 @@ export class LoanAdvanceFormComponent {
   activeSidebarItemId = 'loan-advance-form';
   sidebarCollapsed = signal(false);
   searchText = '';
-  sortColumn: LoanColumnKey = 'FormNumber';
+  sortColumn: LoanColumnKey = 'DocumentNo';
   sortDirection: 'asc' | 'desc' = 'asc';
   currentPage = 1;
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
-  loanList: LoanAdvanceRecord[] = [];
+  showDialog = false;
+  activeTab: 'filter' = 'filter';
+  showViewDialog = false;
+  viewLoading = false;
+  selectedRecord: LoanAdvanceRecord | null = null;
+
+  get loanList(): LoanAdvanceRecord[] {
+    return this.loanService.loans();
+  }
+
+  get visibleColumns(): Array<{ key: LoanColumnKey; label: string; visible: boolean }> {
+    return this.columns.filter((col) => col.visible);
+  }
 
   get filteredList(): LoanAdvanceRecord[] {
     let list = this.tableFilter.filterItems([...this.loanList], this.loanTableFilter);
     if (this.searchText) {
       const search = this.searchText.trim().toLowerCase();
-      list = list.filter(item =>
-        item.EmployeeName.toLowerCase().includes(search) ||
-        item.FormNumber.toLowerCase().includes(search) ||
-        item.Department.toLowerCase().includes(search) ||
-        item.RequestType.toLowerCase().includes(search) ||
-        item.RequestedAmount.toLowerCase().includes(search) ||
-        item.Installments.toLowerCase().includes(search) ||
-        item.ApprovalStatus.toLowerCase().includes(search) ||
-        item.EmployeeID.toString().includes(search)
-      );
+      list = list.filter((item) => {
+        const haystack = [
+          item.DocumentNo,
+          item.EmployeeID,
+          item.EmployeeName,
+          item.Department,
+          item.RequestType,
+          item.RequestDate,
+          item.Status,
+          item.LoanAmountRequested,
+          item.AdvanceAmountRequested,
+          item.NoOfInstallments,
+          item.EmployeeNature,
+          item.EmploymentType,
+          item.Designation,
+          item.WorkGradeLevel,
+          item.JobTitle,
+          item.EmployeeCategory,
+          item.ReportingManager,
+          item.Location,
+          item.PayrollMonth,
+          item.LoanPurpose,
+          item.AdvancePurpose,
+        ]
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(search);
+      });
     }
     list.sort((a, b) => {
       const valueA = a[this.sortColumn];
@@ -117,18 +183,39 @@ export class LoanAdvanceFormComponent {
     return this.filteredList.slice(start, start + this.pageSize);
   }
 
-  get totalPages(): number { return Math.ceil(this.filteredList.length / this.pageSize); }
-  get pages(): number[] { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
+  get totalPages(): number {
+    return Math.ceil(this.filteredList.length / this.pageSize);
+  }
+
+  get pages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
 
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.filteredList.forEach(item => item.selected = checked);
+    this.filteredList.forEach((item) => (item.selected = checked));
   }
-  isAllSelected(): boolean { return this.filteredList.length > 0 && this.filteredList.every(item => item.selected); }
-  getSelectedCount(): number { return this.loanList.filter(item => item.selected).length; }
-  onSearchChange(): void { this.currentPage = 1; }
-  hasActiveListFilters(): boolean { return this.tableFilter.hasActive(this.loanTableFilter); }
-  onTableFilterApplied(): void { this.currentPage = 1; }
+
+  isAllSelected(): boolean {
+    return this.filteredList.length > 0 && this.filteredList.every((item) => item.selected);
+  }
+
+  getSelectedCount(): number {
+    return this.loanList.filter((item) => item.selected).length;
+  }
+
+  onSearchChange(): void {
+    this.currentPage = 1;
+  }
+
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.loanTableFilter);
+  }
+
+  onTableFilterApplied(): void {
+    this.currentPage = 1;
+  }
+
   sortData(column: LoanColumnKey): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -137,27 +224,119 @@ export class LoanAdvanceFormComponent {
     this.sortColumn = column;
     this.sortDirection = 'asc';
   }
-  setPage(page: number): void { if (page >= 1 && page <= this.totalPages) this.currentPage = page; }
-  onPageSizeChange(): void { this.currentPage = 1; }
-  onFolderSelected(folderId: string): void { this.activeSidebarItemId = folderId; }
-  toggleSidebar(): void { this.sidebarCollapsed.update((state) => !state); }
+
+  setPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
+
+  openDialog(): void {
+    this.showDialog = true;
+  }
+
+  closeDialog(): void {
+    this.showDialog = false;
+  }
+
+  viewRecord(record: LoanAdvanceRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('View', 'Unable to view this row: missing loan / advance id.');
+      return;
+    }
+
+    this.showViewDialog = true;
+    this.selectedRecord = null;
+    this.viewLoading = true;
+
+    this.loanService.fetchLoanAdvanceDetail(record.Id).subscribe({
+      next: (detail) => {
+        this.selectedRecord = detail;
+        this.viewLoading = false;
+      },
+      error: (error: unknown) => {
+        this.viewLoading = false;
+        this.showViewDialog = false;
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load loan / advance details.'),
+        );
+      },
+    });
+  }
+
+  onUpdate(record: LoanAdvanceRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing loan / advance id.');
+      return;
+    }
+    this.alertService.warning('Update', 'Edit screen for loan / advance is not available yet.');
+  }
+
+  async onDelete(record: LoanAdvanceRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete loan / advance?',
+      `Remove ${record.EmployeeName} (${record.DocumentNo}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing loan / advance id.');
+      return;
+    }
+
+    this.loanService.deleteLoanAdvance(record.Id).subscribe({
+      next: () => {
+        this.loanService.removeLoanRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'Loan / advance request removed successfully.');
+      },
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete loan / advance request.'),
+        );
+      },
+    });
+  }
+
+  closeViewDialog(): void {
+    this.showViewDialog = false;
+    this.selectedRecord = null;
+    this.viewLoading = false;
+  }
+
+  onFolderSelected(folderId: string): void {
+    this.activeSidebarItemId = folderId;
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update((state) => !state);
+  }
+
   createNewLoanAdvance(): void {
     void this.router.navigateByUrl('/employee-action/loan-advance-form/create');
   }
 
-  private toLoanRecord(record: ApplicationFormRecord): LoanAdvanceRecord {
-    const requestTypes = ['Loan', 'Advance'] as const;
-    const statuses = ['Pending', 'Approved', 'Rejected'] as const;
-    return {
-      FormNumber: `LAF-${record.EmployeeCode.toString().padStart(4, '0')}`,
-      EmployeeID: record.EmployeeCode,
-      EmployeeName: record.EmployeeName,
-      Department: record.Department,
-      RequestType: requestTypes[record.EmployeeCode % requestTypes.length],
-      RequestedAmount: `${10000 + (record.EmployeeCode % 10) * 2500}`,
-      Installments: `${3 + (record.EmployeeCode % 10)}`,
-      ApprovalStatus: statuses[record.EmployeeCode % statuses.length],
-      selected: record.selected ?? false
-    };
+  formatCellValue(record: LoanAdvanceRecord, key: LoanColumnKey): string {
+    const value = record[key];
+    if (value === undefined || value === null) {
+      return '—';
+    }
+    const text = String(value).trim();
+    return text === '' || text === '—' ? '—' : text;
+  }
+
+  formatDetail(value: string | undefined): string {
+    const text = (value ?? '').trim();
+    return text ? text : '—';
   }
 }

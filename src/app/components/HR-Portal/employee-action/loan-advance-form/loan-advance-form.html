@@ -20,14 +20,28 @@
         <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
         <span class="sapUiIcon search-icon">🔍</span>
       </div>
-
       <div class="sapMTBActions">
-        <app-table-filter
-          [config]="loanTableFilter"
-          [data]="loanList"
-          (applied)="onTableFilterApplied()"
-        />
+        <app-table-filter [config]="loanTableFilter" [data]="loanList" (applied)="onTableFilterApplied()" />
+        <button class="sapMBtnBase sapMBtn" title="Download">⬇</button>
+        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">⛶</button>
+        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">⚙</button>
       </div>
+    </div>
+
+    <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+    <div class="view-settings-dialog" *ngIf="showDialog">
+      <div class="dialog-header"><h3>View Settings</h3></div>
+      <div class="dialog-tabs">
+        <button (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+      </div>
+      <div class="dialog-body">
+        <div *ngIf="activeTab === 'filter'">
+          <div *ngFor="let col of columns">
+            <label><input type="checkbox" [(ngModel)]="col.visible" /> {{ col.label }}</label>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer"></div>
     </div>
 
     <div class="table-wrapper">
@@ -35,47 +49,140 @@
         <table class="mountain-table">
           <thead>
             <tr>
-              <th>
-                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
-              </th>
-              <th *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize (click)="sortData(col.key)" class="sortable-header">
+              <th><input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" /></th>
+              <th *ngFor="let col of visibleColumns" appColumnResize (click)="sortData(col.key)" class="sortable-header">
                 {{ col.label }}
-                <span *ngIf="sortColumn === col.key" class="sort-indicator">
-                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                </span>
+                <span *ngIf="sortColumn === col.key" class="sort-indicator">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
               </th>
+              <th>Actions</th>
             </tr>
           </thead>
-
           <tbody>
             <tr *ngFor="let item of paginatedList">
-              <td>
-                <input type="checkbox" [(ngModel)]="item.selected" />
-              </td>
-              <td *ngFor="let col of columns" [hidden]="!col.visible">
-                {{ item[col.key] }}
+              <td><input type="checkbox" [(ngModel)]="item.selected" /></td>
+              <td *ngFor="let col of visibleColumns">{{ formatCellValue(item, col.key) }}</td>
+              <td class="table-action-cell">
+                <div class="action-buttons">
+                  <button type="button" class="view-btn" (click)="viewRecord(item)">View</button>
+                  <button type="button" class="update-btn" (click)="onUpdate(item)">Update</button>
+                  <button type="button" class="delete-btn" (click)="onDelete(item)">Delete</button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showViewDialog">
+        <div class="js-modal-header">
+          <h2>Loan / Advance Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+          <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
+        </div>
+        <div class="js-modal-body">
+          <p *ngIf="viewLoading">Loading details…</p>
+          <ng-container *ngIf="selectedRecord && !viewLoading">
+            <div class="js-detail-section">
+              <h3>Header Information</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Document No:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.documentNo) }}</span></div>
+                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employeeID) }}</span></div>
+                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employeeName) }}</span></div>
+                <div class="js-detail-item"><label>Employee Nature:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employeeNature) }}</span></div>
+                <div class="js-detail-item"><label>Department:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.department) }}</span></div>
+                <div class="js-detail-item"><label>Request Type:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.requestType) }}</span></div>
+                <div class="js-detail-item"><label>Employment Type:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employmentType) }}</span></div>
+                <div class="js-detail-item"><label>Designation:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.designation) }}</span></div>
+                <div class="js-detail-item"><label>Request Date:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.requestDate) }}</span></div>
+                <div class="js-detail-item"><label>Work Grade Level:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.workGradeLevel) }}</span></div>
+                <div class="js-detail-item"><label>Job Title:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.jobTitle) }}</span></div>
+                <div class="js-detail-item"><label>Status:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.status) }}</span></div>
+                <div class="js-detail-item"><label>Employee Category:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employeeCategory) }}</span></div>
+                <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.reportingManager) }}</span></div>
+                <div class="js-detail-item"><label>Location:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.location) }}</span></div>
+                <div class="js-detail-item"><label>Joining Date:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.joiningDate) }}</span></div>
+                <div class="js-detail-item"><label>Years of Service:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.yearsOfService) }}</span></div>
+                <div class="js-detail-item"><label>Payroll Month:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.payrollMonth) }}</span></div>
+              </div>
+            </div>
+
+            <div class="js-detail-section">
+              <h3>Loan Detail</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Existing Loan:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.existingLoan) }}</span></div>
+                <div class="js-detail-item"><label>Loan Acquired Date:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.loanAcquiredDate) }}</span></div>
+                <div class="js-detail-item"><label>Installment Number:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.installmentNumber) }}</span></div>
+                <div class="js-detail-item"><label>Loan Ending Date:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.loanEndingDate) }}</span></div>
+                <div class="js-detail-item"><label>Previous Installment Amount:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.previousInstallmentAmount) }}</span></div>
+                <div class="js-detail-item"><label>Previous Loan Purpose:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.previousLoanPurpose) }}</span></div>
+                <div class="js-detail-item"><label>Loan Amount:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.loanAmount) }}</span></div>
+                <div class="js-detail-item"><label>Loan Amount Deducted Till Now:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.loanAmountDeductedTillNow) }}</span></div>
+                <div class="js-detail-item"><label>Loan Balance:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.loanBalance) }}</span></div>
+                <div class="js-detail-item"><label>Purpose:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.purpose) }}</span></div>
+                <div class="js-detail-item"><label>Loan Amount Requested:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.loanAmountRequested) }}</span></div>
+                <div class="js-detail-item"><label>Installment Amount:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.installmentAmount) }}</span></div>
+                <div class="js-detail-item"><label>No. of Installments:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.noOfInstallments) }}</span></div>
+                <div class="js-detail-item"><label>Loan Start Month:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.loanStartMonth) }}</span></div>
+                <div class="js-detail-item"><label>Loan End Month:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.loanEndMonth) }}</span></div>
+                <div class="js-detail-item"><label>Loan Tenure:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.loanTenure) }}</span></div>
+                <div class="js-detail-item"><label>Eligible Amount:</label> <span>{{ formatDetail(selectedRecord.LoanDetail.newLoanRequest.eligibleAmount) }}</span></div>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.LoanDetail.remarks">
+                <label>Remarks:</label>
+                <p>{{ selectedRecord.LoanDetail.remarks }}</p>
+              </div>
+            </div>
+
+            <div class="js-detail-section">
+              <h3>Advance Detail</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Existing Advance:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.existingAdvance) }}</span></div>
+                <div class="js-detail-item"><label>Advance Acquired Date:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.advanceAcquiredDate) }}</span></div>
+                <div class="js-detail-item"><label>Advance Eligible Amount:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.advanceEligibleAmount) }}</span></div>
+                <div class="js-detail-item"><label>Previous Advance Purpose:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.previousAdvancePurpose) }}</span></div>
+                <div class="js-detail-item"><label>Advance Amount:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.advanceAmount) }}</span></div>
+                <div class="js-detail-item"><label>Advance Amount To Be Deducted This Month:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.advanceAmountToBeDeductedThisMonth) }}</span></div>
+                <div class="js-detail-item"><label>Advance Balance:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.advanceBalance) }}</span></div>
+                <div class="js-detail-item"><label>Purpose:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.newAdvanceRequest.purpose) }}</span></div>
+                <div class="js-detail-item"><label>Advance Amount Requested:</label> <span>{{ formatDetail(selectedRecord.AdvanceDetail.newAdvanceRequest.advanceAmountRequested) }}</span></div>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.AdvanceDetail.advanceRemarks">
+                <label>Advance Remarks:</label>
+                <p>{{ selectedRecord.AdvanceDetail.advanceRemarks }}</p>
+              </div>
+            </div>
+
+            <div class="js-detail-section">
+              <h3>Repayment Schedule</h3>
+              <div class="js-detail-grid">
+                <div class="js-detail-item"><label>Repayment Start Date:</label> <span>{{ formatDetail(selectedRecord.RepaymentSchedule.repaymentStartDate) }}</span></div>
+                <div class="js-detail-item"><label>Repayment Frequency:</label> <span>{{ formatDetail(selectedRecord.RepaymentSchedule.repaymentFrequency) }}</span></div>
+                <div class="js-detail-item"><label>Deduction Amount:</label> <span>{{ formatDetail(selectedRecord.RepaymentSchedule.deductionAmount) }}</span></div>
+              </div>
+              <div class="js-detail-full" *ngIf="selectedRecord.RepaymentSchedule.remarks">
+                <label>Remarks:</label>
+                <p>{{ selectedRecord.RepaymentSchedule.remarks }}</p>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+        <div class="js-modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
+        </div>
+      </div>
+
       <div class="table-pagination">
         <div class="pagination-info">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
+          Showing {{ filteredList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }}
           of {{ filteredList.length }} entries
         </div>
-
         <div class="pagination-controls">
           <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
           <div class="page-numbers">
-            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
-              {{ page }}
-            </button>
+            <button *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">{{ page }}</button>
           </div>
           <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
         </div>
-
         <div class="page-size-selector">
           <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
             <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
