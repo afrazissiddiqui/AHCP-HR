@@ -1,17 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { TerminationRecord, TerminationService } from '../../../services/termination.service';
+import { AlertService } from '../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import {
   TERMINATION_TABLE_FILTER,
   TableFilterComponent,
   TableFilterService,
 } from '../../table-filter';
 
-type TerminationColumnKey = Exclude<keyof TerminationRecord, 'selected' | 'detail'>;
+type TerminationColumnKey = Exclude<keyof TerminationRecord, 'selected' | 'detail' | 'Id'>;
 
 @Component({
   selector: 'app-termination-form',
@@ -20,14 +22,26 @@ type TerminationColumnKey = Exclude<keyof TerminationRecord, 'selected' | 'detai
   templateUrl: './termination-form.html',
   styleUrls: ['../Application-Form/Application-Form.css', './termination-form.css'],
 })
-export class TerminationFormComponent {
+export class TerminationFormComponent implements OnInit {
   readonly terminationTableFilter = TERMINATION_TABLE_FILTER;
 
   constructor(
     private readonly terminationService: TerminationService,
     private readonly router: Router,
-    readonly tableFilter: TableFilterService
+    private readonly alertService: AlertService,
+    readonly tableFilter: TableFilterService,
   ) {}
+
+  ngOnInit(): void {
+    this.terminationService.fetchFinalSettlements().subscribe({
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load termination records.'),
+        );
+      },
+    });
+  }
 
   Math = Math;
 
@@ -52,6 +66,7 @@ export class TerminationFormComponent {
   showDialog = false;
   activeTab: 'filter' = 'filter';
   showViewDialog = false;
+  viewLoading = false;
   selectedRecord: TerminationRecord | null = null;
 
   get terminationList(): TerminationRecord[] {
@@ -152,13 +167,81 @@ export class TerminationFormComponent {
   }
 
   viewRecord(record: TerminationRecord): void {
-    this.selectedRecord = record;
+    if (!record.Id) {
+      this.alertService.warning('View', 'Unable to view this row: missing termination id.');
+      return;
+    }
+
     this.showViewDialog = true;
+    this.selectedRecord = null;
+    this.viewLoading = true;
+
+    this.terminationService.fetchFinalSettlementDetail(record.Id).subscribe({
+      next: (detail) => {
+        this.selectedRecord = detail;
+        this.viewLoading = false;
+      },
+      error: (error: unknown) => {
+        this.viewLoading = false;
+        this.showViewDialog = false;
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load termination details.'),
+        );
+      },
+    });
+  }
+
+  onUpdate(record: TerminationRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing termination id.');
+      return;
+    }
+    void this.router.navigate(['/termination/edit', record.Id]);
+  }
+
+  async onDelete(record: TerminationRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete termination?',
+      `Remove ${record.EmployeeName} (Employee ID: ${record.EmployeeId}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing termination id.');
+      return;
+    }
+
+    this.terminationService.deleteFinalSettlement(record.Id).subscribe({
+      next: () => {
+        this.terminationService.removeTerminationRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'Termination removed successfully.');
+      },
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete termination.'),
+        );
+      },
+    });
   }
 
   closeViewDialog(): void {
     this.showViewDialog = false;
     this.selectedRecord = null;
+    this.viewLoading = false;
+  }
+
+  formatDetail(value: string | number | null | undefined): string {
+    if (value === null || value === undefined || value === '') {
+      return '—';
+    }
+    return String(value);
   }
 
   formatCellValue(record: TerminationRecord, key: TerminationColumnKey): string | number {

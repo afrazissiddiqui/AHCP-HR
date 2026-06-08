@@ -191,6 +191,11 @@ export const routes: Routes = [
     component: AddTerminationComponent,
     canActivate: [authGuard],
   },
+  {
+    path: 'termination/edit/:id',
+    component: AddTerminationComponent,
+    canActivate: [authGuard],
+  },
   ...plantMaintenanceRoutes.map((route) =>
     route.redirectTo ? route : { ...route, canActivate: [authGuard] }
   ),

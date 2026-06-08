@@ -86,7 +86,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected readonly totalLeaves = signal<number | null>(null);
   protected readonly leavesAvailed = signal<number | null>(null);
   protected readonly remainingLeaves = signal<number | null>(null);
-  protected readonly requestStatus = signal<'Submitted' | 'Approved' | 'Rejected' | ''>('Submitted');
+  protected readonly requestStatus = signal<'Submitted' | 'Approved' | 'Rejected' | ''>('');
   protected readonly remarks = signal('');
 
   protected readonly codeSuggestionsOpen = signal(false);
@@ -309,9 +309,11 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       leave.totalLeaveDaysRequested > 0 ? leave.totalLeaveDaysRequested : null,
     );
     this.requestStatus.set(
-      leave.requestStatus === 'Approved' || leave.requestStatus === 'Rejected'
+      leave.requestStatus === 'Approved' ||
+        leave.requestStatus === 'Rejected' ||
+        leave.requestStatus === 'Submitted'
         ? leave.requestStatus
-        : 'Submitted',
+        : '',
     );
     this.remarks.set(emptyIfDash(leave.remarks));
 
@@ -341,7 +343,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         fromDate: this.fromDate().trim(),
         toDate: this.toDate().trim(),
         totalLeaveDaysRequested: this.totalLeaveDaysRequested() ?? 0,
-        requestStatus: this.requestStatus() || 'Submitted',
+        requestStatus: this.requestStatus(),
         remarks: this.remarks().trim(),
       },
       leaveBalanceInformation: {

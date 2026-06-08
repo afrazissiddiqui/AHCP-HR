@@ -51,38 +51,22 @@ export interface TaxComputationEmployeeOption {
   category: string;
 }
 
-function amountsFromEmployeeCode(code: number): PayrollSetupAmounts {
-  const basicSalary = 85000 + (code % 20) * 2500;
-  const medicalAllowance = Math.round(basicSalary * 0.1);
-  const fuelAllowance = 5000 + (code % 5) * 500;
-  const mobileAllowance = 2000 + (code % 3) * 500;
-  const carAllowance = code % 2 === 0 ? 15000 : 0;
-  const otherAllowances = 1000 + (code % 4) * 250;
-  const overtime = (code % 6) * 1200;
-  const bonus = code % 3 === 0 ? 10000 : 0;
-  const arrears = code % 5 === 0 ? 5000 : 0;
-  const providentFund = Math.round(basicSalary * 0.08);
-  const gratuity = Math.round(basicSalary * 0.05);
-  const eobi = 500;
-  const loanInstallment = code % 4 === 0 ? 3000 : 0;
-  const otherDeductions = 500 + (code % 2) * 250;
-  return {
-    basicSalary,
-    medicalAllowance,
-    fuelAllowance,
-    mobileAllowance,
-    carAllowance,
-    otherAllowances,
-    overtime,
-    bonus,
-    arrears,
-    providentFund,
-    gratuity,
-    eobi,
-    loanInstallment,
-    otherDeductions,
-  };
-}
+const EMPTY_PAYROLL_AMOUNTS: PayrollSetupAmounts = {
+  basicSalary: 0,
+  medicalAllowance: 0,
+  fuelAllowance: 0,
+  mobileAllowance: 0,
+  carAllowance: 0,
+  otherAllowances: 0,
+  overtime: 0,
+  bonus: 0,
+  arrears: 0,
+  providentFund: 0,
+  gratuity: 0,
+  eobi: 0,
+  loanInstallment: 0,
+  otherDeductions: 0,
+};
 
 @Component({
   selector: 'app-tax-computation',
@@ -275,10 +259,7 @@ export class TaxComputationComponent {
       return;
     }
 
-    const numericCode = Number(code);
-    if (Number.isFinite(numericCode)) {
-      this.applyAmounts(amountsFromEmployeeCode(numericCode));
-    }
+    this.applyAmounts(EMPTY_PAYROLL_AMOUNTS);
   }
 
   private findPayrollByEmployeeId(code: string): PayrollSetupRecord | undefined {

@@ -285,9 +285,12 @@ export class LeaveApplicationService {
         'leaveDays',
         'leave_days',
       ]),
-      requestStatus:
-        this.pickString(sources, ['requestStatus', 'request_status', 'status', 'approvalStatus']) ||
-        'Submitted',
+      requestStatus: this.pickString(sources, [
+        'requestStatus',
+        'request_status',
+        'status',
+        'approvalStatus',
+      ]),
       remarks: this.pickString([leaveSource, item], ['remarks', 'Remarks']),
     };
 

@@ -78,10 +78,10 @@
             <td *ngFor="let col of columns" [hidden]="!col.visible">
               {{ formatCellValue(item, col.key) }}
             </td>
-            <td>
-              <button class="view-btn" (click)="viewRecord(item)" title="View Details">
-                👁 View
-              </button>
+            <td class="termination-actions">
+              <button type="button" class="view-btn" (click)="viewRecord(item)" title="View Details">View</button>
+              <button type="button" class="update-btn" (click)="onUpdate(item)" title="Update">Update</button>
+              <button type="button" class="delete-btn" (click)="onDelete(item)" title="Delete">Delete</button>
             </td>
           </tr>
         </tbody>
@@ -114,12 +114,14 @@
 </div>
 
 <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+<div class="js-detail-modal" *ngIf="showViewDialog">
   <div class="js-modal-header">
-    <h2>Termination Detail - {{ selectedRecord.EmployeeName }}</h2>
-    <button class="js-close-modal" (click)="closeViewDialog()">×</button>
+    <h2>Termination Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+    <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
-  <div class="js-modal-body" *ngIf="selectedRecord">
+  <div class="js-modal-body">
+    <p *ngIf="viewLoading">Loading details…</p>
+    <ng-container *ngIf="selectedRecord && !viewLoading">
     <div class="js-detail-section">
       <h3>General Details</h3>
       <div class="js-detail-grid">
@@ -142,8 +144,8 @@
     <div class="js-detail-section">
       <h3>Dues Payable</h3>
       <div class="js-detail-grid">
-        <div class="js-detail-item"><label>From / To Date:</label>
-          <span>{{ dues.fromDate || '—' }} to {{ dues.toDate || '—' }}</span></div>
+        <div class="js-detail-item"><label>Dues From / To Date:</label>
+          <span>{{ dues.duesFromDate || '—' }} to {{ dues.duesToDate || '—' }}</span></div>
         <div class="js-detail-item"><label>No of Days Salary not paid:</label> <span>{{ dues.noOfDaysSalaryNotPaid || '—' }}</span></div>
         <div class="js-detail-item"><label>Salary Payable:</label> <span>{{ dues.salaryPayable || '—' }}</span></div>
         <div class="js-detail-item"><label>Gratuity:</label> <span>{{ dues.gratuity || '—' }}</span></div>
@@ -162,7 +164,7 @@
         <div class="js-detail-item"><label>Salary Advances:</label> <span>{{ recoverable.salaryAdvances || '—' }}</span></div>
         <div class="js-detail-item"><label>Outstanding Loan Balance:</label> <span>{{ recoverable.outstandingLoanBalance || '—' }}</span></div>
         <div class="js-detail-item"><label>Income Tax Deductions:</label> <span>{{ recoverable.incomeTaxDeductions || '—' }}</span></div>
-        <div class="js-detail-item"><label>Notice Pay:</label> <span>{{ recoverable.noticePay || '—' }}</span></div>
+        <div class="js-detail-item"><label>Recoverable Notice Pay:</label> <span>{{ recoverable.recoverableNoticePay || '—' }}</span></div>
         <div class="js-detail-item"><label>Leave With-out Pay:</label> <span>{{ recoverable.leaveWithoutPay || '—' }}</span></div>
         <div class="js-detail-item"><label>Assets Handled Over:</label> <span>{{ recoverable.assetsHandledOver || '—' }}</span></div>
         <div class="js-detail-item"><label>Asset Recovered:</label> <span>{{ recoverable.assetRecovered || '—' }}</span></div>
@@ -173,6 +175,7 @@
       </div>
     </div>
     }
+    </ng-container>
   </div>
   <div class="js-modal-footer">
     <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>

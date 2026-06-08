@@ -82,7 +82,7 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
   protected readonly reportingManager = signal('');
   protected readonly requestType = signal('');
   protected readonly requestDate = signal(this.getTodayDate());
-  protected readonly status = signal('Draft');
+  protected readonly status = signal('');
   protected readonly joiningDate = signal('');
   protected readonly department = signal('');
   protected readonly payrollMonth = signal(this.getCurrentPayrollMonth());
@@ -430,6 +430,7 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
       next: async (response) => {
         if (response.status) {
           await this.alertService.successAndWait('Saved', response.message || 'Loan/Advance submitted successfully.');
+          this.loanAdvanceService.fetchLoanAdvances().subscribe();
           void this.router.navigateByUrl('/employee-action/loan-advance-form');
         } else {
           this.alertService.error('Error', response.message || 'Failed to submit loan/advance request.');

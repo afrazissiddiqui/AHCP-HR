@@ -4,7 +4,7 @@
       <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
         <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>Termination Form</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
@@ -106,12 +106,12 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row cjr-row--date-range">
-            <label>From / To Date:</label>
+            <label>Dues From / To Date:</label>
             <div class="cjr-date-range-inputs">
-              <input type="date" aria-label="From date" [ngModel]="duesFromDate()"
+              <input type="date" aria-label="Dues from date" [ngModel]="duesFromDate()"
                 (ngModelChange)="duesFromDate.set($event)" />
               <span class="cjr-date-range-separator">to</span>
-              <input type="date" aria-label="To date" [ngModel]="duesToDate()" (ngModelChange)="duesToDate.set($event)" />
+              <input type="date" aria-label="Dues to date" [ngModel]="duesToDate()" (ngModelChange)="duesToDate.set($event)" />
             </div>
           </div>
           <div class="cjr-row">
@@ -180,7 +180,7 @@
               (ngModelChange)="incomeTaxDeductions.set($event)" />
           </div>
           <div class="cjr-row">
-            <label>Notice Pay:</label>
+            <label>Recoverable Notice Pay:</label>
             <input type="number" min="0" step="0.01" [ngModel]="recoverableNoticePay()"
               (ngModelChange)="recoverableNoticePay.set($event)" />
           </div>
@@ -232,7 +232,7 @@
 
     <div class="cjr-actions-footer">
       <button type="button" class="cjr-submit-btn" (click)="save()">
-        <span class="cjr-submit-icon">✓</span> Save Termination
+        <span class="cjr-submit-icon">✓</span> {{ submitButtonLabel }}
       </button>
     </div>
   </div>
