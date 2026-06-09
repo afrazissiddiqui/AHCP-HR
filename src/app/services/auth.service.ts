@@ -65,6 +65,18 @@ export class AuthService {
     return this.sessionUserId();
   }
 
+  getSessionUser(): LoginApiUser | null {
+    const raw = sessionStorage.getItem(SESSION_USER_KEY);
+    if (!raw) {
+      return null;
+    }
+    try {
+      return JSON.parse(raw) as LoginApiUser;
+    } catch {
+      return null;
+    }
+  }
+
   getAuthToken(): string | null {
     return sessionStorage.getItem(SESSION_TOKEN_KEY);
   }

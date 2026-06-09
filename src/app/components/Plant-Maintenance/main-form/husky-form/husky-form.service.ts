@@ -800,6 +800,9 @@ export interface HuskyFormRecord {
   measurements: HuskyMeasurementsData;
   levelParallelism: HuskyLevelParallelismData;
   cycleTimeComparison: HuskyCycleTimeComparisonData;
+  recommendations: string;
+  performedBy: string;
+  performedByEmployeeId: string;
 }
 
 export interface HuskyInspectorUser {

@@ -13,6 +13,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
+import { ApplicationFormService } from '../../../../../services/application-form.service';
+import { AuthService } from '../../../../../services/auth.service';
 import { SAP_MACHINE_MASTER } from '../../../setup-form/plant-maintenance-machine.model';
 import {
   calculateHuskyCycleTimeDeviation,
@@ -70,6 +72,8 @@ export interface HuskySectionNavItem {
 export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly huskyService = inject(HuskyFormService);
   private readonly alertService = inject(AlertService);
+  private readonly authService = inject(AuthService);
+  private readonly applicationFormService = inject(ApplicationFormService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -107,6 +111,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly cycleTimeComparison = signal<HuskyCycleTimeComparisonData>(
     createEmptyHuskyCycleTimeComparison(),
   );
+  readonly recommendations = signal('');
+  readonly performedBy = signal('');
+  readonly performedByEmployeeId = signal('');
 
   readonly machineOptions = SAP_MACHINE_MASTER;
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
@@ -154,6 +161,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
+      this.setPerformedByFromLogin();
       return;
     }
     const record = this.huskyService.getById(id);
@@ -187,6 +195,11 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.measurements.set(mergeHuskyMeasurements(record.measurements));
     this.levelParallelism.set(mergeHuskyLevelParallelism(record.levelParallelism));
     this.cycleTimeComparison.set(mergeHuskyCycleTimeComparison(record.cycleTimeComparison));
+    this.recommendations.set(record.recommendations ?? '');
+    this.performedBy.set(record.performedBy || this.resolvePerformedByLabel());
+    this.performedByEmployeeId.set(
+      record.performedByEmployeeId || this.resolvePerformedByEmployeeId(),
+    );
   }
 
   ngAfterViewInit(): void {
@@ -479,6 +492,14 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const recommendations = this.recommendations().trim();
+    if (!recommendations) {
+      this.alertService.validation(
+        'Please enter Recommendations before submitting the Husky Form.',
+      );
+      return;
+    }
+
     const payload = {
       machineId,
       machineName,
@@ -499,6 +520,10 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       measurements: mergeHuskyMeasurements(this.measurements()),
       levelParallelism: mergeHuskyLevelParallelism(this.levelParallelism()),
       cycleTimeComparison: mergeHuskyCycleTimeComparison(this.cycleTimeComparison()),
+      recommendations,
+      performedBy: this.performedBy().trim() || this.resolvePerformedByLabel(),
+      performedByEmployeeId:
+        this.performedByEmployeeId().trim() || this.resolvePerformedByEmployeeId(),
     };
 
     const editingId = this.editingRecordId();
@@ -690,5 +715,49 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       ...data,
       [group]: data[group].map((row) => (row.key === key ? { ...row, actualValue } : row)),
     }));
+  }
+
+  private setPerformedByFromLogin(): void {
+    this.performedBy.set(this.resolvePerformedByLabel());
+    this.performedByEmployeeId.set(this.resolvePerformedByEmployeeId());
+  }
+
+  private resolvePerformedByLabel(): string {
+    const employeeRecord = this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId(),
+    );
+    if (employeeRecord) {
+      const name = employeeRecord.EmployeeName?.trim() ?? '';
+      const employeeId = employeeRecord.EmployeeCode
+        ? String(employeeRecord.EmployeeCode)
+        : '';
+      if (name && employeeId) {
+        return `${name} / ${employeeId}`;
+      }
+      return name || employeeId || '—';
+    }
+
+    const sessionUser = this.authService.getSessionUser();
+    if (sessionUser?.name?.trim()) {
+      const idPart = sessionUser.id ? String(sessionUser.id) : '';
+      return idPart
+        ? `${sessionUser.name.trim()} / ${idPart}`
+        : sessionUser.name.trim();
+    }
+
+    const sessionUserId = this.authService.getSessionUserId()?.trim();
+    return sessionUserId || '—';
+  }
+
+  private resolvePerformedByEmployeeId(): string {
+    const employeeRecord = this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId(),
+    );
+    if (employeeRecord?.EmployeeCode) {
+      return String(employeeRecord.EmployeeCode);
+    }
+
+    const sessionUser = this.authService.getSessionUser();
+    return sessionUser?.id ? String(sessionUser.id) : '';
   }
 }

@@ -29,8 +29,12 @@
 }
 
 .husky-header-card,
-.husky-sections-card {
-  overflow: visible;
+.husky-sections-card,
+.husky-footer-card {
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   margin: 16px 24px 0;
 }
 
@@ -57,9 +61,7 @@
   padding: 0;
   display: flex;
   gap: 6px;
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  scrollbar-width: thin;
+  flex-wrap: wrap;
 }
 
 .husky-section-nav-item {
@@ -89,13 +91,19 @@
 }
 
 .husky-form-sections {
-  overflow: visible;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .husky-form-section {
   scroll-margin-top: 56px;
   padding: 20px 16px 28px;
   border-top: 1px solid #eee;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .husky-form-section:first-child {
@@ -182,12 +190,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 130px;
+  width: 100%;
+  max-width: 100%;
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .husky-kpi-status--pass {
@@ -226,46 +237,65 @@
   }
 }
 
-.husky-checkpoint-table-wrap {
-  overflow-x: auto;
+.husky-checkpoint-table-wrap,
+.husky-measurement-table-wrap {
   margin-top: 8px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.husky-checkpoint-table {
+.husky-checkpoint-table,
+.husky-measurement-table {
   width: 100%;
-  min-width: 720px;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
-.husky-checkpoint-table th {
+.husky-checkpoint-table th,
+.husky-measurement-table th {
   font-size: 12px;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: top;
 }
 
-.husky-checkpoint-table__checkpoint {
-  min-width: 280px;
+.husky-checkpoint-table td,
+.husky-measurement-table td {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.husky-checkpoint-table__checkpoint,
+.husky-measurement-table__label {
+  width: 38%;
   font-size: 13px;
+  font-weight: 600;
   color: #1d2d3e;
   vertical-align: top;
 }
 
 .husky-checkpoint-table__evaluation {
-  width: 160px;
+  width: 18%;
   vertical-align: top;
 }
 
 .husky-checkpoint-table__recommendation {
-  min-width: 220px;
+  width: 44%;
   vertical-align: top;
 }
 
-.husky-checkpoint-select {
+.husky-checkpoint-select,
+.husky-checkpoint-notes,
+.husky-measurement-input {
   width: 100%;
-  min-width: 130px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .husky-checkpoint-notes {
-  width: 100%;
-  min-width: 200px;
   padding: 6px 8px;
   border: 1px solid #d0d5dd;
   border-radius: 4px;
@@ -280,6 +310,8 @@
   flex-direction: column;
   gap: 16px;
   margin-top: 8px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .husky-measurement-block {
@@ -287,6 +319,9 @@
   border-radius: 8px;
   padding: 16px;
   background: #fff;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .husky-measurement-block__title {
@@ -296,41 +331,25 @@
   color: #1d2d3e;
 }
 
-.husky-measurement-table-wrap {
-  overflow-x: auto;
-}
-
-.husky-measurement-table {
-  width: 100%;
-  min-width: 560px;
-}
-
-.husky-measurement-table--wide {
-  min-width: 720px;
-}
-
-.husky-measurement-table th {
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .husky-measurement-table__label-col {
-  min-width: 220px;
+  width: 34%;
 }
 
 .husky-measurement-table__reference-col {
-  width: 180px;
+  width: 18%;
 }
 
 .husky-measurement-table__entry-col {
-  min-width: 180px;
+  width: 24%;
 }
 
-.husky-measurement-table__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1d2d3e;
-  vertical-align: middle;
+.husky-measurement-table--wide .husky-measurement-table__label-col {
+  width: 30%;
+}
+
+.husky-measurement-table--wide .husky-measurement-table__reference-col,
+.husky-measurement-table--wide .husky-measurement-table__entry-col {
+  width: 17.5%;
 }
 
 .husky-measurement-table__reference {
@@ -345,8 +364,6 @@
 }
 
 .husky-measurement-input {
-  width: 100%;
-  min-width: 120px;
   padding: 6px 8px;
   border: 1px solid #d0d5dd;
   border-radius: 4px;
@@ -357,4 +374,135 @@
 .husky-cycle-time-deviation {
   font-weight: 600;
   color: #344054;
+}
+
+.husky-footer {
+  padding: 20px 16px 24px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.husky-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 20px;
+  margin-top: 20px;
+}
+
+.husky-footer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.husky-footer-field--full {
+  margin-top: 4px;
+}
+
+.husky-footer-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1d2d3e;
+}
+
+.husky-footer-field__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #667085;
+}
+
+.husky-footer-field__required {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b42318;
+}
+
+.husky-header-card .cjr-personal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 100%;
+  min-width: 0;
+}
+
+.husky-header-card .cjr-personal-col {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.husky-header-card .cjr-row input,
+.husky-header-card .cjr-row select,
+.husky-header-card .cjr-row textarea {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.husky-footer-recommendations {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 140px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  background: #fff;
+}
+
+.husky-footer-readonly {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e4e7ec;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #344054;
+  background: #f9fafb;
+}
+
+@media (max-width: 1100px) {
+  .husky-header-card .cjr-personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .husky-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .husky-header-card .cjr-personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+:host .mountain-table.husky-checkpoint-table,
+:host .mountain-table.husky-measurement-table {
+  min-width: 0 !important;
+  max-width: 100%;
+  table-layout: fixed;
+}
+
+:host .mountain-table.husky-checkpoint-table th:first-child,
+:host .mountain-table.husky-checkpoint-table td:first-child,
+:host .mountain-table.husky-measurement-table th:first-child,
+:host .mountain-table.husky-measurement-table td:first-child,
+:host .mountain-table.husky-checkpoint-table th:last-child,
+:host .mountain-table.husky-checkpoint-table td:last-child,
+:host .mountain-table.husky-measurement-table th:last-child,
+:host .mountain-table.husky-measurement-table td:last-child {
+  position: static;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  box-shadow: none;
+  border-left: none;
+  text-align: inherit;
+  white-space: normal;
 }
