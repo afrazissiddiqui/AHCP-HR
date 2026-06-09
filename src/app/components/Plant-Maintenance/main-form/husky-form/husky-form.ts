@@ -5,31 +5,35 @@ import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { AlertService } from '../../../../services/alert.service';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
-import { PlantMaintenanceMainLayoutService } from '../../main-form/plant-maintenance-main-layout.service';
-import {
-  PlantMaintenanceMasterFormService,
-  PlantMaintenanceMasterRecord,
-} from './plant-maintenance-master-form.service';
+import { PlantMaintenanceMainLayoutService } from '../plant-maintenance-main-layout.service';
+import { HuskyFormRecord, HuskyFormService } from './husky-form.service';
 
-type MasterTableColumnKey =
+type HuskyTableColumnKey =
   | 'machineId'
   | 'machineName'
-  | 'machineType'
-  | 'maintenanceNature'
-  | 'plantMaintenanceFrequency'
-  | 'plantMaintenanceType'
+  | 'maintenanceType'
+  | 'maintenanceFrequency'
+  | 'serialNo'
+  | 'moldNo'
+  | 'hotRunnerJobNo'
+  | 'hourMeterReading'
+  | 'robotSerialNo'
+  | 'inspector'
+  | 'inspectionDate'
+  | 'submitDate'
+  | 'documentNo'
   | 'status';
 
 type RowActionKey = 'view' | 'update' | 'delete';
 
 @Component({
-  selector: 'app-plant-maintenance-master-form',
+  selector: 'app-husky-form',
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent, ColumnResizeDirective],
-  templateUrl: './plant-maintenance-master-form.html',
+  templateUrl: './husky-form.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/Application-Form.css',
-    '../plant-maintenance-setup-form.css',
+    '../../setup-form/plant-maintenance-setup-form.css',
   ],
   styles: [
     `
@@ -43,34 +47,41 @@ type RowActionKey = 'view' | 'update' | 'delete';
     `,
   ],
 })
-export class PlantMaintenanceMasterFormComponent {
+export class HuskyFormComponent {
   private readonly layout = inject(PlantMaintenanceMainLayoutService);
-  private readonly masterService = inject(PlantMaintenanceMasterFormService);
+  private readonly huskyService = inject(HuskyFormService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
 
   readonly Math = Math;
 
   searchText = '';
-  sortColumn: MasterTableColumnKey = 'machineId';
+  sortColumn: HuskyTableColumnKey = 'machineId';
   sortDirection: 'asc' | 'desc' = 'asc';
   currentPage = 1;
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   showViewDialog = false;
-  selectedRecord: PlantMaintenanceMasterRecord | null = null;
+  selectedRecord: HuskyFormRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
   readonly rowActions: RowActionKey[] = ['view', 'update', 'delete'];
 
-  readonly columns: Array<{ key: MasterTableColumnKey; label: string; visible: boolean }> = [
+  readonly columns: Array<{ key: HuskyTableColumnKey; label: string; visible: boolean }> = [
     { key: 'machineId', label: 'Machine ID', visible: true },
     { key: 'machineName', label: 'Machine Name', visible: true },
-    { key: 'machineType', label: 'Machine Type', visible: true },
-    { key: 'maintenanceNature', label: 'Maintenance Nature', visible: true },
-    { key: 'plantMaintenanceFrequency', label: 'Plant Maintenance Frequency', visible: true },
-    { key: 'plantMaintenanceType', label: 'Plant Maintenance Type', visible: true },
+    { key: 'maintenanceType', label: 'Maintenance Type', visible: true },
+    { key: 'maintenanceFrequency', label: 'Maintenance Frequency', visible: true },
+    { key: 'serialNo', label: 'SN# (Machine Serial No.)', visible: true },
+    { key: 'moldNo', label: 'Mold #', visible: true },
+    { key: 'hotRunnerJobNo', label: 'Hot Runner Job #', visible: false },
+    { key: 'hourMeterReading', label: 'Hour Meter Reading', visible: false },
+    { key: 'robotSerialNo', label: 'Robot Serial #', visible: false },
+    { key: 'inspector', label: 'Inspector', visible: true },
+    { key: 'inspectionDate', label: 'Inspection Date', visible: true },
+    { key: 'submitDate', label: 'Submit Date', visible: true },
+    { key: 'documentNo', label: 'Document No.', visible: true },
     { key: 'status', label: 'Status', visible: true },
   ];
 
@@ -82,36 +93,21 @@ export class PlantMaintenanceMasterFormComponent {
     return this.rowActions.includes(action);
   }
 
-  get machineList(): PlantMaintenanceMasterRecord[] {
-    return this.masterService.records();
+  get recordList(): HuskyFormRecord[] {
+    return this.huskyService.records();
   }
 
-  get filteredList(): PlantMaintenanceMasterRecord[] {
-    let list = [...this.machineList];
+  get filteredList(): HuskyFormRecord[] {
+    let list = [...this.recordList];
     const search = this.searchText.trim().toLowerCase();
 
     if (search) {
-      list = list.filter(
-        (item) =>
-          item.machineId.toLowerCase().includes(search) ||
-          item.machineName.toLowerCase().includes(search) ||
-          item.machineType.toLowerCase().includes(search) ||
-          item.maintenanceNature.toLowerCase().includes(search) ||
-          item.plantMaintenanceFrequency.toLowerCase().includes(search) ||
-          item.plantMaintenanceType.toLowerCase().includes(search) ||
-          item.remarks.toLowerCase().includes(search) ||
-          (item.components ?? []).some(
-            (c) =>
-              c.name.toLowerCase().includes(search) ||
-              c.inspectionLines.some(
-                (line) =>
-                  line.status.toLowerCase().includes(search) ||
-                  (line.recommendation ?? '').toLowerCase().includes(search) ||
-                  line.itemsToBeInspected.toLowerCase().includes(search) ||
-                  line.whatToCheck.toLowerCase().includes(search) ||
-                  line.instructions.toLowerCase().includes(search),
-              ),
-          ),
+      list = list.filter((item) =>
+        Object.values(item).some((value) =>
+          String(value ?? '')
+            .toLowerCase()
+            .includes(search),
+        ),
       );
     }
 
@@ -130,7 +126,7 @@ export class PlantMaintenanceMasterFormComponent {
     return list;
   }
 
-  get paginatedList(): PlantMaintenanceMasterRecord[] {
+  get paginatedList(): HuskyFormRecord[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredList.slice(start, start + this.pageSize);
   }
@@ -155,13 +151,11 @@ export class PlantMaintenanceMasterFormComponent {
     this.layout.toggleSidebar();
   }
 
-  addMachine(): void {
-    void this.router.navigate([
-      '/plant-maintenance/main-form/plant-maintenance-master-form/create',
-    ]);
+  addRecord(): void {
+    void this.router.navigate(['/plant-maintenance/main-form/husky-form/create']);
   }
 
-  viewRecord(item: PlantMaintenanceMasterRecord): void {
+  viewRecord(item: HuskyFormRecord): void {
     this.selectedRecord = item;
     this.showViewDialog = true;
   }
@@ -171,38 +165,29 @@ export class PlantMaintenanceMasterFormComponent {
     this.selectedRecord = null;
   }
 
-  updateRecord(item: PlantMaintenanceMasterRecord): void {
-    void this.router.navigate([
-      '/plant-maintenance/main-form/plant-maintenance-master-form/edit',
-      item.id,
-    ]);
+  updateRecord(item: HuskyFormRecord): void {
+    void this.router.navigate(['/plant-maintenance/main-form/husky-form/edit', item.id]);
   }
 
-  async deleteRecord(item: PlantMaintenanceMasterRecord): Promise<void> {
+  async deleteRecord(item: HuskyFormRecord): Promise<void> {
     const result = await this.alertService.confirm(
-      'Delete machine?',
-      `Remove ${item.machineId} — ${item.machineName} from the list?`,
+      'Delete record?',
+      `Remove ${item.documentNo || item.machineId} — ${item.machineName} from the list?`,
     );
     if (!result.isConfirmed) {
       return;
     }
-    this.masterService.deleteRecord(item.id);
+    this.huskyService.deleteRecord(item.id);
     if (this.paginatedList.length === 0 && this.currentPage > 1) {
       this.currentPage -= 1;
     }
   }
 
-  getCellValue(item: PlantMaintenanceMasterRecord, columnKey: MasterTableColumnKey): string {
-    if (columnKey === 'status') {
-      const statuses = (item.components ?? []).flatMap((c) =>
-        c.inspectionLines.map((line) => line.status?.trim()).filter(Boolean),
-      );
-      return statuses.length ? statuses.join(', ') : '';
-    }
+  getCellValue(item: HuskyFormRecord, columnKey: HuskyTableColumnKey): string {
     return item[columnKey] ?? '';
   }
 
-  onHeaderClick(columnKey: MasterTableColumnKey): void {
+  onHeaderClick(columnKey: HuskyTableColumnKey): void {
     if (this.sortColumn === columnKey) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
       return;
@@ -214,22 +199,20 @@ export class PlantMaintenanceMasterFormComponent {
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     const ids = this.filteredList.map((r) => r.id);
-    this.masterService.setAllSelected(checked, ids);
+    this.huskyService.setAllSelected(checked, ids);
   }
 
   isAllSelected(): boolean {
-    return (
-      this.filteredList.length > 0 && this.filteredList.every((item) => item.selected)
-    );
+    return this.filteredList.length > 0 && this.filteredList.every((item) => item.selected);
   }
 
-  onRowSelectChange(item: PlantMaintenanceMasterRecord, event: Event): void {
+  onRowSelectChange(item: HuskyFormRecord, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.masterService.updateSelection(item.id, checked);
+    this.huskyService.updateSelection(item.id, checked);
   }
 
   getSelectedCount(): number {
-    return this.machineList.filter((item) => item.selected).length;
+    return this.recordList.filter((item) => item.selected).length;
   }
 
   onSearchChange(): void {
@@ -254,4 +237,3 @@ export class PlantMaintenanceMasterFormComponent {
     this.showDialog = false;
   }
 }
-

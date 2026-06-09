@@ -17,19 +17,11 @@ export const PLANT_MAINTENANCE_SETUP_SIDEBAR_SECTIONS: SidebarSection[] = [
         label: 'Maintenance Activity Defination',
         route: '/plant-maintenance/setup-form/maintenance-activity-definition',
       },
-      {
-        id: 'plant-maintenance-master-form',
-        label: 'Plant Maintenance Master Form',
-        route: '/plant-maintenance/setup-form/plant-maintenance-master-form',
-      },
     ],
   },
 ];
 
 export function plantMaintenanceSetupActiveItemFromUrl(url: string): string {
-  if (url.includes('/plant-maintenance/setup-form/plant-maintenance-master-form')) {
-    return 'plant-maintenance-master-form';
-  }
   if (url.includes('/plant-maintenance/setup-form/maintenance-activity-definition')) {
     return 'maintenance-activity-definition';
   }

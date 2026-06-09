@@ -218,6 +218,7 @@
 
 .app-content > app-gate-pass-shell,
 .app-content > app-payroll-master-shell,
+.app-content > app-plant-maintenance-main-form,
 .app-content > app-plant-maintenance-setup-shell {
   flex: 1 1 auto;
   display: flex;

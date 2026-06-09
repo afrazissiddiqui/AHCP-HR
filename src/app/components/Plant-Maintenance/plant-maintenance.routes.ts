@@ -7,11 +7,40 @@ import { MaintenanceActivityDefinitionComponent } from './setup-form/maintenance
 import { AddMaintenanceActivityDefinitionComponent } from './setup-form/maintenance-activity-definition/add-maintenance-activity-definition/add-maintenance-activity-definition';
 import { PlantMaintenanceMasterFormComponent } from './setup-form/plant-maintenance-master-form/plant-maintenance-master-form';
 import { AddPlantMaintenanceMasterFormComponent } from './setup-form/plant-maintenance-master-form/add-plant-maintenance-master-form/add-plant-maintenance-master-form';
+import { HuskyFormComponent } from './main-form/husky-form/husky-form';
+import { AddHuskyFormComponent } from './main-form/husky-form/add-husky-form/add-husky-form';
 
 export const plantMaintenanceRoutes: Routes = [
   {
     path: 'plant-maintenance/main-form',
     component: PlantMaintenanceMainFormComponent,
+    children: [
+      { path: '', redirectTo: 'plant-maintenance-master-form', pathMatch: 'full' },
+      {
+        path: 'plant-maintenance-master-form',
+        component: PlantMaintenanceMasterFormComponent,
+      },
+      {
+        path: 'plant-maintenance-master-form/create',
+        component: AddPlantMaintenanceMasterFormComponent,
+      },
+      {
+        path: 'plant-maintenance-master-form/edit/:id',
+        component: AddPlantMaintenanceMasterFormComponent,
+      },
+      {
+        path: 'husky-form',
+        component: HuskyFormComponent,
+      },
+      {
+        path: 'husky-form/create',
+        component: AddHuskyFormComponent,
+      },
+      {
+        path: 'husky-form/edit/:id',
+        component: AddHuskyFormComponent,
+      },
+    ],
   },
   {
     path: 'plant-maintenance/setup-form',
@@ -38,18 +67,6 @@ export const plantMaintenanceRoutes: Routes = [
       {
         path: 'maintenance-activity-definition/edit/:id',
         component: AddMaintenanceActivityDefinitionComponent,
-      },
-      {
-        path: 'plant-maintenance-master-form',
-        component: PlantMaintenanceMasterFormComponent,
-      },
-      {
-        path: 'plant-maintenance-master-form/create',
-        component: AddPlantMaintenanceMasterFormComponent,
-      },
-      {
-        path: 'plant-maintenance-master-form/edit/:id',
-        component: AddPlantMaintenanceMasterFormComponent,
       },
     ],
   },

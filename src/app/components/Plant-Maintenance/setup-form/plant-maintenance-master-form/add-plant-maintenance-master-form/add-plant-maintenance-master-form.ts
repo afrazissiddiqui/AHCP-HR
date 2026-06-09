@@ -186,7 +186,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     const record = this.masterService.getById(id);
     if (!record) {
       this.alertService.validation('Machine record not found.');
-      void this.router.navigate(['/plant-maintenance/setup-form/plant-maintenance-master-form']);
+      void this.router.navigate(['/plant-maintenance/main-form/plant-maintenance-master-form']);
       return;
     }
     this.editingRecordId.set(id);
@@ -226,7 +226,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   }
 
   back(): void {
-    void this.router.navigate(['/plant-maintenance/setup-form/plant-maintenance-master-form']);
+    void this.router.navigate(['/plant-maintenance/main-form/plant-maintenance-master-form']);
   }
 
   onMachineIdInput(value: string): void {
@@ -753,7 +753,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
 
     await this.alertService.successAndWait('Success', successMessage);
 
-    void this.router.navigate(['/plant-maintenance/setup-form/plant-maintenance-master-form']);
+    void this.router.navigate(['/plant-maintenance/main-form/plant-maintenance-master-form']);
   }
 
   private syncScheduleFromDuration(days: number): void {

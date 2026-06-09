@@ -1,9 +1,20 @@
-<div class="plant-maintenance-page">
-  <app-page-toolbar></app-page-toolbar>
-  <div class="plant-maintenance-page__body">
-    <div class="plant-maintenance-page__card">
-      <h1>Main Form</h1>
-      <p>Plant maintenance main form — content can be added here.</p>
-    </div>
+<div class="plant-maintenance-main-layout">
+  @if (showSidebar()) {
+    <app-sidebar
+      [title]="'Forms'"
+      [items]="sidebarItems"
+      [sections]="sidebarSections"
+      [isCollapsed]="layout.sidebarCollapsed()"
+      [activeItemId]="activeSidebarItemId()"
+      (folderSelected)="onFolderSelected($event)"
+      (collapsedChange)="layout.sidebarCollapsed.set($event)"
+    ></app-sidebar>
+  }
+
+  <div
+    class="plant-maintenance-main-content"
+    [class.plant-maintenance-main-content--full]="!showSidebar()"
+  >
+    <router-outlet />
   </div>
 </div>
