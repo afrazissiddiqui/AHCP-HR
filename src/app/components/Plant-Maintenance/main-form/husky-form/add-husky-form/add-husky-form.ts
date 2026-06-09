@@ -17,13 +17,18 @@ import { SAP_MACHINE_MASTER } from '../../../setup-form/plant-maintenance-machin
 import {
   calculateHuskyKpiPercentage,
   createEmptyHuskyKpiRows,
+  createEmptyHuskyHydraulicCheckpoints,
   createEmptyHuskySafetyCheckpoints,
+  HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS,
   HUSKY_INSPECTOR_USERS,
+  HUSKY_SAFETY_CHECKPOINT_DEFINITIONS,
   HuskyCheckpointEvaluation,
   HuskyFormService,
+  HuskyHydraulicCheckpoint,
   HuskyKpiRow,
   HuskyKpiStatus,
   HuskySafetyCheckpoint,
+  mergeHuskyCheckpoints,
   resolveHuskyKpiStatus,
 } from '../husky-form.service';
 
@@ -72,6 +77,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly status = signal('');
   readonly kpiRows = signal<HuskyKpiRow[]>(createEmptyHuskyKpiRows());
   readonly safetyCheckpoints = signal<HuskySafetyCheckpoint[]>(createEmptyHuskySafetyCheckpoints());
+  readonly hydraulicCheckpoints = signal<HuskyHydraulicCheckpoint[]>(
+    createEmptyHuskyHydraulicCheckpoints(),
+  );
 
   readonly machineOptions = SAP_MACHINE_MASTER;
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
@@ -112,6 +120,8 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef<HTMLElement>;
 
   private intersectionObserver: IntersectionObserver | null = null;
+  private pauseSectionObserver = false;
+  private sectionObserverResumeTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -141,6 +151,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.status.set(record.status);
     this.kpiRows.set(this.cloneKpiRows(record.kpiRows));
     this.safetyCheckpoints.set(this.cloneSafetyCheckpoints(record.safetyCheckpoints));
+    this.hydraulicCheckpoints.set(this.cloneHydraulicCheckpoints(record.hydraulicCheckpoints));
   }
 
   ngAfterViewInit(): void {
@@ -148,27 +159,49 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.sectionObserverResumeTimer) {
+      clearTimeout(this.sectionObserverResumeTimer);
+    }
     this.destroyIntersectionObserver();
   }
 
   scrollToSection(sectionId: string): void {
     this.activeSection.set(sectionId);
-    const element = document.getElementById(sectionId);
-    if (!element) {
-      return;
+    this.pauseSectionObserver = true;
+    if (this.sectionObserverResumeTimer) {
+      clearTimeout(this.sectionObserverResumeTimer);
     }
 
-    const scrollRoot = this.scrollContainer?.nativeElement;
+    requestAnimationFrame(() => {
+      const scrollRoot = this.scrollContainer?.nativeElement;
+      const element =
+        scrollRoot?.querySelector<HTMLElement>(`#${CSS.escape(sectionId)}`) ??
+        document.getElementById(sectionId);
 
-    if (scrollRoot) {
-      const elementTop = element.getBoundingClientRect().top;
-      const rootTop = scrollRoot.getBoundingClientRect().top;
-      const offset = elementTop - rootTop + scrollRoot.scrollTop - 8;
-      scrollRoot.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
-      return;
+      if (!element) {
+        this.resumeSectionObserver();
+        return;
+      }
+
+      if (scrollRoot?.contains(element)) {
+        const top =
+          element.getBoundingClientRect().top -
+          scrollRoot.getBoundingClientRect().top +
+          scrollRoot.scrollTop;
+        scrollRoot.scrollTo({ top: Math.max(0, top - 12), behavior: 'smooth' });
+      } else {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      this.sectionObserverResumeTimer = setTimeout(() => this.resumeSectionObserver(), 450);
+    });
+  }
+
+  onSectionNavKeydown(event: KeyboardEvent, sectionId: string): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.scrollToSection(sectionId);
     }
-
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   back(): void {
@@ -266,6 +299,16 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateSafetyCheckpoint(key, { recommendation: value });
   }
 
+  updateHydraulicEvaluation(key: string, value: string): void {
+    this.updateHydraulicCheckpoint(key, {
+      evaluation: value as HuskyCheckpointEvaluation,
+    });
+  }
+
+  updateHydraulicRecommendation(key: string, value: string): void {
+    this.updateHydraulicCheckpoint(key, { recommendation: value });
+  }
+
   async save(): Promise<void> {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
@@ -309,6 +352,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       inspectionDate,
       kpiRows: this.cloneKpiRows(this.kpiRows()),
       safetyCheckpoints: this.cloneSafetyCheckpoints(this.safetyCheckpoints()),
+      hydraulicCheckpoints: this.cloneHydraulicCheckpoints(this.hydraulicCheckpoints()),
     };
 
     const editingId = this.editingRecordId();
@@ -328,6 +372,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.intersectionObserver = new IntersectionObserver(
       (entries) => {
+        if (this.pauseSectionObserver) {
+          return;
+        }
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
@@ -343,11 +390,18 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     );
 
     for (const section of this.sectionNavItems) {
-      const element = document.getElementById(section.id);
+      const element =
+        scrollRoot?.querySelector<HTMLElement>(`#${CSS.escape(section.id)}`) ??
+        document.getElementById(section.id);
       if (element) {
         this.intersectionObserver.observe(element);
       }
     }
+  }
+
+  private resumeSectionObserver(): void {
+    this.pauseSectionObserver = false;
+    this.sectionObserverResumeTimer = null;
   }
 
   private destroyIntersectionObserver(): void {
@@ -387,13 +441,21 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private cloneSafetyCheckpoints(
     rows: HuskySafetyCheckpoint[] | undefined,
   ): HuskySafetyCheckpoint[] {
-    const defaults = createEmptyHuskySafetyCheckpoints();
-    if (!rows?.length) {
-      return defaults;
-    }
-    return defaults.map((defaultRow) => {
-      const saved = rows.find((row) => row.key === defaultRow.key);
-      return saved ? { ...defaultRow, ...saved, checkpoint: defaultRow.checkpoint } : defaultRow;
-    });
+    return mergeHuskyCheckpoints(rows, HUSKY_SAFETY_CHECKPOINT_DEFINITIONS);
+  }
+
+  private updateHydraulicCheckpoint(
+    key: string,
+    patch: Partial<Pick<HuskyHydraulicCheckpoint, 'evaluation' | 'recommendation'>>,
+  ): void {
+    this.hydraulicCheckpoints.update((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
+  }
+
+  private cloneHydraulicCheckpoints(
+    rows: HuskyHydraulicCheckpoint[] | undefined,
+  ): HuskyHydraulicCheckpoint[] {
+    return mergeHuskyCheckpoints(rows, HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS);
   }
 }

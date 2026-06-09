@@ -71,12 +71,15 @@ export function resolveHuskyKpiStatus(percentage: number | null): HuskyKpiStatus
 
 export type HuskyCheckpointEvaluation = 'Pass' | 'Fail' | 'N/A' | '';
 
-export interface HuskySafetyCheckpoint {
+export interface HuskySectionCheckpoint {
   key: string;
   checkpoint: string;
   evaluation: HuskyCheckpointEvaluation;
   recommendation: string;
 }
+
+export type HuskySafetyCheckpoint = HuskySectionCheckpoint;
+export type HuskyHydraulicCheckpoint = HuskySectionCheckpoint;
 
 export const HUSKY_SAFETY_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
   key: string;
@@ -114,15 +117,108 @@ export const HUSKY_SAFETY_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
     key: 'safety-glass',
     checkpoint: 'Safety glass not damaged',
   },
+  {
+    key: 'barrel-cover-grounding',
+    checkpoint: 'Barrel cover grounding straps connected',
+  },
+  {
+    key: 'safety-gates',
+    checkpoint: 'Safety gates installed and functioning normally',
+  },
+  {
+    key: 'purge-guard-movement',
+    checkpoint: 'Purge guard opening stops movement',
+  },
+  {
+    key: 'clamp-well-guards',
+    checkpoint: 'Clamp well guards installed (gap max 19" / 483 mm to floor)',
+  },
+  {
+    key: 'finger-safe-guards',
+    checkpoint: 'Finger-safe guards on cabinet components',
+  },
 ];
 
-export function createEmptyHuskySafetyCheckpoints(): HuskySafetyCheckpoint[] {
-  return HUSKY_SAFETY_CHECKPOINT_DEFINITIONS.map((row) => ({
+export const HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  checkpoint: string;
+}> = [
+  { key: 'general-housekeeping', checkpoint: 'General housekeeping' },
+  { key: 'no-unusual-movements', checkpoint: 'No unusual movements or noises' },
+  {
+    key: 'hydraulic-oil-temperature',
+    checkpoint: 'Hydraulic oil temperature within specifications',
+  },
+  { key: 'hydraulic-oil-level', checkpoint: 'Hydraulic oil level' },
+  { key: 'extruder-oil-level', checkpoint: 'Extruder oil level' },
+  { key: 'hose-inspection', checkpoint: 'Hose inspection' },
+  {
+    key: 'hose-restraints',
+    checkpoint: 'Hose restraints present and properly installed',
+  },
+  { key: 'clamp-cylinder', checkpoint: 'Clamp cylinder' },
+  { key: 'mold-stroke-cylinders', checkpoint: 'Mold stroke cylinder(s)' },
+  { key: 'power-manifold', checkpoint: 'Power manifold' },
+  { key: 'injection-manifold', checkpoint: 'Injection manifold' },
+  { key: 'clamp-manifold', checkpoint: 'Clamp manifold' },
+  { key: 'stroke-manifold', checkpoint: 'Stroke manifold' },
+  { key: 'ejector-manifold', checkpoint: 'Ejector manifold' },
+  { key: 'injection-accumulator-manifold', checkpoint: 'Injection accumulator manifold' },
+  { key: 'clamp-accumulator-manifold', checkpoint: 'Clamp accumulator manifold' },
+  { key: 'options-manifolds', checkpoint: 'Options manifolds' },
+  { key: 'booster-cylinder', checkpoint: 'Booster cylinder' },
+  { key: 'ejector-cylinder', checkpoint: 'Ejector cylinder' },
+  { key: 'shutter-cylinders', checkpoint: 'Shutter cylinder(s)' },
+  { key: 'clamp-accumulator', checkpoint: 'Clamp accumulator' },
+  {
+    key: 'injection-system-accumulator',
+    checkpoint: 'Injection/System accumulator (RS machine only)',
+  },
+  { key: 'injection-cylinder-a', checkpoint: 'Injection cylinder A' },
+  { key: 'transfer-cylinders', checkpoint: 'Transfer cylinders' },
+  { key: 'extruder-motor-a', checkpoint: 'Extruder motor A' },
+  { key: 'extruder-gear-box', checkpoint: 'Extruder gear box' },
+  { key: 'carriage-cylinder-a', checkpoint: 'Carriage cylinder A' },
+  { key: 'shut-off-nozzle-cylinder-a', checkpoint: 'Shut off nozzle cylinder A' },
+  { key: 'hydraulic-power-pack', checkpoint: 'Hydraulic power pack / pumps' },
+  { key: 'pressure-offline-filter', checkpoint: 'Pressure / offline filter' },
+  { key: 'suction-filter-inspection', checkpoint: 'Suction filter inspection' },
+  { key: 'cartridge-valve-inspection', checkpoint: 'Cartridge valve inspection' },
+];
+
+function createEmptyCheckpoints(
+  definitions: ReadonlyArray<{ key: string; checkpoint: string }>,
+): HuskySectionCheckpoint[] {
+  return definitions.map((row) => ({
     key: row.key,
     checkpoint: row.checkpoint,
     evaluation: '',
     recommendation: '',
   }));
+}
+
+export function createEmptyHuskySafetyCheckpoints(): HuskySafetyCheckpoint[] {
+  return createEmptyCheckpoints(HUSKY_SAFETY_CHECKPOINT_DEFINITIONS);
+}
+
+export function createEmptyHuskyHydraulicCheckpoints(): HuskyHydraulicCheckpoint[] {
+  return createEmptyCheckpoints(HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS);
+}
+
+export function mergeHuskyCheckpoints(
+  saved: HuskySectionCheckpoint[] | undefined,
+  definitions: ReadonlyArray<{ key: string; checkpoint: string }>,
+): HuskySectionCheckpoint[] {
+  const defaults = createEmptyCheckpoints(definitions);
+  if (!saved?.length) {
+    return defaults;
+  }
+  return defaults.map((defaultRow) => {
+    const existing = saved.find((row) => row.key === defaultRow.key);
+    return existing
+      ? { ...defaultRow, ...existing, checkpoint: defaultRow.checkpoint }
+      : defaultRow;
+  });
 }
 
 export function calculateHuskyKpiPercentage(
@@ -159,6 +255,7 @@ export interface HuskyFormRecord {
   status: HuskyFormStatus;
   kpiRows: HuskyKpiRow[];
   safetyCheckpoints: HuskySafetyCheckpoint[];
+  hydraulicCheckpoints: HuskyHydraulicCheckpoint[];
 }
 
 export interface HuskyInspectorUser {

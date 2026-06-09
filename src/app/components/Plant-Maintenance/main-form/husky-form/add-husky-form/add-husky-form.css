@@ -27,9 +27,11 @@
 .husky-add-scroll {
   flex: 1 1 auto;
   min-height: 0;
+  height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 .husky-header-card,
@@ -93,7 +95,7 @@
 }
 
 .husky-form-section {
-  scroll-margin-top: 12px;
+  scroll-margin-top: 16px;
   padding: 20px 16px 28px;
   border-top: 1px solid #eee;
 }
