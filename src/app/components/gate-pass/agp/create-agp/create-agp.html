@@ -4,7 +4,7 @@
       <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
         <span class="cjs-back-icon">❮</span>
       </button>
-      <h1>Add AGP</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
@@ -19,14 +19,14 @@
             <div class="ogp-header-grid ogp-header-grid--4">
               <div class="ogp-field">
                 <label for="agp-type">Type</label>
-                <select id="agp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked">
+                <select id="agp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked || !!editingId">
                   <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
                 </select>
               </div>
               <div class="ogp-field ogp-field--span-3">
                 <span class="gate-pass-base-doc-label">Base document</span>
                 <div class="gate-pass-base-doc-row">
-                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()">
+                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()" [disabled]="!!editingId">
                     Choose base document…
                   </button>
                   <span
@@ -34,7 +34,7 @@
                     [class.gate-pass-base-doc-summary--muted]="!baseDocNo"
                     >{{ baseDocNo || 'None selected' }}</span>
                   <button
-                    *ngIf="headerLocked"
+                    *ngIf="headerLocked && !editingId"
                     type="button"
                     class="gate-pass-clear-base-doc"
                     (click)="clearBaseDocumentSelection()"
@@ -245,7 +245,7 @@
       <div class="cjs-actions-footer">
         <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
         <button type="button" class="cjs-submit-btn" (click)="submitForm()">
-          <span class="cjs-submit-icon">✓</span> Save AGP
+          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
         </button>
       </div>
     </div>

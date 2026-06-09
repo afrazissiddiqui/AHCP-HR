@@ -1,11 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { BaseDocLinePayload, OpenBaseDocument } from '../../open-base-documents.service';
-import { AgpLineItem, AgpService, createEmptyAgpLineItem } from '../agp.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import {
+  AgpAddPayload,
+  AgpLineItem,
+  AgpRecord,
+  AgpService,
+  createEmptyAgpLineItem,
+} from '../agp.service';
+
+function emptyIfDash(value: string): string {
+  return value === '—' ? '' : value;
+}
 
 @Component({
   selector: 'app-create-agp',
@@ -14,8 +25,12 @@ import { AgpLineItem, AgpService, createEmptyAgpLineItem } from '../agp.service'
   templateUrl: './create-agp.html',
   styleUrl: '../../igp/create-igp/create-igp.css',
 })
-export class CreateAgpComponent {
-  type = 'Purchase Order';
+export class CreateAgpComponent implements OnInit {
+  editingId: string | null = null;
+  pageTitle = 'Add AGP';
+  submitButtonLabel = 'Save AGP';
+
+  type = 'Article Gate Pass';
   documentDate = '';
   businessPartnerCode = '';
   baseDocNo = '';
@@ -49,7 +64,12 @@ export class CreateAgpComponent {
 
   showBaseDocModal = false;
 
-  readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
+  readonly typeOptions = [
+    'Article Gate Pass',
+    'Purchase Order',
+    'Sales Return Request',
+    'Stand Alone Documents',
+  ] as const;
 
   readonly departmentOptions = [
     'Engineering',
@@ -65,11 +85,35 @@ export class CreateAgpComponent {
 
   constructor(
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly agpService: AgpService,
-    private readonly alertService: AlertService
+    private readonly alertService: AlertService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
+  }
+
+  ngOnInit(): void {
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+
+    this.editingId = editId;
+    this.pageTitle = 'Update AGP';
+    this.submitButtonLabel = 'Update AGP';
+
+    this.agpService.fetchArticleGatePassDetail(editId).subscribe({
+      next: (record) => {
+        this.populateFromRecord(record);
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load AGP for edit.'),
+        );
+      },
+    });
   }
 
   get totalQtySent(): number {
@@ -106,10 +150,16 @@ export class CreateAgpComponent {
   }
 
   onBaseDocumentTypeChange(): void {
+    if (this.editingId) {
+      return;
+    }
     this.resetAfterTypeOrClearBaseDoc();
   }
 
   clearBaseDocumentSelection(): void {
+    if (this.editingId) {
+      return;
+    }
     this.resetAfterTypeOrClearBaseDoc();
   }
 
@@ -127,6 +177,9 @@ export class CreateAgpComponent {
   }
 
   openBaseDocumentModal(): void {
+    if (this.editingId) {
+      return;
+    }
     if (!this.type?.trim()) {
       void this.alertService.validation('Select a document type first.');
       return;
@@ -171,7 +224,7 @@ export class CreateAgpComponent {
     const freightParsed = parseFloat(String(doc.freight ?? '').replace(/[^\d.]/g, ''));
     this.freightAmount = Number.isFinite(freightParsed) ? freightParsed : null;
     this.remarks = doc.remarks?.trim() ?? '';
-    this.lines = doc.lines?.map(l => this.mapBaseDocLine(l)) ?? [];
+    this.lines = doc.lines?.map((l) => this.mapBaseDocLine(l)) ?? [];
   }
 
   submitForm(): void {
@@ -182,39 +235,86 @@ export class CreateAgpComponent {
       !this.businessPartnerName?.trim()
     ) {
       void this.alertService.validation(
-        'Please select Type, choose a base document, and ensure required header data is present.'
+        'Please ensure Type, Date, Requesting department, and Business partner name are filled.',
       );
       return;
     }
 
-    if (!this.baseDocNo?.trim()) {
-      void this.alertService.validation('Please choose a base document using the Base document button.');
-      return;
-    }
-
     if (this.lines.length === 0) {
-      void this.alertService.validation('The base document must include at least one line item.');
+      void this.alertService.validation('At least one line item is required.');
       return;
     }
 
-    const ref =
-      this.referenceNo.trim() ||
-      `AGP-${new Date().getFullYear()}-${String(this.agpService.records().length + 1).padStart(3, '0')}`;
+    const payload = this.buildPayload();
+    const request$ = this.editingId
+      ? this.agpService.updateArticleGatePass(this.editingId, payload)
+      : this.agpService.addArticleGatePass(payload);
 
-    this.agpService.addAgp({
-      referenceNo: ref,
-      title: this.businessPartnerName.trim(),
-      requestingDepartment: this.requestingDepartment.trim(),
-      status: this.headOfSupplyChainApproval ? 'Approved' : 'Pending',
-      submittedDate: this.documentDate,
-      remarks: this.remarks.trim() || undefined,
-      type: this.type,
-      businessPartnerCode: this.businessPartnerCode.trim(),
+    request$.subscribe({
+      next: async (response) => {
+        if (response?.status === false || response?.success === false) {
+          const fallback = this.editingId ? 'Failed to update AGP.' : 'Failed to save AGP.';
+          this.alertService.error('Error', response.message || fallback);
+          return;
+        }
+
+        const title = this.editingId ? 'Updated' : 'Success';
+        const message = this.editingId
+          ? response?.message || 'AGP record updated successfully.'
+          : response?.message || 'AGP record saved successfully.';
+        await this.alertService.successAndWait(title, message);
+        this.agpService.fetchArticleGatePasses().subscribe();
+        this.back();
+      },
+      error: (error: unknown) => {
+        const fallback = this.editingId ? 'Failed to update AGP.' : 'Failed to save AGP.';
+        this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+      },
+    });
+  }
+
+  private populateFromRecord(record: AgpRecord): void {
+    this.type = emptyIfDash(record.type) || 'Article Gate Pass';
+    this.documentDate = emptyIfDash(record.submittedDate) || this.documentDate;
+    this.referenceNo = emptyIfDash(record.referenceNo);
+    this.businessPartnerCode = emptyIfDash(record.businessPartnerCode);
+    this.baseDocNo = emptyIfDash(record.baseDocNo);
+    this.businessPartnerName = emptyIfDash(record.businessPartnerName);
+    this.vehicleNo = emptyIfDash(record.vehicleNo);
+    this.reasonForMovement = emptyIfDash(record.reasonForMovement);
+    this.requestingEmployee = emptyIfDash(record.requestingEmployee);
+    this.requestingDepartment = emptyIfDash(record.requestingDepartment);
+    this.requestedBy = emptyIfDash(record.requestedBy);
+    this.issuedTo = emptyIfDash(record.issuedTo);
+    this.articleOutDate = emptyIfDash(record.articleOutDate);
+    this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
+    this.transporterName = emptyIfDash(record.transporterName);
+    this.transporterCnic = emptyIfDash(record.transporterCnic);
+    this.transporterPhone = emptyIfDash(record.transporterPhone);
+    this.biltyNo = emptyIfDash(record.biltyNo);
+    this.freightAmount = record.freightAmount || null;
+    this.attachmentFileName = emptyIfDash(record.attachmentFileName ?? '');
+    this.headOfSupplyChainApproval = record.headOfSupplyChainApproval;
+    this.remarks = emptyIfDash(record.remarks ?? '');
+    this.lines = record.lines.length ? record.lines.map((line) => ({ ...line })) : [];
+  }
+
+  private buildPayload(): AgpAddPayload {
+    const referenceNo =
+      this.referenceNo.trim() ||
+      `AGP-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+
+    return {
+      type: this.type.trim(),
       baseDocNo: this.baseDocNo.trim(),
+      documentDate: this.documentDate.trim(),
+      referenceNo,
+      businessPartnerCode: this.businessPartnerCode.trim(),
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
       reasonForMovement: this.reasonForMovement.trim(),
       requestingEmployee: this.requestingEmployee.trim(),
+      requestingDepartment: this.requestingDepartment.trim(),
       requestedBy: this.requestedBy.trim(),
       issuedTo: this.issuedTo.trim(),
       articleOutDate: this.articleOutDate.trim(),
@@ -224,18 +324,25 @@ export class CreateAgpComponent {
       transporterPhone: this.transporterPhone.trim(),
       biltyNo: this.biltyNo.trim(),
       freightAmount: Number(this.freightAmount) || 0,
-      attachmentFileName: this.attachmentFileName.trim() || undefined,
+      attachmentFileName: this.attachmentFileName.trim(),
       headOfSupplyChainApproval: this.headOfSupplyChainApproval,
-      lines: this.lines.map(l => ({
-        ...l,
-        qtySent: Number(l.qtySent) || 0,
-        qtyReceived: Number(l.qtyReceived) || 0,
+      remarks: this.remarks.trim(),
+      lines: this.lines.map((line) => ({
+        oitmCode: line.oitmCode.trim(),
+        itemCode: line.itemCode.trim(),
+        itemName: line.itemName.trim(),
+        serialNumbers: line.serialNumbers.trim(),
+        category: line.category.trim(),
+        packingCondition: line.packingCondition.trim(),
+        productQuality: line.productQuality.trim(),
+        uom: line.uom.trim(),
+        qtySent: Number(line.qtySent) || 0,
+        qtyReceived: Number(line.qtyReceived) || 0,
+        info: line.info.trim(),
+        remarks: line.remarks.trim(),
       })),
       totalQtySent: this.totalQtySent,
       totalQtyReceived: this.totalQtyReceived,
-    });
-
-    void this.alertService.success('Success', 'AGP record saved successfully.');
-    this.back();
+    };
   }
 }

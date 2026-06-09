@@ -1,4 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../../../config/api.config';
 
 export interface AgpLineItem {
   itemCode: string;
@@ -14,6 +17,41 @@ export interface AgpLineItem {
   qtyReceived: number;
   info: string;
   remarks: string;
+}
+
+export interface AgpAddPayload {
+  type: string;
+  baseDocNo: string;
+  documentDate: string;
+  referenceNo: string;
+  businessPartnerCode: string;
+  businessPartnerName: string;
+  vehicleNo: string;
+  reasonForMovement: string;
+  requestingEmployee: string;
+  requestingDepartment: string;
+  requestedBy: string;
+  issuedTo: string;
+  articleOutDate: string;
+  articleReturnedDate: string;
+  transporterName: string;
+  transporterCnic: string;
+  transporterPhone: string;
+  biltyNo: string;
+  freightAmount: number;
+  attachmentFileName: string;
+  headOfSupplyChainApproval: boolean;
+  remarks: string;
+  lines: AgpLineItem[];
+  totalQtySent: number;
+  totalQtyReceived: number;
+}
+
+export interface AgpApiResponse {
+  status?: boolean;
+  success?: boolean;
+  message?: string;
+  data?: Record<string, unknown>;
 }
 
 export interface AgpRecord {
@@ -60,6 +98,12 @@ export interface AgpRecord {
   department?: string;
 }
 
+const ARTICLE_GATE_PASS_LIST_URL = apiUrl('article-gate-pass-list');
+const ARTICLE_GATE_PASS_ADD_URL = apiUrl('article-gate-pass-add');
+const ARTICLE_GATE_PASS_DETAIL_URL = apiUrl('article-gate-pass-detail');
+const ARTICLE_GATE_PASS_UPDATE_URL = apiUrl('article-gate-pass-update');
+const ARTICLE_GATE_PASS_DELETE_URL = apiUrl('article-gate-pass-delete');
+
 function emptyLine(): AgpLineItem {
   return {
     itemCode: '',
@@ -90,138 +134,237 @@ export function createEmptyAgpLineItem(): AgpLineItem {
   providedIn: 'root',
 })
 export class AgpService {
-  private readonly agpList = signal<AgpRecord[]>([
-    {
-      Id: 301,
-      referenceNo: 'AGP-2026-001',
-      title: 'Textile Components Ltd',
-      requestingDepartment: 'Procurement',
-      department: 'Procurement',
-      status: 'Approved',
-      submittedDate: '2026-01-10',
-      remarks: 'Article receipt against PO',
-      selected: false,
-      type: 'Purchase Order',
-      businessPartnerCode: 'BP-3100',
-      baseDocNo: 'PO-2026-0104',
-      businessPartnerName: 'Textile Components Ltd',
-      vehicleNo: 'LHR-5501',
-      reasonForMovement: 'Purchase receipt',
-      requestingEmployee: 'EMP-301',
-      requestedBy: 'Ahmed Khan',
-      issuedTo: 'Article warehouse — Store A',
-      articleOutDate: '2026-01-08',
-      articleReturnedDate: '',
-      transporterName: 'Ali Transport',
-      transporterCnic: '35202-1234567-1',
-      transporterPhone: '0300-1234567',
-      biltyNo: 'BL-77821',
-      freightAmount: 15000,
-      attachmentFileName: 'invoice-AGP-001.pdf',
-      headOfSupplyChainApproval: true,
-      lines: [
-        {
-          itemCode: 'ART-01',
-          itemName: 'Cotton yarn 40s',
-          oitmCode: 'OITM-ART-01',
-          serialNumbers: 'SN-1001, SN-1002',
-          category: 'Article',
-          packingCondition: 'Bales',
-          productQuality: 'A',
-          uom: 'KG',
-          qtySent: 500,
-          qtyReceived: 500,
-          info: '',
-          remarks: '',
-        },
-      ],
-      totalQtySent: 500,
-      totalQtyReceived: 500,
-    },
-    {
-      Id: 302,
-      referenceNo: 'AGP-2026-002',
-      title: 'Retail Chain East',
-      requestingDepartment: 'Sales',
-      department: 'Sales',
-      status: 'Pending',
-      submittedDate: '2026-02-20',
-      remarks: '',
-      selected: false,
-      type: 'Sales Return Request',
-      businessPartnerCode: 'BP-RCE',
-      baseDocNo: 'SRR-2026-0031',
-      businessPartnerName: 'Retail Chain East',
-      vehicleNo: 'KHI-7711',
-      reasonForMovement: 'Sales return',
-      requestingEmployee: 'EMP-302',
-      requestedBy: 'Sara Malik',
-      issuedTo: 'Returns dock',
-      articleOutDate: '2026-02-18',
-      articleReturnedDate: '2026-02-20',
-      transporterName: 'Fast Cargo',
-      transporterCnic: '35202-9876543-2',
-      transporterPhone: '0321-7654321',
-      biltyNo: 'BL-77001',
-      freightAmount: 8500,
-      headOfSupplyChainApproval: false,
-      lines: createEmptyAgpLines(2),
-      totalQtySent: 0,
-      totalQtyReceived: 0,
-    },
-    {
-      Id: 303,
-      referenceNo: 'AGP-2026-003',
-      title: 'CSR program',
-      requestingDepartment: 'Marketing',
-      department: 'Marketing',
-      status: 'Pending',
-      submittedDate: '2026-03-05',
-      remarks: 'Stand-alone article movement',
-      selected: false,
-      type: 'Stand Alone Documents',
-      businessPartnerCode: 'CSR',
-      baseDocNo: 'STD-2026-0207',
-      businessPartnerName: 'CSR program',
-      vehicleNo: 'LHR-1200',
-      reasonForMovement: 'Sample dispatch',
-      requestingEmployee: 'EMP-303',
-      requestedBy: 'Hassan Raza',
-      issuedTo: 'CSR program — external',
-      articleOutDate: '2026-03-04',
-      articleReturnedDate: '',
-      transporterName: 'Company fleet',
-      transporterCnic: '35202-1112233-3',
-      transporterPhone: '0333-4455667',
-      biltyNo: 'BL-78000',
-      freightAmount: 0,
-      headOfSupplyChainApproval: false,
-      lines: createEmptyAgpLines(1),
-      totalQtySent: 0,
-      totalQtyReceived: 0,
-    },
-  ]);
+  private readonly http = inject(HttpClient);
+  private readonly agpList = signal<AgpRecord[]>([]);
 
   readonly records = this.agpList.asReadonly();
 
-  addAgp(row: Omit<AgpRecord, 'Id' | 'selected'>): void {
-    const nextId = Math.max(0, ...this.agpList().map(r => r.Id)) + 1;
+  fetchArticleGatePasses(): Observable<AgpRecord[]> {
+    return this.http.get<unknown>(ARTICLE_GATE_PASS_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      tap((records) => this.agpList.set(records)),
+    );
+  }
+
+  fetchArticleGatePassDetail(id: string | number): Observable<AgpRecord> {
+    const identifier = encodeURIComponent(String(id));
+    const numericId = Number.parseInt(String(id), 10) || 0;
+
+    return this.http.get<unknown>(`${ARTICLE_GATE_PASS_DETAIL_URL}/${identifier}`).pipe(
+      map((response) => {
+        const record = this.mapDetailResponse(response);
+        if (!record.Id && numericId) {
+          return { ...record, Id: numericId };
+        }
+        return record;
+      }),
+    );
+  }
+
+  addArticleGatePass(payload: AgpAddPayload): Observable<AgpApiResponse> {
+    return this.http.post<AgpApiResponse>(ARTICLE_GATE_PASS_ADD_URL, payload);
+  }
+
+  updateArticleGatePass(id: string | number, payload: AgpAddPayload): Observable<AgpApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post<AgpApiResponse>(`${ARTICLE_GATE_PASS_UPDATE_URL}/${identifier}`, payload);
+  }
+
+  deleteArticleGatePass(id: string | number): Observable<AgpApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete<AgpApiResponse>(`${ARTICLE_GATE_PASS_DELETE_URL}/${identifier}`);
+  }
+
+  removeAgpRecord(record: AgpRecord): void {
+    this.agpList.update((list) => list.filter((item) => item.Id !== record.Id));
+  }
+
+  private mapDetailResponse(response: unknown): AgpRecord {
+    const items = this.extractApiItems(response);
+    if (items.length > 0) {
+      return this.mapApiItemToRecord(items[0]);
+    }
+
+    if (response && typeof response === 'object') {
+      return this.mapApiItemToRecord(response as Record<string, unknown>);
+    }
+
+    throw new Error('Article gate pass record not found');
+  }
+
+  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (!response) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = [
+      'data',
+      'items',
+      'results',
+      'records',
+      'list',
+      'article_gate_passes',
+      'articleGatePasses',
+      'articleGatePassList',
+      'agpList',
+      'agps',
+    ];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (
+      obj['referenceNo'] ||
+      obj['reference_no'] ||
+      obj['type'] ||
+      obj['baseDocNo'] ||
+      obj['base_doc_no'] ||
+      obj['businessPartnerName'] ||
+      obj['business_partner_name']
+    ) {
+      return [obj];
+    }
+
+    return [];
+  }
+
+  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
+    for (const source of sources) {
+      for (const key of keys) {
+        const value = source[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          return String(value).trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  private pickNumber(sources: Array<Record<string, unknown>>, keys: string[]): number {
+    const text = this.pickString(sources, keys);
+    const parsed = Number.parseFloat(text);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private pickBoolean(sources: Array<Record<string, unknown>>, keys: string[]): boolean {
+    for (const source of sources) {
+      for (const key of keys) {
+        const value = source[key];
+        if (value === true || value === false) {
+          return value;
+        }
+        if (value === 1 || value === '1' || String(value).toLowerCase() === 'true') {
+          return true;
+        }
+        if (value === 0 || value === '0' || String(value).toLowerCase() === 'false') {
+          return false;
+        }
+      }
+    }
+    return false;
+  }
+
+  private mapLineItem(raw: Record<string, unknown>): AgpLineItem {
+    return {
+      oitmCode: this.pickString([raw], ['oitmCode', 'oitm_code', 'OitmCode']),
+      itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode']),
+      itemName: this.pickString([raw], ['itemName', 'item_name', 'ItemName']),
+      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'SerialNumbers']),
+      category: this.pickString([raw], ['category', 'Category']),
+      packingCondition: this.pickString([raw], ['packingCondition', 'packing_condition']),
+      productQuality: this.pickString([raw], ['productQuality', 'product_quality']),
+      uom: this.pickString([raw], ['uom', 'UOM', 'Uom']),
+      qtySent: this.pickNumber([raw], ['qtySent', 'qty_sent', 'QtySent']),
+      qtyReceived: this.pickNumber([raw], ['qtyReceived', 'qty_received', 'QtyReceived']),
+      info: this.pickString([raw], ['info', 'Info']),
+      remarks: this.pickString([raw], ['remarks', 'Remarks']),
+    };
+  }
+
+  private mapLines(item: Record<string, unknown>): AgpLineItem[] {
+    const rawLines = item['lines'] ?? item['Lines'] ?? item['lineItems'] ?? item['line_items'];
+    if (!Array.isArray(rawLines)) {
+      return [];
+    }
+
+    return rawLines
+      .filter((line): line is Record<string, unknown> => !!line && typeof line === 'object')
+      .map((line) => this.mapLineItem(line));
+  }
+
+  private mapApiItemToRecord(item: Record<string, unknown>): AgpRecord {
+    const sources = [item];
+    const id = this.pickString([item], ['id', 'Id', 'agp_id', 'article_gate_pass_id']);
+
+    const businessPartnerName =
+      this.pickString(sources, ['businessPartnerName', 'business_partner_name', 'BusinessPartnerName']) || '—';
+    const requestingDepartment =
+      this.pickString(sources, ['requestingDepartment', 'requesting_department', 'department', 'Department']) || '—';
+    const lines = this.mapLines(item);
     const totalQtySent =
-      row.totalQtySent ??
-      row.lines.reduce((sum, l) => sum + (Number.isFinite(l.qtySent) ? l.qtySent : 0), 0);
+      this.pickNumber(sources, ['totalQtySent', 'total_qty_sent', 'TotalQtySent']) ||
+      lines.reduce((sum, line) => sum + (Number.isFinite(line.qtySent) ? line.qtySent : 0), 0);
     const totalQtyReceived =
-      row.totalQtyReceived ??
-      row.lines.reduce((sum, l) => sum + (Number.isFinite(l.qtyReceived) ? l.qtyReceived : 0), 0);
-    this.agpList.update(list => [
-      ...list,
-      {
-        ...row,
-        department: row.requestingDepartment,
-        totalQtySent,
-        totalQtyReceived,
-        Id: nextId,
-        selected: false,
-      },
-    ]);
+      this.pickNumber(sources, ['totalQtyReceived', 'total_qty_received', 'TotalQtyReceived']) ||
+      lines.reduce((sum, line) => sum + (Number.isFinite(line.qtyReceived) ? line.qtyReceived : 0), 0);
+
+    return {
+      Id: Number.parseInt(id, 10) || 0,
+      referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo']) || '—',
+      title: businessPartnerName,
+      requestingDepartment,
+      department: requestingDepartment,
+      status: this.pickString(sources, ['status', 'Status']) || '—',
+      submittedDate:
+        this.pickString(sources, ['documentDate', 'document_date', 'submittedDate', 'submitted_date']) || '—',
+      remarks: this.pickString(sources, ['remarks', 'Remarks']) || undefined,
+      selected: false,
+      type: this.pickString(sources, ['type', 'Type']) || '—',
+      businessPartnerCode:
+        this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode']) || '—',
+      baseDocNo: this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo']) || '—',
+      businessPartnerName,
+      vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']) || '—',
+      reasonForMovement: this.pickString(sources, ['reasonForMovement', 'reason_for_movement']) || '—',
+      requestingEmployee: this.pickString(sources, ['requestingEmployee', 'requesting_employee']) || '—',
+      requestedBy: this.pickString(sources, ['requestedBy', 'requested_by']) || '—',
+      issuedTo: this.pickString(sources, ['issuedTo', 'issued_to']) || '—',
+      articleOutDate: this.pickString(sources, ['articleOutDate', 'article_out_date']) || '—',
+      articleReturnedDate: this.pickString(sources, ['articleReturnedDate', 'article_returned_date']) || '—',
+      transporterName: this.pickString(sources, ['transporterName', 'transporter_name']) || '—',
+      transporterCnic: this.pickString(sources, ['transporterCnic', 'transporter_cnic']) || '—',
+      transporterPhone: this.pickString(sources, ['transporterPhone', 'transporter_phone']) || '—',
+      biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']) || '—',
+      freightAmount: this.pickNumber(sources, ['freightAmount', 'freight_amount', 'FreightAmount']),
+      attachmentFileName: this.pickString(sources, ['attachmentFileName', 'attachment_file_name']) || undefined,
+      headOfSupplyChainApproval: this.pickBoolean(sources, [
+        'headOfSupplyChainApproval',
+        'head_of_supply_chain_approval',
+      ]),
+      lines,
+      totalQtySent,
+      totalQtyReceived,
+    };
   }
 }
