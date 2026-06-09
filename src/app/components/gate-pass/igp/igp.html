@@ -79,7 +79,7 @@
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th>Actions</th>
+              <th class="application-actions-header">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -88,10 +88,12 @@
                 <input type="checkbox" [(ngModel)]="j.selected" />
               </td>
               <td *ngFor="let col of columns" [hidden]="!col.visible">{{ j[col.key] }}</td>
-              <td class="igp-actions">
-                <button type="button" class="view-btn" (click)="viewDetails(j)" title="View Details">View</button>
-                <button type="button" class="update-btn" (click)="onUpdate(j)" title="Update">Update</button>
-                <button type="button" class="delete-btn" (click)="onDelete(j)" title="Delete">Delete</button>
+              <td class="table-action-cell application-actions-cell">
+                <div class="action-buttons">
+                  <button class="view-btn" (click)="viewDetails(j)" title="View Details">View</button>
+                  <button class="update-btn" (click)="onUpdate(j)" title="Update">Update</button>
+                  <button class="delete-btn" (click)="onDelete(j)" title="Delete">Delete</button>
+                </div>
               </td>
             </tr>
           </tbody>

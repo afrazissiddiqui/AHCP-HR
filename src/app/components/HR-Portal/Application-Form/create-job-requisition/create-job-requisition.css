@@ -59,11 +59,6 @@
   overflow: visible;
 }
 
-.cjr-options {
-  padding: 16px 16px 10px 16px;
-  border-bottom: 1px solid #eee;
-}
-
 .cjr-section-nav {
   padding: 10px 16px;
   border-bottom: 1px solid #eee;
@@ -105,13 +100,6 @@
   color: #0052cc;
   background: rgba(0, 82, 204, 0.08);
   border-color: rgba(0, 82, 204, 0.2);
-}
-
-.cjr-options-title {
-  font-weight: 700;
-  color: #000;
-  font-size: 13px;
-  margin-bottom: 8px;
 }
 
 .cjr-checkbox {

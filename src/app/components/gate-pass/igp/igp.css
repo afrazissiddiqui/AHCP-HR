@@ -506,6 +506,25 @@ app-root {
 }
 
 /* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.table-action-cell {
+  white-space: nowrap;
+}
+
+.table-action-cell .action-buttons {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+/* =========================================================
    VIEW BUTTON & DETAIL MODAL
 ========================================================= */
 
@@ -527,6 +546,35 @@ app-root {
 .view-btn:hover {
   background: #0056b3;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.update-btn,
+.delete-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.update-btn {
+  background: #0a6ed1;
+  color: #ffffff;
+}
+
+.update-btn:hover {
+  background: #0854a0;
+}
+
+.delete-btn {
+  background: #bb0000;
+  color: #ffffff;
+}
+
+.delete-btn:hover {
+  background: #8f0000;
 }
 
 .js-detail-modal {
