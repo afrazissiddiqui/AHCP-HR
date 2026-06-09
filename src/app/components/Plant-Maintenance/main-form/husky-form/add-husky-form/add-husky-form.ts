@@ -18,6 +18,7 @@ import {
   calculateHuskyKpiPercentage,
   createEmptyHuskyKpiRows,
   createEmptyHuskyHydraulicCheckpoints,
+  createEmptyHuskyLevelParallelism,
   createEmptyHuskyMeasurements,
   createEmptyHuskyMechanicalCheckpoints,
   createEmptyHuskySafetyCheckpoints,
@@ -30,10 +31,14 @@ import {
   HuskyHydraulicCheckpoint,
   HuskyKpiRow,
   HuskyKpiStatus,
+  HuskyLevelParallelismData,
+  HuskyLevelPointRow,
+  HuskyLevelStatus,
   HuskyMeasurementsData,
   HuskyMechanicalCheckpoint,
   HuskySafetyCheckpoint,
   mergeHuskyCheckpoints,
+  mergeHuskyLevelParallelism,
   mergeHuskyMeasurements,
   resolveHuskyKpiStatus,
 } from '../husky-form.service';
@@ -90,9 +95,11 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     createEmptyHuskyMechanicalCheckpoints(),
   );
   readonly measurements = signal<HuskyMeasurementsData>(createEmptyHuskyMeasurements());
+  readonly levelParallelism = signal<HuskyLevelParallelismData>(createEmptyHuskyLevelParallelism());
 
   readonly machineOptions = SAP_MACHINE_MASTER;
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
+  readonly levelStatusOptions = ['Pass', 'Fail'] as const;
   readonly inspectorUsers = HUSKY_INSPECTOR_USERS;
 
   readonly maintenanceTypeOptions = [
@@ -166,6 +173,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cloneMechanicalCheckpoints(record.mechanicalCheckpoints),
     );
     this.measurements.set(mergeHuskyMeasurements(record.measurements));
+    this.levelParallelism.set(mergeHuskyLevelParallelism(record.levelParallelism));
   }
 
   ngAfterViewInit(): void {
@@ -363,6 +371,41 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     }));
   }
 
+  updateLevelOpsValue(
+    group: 'levelPoints' | 'columnGuideBushing' | 'injectionLevel',
+    key: string,
+    value: string,
+  ): void {
+    this.updateLevelPointRow(group, key, { opsValue: value });
+  }
+
+  updateLevelNopsValue(
+    group: 'levelPoints' | 'columnGuideBushing' | 'injectionLevel',
+    key: string,
+    value: string,
+  ): void {
+    this.updateLevelPointRow(group, key, { nopsValue: value });
+  }
+
+  updateRobotLevelMeasured(key: string, value: string): void {
+    this.updateRobotLevelRow(key, { measuredValue: value });
+  }
+
+  updateRobotLevelStatus(key: string, value: string): void {
+    this.updateRobotLevelRow(key, { status: value as HuskyLevelStatus });
+  }
+
+  getLevelStatusSelectClass(status: HuskyLevelStatus): string {
+    switch (status) {
+      case 'Pass':
+        return 'mad-select--status-pass';
+      case 'Fail':
+        return 'mad-select--status-fail';
+      default:
+        return 'mad-select--status-empty';
+    }
+  }
+
   async save(): Promise<void> {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
@@ -409,6 +452,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       hydraulicCheckpoints: this.cloneHydraulicCheckpoints(this.hydraulicCheckpoints()),
       mechanicalCheckpoints: this.cloneMechanicalCheckpoints(this.mechanicalCheckpoints()),
       measurements: mergeHuskyMeasurements(this.measurements()),
+      levelParallelism: mergeHuskyLevelParallelism(this.levelParallelism()),
     };
 
     const editingId = this.editingRecordId();
@@ -552,6 +596,27 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       extruderSpeedControl: data.extruderSpeedControl.map((row) =>
         row.key === key ? { ...row, ...patch } : row,
       ),
+    }));
+  }
+
+  private updateLevelPointRow(
+    group: 'levelPoints' | 'columnGuideBushing' | 'injectionLevel',
+    key: string,
+    patch: Partial<Pick<HuskyLevelPointRow, 'opsValue' | 'nopsValue'>>,
+  ): void {
+    this.levelParallelism.update((data) => ({
+      ...data,
+      [group]: data[group].map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  private updateRobotLevelRow(
+    key: string,
+    patch: Partial<{ measuredValue: string; status: HuskyLevelStatus }>,
+  ): void {
+    this.levelParallelism.update((data) => ({
+      ...data,
+      robotLevel: data.robotLevel.map((row) => (row.key === key ? { ...row, ...patch } : row)),
     }));
   }
 }

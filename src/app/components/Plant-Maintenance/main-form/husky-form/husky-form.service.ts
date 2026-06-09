@@ -473,6 +473,107 @@ export function mergeHuskyMeasurements(
   };
 }
 
+export type HuskyLevelStatus = 'Pass' | 'Fail' | '';
+
+export interface HuskyLevelPointRow {
+  key: string;
+  levelPoint: string;
+  opsValue: string;
+  nopsValue: string;
+}
+
+export interface HuskyRobotLevelRow {
+  key: string;
+  levelPoint: string;
+  measuredValue: string;
+  tolerance: string;
+  status: HuskyLevelStatus;
+}
+
+export interface HuskyLevelParallelismData {
+  levelPoints: HuskyLevelPointRow[];
+  columnGuideBushing: HuskyLevelPointRow[];
+  injectionLevel: HuskyLevelPointRow[];
+  robotLevel: HuskyRobotLevelRow[];
+}
+
+const HUSKY_LEVEL_POINT_DEFINITIONS = ['L1', 'L2', 'L3', 'L4'] as const;
+const HUSKY_COLUMN_GUIDE_DEFINITIONS = ['L5', 'L6', 'L7'] as const;
+const HUSKY_INJECTION_LEVEL_DEFINITIONS = ['L8', 'L9', 'L10'] as const;
+
+const HUSKY_ROBOT_LEVEL_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  levelPoint: string;
+  tolerance: string;
+}> = [
+  { key: 'r4-ops', levelPoint: 'R4 OPS', tolerance: '±0.15 mm/m (a)' },
+  { key: 'r5-ops', levelPoint: 'R5 OPS', tolerance: '±0.30 mm/m (c)' },
+];
+
+function createEmptyLevelPointRows(levelPoints: readonly string[]): HuskyLevelPointRow[] {
+  return levelPoints.map((point) => ({
+    key: point.toLowerCase(),
+    levelPoint: point,
+    opsValue: '',
+    nopsValue: '',
+  }));
+}
+
+export function createEmptyHuskyLevelParallelism(): HuskyLevelParallelismData {
+  return {
+    levelPoints: createEmptyLevelPointRows(HUSKY_LEVEL_POINT_DEFINITIONS),
+    columnGuideBushing: createEmptyLevelPointRows(HUSKY_COLUMN_GUIDE_DEFINITIONS),
+    injectionLevel: createEmptyLevelPointRows(HUSKY_INJECTION_LEVEL_DEFINITIONS),
+    robotLevel: HUSKY_ROBOT_LEVEL_DEFINITIONS.map((row) => ({
+      key: row.key,
+      levelPoint: row.levelPoint,
+      measuredValue: '',
+      tolerance: row.tolerance,
+      status: '' as HuskyLevelStatus,
+    })),
+  };
+}
+
+export function mergeHuskyLevelParallelism(
+  saved: HuskyLevelParallelismData | undefined,
+): HuskyLevelParallelismData {
+  const defaults = createEmptyHuskyLevelParallelism();
+  if (!saved) {
+    return defaults;
+  }
+
+  const mergeLevelRows = (
+    defaultRows: HuskyLevelPointRow[],
+    savedRows: HuskyLevelPointRow[] | undefined,
+  ): HuskyLevelPointRow[] =>
+    defaultRows.map((defaultRow) => {
+      const existing = savedRows?.find((row) => row.key === defaultRow.key);
+      return existing
+        ? {
+            ...defaultRow,
+            opsValue: existing.opsValue ?? '',
+            nopsValue: existing.nopsValue ?? '',
+          }
+        : defaultRow;
+    });
+
+  return {
+    levelPoints: mergeLevelRows(defaults.levelPoints, saved.levelPoints),
+    columnGuideBushing: mergeLevelRows(defaults.columnGuideBushing, saved.columnGuideBushing),
+    injectionLevel: mergeLevelRows(defaults.injectionLevel, saved.injectionLevel),
+    robotLevel: defaults.robotLevel.map((defaultRow) => {
+      const existing = saved.robotLevel?.find((row) => row.key === defaultRow.key);
+      return existing
+        ? {
+            ...defaultRow,
+            measuredValue: existing.measuredValue ?? '',
+            status: existing.status ?? '',
+          }
+        : defaultRow;
+    }),
+  };
+}
+
 export function calculateHuskyKpiPercentage(
   issuesScore: number | null,
   maxPossibleScore: number | null,
@@ -510,6 +611,7 @@ export interface HuskyFormRecord {
   hydraulicCheckpoints: HuskyHydraulicCheckpoint[];
   mechanicalCheckpoints: HuskyMechanicalCheckpoint[];
   measurements: HuskyMeasurementsData;
+  levelParallelism: HuskyLevelParallelismData;
 }
 
 export interface HuskyInspectorUser {
