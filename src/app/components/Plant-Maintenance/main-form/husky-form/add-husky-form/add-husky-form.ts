@@ -15,7 +15,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
 import { SAP_MACHINE_MASTER } from '../../../setup-form/plant-maintenance-machine.model';
 import {
+  calculateHuskyCycleTimeDeviation,
   calculateHuskyKpiPercentage,
+  createEmptyHuskyCycleTimeComparison,
   createEmptyHuskyKpiRows,
   createEmptyHuskyHydraulicCheckpoints,
   createEmptyHuskyLevelParallelism,
@@ -29,6 +31,7 @@ import {
   HUSKY_ROBOT_CHECKPOINT_DEFINITIONS,
   HUSKY_SAFETY_CHECKPOINT_DEFINITIONS,
   HuskyCheckpointEvaluation,
+  HuskyCycleTimeComparisonData,
   HuskyFormService,
   HuskyHydraulicCheckpoint,
   HuskyKpiRow,
@@ -41,6 +44,7 @@ import {
   HuskyRobotCheckpoint,
   HuskySafetyCheckpoint,
   mergeHuskyCheckpoints,
+  mergeHuskyCycleTimeComparison,
   mergeHuskyLevelParallelism,
   mergeHuskyMeasurements,
   resolveHuskyKpiStatus,
@@ -100,6 +104,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly robotCheckpoints = signal<HuskyRobotCheckpoint[]>(createEmptyHuskyRobotCheckpoints());
   readonly measurements = signal<HuskyMeasurementsData>(createEmptyHuskyMeasurements());
   readonly levelParallelism = signal<HuskyLevelParallelismData>(createEmptyHuskyLevelParallelism());
+  readonly cycleTimeComparison = signal<HuskyCycleTimeComparisonData>(
+    createEmptyHuskyCycleTimeComparison(),
+  );
 
   readonly machineOptions = SAP_MACHINE_MASTER;
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
@@ -179,6 +186,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.robotCheckpoints.set(this.cloneRobotCheckpoints(record.robotCheckpoints));
     this.measurements.set(mergeHuskyMeasurements(record.measurements));
     this.levelParallelism.set(mergeHuskyLevelParallelism(record.levelParallelism));
+    this.cycleTimeComparison.set(mergeHuskyCycleTimeComparison(record.cycleTimeComparison));
   }
 
   ngAfterViewInit(): void {
@@ -410,6 +418,27 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateRobotLevelRow(key, { status: value as HuskyLevelStatus });
   }
 
+  getCycleTimeDeviation(standardSeconds: number, actualValue: string): string {
+    return calculateHuskyCycleTimeDeviation(standardSeconds, actualValue) ?? '—';
+  }
+
+  updateDryCycleActual(key: string, value: string): void {
+    this.updateCycleTimeRow('nonProcessTimeDryCycle', key, value);
+  }
+
+  updateProcessTimeActual(key: string, value: string): void {
+    this.updateCycleTimeRow('processTime', key, value);
+  }
+
+  updateProductionDataValue(key: string, value: string): void {
+    this.cycleTimeComparison.update((data) => ({
+      ...data,
+      productionData: data.productionData.map((row) =>
+        row.key === key ? { ...row, value } : row,
+      ),
+    }));
+  }
+
   getLevelStatusSelectClass(status: HuskyLevelStatus): string {
     switch (status) {
       case 'Pass':
@@ -469,6 +498,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       robotCheckpoints: this.cloneRobotCheckpoints(this.robotCheckpoints()),
       measurements: mergeHuskyMeasurements(this.measurements()),
       levelParallelism: mergeHuskyLevelParallelism(this.levelParallelism()),
+      cycleTimeComparison: mergeHuskyCycleTimeComparison(this.cycleTimeComparison()),
     };
 
     const editingId = this.editingRecordId();
@@ -648,6 +678,17 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.levelParallelism.update((data) => ({
       ...data,
       robotLevel: data.robotLevel.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  private updateCycleTimeRow(
+    group: 'nonProcessTimeDryCycle' | 'processTime',
+    key: string,
+    actualValue: string,
+  ): void {
+    this.cycleTimeComparison.update((data) => ({
+      ...data,
+      [group]: data[group].map((row) => (row.key === key ? { ...row, actualValue } : row)),
     }));
   }
 }

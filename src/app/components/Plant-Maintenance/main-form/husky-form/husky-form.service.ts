@@ -615,6 +615,151 @@ export function mergeHuskyLevelParallelism(
   };
 }
 
+export interface HuskyCycleTimeRow {
+  key: string;
+  parameter: string;
+  standardValue: string;
+  standardSeconds: number;
+  actualValue: string;
+}
+
+export interface HuskyProductionDataRow {
+  key: string;
+  parameter: string;
+  value: string;
+}
+
+export interface HuskyCycleTimeComparisonData {
+  nonProcessTimeDryCycle: HuskyCycleTimeRow[];
+  processTime: HuskyCycleTimeRow[];
+  productionData: HuskyProductionDataRow[];
+}
+
+const HUSKY_DRY_CYCLE_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  parameter: string;
+  standardSeconds: number;
+}> = [
+  { key: 'mold-closing-time', parameter: 'Mold Closing Time', standardSeconds: 0.67 },
+  {
+    key: 'shutter-in-time',
+    parameter: 'Shutter In Time (Clamp Lock Engaged)',
+    standardSeconds: 0.23,
+  },
+  { key: 'clamp-up-time', parameter: 'Clamp Up Time', standardSeconds: 0.2 },
+  { key: 'unclamp-time', parameter: 'Unclamp Time', standardSeconds: 0.4 },
+  { key: 'shutter-out-time', parameter: 'Shutter Out Time', standardSeconds: 0.23 },
+  { key: 'mold-opening-time', parameter: 'Mold Opening Time', standardSeconds: 0.67 },
+  { key: 'dry-cycle-total', parameter: 'Dry Cycle Total', standardSeconds: 2.4 },
+];
+
+const HUSKY_PROCESS_TIME_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  parameter: string;
+  standardSeconds: number;
+}> = [
+  { key: 'fill-time', parameter: 'Fill Time', standardSeconds: 4.75 },
+  { key: 'hold-time', parameter: 'Hold Time', standardSeconds: 5.5 },
+  { key: 'cool-time', parameter: 'Cool Time', standardSeconds: 3.8 },
+  { key: 'cycle-time-total', parameter: 'Cycle Time Total', standardSeconds: 17 },
+  { key: 'process-totals', parameter: 'Process Totals', standardSeconds: 14.05 },
+];
+
+const HUSKY_PRODUCTION_DATA_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  parameter: string;
+}> = [
+  { key: 'preform-weight', parameter: 'Preform Weight (g)' },
+  { key: 'mold-cavities-total', parameter: 'Mold Cavities (total)' },
+  { key: 'cavities-producing', parameter: 'Cavities Producing' },
+  { key: 'operating-positions', parameter: 'Operating Positions (%)' },
+  {
+    key: 'loss-preforms-hour-cycle-time',
+    parameter: 'Loss of potential preforms/hour (Cycle Time)',
+  },
+  {
+    key: 'loss-preforms-hour-operating-positions',
+    parameter: 'Loss of potential preforms/hour (Operating Positions)',
+  },
+];
+
+function formatCycleTimeStandard(seconds: number): string {
+  return `${seconds.toFixed(2)} sec`;
+}
+
+function createEmptyCycleTimeRows(
+  definitions: ReadonlyArray<{ key: string; parameter: string; standardSeconds: number }>,
+): HuskyCycleTimeRow[] {
+  return definitions.map((row) => ({
+    key: row.key,
+    parameter: row.parameter,
+    standardValue: formatCycleTimeStandard(row.standardSeconds),
+    standardSeconds: row.standardSeconds,
+    actualValue: '',
+  }));
+}
+
+export function createEmptyHuskyCycleTimeComparison(): HuskyCycleTimeComparisonData {
+  return {
+    nonProcessTimeDryCycle: createEmptyCycleTimeRows(HUSKY_DRY_CYCLE_DEFINITIONS),
+    processTime: createEmptyCycleTimeRows(HUSKY_PROCESS_TIME_DEFINITIONS),
+    productionData: HUSKY_PRODUCTION_DATA_DEFINITIONS.map((row) => ({
+      key: row.key,
+      parameter: row.parameter,
+      value: '',
+    })),
+  };
+}
+
+export function mergeHuskyCycleTimeComparison(
+  saved: HuskyCycleTimeComparisonData | undefined,
+): HuskyCycleTimeComparisonData {
+  const defaults = createEmptyHuskyCycleTimeComparison();
+  if (!saved) {
+    return defaults;
+  }
+
+  const mergeCycleTimeRows = (
+    defaultRows: HuskyCycleTimeRow[],
+    savedRows: HuskyCycleTimeRow[] | undefined,
+  ): HuskyCycleTimeRow[] =>
+    defaultRows.map((defaultRow) => {
+      const existing = savedRows?.find((row) => row.key === defaultRow.key);
+      return existing ? { ...defaultRow, actualValue: existing.actualValue ?? '' } : defaultRow;
+    });
+
+  return {
+    nonProcessTimeDryCycle: mergeCycleTimeRows(
+      defaults.nonProcessTimeDryCycle,
+      saved.nonProcessTimeDryCycle,
+    ),
+    processTime: mergeCycleTimeRows(defaults.processTime, saved.processTime),
+    productionData: defaults.productionData.map((defaultRow) => {
+      const existing = saved.productionData?.find((row) => row.key === defaultRow.key);
+      return existing ? { ...defaultRow, value: existing.value ?? '' } : defaultRow;
+    }),
+  };
+}
+
+export function calculateHuskyCycleTimeDeviation(
+  standardSeconds: number,
+  actualValue: string,
+): string | null {
+  const trimmed = actualValue.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const numeric = Number.parseFloat(trimmed.replace(/[^\d.-]/g, ''));
+  if (Number.isNaN(numeric)) {
+    return null;
+  }
+
+  const diff = Math.round((numeric - standardSeconds) * 100) / 100;
+  const sign = diff > 0 ? '+' : '';
+  return `${sign}${diff.toFixed(2)} sec`;
+}
+
 export function calculateHuskyKpiPercentage(
   issuesScore: number | null,
   maxPossibleScore: number | null,
@@ -654,6 +799,7 @@ export interface HuskyFormRecord {
   robotCheckpoints: HuskyRobotCheckpoint[];
   measurements: HuskyMeasurementsData;
   levelParallelism: HuskyLevelParallelismData;
+  cycleTimeComparison: HuskyCycleTimeComparisonData;
 }
 
 export interface HuskyInspectorUser {

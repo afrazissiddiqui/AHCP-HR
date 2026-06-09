@@ -806,6 +806,113 @@
                   </tbody>
                 </table>
               </div>
+            } @else if (section.id === 'husky-cycle-time-section') {
+              <div class="husky-calibration-measurements">
+                <article class="husky-measurement-block">
+                  <h4 class="husky-measurement-block__title">Non-Process Time (Dry Cycle)</h4>
+                  <div class="husky-measurement-table-wrap">
+                    <table class="mountain-table husky-measurement-table husky-measurement-table--wide">
+                      <thead>
+                        <tr>
+                          <th class="husky-measurement-table__label-col">Parameter</th>
+                          <th class="husky-measurement-table__reference-col">Standard</th>
+                          <th class="husky-measurement-table__entry-col">Actual</th>
+                          <th class="husky-measurement-table__reference-col">Deviation</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of cycleTimeComparison().nonProcessTimeDryCycle; track row.key) {
+                          <tr>
+                            <td class="husky-measurement-table__label">{{ row.parameter }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.standardValue }}</td>
+                            <td class="husky-measurement-table__entry">
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.actualValue"
+                                (ngModelChange)="updateDryCycleActual(row.key, $event)"
+                                [name]="'dryCycleActual-' + row.key"
+                                placeholder="User entry"
+                              />
+                            </td>
+                            <td class="husky-measurement-table__reference husky-cycle-time-deviation">
+                              {{ getCycleTimeDeviation(row.standardSeconds, row.actualValue) }}
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </article>
+
+                <article class="husky-measurement-block">
+                  <h4 class="husky-measurement-block__title">Process Time</h4>
+                  <div class="husky-measurement-table-wrap">
+                    <table class="mountain-table husky-measurement-table husky-measurement-table--wide">
+                      <thead>
+                        <tr>
+                          <th class="husky-measurement-table__label-col">Parameter</th>
+                          <th class="husky-measurement-table__reference-col">Standard</th>
+                          <th class="husky-measurement-table__entry-col">Actual</th>
+                          <th class="husky-measurement-table__reference-col">Deviation</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of cycleTimeComparison().processTime; track row.key) {
+                          <tr>
+                            <td class="husky-measurement-table__label">{{ row.parameter }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.standardValue }}</td>
+                            <td class="husky-measurement-table__entry">
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.actualValue"
+                                (ngModelChange)="updateProcessTimeActual(row.key, $event)"
+                                [name]="'processTimeActual-' + row.key"
+                                placeholder="User entry"
+                              />
+                            </td>
+                            <td class="husky-measurement-table__reference husky-cycle-time-deviation">
+                              {{ getCycleTimeDeviation(row.standardSeconds, row.actualValue) }}
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </article>
+
+                <article class="husky-measurement-block">
+                  <h4 class="husky-measurement-block__title">Production Data</h4>
+                  <div class="husky-measurement-table-wrap">
+                    <table class="mountain-table husky-measurement-table">
+                      <thead>
+                        <tr>
+                          <th class="husky-measurement-table__label-col">Parameter</th>
+                          <th class="husky-measurement-table__entry-col">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of cycleTimeComparison().productionData; track row.key) {
+                          <tr>
+                            <td class="husky-measurement-table__label">{{ row.parameter }}</td>
+                            <td class="husky-measurement-table__entry">
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.value"
+                                (ngModelChange)="updateProductionDataValue(row.key, $event)"
+                                [name]="'productionValue-' + row.key"
+                                placeholder="User entry"
+                              />
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </article>
+              </div>
             } @else {
               <p class="husky-form-section__placeholder">
                 Section content for {{ section.label }} can be added here.

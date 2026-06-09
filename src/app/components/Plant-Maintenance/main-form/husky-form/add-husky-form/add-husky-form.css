@@ -353,3 +353,8 @@
   font-size: 13px;
   background: #fff;
 }
+
+.husky-cycle-time-deviation {
+  font-weight: 600;
+  color: #344054;
+}
