@@ -18,15 +18,18 @@ import {
   calculateHuskyKpiPercentage,
   createEmptyHuskyKpiRows,
   createEmptyHuskyHydraulicCheckpoints,
+  createEmptyHuskyMechanicalCheckpoints,
   createEmptyHuskySafetyCheckpoints,
   HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS,
   HUSKY_INSPECTOR_USERS,
+  HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS,
   HUSKY_SAFETY_CHECKPOINT_DEFINITIONS,
   HuskyCheckpointEvaluation,
   HuskyFormService,
   HuskyHydraulicCheckpoint,
   HuskyKpiRow,
   HuskyKpiStatus,
+  HuskyMechanicalCheckpoint,
   HuskySafetyCheckpoint,
   mergeHuskyCheckpoints,
   resolveHuskyKpiStatus,
@@ -79,6 +82,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly safetyCheckpoints = signal<HuskySafetyCheckpoint[]>(createEmptyHuskySafetyCheckpoints());
   readonly hydraulicCheckpoints = signal<HuskyHydraulicCheckpoint[]>(
     createEmptyHuskyHydraulicCheckpoints(),
+  );
+  readonly mechanicalCheckpoints = signal<HuskyMechanicalCheckpoint[]>(
+    createEmptyHuskyMechanicalCheckpoints(),
   );
 
   readonly machineOptions = SAP_MACHINE_MASTER;
@@ -152,6 +158,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.kpiRows.set(this.cloneKpiRows(record.kpiRows));
     this.safetyCheckpoints.set(this.cloneSafetyCheckpoints(record.safetyCheckpoints));
     this.hydraulicCheckpoints.set(this.cloneHydraulicCheckpoints(record.hydraulicCheckpoints));
+    this.mechanicalCheckpoints.set(
+      this.cloneMechanicalCheckpoints(record.mechanicalCheckpoints),
+    );
   }
 
   ngAfterViewInit(): void {
@@ -184,11 +193,16 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       if (scrollRoot?.contains(element)) {
+        const navElement = scrollRoot.querySelector<HTMLElement>('.husky-section-nav');
+        const navHeight = navElement?.offsetHeight ?? 0;
         const top =
           element.getBoundingClientRect().top -
           scrollRoot.getBoundingClientRect().top +
           scrollRoot.scrollTop;
-        scrollRoot.scrollTo({ top: Math.max(0, top - 12), behavior: 'smooth' });
+        scrollRoot.scrollTo({
+          top: Math.max(0, top - navHeight - 8),
+          behavior: 'smooth',
+        });
       } else {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
@@ -309,6 +323,16 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateHydraulicCheckpoint(key, { recommendation: value });
   }
 
+  updateMechanicalEvaluation(key: string, value: string): void {
+    this.updateMechanicalCheckpoint(key, {
+      evaluation: value as HuskyCheckpointEvaluation,
+    });
+  }
+
+  updateMechanicalRecommendation(key: string, value: string): void {
+    this.updateMechanicalCheckpoint(key, { recommendation: value });
+  }
+
   async save(): Promise<void> {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
@@ -353,6 +377,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       kpiRows: this.cloneKpiRows(this.kpiRows()),
       safetyCheckpoints: this.cloneSafetyCheckpoints(this.safetyCheckpoints()),
       hydraulicCheckpoints: this.cloneHydraulicCheckpoints(this.hydraulicCheckpoints()),
+      mechanicalCheckpoints: this.cloneMechanicalCheckpoints(this.mechanicalCheckpoints()),
     };
 
     const editingId = this.editingRecordId();
@@ -457,5 +482,20 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     rows: HuskyHydraulicCheckpoint[] | undefined,
   ): HuskyHydraulicCheckpoint[] {
     return mergeHuskyCheckpoints(rows, HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS);
+  }
+
+  private updateMechanicalCheckpoint(
+    key: string,
+    patch: Partial<Pick<HuskyMechanicalCheckpoint, 'evaluation' | 'recommendation'>>,
+  ): void {
+    this.mechanicalCheckpoints.update((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
+  }
+
+  private cloneMechanicalCheckpoints(
+    rows: HuskyMechanicalCheckpoint[] | undefined,
+  ): HuskyMechanicalCheckpoint[] {
+    return mergeHuskyCheckpoints(rows, HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS);
   }
 }

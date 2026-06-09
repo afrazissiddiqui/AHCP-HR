@@ -1,5 +1,5 @@
 <div class="husky-add-page cjr-page scd-add-page">
-  <div class="husky-add-top">
+  <div class="husky-add-scroll" #scrollContainer>
     <div class="cjr-header">
       <div class="cjr-header-left">
         <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
@@ -221,9 +221,7 @@
         </li>
       </ul>
     </nav>
-  </div>
 
-  <div class="husky-add-scroll" #scrollContainer>
     <div class="cjr-card scd-form-card husky-sections-card">
       <div class="husky-form-sections">
         @for (section of sectionNavItems; track section.id) {
@@ -385,6 +383,49 @@
                             [ngModel]="row.recommendation"
                             (ngModelChange)="updateHydraulicRecommendation(row.key, $event)"
                             [name]="'hydraulicRec-' + row.key"
+                            placeholder="Enter recommendation"
+                          ></textarea>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else if (section.id === 'husky-mechanical-section') {
+              <div class="husky-checkpoint-table-wrap">
+                <table class="mountain-table husky-checkpoint-table">
+                  <thead>
+                    <tr>
+                      <th>Checkpoint</th>
+                      <th>Evaluation</th>
+                      <th>Recommendation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of mechanicalCheckpoints(); track row.key) {
+                      <tr>
+                        <td class="husky-checkpoint-table__checkpoint">{{ row.checkpoint }}</td>
+                        <td class="husky-checkpoint-table__evaluation">
+                          <select
+                            class="mad-select husky-checkpoint-select"
+                            [class]="getEvaluationSelectClass(row.evaluation)"
+                            [ngModel]="row.evaluation"
+                            (ngModelChange)="updateMechanicalEvaluation(row.key, $event)"
+                            [name]="'mechanicalEval-' + row.key"
+                          >
+                            <option value="">Select</option>
+                            @for (option of evaluationOptions; track option) {
+                              <option [value]="option">{{ option }}</option>
+                            }
+                          </select>
+                        </td>
+                        <td class="husky-checkpoint-table__recommendation">
+                          <textarea
+                            class="husky-checkpoint-notes"
+                            rows="2"
+                            [ngModel]="row.recommendation"
+                            (ngModelChange)="updateMechanicalRecommendation(row.key, $event)"
+                            [name]="'mechanicalRec-' + row.key"
                             placeholder="Enter recommendation"
                           ></textarea>
                         </td>

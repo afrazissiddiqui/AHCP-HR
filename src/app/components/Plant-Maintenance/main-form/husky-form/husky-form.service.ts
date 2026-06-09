@@ -80,6 +80,7 @@ export interface HuskySectionCheckpoint {
 
 export type HuskySafetyCheckpoint = HuskySectionCheckpoint;
 export type HuskyHydraulicCheckpoint = HuskySectionCheckpoint;
+export type HuskyMechanicalCheckpoint = HuskySectionCheckpoint;
 
 export const HUSKY_SAFETY_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
   key: string;
@@ -186,6 +187,100 @@ export const HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
   { key: 'cartridge-valve-inspection', checkpoint: 'Cartridge valve inspection' },
 ];
 
+export const HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  checkpoint: string;
+}> = [
+  { key: 'tank-transfer-breathers', checkpoint: 'Tank and Transfer cylinder breathers' },
+  { key: 'water-saver-valves', checkpoint: 'Water saver valves' },
+  { key: 'shutoff-linkage', checkpoint: 'Shutoff linkage inspection' },
+  { key: 'drool-nipple', checkpoint: 'Check if the drool nipple is blocked' },
+  { key: 'heat-exchanger', checkpoint: 'Heat exchanger functioning' },
+  {
+    key: 'motor-water-circuit',
+    checkpoint: 'Electric motor water circuit for flow',
+  },
+  {
+    key: 'motor-pump-coupling',
+    checkpoint: 'Check electrical motor/pump coupling',
+  },
+  {
+    key: 'tempo-sonic-rods',
+    checkpoint: 'Tempo Sonic rods (rod head color - yellow or green)',
+  },
+  {
+    key: 'leveling-mounts',
+    checkpoint: 'Leveling mounts not old, loose, or damaged',
+  },
+  { key: 'pump-motor-mounts', checkpoint: 'Pump motor mounts' },
+  { key: 'pump-mounts', checkpoint: 'Pump mounts' },
+  { key: 'tie-bar-condition', checkpoint: 'Tie bar condition' },
+  {
+    key: 'tie-bar-wear-pads',
+    checkpoint: 'Tie bar support / wear pads condition',
+  },
+  { key: 'rail-condition', checkpoint: 'Rail condition' },
+  { key: 'clamp-wear-pads', checkpoint: 'Clamp wear pads condition' },
+  {
+    key: 'moving-platen-shoes',
+    checkpoint: 'Moving platen shoes & shims condition',
+  },
+  { key: 'linear-bearings-rails', checkpoint: 'Linear bearings and rails' },
+  {
+    key: 'shutter-housing-shoes',
+    checkpoint: 'Shutter housing shoes & shims condition',
+  },
+  { key: 'cable-track', checkpoint: 'Cable track inspection' },
+  { key: 'auto-lube-system', checkpoint: 'Auto lube / central lube system' },
+  {
+    key: 'air-pressure-gauge',
+    checkpoint: 'Air pressure gauge condition and reading',
+  },
+  { key: 'oil-drain-bowls-installed', checkpoint: 'Oil drain bowls installed' },
+  {
+    key: 'oil-drain-bowls-accumulation',
+    checkpoint: 'Oil accumulation in drain bowls',
+  },
+  { key: 'oil-recovery-system', checkpoint: 'Oil recovery system' },
+  { key: 'air-leaks', checkpoint: 'Air leaks' },
+  {
+    key: 'water-temp-pressure-sensors',
+    checkpoint: 'Water temperature/pressure sensors and gauge condition',
+  },
+  {
+    key: 'cabinet-cooling-units',
+    checkpoint: 'Electrical cabinet cooling unit(s)',
+  },
+  { key: 'hmi', checkpoint: 'Human-machine-interface (HMI)' },
+  { key: 'plc-battery', checkpoint: 'PLC battery or IPC battery check' },
+  {
+    key: 'cabinet-jumpers',
+    checkpoint: 'Inspect electrical cabinet for jumpers/modifications',
+  },
+  { key: 'profibus-cabling', checkpoint: 'Profibus cabling and connections' },
+  {
+    key: 'cabinet-filter',
+    checkpoint: 'Filter inspection (electrical cabinet)',
+  },
+  { key: 'cabinet-fan', checkpoint: 'Fan inspection (electrical cabinet)' },
+  {
+    key: 'rotary-manifold',
+    checkpoint: 'Rotary manifold (Index machine only)',
+  },
+  {
+    key: 'turret-locking-pin',
+    checkpoint: 'Turret locking pin (Index machine only)',
+  },
+  {
+    key: 'turret-belt-condition',
+    checkpoint: 'Turret belt condition (Index machine only)',
+  },
+  {
+    key: 'consumables-filters',
+    checkpoint: 'Consumables (filters) changed / when',
+  },
+];
+
 function createEmptyCheckpoints(
   definitions: ReadonlyArray<{ key: string; checkpoint: string }>,
 ): HuskySectionCheckpoint[] {
@@ -203,6 +298,10 @@ export function createEmptyHuskySafetyCheckpoints(): HuskySafetyCheckpoint[] {
 
 export function createEmptyHuskyHydraulicCheckpoints(): HuskyHydraulicCheckpoint[] {
   return createEmptyCheckpoints(HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS);
+}
+
+export function createEmptyHuskyMechanicalCheckpoints(): HuskyMechanicalCheckpoint[] {
+  return createEmptyCheckpoints(HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS);
 }
 
 export function mergeHuskyCheckpoints(
@@ -256,6 +355,7 @@ export interface HuskyFormRecord {
   kpiRows: HuskyKpiRow[];
   safetyCheckpoints: HuskySafetyCheckpoint[];
   hydraulicCheckpoints: HuskyHydraulicCheckpoint[];
+  mechanicalCheckpoints: HuskyMechanicalCheckpoint[];
 }
 
 export interface HuskyInspectorUser {
