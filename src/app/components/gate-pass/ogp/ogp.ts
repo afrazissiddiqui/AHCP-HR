@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
+import { AlertService } from '../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { OgpRecord, OgpService } from './ogp.service';
 
@@ -22,12 +24,24 @@ interface ColumnConfig {
   templateUrl: './ogp.html',
   styleUrl: '../igp/igp.css',
 })
-export class OgpComponent {
+export class OgpComponent implements OnInit {
   constructor(
     private readonly router: Router,
     private readonly ogpService: OgpService,
     private readonly layout: GatePassLayoutService,
+    private readonly alertService: AlertService,
   ) {}
+
+  ngOnInit(): void {
+    this.ogpService.fetchOutwardGatePasses().subscribe({
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load OGP records.'),
+        );
+      },
+    });
+  }
 
   Math = Math;
 
@@ -57,6 +71,7 @@ export class OgpComponent {
 
   showDialog = false;
   showDetailDialog = false;
+  detailLoading = false;
   selectedRow: OgpRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
@@ -69,26 +84,87 @@ export class OgpComponent {
   }
 
   viewDetails(record: OgpRecord): void {
-    this.selectedRow = record;
+    if (!record.Id) {
+      this.alertService.warning('View', 'Unable to view this row: missing OGP id.');
+      return;
+    }
+
     this.showDetailDialog = true;
+    this.selectedRow = null;
+    this.detailLoading = true;
+
+    this.ogpService.fetchOutwardGatePassDetail(record.Id).subscribe({
+      next: (detail) => {
+        this.selectedRow = detail;
+        this.detailLoading = false;
+      },
+      error: (error: unknown) => {
+        this.detailLoading = false;
+        this.showDetailDialog = false;
+        this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load OGP details.'),
+        );
+      },
+    });
+  }
+
+  onUpdate(record: OgpRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing OGP id.');
+      return;
+    }
+    void this.router.navigate(['/gate-pass/ogp/edit', record.Id]);
+  }
+
+  async onDelete(record: OgpRecord): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete OGP?',
+      `Remove ${record.referenceNo} (${record.businessPartnerName}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing OGP id.');
+      return;
+    }
+
+    this.ogpService.deleteOutwardGatePass(record.Id).subscribe({
+      next: () => {
+        this.ogpService.removeOgpRecord(record);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        this.alertService.success('Deleted', 'OGP record removed successfully.');
+      },
+      error: (error: unknown) => {
+        this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete OGP record.'),
+        );
+      },
+    });
   }
 
   closeDetailDialog(): void {
     this.selectedRow = null;
     this.showDetailDialog = false;
+    this.detailLoading = false;
   }
 
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.filteredList.forEach(s => (s.selected = checked));
+    this.filteredList.forEach((s) => (s.selected = checked));
   }
 
   isAllSelected(): boolean {
-    return this.filteredList.length > 0 && this.filteredList.every(s => s.selected);
+    return this.filteredList.length > 0 && this.filteredList.every((s) => s.selected);
   }
 
   getSelectedCount(): number {
-    return this.rows.filter(x => x.selected).length;
+    return this.rows.filter((x) => x.selected).length;
   }
 
   get filteredList(): OgpRecord[] {
@@ -96,7 +172,7 @@ export class OgpComponent {
 
     if (this.searchText) {
       const search = this.searchText.toLowerCase();
-      list = list.filter(item => {
+      list = list.filter((item) => {
         const hay = [
           item.title,
           item.department,

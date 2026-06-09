@@ -50,9 +50,6 @@ export class CreateIgpComponent implements OnInit {
   lines: IgpLineItem[] = [];
   remarks = '';
 
-  /** After a base document is chosen, header fields (except employee) are read-only. */
-  headerLocked = false;
-
   showBaseDocModal = false;
 
   readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
@@ -114,37 +111,14 @@ export class CreateIgpComponent implements OnInit {
     if (this.editingId) {
       return;
     }
-    this.resetAfterTypeOrClearBaseDoc();
+    this.baseDocNo = '';
   }
 
   clearBaseDocumentSelection(): void {
     if (this.editingId) {
       return;
     }
-    this.resetAfterTypeOrClearBaseDoc();
-  }
-
-  private resetAfterTypeOrClearBaseDoc(): void {
-    this.headerLocked = false;
     this.baseDocNo = '';
-    this.referenceNo = '';
-    this.businessPartnerCode = '';
-    this.businessPartnerName = '';
-    this.vehicleNo = '';
-    this.fromUnit = '';
-    this.kantaSlip = '';
-    this.department = '';
-    this.biltyNo = '';
-    this.store = '';
-    this.freight = '';
-    this.weightMachineName = '';
-    this.weight = '';
-    this.location = '';
-    this.remarks = '';
-    this.lines = [];
-    this.employee = '';
-    const d = new Date();
-    this.documentDate = d.toISOString().slice(0, 10);
   }
 
   openBaseDocumentModal(): void {
@@ -163,7 +137,6 @@ export class CreateIgpComponent implements OnInit {
   }
 
   private applyBaseDocument(doc: OpenBaseDocument): void {
-    this.headerLocked = true;
     this.baseDocNo = doc.number;
     if (doc.date?.trim()) {
       this.documentDate = doc.date.trim();
@@ -199,11 +172,6 @@ export class CreateIgpComponent implements OnInit {
   submitForm(): void {
     if (!this.type?.trim() || !this.documentDate?.trim() || !this.department?.trim() || !this.businessPartnerName?.trim()) {
       void this.alertService.validation('Please ensure Type, Date, Department, and Business partner name are filled.');
-      return;
-    }
-
-    if (!this.editingId && !this.baseDocNo?.trim()) {
-      void this.alertService.validation('Please choose a base document using the Base document button.');
       return;
     }
 

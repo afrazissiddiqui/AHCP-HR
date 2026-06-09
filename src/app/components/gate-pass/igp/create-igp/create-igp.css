@@ -558,6 +558,11 @@
   color: #444;
 }
 
+.gate-pass-optional {
+  font-weight: 400;
+  color: #888;
+}
+
 .gate-pass-base-doc-row {
   display: flex;
   flex-wrap: wrap;

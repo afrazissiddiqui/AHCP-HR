@@ -18,6 +18,7 @@ export const gatePassRoutes: Routes = [
       { path: 'igp/edit/:id', component: CreateIgpComponent },
       { path: 'ogp', component: OgpComponent },
       { path: 'ogp/create', component: CreateOgpComponent },
+      { path: 'ogp/edit/:id', component: CreateOgpComponent },
       { path: 'agp', component: AgpComponent },
       { path: 'agp/create', component: CreateAgpComponent },
     ],
@@ -27,6 +28,7 @@ export const gatePassRoutes: Routes = [
   { path: 'igp/edit/:id', redirectTo: 'gate-pass/igp/edit/:id', pathMatch: 'full' },
   { path: 'ogp', redirectTo: 'gate-pass/ogp', pathMatch: 'full' },
   { path: 'ogp/create', redirectTo: 'gate-pass/ogp/create', pathMatch: 'full' },
+  { path: 'ogp/edit/:id', redirectTo: 'gate-pass/ogp/edit/:id', pathMatch: 'full' },
   { path: 'agp', redirectTo: 'gate-pass/agp', pathMatch: 'full' },
   { path: 'agp/create', redirectTo: 'gate-pass/agp/create', pathMatch: 'full' },
 ];

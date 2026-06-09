@@ -1,11 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { OpenBaseDocument } from '../../open-base-documents.service';
-import { createEmptyOgpLineItem, OgpLineItem, OgpService } from '../ogp.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import {
+  createEmptyOgpLineItem,
+  OgpAddPayload,
+  OgpLineItem,
+  OgpRecord,
+  OgpService,
+} from '../ogp.service';
+
+function emptyIfDash(value: string): string {
+  return value === '—' ? '' : value;
+}
 
 @Component({
   selector: 'app-create-ogp',
@@ -14,8 +25,12 @@ import { createEmptyOgpLineItem, OgpLineItem, OgpService } from '../ogp.service'
   templateUrl: './create-ogp.html',
   styleUrl: '../../igp/create-igp/create-igp.css',
 })
-export class CreateOgpComponent {
-  type = 'Purchase Order';
+export class CreateOgpComponent implements OnInit {
+  editingId: string | null = null;
+  pageTitle = 'Add OGP';
+  submitButtonLabel = 'Save OGP';
+
+  type = 'Delivery';
   documentDate = '';
   businessPartnerCode = '';
   baseDocNo = '';
@@ -35,20 +50,46 @@ export class CreateOgpComponent {
   lines: OgpLineItem[] = [];
   remarks = '';
 
-  /** After a base document is chosen, header fields (except employee) are read-only. */
-  headerLocked = false;
-
   showBaseDocModal = false;
 
-  readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
+  readonly typeOptions = [
+    'Delivery',
+    'Purchase Order',
+    'Sales Return Request',
+    'Stand Alone Documents',
+  ] as const;
 
   constructor(
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly ogpService: OgpService,
-    private readonly alertService: AlertService
+    private readonly alertService: AlertService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
+  }
+
+  ngOnInit(): void {
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+
+    this.editingId = editId;
+    this.pageTitle = 'Update OGP';
+    this.submitButtonLabel = 'Update OGP';
+
+    this.ogpService.fetchOutwardGatePassDetail(editId).subscribe({
+      next: (record) => {
+        this.populateFromRecord(record);
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load OGP for edit.'),
+        );
+      },
+    });
   }
 
   get totalQty(): number {
@@ -72,37 +113,23 @@ export class CreateOgpComponent {
   }
 
   onBaseDocumentTypeChange(): void {
-    this.resetAfterTypeOrClearBaseDoc();
+    if (this.editingId) {
+      return;
+    }
+    this.baseDocNo = '';
   }
 
   clearBaseDocumentSelection(): void {
-    this.resetAfterTypeOrClearBaseDoc();
-  }
-
-  private resetAfterTypeOrClearBaseDoc(): void {
-    this.headerLocked = false;
+    if (this.editingId) {
+      return;
+    }
     this.baseDocNo = '';
-    this.referenceNo = '';
-    this.businessPartnerCode = '';
-    this.businessPartnerName = '';
-    this.vehicleNo = '';
-    this.fromUnit = '';
-    this.kantaSlip = '';
-    this.department = '';
-    this.biltyNo = '';
-    this.store = '';
-    this.freight = '';
-    this.weightMachineName = '';
-    this.weight = '';
-    this.location = '';
-    this.remarks = '';
-    this.lines = [];
-    this.employee = '';
-    const d = new Date();
-    this.documentDate = d.toISOString().slice(0, 10);
   }
 
   openBaseDocumentModal(): void {
+    if (this.editingId) {
+      return;
+    }
     if (!this.type?.trim()) {
       void this.alertService.validation('Select a document type first.');
       return;
@@ -115,7 +142,6 @@ export class CreateOgpComponent {
   }
 
   private applyBaseDocument(doc: OpenBaseDocument): void {
-    this.headerLocked = true;
     this.baseDocNo = doc.number;
     if (doc.date?.trim()) {
       this.documentDate = doc.date.trim();
@@ -135,7 +161,7 @@ export class CreateOgpComponent {
     this.location = doc.location?.trim() ?? '';
     this.remarks = doc.remarks?.trim() ?? '';
     this.lines =
-      doc.lines?.map(l => ({
+      doc.lines?.map((l) => ({
         itemCode: l.itemCode,
         itemName: l.itemName,
         category: l.category,
@@ -150,34 +176,76 @@ export class CreateOgpComponent {
 
   submitForm(): void {
     if (!this.type?.trim() || !this.documentDate?.trim() || !this.department?.trim() || !this.businessPartnerName?.trim()) {
-      void this.alertService.validation('Please select Type, choose a base document, and ensure required header data is present.');
-      return;
-    }
-
-    if (!this.baseDocNo?.trim()) {
-      void this.alertService.validation('Please choose a base document using the Base document button.');
+      void this.alertService.validation('Please ensure Type, Date, Department, and Business partner name are filled.');
       return;
     }
 
     if (this.lines.length === 0) {
-      void this.alertService.validation('The base document must include at least one line item.');
+      void this.alertService.validation('At least one line item is required.');
       return;
     }
 
-    const ref =
+    const payload = this.buildPayload();
+    const request$ = this.editingId
+      ? this.ogpService.updateOutwardGatePass(this.editingId, payload)
+      : this.ogpService.addOutwardGatePass(payload);
+
+    request$.subscribe({
+      next: async (response) => {
+        if (response?.status === false || response?.success === false) {
+          const fallback = this.editingId ? 'Failed to update OGP.' : 'Failed to save OGP.';
+          this.alertService.error('Error', response.message || fallback);
+          return;
+        }
+
+        const title = this.editingId ? 'Updated' : 'Success';
+        const message = this.editingId
+          ? response?.message || 'OGP record updated successfully.'
+          : response?.message || 'OGP record saved successfully.';
+        await this.alertService.successAndWait(title, message);
+        this.ogpService.fetchOutwardGatePasses().subscribe();
+        this.back();
+      },
+      error: (error: unknown) => {
+        const fallback = this.editingId ? 'Failed to update OGP.' : 'Failed to save OGP.';
+        this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+      },
+    });
+  }
+
+  private populateFromRecord(record: OgpRecord): void {
+    this.type = emptyIfDash(record.type) || 'Delivery';
+    this.documentDate = emptyIfDash(record.submittedDate) || this.documentDate;
+    this.referenceNo = emptyIfDash(record.referenceNo);
+    this.businessPartnerCode = emptyIfDash(record.businessPartnerCode);
+    this.baseDocNo = emptyIfDash(record.baseDocNo);
+    this.businessPartnerName = emptyIfDash(record.businessPartnerName);
+    this.vehicleNo = emptyIfDash(record.vehicleNo);
+    this.fromUnit = emptyIfDash(record.fromUnit);
+    this.kantaSlip = emptyIfDash(record.kantaSlip);
+    this.biltyNo = emptyIfDash(record.biltyNo);
+    this.store = emptyIfDash(record.store);
+    this.freight = emptyIfDash(record.freight);
+    this.department = emptyIfDash(record.department);
+    this.weightMachineName = emptyIfDash(record.weightMachineName);
+    this.weight = emptyIfDash(record.weight);
+    this.location = emptyIfDash(record.location);
+    this.employee = emptyIfDash(record.employee);
+    this.remarks = emptyIfDash(record.remarks ?? '');
+    this.lines = record.lines.length ? record.lines.map((line) => ({ ...line })) : [];
+  }
+
+  private buildPayload(): OgpAddPayload {
+    const referenceNo =
       this.referenceNo.trim() ||
       `OGP-${new Date().getFullYear()}-${String(this.ogpService.records().length + 1).padStart(3, '0')}`;
 
-    this.ogpService.addOgp({
-      referenceNo: ref,
-      title: this.businessPartnerName.trim(),
-      department: this.department.trim(),
-      status: 'Pending',
-      submittedDate: this.documentDate,
-      remarks: this.remarks.trim() || undefined,
-      type: this.type,
-      businessPartnerCode: this.businessPartnerCode.trim(),
+    return {
+      type: this.type.trim(),
       baseDocNo: this.baseDocNo.trim(),
+      documentDate: this.documentDate.trim(),
+      referenceNo,
+      businessPartnerCode: this.businessPartnerCode.trim(),
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
       fromUnit: this.fromUnit.trim(),
@@ -185,18 +253,24 @@ export class CreateOgpComponent {
       biltyNo: this.biltyNo.trim(),
       store: this.store.trim(),
       freight: this.freight.trim(),
+      department: this.department.trim(),
       weightMachineName: this.weightMachineName.trim(),
       weight: this.weight.trim(),
       location: this.location,
       employee: this.employee.trim(),
-      lines: this.lines.map(l => ({
-        ...l,
-        qty: Number(l.qty) || 0,
+      remarks: this.remarks.trim(),
+      lines: this.lines.map((line) => ({
+        itemCode: line.itemCode.trim(),
+        itemName: line.itemName.trim(),
+        category: line.category.trim(),
+        packingCondition: line.packingCondition.trim(),
+        productQuality: line.productQuality.trim(),
+        uom: line.uom.trim(),
+        qty: Number(line.qty) || 0,
+        info: line.info.trim(),
+        remarks: line.remarks.trim(),
       })),
       totalQty: this.totalQty,
-    });
-
-    void this.alertService.success('Success', 'OGP record saved successfully.');
-    this.back();
+    };
   }
 }

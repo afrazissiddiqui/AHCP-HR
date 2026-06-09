@@ -4,7 +4,7 @@
       <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
         <span class="cjs-back-icon">❮</span>
       </button>
-      <h1>Add OGP</h1>
+      <h1>{{ pageTitle }}</h1>
     </div>
   </div>
 
@@ -19,14 +19,14 @@
             <div class="ogp-header-grid ogp-header-grid--4">
               <div class="ogp-field">
                 <label for="ogp-type">Type</label>
-                <select id="ogp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked">
+                <select id="ogp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="!!editingId">
                   <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
                 </select>
               </div>
               <div class="ogp-field ogp-field--span-3">
-                <span class="gate-pass-base-doc-label">Base document</span>
+                <span class="gate-pass-base-doc-label">Base document <span class="gate-pass-optional">(optional)</span></span>
                 <div class="gate-pass-base-doc-row">
-                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()">
+                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()" [disabled]="!!editingId">
                     Choose base document…
                   </button>
                   <span
@@ -34,7 +34,7 @@
                     [class.gate-pass-base-doc-summary--muted]="!baseDocNo"
                     >{{ baseDocNo || 'None selected' }}</span>
                   <button
-                    *ngIf="headerLocked"
+                    *ngIf="baseDocNo && !editingId"
                     type="button"
                     class="gate-pass-clear-base-doc"
                     (click)="clearBaseDocumentSelection()"
@@ -47,7 +47,7 @@
             <div class="ogp-header-grid ogp-header-grid--2 ogp-header-grid--nested">
               <div class="ogp-field">
                 <label for="ogp-date">Date</label>
-                <input id="ogp-date" type="date" [(ngModel)]="documentDate" [readonly]="headerLocked" />
+                <input id="ogp-date" type="date" [(ngModel)]="documentDate" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-ref">OGP no.</label>
@@ -56,7 +56,6 @@
                   type="text"
                   [(ngModel)]="referenceNo"
                   placeholder="Auto if left blank"
-                  [readonly]="headerLocked"
                 />
               </div>
             </div>
@@ -67,15 +66,15 @@
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
                 <label for="ogp-bp-code">Business partner code</label>
-                <input id="ogp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" [readonly]="headerLocked" />
+                <input id="ogp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" />
               </div>
               <div class="ogp-field ogp-field--span-2">
                 <label for="ogp-bp-name">Business partner name</label>
-                <input id="ogp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" [readonly]="headerLocked" />
+                <input id="ogp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-vehicle">Vehicle no.</label>
-                <input id="ogp-vehicle" type="text" [(ngModel)]="vehicleNo" [readonly]="headerLocked" />
+                <input id="ogp-vehicle" type="text" [(ngModel)]="vehicleNo" />
               </div>
             </div>
           </div>
@@ -85,27 +84,27 @@
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
                 <label for="ogp-from-unit">From unit</label>
-                <input id="ogp-from-unit" type="text" [(ngModel)]="fromUnit" [readonly]="headerLocked" />
+                <input id="ogp-from-unit" type="text" [(ngModel)]="fromUnit" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-kanta-slip">Kanta slip</label>
-                <input id="ogp-kanta-slip" type="text" [(ngModel)]="kantaSlip" [readonly]="headerLocked" />
+                <input id="ogp-kanta-slip" type="text" [(ngModel)]="kantaSlip" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-bilty">Bilty no.</label>
-                <input id="ogp-bilty" type="text" [(ngModel)]="biltyNo" [readonly]="headerLocked" />
+                <input id="ogp-bilty" type="text" [(ngModel)]="biltyNo" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-store">Store</label>
-                <input id="ogp-store" type="text" [(ngModel)]="store" [readonly]="headerLocked" />
+                <input id="ogp-store" type="text" [(ngModel)]="store" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-freight">Freight</label>
-                <input id="ogp-freight" type="text" [(ngModel)]="freight" [readonly]="headerLocked" />
+                <input id="ogp-freight" type="text" [(ngModel)]="freight" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-department">Department</label>
-                <select id="ogp-department" [(ngModel)]="department" [disabled]="headerLocked">
+                <select id="ogp-department" [(ngModel)]="department">
                   <option value="">No selection</option>
                   <option value="Engineering">Engineering</option>
                   <option value="Marketing">Marketing</option>
@@ -125,15 +124,15 @@
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
                 <label for="ogp-weight-machine">Weight machine (kanta) name</label>
-                <input id="ogp-weight-machine" type="text" [(ngModel)]="weightMachineName" [readonly]="headerLocked" />
+                <input id="ogp-weight-machine" type="text" [(ngModel)]="weightMachineName" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-weight">Weight</label>
-                <input id="ogp-weight" type="text" [(ngModel)]="weight" placeholder="e.g. 12.5" [readonly]="headerLocked" />
+                <input id="ogp-weight" type="text" [(ngModel)]="weight" placeholder="e.g. 12.5" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-location">Location</label>
-                <select id="ogp-location" [(ngModel)]="location" [disabled]="headerLocked">
+                <select id="ogp-location" [(ngModel)]="location">
                   <option value="">No selection</option>
                   <option value="FSD">FSD</option>
                   <option value="PSH">PSH</option>
@@ -213,14 +212,14 @@
       <section class="cjs-section-block">
         <div class="cjs-row igp-remarks-block">
           <label>Remarks</label>
-          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks" [readonly]="headerLocked"></textarea>
+          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks"></textarea>
         </div>
       </section>
 
       <div class="cjs-actions-footer">
         <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
         <button type="button" class="cjs-submit-btn" (click)="submitForm()">
-          <span class="cjs-submit-icon">✓</span> Save OGP
+          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
         </button>
       </div>
     </div>
