@@ -1,0 +1,52 @@
+:host {
+  display: block;
+  height: 100%;
+  overflow: visible;
+  --husky-nav-sticky-offset: 0px;
+}
+
+.husky-add-card {
+  overflow: visible;
+}
+
+.husky-section-nav {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--husky-nav-sticky-offset);
+  z-index: 30;
+  border-top: 1px solid #eee;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.husky-section-nav-list {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+
+.husky-section-nav-item {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.husky-form-sections {
+  overflow: visible;
+}
+
+.husky-form-section {
+  scroll-margin-top: calc(var(--husky-nav-sticky-offset) + 52px);
+  padding: 20px 16px 28px;
+  border-top: 1px solid #eee;
+  min-height: 180px;
+}
+
+.husky-form-section:first-child {
+  border-top: none;
+}
+
+.husky-form-section__placeholder {
+  margin: 0;
+  font-size: 13px;
+  color: #667085;
+}

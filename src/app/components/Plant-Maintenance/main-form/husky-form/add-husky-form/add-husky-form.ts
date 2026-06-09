@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
@@ -8,6 +16,11 @@ import {
   HUSKY_INSPECTOR_USERS,
   HuskyFormService,
 } from '../husky-form.service';
+
+export interface HuskySectionNavItem {
+  id: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-add-husky-form',
@@ -18,9 +31,10 @@ import {
     '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
     '../../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
     '../../../setup-form/plant-maintenance-setup-form.css',
+    './add-husky-form.css',
   ],
 })
-export class AddHuskyFormComponent implements OnInit {
+export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly huskyService = inject(HuskyFormService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
@@ -66,6 +80,25 @@ export class AddHuskyFormComponent implements OnInit {
     'Semi-annually',
   ] as const;
 
+  readonly sectionNavItems: HuskySectionNavItem[] = [
+    { id: 'husky-kpi-section', label: 'Key Performance Indicators (KPI)' },
+    { id: 'husky-safety-section', label: 'Safety' },
+    { id: 'husky-hydraulic-section', label: 'Hydraulic and Hydraulic Manifolds' },
+    {
+      id: 'husky-mechanical-section',
+      label: 'Mechanical / Pneumatic / Water / Electrical / Software',
+    },
+    { id: 'husky-measurements-section', label: 'Measurements / Calibration' },
+    { id: 'husky-level-section', label: 'Level / Parallelism' },
+    { id: 'husky-robot-section', label: 'Robot and Conveyor' },
+    { id: 'husky-cycle-time-section', label: 'Cycle Time Comparison' },
+  ];
+
+  readonly activeSection = signal(this.sectionNavItems[0].id);
+
+  private intersectionObserver: IntersectionObserver | null = null;
+  private scrollRoot: HTMLElement | null = null;
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -92,6 +125,36 @@ export class AddHuskyFormComponent implements OnInit {
     this.submitDate.set(record.submitDate);
     this.documentNo.set(record.documentNo);
     this.status.set(record.status);
+  }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyIntersectionObserver();
+  }
+
+  scrollToSection(sectionId: string): void {
+    this.activeSection.set(sectionId);
+    const element = document.getElementById(sectionId);
+    if (!element) {
+      return;
+    }
+
+    const scrollRoot = this.getScrollRoot(element);
+    const navElement = document.querySelector('.husky-section-nav');
+    const navHeight = navElement?.getBoundingClientRect().height ?? 0;
+
+    if (scrollRoot) {
+      const elementTop = element.getBoundingClientRect().top;
+      const rootTop = scrollRoot.getBoundingClientRect().top;
+      const offset = elementTop - rootTop + scrollRoot.scrollTop - navHeight - 8;
+      scrollRoot.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+      return;
+    }
+
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   back(): void {
@@ -173,5 +236,51 @@ export class AddHuskyFormComponent implements OnInit {
     }
 
     void this.router.navigate(['/plant-maintenance/main-form/husky-form']);
+  }
+
+  private setupIntersectionObserver(): void {
+    const firstSection = document.getElementById(this.sectionNavItems[0].id);
+    this.scrollRoot = firstSection ? this.getScrollRoot(firstSection) : null;
+
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible.length > 0) {
+          this.activeSection.set(visible[0].target.id);
+        }
+      },
+      {
+        root: this.scrollRoot,
+        rootMargin: '-45% 0px -45% 0px',
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+      },
+    );
+
+    for (const section of this.sectionNavItems) {
+      const element = document.getElementById(section.id);
+      if (element) {
+        this.intersectionObserver.observe(element);
+      }
+    }
+  }
+
+  private destroyIntersectionObserver(): void {
+    this.intersectionObserver?.disconnect();
+    this.intersectionObserver = null;
+    this.scrollRoot = null;
+  }
+
+  private getScrollRoot(element: HTMLElement): HTMLElement | null {
+    let parent = element.parentElement;
+    while (parent) {
+      const style = getComputedStyle(parent);
+      if (/(auto|scroll)/.test(style.overflowY)) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
   }
 }
