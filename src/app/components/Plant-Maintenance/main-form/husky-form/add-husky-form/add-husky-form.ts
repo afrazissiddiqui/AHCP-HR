@@ -18,6 +18,7 @@ import {
   calculateHuskyKpiPercentage,
   createEmptyHuskyKpiRows,
   createEmptyHuskyHydraulicCheckpoints,
+  createEmptyHuskyMeasurements,
   createEmptyHuskyMechanicalCheckpoints,
   createEmptyHuskySafetyCheckpoints,
   HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS,
@@ -29,9 +30,11 @@ import {
   HuskyHydraulicCheckpoint,
   HuskyKpiRow,
   HuskyKpiStatus,
+  HuskyMeasurementsData,
   HuskyMechanicalCheckpoint,
   HuskySafetyCheckpoint,
   mergeHuskyCheckpoints,
+  mergeHuskyMeasurements,
   resolveHuskyKpiStatus,
 } from '../husky-form.service';
 
@@ -86,6 +89,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly mechanicalCheckpoints = signal<HuskyMechanicalCheckpoint[]>(
     createEmptyHuskyMechanicalCheckpoints(),
   );
+  readonly measurements = signal<HuskyMeasurementsData>(createEmptyHuskyMeasurements());
 
   readonly machineOptions = SAP_MACHINE_MASTER;
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
@@ -161,6 +165,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mechanicalCheckpoints.set(
       this.cloneMechanicalCheckpoints(record.mechanicalCheckpoints),
     );
+    this.measurements.set(mergeHuskyMeasurements(record.measurements));
   }
 
   ngAfterViewInit(): void {
@@ -333,6 +338,31 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateMechanicalCheckpoint(key, { recommendation: value });
   }
 
+  updateAccumulatorActual(key: string, value: string): void {
+    this.updateRequiredActualRow('accumulatorNitrogen', key, value);
+  }
+
+  updatePumpPressureActual(key: string, value: string): void {
+    this.updateRequiredActualRow('pumpPressure', key, value);
+  }
+
+  updateExtruderSpeedActual(key: string, value: string): void {
+    this.updateExtruderSpeedRow(key, { actualValue: value });
+  }
+
+  updateExtruderSpeedPressure(key: string, value: string): void {
+    this.updateExtruderSpeedRow(key, { pressureValue: value });
+  }
+
+  updateTonnageActualLoss(key: string, value: string): void {
+    this.measurements.update((data) => ({
+      ...data,
+      tonnageTest: data.tonnageTest.map((row) =>
+        row.key === key ? { ...row, actualLossTons: value } : row,
+      ),
+    }));
+  }
+
   async save(): Promise<void> {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
@@ -378,6 +408,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       safetyCheckpoints: this.cloneSafetyCheckpoints(this.safetyCheckpoints()),
       hydraulicCheckpoints: this.cloneHydraulicCheckpoints(this.hydraulicCheckpoints()),
       mechanicalCheckpoints: this.cloneMechanicalCheckpoints(this.mechanicalCheckpoints()),
+      measurements: mergeHuskyMeasurements(this.measurements()),
     };
 
     const editingId = this.editingRecordId();
@@ -497,5 +528,30 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     rows: HuskyMechanicalCheckpoint[] | undefined,
   ): HuskyMechanicalCheckpoint[] {
     return mergeHuskyCheckpoints(rows, HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS);
+  }
+
+  private updateRequiredActualRow(
+    group: 'accumulatorNitrogen' | 'pumpPressure',
+    key: string,
+    actualValue: string,
+  ): void {
+    this.measurements.update((data) => ({
+      ...data,
+      [group]: data[group].map((row) =>
+        row.key === key ? { ...row, actualValue } : row,
+      ),
+    }));
+  }
+
+  private updateExtruderSpeedRow(
+    key: string,
+    patch: Partial<{ actualValue: string; pressureValue: string }>,
+  ): void {
+    this.measurements.update((data) => ({
+      ...data,
+      extruderSpeedControl: data.extruderSpeedControl.map((row) =>
+        row.key === key ? { ...row, ...patch } : row,
+      ),
+    }));
   }
 }

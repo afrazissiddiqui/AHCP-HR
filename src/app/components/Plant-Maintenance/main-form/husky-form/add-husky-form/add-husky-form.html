@@ -434,6 +434,157 @@
                   </tbody>
                 </table>
               </div>
+            } @else if (section.id === 'husky-measurements-section') {
+              <div class="husky-measurements">
+                <div class="husky-measurement-block">
+                  <h4 class="husky-measurement-block__title">Accumulator Nitrogen Pressure</h4>
+                  <div class="husky-checkpoint-table-wrap">
+                    <table class="mountain-table husky-checkpoint-table">
+                      <thead>
+                        <tr>
+                          <th>Accumulator</th>
+                          <th>Required Value (bar)</th>
+                          <th>Actual Value (bar)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of measurements().accumulatorNitrogen; track row.key) {
+                          <tr>
+                            <td class="husky-checkpoint-table__checkpoint">{{ row.label }}</td>
+                            <td>{{ row.requiredValue }}</td>
+                            <td>
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.actualValue"
+                                (ngModelChange)="updateAccumulatorActual(row.key, $event)"
+                                [name]="'accumulatorActual-' + row.key"
+                                placeholder="Enter actual value"
+                              />
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="husky-measurement-block">
+                  <h4 class="husky-measurement-block__title">
+                    Pump Pressure Measurement / Calibration (Tolerance ±5 bar / 72 PSI)
+                  </h4>
+                  <div class="husky-checkpoint-table-wrap">
+                    <table class="mountain-table husky-checkpoint-table">
+                      <thead>
+                        <tr>
+                          <th>Pump</th>
+                          <th>Required Value (bar)</th>
+                          <th>Actual Value (bar)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of measurements().pumpPressure; track row.key) {
+                          <tr>
+                            <td class="husky-checkpoint-table__checkpoint">{{ row.label }}</td>
+                            <td>{{ row.requiredValue }}</td>
+                            <td>
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.actualValue"
+                                (ngModelChange)="updatePumpPressureActual(row.key, $event)"
+                                [name]="'pumpActual-' + row.key"
+                                placeholder="Enter actual value"
+                              />
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="husky-measurement-block">
+                  <h4 class="husky-measurement-block__title">Extruder Speed Control A</h4>
+                  <div class="husky-checkpoint-table-wrap">
+                    <table class="mountain-table husky-checkpoint-table">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Set Value (bar)</th>
+                          <th>Actual Value (bar)</th>
+                          <th>Pressure Value (bar)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of measurements().extruderSpeedControl; track row.key) {
+                          <tr>
+                            <td class="husky-checkpoint-table__checkpoint">{{ row.item }}</td>
+                            <td>{{ row.setValue }}</td>
+                            <td>
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.actualValue"
+                                (ngModelChange)="updateExtruderSpeedActual(row.key, $event)"
+                                [name]="'extruderActual-' + row.key"
+                                placeholder="Enter actual value"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.pressureValue"
+                                (ngModelChange)="updateExtruderSpeedPressure(row.key, $event)"
+                                [name]="'extruderPressure-' + row.key"
+                                placeholder="Enter pressure value"
+                              />
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="husky-measurement-block">
+                  <h4 class="husky-measurement-block__title">Tonnage Test</h4>
+                  <div class="husky-checkpoint-table-wrap">
+                    <table class="mountain-table husky-checkpoint-table">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>T=0 Min</th>
+                          <th>T=10 Min</th>
+                          <th>Authorized Loss (tons)</th>
+                          <th>Actual Loss (tons)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of measurements().tonnageTest; track row.key) {
+                          <tr>
+                            <td class="husky-checkpoint-table__checkpoint">{{ row.item }}</td>
+                            <td>{{ row.t0Min }}</td>
+                            <td>{{ row.t10Min }}</td>
+                            <td>{{ row.authorizedLossTons }}</td>
+                            <td>
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.actualLossTons"
+                                (ngModelChange)="updateTonnageActualLoss(row.key, $event)"
+                                [name]="'tonnageActual-' + row.key"
+                                placeholder="Enter actual loss"
+                              />
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             } @else {
               <p class="husky-form-section__placeholder">
                 Section content for {{ section.label }} can be added here.

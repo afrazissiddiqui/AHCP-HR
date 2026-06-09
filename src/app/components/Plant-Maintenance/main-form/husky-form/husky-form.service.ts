@@ -320,6 +320,159 @@ export function mergeHuskyCheckpoints(
   });
 }
 
+export interface HuskyRequiredActualRow {
+  key: string;
+  label: string;
+  requiredValue: string;
+  actualValue: string;
+}
+
+export interface HuskyExtruderSpeedRow {
+  key: string;
+  item: string;
+  setValue: string;
+  actualValue: string;
+  pressureValue: string;
+}
+
+export interface HuskyTonnageTestRow {
+  key: string;
+  item: string;
+  t0Min: string;
+  t10Min: string;
+  authorizedLossTons: string;
+  actualLossTons: string;
+}
+
+export interface HuskyMeasurementsData {
+  accumulatorNitrogen: HuskyRequiredActualRow[];
+  pumpPressure: HuskyRequiredActualRow[];
+  extruderSpeedControl: HuskyExtruderSpeedRow[];
+  tonnageTest: HuskyTonnageTestRow[];
+}
+
+const HUSKY_ACCUMULATOR_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  label: string;
+  requiredValue: string;
+}> = [
+  { key: 'system-accumulator-1', label: 'System Accumulator 1', requiredValue: '140 bars' },
+  { key: 'system-accumulator-2', label: 'System Accumulator 2', requiredValue: '140 bars' },
+  { key: 'system-accumulator-3', label: 'System Accumulator 3', requiredValue: '140 bars' },
+  { key: 'system-accumulator-4', label: 'System Accumulator 4', requiredValue: '—' },
+];
+
+const HUSKY_PUMP_PRESSURE_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  label: string;
+  requiredValue: string;
+}> = [
+  { key: 'system-pump-1', label: 'System Pump 1', requiredValue: '180 bar' },
+  { key: 'system-pump-2', label: 'System Pump 2', requiredValue: '—' },
+  { key: 'extruder-pump-1', label: 'Extruder Pump 1', requiredValue: '120 bar' },
+  { key: 'extruder-pump-2', label: 'Extruder Pump 2', requiredValue: '120 bar' },
+  { key: 'extruder-pump-3', label: 'Extruder Pump 3', requiredValue: '—' },
+];
+
+const HUSKY_EXTRUDER_SPEED_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  item: string;
+  setValue: string;
+}> = [{ key: 'system-pump-1', item: 'System Pump 1', setValue: '180 bar' }];
+
+const HUSKY_TONNAGE_TEST_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  item: string;
+  t0Min: string;
+  t10Min: string;
+  authorizedLossTons: string;
+}> = [
+  {
+    key: 'tonnage-test',
+    item: 'Tonnage Test',
+    t0Min: '190',
+    t10Min: '181',
+    authorizedLossTons: '19',
+  },
+];
+
+function createEmptyRequiredActualRows(
+  definitions: ReadonlyArray<{ key: string; label: string; requiredValue: string }>,
+): HuskyRequiredActualRow[] {
+  return definitions.map((row) => ({
+    key: row.key,
+    label: row.label,
+    requiredValue: row.requiredValue,
+    actualValue: '',
+  }));
+}
+
+export function createEmptyHuskyMeasurements(): HuskyMeasurementsData {
+  return {
+    accumulatorNitrogen: createEmptyRequiredActualRows(HUSKY_ACCUMULATOR_DEFINITIONS),
+    pumpPressure: createEmptyRequiredActualRows(HUSKY_PUMP_PRESSURE_DEFINITIONS),
+    extruderSpeedControl: HUSKY_EXTRUDER_SPEED_DEFINITIONS.map((row) => ({
+      key: row.key,
+      item: row.item,
+      setValue: row.setValue,
+      actualValue: '',
+      pressureValue: '',
+    })),
+    tonnageTest: HUSKY_TONNAGE_TEST_DEFINITIONS.map((row) => ({
+      key: row.key,
+      item: row.item,
+      t0Min: row.t0Min,
+      t10Min: row.t10Min,
+      authorizedLossTons: row.authorizedLossTons,
+      actualLossTons: '',
+    })),
+  };
+}
+
+export function mergeHuskyMeasurements(
+  saved: HuskyMeasurementsData | undefined,
+): HuskyMeasurementsData {
+  const defaults = createEmptyHuskyMeasurements();
+  if (!saved) {
+    return defaults;
+  }
+
+  const mergeRequiredActual = (
+    defaultRows: HuskyRequiredActualRow[],
+    savedRows: HuskyRequiredActualRow[] | undefined,
+  ): HuskyRequiredActualRow[] =>
+    defaultRows.map((defaultRow) => {
+      const existing = savedRows?.find((row) => row.key === defaultRow.key);
+      return existing
+        ? { ...defaultRow, actualValue: existing.actualValue ?? '' }
+        : defaultRow;
+    });
+
+  return {
+    accumulatorNitrogen: mergeRequiredActual(
+      defaults.accumulatorNitrogen,
+      saved.accumulatorNitrogen,
+    ),
+    pumpPressure: mergeRequiredActual(defaults.pumpPressure, saved.pumpPressure),
+    extruderSpeedControl: defaults.extruderSpeedControl.map((defaultRow) => {
+      const existing = saved.extruderSpeedControl?.find((row) => row.key === defaultRow.key);
+      return existing
+        ? {
+            ...defaultRow,
+            actualValue: existing.actualValue ?? '',
+            pressureValue: existing.pressureValue ?? '',
+          }
+        : defaultRow;
+    }),
+    tonnageTest: defaults.tonnageTest.map((defaultRow) => {
+      const existing = saved.tonnageTest?.find((row) => row.key === defaultRow.key);
+      return existing
+        ? { ...defaultRow, actualLossTons: existing.actualLossTons ?? '' }
+        : defaultRow;
+    }),
+  };
+}
+
 export function calculateHuskyKpiPercentage(
   issuesScore: number | null,
   maxPossibleScore: number | null,
@@ -356,6 +509,7 @@ export interface HuskyFormRecord {
   safetyCheckpoints: HuskySafetyCheckpoint[];
   hydraulicCheckpoints: HuskyHydraulicCheckpoint[];
   mechanicalCheckpoints: HuskyMechanicalCheckpoint[];
+  measurements: HuskyMeasurementsData;
 }
 
 export interface HuskyInspectorUser {
