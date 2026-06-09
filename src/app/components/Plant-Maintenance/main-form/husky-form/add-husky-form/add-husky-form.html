@@ -1,5 +1,5 @@
 <div class="husky-add-page cjr-page scd-add-page">
-  <div class="husky-add-scroll" #scrollContainer>
+  <div class="husky-add-top">
     <div class="cjr-header">
       <div class="cjr-header-left">
         <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
@@ -203,98 +203,143 @@
             </div>
           </div>
         </div>
-
-        <p class="mad-components-hint" *ngIf="isCreateMode()">
-          Submit Date, Document No., and Status are generated automatically when you save this form.
-        </p>
       </div>
     </div>
 
-    <nav class="cjr-section-nav husky-section-nav" aria-label="Husky Form sections">
-      <ul class="cjr-section-nav-list husky-section-nav-list">
+    <nav class="husky-section-nav" aria-label="Husky Form sections">
+      <ul class="husky-section-nav-list">
         <li
           *ngFor="let section of sectionNavItems"
-          class="cjr-section-nav-item husky-section-nav-item"
-          [class.cjr-section-nav-item--active]="activeSection() === section.id"
+          class="husky-section-nav-item"
+          [class.husky-section-nav-item--active]="activeSection() === section.id"
           (click)="scrollToSection(section.id)"
         >
           {{ section.label }}
         </li>
       </ul>
     </nav>
+  </div>
 
+  <div class="husky-add-scroll" #scrollContainer>
     <div class="cjr-card scd-form-card husky-sections-card">
       <div class="husky-form-sections">
         @for (section of sectionNavItems; track section.id) {
-          <section [id]="section.id" class="husky-form-section cjr-personal">
+          <section [id]="section.id" class="husky-form-section">
             <div class="cjr-section-title">{{ section.label }}</div>
 
             @if (section.id === 'husky-kpi-section') {
-              <div class="husky-kpi-table-wrap">
-                <table class="mountain-table husky-kpi-table">
-                  <thead>
-                    <tr>
-                      <th>Category</th>
-                      <th>Score Formula</th>
-                      <th>Issues Score</th>
-                      <th>Max Possible Score</th>
-                      <th>Result %</th>
-                      <th>Status</th>
-                      <th>Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of kpiRows(); track row.key) {
-                      <tr>
-                        <td class="husky-kpi-table__category">{{ row.label }}</td>
-                        <td class="husky-kpi-table__formula">{{ row.formulaLabel }}</td>
-                        <td>
-                          <input
-                            type="number"
-                            class="husky-kpi-input"
-                            min="0"
-                            step="1"
-                            [ngModel]="row.issuesScore ?? ''"
-                            (ngModelChange)="updateKpiIssuesScore(row.key, $event)"
-                            [name]="'kpiIssues-' + row.key"
-                            placeholder="0"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            class="husky-kpi-input"
-                            min="0"
-                            step="1"
-                            [ngModel]="row.maxPossibleScore ?? ''"
-                            (ngModelChange)="updateKpiMaxScore(row.key, $event)"
-                            [name]="'kpiMax-' + row.key"
-                            placeholder="0"
-                          />
-                        </td>
-                        <td class="husky-kpi-table__result">
+              <div class="husky-kpi-list">
+                @for (row of kpiRows(); track row.key) {
+                  <article class="husky-kpi-row">
+                    <div class="husky-kpi-row__head">
+                      <h4 class="husky-kpi-row__title">{{ row.label }}</h4>
+                      <p class="husky-kpi-row__formula">{{ row.formulaLabel }}</p>
+                    </div>
+
+                    <div class="husky-kpi-row__fields">
+                      <div class="cjr-row husky-kpi-row__field">
+                        <label [attr.for]="'kpiIssues-' + row.key">Issues Score:</label>
+                        <input
+                          [id]="'kpiIssues-' + row.key"
+                          type="number"
+                          class="husky-kpi-input"
+                          min="0"
+                          step="1"
+                          [ngModel]="row.issuesScore ?? ''"
+                          (ngModelChange)="updateKpiIssuesScore(row.key, $event)"
+                          [name]="'kpiIssues-' + row.key"
+                          placeholder="0"
+                        />
+                      </div>
+
+                      <div class="cjr-row husky-kpi-row__field">
+                        <label [attr.for]="'kpiMax-' + row.key">Max Possible Score:</label>
+                        <input
+                          [id]="'kpiMax-' + row.key"
+                          type="number"
+                          class="husky-kpi-input"
+                          min="0"
+                          step="1"
+                          [ngModel]="row.maxPossibleScore ?? ''"
+                          (ngModelChange)="updateKpiMaxScore(row.key, $event)"
+                          [name]="'kpiMax-' + row.key"
+                          placeholder="0"
+                        />
+                      </div>
+
+                      <div class="cjr-row husky-kpi-row__field husky-kpi-row__field--readonly">
+                        <label>Result %:</label>
+                        <div class="husky-kpi-readonly">
                           {{
                             getKpiPercentage(row) === null
                               ? '—'
                               : getKpiPercentage(row) + '%'
                           }}
-                        </td>
-                        <td>
-                          <span
-                            class="husky-kpi-status"
-                            [class]="getKpiStatusClass(getKpiStatus(row))"
+                        </div>
+                      </div>
+
+                      <div class="cjr-row husky-kpi-row__field husky-kpi-row__field--readonly">
+                        <label>Status:</label>
+                        <span
+                          class="husky-kpi-status"
+                          [class]="getKpiStatusClass(getKpiStatus(row))"
+                        >
+                          {{ getKpiStatusLabel(getKpiStatus(row)) }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="cjr-row husky-kpi-row__notes">
+                      <label [attr.for]="'kpiNotes-' + row.key">Notes:</label>
+                      <textarea
+                        [id]="'kpiNotes-' + row.key"
+                        class="husky-kpi-notes"
+                        rows="2"
+                        [ngModel]="row.notes"
+                        (ngModelChange)="updateKpiNotes(row.key, $event)"
+                        [name]="'kpiNotes-' + row.key"
+                        placeholder="Enter notes"
+                      ></textarea>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else if (section.id === 'husky-safety-section') {
+              <div class="husky-checkpoint-table-wrap">
+                <table class="mountain-table husky-checkpoint-table">
+                  <thead>
+                    <tr>
+                      <th>Checkpoint</th>
+                      <th>Evaluation</th>
+                      <th>Recommendation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of safetyCheckpoints(); track row.key) {
+                      <tr>
+                        <td class="husky-checkpoint-table__checkpoint">{{ row.checkpoint }}</td>
+                        <td class="husky-checkpoint-table__evaluation">
+                          <select
+                            class="mad-select husky-checkpoint-select"
+                            [class]="getEvaluationSelectClass(row.evaluation)"
+                            [ngModel]="row.evaluation"
+                            (ngModelChange)="updateSafetyEvaluation(row.key, $event)"
+                            [name]="'safetyEval-' + row.key"
                           >
-                            {{ getKpiStatusLabel(getKpiStatus(row)) }}
-                          </span>
+                            <option value="">Select</option>
+                            @for (option of evaluationOptions; track option) {
+                              <option [value]="option">{{ option }}</option>
+                            }
+                          </select>
                         </td>
-                        <td>
+                        <td class="husky-checkpoint-table__recommendation">
                           <textarea
-                            class="husky-kpi-notes"
+                            class="husky-checkpoint-notes"
                             rows="2"
-                            [ngModel]="row.notes"
-                            (ngModelChange)="updateKpiNotes(row.key, $event)"
-                            [name]="'kpiNotes-' + row.key"
-                            placeholder="Enter notes"
+                            [ngModel]="row.recommendation"
+                            (ngModelChange)="updateSafetyRecommendation(row.key, $event)"
+                            [name]="'safetyRec-' + row.key"
+                            placeholder="Enter recommendation"
                           ></textarea>
                         </td>
                       </tr>
@@ -302,9 +347,6 @@
                   </tbody>
                 </table>
               </div>
-              <p class="husky-kpi-legend">
-                Status: Green (Pass) ≤ 30% · Yellow (Warning) 31–60% · Red (Fail) &gt; 60%
-              </p>
             } @else {
               <p class="husky-form-section__placeholder">
                 Section content for {{ section.label }} can be added here.

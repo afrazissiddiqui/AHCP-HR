@@ -17,10 +17,13 @@ import { SAP_MACHINE_MASTER } from '../../../setup-form/plant-maintenance-machin
 import {
   calculateHuskyKpiPercentage,
   createEmptyHuskyKpiRows,
+  createEmptyHuskySafetyCheckpoints,
   HUSKY_INSPECTOR_USERS,
+  HuskyCheckpointEvaluation,
   HuskyFormService,
   HuskyKpiRow,
   HuskyKpiStatus,
+  HuskySafetyCheckpoint,
   resolveHuskyKpiStatus,
 } from '../husky-form.service';
 
@@ -68,8 +71,10 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly documentNo = signal('');
   readonly status = signal('');
   readonly kpiRows = signal<HuskyKpiRow[]>(createEmptyHuskyKpiRows());
+  readonly safetyCheckpoints = signal<HuskySafetyCheckpoint[]>(createEmptyHuskySafetyCheckpoints());
 
   readonly machineOptions = SAP_MACHINE_MASTER;
+  readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
   readonly inspectorUsers = HUSKY_INSPECTOR_USERS;
 
   readonly maintenanceTypeOptions = [
@@ -135,6 +140,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.documentNo.set(record.documentNo);
     this.status.set(record.status);
     this.kpiRows.set(this.cloneKpiRows(record.kpiRows));
+    this.safetyCheckpoints.set(this.cloneSafetyCheckpoints(record.safetyCheckpoints));
   }
 
   ngAfterViewInit(): void {
@@ -153,13 +159,11 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const scrollRoot = this.scrollContainer?.nativeElement;
-    const navElement = scrollRoot?.querySelector('.husky-section-nav');
-    const navHeight = navElement?.getBoundingClientRect().height ?? 0;
 
     if (scrollRoot) {
       const elementTop = element.getBoundingClientRect().top;
       const rootTop = scrollRoot.getBoundingClientRect().top;
-      const offset = elementTop - rootTop + scrollRoot.scrollTop - navHeight - 8;
+      const offset = elementTop - rootTop + scrollRoot.scrollTop - 8;
       scrollRoot.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
       return;
     }
@@ -239,6 +243,29 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateKpiRow(key, { notes: value });
   }
 
+  getEvaluationSelectClass(evaluation: HuskyCheckpointEvaluation): string {
+    switch (evaluation) {
+      case 'Pass':
+        return 'mad-select--status-pass';
+      case 'Fail':
+        return 'mad-select--status-fail';
+      case 'N/A':
+        return 'mad-select--status-na';
+      default:
+        return 'mad-select--status-empty';
+    }
+  }
+
+  updateSafetyEvaluation(key: string, value: string): void {
+    this.updateSafetyCheckpoint(key, {
+      evaluation: value as HuskyCheckpointEvaluation,
+    });
+  }
+
+  updateSafetyRecommendation(key: string, value: string): void {
+    this.updateSafetyCheckpoint(key, { recommendation: value });
+  }
+
   async save(): Promise<void> {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
@@ -281,6 +308,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       inspector,
       inspectionDate,
       kpiRows: this.cloneKpiRows(this.kpiRows()),
+      safetyCheckpoints: this.cloneSafetyCheckpoints(this.safetyCheckpoints()),
     };
 
     const editingId = this.editingRecordId();
@@ -345,5 +373,27 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private cloneKpiRows(rows: HuskyKpiRow[] | undefined): HuskyKpiRow[] {
     const source = rows?.length ? rows : createEmptyHuskyKpiRows();
     return source.map((row) => ({ ...row }));
+  }
+
+  private updateSafetyCheckpoint(
+    key: string,
+    patch: Partial<Pick<HuskySafetyCheckpoint, 'evaluation' | 'recommendation'>>,
+  ): void {
+    this.safetyCheckpoints.update((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
+  }
+
+  private cloneSafetyCheckpoints(
+    rows: HuskySafetyCheckpoint[] | undefined,
+  ): HuskySafetyCheckpoint[] {
+    const defaults = createEmptyHuskySafetyCheckpoints();
+    if (!rows?.length) {
+      return defaults;
+    }
+    return defaults.map((defaultRow) => {
+      const saved = rows.find((row) => row.key === defaultRow.key);
+      return saved ? { ...defaultRow, ...saved, checkpoint: defaultRow.checkpoint } : defaultRow;
+    });
   }
 }

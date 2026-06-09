@@ -18,6 +18,12 @@
   background: #f8f8f8;
 }
 
+.husky-add-top {
+  flex-shrink: 0;
+  z-index: 50;
+  background: #f8f8f8;
+}
+
 .husky-add-scroll {
   flex: 1 1 auto;
   min-height: 0;
@@ -37,11 +43,8 @@
 }
 
 .husky-section-nav {
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  margin: 16px 24px 0;
+  margin: 12px 24px 0;
+  padding: 10px 16px;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   background: #fff;
@@ -49,15 +52,40 @@
 }
 
 .husky-section-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
   overflow-x: auto;
   flex-wrap: nowrap;
   scrollbar-width: thin;
-  padding-bottom: 2px;
 }
 
 .husky-section-nav-item {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: #f6f6f6;
   white-space: nowrap;
   flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.husky-section-nav-item:hover {
+  background: #efefef;
+  border-color: #d0d0d0;
+}
+
+.husky-section-nav-item--active {
+  color: #0052cc;
+  background: rgba(0, 82, 204, 0.08);
+  border-color: rgba(0, 82, 204, 0.2);
 }
 
 .husky-form-sections {
@@ -65,10 +93,9 @@
 }
 
 .husky-form-section {
-  scroll-margin-top: 60px;
+  scroll-margin-top: 12px;
   padding: 20px 16px 28px;
   border-top: 1px solid #eee;
-  min-height: 180px;
 }
 
 .husky-form-section:first-child {
@@ -81,54 +108,74 @@
   color: #667085;
 }
 
-.husky-kpi-table-wrap {
-  overflow-x: auto;
+.husky-kpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 8px;
 }
 
-.husky-kpi-table {
-  width: 100%;
-  min-width: 960px;
+.husky-kpi-row {
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #fafbfc;
+  padding: 16px;
 }
 
-.husky-kpi-table th {
-  white-space: nowrap;
-  font-size: 12px;
+.husky-kpi-row__head {
+  margin-bottom: 12px;
 }
 
-.husky-kpi-table__category {
-  font-weight: 600;
-  white-space: nowrap;
+.husky-kpi-row__title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d2d3e;
 }
 
-.husky-kpi-table__formula {
-  min-width: 220px;
+.husky-kpi-row__formula {
+  margin: 0;
   font-size: 12px;
   color: #556b82;
 }
 
-.husky-kpi-table__result {
-  font-weight: 600;
-  white-space: nowrap;
+.husky-kpi-row__fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 12px;
 }
 
-.husky-kpi-input {
+.husky-kpi-row__field {
+  margin-bottom: 0;
+}
+
+.husky-kpi-row__field--readonly .husky-kpi-readonly {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d2d3e;
+}
+
+.husky-kpi-row__notes {
+  margin-bottom: 0;
+}
+
+.husky-kpi-input,
+.husky-kpi-notes {
   width: 100%;
-  min-width: 88px;
   padding: 6px 8px;
   border: 1px solid #d0d5dd;
   border-radius: 4px;
   font-size: 13px;
+  background: #fff;
 }
 
 .husky-kpi-notes {
-  width: 100%;
-  min-width: 180px;
-  padding: 6px 8px;
-  border: 1px solid #d0d5dd;
-  border-radius: 4px;
-  font-size: 13px;
   resize: vertical;
+  min-height: 56px;
 }
 
 .husky-kpi-status {
@@ -167,8 +214,62 @@
   border: 1px solid #d0d5dd;
 }
 
-.husky-kpi-legend {
-  margin: 12px 0 0;
+@media (max-width: 1100px) {
+  .husky-kpi-row__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .husky-kpi-row__fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.husky-checkpoint-table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.husky-checkpoint-table {
+  width: 100%;
+  min-width: 720px;
+}
+
+.husky-checkpoint-table th {
   font-size: 12px;
-  color: #667085;
+  white-space: nowrap;
+}
+
+.husky-checkpoint-table__checkpoint {
+  min-width: 280px;
+  font-size: 13px;
+  color: #1d2d3e;
+  vertical-align: top;
+}
+
+.husky-checkpoint-table__evaluation {
+  width: 160px;
+  vertical-align: top;
+}
+
+.husky-checkpoint-table__recommendation {
+  min-width: 220px;
+  vertical-align: top;
+}
+
+.husky-checkpoint-select {
+  width: 100%;
+  min-width: 130px;
+}
+
+.husky-checkpoint-notes {
+  width: 100%;
+  min-width: 200px;
+  padding: 6px 8px;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+  font-size: 13px;
+  resize: vertical;
+  background: #fff;
 }

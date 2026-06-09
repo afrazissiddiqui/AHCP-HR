@@ -69,6 +69,62 @@ export function resolveHuskyKpiStatus(percentage: number | null): HuskyKpiStatus
   return 'Fail';
 }
 
+export type HuskyCheckpointEvaluation = 'Pass' | 'Fail' | 'N/A' | '';
+
+export interface HuskySafetyCheckpoint {
+  key: string;
+  checkpoint: string;
+  evaluation: HuskyCheckpointEvaluation;
+  recommendation: string;
+}
+
+export const HUSKY_SAFETY_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  checkpoint: string;
+}> = [
+  {
+    key: 'low-air-pressure-alarm',
+    checkpoint:
+      'Check low air pressure alarm stops cycle; verify alarm on screen',
+  },
+  {
+    key: 'e-stop-power',
+    checkpoint:
+      'E-stop interrupts all power, shuts off pump, dumps accumulators',
+  },
+  {
+    key: 'alarm-light-horn',
+    checkpoint: 'Alarm light and horn sounds during alarm condition',
+  },
+  {
+    key: 'safety-signs',
+    checkpoint:
+      'Safety signs correctly installed, clean and readable at potential hazard',
+  },
+  {
+    key: 'lockout-tagout',
+    checkpoint:
+      'Air supply valves and power cabinet breaker have lockout/tagout features',
+  },
+  {
+    key: 'limit-proxy-switches',
+    checkpoint: 'Limit and proxy switches in good condition and operate correctly',
+  },
+  {
+    key: 'safety-glass',
+    checkpoint: 'Safety glass not damaged',
+  },
+];
+
+export function createEmptyHuskySafetyCheckpoints(): HuskySafetyCheckpoint[] {
+  return HUSKY_SAFETY_CHECKPOINT_DEFINITIONS.map((row) => ({
+    key: row.key,
+    checkpoint: row.checkpoint,
+    evaluation: '',
+    recommendation: '',
+  }));
+}
+
 export function calculateHuskyKpiPercentage(
   issuesScore: number | null,
   maxPossibleScore: number | null,
@@ -102,6 +158,7 @@ export interface HuskyFormRecord {
   documentNo: string;
   status: HuskyFormStatus;
   kpiRows: HuskyKpiRow[];
+  safetyCheckpoints: HuskySafetyCheckpoint[];
 }
 
 export interface HuskyInspectorUser {
