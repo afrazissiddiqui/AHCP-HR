@@ -274,18 +274,74 @@
   background: #fff;
 }
 
-.husky-measurements {
+.husky-measurements,
+.husky-calibration-measurements {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   margin-top: 8px;
 }
 
+.husky-measurement-block {
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
 .husky-measurement-block__title {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 14px;
   font-weight: 700;
   color: #1d2d3e;
+}
+
+.husky-measurement-table-wrap {
+  overflow-x: auto;
+}
+
+.husky-measurement-table {
+  width: 100%;
+  min-width: 560px;
+}
+
+.husky-measurement-table--wide {
+  min-width: 720px;
+}
+
+.husky-measurement-table th {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.husky-measurement-table__label-col {
+  min-width: 220px;
+}
+
+.husky-measurement-table__reference-col {
+  width: 180px;
+}
+
+.husky-measurement-table__entry-col {
+  min-width: 180px;
+}
+
+.husky-measurement-table__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d2d3e;
+  vertical-align: middle;
+}
+
+.husky-measurement-table__reference {
+  font-size: 13px;
+  color: #475467;
+  background: #f9fafb;
+  vertical-align: middle;
+}
+
+.husky-measurement-table__entry {
+  vertical-align: middle;
 }
 
 .husky-measurement-input {

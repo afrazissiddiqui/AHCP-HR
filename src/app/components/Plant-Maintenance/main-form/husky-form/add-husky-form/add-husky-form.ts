@@ -21,10 +21,12 @@ import {
   createEmptyHuskyLevelParallelism,
   createEmptyHuskyMeasurements,
   createEmptyHuskyMechanicalCheckpoints,
+  createEmptyHuskyRobotCheckpoints,
   createEmptyHuskySafetyCheckpoints,
   HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS,
   HUSKY_INSPECTOR_USERS,
   HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS,
+  HUSKY_ROBOT_CHECKPOINT_DEFINITIONS,
   HUSKY_SAFETY_CHECKPOINT_DEFINITIONS,
   HuskyCheckpointEvaluation,
   HuskyFormService,
@@ -36,6 +38,7 @@ import {
   HuskyLevelStatus,
   HuskyMeasurementsData,
   HuskyMechanicalCheckpoint,
+  HuskyRobotCheckpoint,
   HuskySafetyCheckpoint,
   mergeHuskyCheckpoints,
   mergeHuskyLevelParallelism,
@@ -94,6 +97,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly mechanicalCheckpoints = signal<HuskyMechanicalCheckpoint[]>(
     createEmptyHuskyMechanicalCheckpoints(),
   );
+  readonly robotCheckpoints = signal<HuskyRobotCheckpoint[]>(createEmptyHuskyRobotCheckpoints());
   readonly measurements = signal<HuskyMeasurementsData>(createEmptyHuskyMeasurements());
   readonly levelParallelism = signal<HuskyLevelParallelismData>(createEmptyHuskyLevelParallelism());
 
@@ -126,7 +130,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       id: 'husky-mechanical-section',
       label: 'Mechanical / Pneumatic / Water / Electrical / Software',
     },
-    { id: 'husky-measurements-section', label: 'Measurements / Calibration' },
+    { id: 'husky-measurements-section', label: 'Calibration Measurements' },
     { id: 'husky-level-section', label: 'Level / Parallelism' },
     { id: 'husky-robot-section', label: 'Robot and Conveyor' },
     { id: 'husky-cycle-time-section', label: 'Cycle Time Comparison' },
@@ -172,6 +176,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mechanicalCheckpoints.set(
       this.cloneMechanicalCheckpoints(record.mechanicalCheckpoints),
     );
+    this.robotCheckpoints.set(this.cloneRobotCheckpoints(record.robotCheckpoints));
     this.measurements.set(mergeHuskyMeasurements(record.measurements));
     this.levelParallelism.set(mergeHuskyLevelParallelism(record.levelParallelism));
   }
@@ -346,6 +351,16 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateMechanicalCheckpoint(key, { recommendation: value });
   }
 
+  updateRobotEvaluation(key: string, value: string): void {
+    this.updateRobotCheckpoint(key, {
+      evaluation: value as HuskyCheckpointEvaluation,
+    });
+  }
+
+  updateRobotRecommendation(key: string, value: string): void {
+    this.updateRobotCheckpoint(key, { recommendation: value });
+  }
+
   updateAccumulatorActual(key: string, value: string): void {
     this.updateRequiredActualRow('accumulatorNitrogen', key, value);
   }
@@ -451,6 +466,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       safetyCheckpoints: this.cloneSafetyCheckpoints(this.safetyCheckpoints()),
       hydraulicCheckpoints: this.cloneHydraulicCheckpoints(this.hydraulicCheckpoints()),
       mechanicalCheckpoints: this.cloneMechanicalCheckpoints(this.mechanicalCheckpoints()),
+      robotCheckpoints: this.cloneRobotCheckpoints(this.robotCheckpoints()),
       measurements: mergeHuskyMeasurements(this.measurements()),
       levelParallelism: mergeHuskyLevelParallelism(this.levelParallelism()),
     };
@@ -572,6 +588,21 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     rows: HuskyMechanicalCheckpoint[] | undefined,
   ): HuskyMechanicalCheckpoint[] {
     return mergeHuskyCheckpoints(rows, HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS);
+  }
+
+  private updateRobotCheckpoint(
+    key: string,
+    patch: Partial<Pick<HuskyRobotCheckpoint, 'evaluation' | 'recommendation'>>,
+  ): void {
+    this.robotCheckpoints.update((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
+  }
+
+  private cloneRobotCheckpoints(
+    rows: HuskyRobotCheckpoint[] | undefined,
+  ): HuskyRobotCheckpoint[] {
+    return mergeHuskyCheckpoints(rows, HUSKY_ROBOT_CHECKPOINT_DEFINITIONS);
   }
 
   private updateRequiredActualRow(

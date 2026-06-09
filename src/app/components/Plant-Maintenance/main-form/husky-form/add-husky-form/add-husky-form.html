@@ -435,31 +435,31 @@
                 </table>
               </div>
             } @else if (section.id === 'husky-measurements-section') {
-              <div class="husky-measurements">
-                <div class="husky-measurement-block">
+              <div class="husky-calibration-measurements">
+                <article class="husky-measurement-block">
                   <h4 class="husky-measurement-block__title">Accumulator Nitrogen Pressure</h4>
-                  <div class="husky-checkpoint-table-wrap">
-                    <table class="mountain-table husky-checkpoint-table">
+                  <div class="husky-measurement-table-wrap">
+                    <table class="mountain-table husky-measurement-table">
                       <thead>
                         <tr>
-                          <th>Accumulator</th>
-                          <th>Required Value (bar)</th>
-                          <th>Actual Value (bar)</th>
+                          <th class="husky-measurement-table__label-col">Accumulator</th>
+                          <th class="husky-measurement-table__reference-col">Required Value (bar)</th>
+                          <th class="husky-measurement-table__entry-col">Actual Value (bar)</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (row of measurements().accumulatorNitrogen; track row.key) {
                           <tr>
-                            <td class="husky-checkpoint-table__checkpoint">{{ row.label }}</td>
-                            <td>{{ row.requiredValue }}</td>
-                            <td>
+                            <td class="husky-measurement-table__label">{{ row.label }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.requiredValue }}</td>
+                            <td class="husky-measurement-table__entry">
                               <input
                                 type="text"
                                 class="husky-measurement-input"
                                 [ngModel]="row.actualValue"
                                 (ngModelChange)="updateAccumulatorActual(row.key, $event)"
                                 [name]="'accumulatorActual-' + row.key"
-                                placeholder="Enter actual value"
+                                placeholder="User entry"
                               />
                             </td>
                           </tr>
@@ -467,34 +467,34 @@
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </article>
 
-                <div class="husky-measurement-block">
+                <article class="husky-measurement-block">
                   <h4 class="husky-measurement-block__title">
                     Pump Pressure Measurement / Calibration (Tolerance ±5 bar / 72 PSI)
                   </h4>
-                  <div class="husky-checkpoint-table-wrap">
-                    <table class="mountain-table husky-checkpoint-table">
+                  <div class="husky-measurement-table-wrap">
+                    <table class="mountain-table husky-measurement-table">
                       <thead>
                         <tr>
-                          <th>Pump</th>
-                          <th>Required Value (bar)</th>
-                          <th>Actual Value (bar)</th>
+                          <th class="husky-measurement-table__label-col">Pump</th>
+                          <th class="husky-measurement-table__reference-col">Required Value (bar)</th>
+                          <th class="husky-measurement-table__entry-col">Actual Value (bar)</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (row of measurements().pumpPressure; track row.key) {
                           <tr>
-                            <td class="husky-checkpoint-table__checkpoint">{{ row.label }}</td>
-                            <td>{{ row.requiredValue }}</td>
-                            <td>
+                            <td class="husky-measurement-table__label">{{ row.label }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.requiredValue }}</td>
+                            <td class="husky-measurement-table__entry">
                               <input
                                 type="text"
                                 class="husky-measurement-input"
                                 [ngModel]="row.actualValue"
                                 (ngModelChange)="updatePumpPressureActual(row.key, $event)"
                                 [name]="'pumpActual-' + row.key"
-                                placeholder="Enter actual value"
+                                placeholder="User entry"
                               />
                             </td>
                           </tr>
@@ -502,43 +502,43 @@
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </article>
 
-                <div class="husky-measurement-block">
+                <article class="husky-measurement-block">
                   <h4 class="husky-measurement-block__title">Extruder Speed Control A</h4>
-                  <div class="husky-checkpoint-table-wrap">
-                    <table class="mountain-table husky-checkpoint-table">
+                  <div class="husky-measurement-table-wrap">
+                    <table class="mountain-table husky-measurement-table">
                       <thead>
                         <tr>
-                          <th>Item</th>
-                          <th>Set Value (bar)</th>
-                          <th>Actual Value (bar)</th>
-                          <th>Pressure Value (bar)</th>
+                          <th class="husky-measurement-table__label-col">Item</th>
+                          <th class="husky-measurement-table__reference-col">Set Value (bar)</th>
+                          <th class="husky-measurement-table__entry-col">Actual Value (bar)</th>
+                          <th class="husky-measurement-table__entry-col">Pressure Value (bar)</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (row of measurements().extruderSpeedControl; track row.key) {
                           <tr>
-                            <td class="husky-checkpoint-table__checkpoint">{{ row.item }}</td>
-                            <td>{{ row.setValue }}</td>
-                            <td>
+                            <td class="husky-measurement-table__label">{{ row.item }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.setValue }}</td>
+                            <td class="husky-measurement-table__entry">
                               <input
                                 type="text"
                                 class="husky-measurement-input"
                                 [ngModel]="row.actualValue"
                                 (ngModelChange)="updateExtruderSpeedActual(row.key, $event)"
                                 [name]="'extruderActual-' + row.key"
-                                placeholder="Enter actual value"
+                                placeholder="Manual entry"
                               />
                             </td>
-                            <td>
+                            <td class="husky-measurement-table__entry">
                               <input
                                 type="text"
                                 class="husky-measurement-input"
                                 [ngModel]="row.pressureValue"
                                 (ngModelChange)="updateExtruderSpeedPressure(row.key, $event)"
                                 [name]="'extruderPressure-' + row.key"
-                                placeholder="Enter pressure value"
+                                placeholder="User entry"
                               />
                             </td>
                           </tr>
@@ -546,36 +546,36 @@
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </article>
 
-                <div class="husky-measurement-block">
+                <article class="husky-measurement-block">
                   <h4 class="husky-measurement-block__title">Tonnage Test</h4>
-                  <div class="husky-checkpoint-table-wrap">
-                    <table class="mountain-table husky-checkpoint-table">
+                  <div class="husky-measurement-table-wrap">
+                    <table class="mountain-table husky-measurement-table husky-measurement-table--wide">
                       <thead>
                         <tr>
-                          <th>Item</th>
-                          <th>T=0 Min</th>
-                          <th>T=10 Min</th>
-                          <th>Authorized Loss (tons)</th>
-                          <th>Actual Loss (tons)</th>
+                          <th class="husky-measurement-table__label-col">Item</th>
+                          <th class="husky-measurement-table__reference-col">T=0 Min</th>
+                          <th class="husky-measurement-table__reference-col">T=10 Min</th>
+                          <th class="husky-measurement-table__reference-col">Authorized Loss (tons)</th>
+                          <th class="husky-measurement-table__entry-col">Actual Loss (tons)</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (row of measurements().tonnageTest; track row.key) {
                           <tr>
-                            <td class="husky-checkpoint-table__checkpoint">{{ row.item }}</td>
-                            <td>{{ row.t0Min }}</td>
-                            <td>{{ row.t10Min }}</td>
-                            <td>{{ row.authorizedLossTons }}</td>
-                            <td>
+                            <td class="husky-measurement-table__label">{{ row.item }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.t0Min }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.t10Min }}</td>
+                            <td class="husky-measurement-table__reference">{{ row.authorizedLossTons }}</td>
+                            <td class="husky-measurement-table__entry">
                               <input
                                 type="text"
                                 class="husky-measurement-input"
                                 [ngModel]="row.actualLossTons"
                                 (ngModelChange)="updateTonnageActualLoss(row.key, $event)"
                                 [name]="'tonnageActual-' + row.key"
-                                placeholder="Enter actual loss"
+                                placeholder="User entry"
                               />
                             </td>
                           </tr>
@@ -583,7 +583,7 @@
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </article>
               </div>
             } @else if (section.id === 'husky-level-section') {
               <div class="husky-measurements">
@@ -762,6 +762,49 @@
                     </table>
                   </div>
                 </div>
+              </div>
+            } @else if (section.id === 'husky-robot-section') {
+              <div class="husky-checkpoint-table-wrap">
+                <table class="mountain-table husky-checkpoint-table">
+                  <thead>
+                    <tr>
+                      <th>Checkpoint</th>
+                      <th>Evaluation</th>
+                      <th>Recommendation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of robotCheckpoints(); track row.key) {
+                      <tr>
+                        <td class="husky-checkpoint-table__checkpoint">{{ row.checkpoint }}</td>
+                        <td class="husky-checkpoint-table__evaluation">
+                          <select
+                            class="mad-select husky-checkpoint-select"
+                            [class]="getEvaluationSelectClass(row.evaluation)"
+                            [ngModel]="row.evaluation"
+                            (ngModelChange)="updateRobotEvaluation(row.key, $event)"
+                            [name]="'robotEval-' + row.key"
+                          >
+                            <option value="">Select</option>
+                            @for (option of evaluationOptions; track option) {
+                              <option [value]="option">{{ option }}</option>
+                            }
+                          </select>
+                        </td>
+                        <td class="husky-checkpoint-table__recommendation">
+                          <textarea
+                            class="husky-checkpoint-notes"
+                            rows="2"
+                            [ngModel]="row.recommendation"
+                            (ngModelChange)="updateRobotRecommendation(row.key, $event)"
+                            [name]="'robotRec-' + row.key"
+                            placeholder="Enter recommendation"
+                          ></textarea>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             } @else {
               <p class="husky-form-section__placeholder">

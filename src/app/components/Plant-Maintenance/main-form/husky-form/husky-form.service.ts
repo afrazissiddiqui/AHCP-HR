@@ -81,6 +81,7 @@ export interface HuskySectionCheckpoint {
 export type HuskySafetyCheckpoint = HuskySectionCheckpoint;
 export type HuskyHydraulicCheckpoint = HuskySectionCheckpoint;
 export type HuskyMechanicalCheckpoint = HuskySectionCheckpoint;
+export type HuskyRobotCheckpoint = HuskySectionCheckpoint;
 
 export const HUSKY_SAFETY_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
   key: string;
@@ -281,6 +282,42 @@ export const HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
   },
 ];
 
+export const HUSKY_ROBOT_CHECKPOINT_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  checkpoint: string;
+}> = [
+  { key: 'no-unusual-movement-noises', checkpoint: 'No unusual movement or noises' },
+  { key: 'general-housekeeping', checkpoint: 'General housekeeping' },
+  { key: 'hose-inspection', checkpoint: 'Hose inspection' },
+  { key: 'glass-broken-cracked', checkpoint: 'Glass broken / cracked' },
+  {
+    key: 'conveyor-belt-tracking',
+    checkpoint: 'Conveyor belt damaged / tracking correctly',
+  },
+  {
+    key: 'cam-roller-linear-bearing',
+    checkpoint: 'Cam roller / linear bearing condition / lubrication',
+  },
+  {
+    key: 'axis-belt-condition',
+    checkpoint: 'Axis belt condition (Z, Y1, Y2, X)',
+  },
+  {
+    key: 'cool-jet-belt-condition',
+    checkpoint: 'Cool Jet belt condition (G Line PET only)',
+  },
+  { key: 'air-water-leaks', checkpoint: 'Air or water leaks' },
+  { key: 'bladder-condition', checkpoint: 'Bladder condition' },
+  { key: 'manual-grease-points', checkpoint: 'Manual grease points' },
+  { key: 'servo-cables-condition', checkpoint: 'Servo cables condition' },
+  { key: 'servo-motor-gearbox', checkpoint: 'Servo motor and gearbox' },
+  { key: 'servo-encoder-batteries', checkpoint: 'Servo encoder batteries' },
+  {
+    key: 'robot-casting-inspection',
+    checkpoint: 'Robot casting inspection for cracks / welding',
+  },
+];
+
 function createEmptyCheckpoints(
   definitions: ReadonlyArray<{ key: string; checkpoint: string }>,
 ): HuskySectionCheckpoint[] {
@@ -302,6 +339,10 @@ export function createEmptyHuskyHydraulicCheckpoints(): HuskyHydraulicCheckpoint
 
 export function createEmptyHuskyMechanicalCheckpoints(): HuskyMechanicalCheckpoint[] {
   return createEmptyCheckpoints(HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS);
+}
+
+export function createEmptyHuskyRobotCheckpoints(): HuskyRobotCheckpoint[] {
+  return createEmptyCheckpoints(HUSKY_ROBOT_CHECKPOINT_DEFINITIONS);
 }
 
 export function mergeHuskyCheckpoints(
@@ -610,6 +651,7 @@ export interface HuskyFormRecord {
   safetyCheckpoints: HuskySafetyCheckpoint[];
   hydraulicCheckpoints: HuskyHydraulicCheckpoint[];
   mechanicalCheckpoints: HuskyMechanicalCheckpoint[];
+  robotCheckpoints: HuskyRobotCheckpoint[];
   measurements: HuskyMeasurementsData;
   levelParallelism: HuskyLevelParallelismData;
 }
