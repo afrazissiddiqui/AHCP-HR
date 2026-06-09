@@ -3,18 +3,25 @@ import {
   AfterViewInit,
   Component,
   computed,
+  ElementRef,
   inject,
   OnDestroy,
   OnInit,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../../services/alert.service';
 import { SAP_MACHINE_MASTER } from '../../../setup-form/plant-maintenance-machine.model';
 import {
+  calculateHuskyKpiPercentage,
+  createEmptyHuskyKpiRows,
   HUSKY_INSPECTOR_USERS,
   HuskyFormService,
+  HuskyKpiRow,
+  HuskyKpiStatus,
+  resolveHuskyKpiStatus,
 } from '../husky-form.service';
 
 export interface HuskySectionNavItem {
@@ -60,6 +67,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly submitDate = signal('');
   readonly documentNo = signal('');
   readonly status = signal('');
+  readonly kpiRows = signal<HuskyKpiRow[]>(createEmptyHuskyKpiRows());
 
   readonly machineOptions = SAP_MACHINE_MASTER;
   readonly inspectorUsers = HUSKY_INSPECTOR_USERS;
@@ -96,8 +104,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly activeSection = signal(this.sectionNavItems[0].id);
 
+  @ViewChild('scrollContainer') private scrollContainer?: ElementRef<HTMLElement>;
+
   private intersectionObserver: IntersectionObserver | null = null;
-  private scrollRoot: HTMLElement | null = null;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -125,6 +134,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.submitDate.set(record.submitDate);
     this.documentNo.set(record.documentNo);
     this.status.set(record.status);
+    this.kpiRows.set(this.cloneKpiRows(record.kpiRows));
   }
 
   ngAfterViewInit(): void {
@@ -142,8 +152,8 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const scrollRoot = this.getScrollRoot(element);
-    const navElement = document.querySelector('.husky-section-nav');
+    const scrollRoot = this.scrollContainer?.nativeElement;
+    const navElement = scrollRoot?.querySelector('.husky-section-nav');
     const navHeight = navElement?.getBoundingClientRect().height ?? 0;
 
     if (scrollRoot) {
@@ -181,6 +191,52 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onInspectionDateChange(value: string): void {
     this.inspectionDate.set(value);
+  }
+
+  getKpiPercentage(row: HuskyKpiRow): number | null {
+    return calculateHuskyKpiPercentage(row.issuesScore, row.maxPossibleScore);
+  }
+
+  getKpiStatus(row: HuskyKpiRow): HuskyKpiStatus {
+    return resolveHuskyKpiStatus(this.getKpiPercentage(row));
+  }
+
+  getKpiStatusLabel(status: HuskyKpiStatus): string {
+    switch (status) {
+      case 'Pass':
+        return 'Green (Pass)';
+      case 'Warning':
+        return 'Yellow (Warning)';
+      case 'Fail':
+        return 'Red (Fail)';
+      default:
+        return '—';
+    }
+  }
+
+  getKpiStatusClass(status: HuskyKpiStatus): string {
+    switch (status) {
+      case 'Pass':
+        return 'husky-kpi-status--pass';
+      case 'Warning':
+        return 'husky-kpi-status--warning';
+      case 'Fail':
+        return 'husky-kpi-status--fail';
+      default:
+        return 'husky-kpi-status--empty';
+    }
+  }
+
+  updateKpiIssuesScore(key: string, value: string): void {
+    this.updateKpiRow(key, { issuesScore: this.parseScoreValue(value) });
+  }
+
+  updateKpiMaxScore(key: string, value: string): void {
+    this.updateKpiRow(key, { maxPossibleScore: this.parseScoreValue(value) });
+  }
+
+  updateKpiNotes(key: string, value: string): void {
+    this.updateKpiRow(key, { notes: value });
   }
 
   async save(): Promise<void> {
@@ -224,6 +280,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       robotSerialNo: this.robotSerialNo().trim(),
       inspector,
       inspectionDate,
+      kpiRows: this.cloneKpiRows(this.kpiRows()),
     };
 
     const editingId = this.editingRecordId();
@@ -239,8 +296,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setupIntersectionObserver(): void {
-    const firstSection = document.getElementById(this.sectionNavItems[0].id);
-    this.scrollRoot = firstSection ? this.getScrollRoot(firstSection) : null;
+    const scrollRoot = this.scrollContainer?.nativeElement ?? null;
 
     this.intersectionObserver = new IntersectionObserver(
       (entries) => {
@@ -252,7 +308,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       {
-        root: this.scrollRoot,
+        root: scrollRoot,
         rootMargin: '-45% 0px -45% 0px',
         threshold: [0, 0.25, 0.5, 0.75, 1],
       },
@@ -269,18 +325,25 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroyIntersectionObserver(): void {
     this.intersectionObserver?.disconnect();
     this.intersectionObserver = null;
-    this.scrollRoot = null;
   }
 
-  private getScrollRoot(element: HTMLElement): HTMLElement | null {
-    let parent = element.parentElement;
-    while (parent) {
-      const style = getComputedStyle(parent);
-      if (/(auto|scroll)/.test(style.overflowY)) {
-        return parent;
-      }
-      parent = parent.parentElement;
+  private updateKpiRow(key: string, patch: Partial<Pick<HuskyKpiRow, 'issuesScore' | 'maxPossibleScore' | 'notes'>>): void {
+    this.kpiRows.update((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    );
+  }
+
+  private parseScoreValue(value: string): number | null {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
     }
-    return null;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private cloneKpiRows(rows: HuskyKpiRow[] | undefined): HuskyKpiRow[] {
+    const source = rows?.length ? rows : createEmptyHuskyKpiRows();
+    return source.map((row) => ({ ...row }));
   }
 }

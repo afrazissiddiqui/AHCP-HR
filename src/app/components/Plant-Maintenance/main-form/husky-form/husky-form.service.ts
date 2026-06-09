@@ -2,6 +2,88 @@ import { Injectable, signal } from '@angular/core';
 
 export type HuskyFormStatus = 'Draft' | 'Submitted' | 'In Review' | 'Approved' | 'Rejected';
 
+export type HuskyKpiStatus = 'Pass' | 'Warning' | 'Fail' | '';
+
+export interface HuskyKpiRow {
+  key: string;
+  label: string;
+  formulaLabel: string;
+  issuesScore: number | null;
+  maxPossibleScore: number | null;
+  notes: string;
+}
+
+export const HUSKY_KPI_ROW_DEFINITIONS: ReadonlyArray<{
+  key: string;
+  label: string;
+  formulaLabel: string;
+}> = [
+  {
+    key: 'safety',
+    label: 'Safety',
+    formulaLabel: 'Safety Issues Score / Safety Max Possible Score × 100',
+  },
+  {
+    key: 'hydraulic',
+    label: 'Hydraulic',
+    formulaLabel: 'Hydraulic Issues Score / Hydraulic Possible Score × 100',
+  },
+  {
+    key: 'mechanical',
+    label: 'Mechanical',
+    formulaLabel: 'Mechanical Issues Score / Mechanical Possible Score × 100',
+  },
+  {
+    key: 'geometry',
+    label: 'Geometry',
+    formulaLabel: 'Geometry Issues Score / Geometry Possible Score × 100',
+  },
+  {
+    key: 'robot-conveyor',
+    label: 'Robot and Conveyor',
+    formulaLabel: 'Issues Score / Possible Score × 100',
+  },
+];
+
+export function createEmptyHuskyKpiRows(): HuskyKpiRow[] {
+  return HUSKY_KPI_ROW_DEFINITIONS.map((row) => ({
+    key: row.key,
+    label: row.label,
+    formulaLabel: row.formulaLabel,
+    issuesScore: null,
+    maxPossibleScore: null,
+    notes: '',
+  }));
+}
+
+export function resolveHuskyKpiStatus(percentage: number | null): HuskyKpiStatus {
+  if (percentage === null) {
+    return '';
+  }
+  if (percentage <= 30) {
+    return 'Pass';
+  }
+  if (percentage <= 60) {
+    return 'Warning';
+  }
+  return 'Fail';
+}
+
+export function calculateHuskyKpiPercentage(
+  issuesScore: number | null,
+  maxPossibleScore: number | null,
+): number | null {
+  if (
+    issuesScore === null ||
+    maxPossibleScore === null ||
+    maxPossibleScore <= 0 ||
+    issuesScore < 0
+  ) {
+    return null;
+  }
+  return Math.round((issuesScore / maxPossibleScore) * 10000) / 100;
+}
+
 export interface HuskyFormRecord {
   id: string;
   selected: boolean;
@@ -19,6 +101,7 @@ export interface HuskyFormRecord {
   submitDate: string;
   documentNo: string;
   status: HuskyFormStatus;
+  kpiRows: HuskyKpiRow[];
 }
 
 export interface HuskyInspectorUser {

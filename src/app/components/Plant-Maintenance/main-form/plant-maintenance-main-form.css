@@ -39,6 +39,10 @@
   overflow-x: hidden;
 }
 
+.plant-maintenance-main-content--full:has(app-add-husky-form) {
+  overflow: hidden;
+}
+
 .plant-maintenance-main-content ::ng-deep .plant-maintenance-setup-view {
   display: flex;
   flex-direction: column;
