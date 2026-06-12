@@ -288,7 +288,15 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   private intersectionObserver: IntersectionObserver | null = null;
-  private sectionIds = ['personal-info-section', 'education-section', 'past-experience-section', 'remunation-section', 'login-detail-section', 'loan-section'];
+  private sectionIds = [
+    'personal-info-section',
+    'education-section',
+    'past-experience-section',
+    'attachments-section',
+    'remunation-section',
+    'login-detail-section',
+    'requisition-section',
+  ];
 
   protected scrollToSection(sectionId: string): void {
     this.activeSection.set(sectionId);
@@ -632,5 +640,35 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.userId.set(detail.loginDetails.userId);
     this.loginEmployeeName.set(detail.loginDetails.employeeName);
     this.password.set(detail.loginDetails.password);
+
+    if (detail.attachments.length) {
+      const attachmentTypes = this.attachments().map((a) => a.type);
+      this.attachments.set(
+        attachmentTypes.map((type) => {
+          const match = detail.attachments.find((a) => a.type === type);
+          return {
+            type,
+            file: null,
+            fileName: match?.fileName ?? '',
+          };
+        }),
+      );
+    }
+
+    const req = detail.requisition;
+    this.copyExisting.set(req.copyExisting);
+    this.reqId.set(req.reqId);
+    this.internalJobTitle.set(req.internalJobTitle);
+    this.hiringManager.set(req.hiringManager);
+    this.recruiter.set(req.recruiter);
+    this.recruitmentCollaborator.set(req.recruitmentCollaborator);
+    this.requisitionAdministrator.set(req.requisitionAdministrator);
+    this.recruitmentCoordinator.set(req.recruitmentCoordinator);
+    this.hrAdministrator.set(req.hrAdministrator);
+    this.company.set(req.company || 'No Selection');
+    this.department.set(req.department || 'No Selection');
+    this.division.set(req.division || 'No Selection');
+    this.location.set(req.location || 'No Selection');
+    this.costCenter.set(req.costCenter || 'No Selection');
   }
 }

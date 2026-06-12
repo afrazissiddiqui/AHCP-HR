@@ -467,6 +467,17 @@
   margin-top: 4px;
 }
 
+.cjr-requisition {
+  border-top: 1px solid #eee;
+  margin-top: 4px;
+  padding-bottom: 14px;
+}
+
+.cjr-row--full {
+  grid-template-columns: 170px 1fr;
+  margin-bottom: 8px;
+}
+
 .cjr-actions-footer {
   display: flex;
   flex-wrap: wrap;
