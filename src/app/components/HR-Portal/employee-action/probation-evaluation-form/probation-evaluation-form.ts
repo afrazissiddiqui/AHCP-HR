@@ -25,7 +25,49 @@ type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 
   standalone: true,
   imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
   templateUrl: './probation-evaluation-form.html',
-  styleUrls: ['./probation-evaluation-form.css', '../../Application-Form/Application-Form.css'],
+  styleUrls: [
+    '../../Application-Form/Application-Form.css',
+  ],
+  styles: [`
+    :host .table-scroll {
+      overflow-x: auto;
+    }
+
+    :host .mountain-table {
+      width: 100%;
+      min-width: 1000px;
+      table-layout: auto;
+    }
+
+    :host .mountain-table th,
+    :host .mountain-table td {
+      min-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    :host .mountain-table th:first-child,
+    :host .mountain-table td:first-child {
+      min-width: 40px;
+      width: 40px;
+    }
+
+    :host .mountain-table th:last-child,
+    :host .mountain-table td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 11;
+      background: #ffffff;
+      border-left: 1px solid #eee;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+    }
+
+    :host .mountain-table thead th:last-child {
+      z-index: 12;
+      background: #f5f5f5;
+    }
+  `],
 })
 export class ProbationEvaluationFormComponent implements OnInit {
   readonly probationTableFilter = PROBATION_EVALUATION_TABLE_FILTER;
@@ -71,6 +113,7 @@ export class ProbationEvaluationFormComponent implements OnInit {
   showDialog = false;
   activeTab: 'filter' = 'filter';
   showViewDialog = false;
+  viewLoading = false;
   selectedRecord: ProbationEvaluationRecord | null = null;
 
   get probationList(): ProbationEvaluationRecord[] {
@@ -174,13 +217,15 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   viewRecord(record: ProbationEvaluationRecord): void {
-    this.selectedRecord = record;
     this.showViewDialog = true;
+    this.selectedRecord = record;
+    this.viewLoading = false;
   }
 
   closeViewDialog(): void {
     this.showViewDialog = false;
     this.selectedRecord = null;
+    this.viewLoading = false;
   }
 
   onUpdate(record: ProbationEvaluationRecord): void {
@@ -229,14 +274,5 @@ export class ProbationEvaluationFormComponent implements OnInit {
 
   createNewProbation(): void {
     void this.router.navigateByUrl('/employee-action/probation-evaluation-form/create');
-  }
-
-  formatCellValue(record: ProbationEvaluationRecord, key: ProbationColumnKey): string {
-    const value = record[key];
-    if (value === undefined || value === null) {
-      return '—';
-    }
-    const text = String(value).trim();
-    return text === '' || text === '—' ? '—' : text;
   }
 }
