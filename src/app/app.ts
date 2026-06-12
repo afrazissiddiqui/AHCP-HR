@@ -64,7 +64,7 @@ export class App {
 
   protected readonly hrMenuOptions: HrMenuOption[] = [
     { label: 'Home', value: 'dashboard', icon: 'home', route: '/dashboard' },
-    { label: 'Recruitment', value: 'recruitment', icon: 'recruiting', route: '/recruitment' },
+    { label: 'Recruitment', value: 'recruitment', icon: 'employee-pane', route: '/recruitment' },
     { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
     { label: 'Payroll Master', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
     // { label: 'IGP', value: 'gate-pass/igp', icon: 'expense-report', route: '/gate-pass/igp' },

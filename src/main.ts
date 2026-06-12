@@ -13,8 +13,8 @@ import "@ui5/webcomponents/dist/Tab.js";
 // Fiori components (ShellBar is here!)
 import "@ui5/webcomponents-fiori/dist/ShellBar.js";
 
-// Icons
-import "@ui5/webcomponents-icons/dist/AllIcons.js";
+// Icons used by <ui5-icon> (tree-shaken; do not import AllIcons)
+import './app/ui5-icons';
 
 
 
