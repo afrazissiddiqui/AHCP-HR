@@ -1,22 +1,20 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
-
+import { getNavigableHrMenuActions, HrMenuAction } from '../../config/hr-menu.config';
 
 @Component({
   selector: 'app-dashboard',
   imports: [],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class dashboardComponent {
-  protected readonly title = signal('SAPQC');
+  readonly menuActions: HrMenuAction[] = getNavigableHrMenuActions();
 
-  constructor(private router: Router) { }
+  constructor(private readonly router: Router) {}
 
-
-  listSIR(): void {
-    this.router.navigate(['/recruitment']);
+  openAction(action: HrMenuAction): void {
+    void this.router.navigateByUrl(action.route);
   }
 }

@@ -7,14 +7,9 @@ import { ViewProfileComponent } from './components/profile/view-profile';
 import { ApplicationFormService } from './services/application-form.service';
 import { AuthService } from './services/auth.service';
 import { resolveShellbarTitle } from './utils/shellbar-title.util';
+import { HR_MENU_OPTIONS, HrMenuOption } from './config/hr-menu.config';
 
-type HrMenuOption = {
-  label: string;
-  value: string;
-  icon: string;
-  route?: string;
-  children?: HrMenuOption[];
-};
+type HrMenuOptionLocal = HrMenuOption;
 
 @Component({
   selector: 'app-root',
@@ -62,42 +57,7 @@ export class App {
     return name.slice(0, 2).toUpperCase();
   });
 
-  protected readonly hrMenuOptions: HrMenuOption[] = [
-    { label: 'Home', value: 'dashboard', icon: 'home', route: '/dashboard' },
-    { label: 'Recruitment', value: 'recruitment', icon: 'employee-pane', route: '/recruitment' },
-    { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
-    { label: 'Payroll Master', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
-    // { label: 'IGP', value: 'gate-pass/igp', icon: 'expense-report', route: '/gate-pass/igp' },
-    { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
-    { label: 'Termination', value: 'termination', icon: 'feedback', route: '/termination' },
-    { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance', },
-    { label: 'Development', value: 'development', icon: 'learning-assistant', },
-    { label: 'Goals', value: 'goals', icon: 'goal', },
-    {
-      label: 'Plant maintenance',
-      value: 'plant-maintenance',
-      icon: 'factory',
-      children: [
-        {
-          label: 'Main Form',
-          value: 'plant-maintenance/main-form',
-          icon: 'form',
-          route: '/plant-maintenance/main-form',
-        },
-        {
-          label: 'Setup Form',
-          value: 'plant-maintenance/setup-form',
-          icon: 'settings',
-          route: '/plant-maintenance/setup-form',
-        },
-      ],
-    },
-    { label: 'Learning', value: 'learning', icon: 'learning-assistant', },
-    { label: 'Org Chart', value: 'org-chart', icon: 'org-chart', },
-    { label: 'Performance', value: 'performance', icon: 'performance', },
-    { label: 'Succession', value: 'succession', icon: 'family-care', },
-    { label: 'Sign Out', value: 'login', icon: 'key', route: '/login' },
-  ];
+  protected readonly hrMenuOptions: HrMenuOptionLocal[] = HR_MENU_OPTIONS;
 
   constructor(
     private router: Router,
@@ -224,7 +184,7 @@ export class App {
     this.goHome();
   }
 
-  selectHrOption(option: HrMenuOption, event?: Event): void {
+  selectHrOption(option: HrMenuOptionLocal, event?: Event): void {
     event?.stopPropagation();
     this.profileDropdownOpen.set(false);
 
@@ -246,11 +206,11 @@ export class App {
     }
   }
 
-  isHrOptionExpanded(option: HrMenuOption): boolean {
+  isHrOptionExpanded(option: HrMenuOptionLocal): boolean {
     return !!option.children?.length && this.expandedHrMenuValue() === option.value;
   }
 
-  isHrOptionSelected(option: HrMenuOption): boolean {
+  isHrOptionSelected(option: HrMenuOptionLocal): boolean {
     const selected = this.selectedHrOption();
     if (option.children?.length) {
       return selected === option.value || selected.startsWith(`${option.value}/`);

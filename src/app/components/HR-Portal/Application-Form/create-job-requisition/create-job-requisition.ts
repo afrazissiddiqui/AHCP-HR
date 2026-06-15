@@ -295,7 +295,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     'attachments-section',
     'remunation-section',
     'login-detail-section',
-    'requisition-section',
   ];
 
   protected scrollToSection(sectionId: string): void {

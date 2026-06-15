@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
@@ -7,7 +7,6 @@ import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sid
 import { Router } from '@angular/router';
 import { AlertService } from '../../../services/alert.service';
 import {
-  ApplicationFormDetail,
   ApplicationFormRecord,
   ApplicationFormService,
 } from '../../../services/application-form.service';
@@ -114,8 +113,9 @@ export class RecruitmentComponent implements OnInit {
   showColumnPanel = false;
   showDialog = false;
   activeTab: 'columns' = 'columns';
-  detailRecord: ApplicationFormRecord | null = null;
-  detailLoading = false;
+  detailRecord = signal<ApplicationFormRecord | null>(null);
+  detailLoading = signal(false);
+  readonly applicationDetail = computed(() => this.detailRecord()?.detail ?? null);
 
   toggleColumnPanel() {
     this.showColumnPanel = !this.showColumnPanel;
@@ -226,19 +226,19 @@ export class RecruitmentComponent implements OnInit {
 
   openApplicationDetail(record: ApplicationFormRecord) {
     const viewId = record.apiId ?? record.EmployeeCode;
-    this.detailRecord = record;
-    this.detailLoading = true;
+    this.detailRecord.set(record);
+    this.detailLoading.set(true);
 
     this.applicationFormService.fetchEmployeeProfileDetail(viewId).subscribe({
       next: (fullRecord) => {
-        this.detailLoading = false;
-        this.detailRecord = {
+        this.detailLoading.set(false);
+        this.detailRecord.set({
           ...fullRecord,
           selected: record.selected,
-        };
+        });
       },
       error: (error: unknown) => {
-        this.detailLoading = false;
+        this.detailLoading.set(false);
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
@@ -249,12 +249,8 @@ export class RecruitmentComponent implements OnInit {
   }
 
   closeApplicationDetail() {
-    this.detailRecord = null;
-    this.detailLoading = false;
-  }
-
-  get applicationDetail(): ApplicationFormDetail | null {
-    return this.detailRecord?.detail ?? null;
+    this.detailRecord.set(null);
+    this.detailLoading.set(false);
   }
 
   displayDash(value: string | number | undefined | null): string {

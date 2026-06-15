@@ -27,9 +27,6 @@
         <li class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'login-detail-section'"
           (click)="scrollToSection('login-detail-section')">Login detail</li>
-        <li class="cjr-section-nav-item"
-          [class.cjr-section-nav-item--active]="activeSection() === 'requisition-section'"
-          (click)="scrollToSection('requisition-section')">Requisition</li>
       </ul>
     </nav>
 
@@ -445,101 +442,6 @@
             <label>Password:</label>
             <input type="password" [ngModel]="password()" (ngModelChange)="password.set($event)"
               (blur)="touch('password')" placeholder="Enter password..." />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="cjr-personal cjr-requisition" id="requisition-section">
-      <div class="cjr-section-title">Requisition &amp; organization</div>
-
-      <div class="cjr-row cjr-row--full">
-        <label>Copy existing requisition:</label>
-        <label class="cjr-checkbox">
-          <input type="checkbox" [ngModel]="copyExisting()" (ngModelChange)="copyExisting.set($event)" />
-          <span>Use an existing job requisition as template</span>
-        </label>
-      </div>
-
-      <div class="cjr-personal-grid">
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>Req. ID:</label>
-            <input type="text" [ngModel]="reqId()" (ngModelChange)="reqId.set($event)" (blur)="touch('reqId')"
-              placeholder="Requisition ID" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Internal job title:</label>
-            <input type="text" [ngModel]="internalJobTitle()" (ngModelChange)="internalJobTitle.set($event)"
-              (blur)="touch('internalJobTitle')" placeholder="Designation / job title" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Hiring manager:</label>
-            <input type="text" [ngModel]="hiringManager()" (ngModelChange)="hiringManager.set($event)"
-              (blur)="touch('hiringManager')" placeholder="Reporting manager" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Recruiter:</label>
-            <input type="text" [ngModel]="recruiter()" (ngModelChange)="recruiter.set($event)"
-              (blur)="touch('recruiter')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Recruitment collaborator:</label>
-            <input type="text" [ngModel]="recruitmentCollaborator()" (ngModelChange)="recruitmentCollaborator.set($event)"
-              (blur)="touch('recruitmentCollaborator')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Requisition administrator:</label>
-            <input type="text" [ngModel]="requisitionAdministrator()" (ngModelChange)="requisitionAdministrator.set($event)"
-              (blur)="touch('requisitionAdministrator')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Recruitment coordinator:</label>
-            <input type="text" [ngModel]="recruitmentCoordinator()" (ngModelChange)="recruitmentCoordinator.set($event)"
-              (blur)="touch('recruitmentCoordinator')" />
-          </div>
-        </div>
-
-        <div class="cjr-personal-col">
-          <div class="cjr-row">
-            <label>HR administrator:</label>
-            <input type="text" [ngModel]="hrAdministrator()" (ngModelChange)="hrAdministrator.set($event)"
-              (blur)="touch('hrAdministrator')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Company:</label>
-            <input type="text" [ngModel]="company()" (ngModelChange)="company.set($event)" (blur)="touch('company')"
-              placeholder="Employee nature / company" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Department:</label>
-            <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)"
-              (blur)="touch('department')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Division:</label>
-            <input type="text" [ngModel]="division()" (ngModelChange)="division.set($event)" (blur)="touch('division')"
-              placeholder="Employment type / division" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Location:</label>
-            <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" (blur)="touch('location')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Cost center:</label>
-            <input type="text" [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)"
-              (blur)="touch('costCenter')" placeholder="Employment category / cost center" />
           </div>
         </div>
       </div>

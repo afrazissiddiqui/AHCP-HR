@@ -182,17 +182,17 @@
     </div>
 
     <!-- Application detail (Create Application Form fields) -->
-    <div class="dialog-backdrop application-detail-backdrop" *ngIf="detailRecord" (click)="closeApplicationDetail()">
+    <div class="dialog-backdrop application-detail-backdrop" *ngIf="detailRecord()" (click)="closeApplicationDetail()">
     </div>
-    <div class="application-detail-dialog" *ngIf="detailRecord" (click)="$event.stopPropagation()">
+    <div class="application-detail-dialog" *ngIf="detailRecord()" (click)="$event.stopPropagation()">
       <div class="application-detail-header dialog-header">
-        <h3>Application details · {{ detailRecord.EmployeeName }} ({{ detailRecord.EmployeeCode }})</h3>
+        <h3>Application details · {{ detailRecord()!.EmployeeName }} ({{ detailRecord()!.EmployeeCode }})</h3>
         <button type="button" class="sapMBtnBase sapMBtn application-detail-close" (click)="closeApplicationDetail()"
           title="Close">✕</button>
       </div>
       <div class="application-detail-body dialog-body">
-        <p *ngIf="detailLoading" class="application-detail-empty">Loading employee details...</p>
-        <ng-container *ngIf="applicationDetail as d">
+        <p *ngIf="detailLoading()" class="application-detail-empty">Loading employee details...</p>
+        <ng-container *ngIf="applicationDetail() as d">
           <section class="application-detail-section">
             <h4 class="application-detail-section-title">Personal information</h4>
             <dl class="application-detail-dl">
@@ -383,7 +383,7 @@
           </section>
         </ng-container>
 
-        <p *ngIf="detailRecord && !applicationDetail && !detailLoading" class="application-detail-empty">
+        <p *ngIf="detailRecord() && !applicationDetail() && !detailLoading()" class="application-detail-empty">
           No extended profile data for this employee.
         </p>
       </div>
