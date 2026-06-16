@@ -1,0 +1,197 @@
+<div class="good-issue-page">
+  @if (!showAddForm()) {
+    <app-page-toolbar [showSidebarToggle]="false">
+      <button class="btn-add" pageToolbarActions (click)="onAddNewIssue()">Add New</button>
+    </app-page-toolbar>
+
+    <div class="table-toolbar">
+      <div class="toolbar-title">Good Issue ({{ filteredIssues().length }})</div>
+      <div class="search-box">
+        <input
+          type="text"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          placeholder="Search good issue..."
+        />
+        <span>🔍</span>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="issue-table">
+        <thead>
+          <tr>
+            <th>Issue No</th>
+            <th>Posting Date</th>
+            <th>From Warehouse</th>
+            <th>Issued To</th>
+            <th>Items</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filteredIssues(); track row.issueNo) {
+            <tr>
+              <td>{{ row.issueNo }}</td>
+              <td>{{ row.postingDate }}</td>
+              <td>{{ row.fromWarehouse }}</td>
+              <td>{{ row.issuedTo }}</td>
+              <td>{{ row.itemCount }}</td>
+              <td>
+                <span class="status-badge" [class.draft]="row.status === 'Draft'">
+                  {{ row.status }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (filteredIssues().length === 0) {
+        <div class="empty-state">No good issue records found.</div>
+      }
+    </div>
+  } @else {
+    <app-page-toolbar [showSidebarToggle]="false">
+      <button class="btn-back" pageToolbarActions (click)="onBackToList()">Back</button>
+    </app-page-toolbar>
+
+    <div class="add-form-wrapper">
+      <h3 class="form-title">Add Good Issue</h3>
+
+      <div class="header-fields-grid">
+        <label class="field">
+          <span>Number Series</span>
+          <input
+            type="text"
+            [ngModel]="headerForm().numberSeries"
+            (ngModelChange)="updateHeaderField('numberSeries', $event)"
+          />
+        </label>
+        <label class="field">
+          <span>Posting Date</span>
+          <input
+            type="date"
+            [ngModel]="headerForm().postingDate"
+            (ngModelChange)="updateHeaderField('postingDate', $event)"
+          />
+        </label>
+        <label class="field">
+          <span>Document Date</span>
+          <input
+            type="date"
+            [ngModel]="headerForm().documentDate"
+            (ngModelChange)="updateHeaderField('documentDate', $event)"
+          />
+        </label>
+        <label class="field">
+          <span>Ref Number</span>
+          <input
+            type="text"
+            [ngModel]="headerForm().refNumber"
+            (ngModelChange)="updateHeaderField('refNumber', $event)"
+          />
+        </label>
+        <label class="field">
+          <span>Price List</span>
+          <input
+            type="text"
+            [ngModel]="headerForm().priceList"
+            (ngModelChange)="updateHeaderField('priceList', $event)"
+          />
+        </label>
+      </div>
+
+      <div class="line-sections">
+        <button
+          class="section-tab"
+          [class.active]="activeLineSection() === 'content'"
+          (click)="setLineSection('content')"
+          type="button"
+        >
+          Content
+        </button>
+        <button
+          class="section-tab"
+          [class.active]="activeLineSection() === 'attachment'"
+          (click)="setLineSection('attachment')"
+          type="button"
+        >
+          Attachment
+        </button>
+        <button class="btn-add-row" type="button" (click)="addLineRow()">Add Row</button>
+      </div>
+
+      <div class="line-section-caption">
+        @if (activeLineSection() === 'content') {
+          Fill content item rows accordingly.
+        } @else {
+          Attachment section fields: Item No, Item Description, Quantity, Account, Item Cost, UOM Code.
+        }
+      </div>
+
+      <div class="table-wrapper">
+        <table class="issue-table line-table">
+          <thead>
+            <tr>
+              <th>Item No.</th>
+              <th>Item Description</th>
+              <th>Quantity</th>
+              <th>Account</th>
+              <th>Item Cost</th>
+              <th>UOM Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of getActiveLines(); track $index) {
+              <tr>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.itemNo"
+                    (ngModelChange)="updateLine($index, 'itemNo', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.itemDescription"
+                    (ngModelChange)="updateLine($index, 'itemDescription', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [ngModel]="line.quantity"
+                    (ngModelChange)="updateLine($index, 'quantity', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.account"
+                    (ngModelChange)="updateLine($index, 'account', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [ngModel]="line.itemCost"
+                    (ngModelChange)="updateLine($index, 'itemCost', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.uomCode"
+                    (ngModelChange)="updateLine($index, 'uomCode', $event)"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

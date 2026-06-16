@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { GoodIssuePageComponent } from './good-issue-page';
+import { InventoryTransferPageComponent } from './inventory-transfer-page';
 import { MiscellaneousPageComponent } from './miscellaneous-page';
 import { MiscellaneousShellComponent } from './miscellaneous-shell';
 
@@ -20,12 +22,12 @@ export const miscellaneousRoutes: Routes = [
       },
       {
         path: 'inventory-transfer',
-        component: MiscellaneousPageComponent,
+        component: InventoryTransferPageComponent,
         data: { title: 'Inventory transfer' },
       },
       {
         path: 'good-issue',
-        component: MiscellaneousPageComponent,
+        component: GoodIssuePageComponent,
         data: { title: 'Good Issue' },
       },
     ],
