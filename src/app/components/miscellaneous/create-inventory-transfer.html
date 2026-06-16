@@ -1,0 +1,199 @@
+<div class="misc-form-page">
+  <div class="misc-form-header">
+    <div class="misc-form-header-left">
+      <button type="button" class="misc-form-back" (click)="back()" aria-label="Back">←</button>
+      <h1>Add Inventory Transfer</h1>
+    </div>
+  </div>
+
+  <div class="misc-form-card">
+    <section class="misc-section-block">
+      <div class="misc-section-title">Header</div>
+      <div class="misc-header-grid">
+        <label class="misc-field">
+          <span>Number Series</span>
+          <input
+            type="text"
+            [ngModel]="headerForm().numberSeries"
+            (ngModelChange)="updateHeaderField('numberSeries', $event)"
+          />
+        </label>
+        <label class="misc-field">
+          <span>Posting Date</span>
+          <input
+            type="date"
+            [ngModel]="headerForm().postingDate"
+            (ngModelChange)="updateHeaderField('postingDate', $event)"
+          />
+        </label>
+        <label class="misc-field">
+          <span>Document Date</span>
+          <input
+            type="date"
+            [ngModel]="headerForm().documentDate"
+            (ngModelChange)="updateHeaderField('documentDate', $event)"
+          />
+        </label>
+        <label class="misc-field">
+          <span>Ref Number</span>
+          <input
+            type="text"
+            [ngModel]="headerForm().refNumber"
+            (ngModelChange)="updateHeaderField('refNumber', $event)"
+          />
+        </label>
+        <label class="misc-field">
+          <span>Price List</span>
+          <input
+            type="text"
+            [ngModel]="headerForm().priceList"
+            (ngModelChange)="updateHeaderField('priceList', $event)"
+          />
+        </label>
+      </div>
+    </section>
+
+    <section class="misc-section-block">
+      <div class="misc-lines-heading">
+        <div class="misc-section-title">Content</div>
+        <button type="button" class="misc-add-line-btn" (click)="addContentLine()">Add Row</button>
+      </div>
+      <div class="misc-lines-scroll">
+        <table class="misc-lines-table">
+          <thead>
+            <tr>
+              <th>Item No.</th>
+              <th>Item Description</th>
+              <th>Quantity</th>
+              <th>Account</th>
+              <th>Item Cost</th>
+              <th>UOM Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of contentLines(); track $index) {
+              <tr>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.itemNo"
+                    (ngModelChange)="updateContentLine($index, 'itemNo', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.itemDescription"
+                    (ngModelChange)="updateContentLine($index, 'itemDescription', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [ngModel]="line.quantity"
+                    (ngModelChange)="updateContentLine($index, 'quantity', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.account"
+                    (ngModelChange)="updateContentLine($index, 'account', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [ngModel]="line.itemCost"
+                    (ngModelChange)="updateContentLine($index, 'itemCost', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.uomCode"
+                    (ngModelChange)="updateContentLine($index, 'uomCode', $event)"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="misc-section-block">
+      <div class="misc-lines-heading">
+        <div class="misc-section-title">Attachment</div>
+        <button type="button" class="misc-add-line-btn" (click)="addAttachmentLine()">Add Row</button>
+      </div>
+      <div class="misc-lines-scroll">
+        <table class="misc-lines-table">
+          <thead>
+            <tr>
+              <th>Item No.</th>
+              <th>Item Description</th>
+              <th>Quantity</th>
+              <th>Account</th>
+              <th>Item Cost</th>
+              <th>UOM Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of attachmentLines(); track $index) {
+              <tr>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.itemNo"
+                    (ngModelChange)="updateAttachmentLine($index, 'itemNo', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.itemDescription"
+                    (ngModelChange)="updateAttachmentLine($index, 'itemDescription', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [ngModel]="line.quantity"
+                    (ngModelChange)="updateAttachmentLine($index, 'quantity', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.account"
+                    (ngModelChange)="updateAttachmentLine($index, 'account', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [ngModel]="line.itemCost"
+                    (ngModelChange)="updateAttachmentLine($index, 'itemCost', $event)"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [ngModel]="line.uomCode"
+                    (ngModelChange)="updateAttachmentLine($index, 'uomCode', $event)"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="misc-form-actions">
+      <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
+      <button type="button" class="btn-primary" (click)="save()">Save</button>
+    </div>
+  </div>
+</div>

@@ -4,10 +4,10 @@
     [items]="sidebarItems"
     [sections]="sidebarSections"
     [showManageButton]="false"
-    [isCollapsed]="sidebarCollapsed()"
+    [isCollapsed]="layout.sidebarCollapsed()"
     [activeItemId]="activeSidebarItemId()"
     (folderSelected)="onFolderSelected($event)"
-    (collapsedChange)="sidebarCollapsed.set($event)"
+    (collapsedChange)="layout.sidebarCollapsed.set($event)"
   ></app-sidebar>
 
   <div class="miscellaneous-content">

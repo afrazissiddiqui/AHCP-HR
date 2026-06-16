@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SidebarComponent } from '../sidebar/sidebar';
+import { MiscellaneousLayoutService } from './miscellaneous-layout.service';
 import {
   MISCELLANEOUS_SIDEBAR_ITEMS,
   MISCELLANEOUS_SIDEBAR_SECTIONS,
@@ -17,12 +18,12 @@ import {
   styleUrl: './miscellaneous-shell.css',
 })
 export class MiscellaneousShellComponent {
+  protected readonly layout = inject(MiscellaneousLayoutService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly sidebarItems = MISCELLANEOUS_SIDEBAR_ITEMS;
   readonly sidebarSections = MISCELLANEOUS_SIDEBAR_SECTIONS;
-  readonly sidebarCollapsed = signal(false);
   readonly activeSidebarItemId = signal('miscellaneous-good-receipt-note');
 
   constructor() {

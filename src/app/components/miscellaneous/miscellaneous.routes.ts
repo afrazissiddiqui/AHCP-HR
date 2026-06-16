@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { CreateGoodIssueComponent } from './create-good-issue';
+import { CreateInventoryTransferComponent } from './create-inventory-transfer';
 import { GoodIssuePageComponent } from './good-issue-page';
 import { InventoryTransferPageComponent } from './inventory-transfer-page';
 import { MiscellaneousPageComponent } from './miscellaneous-page';
@@ -26,9 +28,19 @@ export const miscellaneousRoutes: Routes = [
         data: { title: 'Inventory transfer' },
       },
       {
+        path: 'inventory-transfer/create',
+        component: CreateInventoryTransferComponent,
+        data: { title: 'Add Inventory Transfer' },
+      },
+      {
         path: 'good-issue',
         component: GoodIssuePageComponent,
         data: { title: 'Good Issue' },
+      },
+      {
+        path: 'good-issue/create',
+        component: CreateGoodIssueComponent,
+        data: { title: 'Add Good Issue' },
       },
     ],
   },
