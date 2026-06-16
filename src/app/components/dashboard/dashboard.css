@@ -7,7 +7,7 @@
 /* ACTION BAR */
 .action-bar {
   display: flex;
-  width: 50%;
+  width: 100%;
   max-width: 960px;
   background: #cfe1ee;
 
@@ -16,13 +16,28 @@
   margin: 0 auto 2rem;
 
   gap: 20px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scrollbar-width: none; 
+  overflow-x: hidden; /* Keep layout stable; no horizontal scrollbar */
+}
+
+@media (max-width: 700px) {
+  .action-bar {
+    gap: 12px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .action {
+    font-size: 9px;
+  }
+
+  .action ui5-icon {
+    width: 26px;
+    margin-bottom: 4px;
+  }
 }
 
 .action {
-  flex: 0 0 calc(100% / 7);
+  flex: 1 1 0; /* Evenly distribute all action buttons */
+  min-width: 0; /* Allow text truncation inside flex item */
   text-align: center;
   font-size: 10px;
   color: #050505;
@@ -37,6 +52,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.action span {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .action:hover {
@@ -54,24 +78,6 @@
   margin-bottom: 6px;   /* spacing between icon & text */
   width: 30px;
   color: #0064d9;
-}
-
-.action-bar::-webkit-scrollbar {
-  height: 0px;                  /* Chrome, Edge, Safari */
-}
-
-/* Show scrollbar on hover */
-.action-bar:hover {
-  scrollbar-width: thin;
-}
-
-.action-bar:hover::-webkit-scrollbar {
-  height: 6px;
-}
-
-.action-bar:hover::-webkit-scrollbar-thumb {
-  background: #999;
-  border-radius: 10px;
 }
 
 /* WELCOME */

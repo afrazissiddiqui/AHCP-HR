@@ -48,7 +48,6 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   { label: 'Org Chart', value: 'org-chart', icon: 'org-chart' },
   { label: 'Performance', value: 'performance', icon: 'performance' },
   { label: 'Succession', value: 'succession', icon: 'family-care' },
-  { label: 'Sign Out', value: 'login', icon: 'key', route: '/login' },
 ];
 
 /** Flat list of menu entries that have a route (for dashboard action bar, etc.). */
