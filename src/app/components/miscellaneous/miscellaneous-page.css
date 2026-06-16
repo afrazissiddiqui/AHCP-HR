@@ -1,0 +1,23 @@
+.misc-page {
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.misc-page-card {
+  margin: 20px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.misc-page-card h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: #1f2937;
+}
+
+.misc-page-card p {
+  margin: 0;
+  color: #6b7280;
+}

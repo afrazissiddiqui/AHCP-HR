@@ -27,6 +27,7 @@ import { TerminationFormComponent } from './components/HR-Portal/termination/ter
 import { AddTerminationComponent } from './components/HR-Portal/termination/add-termination/add-termination';
 import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-maintenance.routes';
 import { authGuard } from './guards/auth.guard';
+import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.routes';
 
 export const routes: Routes = [
   {
@@ -197,6 +198,9 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   ...plantMaintenanceRoutes.map((route) =>
+    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+  ),
+  ...miscellaneousRoutes.map((route) =>
     route.redirectTo ? route : { ...route, canActivate: [authGuard] }
   ),
 ];

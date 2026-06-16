@@ -1,6 +1,7 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { BehaviorSubject } from 'rxjs';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
@@ -24,6 +25,12 @@ interface ColumnConfig {
   visible: boolean;
 }
 
+interface ApplicationDetailViewState {
+  open: boolean;
+  loading: boolean;
+  record: ApplicationFormRecord | null;
+}
+
 @Component({
   selector: 'app-recruitment',
   standalone: true,
@@ -35,12 +42,19 @@ interface ColumnConfig {
     PageToolbarComponent,
     TableFilterComponent,
   ],
-  templateUrl: './application-form.html',
+  templateUrl: './Application-Form.html',
   styleUrls: ['./Application-Form.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecruitmentComponent implements OnInit {
 
   readonly applicationTableFilter = APPLICATION_FORM_TABLE_FILTER;
+  private readonly cdr = inject(ChangeDetectorRef);
+  readonly detailViewState$ = new BehaviorSubject<ApplicationDetailViewState>({
+    open: false,
+    loading: false,
+    record: null,
+  });
 
   constructor(
     private router: Router,
@@ -51,12 +65,14 @@ export class RecruitmentComponent implements OnInit {
 
   ngOnInit(): void {
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => this.cdr.markForCheck(),
       error: (error: unknown) => {
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
           'Failed to load user list.';
         this.alertService.error('Load Failed', errorMessage);
+        this.cdr.markForCheck();
       },
     });
   }
@@ -113,9 +129,6 @@ export class RecruitmentComponent implements OnInit {
   showColumnPanel = false;
   showDialog = false;
   activeTab: 'columns' = 'columns';
-  detailRecord = signal<ApplicationFormRecord | null>(null);
-  detailLoading = signal(false);
-  readonly applicationDetail = computed(() => this.detailRecord()?.detail ?? null);
 
   toggleColumnPanel() {
     this.showColumnPanel = !this.showColumnPanel;
@@ -226,19 +239,21 @@ export class RecruitmentComponent implements OnInit {
 
   openApplicationDetail(record: ApplicationFormRecord) {
     const viewId = record.apiId ?? record.EmployeeCode;
-    this.detailRecord.set(record);
-    this.detailLoading.set(true);
+    this.detailViewState$.next({ open: true, loading: true, record });
 
     this.applicationFormService.fetchEmployeeProfileDetail(viewId).subscribe({
       next: (fullRecord) => {
-        this.detailLoading.set(false);
-        this.detailRecord.set({
-          ...fullRecord,
-          selected: record.selected,
+        this.detailViewState$.next({
+          open: true,
+          loading: false,
+          record: {
+            ...fullRecord,
+            selected: record.selected,
+          },
         });
       },
       error: (error: unknown) => {
-        this.detailLoading.set(false);
+        this.detailViewState$.next({ open: false, loading: false, record: null });
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
@@ -249,8 +264,7 @@ export class RecruitmentComponent implements OnInit {
   }
 
   closeApplicationDetail() {
-    this.detailRecord.set(null);
-    this.detailLoading.set(false);
+    this.detailViewState$.next({ open: false, loading: false, record: null });
   }
 
   displayDash(value: string | number | undefined | null): string {
@@ -307,6 +321,7 @@ export class RecruitmentComponent implements OnInit {
           this.currentPage -= 1;
         }
         this.alertService.success('Deleted', 'Employee removed successfully.');
+        this.cdr.markForCheck();
       },
       error: (error: unknown) => {
         const errorMessage =

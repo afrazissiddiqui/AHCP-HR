@@ -1,0 +1,9 @@
+.miscellaneous-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.miscellaneous-content {
+  flex: 1;
+  min-width: 0;
+}

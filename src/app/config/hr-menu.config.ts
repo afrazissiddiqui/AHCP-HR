@@ -20,6 +20,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
   { label: 'Payroll Master', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
   { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
+  { label: 'Miscellaneous', value: 'miscellaneous', icon: 'grid', route: '/miscellaneous' },
   { label: 'Termination', value: 'termination', icon: 'feedback', route: '/termination' },
   { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
   { label: 'Development', value: 'development', icon: 'learning-assistant' },

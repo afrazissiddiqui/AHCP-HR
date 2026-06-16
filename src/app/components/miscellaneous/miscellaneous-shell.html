@@ -1,0 +1,15 @@
+<div class="miscellaneous-layout">
+  <app-sidebar
+    [title]="'Forms'"
+    [items]="sidebarItems"
+    [sections]="sidebarSections"
+    [isCollapsed]="sidebarCollapsed()"
+    [activeItemId]="activeSidebarItemId()"
+    (folderSelected)="onFolderSelected($event)"
+    (collapsedChange)="sidebarCollapsed.set($event)"
+  ></app-sidebar>
+
+  <div class="miscellaneous-content">
+    <router-outlet />
+  </div>
+</div>
