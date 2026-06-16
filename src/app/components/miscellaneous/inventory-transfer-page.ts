@@ -3,9 +3,10 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../page-toolbar/page-toolbar';
+import { AlertService } from '../../services/alert.service';
 import { MiscellaneousLayoutService } from './miscellaneous-layout.service';
 
-interface InventoryTransferRow {
+export interface InventoryTransferRow {
   transferNo: string;
   postingDate: string;
   fromWarehouse: string;
@@ -23,9 +24,12 @@ interface InventoryTransferRow {
 })
 export class InventoryTransferPageComponent {
   private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
   readonly searchText = signal('');
+  readonly showDetailDialog = signal(false);
+  readonly selectedRow = signal<InventoryTransferRow | null>(null);
 
   readonly transfers = signal<InventoryTransferRow[]>([
     {
@@ -74,5 +78,32 @@ export class InventoryTransferPageComponent {
 
   toggleSidebar(): void {
     this.layout.toggleSidebar();
+  }
+
+  viewDetails(row: InventoryTransferRow): void {
+    this.selectedRow.set(row);
+    this.showDetailDialog.set(true);
+  }
+
+  closeDetailDialog(): void {
+    this.selectedRow.set(null);
+    this.showDetailDialog.set(false);
+  }
+
+  onUpdate(row: InventoryTransferRow): void {
+    void this.router.navigate(['/miscellaneous/inventory-transfer/edit', row.transferNo]);
+  }
+
+  async onDelete(row: InventoryTransferRow): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete Inventory Transfer?',
+      `Remove ${row.transferNo} from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.transfers.update((rows) => rows.filter((item) => item.transferNo !== row.transferNo));
+    this.alertService.success('Deleted', 'Inventory transfer removed successfully.');
   }
 }

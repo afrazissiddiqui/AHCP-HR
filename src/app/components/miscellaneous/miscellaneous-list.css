@@ -74,7 +74,7 @@
 
 .mountain-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1100px;
   border-collapse: collapse;
 }
 
@@ -129,4 +129,166 @@
 .btn-default:hover {
   background: #0954a5;
   border-color: #0954a5;
+}
+
+.application-actions-header,
+.application-actions-cell {
+  width: 220px;
+  min-width: 220px;
+}
+
+.mountain-table th:last-child,
+.mountain-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #fff;
+  border-left: 1px solid #eee;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.mountain-table thead th:last-child {
+  background: #f5f5f5;
+  z-index: 3;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.table-action-cell {
+  white-space: nowrap;
+}
+
+.view-btn {
+  background: #0070f2;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.view-btn:hover {
+  background: #0056b3;
+}
+
+.update-btn,
+.delete-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.update-btn {
+  background: #0a6ed1;
+  color: #fff;
+}
+
+.update-btn:hover {
+  background: #0854a0;
+}
+
+.delete-btn {
+  background: #bb0000;
+  color: #fff;
+}
+
+.delete-btn:hover {
+  background: #8f0000;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+}
+
+.js-detail-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  background: #fff;
+  border-radius: 12px;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.js-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.js-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.js-close-modal {
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.js-modal-body {
+  padding: 20px;
+  overflow: auto;
+}
+
+.js-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.js-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.js-detail-item label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.js-detail-item span {
+  font-size: 14px;
+  color: #111827;
+}
+
+.js-modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
 }

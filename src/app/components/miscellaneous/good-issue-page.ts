@@ -3,9 +3,10 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../page-toolbar/page-toolbar';
+import { AlertService } from '../../services/alert.service';
 import { MiscellaneousLayoutService } from './miscellaneous-layout.service';
 
-interface GoodIssueRow {
+export interface GoodIssueRow {
   issueNo: string;
   postingDate: string;
   fromWarehouse: string;
@@ -23,9 +24,12 @@ interface GoodIssueRow {
 })
 export class GoodIssuePageComponent {
   private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
   readonly searchText = signal('');
+  readonly showDetailDialog = signal(false);
+  readonly selectedRow = signal<GoodIssueRow | null>(null);
 
   readonly issues = signal<GoodIssueRow[]>([
     {
@@ -66,5 +70,32 @@ export class GoodIssuePageComponent {
 
   toggleSidebar(): void {
     this.layout.toggleSidebar();
+  }
+
+  viewDetails(row: GoodIssueRow): void {
+    this.selectedRow.set(row);
+    this.showDetailDialog.set(true);
+  }
+
+  closeDetailDialog(): void {
+    this.selectedRow.set(null);
+    this.showDetailDialog.set(false);
+  }
+
+  onUpdate(row: GoodIssueRow): void {
+    void this.router.navigate(['/miscellaneous/good-issue/edit', row.issueNo]);
+  }
+
+  async onDelete(row: GoodIssueRow): Promise<void> {
+    const result = await this.alertService.confirm(
+      'Delete Good Issue?',
+      `Remove ${row.issueNo} from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.issues.update((rows) => rows.filter((item) => item.issueNo !== row.issueNo));
+    this.alertService.success('Deleted', 'Good issue removed successfully.');
   }
 }

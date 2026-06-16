@@ -33,6 +33,11 @@ export const miscellaneousRoutes: Routes = [
         data: { title: 'Add Inventory Transfer' },
       },
       {
+        path: 'inventory-transfer/edit/:id',
+        component: CreateInventoryTransferComponent,
+        data: { title: 'Edit Inventory Transfer' },
+      },
+      {
         path: 'good-issue',
         component: GoodIssuePageComponent,
         data: { title: 'Good Issue' },
@@ -41,6 +46,11 @@ export const miscellaneousRoutes: Routes = [
         path: 'good-issue/create',
         component: CreateGoodIssueComponent,
         data: { title: 'Add Good Issue' },
+      },
+      {
+        path: 'good-issue/edit/:id',
+        component: CreateGoodIssueComponent,
+        data: { title: 'Edit Good Issue' },
       },
     ],
   },

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   createEmptyMiscellaneousHeader,
   createEmptyMiscellaneousLine,
@@ -19,10 +19,23 @@ import {
 })
 export class CreateInventoryTransferComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  readonly editingId = signal<string | null>(this.route.snapshot.paramMap.get('id'));
+  readonly pageTitle = computed(() =>
+    this.editingId() ? 'Edit Inventory Transfer' : 'Add Inventory Transfer'
+  );
 
   readonly headerForm = signal<MiscellaneousHeaderForm>(createEmptyMiscellaneousHeader());
   readonly contentLines = signal<MiscellaneousLineRow[]>([createEmptyMiscellaneousLine()]);
   readonly attachmentLines = signal<MiscellaneousLineRow[]>([createEmptyMiscellaneousLine()]);
+
+  constructor() {
+    const id = this.editingId();
+    if (id) {
+      this.headerForm.update((state) => ({ ...state, refNumber: id }));
+    }
+  }
 
   back(): void {
     void this.router.navigate(['/miscellaneous/inventory-transfer']);

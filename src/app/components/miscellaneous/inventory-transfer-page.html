@@ -33,6 +33,7 @@
           <th>To Warehouse</th>
           <th>Items</th>
           <th>Status</th>
+          <th class="application-actions-header">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -48,6 +49,13 @@
                 {{ row.status }}
               </span>
             </td>
+            <td class="table-action-cell application-actions-cell">
+              <div class="action-buttons">
+                <button class="view-btn" type="button" (click)="viewDetails(row)" title="View Details">View</button>
+                <button class="update-btn" type="button" (click)="onUpdate(row)" title="Update">Update</button>
+                <button class="delete-btn" type="button" (click)="onDelete(row)" title="Delete">Delete</button>
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -58,3 +66,33 @@
     }
   </div>
 </div>
+
+@if (showDetailDialog()) {
+  <div class="dialog-backdrop" (click)="closeDetailDialog()"></div>
+  <div class="js-detail-modal" (click)="$event.stopPropagation()">
+    <div class="js-modal-header">
+      <h2>
+        Inventory Transfer
+        @if (selectedRow(); as row) {
+          — {{ row.transferNo }}
+        }
+      </h2>
+      <button type="button" class="js-close-modal" (click)="closeDetailDialog()">×</button>
+    </div>
+    @if (selectedRow(); as row) {
+      <div class="js-modal-body">
+        <div class="js-detail-grid">
+          <div class="js-detail-item"><label>Transfer No</label><span>{{ row.transferNo }}</span></div>
+          <div class="js-detail-item"><label>Posting Date</label><span>{{ row.postingDate }}</span></div>
+          <div class="js-detail-item"><label>From Warehouse</label><span>{{ row.fromWarehouse }}</span></div>
+          <div class="js-detail-item"><label>To Warehouse</label><span>{{ row.toWarehouse }}</span></div>
+          <div class="js-detail-item"><label>Items</label><span>{{ row.itemCount }}</span></div>
+          <div class="js-detail-item"><label>Status</label><span>{{ row.status }}</span></div>
+        </div>
+      </div>
+    }
+    <div class="js-modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeDetailDialog()">Close</button>
+    </div>
+  </div>
+}
