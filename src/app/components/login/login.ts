@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService } from '../../services/alert.service';
 import { AuthService } from '../../services/auth.service';
+import { formatApiErrorMessage } from '../../utils/api-error.util';
 
 @Component({
   selector: 'app-login',
@@ -45,11 +46,10 @@ export class LoginComponent implements OnInit {
       },
       error: (error: unknown) => {
         this.isSubmitting = false;
-        const errorMessage =
-          (error as { error?: { message?: string } })?.error?.message ||
-          (error as { message?: string })?.message ||
-          'Login failed. Please check your credentials.';
-        void this.alertService.error('Login failed', errorMessage);
+        void this.alertService.error(
+          'Login failed',
+          formatApiErrorMessage(error, 'Login failed. Please check your credentials.'),
+        );
       },
     });
   }
