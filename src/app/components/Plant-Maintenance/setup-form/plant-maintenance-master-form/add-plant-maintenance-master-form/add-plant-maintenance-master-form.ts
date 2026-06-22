@@ -179,6 +179,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   private syncingScheduleFields = false;
 
   ngOnInit(): void {
+    this.activityService.fetchMaintenanceActivityDefinitions().subscribe({ error: () => {} });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       return;

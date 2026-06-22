@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { AlertService } from '../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PlantMaintenanceSetupLayoutService } from '../plant-maintenance-setup-layout.service';
 import {
@@ -42,7 +43,7 @@ type RowActionKey = 'view' | 'update' | 'delete';
     `,
   ],
 })
-export class MaintenanceActivityDefinitionComponent {
+export class MaintenanceActivityDefinitionComponent implements OnInit {
   private readonly layout = inject(PlantMaintenanceSetupLayoutService);
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
   private readonly alertService = inject(AlertService);
@@ -58,8 +59,20 @@ export class MaintenanceActivityDefinitionComponent {
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   showViewDialog = false;
+  detailLoading = false;
   selectedRecord: MaintenanceActivityMachineRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
+
+  ngOnInit(): void {
+    this.activityService.fetchMaintenanceActivityDefinitions().subscribe({
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load maintenance activity definitions.'),
+        );
+      },
+    });
+  }
 
   readonly rowActions: RowActionKey[] = ['view', 'update', 'delete'];
 
@@ -151,16 +164,42 @@ export class MaintenanceActivityDefinitionComponent {
   }
 
   viewRecord(item: MaintenanceActivityMachineRecord): void {
-    this.selectedRecord = item;
+    if (!item.id) {
+      void this.alertService.warning('View', 'Unable to view this row: missing record id.');
+      return;
+    }
+
     this.showViewDialog = true;
+    this.selectedRecord = null;
+    this.detailLoading = true;
+
+    this.activityService.fetchMaintenanceActivityDefinitionDetail(item.id).subscribe({
+      next: (detail) => {
+        this.selectedRecord = detail;
+        this.detailLoading = false;
+      },
+      error: (error: unknown) => {
+        this.detailLoading = false;
+        this.showViewDialog = false;
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load maintenance activity definition details.'),
+        );
+      },
+    });
   }
 
   closeViewDialog(): void {
     this.showViewDialog = false;
     this.selectedRecord = null;
+    this.detailLoading = false;
   }
 
   updateRecord(item: MaintenanceActivityMachineRecord): void {
+    if (!item.id) {
+      void this.alertService.warning('Update', 'Unable to update this row: missing record id.');
+      return;
+    }
     void this.router.navigate([
       '/plant-maintenance/setup-form/maintenance-activity-definition/edit',
       item.id,
@@ -175,10 +214,27 @@ export class MaintenanceActivityDefinitionComponent {
     if (!result.isConfirmed) {
       return;
     }
-    this.activityService.deleteRecord(item.id);
-    if (this.paginatedList.length === 0 && this.currentPage > 1) {
-      this.currentPage -= 1;
+
+    if (!item.id) {
+      void this.alertService.warning('Delete', 'Unable to delete this row: missing record id.');
+      return;
     }
+
+    this.activityService.deleteMaintenanceActivityDefinition(item.id).subscribe({
+      next: () => {
+        this.activityService.removeMaintenanceActivityRecord(item);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        void this.alertService.success('Deleted', 'Maintenance activity definition removed successfully.');
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete maintenance activity definition.'),
+        );
+      },
+    });
   }
 
   getCellValue(item: MaintenanceActivityMachineRecord, columnKey: MachineTableColumnKey): string {

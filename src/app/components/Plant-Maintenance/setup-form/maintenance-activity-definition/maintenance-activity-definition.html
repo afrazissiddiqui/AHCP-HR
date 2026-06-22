@@ -172,81 +172,84 @@
 </div>
 
 <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+<div class="js-detail-modal" *ngIf="showViewDialog">
   <div class="js-modal-header">
-    <h2>Machine Detail — {{ selectedRecord.machineName }}</h2>
+    <h2>Machine Detail{{ selectedRecord ? ' — ' + selectedRecord.machineName : '' }}</h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">
-    <div class="js-detail-section">
-      <h3>Machine Information</h3>
-      <div class="js-detail-grid mad-detail-grid">
-        <div class="js-detail-item">
-          <label>Machine ID:</label>
-          <span>{{ selectedRecord.machineId }}</span>
-        </div>
-        <div class="js-detail-item">
-          <label>Machine Name:</label>
-          <span>{{ selectedRecord.machineName }}</span>
-        </div>
-        <div class="js-detail-item">
-          <label>Machine Type:</label>
-          <span>{{ selectedRecord.machineType }}</span>
-        </div>
-        <div class="js-detail-item">
-          <label>Maintenance Nature:</label>
-          <span>{{ selectedRecord.maintenanceNature }}</span>
-        </div>
-        <div class="js-detail-item">
-          <label>Plant Maintenance Frequency:</label>
-          <span>{{ selectedRecord.plantMaintenanceFrequency }}</span>
-        </div>
-        <div class="js-detail-item">
-          <label>Plant Maintenance Type:</label>
-          <span>{{ selectedRecord.plantMaintenanceType }}</span>
-        </div>
-      </div>
-    </div>
-    <div class="js-detail-section">
-      <h3>Components</h3>
-      <div *ngIf="selectedRecord.components.length; else noComponents">
-        <div class="mad-view-component" *ngFor="let component of selectedRecord.components">
-          <h4 class="mad-view-component__name">{{ component.name }}</h4>
-          <div class="mad-view-table-wrap">
-            <table class="mountain-table mad-view-inspection-table">
-              <thead>
-                <tr>
-                  <th class="mad-view-inspection-table__line-col" *ngIf="component.inspectionLines.length > 1">
-                    Line
-                  </th>
-                  <th>Items to be inspected</th>
-                  <th>What to check</th>
-                  <th>Instructions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let line of component.inspectionLines; let li = index">
-                  <td class="mad-view-inspection-table__line-col" *ngIf="component.inspectionLines.length > 1">
-                    {{ li + 1 }}
-                  </td>
-                  <td>{{ line.itemsToBeInspected || '—' }}</td>
-                  <td>{{ line.whatToCheck || '—' }}</td>
-                  <td class="mad-view-inspection-table__instructions">{{ line.instructions || '—' }}</td>
-                </tr>
-              </tbody>
-            </table>
+    <p *ngIf="detailLoading">Loading maintenance activity definition details...</p>
+    <ng-container *ngIf="!detailLoading && selectedRecord">
+      <div class="js-detail-section">
+        <h3>Machine Information</h3>
+        <div class="js-detail-grid mad-detail-grid">
+          <div class="js-detail-item">
+            <label>Machine ID:</label>
+            <span>{{ selectedRecord.machineId }}</span>
+          </div>
+          <div class="js-detail-item">
+            <label>Machine Name:</label>
+            <span>{{ selectedRecord.machineName }}</span>
+          </div>
+          <div class="js-detail-item">
+            <label>Machine Type:</label>
+            <span>{{ selectedRecord.machineType }}</span>
+          </div>
+          <div class="js-detail-item">
+            <label>Maintenance Nature:</label>
+            <span>{{ selectedRecord.maintenanceNature }}</span>
+          </div>
+          <div class="js-detail-item">
+            <label>Plant Maintenance Frequency:</label>
+            <span>{{ selectedRecord.plantMaintenanceFrequency }}</span>
+          </div>
+          <div class="js-detail-item">
+            <label>Plant Maintenance Type:</label>
+            <span>{{ selectedRecord.plantMaintenanceType }}</span>
           </div>
         </div>
       </div>
-      <ng-template #noComponents>
-        <p class="scd-view-sub-empty">No components defined.</p>
-      </ng-template>
-    </div>
+      <div class="js-detail-section">
+        <h3>Components</h3>
+        <div *ngIf="selectedRecord.components.length; else noComponents">
+          <div class="mad-view-component" *ngFor="let component of selectedRecord.components">
+            <h4 class="mad-view-component__name">{{ component.name }}</h4>
+            <div class="mad-view-table-wrap">
+              <table class="mountain-table mad-view-inspection-table">
+                <thead>
+                  <tr>
+                    <th class="mad-view-inspection-table__line-col" *ngIf="component.inspectionLines.length > 1">
+                      Line
+                    </th>
+                    <th>Items to be inspected</th>
+                    <th>What to check</th>
+                    <th>Instructions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let line of component.inspectionLines; let li = index">
+                    <td class="mad-view-inspection-table__line-col" *ngIf="component.inspectionLines.length > 1">
+                      {{ li + 1 }}
+                    </td>
+                    <td>{{ line.itemsToBeInspected || '—' }}</td>
+                    <td>{{ line.whatToCheck || '—' }}</td>
+                    <td class="mad-view-inspection-table__instructions">{{ line.instructions || '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <ng-template #noComponents>
+          <p class="scd-view-sub-empty">No components defined.</p>
+        </ng-template>
+      </div>
+    </ng-container>
   </div>
   <div class="js-modal-footer">
     <button type="button" class="btn-secondary scd-modal-close-btn" (click)="closeViewDialog()">Close</button>
     <button
-      *ngIf="hasRowAction('update')"
+      *ngIf="hasRowAction('update') && !detailLoading && selectedRecord"
       type="button"
       class="scd-update-btn"
       (click)="updateRecord(selectedRecord); closeViewDialog()"

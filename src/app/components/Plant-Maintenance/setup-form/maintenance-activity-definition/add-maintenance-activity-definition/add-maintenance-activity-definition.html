@@ -318,9 +318,9 @@
 
         <div class="cjr-actions-footer">
           <button type="button" class="btn-secondary" (click)="resetForm()">Reset</button>
-          <button type="button" class="cjr-submit-btn" (click)="saveForm()">
+          <button type="button" class="cjr-submit-btn" (click)="saveForm()" [disabled]="isSaving()">
             <span class="cjr-submit-icon">✓</span>
-            {{ editingRecordId() ? 'Update' : 'Save' }}
+            {{ isSaving() ? (editingRecordId() ? 'Updating...' : 'Saving...') : editingRecordId() ? 'Update' : 'Save' }}
           </button>
         </div>
       </div>

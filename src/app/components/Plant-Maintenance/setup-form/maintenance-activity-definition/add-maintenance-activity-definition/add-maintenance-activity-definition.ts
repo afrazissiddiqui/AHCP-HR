@@ -5,8 +5,9 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-
+import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   MachineSearchOption,
   resolveMachineIdentity,
@@ -117,7 +118,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
   readonly nameSuggestionsOpen = signal(false);
 
-  private readonly isSaving = signal(false);
+  readonly isSaving = signal(false);
 
 
 
@@ -179,33 +180,37 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     }
 
-    const record = this.activityService.getById(id);
+    this.editingRecordId.set(id);
 
-    if (!record) {
+    const cached = this.activityService.getById(id);
 
-      this.alertService.validation('Machine record not found.');
+    if (cached) {
 
-      void this.router.navigate(['/plant-maintenance/setup-form/maintenance-activity-definition']);
+      this.populateFromRecord(cached);
 
       return;
 
     }
 
-    this.editingRecordId.set(id);
+    this.activityService.fetchMaintenanceActivityDefinitionDetail(id).subscribe({
 
-    this.machineId.set(record.machineId);
+      next: (record) => this.populateFromRecord(record),
 
-    this.machineName.set(record.machineName);
+      error: (error: unknown) => {
 
-    this.machineType.set(record.machineType);
+        void this.alertService.error(
 
-    this.maintenanceNature.set(record.maintenanceNature);
+          'Load Failed',
 
-    this.plantMaintenanceFrequency.set(record.plantMaintenanceFrequency);
+          formatApiErrorMessage(error, 'Failed to load maintenance activity definition for edit.'),
 
-    this.plantMaintenanceType.set(record.plantMaintenanceType);
+        );
 
-    this.components.set(this.cloneComponents(record));
+        void this.router.navigate(['/plant-maintenance/setup-form/maintenance-activity-definition']);
+
+      },
+
+    });
 
   }
 
@@ -501,19 +506,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
       if (record) {
 
-        this.machineId.set(record.machineId);
-
-        this.machineName.set(record.machineName);
-
-        this.machineType.set(record.machineType);
-
-        this.maintenanceNature.set(record.maintenanceNature);
-
-        this.plantMaintenanceFrequency.set(record.plantMaintenanceFrequency);
-
-        this.plantMaintenanceType.set(record.plantMaintenanceType);
-
-        this.components.set(this.cloneComponents(record));
+        this.populateFromRecord(record);
 
       }
 
@@ -711,31 +704,39 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
       if (this.editingRecordId()) {
 
-        const updated = this.activityService.updateRecord(this.editingRecordId()!, payload);
+        await firstValueFrom(
+          this.activityService.updateMaintenanceActivityDefinition(this.editingRecordId()!, payload),
+        );
 
-        if (!updated) {
-
-          this.alertService.validation('Machine record not found.');
-
-          return;
-
-        }
+        await this.alertService.successAndWait(
+          'Success',
+          'Maintenance Activity Defination updated successfully.',
+        );
 
       } else {
 
-        this.activityService.addRecord(payload);
+        await firstValueFrom(this.activityService.addMaintenanceActivityDefinition(payload));
+
+        await this.alertService.successAndWait(
+          'Success',
+          'Maintenance Activity Defination saved successfully.',
+        );
 
       }
 
-      const successMessage = this.editingRecordId()
-
-        ? 'Maintenance Activity Defination updated successfully.'
-
-        : 'Maintenance Activity Defination saved successfully.';
-
-      await this.alertService.successAndWait('Success', successMessage);
-
       void this.router.navigate(['/plant-maintenance/setup-form/maintenance-activity-definition']);
+
+    } catch (error) {
+
+      void this.alertService.error(
+        this.editingRecordId() ? 'Update Failed' : 'Save Failed',
+        formatApiErrorMessage(
+          error,
+          this.editingRecordId()
+            ? 'Failed to update maintenance activity definition.'
+            : 'Failed to save maintenance activity definition.',
+        ),
+      );
 
     } finally {
 
@@ -892,6 +893,30 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     }
 
     return unique;
+
+  }
+
+
+
+  private populateFromRecord(record: MaintenanceActivityMachineRecord): void {
+
+    this.machineId.set(record.machineId === '—' ? '' : record.machineId);
+
+    this.machineName.set(record.machineName === '—' ? '' : record.machineName);
+
+    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
+
+    this.maintenanceNature.set(record.maintenanceNature === '—' ? '' : record.maintenanceNature);
+
+    this.plantMaintenanceFrequency.set(
+      record.plantMaintenanceFrequency === '—' ? '' : record.plantMaintenanceFrequency,
+    );
+
+    this.plantMaintenanceType.set(
+      record.plantMaintenanceType === '—' ? '' : record.plantMaintenanceType,
+    );
+
+    this.components.set(this.cloneComponents(record));
 
   }
 

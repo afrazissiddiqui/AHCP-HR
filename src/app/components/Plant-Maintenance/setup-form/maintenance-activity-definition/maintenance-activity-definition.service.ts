@@ -1,4 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../../../../config/api.config';
 import {
   PlantMaintenanceMachineRecordBase,
   resolveMachineIdentity,
@@ -37,22 +40,114 @@ type MaintenanceActivityProfileField =
   | 'plantMaintenanceFrequency'
   | 'plantMaintenanceType';
 
+export interface MaintenanceActivityDefinitionInput {
+  machineId: string;
+  machineName: string;
+  machineType: string;
+  maintenanceNature: string;
+  plantMaintenanceFrequency: string;
+  plantMaintenanceType: string;
+  components: MaintenanceActivityComponent[];
+}
+
+export interface MaintenanceActivityDefinitionPayload {
+  machine_id: string;
+  machine_name: string;
+  machine_type: string;
+  maintenance_nature: string;
+  plant_maintenance_frequency: string;
+  plant_maintenance_type: string;
+  components: MaintenanceActivityComponent[];
+}
+
+export interface MaintenanceActivityApiResponse {
+  status?: boolean;
+  success?: boolean;
+  message?: string;
+  data?: Record<string, unknown>;
+}
+
+const MAINTENANCE_ACTIVITY_DEFINITION_LIST_URL = apiUrl('maintenance-activity-definition-list');
+const MAINTENANCE_ACTIVITY_DEFINITION_ADD_URL = apiUrl('maintenance-activity-definition-add');
+const MAINTENANCE_ACTIVITY_DEFINITION_DETAIL_URL = apiUrl('maintenance-activity-definition-detail');
+const MAINTENANCE_ACTIVITY_DEFINITION_UPDATE_URL = apiUrl('maintenance-activity-definition-update');
+const MAINTENANCE_ACTIVITY_DEFINITION_DELETE_URL = apiUrl('maintenance-activity-definition-delete');
+
+export function buildMaintenanceActivityPayload(
+  entry: MaintenanceActivityDefinitionInput,
+): MaintenanceActivityDefinitionPayload {
+  return {
+    machine_id: entry.machineId.trim(),
+    machine_name: entry.machineName.trim(),
+    machine_type: entry.machineType.trim(),
+    maintenance_nature: entry.maintenanceNature.trim(),
+    plant_maintenance_frequency: entry.plantMaintenanceFrequency.trim(),
+    plant_maintenance_type: entry.plantMaintenanceType.trim(),
+    components: entry.components.map((component) => ({
+      name: component.name.trim(),
+      inspectionLines: component.inspectionLines.map((line) => ({
+        itemsToBeInspected: line.itemsToBeInspected.trim(),
+        whatToCheck: line.whatToCheck.trim(),
+        instructions: line.instructions.trim(),
+      })),
+    })),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class MaintenanceActivityDefinitionService {
+  private readonly http = inject(HttpClient);
   private readonly _records = signal<MaintenanceActivityMachineRecord[]>([]);
 
   readonly records = this._records.asReadonly();
 
-  addRecord(
-    entry: Omit<MaintenanceActivityMachineRecord, 'id' | 'selected'>,
-  ): MaintenanceActivityMachineRecord {
-    const record: MaintenanceActivityMachineRecord = {
-      ...entry,
-      id: `MAM-${Date.now()}`,
-      selected: false,
-    };
-    this._records.update((list) => [...list, record]);
-    return record;
+  fetchMaintenanceActivityDefinitions(): Observable<MaintenanceActivityMachineRecord[]> {
+    return this.http.get<unknown>(MAINTENANCE_ACTIVITY_DEFINITION_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      tap((records) => this._records.set(records)),
+    );
+  }
+
+  fetchMaintenanceActivityDefinitionDetail(
+    id: string | number,
+  ): Observable<MaintenanceActivityMachineRecord> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http
+      .get<unknown>(`${MAINTENANCE_ACTIVITY_DEFINITION_DETAIL_URL}/${identifier}`)
+      .pipe(map((response) => this.mapDetailResponse(response, id)));
+  }
+
+  addMaintenanceActivityDefinition(
+    entry: MaintenanceActivityDefinitionInput,
+  ): Observable<MaintenanceActivityApiResponse> {
+    return this.http.post<MaintenanceActivityApiResponse>(
+      MAINTENANCE_ACTIVITY_DEFINITION_ADD_URL,
+      buildMaintenanceActivityPayload(entry),
+    );
+  }
+
+  updateMaintenanceActivityDefinition(
+    id: string | number,
+    entry: MaintenanceActivityDefinitionInput,
+  ): Observable<MaintenanceActivityApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post<MaintenanceActivityApiResponse>(
+      `${MAINTENANCE_ACTIVITY_DEFINITION_UPDATE_URL}/${identifier}`,
+      buildMaintenanceActivityPayload(entry),
+    );
+  }
+
+  deleteMaintenanceActivityDefinition(
+    id: string | number,
+  ): Observable<MaintenanceActivityApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete<MaintenanceActivityApiResponse>(
+      `${MAINTENANCE_ACTIVITY_DEFINITION_DELETE_URL}/${identifier}`,
+    );
+  }
+
+  removeMaintenanceActivityRecord(record: MaintenanceActivityMachineRecord): void {
+    this._records.update((list) => list.filter((item) => item.id !== record.id));
   }
 
   updateSelection(id: string, selected: boolean): void {
@@ -135,25 +230,161 @@ export class MaintenanceActivityDefinitionService {
     return value.trim().toLowerCase();
   }
 
-  updateRecord(
-    id: string,
-    entry: Omit<MaintenanceActivityMachineRecord, 'id' | 'selected'>,
-  ): boolean {
-    const exists = this._records().some((r) => r.id === id);
-    if (!exists) {
-      return false;
+  private mapDetailResponse(
+    response: unknown,
+    id: string | number,
+  ): MaintenanceActivityMachineRecord {
+    const items = this.extractApiItems(response);
+    if (items.length > 0) {
+      return this.mapApiItemToRecord(items[0]);
     }
-    this._records.update((list) =>
-      list.map((r) => (r.id === id ? { ...r, ...entry, id, selected: r.selected } : r)),
-    );
-    return true;
+
+    if (response && typeof response === 'object') {
+      const record = this.mapApiItemToRecord(response as Record<string, unknown>);
+      if (!record.id) {
+        return { ...record, id: String(id) };
+      }
+      return record;
+    }
+
+    throw new Error('Maintenance activity definition not found');
   }
 
-  deleteRecord(id: string): boolean {
-    const before = this._records().length;
-    this._records.update((list) => list.filter((r) => r.id !== id));
-    return this._records().length < before;
+  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (!response) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = [
+      'data',
+      'items',
+      'results',
+      'records',
+      'list',
+      'maintenance_activity_definitions',
+      'maintenanceActivityDefinitions',
+      'maintenanceActivityDefinitionList',
+      'maintenance_activity_definition_list',
+    ];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (
+      obj['machine_id'] ||
+      obj['machineId'] ||
+      obj['machine_name'] ||
+      obj['machineName']
+    ) {
+      return [obj];
+    }
+
+    return [];
   }
 
+  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
+    for (const source of sources) {
+      for (const key of keys) {
+        const value = source[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          return String(value).trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  private mapInspectionLine(raw: Record<string, unknown>): MaintenanceActivityInspectionLine {
+    return {
+      itemsToBeInspected: this.pickString([raw], [
+        'itemsToBeInspected',
+        'items_to_be_inspected',
+        'ItemsToBeInspected',
+      ]),
+      whatToCheck: this.pickString([raw], ['whatToCheck', 'what_to_check', 'WhatToCheck']),
+      instructions: this.pickString([raw], ['instructions', 'Instructions']),
+    };
+  }
+
+  private mapComponents(item: Record<string, unknown>): MaintenanceActivityComponent[] {
+    const raw = item['components'] ?? item['Components'];
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object')
+      .map((component) => {
+        const rawLines =
+          component['inspectionLines'] ??
+          component['inspection_lines'] ??
+          component['InspectionLines'];
+        const inspectionLines = Array.isArray(rawLines)
+          ? rawLines
+              .filter((line): line is Record<string, unknown> => !!line && typeof line === 'object')
+              .map((line) => this.mapInspectionLine(line))
+          : [];
+
+        return {
+          name: this.pickString([component], ['name', 'Name', 'component_name', 'componentName']),
+          inspectionLines,
+        };
+      })
+      .filter((component) => component.name || component.inspectionLines.length > 0);
+  }
+
+  private mapApiItemToRecord(item: Record<string, unknown>): MaintenanceActivityMachineRecord {
+    const sources = [item];
+    const id = this.pickString(sources, [
+      'id',
+      'Id',
+      'maintenance_activity_definition_id',
+      'maintenanceActivityDefinitionId',
+    ]);
+
+    return {
+      id,
+      machineId: this.pickString(sources, ['machine_id', 'machineId', 'MachineId']) || '—',
+      machineName: this.pickString(sources, ['machine_name', 'machineName', 'MachineName']) || '—',
+      machineType: this.pickString(sources, ['machine_type', 'machineType', 'MachineType']) || '—',
+      maintenanceNature:
+        this.pickString(sources, ['maintenance_nature', 'maintenanceNature', 'MaintenanceNature']) ||
+        '—',
+      plantMaintenanceFrequency:
+        this.pickString(sources, [
+          'plant_maintenance_frequency',
+          'plantMaintenanceFrequency',
+          'PlantMaintenanceFrequency',
+        ]) || '—',
+      plantMaintenanceType:
+        this.pickString(sources, [
+          'plant_maintenance_type',
+          'plantMaintenanceType',
+          'PlantMaintenanceType',
+        ]) || '—',
+      components: this.mapComponents(item),
+      selected: false,
+    };
+  }
 }
-
