@@ -1,24 +1,96 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../../../../config/api.config';
 import { PlantMaintenanceMachineRecordBase } from '../plant-maintenance-machine.model';
 
 export interface SubComponentMachineRecord extends PlantMaintenanceMachineRecordBase {
   subComponents: string[];
 }
 
+export interface MachineSubComponentPayload {
+  name: string;
+}
+
+export interface MachinePayload {
+  machine_id: string;
+  machine_name: string;
+  machine_type: string;
+  sub_components: MachineSubComponentPayload[];
+}
+
+export interface MachineInput {
+  machineId: string;
+  machineName: string;
+  machineType: string;
+  subComponents: string[];
+}
+
+export interface MachineApiResponse {
+  status?: boolean;
+  success?: boolean;
+  message?: string;
+  data?: Record<string, unknown>;
+}
+
+const MACHINE_LIST_URL = apiUrl('machine-list');
+const MACHINE_ADD_URL = apiUrl('machine-add');
+const MACHINE_DETAIL_URL = apiUrl('machine-detail');
+const MACHINE_UPDATE_URL = apiUrl('machine-update');
+const MACHINE_DELETE_URL = apiUrl('machine-delete');
+
+export function buildMachinePayload(entry: MachineInput): MachinePayload {
+  return {
+    machine_id: entry.machineId.trim(),
+    machine_name: entry.machineName.trim(),
+    machine_type: entry.machineType.trim(),
+    sub_components: entry.subComponents
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .map((name) => ({ name })),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class SubComponentDefinitionService {
+  private readonly http = inject(HttpClient);
   private readonly _records = signal<SubComponentMachineRecord[]>([]);
 
   readonly records = this._records.asReadonly();
 
-  addRecord(entry: Omit<SubComponentMachineRecord, 'id' | 'selected'>): SubComponentMachineRecord {
-    const record: SubComponentMachineRecord = {
-      ...entry,
-      id: `SCM-${Date.now()}`,
-      selected: false,
-    };
-    this._records.update((list) => [...list, record]);
-    return record;
+  fetchMachines(): Observable<SubComponentMachineRecord[]> {
+    return this.http.get<unknown>(MACHINE_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      tap((records) => this._records.set(records)),
+    );
+  }
+
+  fetchMachineDetail(id: string | number): Observable<SubComponentMachineRecord> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.get<unknown>(`${MACHINE_DETAIL_URL}/${identifier}`).pipe(
+      map((response) => this.mapDetailResponse(response, id)),
+    );
+  }
+
+  addMachine(entry: MachineInput): Observable<MachineApiResponse> {
+    return this.http.post<MachineApiResponse>(MACHINE_ADD_URL, buildMachinePayload(entry));
+  }
+
+  updateMachine(id: string | number, entry: MachineInput): Observable<MachineApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post<MachineApiResponse>(
+      `${MACHINE_UPDATE_URL}/${identifier}`,
+      buildMachinePayload(entry),
+    );
+  }
+
+  deleteMachine(id: string | number): Observable<MachineApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete<MachineApiResponse>(`${MACHINE_DELETE_URL}/${identifier}`);
+  }
+
+  removeMachineRecord(record: SubComponentMachineRecord): void {
+    this._records.update((list) => list.filter((item) => item.id !== record.id));
   }
 
   updateSelection(id: string, selected: boolean): void {
@@ -49,30 +121,125 @@ export class SubComponentDefinitionService {
     return this._records().find((r) => r.machineId.trim().toLowerCase() === key);
   }
 
-  updateRecord(
-    id: string,
-    entry: Omit<SubComponentMachineRecord, 'id' | 'selected'>,
-  ): boolean {
-    const exists = this._records().some((r) => r.id === id);
-    if (!exists) {
-      return false;
-    }
-    this._records.update((list) =>
-      list.map((r) => (r.id === id ? { ...r, ...entry, id, selected: r.selected } : r)),
-    );
-    return true;
-  }
-
-  deleteRecord(id: string): boolean {
-    const before = this._records().length;
-    this._records.update((list) => list.filter((r) => r.id !== id));
-    return this._records().length < before;
-  }
-
   hasDuplicateMachineId(machineId: string, excludeId?: string): boolean {
     const key = machineId.trim().toLowerCase();
     return this._records().some(
       (r) => r.machineId.trim().toLowerCase() === key && r.id !== excludeId,
     );
+  }
+
+  private mapDetailResponse(response: unknown, id: string | number): SubComponentMachineRecord {
+    const items = this.extractApiItems(response);
+    if (items.length > 0) {
+      return this.mapApiItemToRecord(items[0]);
+    }
+
+    if (response && typeof response === 'object') {
+      const record = this.mapApiItemToRecord(response as Record<string, unknown>);
+      if (!record.id) {
+        return { ...record, id: String(id) };
+      }
+      return record;
+    }
+
+    throw new Error('Machine record not found');
+  }
+
+  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (!response) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = [
+      'data',
+      'items',
+      'results',
+      'records',
+      'list',
+      'machines',
+      'machine_list',
+      'machineList',
+    ];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (
+      obj['machine_id'] ||
+      obj['machineId'] ||
+      obj['machine_name'] ||
+      obj['machineName']
+    ) {
+      return [obj];
+    }
+
+    return [];
+  }
+
+  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
+    for (const source of sources) {
+      for (const key of keys) {
+        const value = source[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          return String(value).trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  private mapSubComponents(item: Record<string, unknown>): string[] {
+    const raw = item['sub_components'] ?? item['subComponents'] ?? item['SubComponents'];
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return entry.trim();
+        }
+        if (entry && typeof entry === 'object') {
+          const component = entry as Record<string, unknown>;
+          return this.pickString([component], ['name', 'Name', 'sub_component', 'subComponent']);
+        }
+        return '';
+      })
+      .filter(Boolean);
+  }
+
+  private mapApiItemToRecord(item: Record<string, unknown>): SubComponentMachineRecord {
+    const sources = [item];
+    const id = this.pickString(sources, ['id', 'Id', 'machine_record_id', 'machineRecordId']);
+
+    return {
+      id,
+      machineId: this.pickString(sources, ['machine_id', 'machineId', 'MachineId']) || '—',
+      machineName: this.pickString(sources, ['machine_name', 'machineName', 'MachineName']) || '—',
+      machineType: this.pickString(sources, ['machine_type', 'machineType', 'MachineType']) || '—',
+      subComponents: this.mapSubComponents(item),
+      selected: false,
+    };
   }
 }

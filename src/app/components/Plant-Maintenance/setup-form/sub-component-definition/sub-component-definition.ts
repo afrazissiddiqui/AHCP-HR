@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { AlertService } from '../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PlantMaintenanceSetupLayoutService } from '../plant-maintenance-setup-layout.service';
 import {
@@ -34,7 +35,7 @@ type MachineTableColumnKey = 'machineId' | 'machineName' | 'machineType';
     `,
   ],
 })
-export class SubComponentDefinitionComponent {
+export class SubComponentDefinitionComponent implements OnInit {
   private readonly layout = inject(PlantMaintenanceSetupLayoutService);
   private readonly subComponentService = inject(SubComponentDefinitionService);
   private readonly alertService = inject(AlertService);
@@ -50,8 +51,20 @@ export class SubComponentDefinitionComponent {
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   showViewDialog = false;
+  detailLoading = false;
   selectedRecord: SubComponentMachineRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
+
+  ngOnInit(): void {
+    this.subComponentService.fetchMachines().subscribe({
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load machines.'),
+        );
+      },
+    });
+  }
 
   readonly columns: Array<{ key: MachineTableColumnKey; label: string; visible: boolean }> = [
     { key: 'machineId', label: 'Machine ID', visible: true },
@@ -119,16 +132,42 @@ export class SubComponentDefinitionComponent {
   }
 
   viewRecord(item: SubComponentMachineRecord): void {
-    this.selectedRecord = item;
+    if (!item.id) {
+      void this.alertService.warning('View', 'Unable to view this row: missing machine id.');
+      return;
+    }
+
     this.showViewDialog = true;
+    this.selectedRecord = null;
+    this.detailLoading = true;
+
+    this.subComponentService.fetchMachineDetail(item.id).subscribe({
+      next: (detail) => {
+        this.selectedRecord = detail;
+        this.detailLoading = false;
+      },
+      error: (error: unknown) => {
+        this.detailLoading = false;
+        this.showViewDialog = false;
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load machine details.'),
+        );
+      },
+    });
   }
 
   closeViewDialog(): void {
     this.showViewDialog = false;
     this.selectedRecord = null;
+    this.detailLoading = false;
   }
 
   updateRecord(item: SubComponentMachineRecord): void {
+    if (!item.id) {
+      void this.alertService.warning('Update', 'Unable to update this row: missing machine id.');
+      return;
+    }
     void this.router.navigate([
       '/plant-maintenance/setup-form/sub-component-definition/edit',
       item.id,
@@ -143,10 +182,27 @@ export class SubComponentDefinitionComponent {
     if (!result.isConfirmed) {
       return;
     }
-    this.subComponentService.deleteRecord(item.id);
-    if (this.paginatedList.length === 0 && this.currentPage > 1) {
-      this.currentPage -= 1;
+
+    if (!item.id) {
+      void this.alertService.warning('Delete', 'Unable to delete this row: missing machine id.');
+      return;
     }
+
+    this.subComponentService.deleteMachine(item.id).subscribe({
+      next: () => {
+        this.subComponentService.removeMachineRecord(item);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        void this.alertService.success('Deleted', 'Machine removed successfully.');
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete machine.'),
+        );
+      },
+    });
   }
 
   getCellValue(item: SubComponentMachineRecord, columnKey: MachineTableColumnKey): string {

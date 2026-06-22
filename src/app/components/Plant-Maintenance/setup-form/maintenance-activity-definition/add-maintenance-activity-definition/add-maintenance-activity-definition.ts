@@ -169,6 +169,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
   ngOnInit(): void {
 
+    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
+
     const id = this.route.snapshot.paramMap.get('id');
 
     if (!id) {

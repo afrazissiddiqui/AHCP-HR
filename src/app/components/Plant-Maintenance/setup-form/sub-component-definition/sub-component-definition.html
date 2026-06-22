@@ -149,42 +149,50 @@
 </div>
 
 <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+<div class="js-detail-modal" *ngIf="showViewDialog">
   <div class="js-modal-header">
-    <h2>Machine Detail — {{ selectedRecord.machineName }}</h2>
+    <h2>Machine Detail{{ selectedRecord ? ' — ' + selectedRecord.machineName : '' }}</h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">
-    <div class="js-detail-section">
-      <h3>Machine Information</h3>
-      <div class="js-detail-grid">
-        <div class="js-detail-item">
-          <label>Machine ID:</label>
-          <span>{{ selectedRecord.machineId }}</span>
-        </div>
-        <div class="js-detail-item">
-          <label>Machine Name:</label>
-          <span>{{ selectedRecord.machineName }}</span>
-        </div>
-        <div class="js-detail-item">
-          <label>Machine Type:</label>
-          <span>{{ selectedRecord.machineType }}</span>
+    <p *ngIf="detailLoading">Loading machine details...</p>
+    <ng-container *ngIf="!detailLoading && selectedRecord">
+      <div class="js-detail-section">
+        <h3>Machine Information</h3>
+        <div class="js-detail-grid">
+          <div class="js-detail-item">
+            <label>Machine ID:</label>
+            <span>{{ selectedRecord.machineId }}</span>
+          </div>
+          <div class="js-detail-item">
+            <label>Machine Name:</label>
+            <span>{{ selectedRecord.machineName }}</span>
+          </div>
+          <div class="js-detail-item">
+            <label>Machine Type:</label>
+            <span>{{ selectedRecord.machineType }}</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="js-detail-section">
-      <h3>Sub-Components</h3>
-      <ul class="scd-view-sub-list" *ngIf="selectedRecord.subComponents.length; else noSubComponents">
-        <li *ngFor="let sub of selectedRecord.subComponents">{{ sub }}</li>
-      </ul>
-      <ng-template #noSubComponents>
-        <p class="scd-view-sub-empty">No sub-components defined.</p>
-      </ng-template>
-    </div>
+      <div class="js-detail-section">
+        <h3>Sub-Components</h3>
+        <ul class="scd-view-sub-list" *ngIf="selectedRecord.subComponents.length; else noSubComponents">
+          <li *ngFor="let sub of selectedRecord.subComponents">{{ sub }}</li>
+        </ul>
+        <ng-template #noSubComponents>
+          <p class="scd-view-sub-empty">No sub-components defined.</p>
+        </ng-template>
+      </div>
+    </ng-container>
   </div>
   <div class="js-modal-footer">
     <button type="button" class="btn-secondary scd-modal-close-btn" (click)="closeViewDialog()">Close</button>
-    <button type="button" class="scd-update-btn" (click)="updateRecord(selectedRecord); closeViewDialog()">
+    <button
+      type="button"
+      class="scd-update-btn"
+      *ngIf="!detailLoading && selectedRecord"
+      (click)="updateRecord(selectedRecord); closeViewDialog()"
+    >
       Update
     </button>
   </div>

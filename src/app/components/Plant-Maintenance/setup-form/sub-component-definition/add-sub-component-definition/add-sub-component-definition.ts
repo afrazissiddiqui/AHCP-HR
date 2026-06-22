@@ -2,9 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
-import { SubComponentDefinitionService } from '../sub-component-definition.service';
+import { SubComponentDefinitionService, SubComponentMachineRecord } from '../sub-component-definition.service';
 
 @Component({
   selector: 'app-add-sub-component-definition',
@@ -32,6 +34,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   readonly machineName = signal('');
   readonly machineType = signal('');
   readonly subComponents = signal<string[]>(['']);
+  readonly isSaving = signal(false);
   readonly idSuggestionsOpen = signal(false);
   readonly nameSuggestionsOpen = signal(false);
 
@@ -47,19 +50,25 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     if (!id) {
       return;
     }
-    const record = this.subComponentService.getById(id);
-    if (!record) {
-      this.alertService.validation('Machine record not found.');
-      void this.router.navigate(['/plant-maintenance/setup-form/sub-component-definition']);
+
+    this.editingRecordId.set(id);
+
+    const cached = this.subComponentService.getById(id);
+    if (cached) {
+      this.populateFromRecord(cached);
       return;
     }
-    this.editingRecordId.set(id);
-    this.machineId.set(record.machineId);
-    this.machineName.set(record.machineName);
-    this.machineType.set(record.machineType);
-    this.subComponents.set(
-      record.subComponents.length ? [...record.subComponents] : [''],
-    );
+
+    this.subComponentService.fetchMachineDetail(id).subscribe({
+      next: (record) => this.populateFromRecord(record),
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load machine for edit.'),
+        );
+        void this.router.navigate(['/plant-maintenance/setup-form/sub-component-definition']);
+      },
+    });
   }
 
   back(): void {
@@ -188,20 +197,54 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     }
 
     const payload = { machineId, machineName, machineType, subComponents };
+    const editingId = this.editingRecordId();
 
-    if (this.editingRecordId()) {
-      this.subComponentService.updateRecord(this.editingRecordId()!, payload);
+    if (editingId) {
+      this.isSaving.set(true);
+      try {
+        await firstValueFrom(this.subComponentService.updateMachine(editingId, payload));
+        await this.alertService.successAndWait(
+          'Success',
+          'Sub Component Defination updated successfully.',
+        );
+      } catch (error) {
+        void this.alertService.error(
+          'Update Failed',
+          formatApiErrorMessage(error, 'Failed to update machine.'),
+        );
+        return;
+      } finally {
+        this.isSaving.set(false);
+      }
     } else {
-      this.subComponentService.addRecord(payload);
+      this.isSaving.set(true);
+      try {
+        await firstValueFrom(this.subComponentService.addMachine(payload));
+        await this.alertService.successAndWait(
+          'Success',
+          'Sub Component Defination saved successfully.',
+        );
+      } catch (error) {
+        void this.alertService.error(
+          'Save Failed',
+          formatApiErrorMessage(error, 'Failed to save machine.'),
+        );
+        return;
+      } finally {
+        this.isSaving.set(false);
+      }
     }
 
-    const successMessage = this.editingRecordId()
-      ? 'Sub Component Defination updated successfully.'
-      : 'Sub Component Defination saved successfully.';
-
-    await this.alertService.successAndWait('Success', successMessage);
-
     void this.router.navigate(['/plant-maintenance/setup-form/sub-component-definition']);
+  }
+
+  private populateFromRecord(record: SubComponentMachineRecord): void {
+    this.machineId.set(record.machineId === '—' ? '' : record.machineId);
+    this.machineName.set(record.machineName === '—' ? '' : record.machineName);
+    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
+    this.subComponents.set(
+      record.subComponents.length ? [...record.subComponents] : [''],
+    );
   }
 
   private filterMachineSuggestions(query: string): MachineSearchOption[] {
