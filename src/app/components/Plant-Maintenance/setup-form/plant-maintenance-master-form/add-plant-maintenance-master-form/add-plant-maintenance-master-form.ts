@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   MachineSearchOption,
   resolveSparePartIdentity,
@@ -118,6 +120,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly endDate = signal('');
   readonly durationDays = signal<number | null>(null);
   readonly spareParts = signal<PlantMaintenanceMasterSparePartLine[]>([]);
+  readonly isSaving = signal(false);
   readonly components = signal<PlantMaintenanceMasterComponent[]>([]);
   readonly availableActivityRecords = signal<MaintenanceActivityMachineRecord[]>([]);
   readonly hasLoadedActivityData = signal(false);
@@ -180,29 +183,31 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.activityService.fetchMaintenanceActivityDefinitions().subscribe({ error: () => {} });
+    this.masterService.fetchPlantMaintenanceMasterForms().subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       return;
     }
-    const record = this.masterService.getById(id);
-    if (!record) {
-      this.alertService.validation('Machine record not found.');
-      void this.router.navigate(['/plant-maintenance/main-form/plant-maintenance-master-form']);
+
+    this.editingRecordId.set(id);
+
+    const cached = this.masterService.getById(id);
+    if (cached) {
+      this.populateFromRecord(cached);
       return;
     }
-    this.editingRecordId.set(id);
-    this.machineId.set(record.machineId);
-    this.machineName.set(record.machineName);
-    this.machineType.set(record.machineType);
-    this.maintenanceNature.set(record.maintenanceNature);
-    this.plantMaintenanceFrequency.set(record.plantMaintenanceFrequency);
-    this.plantMaintenanceType.set(record.plantMaintenanceType);
-    this.startDate.set(record.startDate ?? '');
-    this.endDate.set(record.endDate ?? '');
-    this.durationDays.set(record.duration ?? null);
-    this.spareParts.set(this.cloneSpareParts(record));
-    this.components.set(this.cloneComponents(record));
+
+    this.masterService.fetchPlantMaintenanceMasterFormDetail(id).subscribe({
+      next: (record) => this.populateFromRecord(record),
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load plant maintenance master form for edit.'),
+        );
+        void this.router.navigate(['/plant-maintenance/main-form/plant-maintenance-master-form']);
+      },
+    });
   }
 
   hasLoadedComponents(): boolean {
@@ -605,17 +610,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     if (this.editingRecordId()) {
       const record = this.masterService.getById(this.editingRecordId()!);
       if (record) {
-        this.machineId.set(record.machineId);
-        this.machineName.set(record.machineName);
-        this.machineType.set(record.machineType);
-        this.maintenanceNature.set(record.maintenanceNature);
-        this.plantMaintenanceFrequency.set(record.plantMaintenanceFrequency);
-        this.plantMaintenanceType.set(record.plantMaintenanceType);
-        this.startDate.set(record.startDate ?? '');
-        this.endDate.set(record.endDate ?? '');
-        this.durationDays.set(record.duration ?? null);
-        this.spareParts.set(this.cloneSpareParts(record));
-        this.components.set(this.cloneComponents(record));
+        this.populateFromRecord(record);
         this.hasLoadedActivityData.set(false);
       }
       return;
@@ -638,6 +633,10 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   }
 
   async saveForm(): Promise<void> {
+    if (this.isSaving()) {
+      return;
+    }
+
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
     const machineType = this.machineType().trim();
@@ -739,23 +738,53 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       return;
     }
 
-    if (this.editingRecordId()) {
-      const existing = this.masterService.getById(this.editingRecordId()!);
-      this.masterService.updateRecord(this.editingRecordId()!, {
-        ...payload,
-        remarks: existing?.remarks ?? '',
-      });
-    } else {
-      this.masterService.addRecord(payload);
+    const apiPayload = {
+      machineId,
+      machineName,
+      machineType,
+      maintenanceNature,
+      plantMaintenanceFrequency,
+      plantMaintenanceType,
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      duration: payload.duration,
+      spareParts,
+      components,
+    };
+
+    this.isSaving.set(true);
+
+    try {
+      if (this.editingRecordId()) {
+        await firstValueFrom(
+          this.masterService.updatePlantMaintenanceMasterForm(this.editingRecordId()!, apiPayload),
+        );
+        await this.alertService.successAndWait(
+          'Success',
+          'Plant Maintenance Master Form updated successfully.',
+        );
+      } else {
+        await firstValueFrom(this.masterService.addPlantMaintenanceMasterForm(apiPayload));
+        await this.alertService.successAndWait(
+          'Success',
+          'Plant Maintenance Master Form saved successfully.',
+        );
+      }
+
+      void this.router.navigate(['/plant-maintenance/main-form/plant-maintenance-master-form']);
+    } catch (error) {
+      void this.alertService.error(
+        this.editingRecordId() ? 'Update Failed' : 'Save Failed',
+        formatApiErrorMessage(
+          error,
+          this.editingRecordId()
+            ? 'Failed to update plant maintenance master form.'
+            : 'Failed to save plant maintenance master form.',
+        ),
+      );
+    } finally {
+      this.isSaving.set(false);
     }
-
-    const successMessage = this.editingRecordId()
-      ? 'Plant Maintenance Master Form updated successfully.'
-      : 'Plant Maintenance Master Form saved successfully.';
-
-    await this.alertService.successAndWait('Success', successMessage);
-
-    void this.router.navigate(['/plant-maintenance/main-form/plant-maintenance-master-form']);
   }
 
   private syncScheduleFromDuration(days: number): void {
@@ -931,6 +960,24 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     }
 
     return { spareParts };
+  }
+
+  private populateFromRecord(record: PlantMaintenanceMasterRecord): void {
+    this.machineId.set(record.machineId === '—' ? '' : record.machineId);
+    this.machineName.set(record.machineName === '—' ? '' : record.machineName);
+    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
+    this.maintenanceNature.set(record.maintenanceNature === '—' ? '' : record.maintenanceNature);
+    this.plantMaintenanceFrequency.set(
+      record.plantMaintenanceFrequency === '—' ? '' : record.plantMaintenanceFrequency,
+    );
+    this.plantMaintenanceType.set(
+      record.plantMaintenanceType === '—' ? '' : record.plantMaintenanceType,
+    );
+    this.startDate.set(record.startDate ?? '');
+    this.endDate.set(record.endDate ?? '');
+    this.durationDays.set(record.duration ?? null);
+    this.spareParts.set(this.cloneSpareParts(record));
+    this.components.set(this.cloneComponents(record));
   }
 
   private cloneSpareParts(record: PlantMaintenanceMasterRecord): PlantMaintenanceMasterSparePartLine[] {
