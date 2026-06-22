@@ -1,4 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../../../../config/api.config';
 
 export type HuskyFormStatus = 'Draft' | 'Submitted' | 'In Review' | 'Approved' | 'Rejected';
 
@@ -826,27 +829,650 @@ function formatDateValue(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export interface HuskyFormAddInput {
+  machineId: string;
+  machineName: string;
+  maintenanceType: string;
+  maintenanceFrequency: string;
+  serialNo: string;
+  moldNo: string;
+  hotRunnerJobNo: string;
+  hourMeterReading: string;
+  robotSerialNo: string;
+  inspector: string;
+  inspectionDate: string;
+  submitDate?: string;
+  documentNo?: string;
+  status?: string;
+  kpiRows: HuskyKpiRow[];
+  safetyCheckpoints: HuskySectionCheckpoint[];
+  hydraulicCheckpoints: HuskySectionCheckpoint[];
+  mechanicalCheckpoints: HuskySectionCheckpoint[];
+  robotCheckpoints: HuskySectionCheckpoint[];
+  measurements: HuskyMeasurementsData;
+  levelParallelism: HuskyLevelParallelismData;
+}
+
+export interface HuskyFormSectionPayload {
+  sectionName: string;
+  answers: Array<Record<string, string>>;
+}
+
+export interface HuskyFormAddPayload {
+  machine_id: string;
+  machine_name: string;
+  maintenance_type: string;
+  maintenance_frequency: string;
+  serial_no: string;
+  mold_no: string;
+  hot_runner_job_no: string;
+  hour_meter_reading: number;
+  robot_serial_no: string;
+  inspector: string;
+  inspection_date: string;
+  submit_date: string;
+  document_no: string;
+  status: string;
+  sections: HuskyFormSectionPayload[];
+}
+
+export interface HuskyFormApiResponse {
+  status?: boolean;
+  success?: boolean;
+  message?: string;
+  data?: Record<string, unknown>;
+}
+
+const HUSKY_FORM_LIST_URL = apiUrl('husky-form-list');
+const HUSKY_FORM_ADD_URL = apiUrl('husky-form-add');
+const HUSKY_FORM_DETAIL_URL = apiUrl('husky-form-detail');
+const HUSKY_FORM_UPDATE_URL = apiUrl('husky-form-update');
+const HUSKY_FORM_DELETE_URL = apiUrl('husky-form-delete');
+
+function getKpiSectionName(row: HuskyKpiRow): string {
+  if (row.key === 'safety') {
+    return 'Key Performance Indicators (KPI)';
+  }
+  return row.label;
+}
+
+function buildKpiSection(row: HuskyKpiRow): HuskyFormSectionPayload | null {
+  const answers: Array<Record<string, string>> = [];
+
+  if (row.issuesScore !== null) {
+    answers.push({ question: 'Issues Score', value: String(row.issuesScore) });
+  }
+  if (row.maxPossibleScore !== null) {
+    answers.push({ question: 'Max Possible Score', value: String(row.maxPossibleScore) });
+  }
+  if (row.notes.trim()) {
+    answers.push({ question: 'Notes', value: row.notes.trim() });
+  }
+
+  if (answers.length === 0) {
+    return null;
+  }
+
+  return {
+    sectionName: getKpiSectionName(row),
+    answers,
+  };
+}
+
+function buildCheckpointSection(
+  sectionName: string,
+  checkpoints: HuskySectionCheckpoint[],
+): HuskyFormSectionPayload | null {
+  const answers = checkpoints
+    .filter((row) => row.evaluation.trim() || row.recommendation.trim())
+    .map((row) => ({
+      question: row.checkpoint,
+      Evaluation: row.evaluation.trim(),
+      Recommendation: row.recommendation.trim(),
+    }));
+
+  if (answers.length === 0) {
+    return null;
+  }
+
+  return { sectionName, answers };
+}
+
+function buildLevelParallelismSection(rows: HuskyLevelPointRow[]): HuskyFormSectionPayload | null {
+  const answers = rows
+    .filter((row) => row.opsValue.trim() || row.nopsValue.trim())
+    .map((row) => ({
+      level: row.levelPoint,
+      ops: row.opsValue.trim(),
+      nops: row.nopsValue.trim(),
+    }));
+
+  if (answers.length === 0) {
+    return null;
+  }
+
+  return {
+    sectionName: 'Level / Parallelism',
+    answers,
+  };
+}
+
+export function buildHuskyFormAddPayload(entry: HuskyFormAddInput): HuskyFormAddPayload {
+  const hourMeter = Number.parseFloat(entry.hourMeterReading.trim().replace(/[^\d.-]/g, ''));
+  const sections: HuskyFormSectionPayload[] = [];
+
+  for (const row of entry.kpiRows) {
+    const section = buildKpiSection(row);
+    if (section) {
+      sections.push(section);
+    }
+  }
+
+  const checkpointSections: Array<[string, HuskySectionCheckpoint[]]> = [
+    ['Safety', entry.safetyCheckpoints],
+    ['Hydraulic and Hydraulic Manifolds', entry.hydraulicCheckpoints],
+    ['Mechanical / Pneumatic / Water / Electrical / Software', entry.mechanicalCheckpoints],
+    ['Robot and Conveyor Checkpoints', entry.robotCheckpoints],
+  ];
+
+  for (const [sectionName, checkpoints] of checkpointSections) {
+    const section = buildCheckpointSection(sectionName, checkpoints);
+    if (section) {
+      sections.push(section);
+    }
+  }
+
+  const accumulatorAnswers = entry.measurements.accumulatorNitrogen
+    .filter((row) => row.actualValue.trim())
+    .map((row) => ({
+      Accumulator: row.label,
+      required_value: row.requiredValue,
+      actual_value: row.actualValue.trim(),
+    }));
+  if (accumulatorAnswers.length > 0) {
+    sections.push({
+      sectionName: 'Accumulator Nitrogen Pressure',
+      answers: accumulatorAnswers,
+    });
+  }
+
+  const pumpAnswers = entry.measurements.pumpPressure
+    .filter((row) => row.actualValue.trim())
+    .map((row) => ({
+      Pump: row.label,
+      required_value: row.requiredValue,
+      actual_value: row.actualValue.trim(),
+    }));
+  if (pumpAnswers.length > 0) {
+    sections.push({
+      sectionName: 'Pump Pressure Measurement / Calibration',
+      answers: pumpAnswers,
+    });
+  }
+
+  const extruderAnswers = entry.measurements.extruderSpeedControl
+    .filter((row) => row.actualValue.trim() || row.pressureValue.trim())
+    .map((row) => ({
+      item: row.item,
+      required_value: row.setValue,
+      actual_value: row.actualValue.trim(),
+      pressure_value: row.pressureValue.trim(),
+    }));
+  if (extruderAnswers.length > 0) {
+    sections.push({
+      sectionName: 'Extruder Speed Control A',
+      answers: extruderAnswers,
+    });
+  }
+
+  const tonnageAnswers = entry.measurements.tonnageTest
+    .filter((row) => row.actualLossTons.trim())
+    .map((row) => ({
+      item: row.item,
+      t0: row.t0Min,
+      t10: row.t10Min,
+      authrized_loss: row.authorizedLossTons,
+      actual_loss: row.actualLossTons.trim(),
+    }));
+  if (tonnageAnswers.length > 0) {
+    sections.push({
+      sectionName: 'Tonnage Test',
+      answers: tonnageAnswers,
+    });
+  }
+
+  for (const levelRows of [
+    entry.levelParallelism.levelPoints,
+    entry.levelParallelism.columnGuideBushing,
+    entry.levelParallelism.injectionLevel,
+  ]) {
+    const section = buildLevelParallelismSection(levelRows);
+    if (section) {
+      sections.push(section);
+    }
+  }
+
+  return {
+    machine_id: entry.machineId.trim(),
+    machine_name: entry.machineName.trim(),
+    maintenance_type: entry.maintenanceType.trim(),
+    maintenance_frequency: entry.maintenanceFrequency.trim(),
+    serial_no: entry.serialNo.trim(),
+    mold_no: entry.moldNo.trim(),
+    hot_runner_job_no: entry.hotRunnerJobNo.trim(),
+    hour_meter_reading: Number.isFinite(hourMeter) ? hourMeter : 0,
+    robot_serial_no: entry.robotSerialNo.trim(),
+    inspector: entry.inspector.trim(),
+    inspection_date: entry.inspectionDate.trim(),
+    submit_date: entry.submitDate?.trim() || formatDateValue(new Date()),
+    document_no: entry.documentNo?.trim() || '',
+    status: entry.status?.trim() || 'Draft',
+    sections,
+  };
+}
+
+export const buildHuskyFormPayload = buildHuskyFormAddPayload;
+
+function pickStringValue(sources: Array<Record<string, unknown>>, keys: string[]): string {
+  for (const source of sources) {
+    for (const key of keys) {
+      const value = source[key];
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        return String(value).trim();
+      }
+    }
+  }
+  return '';
+}
+
+function parseNumberOrNull(value: string): number | null {
+  const parsed = Number.parseFloat(value.replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeAnswer(answer: unknown): Record<string, string> {
+  if (!answer || typeof answer !== 'object') {
+    return {};
+  }
+
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(answer as Record<string, unknown>)) {
+    if (value !== undefined && value !== null) {
+      result[key] = String(value);
+    }
+  }
+  return result;
+}
+
+function extractSections(item: Record<string, unknown>): HuskyFormSectionPayload[] {
+  const raw = item['sections'] ?? item['Sections'];
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .filter((section): section is Record<string, unknown> => !!section && typeof section === 'object')
+    .map((section) => ({
+      sectionName: pickStringValue([section], ['sectionName', 'section_name', 'SectionName']),
+      answers: (() => {
+        const rawAnswers = section['answers'] ?? section['Answers'];
+        if (!Array.isArray(rawAnswers)) {
+          return [];
+        }
+        return rawAnswers
+          .filter((answer): answer is Record<string, unknown> => !!answer && typeof answer === 'object')
+          .map((answer) => normalizeAnswer(answer));
+      })(),
+    }))
+    .filter((section) => section.sectionName);
+}
+
+function findSection(
+  sections: HuskyFormSectionPayload[],
+  sectionName: string,
+): HuskyFormSectionPayload | undefined {
+  return sections.find((section) => section.sectionName === sectionName);
+}
+
+function findSections(
+  sections: HuskyFormSectionPayload[],
+  sectionName: string,
+): HuskyFormSectionPayload[] {
+  return sections.filter((section) => section.sectionName === sectionName);
+}
+
+function applyKpiSection(row: HuskyKpiRow, answers: Array<Record<string, string>>): HuskyKpiRow {
+  let issuesScore = row.issuesScore;
+  let maxPossibleScore = row.maxPossibleScore;
+  let notes = row.notes;
+
+  for (const answer of answers) {
+    const question = pickStringValue([answer], ['question', 'Question']);
+    const value = pickStringValue([answer], ['value', 'Value']);
+    if (question === 'Issues Score') {
+      issuesScore = parseNumberOrNull(value);
+    } else if (question === 'Max Possible Score') {
+      maxPossibleScore = parseNumberOrNull(value);
+    } else if (question === 'Notes') {
+      notes = value;
+    }
+  }
+
+  return { ...row, issuesScore, maxPossibleScore, notes };
+}
+
+function applyCheckpointSection(
+  checkpoints: HuskySectionCheckpoint[],
+  answers: Array<Record<string, string>>,
+): HuskySectionCheckpoint[] {
+  return checkpoints.map((checkpoint) => {
+    const match = answers.find(
+      (answer) => pickStringValue([answer], ['question', 'Question']) === checkpoint.checkpoint,
+    );
+    if (!match) {
+      return checkpoint;
+    }
+
+    return {
+      ...checkpoint,
+      evaluation: pickStringValue([match], ['Evaluation', 'evaluation']) as HuskyCheckpointEvaluation,
+      recommendation: pickStringValue([match], ['Recommendation', 'recommendation']),
+    };
+  });
+}
+
+function applyRequiredActualRows(
+  rows: HuskyRequiredActualRow[],
+  answers: Array<Record<string, string>>,
+  labelKeys: string[],
+): HuskyRequiredActualRow[] {
+  return rows.map((row) => {
+    const match = answers.find((answer) => {
+      const label = labelKeys.map((key) => answer[key]).find(Boolean);
+      return label === row.label;
+    });
+    if (!match) {
+      return row;
+    }
+
+    return {
+      ...row,
+      requiredValue:
+        pickStringValue([match], ['required_value', 'requiredValue']) || row.requiredValue,
+      actualValue: pickStringValue([match], ['actual_value', 'actualValue']),
+    };
+  });
+}
+
+function applyExtruderRows(
+  rows: HuskyExtruderSpeedRow[],
+  answers: Array<Record<string, string>>,
+): HuskyExtruderSpeedRow[] {
+  return rows.map((row) => {
+    const match = answers.find(
+      (answer) => pickStringValue([answer], ['item', 'Item']) === row.item,
+    );
+    if (!match) {
+      return row;
+    }
+
+    return {
+      ...row,
+      setValue: pickStringValue([match], ['required_value', 'requiredValue']) || row.setValue,
+      actualValue: pickStringValue([match], ['actual_value', 'actualValue']),
+      pressureValue: pickStringValue([match], ['pressure_value', 'pressureValue']),
+    };
+  });
+}
+
+function applyTonnageRows(
+  rows: HuskyTonnageTestRow[],
+  answers: Array<Record<string, string>>,
+): HuskyTonnageTestRow[] {
+  return rows.map((row) => {
+    const match = answers.find(
+      (answer) => pickStringValue([answer], ['item', 'Item']) === row.item,
+    );
+    if (!match) {
+      return row;
+    }
+
+    return {
+      ...row,
+      t0Min: pickStringValue([match], ['t0', 't0Min']) || row.t0Min,
+      t10Min: pickStringValue([match], ['t10', 't10Min']) || row.t10Min,
+      authorizedLossTons:
+        pickStringValue([match], ['authrized_loss', 'authorized_loss', 'authorizedLossTons']) ||
+        row.authorizedLossTons,
+      actualLossTons: pickStringValue([match], ['actual_loss', 'actualLossTons']),
+    };
+  });
+}
+
+function applyLevelRows(
+  rows: HuskyLevelPointRow[],
+  answers: Array<Record<string, string>>,
+): HuskyLevelPointRow[] {
+  return rows.map((row) => {
+    const match = answers.find(
+      (answer) => pickStringValue([answer], ['level', 'Level']) === row.levelPoint,
+    );
+    if (!match) {
+      return row;
+    }
+
+    return {
+      ...row,
+      opsValue: pickStringValue([match], ['ops', 'Ops']),
+      nopsValue: pickStringValue([match], ['nops', 'Nops']),
+    };
+  });
+}
+
+function mapSectionsToFormParts(sections: HuskyFormSectionPayload[]): {
+  kpiRows: HuskyKpiRow[];
+  safetyCheckpoints: HuskySectionCheckpoint[];
+  hydraulicCheckpoints: HuskySectionCheckpoint[];
+  mechanicalCheckpoints: HuskySectionCheckpoint[];
+  robotCheckpoints: HuskySectionCheckpoint[];
+  measurements: HuskyMeasurementsData;
+  levelParallelism: HuskyLevelParallelismData;
+} {
+  let kpiRows = createEmptyHuskyKpiRows().map((row) => {
+    const section = findSection(sections, getKpiSectionName(row));
+    return section ? applyKpiSection(row, section.answers) : row;
+  });
+
+  let safetyCheckpoints = applyCheckpointSection(
+    createEmptyHuskySafetyCheckpoints(),
+    findSection(sections, 'Safety')?.answers ?? [],
+  );
+  let hydraulicCheckpoints = applyCheckpointSection(
+    createEmptyHuskyHydraulicCheckpoints(),
+    findSection(sections, 'Hydraulic and Hydraulic Manifolds')?.answers ?? [],
+  );
+  let mechanicalCheckpoints = applyCheckpointSection(
+    createEmptyHuskyMechanicalCheckpoints(),
+    findSection(sections, 'Mechanical / Pneumatic / Water / Electrical / Software')?.answers ?? [],
+  );
+  let robotCheckpoints = applyCheckpointSection(
+    createEmptyHuskyRobotCheckpoints(),
+    findSection(sections, 'Robot and Conveyor Checkpoints')?.answers ?? [],
+  );
+
+  let measurements = createEmptyHuskyMeasurements();
+  const accumulatorSection = findSection(sections, 'Accumulator Nitrogen Pressure');
+  if (accumulatorSection) {
+    measurements = {
+      ...measurements,
+      accumulatorNitrogen: applyRequiredActualRows(
+        measurements.accumulatorNitrogen,
+        accumulatorSection.answers,
+        ['Accumulator'],
+      ),
+    };
+  }
+
+  const pumpSection = findSection(sections, 'Pump Pressure Measurement / Calibration');
+  if (pumpSection) {
+    measurements = {
+      ...measurements,
+      pumpPressure: applyRequiredActualRows(
+        measurements.pumpPressure,
+        pumpSection.answers,
+        ['Pump'],
+      ),
+    };
+  }
+
+  const extruderSection = findSection(sections, 'Extruder Speed Control A');
+  if (extruderSection) {
+    measurements = {
+      ...measurements,
+      extruderSpeedControl: applyExtruderRows(
+        measurements.extruderSpeedControl,
+        extruderSection.answers,
+      ),
+    };
+  }
+
+  const tonnageSection = findSection(sections, 'Tonnage Test');
+  if (tonnageSection) {
+    measurements = {
+      ...measurements,
+      tonnageTest: applyTonnageRows(measurements.tonnageTest, tonnageSection.answers),
+    };
+  }
+
+  const levelSections = findSections(sections, 'Level / Parallelism');
+  let levelParallelism = createEmptyHuskyLevelParallelism();
+  if (levelSections[0]) {
+    levelParallelism = {
+      ...levelParallelism,
+      levelPoints: applyLevelRows(levelParallelism.levelPoints, levelSections[0].answers),
+    };
+  }
+  if (levelSections[1]) {
+    levelParallelism = {
+      ...levelParallelism,
+      columnGuideBushing: applyLevelRows(
+        levelParallelism.columnGuideBushing,
+        levelSections[1].answers,
+      ),
+    };
+  }
+  if (levelSections[2]) {
+    levelParallelism = {
+      ...levelParallelism,
+      injectionLevel: applyLevelRows(levelParallelism.injectionLevel, levelSections[2].answers),
+    };
+  }
+
+  return {
+    kpiRows,
+    safetyCheckpoints,
+    hydraulicCheckpoints,
+    mechanicalCheckpoints,
+    robotCheckpoints,
+    measurements,
+    levelParallelism,
+  };
+}
+
+function mapApiItemToRecord(item: Record<string, unknown>): HuskyFormRecord {
+  const sources = [item];
+  const sections = extractSections(item);
+  const sectionParts = mapSectionsToFormParts(sections);
+  const status = pickStringValue(sources, ['status', 'Status']) as HuskyFormStatus;
+
+  return {
+    id: pickStringValue(sources, ['id', 'Id', 'husky_form_id', 'huskyFormId']),
+    selected: false,
+    machineId: pickStringValue(sources, ['machine_id', 'machineId', 'MachineId']),
+    machineName: pickStringValue(sources, ['machine_name', 'machineName', 'MachineName']),
+    maintenanceType: pickStringValue(sources, ['maintenance_type', 'maintenanceType', 'MaintenanceType']),
+    maintenanceFrequency: pickStringValue(sources, [
+      'maintenance_frequency',
+      'maintenanceFrequency',
+      'MaintenanceFrequency',
+    ]),
+    serialNo: pickStringValue(sources, ['serial_no', 'serialNo', 'SerialNo']),
+    moldNo: pickStringValue(sources, ['mold_no', 'moldNo', 'MoldNo']),
+    hotRunnerJobNo: pickStringValue(sources, [
+      'hot_runner_job_no',
+      'hotRunnerJobNo',
+      'HotRunnerJobNo',
+    ]),
+    hourMeterReading: pickStringValue(sources, [
+      'hour_meter_reading',
+      'hourMeterReading',
+      'HourMeterReading',
+    ]),
+    robotSerialNo: pickStringValue(sources, ['robot_serial_no', 'robotSerialNo', 'RobotSerialNo']),
+    inspector: pickStringValue(sources, ['inspector', 'Inspector']),
+    inspectionDate: pickStringValue(sources, ['inspection_date', 'inspectionDate', 'InspectionDate']),
+    submitDate: pickStringValue(sources, ['submit_date', 'submitDate', 'SubmitDate']),
+    documentNo: pickStringValue(sources, ['document_no', 'documentNo', 'DocumentNo']),
+    status: (status || 'Draft') as HuskyFormStatus,
+    kpiRows: sectionParts.kpiRows,
+    safetyCheckpoints: sectionParts.safetyCheckpoints,
+    hydraulicCheckpoints: sectionParts.hydraulicCheckpoints,
+    mechanicalCheckpoints: sectionParts.mechanicalCheckpoints,
+    robotCheckpoints: sectionParts.robotCheckpoints,
+    measurements: sectionParts.measurements,
+    levelParallelism: sectionParts.levelParallelism,
+    cycleTimeComparison: createEmptyHuskyCycleTimeComparison(),
+    recommendations: pickStringValue(sources, ['recommendations', 'Recommendations']),
+    performedBy: pickStringValue(sources, ['performed_by', 'performedBy', 'PerformedBy']),
+    performedByEmployeeId: pickStringValue(sources, [
+      'performed_by_employee_id',
+      'performedByEmployeeId',
+      'PerformedByEmployeeId',
+    ]),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class HuskyFormService {
+  private readonly http = inject(HttpClient);
   private readonly _records = signal<HuskyFormRecord[]>([]);
   private documentSequence = 0;
 
   readonly records = this._records.asReadonly();
 
-  addRecord(
-    entry: Omit<HuskyFormRecord, 'id' | 'selected' | 'submitDate' | 'documentNo' | 'status'>,
-  ): HuskyFormRecord {
-    const now = new Date();
-    const record: HuskyFormRecord = {
-      ...entry,
-      id: `HSK-REC-${Date.now()}`,
-      selected: false,
-      submitDate: formatDateValue(now),
-      documentNo: this.generateDocumentNo(now),
-      status: 'Submitted',
-    };
-    this._records.update((list) => [...list, record]);
-    return record;
+  fetchHuskyForms(): Observable<HuskyFormRecord[]> {
+    return this.http.get<unknown>(HUSKY_FORM_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => mapApiItemToRecord(item))),
+      tap((records) => this._records.set(records)),
+    );
+  }
+
+  fetchHuskyFormDetail(id: string | number): Observable<HuskyFormRecord> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http
+      .get<unknown>(`${HUSKY_FORM_DETAIL_URL}/${identifier}`)
+      .pipe(map((response) => this.mapDetailResponse(response, id)));
+  }
+
+  addHuskyForm(entry: HuskyFormAddInput): Observable<HuskyFormApiResponse> {
+    return this.http.post<HuskyFormApiResponse>(HUSKY_FORM_ADD_URL, buildHuskyFormAddPayload(entry));
+  }
+
+  updateHuskyForm(id: string | number, entry: HuskyFormAddInput): Observable<HuskyFormApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post<HuskyFormApiResponse>(
+      `${HUSKY_FORM_UPDATE_URL}/${identifier}`,
+      buildHuskyFormAddPayload(entry),
+    );
+  }
+
+  deleteHuskyForm(id: string | number): Observable<HuskyFormApiResponse> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete<HuskyFormApiResponse>(`${HUSKY_FORM_DELETE_URL}/${identifier}`);
+  }
+
+  removeHuskyFormRecord(record: HuskyFormRecord): void {
+    this._records.update((list) => list.filter((item) => item.id !== record.id));
   }
 
   updateSelection(id: string, selected: boolean): void {
@@ -869,34 +1495,76 @@ export class HuskyFormService {
     return this._records().find((r) => r.id === id);
   }
 
-  updateRecord(
-    id: string,
-    entry: Omit<HuskyFormRecord, 'id' | 'selected' | 'submitDate' | 'documentNo' | 'status'>,
-  ): boolean {
-    const existing = this._records().find((r) => r.id === id);
-    if (!existing) {
-      return false;
+  private mapDetailResponse(response: unknown, id: string | number): HuskyFormRecord {
+    const items = this.extractApiItems(response);
+    if (items.length > 0) {
+      return mapApiItemToRecord(items[0]);
     }
-    this._records.update((list) =>
-      list.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              ...entry,
-              submitDate: r.submitDate || formatDateValue(new Date()),
-              documentNo: r.documentNo || this.generateDocumentNo(new Date()),
-              status: r.status === 'Draft' ? 'Submitted' : r.status,
-            }
-          : r,
-      ),
-    );
-    return true;
+
+    if (response && typeof response === 'object') {
+      const record = mapApiItemToRecord(response as Record<string, unknown>);
+      if (!record.id) {
+        return { ...record, id: String(id) };
+      }
+      return record;
+    }
+
+    throw new Error('Husky Form record not found');
   }
 
-  deleteRecord(id: string): boolean {
-    const before = this._records().length;
-    this._records.update((list) => list.filter((r) => r.id !== id));
-    return this._records().length < before;
+  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (!response) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = [
+      'data',
+      'items',
+      'results',
+      'records',
+      'list',
+      'husky_forms',
+      'huskyForms',
+      'huskyFormList',
+      'husky_form_list',
+    ];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (
+      obj['machine_id'] ||
+      obj['machineId'] ||
+      obj['machine_name'] ||
+      obj['machineName'] ||
+      obj['document_no'] ||
+      obj['documentNo']
+    ) {
+      return [obj];
+    }
+
+    return [];
   }
 
   private generateDocumentNo(date: Date): string {

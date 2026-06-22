@@ -12,7 +12,9 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { ApplicationFormService } from '../../../../../services/application-form.service';
 import { AuthService } from '../../../../../services/auth.service';
 import { SAP_MACHINE_MASTER } from '../../../setup-form/plant-maintenance-machine.model';
@@ -34,6 +36,7 @@ import {
   HUSKY_SAFETY_CHECKPOINT_DEFINITIONS,
   HuskyCheckpointEvaluation,
   HuskyCycleTimeComparisonData,
+  HuskyFormRecord,
   HuskyFormService,
   HuskyHydraulicCheckpoint,
   HuskyKpiRow,
@@ -114,6 +117,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly recommendations = signal('');
   readonly performedBy = signal('');
   readonly performedByEmployeeId = signal('');
+  readonly isSaving = signal(false);
 
   readonly machineOptions = SAP_MACHINE_MASTER;
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
@@ -164,42 +168,25 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       this.setPerformedByFromLogin();
       return;
     }
-    const record = this.huskyService.getById(id);
-    if (!record) {
-      this.alertService.validation('Husky Form record not found.');
-      void this.router.navigate(['/plant-maintenance/main-form/husky-form']);
+
+    this.editingRecordId.set(id);
+
+    const cached = this.huskyService.getById(id);
+    if (cached) {
+      this.populateFromRecord(cached);
       return;
     }
-    this.editingRecordId.set(id);
-    this.machineId.set(record.machineId);
-    this.machineName.set(record.machineName);
-    this.maintenanceType.set(record.maintenanceType);
-    this.maintenanceFrequency.set(record.maintenanceFrequency);
-    this.serialNo.set(record.serialNo);
-    this.moldNo.set(record.moldNo);
-    this.hotRunnerJobNo.set(record.hotRunnerJobNo);
-    this.hourMeterReading.set(record.hourMeterReading);
-    this.robotSerialNo.set(record.robotSerialNo);
-    this.inspector.set(record.inspector);
-    this.inspectionDate.set(record.inspectionDate);
-    this.submitDate.set(record.submitDate);
-    this.documentNo.set(record.documentNo);
-    this.status.set(record.status);
-    this.kpiRows.set(this.cloneKpiRows(record.kpiRows));
-    this.safetyCheckpoints.set(this.cloneSafetyCheckpoints(record.safetyCheckpoints));
-    this.hydraulicCheckpoints.set(this.cloneHydraulicCheckpoints(record.hydraulicCheckpoints));
-    this.mechanicalCheckpoints.set(
-      this.cloneMechanicalCheckpoints(record.mechanicalCheckpoints),
-    );
-    this.robotCheckpoints.set(this.cloneRobotCheckpoints(record.robotCheckpoints));
-    this.measurements.set(mergeHuskyMeasurements(record.measurements));
-    this.levelParallelism.set(mergeHuskyLevelParallelism(record.levelParallelism));
-    this.cycleTimeComparison.set(mergeHuskyCycleTimeComparison(record.cycleTimeComparison));
-    this.recommendations.set(record.recommendations ?? '');
-    this.performedBy.set(record.performedBy || this.resolvePerformedByLabel());
-    this.performedByEmployeeId.set(
-      record.performedByEmployeeId || this.resolvePerformedByEmployeeId(),
-    );
+
+    this.huskyService.fetchHuskyFormDetail(id).subscribe({
+      next: (record) => this.populateFromRecord(record),
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load Husky form for edit.'),
+        );
+        void this.router.navigate(['/plant-maintenance/main-form/husky-form']);
+      },
+    });
   }
 
   ngAfterViewInit(): void {
@@ -464,6 +451,10 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async save(): Promise<void> {
+    if (this.isSaving()) {
+      return;
+    }
+
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
     const maintenanceType = this.maintenanceType().trim();
@@ -512,6 +503,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       robotSerialNo: this.robotSerialNo().trim(),
       inspector,
       inspectionDate,
+      submitDate: this.submitDate().trim(),
+      documentNo: this.documentNo().trim(),
+      status: this.status().trim() || 'Draft',
       kpiRows: this.cloneKpiRows(this.kpiRows()),
       safetyCheckpoints: this.cloneSafetyCheckpoints(this.safetyCheckpoints()),
       hydraulicCheckpoints: this.cloneHydraulicCheckpoints(this.hydraulicCheckpoints()),
@@ -519,23 +513,33 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       robotCheckpoints: this.cloneRobotCheckpoints(this.robotCheckpoints()),
       measurements: mergeHuskyMeasurements(this.measurements()),
       levelParallelism: mergeHuskyLevelParallelism(this.levelParallelism()),
-      cycleTimeComparison: mergeHuskyCycleTimeComparison(this.cycleTimeComparison()),
-      recommendations,
-      performedBy: this.performedBy().trim() || this.resolvePerformedByLabel(),
-      performedByEmployeeId:
-        this.performedByEmployeeId().trim() || this.resolvePerformedByEmployeeId(),
     };
 
     const editingId = this.editingRecordId();
-    if (editingId) {
-      this.huskyService.updateRecord(editingId, payload);
-      await this.alertService.successAndWait('Success', 'Husky Form updated successfully.');
-    } else {
-      this.huskyService.addRecord(payload);
-      await this.alertService.successAndWait('Success', 'Husky Form submitted successfully.');
-    }
 
-    void this.router.navigate(['/plant-maintenance/main-form/husky-form']);
+    this.isSaving.set(true);
+
+    try {
+      if (editingId) {
+        await firstValueFrom(this.huskyService.updateHuskyForm(editingId, payload));
+        await this.alertService.successAndWait('Success', 'Husky Form updated successfully.');
+      } else {
+        await firstValueFrom(this.huskyService.addHuskyForm(payload));
+        await this.alertService.successAndWait('Success', 'Husky Form submitted successfully.');
+      }
+
+      void this.router.navigate(['/plant-maintenance/main-form/husky-form']);
+    } catch (error) {
+      void this.alertService.error(
+        editingId ? 'Update Failed' : 'Save Failed',
+        formatApiErrorMessage(
+          error,
+          editingId ? 'Failed to update Husky Form.' : 'Failed to submit Husky Form.',
+        ),
+      );
+    } finally {
+      this.isSaving.set(false);
+    }
   }
 
   private setupIntersectionObserver(): void {
@@ -593,6 +597,38 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     const parsed = Number(trimmed);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private populateFromRecord(record: HuskyFormRecord): void {
+    this.machineId.set(record.machineId);
+    this.machineName.set(record.machineName);
+    this.maintenanceType.set(record.maintenanceType);
+    this.maintenanceFrequency.set(record.maintenanceFrequency);
+    this.serialNo.set(record.serialNo);
+    this.moldNo.set(record.moldNo);
+    this.hotRunnerJobNo.set(record.hotRunnerJobNo);
+    this.hourMeterReading.set(record.hourMeterReading);
+    this.robotSerialNo.set(record.robotSerialNo);
+    this.inspector.set(record.inspector);
+    this.inspectionDate.set(record.inspectionDate);
+    this.submitDate.set(record.submitDate);
+    this.documentNo.set(record.documentNo);
+    this.status.set(record.status);
+    this.kpiRows.set(this.cloneKpiRows(record.kpiRows));
+    this.safetyCheckpoints.set(this.cloneSafetyCheckpoints(record.safetyCheckpoints));
+    this.hydraulicCheckpoints.set(this.cloneHydraulicCheckpoints(record.hydraulicCheckpoints));
+    this.mechanicalCheckpoints.set(
+      this.cloneMechanicalCheckpoints(record.mechanicalCheckpoints),
+    );
+    this.robotCheckpoints.set(this.cloneRobotCheckpoints(record.robotCheckpoints));
+    this.measurements.set(mergeHuskyMeasurements(record.measurements));
+    this.levelParallelism.set(mergeHuskyLevelParallelism(record.levelParallelism));
+    this.cycleTimeComparison.set(mergeHuskyCycleTimeComparison(record.cycleTimeComparison));
+    this.recommendations.set(record.recommendations ?? '');
+    this.performedBy.set(record.performedBy || this.resolvePerformedByLabel());
+    this.performedByEmployeeId.set(
+      record.performedByEmployeeId || this.resolvePerformedByEmployeeId(),
+    );
   }
 
   private cloneKpiRows(rows: HuskyKpiRow[] | undefined): HuskyKpiRow[] {

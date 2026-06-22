@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { AlertService } from '../../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PlantMaintenanceMainLayoutService } from '../plant-maintenance-main-layout.service';
 import { HuskyFormRecord, HuskyFormService } from './husky-form.service';
@@ -47,7 +48,7 @@ type RowActionKey = 'view' | 'update' | 'delete';
     `,
   ],
 })
-export class HuskyFormComponent {
+export class HuskyFormComponent implements OnInit {
   private readonly layout = inject(PlantMaintenanceMainLayoutService);
   private readonly huskyService = inject(HuskyFormService);
   private readonly alertService = inject(AlertService);
@@ -63,8 +64,20 @@ export class HuskyFormComponent {
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   showViewDialog = false;
+  detailLoading = false;
   selectedRecord: HuskyFormRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
+
+  ngOnInit(): void {
+    this.huskyService.fetchHuskyForms().subscribe({
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load Husky forms.'),
+        );
+      },
+    });
+  }
 
   readonly rowActions: RowActionKey[] = ['view', 'update', 'delete'];
 
@@ -156,16 +169,42 @@ export class HuskyFormComponent {
   }
 
   viewRecord(item: HuskyFormRecord): void {
-    this.selectedRecord = item;
+    if (!item.id) {
+      void this.alertService.warning('View', 'Unable to view this row: missing record id.');
+      return;
+    }
+
     this.showViewDialog = true;
+    this.selectedRecord = null;
+    this.detailLoading = true;
+
+    this.huskyService.fetchHuskyFormDetail(item.id).subscribe({
+      next: (detail) => {
+        this.selectedRecord = detail;
+        this.detailLoading = false;
+      },
+      error: (error: unknown) => {
+        this.detailLoading = false;
+        this.showViewDialog = false;
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load Husky form details.'),
+        );
+      },
+    });
   }
 
   closeViewDialog(): void {
     this.showViewDialog = false;
     this.selectedRecord = null;
+    this.detailLoading = false;
   }
 
   updateRecord(item: HuskyFormRecord): void {
+    if (!item.id) {
+      void this.alertService.warning('Update', 'Unable to update this row: missing record id.');
+      return;
+    }
     void this.router.navigate(['/plant-maintenance/main-form/husky-form/edit', item.id]);
   }
 
@@ -177,10 +216,27 @@ export class HuskyFormComponent {
     if (!result.isConfirmed) {
       return;
     }
-    this.huskyService.deleteRecord(item.id);
-    if (this.paginatedList.length === 0 && this.currentPage > 1) {
-      this.currentPage -= 1;
+
+    if (!item.id) {
+      void this.alertService.warning('Delete', 'Unable to delete this row: missing record id.');
+      return;
     }
+
+    this.huskyService.deleteHuskyForm(item.id).subscribe({
+      next: () => {
+        this.huskyService.removeHuskyFormRecord(item);
+        if (this.paginatedList.length === 0 && this.currentPage > 1) {
+          this.currentPage -= 1;
+        }
+        void this.alertService.success('Deleted', 'Husky form removed successfully.');
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete Husky form.'),
+        );
+      },
+    });
   }
 
   getCellValue(item: HuskyFormRecord, columnKey: HuskyTableColumnKey): string {

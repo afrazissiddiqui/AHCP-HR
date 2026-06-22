@@ -171,12 +171,14 @@
 </div>
 
 <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog && selectedRecord">
+<div class="js-detail-modal" *ngIf="showViewDialog">
   <div class="js-modal-header">
-    <h2>Husky Form — {{ selectedRecord.machineName }}</h2>
+    <h2>Husky Form{{ selectedRecord ? ' — ' + selectedRecord.machineName : '' }}</h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">
+    <p *ngIf="detailLoading">Loading Husky form details...</p>
+    <ng-container *ngIf="!detailLoading && selectedRecord">
     <div class="js-detail-section">
       <h3>Machine Information</h3>
       <div class="js-detail-grid">
@@ -243,11 +245,12 @@
         </div>
       </div>
     </div>
+    </ng-container>
   </div>
   <div class="js-modal-footer">
     <button type="button" class="btn-secondary scd-modal-close-btn" (click)="closeViewDialog()">Close</button>
     <button
-      *ngIf="hasRowAction('update')"
+      *ngIf="hasRowAction('update') && !detailLoading && selectedRecord"
       type="button"
       class="scd-update-btn"
       (click)="updateRecord(selectedRecord); closeViewDialog()"

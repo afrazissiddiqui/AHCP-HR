@@ -995,9 +995,9 @@
 
     <div class="cjr-actions-footer husky-actions-footer">
       <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
-      <button type="button" class="cjr-submit-btn" (click)="save()">
+      <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="isSaving()">
         <span class="cjr-submit-icon">✓</span>
-        {{ isCreateMode() ? 'Submit' : 'Update' }}
+        {{ isSaving() ? (isCreateMode() ? 'Submitting...' : 'Updating...') : isCreateMode() ? 'Submit' : 'Update' }}
       </button>
     </div>
   </div>
