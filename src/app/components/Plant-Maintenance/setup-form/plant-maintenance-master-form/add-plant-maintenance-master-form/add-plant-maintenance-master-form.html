@@ -369,34 +369,26 @@
 
                 <div class="pmm-spare-part-field">
                   <label [attr.for]="'pmm-spare-part-wh-' + ri">Warehouse:</label>
-                  <select
+                  <input
                     [id]="'pmm-spare-part-wh-' + ri"
-                    class="mad-select"
+                    type="text"
                     [ngModel]="row.warehouseCode"
                     (ngModelChange)="onSparePartWarehouseInput(ri, $event)"
+                    placeholder="Enter warehouse code"
                     [name]="'sparePartWarehouse-' + ri"
-                  >
-                    <option value="">Select warehouse</option>
-                    <option *ngFor="let wh of sapWarehouseOptions" [value]="wh.warehouseCode">
-                      {{ wh.warehouseCode }} — {{ wh.warehouseName }}
-                    </option>
-                  </select>
+                  />
                 </div>
 
                 <div class="pmm-spare-part-field">
                   <label [attr.for]="'pmm-spare-part-uom-' + ri">UOM:</label>
-                  <select
+                  <input
                     [id]="'pmm-spare-part-uom-' + ri"
-                    class="mad-select"
+                    type="text"
                     [ngModel]="row.uomCode"
                     (ngModelChange)="onSparePartUomInput(ri, $event)"
+                    placeholder="Enter unit of measure"
                     [name]="'sparePartUom-' + ri"
-                  >
-                    <option value="">Select UOM</option>
-                    <option *ngFor="let uom of sapUomOptions" [value]="uom.uomCode">
-                      {{ uom.uomCode }} — {{ uom.uomDescription }}
-                    </option>
-                  </select>
+                  />
                 </div>
               </div>
             </div>

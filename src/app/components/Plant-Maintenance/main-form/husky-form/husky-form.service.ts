@@ -813,15 +813,6 @@ export interface HuskyInspectorUser {
   displayName: string;
 }
 
-/** Defined users available for inspector selection — replace with API when available. */
-export const HUSKY_INSPECTOR_USERS: HuskyInspectorUser[] = [
-  { userId: 'USR-001', displayName: 'Ahmed Khan' },
-  { userId: 'USR-002', displayName: 'Sara Malik' },
-  { userId: 'USR-003', displayName: 'Bilal Hussain' },
-  { userId: 'USR-004', displayName: 'Fatima Noor' },
-  { userId: 'USR-005', displayName: 'Omar Siddiqui' },
-];
-
 function formatDateValue(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');

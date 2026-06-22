@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
-import { MachineSearchOption, SAP_MACHINE_MASTER } from '../../plant-maintenance-machine.model';
+import { MachineSearchOption, toMachineSearchOptions } from '../../plant-maintenance-machine.model';
 import { SubComponentDefinitionService, SubComponentMachineRecord } from '../sub-component-definition.service';
 
 @Component({
@@ -42,10 +42,12 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   readonly nameSuggestions = computed(() => this.filterMachineSuggestions(this.machineName()));
 
   private get machineOptions(): MachineSearchOption[] {
-    return SAP_MACHINE_MASTER;
+    return toMachineSearchOptions(this.subComponentService.records());
   }
 
   ngOnInit(): void {
+    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       return;

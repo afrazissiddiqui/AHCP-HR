@@ -11,7 +11,7 @@ import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   MachineSearchOption,
   resolveMachineIdentity,
-  SAP_MACHINE_MASTER,
+  toMachineSearchOptions,
 } from '../../plant-maintenance-machine.model';
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
 import {
@@ -161,9 +161,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
   private get machineOptions(): MachineSearchOption[] {
-
-    return SAP_MACHINE_MASTER;
-
+    return toMachineSearchOptions(this.subComponentService.records());
   }
 
 

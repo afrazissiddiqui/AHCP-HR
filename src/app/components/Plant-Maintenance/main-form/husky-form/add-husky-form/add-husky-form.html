@@ -149,7 +149,7 @@
                 name="inspector"
               >
                 <option value="">Select inspector</option>
-                <option *ngFor="let user of inspectorUsers" [value]="user.displayName">
+                <option *ngFor="let user of inspectorUsers()" [value]="user.displayName">
                   {{ user.displayName }}
                 </option>
               </select>

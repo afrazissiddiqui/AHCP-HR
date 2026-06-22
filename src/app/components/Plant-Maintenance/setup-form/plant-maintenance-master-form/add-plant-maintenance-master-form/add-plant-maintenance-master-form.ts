@@ -8,12 +8,10 @@ import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   MachineSearchOption,
   resolveSparePartIdentity,
-  SAP_MACHINE_MASTER,
-  SAP_SPARE_PARTS_MASTER,
-  SAP_UOM_MASTER,
-  SAP_WAREHOUSE_MASTER,
   SparePartSearchOption,
+  toMachineSearchOptions,
 } from '../../plant-maintenance-machine.model';
+import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
 import {
   MaintenanceActivityDefinitionService,
   MaintenanceActivityMachineRecord,
@@ -100,6 +98,7 @@ function todayDateValue(): string {
 export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   private readonly masterService = inject(PlantMaintenanceMasterFormService);
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
+  private readonly subComponentService = inject(SubComponentDefinitionService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -168,20 +167,18 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly sparePartIdSuggestionsRow = signal<number | null>(null);
   readonly sparePartDescSuggestionsRow = signal<number | null>(null);
 
-  readonly sapWarehouseOptions = SAP_WAREHOUSE_MASTER;
-  readonly sapUomOptions = SAP_UOM_MASTER;
-
   private get machineOptions(): MachineSearchOption[] {
-    return SAP_MACHINE_MASTER;
+    return toMachineSearchOptions(this.subComponentService.records());
   }
 
   private get sparePartOptions(): SparePartSearchOption[] {
-    return SAP_SPARE_PARTS_MASTER;
+    return [];
   }
 
   private syncingScheduleFields = false;
 
   ngOnInit(): void {
+    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
     this.activityService.fetchMaintenanceActivityDefinitions().subscribe({ error: () => {} });
     this.masterService.fetchPlantMaintenanceMasterForms().subscribe({ error: () => {} });
 

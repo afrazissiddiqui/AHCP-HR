@@ -17,7 +17,8 @@ import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { ApplicationFormService } from '../../../../../services/application-form.service';
 import { AuthService } from '../../../../../services/auth.service';
-import { SAP_MACHINE_MASTER } from '../../../setup-form/plant-maintenance-machine.model';
+import { toMachineSearchOptions } from '../../../setup-form/plant-maintenance-machine.model';
+import { SubComponentDefinitionService } from '../../../setup-form/sub-component-definition/sub-component-definition.service';
 import {
   calculateHuskyCycleTimeDeviation,
   calculateHuskyKpiPercentage,
@@ -30,7 +31,6 @@ import {
   createEmptyHuskyRobotCheckpoints,
   createEmptyHuskySafetyCheckpoints,
   HUSKY_HYDRAULIC_CHECKPOINT_DEFINITIONS,
-  HUSKY_INSPECTOR_USERS,
   HUSKY_MECHANICAL_CHECKPOINT_DEFINITIONS,
   HUSKY_ROBOT_CHECKPOINT_DEFINITIONS,
   HUSKY_SAFETY_CHECKPOINT_DEFINITIONS,
@@ -38,6 +38,7 @@ import {
   HuskyCycleTimeComparisonData,
   HuskyFormRecord,
   HuskyFormService,
+  HuskyInspectorUser,
   HuskyHydraulicCheckpoint,
   HuskyKpiRow,
   HuskyKpiStatus,
@@ -74,6 +75,7 @@ export interface HuskySectionNavItem {
 })
 export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly huskyService = inject(HuskyFormService);
+  private readonly subComponentService = inject(SubComponentDefinitionService);
   private readonly alertService = inject(AlertService);
   private readonly authService = inject(AuthService);
   private readonly applicationFormService = inject(ApplicationFormService);
@@ -119,10 +121,9 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly performedByEmployeeId = signal('');
   readonly isSaving = signal(false);
 
-  readonly machineOptions = SAP_MACHINE_MASTER;
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
   readonly levelStatusOptions = ['Pass', 'Fail'] as const;
-  readonly inspectorUsers = HUSKY_INSPECTOR_USERS;
+  readonly inspectorUsers = signal<HuskyInspectorUser[]>([]);
 
   readonly maintenanceTypeOptions = [
     'Preventive',
@@ -163,6 +164,21 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private sectionObserverResumeTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
+    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: (profiles) => {
+        this.inspectorUsers.set(
+          profiles
+            .filter((profile) => profile.EmployeeName?.trim())
+            .map((profile) => ({
+              userId: profile.apiId ?? String(profile.EmployeeCode),
+              displayName: profile.EmployeeName.trim(),
+            })),
+        );
+      },
+      error: () => {},
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.setPerformedByFromLogin();
@@ -252,6 +268,10 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.machineId.set(value);
     const machine = this.machineOptions.find((m) => m.machineId === value);
     this.machineName.set(machine?.machineName ?? '');
+  }
+
+  get machineOptions() {
+    return toMachineSearchOptions(this.subComponentService.records());
   }
 
   onMaintenanceTypeChange(value: string): void {
