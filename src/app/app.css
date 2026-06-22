@@ -23,6 +23,13 @@
   cursor: pointer;
 }
 
+.hr-portal-header img[slot='logo'] {
+  max-height: 1.75rem;
+  width: auto;
+  object-fit: contain;
+  cursor: pointer;
+}
+
 .hr-portal-header:hover {
   background-color: #9ecde8;
 }

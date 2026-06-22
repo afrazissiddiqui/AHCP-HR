@@ -23,7 +23,6 @@
               "sweetalert2"
             ],
             "assets": [
-              "src/favicon.ico",
               "src/assets",
               {
                 "glob": "**/*",

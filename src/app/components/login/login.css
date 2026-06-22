@@ -34,7 +34,8 @@
 .login-logo {
   display: block;
   margin: 0 auto 1rem;
-  max-height: 56px;
+  max-height: 48px;
+  max-width: 160px;
   width: auto;
   object-fit: contain;
 }
