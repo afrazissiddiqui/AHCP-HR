@@ -55,7 +55,8 @@
                   id="igp-ref"
                   type="text"
                   [(ngModel)]="referenceNo"
-                  placeholder="Auto if left blank"
+                  placeholder="Auto-generated"
+                  readonly
                 />
               </div>
             </div>
@@ -99,8 +100,8 @@
                 <input id="igp-store" type="text" [(ngModel)]="store"  />
               </div>
               <div class="ogp-field">
-                <label for="igp-freight">Freight</label>
-                <input id="igp-freight" type="text" [(ngModel)]="freight"  />
+                <label for="igp-freight">Freight (numeric only)</label>
+                <input id="igp-freight" type="number" min="0" step="0.01" [(ngModel)]="freight" placeholder="0.00" />
               </div>
               <div class="ogp-field">
                 <label for="igp-department">Department</label>
@@ -127,15 +128,14 @@
                 <input id="igp-weight-machine" type="text" [(ngModel)]="weightMachineName"  />
               </div>
               <div class="ogp-field">
-                <label for="igp-weight">Weight</label>
-                <input id="igp-weight" type="text" [(ngModel)]="weight" placeholder="e.g. 12.5"  />
+                <label for="igp-weight">Weight (numeric only)</label>
+                <input id="igp-weight" type="number" min="0" step="0.01" [(ngModel)]="weight" placeholder="0.00" />
               </div>
               <div class="ogp-field">
                 <label for="igp-location">Location</label>
                 <select id="igp-location" [(ngModel)]="location" >
                   <option value="">No selection</option>
-                  <option value="FSD">FSD</option>
-                  <option value="PSH">PSH</option>
+                  <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
                 </select>
               </div>
             </div>
@@ -227,6 +227,7 @@
 
   <app-base-document-modal
     [(open)]="showBaseDocModal"
+    gatePassModule="igp"
     [documentType]="type"
     (documentPicked)="onBaseDocumentPicked($event)"
   />

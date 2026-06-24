@@ -13,9 +13,15 @@ import {
   IgpRecord,
   IgpService,
 } from '../igp.service';
+import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
+}
+
+function numericFieldFromDoc(value: string | undefined): string {
+  const parsed = parseFloat(String(value ?? '').replace(/[^\d.]/g, ''));
+  return Number.isFinite(parsed) ? String(parsed) : '';
 }
 
 @Component({
@@ -53,6 +59,7 @@ export class CreateIgpComponent implements OnInit {
   showBaseDocModal = false;
 
   readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
+  readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
 
   constructor(
     private readonly router: Router,
@@ -150,9 +157,9 @@ export class CreateIgpComponent implements OnInit {
     this.department = doc.department?.trim() ?? '';
     this.biltyNo = doc.biltyNo?.trim() ?? '';
     this.store = doc.store?.trim() ?? '';
-    this.freight = doc.freight?.trim() ?? '';
+    this.freight = numericFieldFromDoc(doc.freight);
     this.weightMachineName = doc.weightMachineName?.trim() ?? '';
-    this.weight = doc.weight?.trim() ?? '';
+    this.weight = numericFieldFromDoc(doc.weight);
     this.location = doc.location?.trim() ?? '';
     this.remarks = doc.remarks?.trim() ?? '';
     this.lines =
@@ -220,10 +227,10 @@ export class CreateIgpComponent implements OnInit {
     this.kantaSlip = emptyIfDash(record.kantaSlip);
     this.biltyNo = emptyIfDash(record.biltyNo);
     this.store = emptyIfDash(record.store);
-    this.freight = emptyIfDash(record.freight);
+    this.freight = numericFieldFromDoc(emptyIfDash(record.freight));
     this.department = emptyIfDash(record.department);
     this.weightMachineName = emptyIfDash(record.weightMachineName);
-    this.weight = emptyIfDash(record.weight);
+    this.weight = numericFieldFromDoc(emptyIfDash(record.weight));
     this.location = emptyIfDash(record.location);
     this.employee = emptyIfDash(record.employee);
     this.remarks = emptyIfDash(record.remarks ?? '');

@@ -99,8 +99,8 @@
                 <input id="ogp-store" type="text" [(ngModel)]="store" />
               </div>
               <div class="ogp-field">
-                <label for="ogp-freight">Freight</label>
-                <input id="ogp-freight" type="text" [(ngModel)]="freight" />
+                <label for="ogp-freight">Freight (numeric only)</label>
+                <input id="ogp-freight" type="number" min="0" step="0.01" [(ngModel)]="freight" placeholder="0.00" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-department">Department</label>
@@ -127,15 +127,14 @@
                 <input id="ogp-weight-machine" type="text" [(ngModel)]="weightMachineName" />
               </div>
               <div class="ogp-field">
-                <label for="ogp-weight">Weight</label>
-                <input id="ogp-weight" type="text" [(ngModel)]="weight" placeholder="e.g. 12.5" />
+                <label for="ogp-weight">Weight (numeric only)</label>
+                <input id="ogp-weight" type="number" min="0" step="0.01" [(ngModel)]="weight" placeholder="0.00" />
               </div>
               <div class="ogp-field">
                 <label for="ogp-location">Location</label>
                 <select id="ogp-location" [(ngModel)]="location">
                   <option value="">No selection</option>
-                  <option value="FSD">FSD</option>
-                  <option value="PSH">PSH</option>
+                  <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
                 </select>
               </div>
             </div>
@@ -227,6 +226,7 @@
 
   <app-base-document-modal
     [(open)]="showBaseDocModal"
+    gatePassModule="ogp"
     [documentType]="type"
     (documentPicked)="onBaseDocumentPicked($event)"
   />

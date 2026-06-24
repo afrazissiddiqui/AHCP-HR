@@ -114,6 +114,13 @@
                 <label for="agp-article-returned">Article returned date</label>
                 <input id="agp-article-returned" type="date" [(ngModel)]="articleReturnedDate" />
               </div>
+              <div class="ogp-field">
+                <label for="agp-location">Location</label>
+                <select id="agp-location" [(ngModel)]="location" [disabled]="headerLocked">
+                  <option value="">No selection</option>
+                  <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -137,16 +144,16 @@
                 <input id="agp-bilty" type="text" [(ngModel)]="biltyNo" />
               </div>
               <div class="ogp-field">
-                <label for="agp-freight-amount">Freight amount</label>
+                <label for="agp-freight-amount">Freight amount (numeric only)</label>
                 <input id="agp-freight-amount" type="number" min="0" step="0.01" [(ngModel)]="freightAmount" placeholder="0.00" />
               </div>
             </div>
           </div>
 
           <div class="ogp-header-group ogp-header-group--last">
-            <p class="ogp-header-group-label">Approval &amp; attachment</p>
+            <p class="ogp-header-group-label">Attachment</p>
             <div class="ogp-header-grid ogp-header-grid--2">
-              <div class="ogp-field ogp-field--attachment">
+              <div class="ogp-field ogp-field--attachment ogp-field--span-2">
                 <label for="agp-attachment">Attachment</label>
                 <div class="agp-attachment-row">
                   <span *ngIf="attachmentFileName" class="agp-attachment-name">{{ attachmentFileName }}</span>
@@ -160,12 +167,6 @@
                   />
                 </div>
                 <span class="ogp-field-hint">Invoice references and supporting documents</span>
-              </div>
-              <div class="ogp-field ogp-field--approval">
-                <label class="agp-approval-label">
-                  <input type="checkbox" [(ngModel)]="headOfSupplyChainApproval" />
-                  Head of Supply Chain approval
-                </label>
               </div>
             </div>
           </div>
@@ -253,6 +254,7 @@
 
   <app-base-document-modal
     [(open)]="showBaseDocModal"
+    gatePassModule="agp"
     [documentType]="type"
     (documentPicked)="onBaseDocumentPicked($event)"
   />

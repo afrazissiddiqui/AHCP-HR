@@ -13,6 +13,7 @@ import {
   AgpService,
   createEmptyAgpLineItem,
 } from '../agp.service';
+import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -46,6 +47,7 @@ export class CreateAgpComponent implements OnInit {
 
   articleOutDate = '';
   articleReturnedDate = '';
+  location = '';
 
   transporterName = '';
   transporterCnic = '';
@@ -82,6 +84,7 @@ export class CreateAgpComponent implements OnInit {
     'Sales',
     'Supply Chain',
   ] as const;
+  readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
 
   constructor(
     private readonly router: Router,
@@ -170,6 +173,7 @@ export class CreateAgpComponent implements OnInit {
     this.businessPartnerCode = '';
     this.businessPartnerName = '';
     this.vehicleNo = '';
+    this.location = '';
     this.remarks = '';
     this.lines = [];
     const d = new Date();
@@ -220,9 +224,19 @@ export class CreateAgpComponent implements OnInit {
     this.businessPartnerName = (doc.businessPartnerName || doc.partner || '').trim();
     this.vehicleNo = doc.vehicleNo?.trim() ?? '';
     this.requestingDepartment = doc.department?.trim() ?? '';
+    this.location = doc.location?.trim() ?? '';
     this.biltyNo = doc.biltyNo?.trim() ?? '';
     const freightParsed = parseFloat(String(doc.freight ?? '').replace(/[^\d.]/g, ''));
     this.freightAmount = Number.isFinite(freightParsed) ? freightParsed : null;
+    this.reasonForMovement = doc.reasonForMovement?.trim() ?? '';
+    this.requestingEmployee = doc.requestingEmployee?.trim() ?? '';
+    this.requestedBy = doc.requestedBy?.trim() ?? '';
+    this.issuedTo = doc.issuedTo?.trim() ?? '';
+    this.articleOutDate = doc.articleOutDate?.trim() ?? '';
+    this.articleReturnedDate = doc.articleReturnedDate?.trim() ?? '';
+    this.transporterName = doc.transporterName?.trim() ?? '';
+    this.transporterCnic = doc.transporterCnic?.trim() ?? '';
+    this.transporterPhone = doc.transporterPhone?.trim() ?? '';
     this.remarks = doc.remarks?.trim() ?? '';
     this.lines = doc.lines?.map((l) => this.mapBaseDocLine(l)) ?? [];
   }
@@ -288,6 +302,7 @@ export class CreateAgpComponent implements OnInit {
     this.issuedTo = emptyIfDash(record.issuedTo);
     this.articleOutDate = emptyIfDash(record.articleOutDate);
     this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
+    this.location = emptyIfDash(record.location);
     this.transporterName = emptyIfDash(record.transporterName);
     this.transporterCnic = emptyIfDash(record.transporterCnic);
     this.transporterPhone = emptyIfDash(record.transporterPhone);
@@ -319,6 +334,7 @@ export class CreateAgpComponent implements OnInit {
       issuedTo: this.issuedTo.trim(),
       articleOutDate: this.articleOutDate.trim(),
       articleReturnedDate: this.articleReturnedDate.trim(),
+      location: this.location.trim(),
       transporterName: this.transporterName.trim(),
       transporterCnic: this.transporterCnic.trim(),
       transporterPhone: this.transporterPhone.trim(),

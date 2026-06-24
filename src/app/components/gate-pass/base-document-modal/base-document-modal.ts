@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documents.service';
+import { GatePassModule, OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documents.service';
 
 @Component({
   selector: 'app-base-document-modal',
@@ -11,7 +11,8 @@ import { OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documen
 })
 export class BaseDocumentModalComponent implements OnChanges {
   @Input() open = false;
-  /** Must match the Type dropdown value (Purchase Order, Sales Return Request, Stand Alone Documents). */
+  @Input() gatePassModule: GatePassModule = 'igp';
+  /** Must match the Type dropdown value for the active gate-pass form. */
   @Input() documentType = '';
 
   @Output() openChange = new EventEmitter<boolean>();
@@ -22,8 +23,8 @@ export class BaseDocumentModalComponent implements OnChanges {
   constructor(private readonly openBaseDocuments: OpenBaseDocumentsService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['open'] || changes['documentType']) && this.open) {
-      this.documents = this.openBaseDocuments.listOpenByType(this.documentType);
+    if ((changes['open'] || changes['documentType'] || changes['gatePassModule']) && this.open) {
+      this.documents = this.openBaseDocuments.listOpenByType(this.gatePassModule, this.documentType);
     }
   }
 
