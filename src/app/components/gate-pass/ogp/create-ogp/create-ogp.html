@@ -55,7 +55,7 @@
                   id="ogp-ref"
                   type="text"
                   [(ngModel)]="referenceNo"
-                  placeholder="Auto if left blank"
+                  readonly
                 />
               </div>
             </div>
@@ -91,16 +91,11 @@
                 <input id="ogp-kanta-slip" type="text" [(ngModel)]="kantaSlip" />
               </div>
               <div class="ogp-field">
-                <label for="ogp-bilty">Bilty no.</label>
-                <input id="ogp-bilty" type="text" [(ngModel)]="biltyNo" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-store">Store</label>
-                <input id="ogp-store" type="text" [(ngModel)]="store" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-freight">Freight (numeric only)</label>
-                <input id="ogp-freight" type="number" min="0" step="0.01" [(ngModel)]="freight" placeholder="0.00" />
+                <label for="ogp-store">Warehouse</label>
+                <select id="ogp-store" [(ngModel)]="store">
+                  <option value="">No selection</option>
+                  <option *ngFor="let wh of warehouseOptions" [value]="wh.code">{{ wh.code }} — {{ wh.name }}</option>
+                </select>
               </div>
               <div class="ogp-field">
                 <label for="ogp-department">Department</label>
@@ -115,6 +110,32 @@
                   <option value="Logistics">Logistics</option>
                   <option value="Sales">Sales</option>
                 </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="ogp-header-group">
+            <p class="ogp-header-group-label">Transporter &amp; freight</p>
+            <div class="ogp-header-grid ogp-header-grid--3">
+              <div class="ogp-field">
+                <label for="ogp-transporter-name">Transporter name</label>
+                <input id="ogp-transporter-name" type="text" [(ngModel)]="transporterName" placeholder="Transporter / driver name" />
+              </div>
+              <div class="ogp-field">
+                <label for="ogp-transporter-cnic">Transporter CNIC</label>
+                <input id="ogp-transporter-cnic" type="text" [(ngModel)]="transporterCnic" placeholder="XXXXX-XXXXXXX-X" />
+              </div>
+              <div class="ogp-field">
+                <label for="ogp-transporter-phone">Transporter phone number</label>
+                <input id="ogp-transporter-phone" type="tel" [(ngModel)]="transporterPhone" placeholder="03XX-XXXXXXX" />
+              </div>
+              <div class="ogp-field">
+                <label for="ogp-bilty">Bilty number</label>
+                <input id="ogp-bilty" type="text" [(ngModel)]="biltyNo" />
+              </div>
+              <div class="ogp-field">
+                <label for="ogp-freight">Freight amount (numeric only)</label>
+                <input id="ogp-freight" type="number" min="0" step="0.01" [(ngModel)]="freight" placeholder="0.00" />
               </div>
             </div>
           </div>
@@ -183,8 +204,24 @@
               </tr>
               <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex">
                 <td class="igp-col-sr">{{ i + 1 }}</td>
-                <td><input type="text" [(ngModel)]="line.itemCode" /></td>
-                <td><input type="text" [(ngModel)]="line.itemName" /></td>
+                <td>
+                  <app-gate-pass-item-search-input
+                    [inputId]="'ogp-item-code-' + i"
+                    [value]="line.itemCode"
+                    (valueChange)="line.itemCode = $event"
+                    (itemSelected)="applyItemMaster(line, $event)"
+                    placeholder="Search code or name"
+                  />
+                </td>
+                <td>
+                  <app-gate-pass-item-search-input
+                    [inputId]="'ogp-item-name-' + i"
+                    [value]="line.itemName"
+                    (valueChange)="line.itemName = $event"
+                    (itemSelected)="applyItemMaster(line, $event)"
+                    placeholder="Search code or name"
+                  />
+                </td>
                 <td><input type="text" [(ngModel)]="line.category" /></td>
                 <td><input type="text" [(ngModel)]="line.packingCondition" /></td>
                 <td><input type="text" [(ngModel)]="line.productQuality" /></td>

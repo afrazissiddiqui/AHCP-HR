@@ -14,6 +14,10 @@ import {
   OgpService,
 } from '../ogp.service';
 import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
+import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
+import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
+import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
+import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -27,7 +31,7 @@ function numericFieldFromDoc(value: string | undefined): string {
 @Component({
   selector: 'app-create-ogp',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseDocumentModalComponent],
+  imports: [CommonModule, FormsModule, BaseDocumentModalComponent, GatePassItemSearchInputComponent],
   templateUrl: './create-ogp.html',
   styleUrl: '../../igp/create-igp/create-igp.css',
 })
@@ -49,6 +53,9 @@ export class CreateOgpComponent implements OnInit {
   biltyNo = '';
   store = '';
   freight = '';
+  transporterName = '';
+  transporterCnic = '';
+  transporterPhone = '';
   weightMachineName = '';
   weight = '';
   location = '';
@@ -65,12 +72,14 @@ export class CreateOgpComponent implements OnInit {
     'Stand Alone Documents',
   ] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
+  readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 
   constructor(
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly ogpService: OgpService,
     private readonly alertService: AlertService,
+    private readonly itemMasterService: GatePassItemMasterService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -79,6 +88,7 @@ export class CreateOgpComponent implements OnInit {
   ngOnInit(): void {
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
+      this.assignNextReferenceNo();
       return;
     }
 
@@ -99,6 +109,26 @@ export class CreateOgpComponent implements OnInit {
     });
   }
 
+  private assignNextReferenceNo(): void {
+    const cached = this.ogpService.records().map((r) => r.referenceNo);
+    if (cached.length > 0) {
+      this.referenceNo = nextGatePassReferenceNo('OGP', cached);
+      return;
+    }
+
+    this.ogpService.fetchOutwardGatePasses().subscribe({
+      next: (records) => {
+        this.referenceNo = nextGatePassReferenceNo(
+          'OGP',
+          records.map((r) => r.referenceNo),
+        );
+      },
+      error: () => {
+        this.referenceNo = nextGatePassReferenceNo('OGP', []);
+      },
+    });
+  }
+
   get totalQty(): number {
     return this.lines.reduce((s, l) => s + (Number(l.qty) || 0), 0);
   }
@@ -113,6 +143,10 @@ export class CreateOgpComponent implements OnInit {
 
   removeLine(index: number): void {
     this.lines = this.lines.filter((_, i) => i !== index);
+  }
+
+  applyItemMaster(line: OgpLineItem, item: GatePassItemMaster): void {
+    this.itemMasterService.applyToLine(line, item);
   }
 
   back(): void {
@@ -153,7 +187,6 @@ export class CreateOgpComponent implements OnInit {
     if (doc.date?.trim()) {
       this.documentDate = doc.date.trim();
     }
-    this.referenceNo = doc.referenceNo?.trim() ?? '';
     this.businessPartnerCode = doc.businessPartnerCode?.trim() ?? '';
     this.businessPartnerName = (doc.businessPartnerName || doc.partner || '').trim();
     this.vehicleNo = doc.vehicleNo?.trim() ?? '';
@@ -163,6 +196,9 @@ export class CreateOgpComponent implements OnInit {
     this.biltyNo = doc.biltyNo?.trim() ?? '';
     this.store = doc.store?.trim() ?? '';
     this.freight = numericFieldFromDoc(doc.freight);
+    this.transporterName = doc.transporterName?.trim() ?? '';
+    this.transporterCnic = doc.transporterCnic?.trim() ?? '';
+    this.transporterPhone = doc.transporterPhone?.trim() ?? '';
     this.weightMachineName = doc.weightMachineName?.trim() ?? '';
     this.weight = numericFieldFromDoc(doc.weight);
     this.location = doc.location?.trim() ?? '';
@@ -233,6 +269,9 @@ export class CreateOgpComponent implements OnInit {
     this.biltyNo = emptyIfDash(record.biltyNo);
     this.store = emptyIfDash(record.store);
     this.freight = numericFieldFromDoc(emptyIfDash(record.freight));
+    this.transporterName = emptyIfDash(record.transporterName);
+    this.transporterCnic = emptyIfDash(record.transporterCnic);
+    this.transporterPhone = emptyIfDash(record.transporterPhone);
     this.department = emptyIfDash(record.department);
     this.weightMachineName = emptyIfDash(record.weightMachineName);
     this.weight = numericFieldFromDoc(emptyIfDash(record.weight));
@@ -243,15 +282,11 @@ export class CreateOgpComponent implements OnInit {
   }
 
   private buildPayload(): OgpAddPayload {
-    const referenceNo =
-      this.referenceNo.trim() ||
-      `OGP-${new Date().getFullYear()}-${String(this.ogpService.records().length + 1).padStart(3, '0')}`;
-
     return {
       type: this.type.trim(),
       baseDocNo: this.baseDocNo.trim(),
       documentDate: this.documentDate.trim(),
-      referenceNo,
+      referenceNo: this.referenceNo.trim(),
       businessPartnerCode: this.businessPartnerCode.trim(),
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
@@ -260,6 +295,9 @@ export class CreateOgpComponent implements OnInit {
       biltyNo: this.biltyNo.trim(),
       store: this.store.trim(),
       freight: this.freight.trim(),
+      transporterName: this.transporterName.trim(),
+      transporterCnic: this.transporterCnic.trim(),
+      transporterPhone: this.transporterPhone.trim(),
       department: this.department.trim(),
       weightMachineName: this.weightMachineName.trim(),
       weight: this.weight.trim(),

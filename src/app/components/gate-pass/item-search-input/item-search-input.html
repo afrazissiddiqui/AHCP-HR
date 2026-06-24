@@ -1,0 +1,29 @@
+<div class="gp-item-search-wrap">
+  <input
+    [id]="inputId || null"
+    type="search"
+    role="combobox"
+    [attr.aria-expanded]="suggestionsOpen"
+    aria-autocomplete="list"
+    [ngModel]="value"
+    (ngModelChange)="onInput($event)"
+    (focus)="openSuggestions()"
+    (blur)="onBlur()"
+    [placeholder]="placeholder"
+    autocomplete="off"
+  />
+  <ul class="gp-item-suggestions" role="listbox" *ngIf="suggestionsOpen && value.trim()">
+    <li
+      *ngFor="let item of suggestions"
+      role="option"
+      class="gp-item-suggestion-item"
+      (mousedown)="selectItem(item)"
+    >
+      <span class="gp-item-suggestion-primary">{{ item.itemCode }} — {{ item.itemName }}</span>
+      <span class="gp-item-suggestion-meta">{{ item.category }} · {{ item.uom }}</span>
+    </li>
+    <li *ngIf="suggestions.length === 0" class="gp-item-suggestion-empty" role="presentation">
+      No matching items
+    </li>
+  </ul>
+</div>

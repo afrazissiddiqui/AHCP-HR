@@ -28,6 +28,9 @@ export interface OgpAddPayload {
   biltyNo: string;
   store: string;
   freight: string;
+  transporterName: string;
+  transporterCnic: string;
+  transporterPhone: string;
   department: string;
   weightMachineName: string;
   weight: string;
@@ -64,6 +67,9 @@ export interface OgpRecord {
   biltyNo: string;
   store: string;
   freight: string;
+  transporterName: string;
+  transporterCnic: string;
+  transporterPhone: string;
   weightMachineName: string;
   weight: string;
   location: string;
@@ -293,7 +299,11 @@ export class OgpService {
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',
       biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']) || '—',
       store: this.pickString(sources, ['store', 'Store']) || '—',
-      freight: this.pickString(sources, ['freight', 'Freight']) || '—',
+      freight:
+        this.pickString(sources, ['freight', 'Freight', 'freightAmount', 'freight_amount']) || '—',
+      transporterName: this.pickString(sources, ['transporterName', 'transporter_name']) || '—',
+      transporterCnic: this.pickString(sources, ['transporterCnic', 'transporter_cnic']) || '—',
+      transporterPhone: this.pickString(sources, ['transporterPhone', 'transporter_phone']) || '—',
       weightMachineName:
         this.pickString(sources, ['weightMachineName', 'weight_machine_name', 'WeightMachineName']) || '—',
       weight: this.pickString(sources, ['weight', 'Weight']) || '—',

@@ -35,6 +35,7 @@ export interface AgpAddPayload {
   articleOutDate: string;
   articleReturnedDate: string;
   location: string;
+  store: string;
   transporterName: string;
   transporterCnic: string;
   transporterPhone: string;
@@ -82,6 +83,7 @@ export interface AgpRecord {
   articleOutDate: string;
   articleReturnedDate: string;
   location: string;
+  store: string;
 
   transporterName: string;
   transporterCnic: string;
@@ -355,6 +357,7 @@ export class AgpService {
       articleOutDate: this.pickString(sources, ['articleOutDate', 'article_out_date']) || '—',
       articleReturnedDate: this.pickString(sources, ['articleReturnedDate', 'article_returned_date']) || '—',
       location: this.pickString(sources, ['location', 'Location']) || '—',
+      store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse']) || '—',
       transporterName: this.pickString(sources, ['transporterName', 'transporter_name']) || '—',
       transporterCnic: this.pickString(sources, ['transporterCnic', 'transporter_cnic']) || '—',
       transporterPhone: this.pickString(sources, ['transporterPhone', 'transporter_phone']) || '—',

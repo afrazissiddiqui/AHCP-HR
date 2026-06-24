@@ -127,6 +127,7 @@
               <div class="js-detail-item"><label>Article out date:</label> <span>{{ selectedRow.articleOutDate }}</span></div>
               <div class="js-detail-item"><label>Article returned date:</label> <span>{{ selectedRow.articleReturnedDate }}</span></div>
               <div class="js-detail-item"><label>Location:</label> <span>{{ selectedRow.location }}</span></div>
+              <div class="js-detail-item"><label>Warehouse:</label> <span>{{ warehouseLabel(selectedRow.store) }}</span></div>
               <div class="js-detail-item"><label>Transporter:</label> <span>{{ selectedRow.transporterName }}</span></div>
               <div class="js-detail-item"><label>Transporter CNIC:</label> <span>{{ selectedRow.transporterCnic }}</span></div>
               <div class="js-detail-item"><label>Transporter phone:</label> <span>{{ selectedRow.transporterPhone }}</span></div>
@@ -151,7 +152,6 @@
                 <thead>
                   <tr>
                     <th>Sr.#</th>
-                    <th>OITM</th>
                     <th>Item code</th>
                     <th>Item name</th>
                     <th>Serial no.</th>
@@ -168,7 +168,6 @@
                 <tbody>
                   <tr *ngFor="let ln of selectedRow.lines; let idx = index">
                     <td>{{ idx + 1 }}</td>
-                    <td>{{ ln.oitmCode }}</td>
                     <td>{{ ln.itemCode }}</td>
                     <td>{{ ln.itemName }}</td>
                     <td>{{ ln.serialNumbers }}</td>

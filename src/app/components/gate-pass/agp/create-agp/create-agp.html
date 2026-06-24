@@ -55,8 +55,7 @@
                   id="agp-ref"
                   type="text"
                   [(ngModel)]="referenceNo"
-                  placeholder="Auto if left blank"
-                  [readonly]="headerLocked"
+                  readonly
                 />
               </div>
             </div>
@@ -119,6 +118,13 @@
                 <select id="agp-location" [(ngModel)]="location" [disabled]="headerLocked">
                   <option value="">No selection</option>
                   <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
+                </select>
+              </div>
+              <div class="ogp-field">
+                <label for="agp-store">Warehouse</label>
+                <select id="agp-store" [(ngModel)]="store" [disabled]="headerLocked">
+                  <option value="">No selection</option>
+                  <option *ngFor="let wh of warehouseOptions" [value]="wh.code">{{ wh.code }} — {{ wh.name }}</option>
                 </select>
               </div>
             </div>
@@ -186,7 +192,6 @@
             <thead>
               <tr>
                 <th class="igp-col-sr">Sr.#</th>
-                <th>OITM / item master</th>
                 <th>Item code</th>
                 <th>Item name</th>
                 <th>Serial numbers</th>
@@ -203,13 +208,28 @@
             </thead>
             <tbody>
               <tr *ngIf="lines.length === 0" class="igp-lines-empty">
-                <td colspan="14">No line items yet. Click “Add line” to add rows.</td>
+                <td colspan="13">No line items yet. Click “Add line” to add rows.</td>
               </tr>
               <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex">
                 <td class="igp-col-sr">{{ i + 1 }}</td>
-                <td><input type="text" [(ngModel)]="line.oitmCode" placeholder="OITM code" title="Item Master Data (OITM) linkage" /></td>
-                <td><input type="text" [(ngModel)]="line.itemCode" /></td>
-                <td><input type="text" [(ngModel)]="line.itemName" /></td>
+                <td>
+                  <app-gate-pass-item-search-input
+                    [inputId]="'agp-item-code-' + i"
+                    [value]="line.itemCode"
+                    (valueChange)="line.itemCode = $event"
+                    (itemSelected)="applyItemMaster(line, $event)"
+                    placeholder="Search code or name"
+                  />
+                </td>
+                <td>
+                  <app-gate-pass-item-search-input
+                    [inputId]="'agp-item-name-' + i"
+                    [value]="line.itemName"
+                    (valueChange)="line.itemName = $event"
+                    (itemSelected)="applyItemMaster(line, $event)"
+                    placeholder="Search code or name"
+                  />
+                </td>
                 <td><input type="text" [(ngModel)]="line.serialNumbers" placeholder="Comma-separated" /></td>
                 <td><input type="text" [(ngModel)]="line.category" /></td>
                 <td><input type="text" [(ngModel)]="line.packingCondition" /></td>

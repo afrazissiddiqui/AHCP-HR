@@ -122,9 +122,12 @@
               <div class="js-detail-item"><label>From unit:</label> <span>{{ selectedRow.fromUnit }}</span></div>
               <div class="js-detail-item"><label>Kanta slip:</label> <span>{{ selectedRow.kantaSlip }}</span></div>
               <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRow.department }}</span></div>
+              <div class="js-detail-item"><label>Warehouse:</label> <span>{{ warehouseLabel(selectedRow.store) }}</span></div>
+              <div class="js-detail-item"><label>Transporter:</label> <span>{{ selectedRow.transporterName }}</span></div>
+              <div class="js-detail-item"><label>Transporter CNIC:</label> <span>{{ selectedRow.transporterCnic }}</span></div>
+              <div class="js-detail-item"><label>Transporter phone:</label> <span>{{ selectedRow.transporterPhone }}</span></div>
               <div class="js-detail-item"><label>Bilty no.:</label> <span>{{ selectedRow.biltyNo }}</span></div>
-              <div class="js-detail-item"><label>Store:</label> <span>{{ selectedRow.store }}</span></div>
-              <div class="js-detail-item"><label>Freight:</label> <span>{{ selectedRow.freight }}</span></div>
+              <div class="js-detail-item"><label>Freight amount:</label> <span>{{ selectedRow.freight }}</span></div>
               <div class="js-detail-item"><label>Weight machine:</label> <span>{{ selectedRow.weightMachineName }}</span></div>
               <div class="js-detail-item"><label>Weight:</label> <span>{{ selectedRow.weight }}</span></div>
               <div class="js-detail-item"><label>Location:</label> <span>{{ selectedRow.location }}</span></div>

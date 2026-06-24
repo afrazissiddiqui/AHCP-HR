@@ -405,6 +405,7 @@
   border: 1px solid #ddd;
   padding: 4px 6px;
   vertical-align: middle;
+  overflow: visible;
 }
 
 .igp-lines-table th {
@@ -744,5 +745,5 @@
 }
 
 .igp-lines-table--agp {
-  min-width: 1400px;
+  min-width: 1280px;
 }

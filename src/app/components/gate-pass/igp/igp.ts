@@ -7,6 +7,7 @@ import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { GatePassLayoutService } from '../gate-pass-layout.service';
+import { gatePassWarehouseLabel } from '../gate-pass-warehouse.options';
 import { IgpService, IgpRecord } from './igp.service';
 
 type IgpSortableKey = Exclude<keyof IgpRecord, 'lines' | 'selected'>;
@@ -25,6 +26,8 @@ interface ColumnConfig {
   styleUrl: './igp.css',
 })
 export class IgpComponent implements OnInit {
+  readonly warehouseLabel = gatePassWarehouseLabel;
+
   constructor(
     private readonly router: Router,
     private readonly igpService: IgpService,

@@ -14,6 +14,10 @@ import {
   createEmptyAgpLineItem,
 } from '../agp.service';
 import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
+import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
+import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
+import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
+import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -22,7 +26,7 @@ function emptyIfDash(value: string): string {
 @Component({
   selector: 'app-create-agp',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseDocumentModalComponent],
+  imports: [CommonModule, FormsModule, BaseDocumentModalComponent, GatePassItemSearchInputComponent],
   templateUrl: './create-agp.html',
   styleUrl: '../../igp/create-igp/create-igp.css',
 })
@@ -48,6 +52,7 @@ export class CreateAgpComponent implements OnInit {
   articleOutDate = '';
   articleReturnedDate = '';
   location = '';
+  store = '';
 
   transporterName = '';
   transporterCnic = '';
@@ -85,12 +90,14 @@ export class CreateAgpComponent implements OnInit {
     'Supply Chain',
   ] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
+  readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 
   constructor(
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly agpService: AgpService,
     private readonly alertService: AlertService,
+    private readonly itemMasterService: GatePassItemMasterService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -99,6 +106,7 @@ export class CreateAgpComponent implements OnInit {
   ngOnInit(): void {
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
+      this.assignNextReferenceNo();
       return;
     }
 
@@ -115,6 +123,26 @@ export class CreateAgpComponent implements OnInit {
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load AGP for edit.'),
         );
+      },
+    });
+  }
+
+  private assignNextReferenceNo(): void {
+    const cached = this.agpService.records().map((r) => r.referenceNo);
+    if (cached.length > 0) {
+      this.referenceNo = nextGatePassReferenceNo('AGP', cached);
+      return;
+    }
+
+    this.agpService.fetchArticleGatePasses().subscribe({
+      next: (records) => {
+        this.referenceNo = nextGatePassReferenceNo(
+          'AGP',
+          records.map((r) => r.referenceNo),
+        );
+      },
+      error: () => {
+        this.referenceNo = nextGatePassReferenceNo('AGP', []);
       },
     });
   }
@@ -137,6 +165,10 @@ export class CreateAgpComponent implements OnInit {
 
   removeLine(index: number): void {
     this.lines = this.lines.filter((_, i) => i !== index);
+  }
+
+  applyItemMaster(line: AgpLineItem, item: GatePassItemMaster): void {
+    this.itemMasterService.applyToLine(line, item);
   }
 
   onAttachmentChange(event: Event): void {
@@ -169,11 +201,11 @@ export class CreateAgpComponent implements OnInit {
   private resetAfterTypeOrClearBaseDoc(): void {
     this.headerLocked = false;
     this.baseDocNo = '';
-    this.referenceNo = '';
     this.businessPartnerCode = '';
     this.businessPartnerName = '';
     this.vehicleNo = '';
     this.location = '';
+    this.store = '';
     this.remarks = '';
     this.lines = [];
     const d = new Date();
@@ -219,12 +251,12 @@ export class CreateAgpComponent implements OnInit {
     if (doc.date?.trim()) {
       this.documentDate = doc.date.trim();
     }
-    this.referenceNo = doc.referenceNo?.trim() ?? '';
     this.businessPartnerCode = doc.businessPartnerCode?.trim() ?? '';
     this.businessPartnerName = (doc.businessPartnerName || doc.partner || '').trim();
     this.vehicleNo = doc.vehicleNo?.trim() ?? '';
     this.requestingDepartment = doc.department?.trim() ?? '';
     this.location = doc.location?.trim() ?? '';
+    this.store = doc.store?.trim() ?? '';
     this.biltyNo = doc.biltyNo?.trim() ?? '';
     const freightParsed = parseFloat(String(doc.freight ?? '').replace(/[^\d.]/g, ''));
     this.freightAmount = Number.isFinite(freightParsed) ? freightParsed : null;
@@ -303,6 +335,7 @@ export class CreateAgpComponent implements OnInit {
     this.articleOutDate = emptyIfDash(record.articleOutDate);
     this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
     this.location = emptyIfDash(record.location);
+    this.store = emptyIfDash(record.store);
     this.transporterName = emptyIfDash(record.transporterName);
     this.transporterCnic = emptyIfDash(record.transporterCnic);
     this.transporterPhone = emptyIfDash(record.transporterPhone);
@@ -315,15 +348,11 @@ export class CreateAgpComponent implements OnInit {
   }
 
   private buildPayload(): AgpAddPayload {
-    const referenceNo =
-      this.referenceNo.trim() ||
-      `AGP-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
-
     return {
       type: this.type.trim(),
       baseDocNo: this.baseDocNo.trim(),
       documentDate: this.documentDate.trim(),
-      referenceNo,
+      referenceNo: this.referenceNo.trim(),
       businessPartnerCode: this.businessPartnerCode.trim(),
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
@@ -335,6 +364,7 @@ export class CreateAgpComponent implements OnInit {
       articleOutDate: this.articleOutDate.trim(),
       articleReturnedDate: this.articleReturnedDate.trim(),
       location: this.location.trim(),
+      store: this.store.trim(),
       transporterName: this.transporterName.trim(),
       transporterCnic: this.transporterCnic.trim(),
       transporterPhone: this.transporterPhone.trim(),
@@ -344,7 +374,7 @@ export class CreateAgpComponent implements OnInit {
       headOfSupplyChainApproval: this.headOfSupplyChainApproval,
       remarks: this.remarks.trim(),
       lines: this.lines.map((line) => ({
-        oitmCode: line.oitmCode.trim(),
+        oitmCode: line.itemCode.trim(),
         itemCode: line.itemCode.trim(),
         itemName: line.itemName.trim(),
         serialNumbers: line.serialNumbers.trim(),
