@@ -213,12 +213,13 @@
               <tr *ngIf="lines.length === 0" class="igp-lines-empty">
                 <td colspan="13">No line items yet. Click “Add line” to add rows.</td>
               </tr>
-              <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex">
+              <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex" [class.igp-line-deleted]="line.deleted">
                 <td class="igp-col-sr">{{ i + 1 }}</td>
                 <td>
                   <app-gate-pass-item-search-input
                     [inputId]="'agp-item-code-' + i"
                     [value]="line.itemCode"
+                    [disabled]="line.deleted"
                     (valueChange)="line.itemCode = $event"
                     (itemSelected)="applyItemMaster(line, $event)"
                     placeholder="Search code or name"
@@ -228,22 +229,31 @@
                   <app-gate-pass-item-search-input
                     [inputId]="'agp-item-name-' + i"
                     [value]="line.itemName"
+                    [disabled]="line.deleted"
                     (valueChange)="line.itemName = $event"
                     (itemSelected)="applyItemMaster(line, $event)"
                     placeholder="Search code or name"
                   />
                 </td>
-                <td><input type="text" [(ngModel)]="line.serialNumbers" placeholder="Batch number" /></td>
-                <td><input type="text" [(ngModel)]="line.category" /></td>
-                <td><input type="text" [(ngModel)]="line.packingCondition" /></td>
-                <td><input type="text" [(ngModel)]="line.productQuality" /></td>
-                <td><input type="text" [(ngModel)]="line.uom" /></td>
-                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qtySent" /></td>
-                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qtyReceived" /></td>
-                <td><input type="text" [(ngModel)]="line.info" /></td>
-                <td><input type="text" [(ngModel)]="line.remarks" /></td>
+                <td><input type="text" [(ngModel)]="line.serialNumbers" placeholder="Batch number" [readonly]="line.deleted" /></td>
+                <td><input type="text" [(ngModel)]="line.category" [readonly]="line.deleted" /></td>
+                <td><input type="text" [(ngModel)]="line.packingCondition" [readonly]="line.deleted" /></td>
+                <td><input type="text" [(ngModel)]="line.productQuality" [readonly]="line.deleted" /></td>
+                <td><input type="text" [(ngModel)]="line.uom" [readonly]="line.deleted" /></td>
+                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qtySent" [readonly]="line.deleted" /></td>
+                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qtyReceived" [readonly]="line.deleted" /></td>
+                <td><input type="text" [(ngModel)]="line.info" [readonly]="line.deleted" /></td>
+                <td><input type="text" [(ngModel)]="line.remarks" [readonly]="line.deleted" /></td>
                 <td class="igp-col-actions">
-                  <button type="button" class="igp-remove-line" (click)="removeLine(i)" title="Remove line">Remove</button>
+                  <button
+                    *ngIf="!line.deleted"
+                    type="button"
+                    class="igp-remove-line"
+                    (click)="removeLine(i)"
+                    title="Remove line"
+                  >
+                    Remove
+                  </button>
                 </td>
               </tr>
             </tbody>

@@ -17,6 +17,13 @@
   cursor: pointer;
 }
 
+.gp-item-search-wrap input[type='search']:disabled,
+.gp-item-search-wrap input[type='search'][readonly] {
+  background: #e8e8e8;
+  color: #888;
+  cursor: not-allowed;
+}
+
 .gp-item-search-wrap input[type='search']:focus {
   outline: none;
   border-color: #0070f2;

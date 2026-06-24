@@ -14,6 +14,7 @@ export interface IgpLineItem {
   qty: number;
   info: string;
   remarks: string;
+  deleted: boolean;
 }
 
 export interface IgpAddPayload {
@@ -97,6 +98,7 @@ function emptyLine(): IgpLineItem {
     qty: 0,
     info: '',
     remarks: '',
+    deleted: false,
   };
 }
 
@@ -314,6 +316,7 @@ export class IgpService {
       qty: this.pickNumber([raw], ['qty', 'quantity', 'Qty']),
       info: this.pickString([raw], ['info', 'Info']),
       remarks: this.pickString([raw], ['remarks', 'Remarks']),
+      deleted: Boolean(raw['deleted'] ?? raw['Deleted'] ?? raw['isDeleted']),
     };
   }
 

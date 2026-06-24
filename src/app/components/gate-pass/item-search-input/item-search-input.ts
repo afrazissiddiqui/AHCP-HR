@@ -14,6 +14,7 @@ export class GatePassItemSearchInputComponent {
   @Input() value = '';
   @Input() placeholder = 'Search code or name';
   @Input() inputId = '';
+  @Input() disabled = false;
 
   @Output() valueChange = new EventEmitter<string>();
   @Output() itemSelected = new EventEmitter<GatePassItemMaster>();
@@ -24,12 +25,18 @@ export class GatePassItemSearchInputComponent {
   constructor(private readonly itemMaster: GatePassItemMasterService) {}
 
   onInput(next: string): void {
+    if (this.disabled) {
+      return;
+    }
     this.valueChange.emit(next);
     this.suggestions = this.itemMaster.search(next);
     this.suggestionsOpen = true;
   }
 
   openSuggestions(): void {
+    if (this.disabled) {
+      return;
+    }
     if (this.value.trim()) {
       this.suggestions = this.itemMaster.search(this.value);
       this.suggestionsOpen = true;
@@ -43,6 +50,9 @@ export class GatePassItemSearchInputComponent {
   }
 
   selectItem(item: GatePassItemMaster): void {
+    if (this.disabled) {
+      return;
+    }
     this.itemSelected.emit(item);
     this.suggestionsOpen = false;
   }

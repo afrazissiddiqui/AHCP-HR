@@ -17,6 +17,7 @@ export interface AgpLineItem {
   qtyReceived: number;
   info: string;
   remarks: string;
+  deleted: boolean;
 }
 
 export interface AgpAddPayload {
@@ -122,6 +123,7 @@ function emptyLine(): AgpLineItem {
     qtyReceived: 0,
     info: '',
     remarks: '',
+    deleted: false,
   };
 }
 
@@ -303,6 +305,7 @@ export class AgpService {
       qtyReceived: this.pickNumber([raw], ['qtyReceived', 'qty_received', 'QtyReceived']),
       info: this.pickString([raw], ['info', 'Info']),
       remarks: this.pickString([raw], ['remarks', 'Remarks']),
+      deleted: Boolean(raw['deleted'] ?? raw['Deleted'] ?? raw['isDeleted']),
     };
   }
 

@@ -10,6 +10,7 @@
     (focus)="openSuggestions()"
     (blur)="onBlur()"
     [placeholder]="placeholder"
+    [readonly]="disabled"
     autocomplete="off"
   />
   <ul class="gp-item-suggestions" role="listbox" *ngIf="suggestionsOpen && value.trim()">

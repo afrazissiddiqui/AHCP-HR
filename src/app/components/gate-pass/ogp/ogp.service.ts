@@ -14,6 +14,7 @@ export interface OgpLineItem {
   qty: number;
   info: string;
   remarks: string;
+  deleted: boolean;
 }
 
 export interface OgpAddPayload {
@@ -97,6 +98,7 @@ function emptyLine(): OgpLineItem {
     qty: 0,
     info: '',
     remarks: '',
+    deleted: false,
   };
 }
 
@@ -257,6 +259,7 @@ export class OgpService {
       qty: this.pickNumber([raw], ['qty', 'quantity', 'Qty']),
       info: this.pickString([raw], ['info', 'Info']),
       remarks: this.pickString([raw], ['remarks', 'Remarks']),
+      deleted: Boolean(raw['deleted'] ?? raw['Deleted'] ?? raw['isDeleted']),
     };
   }
 

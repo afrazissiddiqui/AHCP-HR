@@ -112,14 +112,6 @@ export class AgpComponent implements OnInit {
     });
   }
 
-  onUpdate(record: AgpRecord): void {
-    if (!record.Id) {
-      this.alertService.warning('Update', 'Unable to update this row: missing AGP id.');
-      return;
-    }
-    void this.router.navigate(['/gate-pass/agp/edit', record.Id]);
-  }
-
   async onDelete(record: AgpRecord): Promise<void> {
     const result = await this.alertService.confirm(
       'Delete AGP?',

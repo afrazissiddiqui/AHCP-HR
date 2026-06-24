@@ -454,6 +454,18 @@
   color: #c00;
 }
 
+.igp-line-deleted td {
+  background: #f0f0f0;
+  color: #888;
+}
+
+.igp-line-deleted input,
+.igp-line-deleted textarea {
+  background: #e8e8e8;
+  color: #888;
+  cursor: not-allowed;
+}
+
 .igp-lines-empty td {
   text-align: center;
   color: #666;

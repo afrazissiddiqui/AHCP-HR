@@ -125,7 +125,9 @@ export class CreateIgpComponent implements OnInit {
   }
 
   get totalQty(): number {
-    return this.lines.reduce((s, l) => s + (Number(l.qty) || 0), 0);
+    return this.lines
+      .filter((line) => !line.deleted)
+      .reduce((s, l) => s + (Number(l.qty) || 0), 0);
   }
 
   trackByIndex(index: number): number {
@@ -137,7 +139,10 @@ export class CreateIgpComponent implements OnInit {
   }
 
   removeLine(index: number): void {
-    this.lines = this.lines.filter((_, i) => i !== index);
+    const line = this.lines[index];
+    if (line && !line.deleted) {
+      line.deleted = true;
+    }
   }
 
   applyItemMaster(line: IgpLineItem, item: GatePassItemMaster): void {
@@ -210,6 +215,7 @@ export class CreateIgpComponent implements OnInit {
         qty: Number(l.qty) || 0,
         info: l.info ?? '',
         remarks: l.remarks ?? '',
+        deleted: false,
       })) ?? [];
   }
 
@@ -219,7 +225,7 @@ export class CreateIgpComponent implements OnInit {
       return;
     }
 
-    if (this.lines.length === 0) {
+    if (!this.lines.some((line) => !line.deleted)) {
       void this.alertService.validation('At least one line item is required.');
       return;
     }
@@ -300,7 +306,9 @@ export class CreateIgpComponent implements OnInit {
       location: this.location,
       employee: this.employee.trim(),
       remarks: this.remarks.trim(),
-      lines: this.lines.map((line) => ({
+      lines: this.lines
+        .filter((line) => !line.deleted)
+        .map((line) => ({
         itemCode: line.itemCode.trim(),
         itemName: line.itemName.trim(),
         serialNumbers: line.serialNumbers.trim(),
@@ -311,6 +319,7 @@ export class CreateIgpComponent implements OnInit {
         qty: Number(line.qty) || 0,
         info: line.info.trim(),
         remarks: line.remarks.trim(),
+        deleted: false,
       })),
       totalQty: this.totalQty,
     };

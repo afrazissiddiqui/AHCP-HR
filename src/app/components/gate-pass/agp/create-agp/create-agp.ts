@@ -148,11 +148,15 @@ export class CreateAgpComponent implements OnInit {
   }
 
   get totalQtySent(): number {
-    return this.lines.reduce((s, l) => s + (Number(l.qtySent) || 0), 0);
+    return this.lines
+      .filter((line) => !line.deleted)
+      .reduce((s, l) => s + (Number(l.qtySent) || 0), 0);
   }
 
   get totalQtyReceived(): number {
-    return this.lines.reduce((s, l) => s + (Number(l.qtyReceived) || 0), 0);
+    return this.lines
+      .filter((line) => !line.deleted)
+      .reduce((s, l) => s + (Number(l.qtyReceived) || 0), 0);
   }
 
   trackByIndex(index: number): number {
@@ -164,7 +168,10 @@ export class CreateAgpComponent implements OnInit {
   }
 
   removeLine(index: number): void {
-    this.lines = this.lines.filter((_, i) => i !== index);
+    const line = this.lines[index];
+    if (line && !line.deleted) {
+      line.deleted = true;
+    }
   }
 
   applyItemMaster(line: AgpLineItem, item: GatePassItemMaster): void {
@@ -242,6 +249,7 @@ export class CreateAgpComponent implements OnInit {
       qtyReceived: qty,
       info: l.info ?? '',
       remarks: l.remarks ?? '',
+      deleted: false,
     };
   }
 
@@ -286,7 +294,7 @@ export class CreateAgpComponent implements OnInit {
       return;
     }
 
-    if (this.lines.length === 0) {
+    if (!this.lines.some((line) => !line.deleted)) {
       void this.alertService.validation('At least one line item is required.');
       return;
     }
@@ -373,7 +381,9 @@ export class CreateAgpComponent implements OnInit {
       attachmentFileName: this.attachmentFileName.trim(),
       headOfSupplyChainApproval: this.headOfSupplyChainApproval,
       remarks: this.remarks.trim(),
-      lines: this.lines.map((line) => ({
+      lines: this.lines
+        .filter((line) => !line.deleted)
+        .map((line) => ({
         oitmCode: line.itemCode.trim(),
         itemCode: line.itemCode.trim(),
         itemName: line.itemName.trim(),
@@ -386,6 +396,7 @@ export class CreateAgpComponent implements OnInit {
         qtyReceived: Number(line.qtyReceived) || 0,
         info: line.info.trim(),
         remarks: line.remarks.trim(),
+        deleted: false,
       })),
       totalQtySent: this.totalQtySent,
       totalQtyReceived: this.totalQtyReceived,
