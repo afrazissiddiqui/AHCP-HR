@@ -655,6 +655,37 @@
   box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
 }
 
+.ogp-input-unit-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.ogp-input-unit-row input {
+  flex: 1;
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.ogp-input-unit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  background: #f3f4f6;
+  border: 1px solid #d0d0d0;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  white-space: nowrap;
+}
+
+.ogp-input-unit-row input:focus + .ogp-input-unit {
+  border-color: #0052cc;
+}
+
 @media (max-width: 1100px) {
   .ogp-header-grid--4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));

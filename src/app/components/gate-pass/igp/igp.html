@@ -127,9 +127,9 @@
               <div class="js-detail-item"><label>Transporter CNIC:</label> <span>{{ selectedRow.transporterCnic }}</span></div>
               <div class="js-detail-item"><label>Transporter phone:</label> <span>{{ selectedRow.transporterPhone }}</span></div>
               <div class="js-detail-item"><label>Bilty no.:</label> <span>{{ selectedRow.biltyNo }}</span></div>
-              <div class="js-detail-item"><label>Freight amount:</label> <span>{{ selectedRow.freight }}</span></div>
+              <div class="js-detail-item"><label>Freight amount:</label> <span>{{ selectedRow.freight }} PKR</span></div>
               <div class="js-detail-item"><label>Weight machine:</label> <span>{{ selectedRow.weightMachineName }}</span></div>
-              <div class="js-detail-item"><label>Weight:</label> <span>{{ selectedRow.weight }}</span></div>
+              <div class="js-detail-item"><label>Weight:</label> <span>{{ selectedRow.weight }} KG</span></div>
               <div class="js-detail-item"><label>Location:</label> <span>{{ selectedRow.location }}</span></div>
               <div class="js-detail-item"><label>Employee:</label> <span>{{ selectedRow.employee }}</span></div>
               <div class="js-detail-item"><label>Status:</label> <span>{{ selectedRow.status }}</span></div>
@@ -150,6 +150,7 @@
                     <th>Sr.#</th>
                     <th>Item code</th>
                     <th>Item name</th>
+                    <th>Batch #</th>
                     <th>Category</th>
                     <th>Packing</th>
                     <th>Quality</th>
@@ -164,6 +165,7 @@
                     <td>{{ idx + 1 }}</td>
                     <td>{{ ln.itemCode }}</td>
                     <td>{{ ln.itemName }}</td>
+                    <td>{{ ln.serialNumbers }}</td>
                     <td>{{ ln.category }}</td>
                     <td>{{ ln.packingCondition }}</td>
                     <td>{{ ln.productQuality }}</td>

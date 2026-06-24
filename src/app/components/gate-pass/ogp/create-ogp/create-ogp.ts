@@ -207,6 +207,7 @@ export class CreateOgpComponent implements OnInit {
       doc.lines?.map((l) => ({
         itemCode: l.itemCode,
         itemName: l.itemName,
+        serialNumbers: '',
         category: l.category,
         packingCondition: l.packingCondition,
         productQuality: l.productQuality,
@@ -307,6 +308,7 @@ export class CreateOgpComponent implements OnInit {
       lines: this.lines.map((line) => ({
         itemCode: line.itemCode.trim(),
         itemName: line.itemName.trim(),
+        serialNumbers: line.serialNumbers.trim(),
         category: line.category.trim(),
         packingCondition: line.packingCondition.trim(),
         productQuality: line.productQuality.trim(),

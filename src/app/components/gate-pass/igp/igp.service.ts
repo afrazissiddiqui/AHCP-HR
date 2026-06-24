@@ -6,6 +6,7 @@ import { apiUrl } from '../../../config/api.config';
 export interface IgpLineItem {
   itemCode: string;
   itemName: string;
+  serialNumbers: string;
   category: string;
   packingCondition: string;
   productQuality: string;
@@ -88,6 +89,7 @@ function emptyLine(): IgpLineItem {
   return {
     itemCode: '',
     itemName: '',
+    serialNumbers: '',
     category: '',
     packingCondition: '',
     productQuality: '',
@@ -304,6 +306,7 @@ export class IgpService {
     return {
       itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode']),
       itemName: this.pickString([raw], ['itemName', 'item_name', 'ItemName']),
+      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'batchNo', 'batch_no', 'BatchNo']),
       category: this.pickString([raw], ['category', 'Category']),
       packingCondition: this.pickString([raw], ['packingCondition', 'packing_condition']),
       productQuality: this.pickString([raw], ['productQuality', 'product_quality']),

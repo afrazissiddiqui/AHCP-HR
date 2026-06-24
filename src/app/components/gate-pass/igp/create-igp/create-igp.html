@@ -135,7 +135,10 @@
               </div>
               <div class="ogp-field">
                 <label for="igp-freight">Freight amount (numeric only)</label>
-                <input id="igp-freight" type="number" min="0" step="0.01" [(ngModel)]="freight" placeholder="0.00" />
+                <div class="ogp-input-unit-row">
+                  <input id="igp-freight" type="number" min="0" step="0.01" [(ngModel)]="freight" placeholder="0.00" />
+                  <span class="ogp-input-unit">PKR</span>
+                </div>
               </div>
             </div>
           </div>
@@ -149,7 +152,10 @@
               </div>
               <div class="ogp-field">
                 <label for="igp-weight">Weight (numeric only)</label>
-                <input id="igp-weight" type="number" min="0" step="0.01" [(ngModel)]="weight" placeholder="0.00" />
+                <div class="ogp-input-unit-row">
+                  <input id="igp-weight" type="number" min="0" step="0.01" [(ngModel)]="weight" placeholder="0.00" />
+                  <span class="ogp-input-unit">KG</span>
+                </div>
               </div>
               <div class="ogp-field">
                 <label for="igp-location">Location</label>
@@ -188,6 +194,7 @@
                 <th class="igp-col-sr">Sr.#</th>
                 <th>Item code</th>
                 <th>Item name</th>
+                <th>Batch #</th>
                 <th>Category</th>
                 <th>Packing condition</th>
                 <th>Product quality</th>
@@ -200,7 +207,7 @@
             </thead>
             <tbody>
               <tr *ngIf="lines.length === 0" class="igp-lines-empty">
-                <td colspan="11">No line items yet. Click “Add line” to add rows.</td>
+                <td colspan="12">No line items yet. Click “Add line” to add rows.</td>
               </tr>
               <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex">
                 <td class="igp-col-sr">{{ i + 1 }}</td>
@@ -222,6 +229,7 @@
                     placeholder="Search code or name"
                   />
                 </td>
+                <td><input type="text" [(ngModel)]="line.serialNumbers" placeholder="Batch number" /></td>
                 <td><input type="text" [(ngModel)]="line.category" /></td>
                 <td><input type="text" [(ngModel)]="line.packingCondition" /></td>
                 <td><input type="text" [(ngModel)]="line.productQuality" /></td>
@@ -236,7 +244,7 @@
             </tbody>
             <tfoot>
               <tr class="igp-total-row">
-                <td colspan="7" class="igp-total-label">Total</td>
+                <td colspan="8" class="igp-total-label">Total</td>
                 <td class="igp-col-qty"><strong>{{ totalQty }}</strong></td>
                 <td colspan="3"></td>
               </tr>

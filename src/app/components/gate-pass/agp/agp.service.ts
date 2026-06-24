@@ -294,7 +294,7 @@ export class AgpService {
       oitmCode: this.pickString([raw], ['oitmCode', 'oitm_code', 'OitmCode']),
       itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode']),
       itemName: this.pickString([raw], ['itemName', 'item_name', 'ItemName']),
-      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'SerialNumbers']),
+      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'SerialNumbers', 'batchNo', 'batch_no', 'BatchNo']),
       category: this.pickString([raw], ['category', 'Category']),
       packingCondition: this.pickString([raw], ['packingCondition', 'packing_condition']),
       productQuality: this.pickString([raw], ['productQuality', 'product_quality']),
