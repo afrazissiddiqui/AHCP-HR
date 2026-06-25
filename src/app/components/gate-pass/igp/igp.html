@@ -13,7 +13,7 @@
     >
       <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
         <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-          IGP records ({{ rows.length }}) · Selected ({{ getSelectedCount() }})
+          IGP records ({{ records().length }}) · Selected ({{ getSelectedCount() }})
         </div>
       </div>
 
@@ -83,7 +83,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let j of paginatedList">
+            <tr *ngFor="let j of paginatedList; trackBy: trackRowId">
               <td>
                 <input type="checkbox" [(ngModel)]="j.selected" />
               </td>

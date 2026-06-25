@@ -357,7 +357,16 @@ app-root {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.mountain-table tbody td:not(:first-child):not(.table-action-cell) {
   max-width: 0;
+  min-width: 72px;
+}
+
+.mountain-table thead th:not(:first-child):not(.application-actions-header) {
+  max-width: 0;
+  min-width: 72px;
 }
 
 .mountain-table th.application-actions-header,
@@ -374,6 +383,34 @@ app-root {
 
 .mountain-table th.sortable-header {
   overflow: hidden;
+}
+
+/* View modal detail table — no list sticky/ellipsis rules */
+.js-detail-modal .mountain-table {
+  min-width: 0;
+  table-layout: auto;
+}
+
+.js-detail-modal .mountain-table th,
+.js-detail-modal .mountain-table td {
+  max-width: none;
+  min-width: 0;
+  position: static;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  box-shadow: none;
+  border-left: 1px solid #eeeeee;
+}
+
+.js-detail-modal .mountain-table th:first-child,
+.js-detail-modal .mountain-table td:first-child,
+.js-detail-modal .mountain-table th:last-child,
+.js-detail-modal .mountain-table td:last-child {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  text-align: inherit;
 }
 
 /* Hover */

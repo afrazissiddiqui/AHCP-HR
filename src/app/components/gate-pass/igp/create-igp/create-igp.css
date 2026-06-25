@@ -3,23 +3,72 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
   width: 100%;
-  overflow: hidden;
 }
 
-.igp-create-page {
+.igp-create-page.husky-add-page {
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.igp-create-page .husky-add-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
 }
 
 .igp-header-card .cjr-personal-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.igp-header-card .cjr-row {
-  grid-template-columns: minmax(110px, 38%) minmax(0, 1fr);
+.igp-header-card .cjr-row,
+.husky-form-section .cjr-row {
+  grid-template-columns: minmax(120px, 34%) minmax(0, 1fr);
   align-items: center;
+}
+
+.igp-header-card .cjr-row input,
+.igp-header-card .cjr-row select,
+.husky-form-section .cjr-row input:not(.igp-lines-table input),
+.husky-form-section .cjr-row select {
+  width: auto;
+  max-width: 100%;
+  justify-self: start;
+}
+
+.igp-input--date {
+  width: 11rem;
+}
+
+.igp-input--ref {
+  width: 10rem;
+}
+
+.igp-input--code {
+  width: 9rem;
+}
+
+.igp-input--vehicle {
+  width: 9rem;
+}
+
+.igp-input--cnic {
+  width: 11.5rem;
+}
+
+.igp-input--phone {
+  width: 10.5rem;
+}
+
+.igp-input--amount {
+  width: 7.5rem;
+}
+
+.igp-input--wide {
+  width: 100%;
+  max-width: 22rem;
 }
 
 .igp-base-doc-row {
@@ -42,13 +91,23 @@
   padding: 6px 0 0;
 }
 
-.husky-form-section .cjr-row {
-  grid-template-columns: minmax(110px, 38%) minmax(0, 1fr);
-  align-items: center;
+.husky-form-section .cjr-row .ogp-input-unit-row {
+  width: auto;
+  max-width: 11rem;
 }
 
-.husky-form-section .cjr-row .ogp-input-unit-row {
-  width: 100%;
+.husky-form-section.igp-lines-section,
+.husky-form-sections:has(.igp-lines-table) {
+  overflow: visible;
+}
+
+.igp-lines-section .igp-lines-scroll {
+  min-height: 120px;
+}
+
+.igp-create-page .husky-sections-card,
+.igp-create-page .husky-form-sections {
+  overflow: visible;
 }
 
 .igp-lines-heading {

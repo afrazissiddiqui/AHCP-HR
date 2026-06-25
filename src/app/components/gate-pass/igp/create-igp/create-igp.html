@@ -19,6 +19,7 @@
               <label for="igp-type">Type:</label>
               <select
                 id="igp-type"
+                class="igp-input--wide"
                 [(ngModel)]="type"
                 (ngModelChange)="onBaseDocumentTypeChange()"
                 [disabled]="!!editingId"
@@ -30,12 +31,12 @@
 
             <div class="cjr-row">
               <label for="igp-date">Date:</label>
-              <input id="igp-date" type="date" [(ngModel)]="documentDate" name="documentDate" />
+              <input id="igp-date" type="date" class="igp-input--date" [(ngModel)]="documentDate" name="documentDate" />
             </div>
 
             <div class="cjr-row">
               <label for="igp-ref">IGP no.:</label>
-              <input id="igp-ref" type="text" [(ngModel)]="referenceNo" name="referenceNo" readonly />
+              <input id="igp-ref" type="text" class="igp-input--ref" [(ngModel)]="referenceNo" name="referenceNo" readonly />
             </div>
           </div>
 
@@ -74,6 +75,7 @@
               <input
                 id="igp-bp-code"
                 type="text"
+                class="igp-input--code"
                 [(ngModel)]="businessPartnerCode"
                 name="businessPartnerCode"
                 placeholder="Code"
@@ -85,6 +87,7 @@
               <input
                 id="igp-bp-name"
                 type="text"
+                class="igp-input--wide"
                 [(ngModel)]="businessPartnerName"
                 name="businessPartnerName"
                 placeholder="Partner name"
@@ -95,12 +98,12 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label for="igp-vehicle">Vehicle no.:</label>
-              <input id="igp-vehicle" type="text" [(ngModel)]="vehicleNo" name="vehicleNo" />
+              <input id="igp-vehicle" type="text" class="igp-input--vehicle" [(ngModel)]="vehicleNo" name="vehicleNo" />
             </div>
 
             <div class="cjr-row">
               <label for="igp-department">Department:</label>
-              <select id="igp-department" [(ngModel)]="department" name="department">
+              <select id="igp-department" class="igp-input--wide" [(ngModel)]="department" name="department">
                 <option value="">No selection</option>
                 <option value="Engineering">Engineering</option>
                 <option value="Marketing">Marketing</option>
@@ -118,6 +121,7 @@
               <input
                 id="igp-employee"
                 type="text"
+                class="igp-input--wide"
                 [(ngModel)]="employee"
                 name="employee"
                 placeholder="Employee name or code"
@@ -152,19 +156,19 @@
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-from-unit">From unit:</label>
-                <input id="igp-from-unit" type="text" [(ngModel)]="fromUnit" name="fromUnit" />
+                <input id="igp-from-unit" type="text" class="igp-input--wide" [(ngModel)]="fromUnit" name="fromUnit" />
               </div>
             </div>
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-kanta-slip">Kanta slip:</label>
-                <input id="igp-kanta-slip" type="text" [(ngModel)]="kantaSlip" name="kantaSlip" />
+                <input id="igp-kanta-slip" type="text" class="igp-input--ref" [(ngModel)]="kantaSlip" name="kantaSlip" />
               </div>
             </div>
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-store">Warehouse:</label>
-                <select id="igp-store" [(ngModel)]="store" name="store">
+                <select id="igp-store" class="igp-input--wide" [(ngModel)]="store" name="store">
                   <option value="">No selection</option>
                   <option *ngFor="let wh of warehouseOptions" [value]="wh.code">
                     {{ wh.code }} — {{ wh.name }}
@@ -184,6 +188,7 @@
                 <input
                   id="igp-transporter-name"
                   type="text"
+                  class="igp-input--wide"
                   [(ngModel)]="transporterName"
                   name="transporterName"
                   placeholder="Transporter / driver name"
@@ -191,7 +196,7 @@
               </div>
               <div class="cjr-row">
                 <label for="igp-bilty">Bilty number:</label>
-                <input id="igp-bilty" type="text" [(ngModel)]="biltyNo" name="biltyNo" />
+                <input id="igp-bilty" type="text" class="igp-input--ref" [(ngModel)]="biltyNo" name="biltyNo" />
               </div>
             </div>
             <div class="cjr-personal-col">
@@ -200,9 +205,14 @@
                 <input
                   id="igp-transporter-cnic"
                   type="text"
-                  [(ngModel)]="transporterCnic"
+                  class="igp-input--cnic"
+                  [ngModel]="transporterCnic"
+                  (ngModelChange)="onTransporterCnicChange($event)"
                   name="transporterCnic"
                   placeholder="XXXXX-XXXXXXX-X"
+                  maxlength="15"
+                  inputmode="numeric"
+                  autocomplete="off"
                 />
               </div>
               <div class="cjr-row">
@@ -213,6 +223,7 @@
                     type="number"
                     min="0"
                     step="0.01"
+                    class="igp-input--amount"
                     [(ngModel)]="freight"
                     name="freight"
                     placeholder="0.00"
@@ -227,9 +238,15 @@
                 <input
                   id="igp-transporter-phone"
                   type="tel"
-                  [(ngModel)]="transporterPhone"
+                  class="igp-input--phone"
+                  [ngModel]="transporterPhone"
+                  (ngModelChange)="onTransporterPhoneChange($event)"
                   name="transporterPhone"
-                  placeholder="03XX-XXXXXXX"
+                  placeholder="03XXXXXXXXX"
+                  maxlength="11"
+                  inputmode="numeric"
+                  pattern="[0-9]{11}"
+                  autocomplete="tel"
                 />
               </div>
             </div>
@@ -245,6 +262,7 @@
                 <input
                   id="igp-weight-machine"
                   type="text"
+                  class="igp-input--wide"
                   [(ngModel)]="weightMachineName"
                   name="weightMachineName"
                 />
@@ -259,6 +277,7 @@
                     type="number"
                     min="0"
                     step="0.01"
+                    class="igp-input--amount"
                     [(ngModel)]="weight"
                     name="weight"
                     placeholder="0.00"
@@ -270,7 +289,7 @@
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-location">Location:</label>
-                <select id="igp-location" [(ngModel)]="location" name="location">
+                <select id="igp-location" class="igp-input--wide" [(ngModel)]="location" name="location">
                   <option value="">No selection</option>
                   <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
                 </select>
@@ -279,7 +298,7 @@
           </div>
         </section>
 
-        <section id="igp-lines-section" class="husky-form-section">
+        <section id="igp-lines-section" class="husky-form-section igp-lines-section">
           <div class="igp-lines-heading">
             <div class="cjr-section-title">Line items</div>
             <button type="button" class="igp-add-line-btn" (click)="addLine()">

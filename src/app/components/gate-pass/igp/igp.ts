@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -27,17 +27,20 @@ interface ColumnConfig {
   styleUrl: './igp.css',
 })
 export class IgpComponent implements OnInit {
-  readonly warehouseLabel = gatePassWarehouseLabel;
+  private readonly igpService = inject(IgpService);
+  private readonly router = inject(Router);
+  private readonly layout = inject(GatePassLayoutService);
+  private readonly alertService = inject(AlertService);
 
-  constructor(
-    private readonly router: Router,
-    private readonly igpService: IgpService,
-    private readonly layout: GatePassLayoutService,
-    private readonly alertService: AlertService,
-  ) {}
+  readonly warehouseLabel = gatePassWarehouseLabel;
+  readonly records = this.igpService.records;
 
   formatCell(record: IgpRecord, key: IgpSortableKey): string {
     return formatGatePassListCell(record[key] as string | number | null | undefined, key);
+  }
+
+  trackRowId(_index: number, record: IgpRecord): string | number {
+    return record.Id ?? record.referenceNo ?? _index;
   }
 
   ngOnInit(): void {
@@ -67,7 +70,7 @@ export class IgpComponent implements OnInit {
   ];
 
   get rows(): IgpRecord[] {
-    return this.igpService.records();
+    return this.records();
   }
 
   searchText = '';
