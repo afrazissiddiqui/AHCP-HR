@@ -1,5 +1,5 @@
 <div class="husky-add-page cjr-page scd-add-page igp-create-page">
-  <div class="husky-add-scroll" #scrollContainer>
+  <div class="husky-add-scroll">
     <div class="cjr-header">
       <div class="cjr-header-left">
         <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
@@ -132,22 +132,6 @@
       </div>
     </div>
 
-    <nav class="husky-section-nav" aria-label="IGP form sections">
-      <ul class="husky-section-nav-list">
-        <li
-          *ngFor="let section of sectionNavItems"
-          class="husky-section-nav-item"
-          role="button"
-          tabindex="0"
-          [class.husky-section-nav-item--active]="activeSection === section.id"
-          (click)="scrollToSection(section.id)"
-          (keydown)="onSectionNavKeydown($event, section.id)"
-        >
-          {{ section.label }}
-        </li>
-      </ul>
-    </nav>
-
     <div class="cjr-card scd-form-card husky-sections-card">
       <div class="husky-form-sections">
         <section id="igp-shipment-section" class="husky-form-section">
@@ -222,7 +206,7 @@
                     id="igp-freight"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="1"
                     class="igp-input--amount"
                     [(ngModel)]="freight"
                     name="freight"
@@ -276,7 +260,7 @@
                     id="igp-weight"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="1"
                     class="igp-input--amount"
                     [(ngModel)]="weight"
                     name="weight"
@@ -365,7 +349,7 @@
                   <td><input type="text" [(ngModel)]="line.packingCondition" [readonly]="line.deleted" /></td>
                   <td><input type="text" [(ngModel)]="line.productQuality" [readonly]="line.deleted" /></td>
                   <td><input type="text" [(ngModel)]="line.uom" [readonly]="line.deleted" /></td>
-                  <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qty" [readonly]="line.deleted" /></td>
+                  <td><input type="number" min="0" step="1" [(ngModel)]="line.qty" [readonly]="line.deleted" /></td>
                   <td><input type="text" [(ngModel)]="line.info" [readonly]="line.deleted" /></td>
                   <td><input type="text" [(ngModel)]="line.remarks" [readonly]="line.deleted" /></td>
                   <td class="igp-col-actions">

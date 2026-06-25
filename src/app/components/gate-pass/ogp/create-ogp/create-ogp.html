@@ -136,7 +136,7 @@
               <div class="ogp-field">
                 <label for="ogp-freight">Freight amount (numeric only)</label>
                 <div class="ogp-input-unit-row">
-                  <input id="ogp-freight" type="number" min="0" step="0.01" [(ngModel)]="freight" placeholder="0.00" />
+                  <input id="ogp-freight" type="number" min="0" step="1" [(ngModel)]="freight" placeholder="0.00" />
                   <span class="ogp-input-unit">PKR</span>
                 </div>
               </div>
@@ -153,7 +153,7 @@
               <div class="ogp-field">
                 <label for="ogp-weight">Weight (numeric only)</label>
                 <div class="ogp-input-unit-row">
-                  <input id="ogp-weight" type="number" min="0" step="0.01" [(ngModel)]="weight" placeholder="0.00" />
+                  <input id="ogp-weight" type="number" min="0" step="1" [(ngModel)]="weight" placeholder="0.00" />
                   <span class="ogp-input-unit">KG</span>
                 </div>
               </div>
@@ -236,7 +236,7 @@
                 <td><input type="text" [(ngModel)]="line.packingCondition" [readonly]="line.deleted" /></td>
                 <td><input type="text" [(ngModel)]="line.productQuality" [readonly]="line.deleted" /></td>
                 <td><input type="text" [(ngModel)]="line.uom" [readonly]="line.deleted" /></td>
-                <td><input type="number" min="0" step="0.01" [(ngModel)]="line.qty" [readonly]="line.deleted" /></td>
+                <td><input type="number" min="0" step="1" [(ngModel)]="line.qty" [readonly]="line.deleted" /></td>
                 <td><input type="text" [(ngModel)]="line.info" [readonly]="line.deleted" /></td>
                 <td><input type="text" [(ngModel)]="line.remarks" [readonly]="line.deleted" /></td>
                 <td class="igp-col-actions">

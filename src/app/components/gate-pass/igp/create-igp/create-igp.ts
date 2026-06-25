@@ -1,12 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
@@ -41,11 +34,6 @@ function numericFieldFromDoc(value: string | undefined): string {
   return Number.isFinite(parsed) ? String(parsed) : '';
 }
 
-interface IgpSectionNavItem {
-  id: string;
-  label: string;
-}
-
 @Component({
   selector: 'app-create-igp',
   standalone: true,
@@ -58,7 +46,7 @@ interface IgpSectionNavItem {
     './create-igp.css',
   ],
 })
-export class CreateIgpComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CreateIgpComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add IGP';
   submitButtonLabel = 'Save IGP';
@@ -91,21 +79,6 @@ export class CreateIgpComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
-
-  readonly sectionNavItems: IgpSectionNavItem[] = [
-    { id: 'igp-shipment-section', label: 'Shipment & logistics' },
-    { id: 'igp-transporter-section', label: 'Transporter & freight' },
-    { id: 'igp-weighing-section', label: 'Weighing & location' },
-    { id: 'igp-lines-section', label: 'Line items' },
-  ];
-
-  activeSection = this.sectionNavItems[0].id;
-
-  @ViewChild('scrollContainer') private scrollContainer?: ElementRef<HTMLElement>;
-
-  private intersectionObserver: IntersectionObserver | null = null;
-  private pauseSectionObserver = false;
-  private sectionObserverResumeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly router: Router,
@@ -140,103 +113,6 @@ export class CreateIgpComponent implements OnInit, AfterViewInit, OnDestroy {
         );
       },
     });
-  }
-
-  ngAfterViewInit(): void {
-    this.setupIntersectionObserver();
-  }
-
-  ngOnDestroy(): void {
-    if (this.sectionObserverResumeTimer) {
-      clearTimeout(this.sectionObserverResumeTimer);
-    }
-    this.destroyIntersectionObserver();
-  }
-
-  scrollToSection(sectionId: string): void {
-    this.activeSection = sectionId;
-    this.pauseSectionObserver = true;
-    if (this.sectionObserverResumeTimer) {
-      clearTimeout(this.sectionObserverResumeTimer);
-    }
-
-    requestAnimationFrame(() => {
-      const scrollRoot = this.scrollContainer?.nativeElement;
-      const element =
-        scrollRoot?.querySelector<HTMLElement>(`#${CSS.escape(sectionId)}`) ??
-        document.getElementById(sectionId);
-
-      if (!element) {
-        this.resumeSectionObserver();
-        return;
-      }
-
-      if (scrollRoot?.contains(element)) {
-        const navElement = scrollRoot.querySelector<HTMLElement>('.husky-section-nav');
-        const navHeight = navElement?.offsetHeight ?? 0;
-        const top =
-          element.getBoundingClientRect().top -
-          scrollRoot.getBoundingClientRect().top +
-          scrollRoot.scrollTop;
-        scrollRoot.scrollTo({
-          top: Math.max(0, top - navHeight - 8),
-          behavior: 'smooth',
-        });
-      } else {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      this.sectionObserverResumeTimer = setTimeout(() => this.resumeSectionObserver(), 450);
-    });
-  }
-
-  onSectionNavKeydown(event: KeyboardEvent, sectionId: string): void {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      this.scrollToSection(sectionId);
-    }
-  }
-
-  private setupIntersectionObserver(): void {
-    const scrollRoot = this.scrollContainer?.nativeElement ?? null;
-
-    this.intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        if (this.pauseSectionObserver) {
-          return;
-        }
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible.length > 0) {
-          this.activeSection = visible[0].target.id;
-        }
-      },
-      {
-        root: scrollRoot,
-        rootMargin: '-45% 0px -45% 0px',
-        threshold: [0, 0.25, 0.5, 0.75, 1],
-      },
-    );
-
-    for (const section of this.sectionNavItems) {
-      const element =
-        scrollRoot?.querySelector<HTMLElement>(`#${CSS.escape(section.id)}`) ??
-        document.getElementById(section.id);
-      if (element) {
-        this.intersectionObserver.observe(element);
-      }
-    }
-  }
-
-  private resumeSectionObserver(): void {
-    this.pauseSectionObserver = false;
-    this.sectionObserverResumeTimer = null;
-  }
-
-  private destroyIntersectionObserver(): void {
-    this.intersectionObserver?.disconnect();
-    this.intersectionObserver = null;
   }
 
   private assignNextReferenceNo(): void {
