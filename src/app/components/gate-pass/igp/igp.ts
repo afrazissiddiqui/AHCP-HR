@@ -34,6 +34,7 @@ export class IgpComponent implements OnInit {
 
   readonly warehouseLabel = gatePassWarehouseLabel;
   readonly records = this.igpService.records;
+  readonly listLoading = signal(true);
 
   formatCell(record: IgpRecord, key: IgpSortableKey): string {
     return formatGatePassListCell(record[key] as string | number | null | undefined, key);
@@ -44,8 +45,15 @@ export class IgpComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadList();
+  }
+
+  loadList(): void {
+    this.listLoading.set(true);
     this.igpService.fetchInwardGatePasses().subscribe({
+      next: () => this.listLoading.set(false),
       error: (error: unknown) => {
+        this.listLoading.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load IGP records.'),
@@ -68,6 +76,10 @@ export class IgpComponent implements OnInit {
     { key: 'totalQty', label: 'Total qty', visible: true },
     { key: 'status', label: 'Status', visible: true },
   ];
+
+  get visibleColumnCount(): number {
+    return this.columns.filter((col) => col.visible).length;
+  }
 
   get rows(): IgpRecord[] {
     return this.records();

@@ -221,6 +221,7 @@ export class IgpService {
       'records',
       'list',
       'inward_gate_passes',
+      'inward_gate_pass_list',
       'inwardGatePasses',
       'inwardGatePassList',
       'igpList',
