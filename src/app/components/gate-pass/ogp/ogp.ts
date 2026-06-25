@@ -8,6 +8,7 @@ import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { gatePassWarehouseLabel } from '../gate-pass-warehouse.options';
+import { formatGatePassListCell } from '../gate-pass-list-display.util';
 import { OgpRecord, OgpService } from './ogp.service';
 
 type OgpSortableKey = Exclude<keyof OgpRecord, 'lines' | 'selected'>;
@@ -34,6 +35,10 @@ export class OgpComponent implements OnInit {
     private readonly layout: GatePassLayoutService,
     private readonly alertService: AlertService,
   ) {}
+
+  formatCell(record: OgpRecord, key: OgpSortableKey): string {
+    return formatGatePassListCell(record[key] as string | number | null | undefined, key);
+  }
 
   ngOnInit(): void {
     this.ogpService.fetchOutwardGatePasses().subscribe({

@@ -214,8 +214,9 @@ app-root {
 /* Table */
 .mountain-table {
   width: 100%;
-  min-width: 1000px; /* Ensure enough width for all columns */
+  min-width: 1000px;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 /* Sticky Header */
@@ -253,6 +254,8 @@ app-root {
   z-index: 11;
   background: #ffffff;
   width: 40px;
+  min-width: 40px;
+  max-width: none;
   text-align: center;
 }
 
@@ -263,10 +266,13 @@ app-root {
   right: 0;
   z-index: 11;
   background: #ffffff;
-  width: 100px;
+  width: 148px;
+  min-width: 148px;
+  max-width: none;
   text-align: center;
   border-left: 1px solid #eee;
   box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+  overflow: visible;
 }
 
 .mountain-table thead th:first-child {
@@ -349,6 +355,25 @@ app-root {
   text-align: left;
   border: 1px solid #eeeeee;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.mountain-table th.application-actions-header,
+.mountain-table td.table-action-cell {
+  max-width: none;
+}
+
+.mountain-table-cell-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mountain-table th.sortable-header {
+  overflow: hidden;
 }
 
 /* Hover */

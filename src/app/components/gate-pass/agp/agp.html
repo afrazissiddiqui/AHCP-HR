@@ -87,7 +87,9 @@
               <td>
                 <input type="checkbox" [(ngModel)]="j.selected" />
               </td>
-              <td *ngFor="let col of columns" [hidden]="!col.visible">{{ j[col.key] }}</td>
+              <td *ngFor="let col of columns" [hidden]="!col.visible">
+                <span class="mountain-table-cell-text" [title]="formatCell(j, col.key)">{{ formatCell(j, col.key) }}</span>
+              </td>
               <td class="table-action-cell application-actions-cell">
                 <div class="action-buttons">
                   <button class="view-btn" (click)="viewDetails(j)" title="View Details">View</button>

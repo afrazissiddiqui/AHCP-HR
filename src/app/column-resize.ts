@@ -52,6 +52,7 @@ export class ColumnResizeDirective implements OnInit {
               this.renderer.setStyle(cell, "width", `${newWidth}px`);
               this.renderer.setStyle(cell, "min-width", `${newWidth}px`);
               this.renderer.setStyle(cell, "max-width", `${newWidth}px`);
+              this.renderer.setStyle(cell, "overflow", "hidden");
             }
           });
         }
