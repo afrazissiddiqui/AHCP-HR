@@ -101,48 +101,49 @@
         </table>
       </div>
 
-      <div class="dialog-backdrop" *ngIf="showDetailDialog" (click)="closeDetailDialog()"></div>
-      <div class="js-detail-modal" *ngIf="showDetailDialog">
+      <div class="dialog-backdrop" *ngIf="showDetailDialog()" (click)="closeDetailDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showDetailDialog()">
         <div class="js-modal-header">
-          <h2>OGP<ng-container *ngIf="selectedRow"> — {{ selectedRow.referenceNo }}</ng-container></h2>
+          <h2>OGP<ng-container *ngIf="selectedRow() as row"> — {{ row.referenceNo }}</ng-container></h2>
           <button type="button" class="js-close-modal" (click)="closeDetailDialog()">×</button>
         </div>
         <div class="js-modal-body">
-          <p *ngIf="detailLoading">Loading details…</p>
-          <ng-container *ngIf="selectedRow && !detailLoading">
+          <p *ngIf="detailLoading()">Loading details…</p>
+          <ng-container *ngIf="selectedRow() as row">
+          <ng-container *ngIf="!detailLoading()">
           <div class="js-detail-section">
             <h3>Header</h3>
             <div class="js-detail-grid">
-              <div class="js-detail-item"><label>Type:</label> <span>{{ selectedRow.type }}</span></div>
-              <div class="js-detail-item"><label>Date:</label> <span>{{ selectedRow.submittedDate }}</span></div>
-              <div class="js-detail-item"><label>OGP no.:</label> <span>{{ selectedRow.referenceNo }}</span></div>
-              <div class="js-detail-item"><label>Base doc no.:</label> <span>{{ selectedRow.baseDocNo }}</span></div>
-              <div class="js-detail-item"><label>BP code:</label> <span>{{ selectedRow.businessPartnerCode }}</span></div>
-              <div class="js-detail-item"><label>BP name:</label> <span>{{ selectedRow.businessPartnerName }}</span></div>
-              <div class="js-detail-item"><label>Vehicle:</label> <span>{{ selectedRow.vehicleNo }}</span></div>
-              <div class="js-detail-item"><label>From unit:</label> <span>{{ selectedRow.fromUnit }}</span></div>
-              <div class="js-detail-item"><label>Kanta slip:</label> <span>{{ selectedRow.kantaSlip }}</span></div>
-              <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRow.department }}</span></div>
-              <div class="js-detail-item"><label>Warehouse:</label> <span>{{ warehouseLabel(selectedRow.store) }}</span></div>
-              <div class="js-detail-item"><label>Transporter:</label> <span>{{ selectedRow.transporterName }}</span></div>
-              <div class="js-detail-item"><label>Transporter CNIC:</label> <span>{{ selectedRow.transporterCnic }}</span></div>
-              <div class="js-detail-item"><label>Transporter phone:</label> <span>{{ selectedRow.transporterPhone }}</span></div>
-              <div class="js-detail-item"><label>Bilty no.:</label> <span>{{ selectedRow.biltyNo }}</span></div>
-              <div class="js-detail-item"><label>Freight amount:</label> <span>{{ selectedRow.freight }} PKR</span></div>
-              <div class="js-detail-item"><label>Weight machine:</label> <span>{{ selectedRow.weightMachineName }}</span></div>
-              <div class="js-detail-item"><label>Weight:</label> <span>{{ selectedRow.weight }} KG</span></div>
-              <div class="js-detail-item"><label>Location:</label> <span>{{ selectedRow.location }}</span></div>
-              <div class="js-detail-item"><label>Employee:</label> <span>{{ selectedRow.employee }}</span></div>
-              <div class="js-detail-item"><label>Status:</label> <span>{{ selectedRow.status }}</span></div>
-              <div class="js-detail-item"><label>Total qty:</label> <span>{{ selectedRow.totalQty }}</span></div>
+              <div class="js-detail-item"><label>Type:</label> <span>{{ row.type }}</span></div>
+              <div class="js-detail-item"><label>Date:</label> <span>{{ row.submittedDate }}</span></div>
+              <div class="js-detail-item"><label>OGP no.:</label> <span>{{ row.referenceNo }}</span></div>
+              <div class="js-detail-item"><label>Base doc no.:</label> <span>{{ row.baseDocNo }}</span></div>
+              <div class="js-detail-item"><label>BP code:</label> <span>{{ row.businessPartnerCode }}</span></div>
+              <div class="js-detail-item"><label>BP name:</label> <span>{{ row.businessPartnerName }}</span></div>
+              <div class="js-detail-item"><label>Vehicle:</label> <span>{{ row.vehicleNo }}</span></div>
+              <div class="js-detail-item"><label>From unit:</label> <span>{{ row.fromUnit }}</span></div>
+              <div class="js-detail-item"><label>Kanta slip:</label> <span>{{ row.kantaSlip }}</span></div>
+              <div class="js-detail-item"><label>Department:</label> <span>{{ row.department }}</span></div>
+              <div class="js-detail-item"><label>Warehouse:</label> <span>{{ warehouseLabel(row.store) }}</span></div>
+              <div class="js-detail-item"><label>Transporter:</label> <span>{{ row.transporterName }}</span></div>
+              <div class="js-detail-item"><label>Transporter CNIC:</label> <span>{{ row.transporterCnic }}</span></div>
+              <div class="js-detail-item"><label>Transporter phone:</label> <span>{{ row.transporterPhone }}</span></div>
+              <div class="js-detail-item"><label>Bilty no.:</label> <span>{{ row.biltyNo }}</span></div>
+              <div class="js-detail-item"><label>Freight amount:</label> <span>{{ row.freight }} PKR</span></div>
+              <div class="js-detail-item"><label>Weight machine:</label> <span>{{ row.weightMachineName }}</span></div>
+              <div class="js-detail-item"><label>Weight:</label> <span>{{ row.weight }} KG</span></div>
+              <div class="js-detail-item"><label>Location:</label> <span>{{ row.location }}</span></div>
+              <div class="js-detail-item"><label>Employee:</label> <span>{{ row.employee }}</span></div>
+              <div class="js-detail-item"><label>Status:</label> <span>{{ row.status }}</span></div>
+              <div class="js-detail-item"><label>Total qty:</label> <span>{{ row.totalQty }}</span></div>
             </div>
-            <div class="js-detail-full" *ngIf="selectedRow.remarks">
+            <div class="js-detail-full" *ngIf="row.remarks">
               <label>Remarks:</label>
-              <p>{{ selectedRow.remarks }}</p>
+              <p>{{ row.remarks }}</p>
             </div>
           </div>
 
-          <div class="js-detail-section" *ngIf="selectedRow.lines.length">
+          <div class="js-detail-section" *ngIf="row.lines.length">
             <h3>Line items</h3>
             <div class="table-scroll">
               <table class="mountain-table">
@@ -162,7 +163,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let ln of selectedRow.lines; let idx = index">
+                  <tr *ngFor="let ln of row.lines; let idx = index">
                     <td>{{ idx + 1 }}</td>
                     <td>{{ ln.itemCode }}</td>
                     <td>{{ ln.itemName }}</td>
@@ -179,6 +180,7 @@
               </table>
             </div>
           </div>
+          </ng-container>
           </ng-container>
         </div>
         <div class="js-modal-footer">

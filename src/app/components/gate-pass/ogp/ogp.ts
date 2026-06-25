@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -78,9 +78,9 @@ export class OgpComponent implements OnInit {
   pageSizeOptions: number[] = [5, 10, 20, 50];
 
   showDialog = false;
-  showDetailDialog = false;
-  detailLoading = false;
-  selectedRow: OgpRecord | null = null;
+  readonly showDetailDialog = signal(false);
+  readonly detailLoading = signal(false);
+  readonly selectedRow = signal<OgpRecord | null>(null);
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
   openDialog(): void {
@@ -97,18 +97,18 @@ export class OgpComponent implements OnInit {
       return;
     }
 
-    this.showDetailDialog = true;
-    this.selectedRow = null;
-    this.detailLoading = true;
+    this.showDetailDialog.set(true);
+    this.selectedRow.set(null);
+    this.detailLoading.set(true);
 
     this.ogpService.fetchOutwardGatePassDetail(record.Id).subscribe({
       next: (detail) => {
-        this.selectedRow = detail;
-        this.detailLoading = false;
+        this.selectedRow.set(detail);
+        this.detailLoading.set(false);
       },
       error: (error: unknown) => {
-        this.detailLoading = false;
-        this.showDetailDialog = false;
+        this.detailLoading.set(false);
+        this.showDetailDialog.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load OGP details.'),
@@ -149,9 +149,9 @@ export class OgpComponent implements OnInit {
   }
 
   closeDetailDialog(): void {
-    this.selectedRow = null;
-    this.showDetailDialog = false;
-    this.detailLoading = false;
+    this.selectedRow.set(null);
+    this.showDetailDialog.set(false);
+    this.detailLoading.set(false);
   }
 
   toggleAll(event: Event): void {
