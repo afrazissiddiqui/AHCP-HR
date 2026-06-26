@@ -46,6 +46,7 @@ export interface ProbationEvaluationAddPayload {
     currentSalary: number;
     adjustmentInSalary: number;
     adjustmentAmountInSalary: number;
+    revisedSalary: number;
     effectiveDateOfRevision: string;
   };
   allowances?: Array<{ allowance: string; amount: number; notes: string }> | null;
@@ -171,6 +172,7 @@ export function buildProbationEvaluationSubmitPayload(
       currentSalary: Math.round(draft.salary_adjustment.currentSalary),
       adjustmentInSalary: Math.round(draft.salary_adjustment.adjustmentInSalary),
       adjustmentAmountInSalary: Math.round(draft.salary_adjustment.adjustmentAmountInSalary),
+      revisedSalary: Math.round(draft.salary_adjustment.revisedSalary),
       effectiveDateOfRevision: effectiveDateOfRevision,
     },
     total_salary: Math.round(draft.total_salary),
@@ -395,6 +397,14 @@ export class ProbationEvaluationService {
         adjustmentInSalary: asNumber(salarySource['adjustmentInSalary'] ?? salarySource['adjustment_in_salary']),
         adjustmentAmountInSalary: asNumber(
           salarySource['adjustmentAmountInSalary'] ?? salarySource['adjustment_amount_in_salary'],
+        ),
+        revisedSalary: asNumber(
+          salarySource['revisedSalary'] ??
+            salarySource['revised_salary'] ??
+            asNumber(salarySource['currentSalary'] ?? salarySource['current_salary']) +
+              asNumber(
+                salarySource['adjustmentAmountInSalary'] ?? salarySource['adjustment_amount_in_salary'],
+              ),
         ),
         effectiveDateOfRevision:
           asString(salarySource['effectiveDateOfRevision']) || asString(salarySource['effective_date_of_revision']),

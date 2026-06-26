@@ -50,6 +50,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly state = signal<'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | ''>('');
   protected readonly country = signal(''); // OHEM.workCountr
   protected readonly zipCode = signal(''); // XXXXX
+  protected readonly employmentNature = signal('');
+  protected readonly employmentCategory = signal('');
+  protected readonly employmentStatus = signal('');
+  protected readonly departmentInAhcp = signal('');
+  protected readonly designation = signal('');
+  protected readonly jobDescription = signal('');
+  protected readonly roleAndSalary = signal('');
 
   // Education fields - array of education sections
   protected readonly educationSections = signal<Array<{
@@ -439,7 +446,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         city: this.city(),
         state: this.state(),
         country: this.country(),
-        zipCode: this.zipCode()
+        zipCode: this.zipCode(),
+        employmentNature: this.employmentNature(),
+        employmentCategory: this.employmentCategory(),
+        employmentStatus: this.employmentStatus(),
+        departmentInAhcp: this.departmentInAhcp(),
+        designation: this.designation(),
+        jobDescription: this.jobDescription(),
+        roleAndSalary: this.roleAndSalary(),
       },
       education: this.educationSections().map((row) => ({ ...row })),
       pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
@@ -481,13 +495,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     const record: ApplicationFormRecord = {
       EmployeeCode: employeeCodeNum,
       EmployeeName: displayName,
-      Department: noSelection(this.department()) || '—',
-      EmployeeNature: noSelection(this.company()) || '—',
-      Designation: this.internalJobTitle().trim() || '—',
+      Department: this.departmentInAhcp().trim() || '—',
+      EmployeeNature: noSelection(this.employmentNature()) || '—',
+      Designation: this.designation().trim() || '—',
       ReportingManager: this.hiringManager().trim() || '—',
       EmploymentType: noSelection(this.division()) || '—',
-      EmploymentCategory: noSelection(this.costCenter()) || '—',
-      status: 'Submitted',
+      EmploymentCategory: noSelection(this.employmentCategory()) || '—',
+      status: noSelection(this.employmentStatus()) || 'Submitted',
       selected: false,
       detail
     };
@@ -515,6 +529,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       state: this.state(),
       country: this.country(),
       zipCode: this.zipCode(),
+      employmentNature: this.employmentNature(),
+      employmentCategory: this.employmentCategory(),
+      employmentStatus: this.employmentStatus(),
+      departmentInAhcp: this.departmentInAhcp(),
+      designation: this.designation(),
+      jobDescription: this.jobDescription(),
+      roleAndSalary: this.roleAndSalary(),
       educationSections: this.educationSections().map((row) => ({ ...row })),
       pastExperienceSections: this.pastExperienceSections().map((row) => ({
         company: row.company,
@@ -599,6 +620,26 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.state.set((detail.personalInfo.state as 'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | '') ?? '');
     this.country.set(detail.personalInfo.country);
     this.zipCode.set(detail.personalInfo.zipCode);
+    this.employmentNature.set(
+      detail.personalInfo.employmentNature ||
+        (record.EmployeeNature !== '—' ? record.EmployeeNature : ''),
+    );
+    this.employmentCategory.set(
+      detail.personalInfo.employmentCategory ||
+        (record.EmploymentCategory !== '—' ? record.EmploymentCategory : ''),
+    );
+    this.employmentStatus.set(
+      detail.personalInfo.employmentStatus || (record.status !== '—' ? record.status : ''),
+    );
+    this.departmentInAhcp.set(
+      detail.personalInfo.departmentInAhcp || (record.Department !== '—' ? record.Department : ''),
+    );
+    this.designation.set(
+      detail.personalInfo.designation ||
+        (record.Designation !== '—' ? record.Designation : detail.requisition.internalJobTitle),
+    );
+    this.jobDescription.set(detail.personalInfo.jobDescription);
+    this.roleAndSalary.set(detail.personalInfo.roleAndSalary);
 
     this.educationSections.set(
       detail.education.length

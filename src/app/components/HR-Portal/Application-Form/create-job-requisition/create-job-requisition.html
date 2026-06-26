@@ -207,6 +207,74 @@
           </div>
         </div>
       </div>
+
+      <div class="cjr-employment-subsection">
+        <div class="cjr-section-subtitle">Employment details</div>
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>Employment Nature:</label>
+              <select [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)"
+                (blur)="touch('employmentNature')">
+                <option value="">No Selection</option>
+                <option value="Technical">Technical</option>
+                <option value="Non-Technical">Non-Technical</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
+              <label>Employment Category:</label>
+              <select [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)"
+                (blur)="touch('employmentCategory')">
+                <option value="">No Selection</option>
+                <option value="Executive">Executive</option>
+                <option value="Non-Executive">Non-Executive</option>
+                <option value="Daily Wagers">Daily Wagers</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
+              <label>Employment Status:</label>
+              <select [ngModel]="employmentStatus()" (ngModelChange)="employmentStatus.set($event)"
+                (blur)="touch('employmentStatus')">
+                <option value="">No Selection</option>
+                <option value="Active">Active</option>
+                <option value="On Probation">On Probation</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Resigned">Resigned</option>
+                <option value="Terminated">Terminated</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
+              <label>Department in AHCP:</label>
+              <input type="text" [ngModel]="departmentInAhcp()" (ngModelChange)="departmentInAhcp.set($event)"
+                (blur)="touch('departmentInAhcp')" placeholder="e.g. Information Technology" />
+            </div>
+          </div>
+
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>Designation:</label>
+              <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)"
+                (blur)="touch('designation')" placeholder="e.g. Software Developer" />
+            </div>
+
+            <div class="cjr-row cjr-row--textarea">
+              <label>Job Description:</label>
+              <textarea rows="3" [ngModel]="jobDescription()" (ngModelChange)="jobDescription.set($event)"
+                (blur)="touch('jobDescription')" placeholder="Role description"></textarea>
+            </div>
+
+            <div class="cjr-row cjr-row--textarea">
+              <label>Role &amp; Salary:</label>
+              <textarea rows="3" [ngModel]="roleAndSalary()" (ngModelChange)="roleAndSalary.set($event)"
+                (blur)="touch('roleAndSalary')" placeholder="Role and salary details"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="cjr-personal cjr-education" id="education-section">

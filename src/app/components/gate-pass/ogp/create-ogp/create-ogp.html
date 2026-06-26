@@ -1,38 +1,63 @@
-<div class="cjs-page ogp-create-page">
-  <div class="cjs-header">
-    <div class="cjs-header-left">
-      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
-        <span class="cjs-back-icon">❮</span>
-      </button>
-      <h1>{{ pageTitle }}</h1>
+<div class="husky-add-page cjr-page scd-add-page ogp-create-page">
+  <div class="husky-add-scroll">
+    <div class="cjr-header">
+      <div class="cjr-header-left">
+        <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+          <span class="cjr-back-icon">❮</span>
+        </button>
+        <h1>{{ pageTitle }}</h1>
+      </div>
     </div>
-  </div>
 
-  <div class="cjs-card">
-    <div class="cjs-form-container">
-      <section class="cjs-section-block ogp-header-section">
-        <div class="cjs-section-title">Outward gate pass</div>
+    <div class="cjr-card scd-form-card husky-header-card igp-header-card">
+      <div class="cjr-personal" id="ogp-form-header-section">
+        <div class="cjr-section-title">Outward gate pass</div>
 
-        <div class="ogp-header-panel">
-          <div class="ogp-header-group">
-            <p class="ogp-header-group-label">Document details</p>
-            <div class="ogp-header-grid ogp-header-grid--4">
-              <div class="ogp-field">
-                <label for="ogp-type">Type</label>
-                <select id="ogp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="!!editingId">
-                  <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
-                </select>
-              </div>
-              <div class="ogp-field ogp-field--span-3">
-                <span class="gate-pass-base-doc-label">Base document <span class="gate-pass-optional">(optional)</span></span>
+        <div class="cjr-personal-grid pmm-profile-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label for="ogp-type">Type:</label>
+              <select
+                id="ogp-type"
+                class="igp-input--wide"
+                [(ngModel)]="type"
+                (ngModelChange)="onBaseDocumentTypeChange()"
+                [disabled]="!!editingId"
+                name="type"
+              >
+                <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
+              <label for="ogp-date">Date:</label>
+              <input id="ogp-date" type="date" class="igp-input--date" [(ngModel)]="documentDate" name="documentDate" />
+            </div>
+
+            <div class="cjr-row">
+              <label for="ogp-ref">OGP no.:</label>
+              <input id="ogp-ref" type="text" class="igp-input--ref" [(ngModel)]="referenceNo" name="referenceNo" readonly />
+            </div>
+          </div>
+
+          <div class="cjr-personal-col">
+            <div class="cjr-row igp-base-doc-row">
+              <label>Base document:</label>
+              <div class="igp-base-doc-field">
+                <span class="gate-pass-optional">(optional)</span>
                 <div class="gate-pass-base-doc-row">
-                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()" [disabled]="!!editingId">
+                  <button
+                    type="button"
+                    class="gate-pass-base-doc-btn"
+                    (click)="openBaseDocumentModal()"
+                    [disabled]="!!editingId"
+                  >
                     Choose base document…
                   </button>
                   <span
                     class="gate-pass-base-doc-summary"
                     [class.gate-pass-base-doc-summary--muted]="!baseDocNo"
-                    >{{ baseDocNo || 'None selected' }}</span>
+                  >{{ baseDocNo || 'None selected' }}</span>
                   <button
                     *ngIf="baseDocNo && !editingId"
                     type="button"
@@ -44,245 +69,346 @@
                 </div>
               </div>
             </div>
-            <div class="ogp-header-grid ogp-header-grid--2 ogp-header-grid--nested">
-              <div class="ogp-field">
-                <label for="ogp-date">Date</label>
-                <input id="ogp-date" type="date" [(ngModel)]="documentDate" />
+
+            <div class="cjr-row">
+              <label for="ogp-bp-code">Business partner code:</label>
+              <input
+                id="ogp-bp-code"
+                type="text"
+                class="igp-input--code"
+                [(ngModel)]="businessPartnerCode"
+                name="businessPartnerCode"
+                placeholder="Code"
+              />
+            </div>
+
+            <div class="cjr-row">
+              <label for="ogp-bp-name">Business partner name:</label>
+              <input
+                id="ogp-bp-name"
+                type="text"
+                class="igp-input--wide"
+                [(ngModel)]="businessPartnerName"
+                name="businessPartnerName"
+                placeholder="Partner name"
+              />
+            </div>
+          </div>
+
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label for="ogp-vehicle">Vehicle no.:</label>
+              <input id="ogp-vehicle" type="text" class="igp-input--vehicle" [(ngModel)]="vehicleNo" name="vehicleNo" />
+            </div>
+
+            <div class="cjr-row">
+              <label for="ogp-department">Department:</label>
+              <select id="ogp-department" class="igp-input--wide" [(ngModel)]="department" name="department">
+                <option value="">No selection</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Finance">Finance</option>
+                <option value="Human Resources">Human resources</option>
+                <option value="Operations">Operations</option>
+                <option value="Procurement">Procurement</option>
+                <option value="Logistics">Logistics</option>
+                <option value="Sales">Sales</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
+              <label for="ogp-employee">Employee:</label>
+              <input
+                id="ogp-employee"
+                type="text"
+                class="igp-input--wide"
+                [(ngModel)]="employee"
+                name="employee"
+                placeholder="Employee name or code"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-card scd-form-card husky-sections-card">
+      <div class="husky-form-sections">
+        <section id="ogp-shipment-section" class="husky-form-section">
+          <div class="cjr-section-title">Shipment &amp; logistics</div>
+          <div class="cjr-personal-grid pmm-profile-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-from-unit">From unit:</label>
+                <input id="ogp-from-unit" type="text" class="igp-input--wide" [(ngModel)]="fromUnit" name="fromUnit" />
               </div>
-              <div class="ogp-field">
-                <label for="ogp-ref">OGP no.</label>
+            </div>
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-kanta-slip">Kanta slip:</label>
+                <input id="ogp-kanta-slip" type="text" class="igp-input--ref" [(ngModel)]="kantaSlip" name="kantaSlip" />
+              </div>
+            </div>
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-store">Warehouse:</label>
+                <select id="ogp-store" class="igp-input--wide" [(ngModel)]="store" name="store">
+                  <option value="">No selection</option>
+                  <option *ngFor="let wh of warehouseOptions" [value]="wh.code">
+                    {{ wh.code }} — {{ wh.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="ogp-transporter-section" class="husky-form-section">
+          <div class="cjr-section-title">Transporter &amp; freight</div>
+          <div class="cjr-personal-grid pmm-profile-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-transporter-name">Transporter name:</label>
                 <input
-                  id="ogp-ref"
+                  id="ogp-transporter-name"
                   type="text"
-                  [(ngModel)]="referenceNo"
-                  readonly
+                  class="igp-input--wide"
+                  [(ngModel)]="transporterName"
+                  name="transporterName"
+                  placeholder="Transporter / driver name"
                 />
               </div>
-            </div>
-          </div>
-
-          <div class="ogp-header-group">
-            <p class="ogp-header-group-label">Business partner</p>
-            <div class="ogp-header-grid ogp-header-grid--3">
-              <div class="ogp-field">
-                <label for="ogp-bp-code">Business partner code</label>
-                <input id="ogp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" />
-              </div>
-              <div class="ogp-field ogp-field--span-2">
-                <label for="ogp-bp-name">Business partner name</label>
-                <input id="ogp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-vehicle">Vehicle no.</label>
-                <input id="ogp-vehicle" type="text" [(ngModel)]="vehicleNo" />
+              <div class="cjr-row">
+                <label for="ogp-bilty">Bilty number:</label>
+                <input id="ogp-bilty" type="text" class="igp-input--ref" [(ngModel)]="biltyNo" name="biltyNo" />
               </div>
             </div>
-          </div>
-
-          <div class="ogp-header-group">
-            <p class="ogp-header-group-label">Shipment &amp; logistics</p>
-            <div class="ogp-header-grid ogp-header-grid--3">
-              <div class="ogp-field">
-                <label for="ogp-from-unit">From unit</label>
-                <input id="ogp-from-unit" type="text" [(ngModel)]="fromUnit" />
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-transporter-cnic">Transporter CNIC:</label>
+                <input
+                  id="ogp-transporter-cnic"
+                  type="text"
+                  class="igp-input--cnic"
+                  [ngModel]="transporterCnic"
+                  (ngModelChange)="onTransporterCnicChange($event)"
+                  name="transporterCnic"
+                  placeholder="XXXXX-XXXXXXX-X"
+                  maxlength="15"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
               </div>
-              <div class="ogp-field">
-                <label for="ogp-kanta-slip">Kanta slip</label>
-                <input id="ogp-kanta-slip" type="text" [(ngModel)]="kantaSlip" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-store">Warehouse</label>
-                <select id="ogp-store" [(ngModel)]="store">
-                  <option value="">No selection</option>
-                  <option *ngFor="let wh of warehouseOptions" [value]="wh.code">{{ wh.code }} — {{ wh.name }}</option>
-                </select>
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-department">Department</label>
-                <select id="ogp-department" [(ngModel)]="department">
-                  <option value="">No selection</option>
-                  <option value="Engineering">Engineering</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Human Resources">Human resources</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Procurement">Procurement</option>
-                  <option value="Logistics">Logistics</option>
-                  <option value="Sales">Sales</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="ogp-header-group">
-            <p class="ogp-header-group-label">Transporter &amp; freight</p>
-            <div class="ogp-header-grid ogp-header-grid--3">
-              <div class="ogp-field">
-                <label for="ogp-transporter-name">Transporter name</label>
-                <input id="ogp-transporter-name" type="text" [(ngModel)]="transporterName" placeholder="Transporter / driver name" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-transporter-cnic">Transporter CNIC</label>
-                <input id="ogp-transporter-cnic" type="text" [(ngModel)]="transporterCnic" placeholder="XXXXX-XXXXXXX-X" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-transporter-phone">Transporter phone number</label>
-                <input id="ogp-transporter-phone" type="tel" [(ngModel)]="transporterPhone" placeholder="03XX-XXXXXXX" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-bilty">Bilty number</label>
-                <input id="ogp-bilty" type="text" [(ngModel)]="biltyNo" />
-              </div>
-              <div class="ogp-field">
-                <label for="ogp-freight">Freight amount (numeric only)</label>
+              <div class="cjr-row">
+                <label for="ogp-freight">Freight amount:</label>
                 <div class="ogp-input-unit-row">
-                  <input id="ogp-freight" type="number" min="0" step="1" [(ngModel)]="freight" placeholder="0.00" />
+                  <input
+                    id="ogp-freight"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="igp-input--amount"
+                    [(ngModel)]="freight"
+                    name="freight"
+                    placeholder="0.00"
+                  />
                   <span class="ogp-input-unit">PKR</span>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="ogp-header-group">
-            <p class="ogp-header-group-label">Weighing &amp; location</p>
-            <div class="ogp-header-grid ogp-header-grid--3">
-              <div class="ogp-field">
-                <label for="ogp-weight-machine">Weight machine (kanta) name</label>
-                <input id="ogp-weight-machine" type="text" [(ngModel)]="weightMachineName" />
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-transporter-phone">Transporter phone:</label>
+                <input
+                  id="ogp-transporter-phone"
+                  type="tel"
+                  class="igp-input--phone"
+                  [ngModel]="transporterPhone"
+                  (ngModelChange)="onTransporterPhoneChange($event)"
+                  name="transporterPhone"
+                  placeholder="03XXXXXXXXX"
+                  maxlength="11"
+                  inputmode="numeric"
+                  pattern="[0-9]{11}"
+                  autocomplete="tel"
+                />
               </div>
-              <div class="ogp-field">
-                <label for="ogp-weight">Weight (numeric only)</label>
+            </div>
+          </div>
+        </section>
+
+        <section id="ogp-weighing-section" class="husky-form-section">
+          <div class="cjr-section-title">Weighing &amp; location</div>
+          <div class="cjr-personal-grid pmm-profile-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-weight-machine">Weight machine (kanta):</label>
+                <input
+                  id="ogp-weight-machine"
+                  type="text"
+                  class="igp-input--wide"
+                  [(ngModel)]="weightMachineName"
+                  name="weightMachineName"
+                />
+              </div>
+            </div>
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-weight">Weight:</label>
                 <div class="ogp-input-unit-row">
-                  <input id="ogp-weight" type="number" min="0" step="1" [(ngModel)]="weight" placeholder="0.00" />
+                  <input
+                    id="ogp-weight"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="igp-input--amount"
+                    [(ngModel)]="weight"
+                    name="weight"
+                    placeholder="0.00"
+                  />
                   <span class="ogp-input-unit">KG</span>
                 </div>
               </div>
-              <div class="ogp-field">
-                <label for="ogp-location">Location</label>
-                <select id="ogp-location" [(ngModel)]="location">
+            </div>
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="ogp-location">Location:</label>
+                <select id="ogp-location" class="igp-input--wide" [(ngModel)]="location" name="location">
                   <option value="">No selection</option>
                   <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
                 </select>
               </div>
             </div>
           </div>
+        </section>
 
-          <div class="ogp-header-group ogp-header-group--last">
-            <p class="ogp-header-group-label">Responsible person</p>
-            <div class="ogp-header-grid ogp-header-grid--2">
-              <div class="ogp-field ogp-field--span-2">
-                <label for="ogp-employee">Employee</label>
-                <input id="ogp-employee" type="text" [(ngModel)]="employee" placeholder="Employee name or code" />
-              </div>
-            </div>
+        <section id="ogp-lines-section" class="husky-form-section igp-lines-section">
+          <div class="igp-lines-heading">
+            <div class="cjr-section-title">Line items</div>
+            <button type="button" class="igp-add-line-btn" (click)="addLine()">
+              <span class="igp-add-line-icon" aria-hidden="true">+</span>
+              <span class="igp-add-line-label">Add line</span>
+            </button>
           </div>
-        </div>
-      </section>
-
-      <section class="cjs-section-block igp-lines-section">
-        <div class="igp-lines-heading">
-          <div class="cjs-section-title">Line items</div>
-          <button type="button" class="igp-add-line-btn" (click)="addLine()">
-            <span class="igp-add-line-icon" aria-hidden="true">+</span>
-            <span class="igp-add-line-label">Add line</span>
-          </button>
-        </div>
-        <div class="igp-lines-scroll">
-          <table class="igp-lines-table">
-            <thead>
-              <tr>
-                <th class="igp-col-sr">Sr.#</th>
-                <th>Item code</th>
-                <th>Item name</th>
-                <th>Batch #</th>
-                <th>Category</th>
-                <th>Packing condition</th>
-                <th>Product quality</th>
-                <th>UOM</th>
-                <th class="igp-col-qty">Qty</th>
-                <th>Info</th>
-                <th>Remarks</th>
-                <th class="igp-col-actions" aria-label="Actions"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngIf="lines.length === 0" class="igp-lines-empty">
-                <td colspan="12">No line items yet. Click “Add line” to add rows.</td>
-              </tr>
-              <tr *ngFor="let line of lines; let i = index; trackBy: trackByIndex" [class.igp-line-deleted]="line.deleted">
-                <td class="igp-col-sr">{{ i + 1 }}</td>
-                <td>
-                  <app-gate-pass-item-search-input
-                    [inputId]="'ogp-item-code-' + i"
-                    [value]="line.itemCode"
-                    [disabled]="line.deleted"
-                    (valueChange)="line.itemCode = $event"
-                    (itemSelected)="applyItemMaster(line, $event)"
-                    placeholder="Search code or name"
-                  />
-                </td>
-                <td>
-                  <app-gate-pass-item-search-input
-                    [inputId]="'ogp-item-name-' + i"
-                    [value]="line.itemName"
-                    [disabled]="line.deleted"
-                    (valueChange)="line.itemName = $event"
-                    (itemSelected)="applyItemMaster(line, $event)"
-                    placeholder="Search code or name"
-                  />
-                </td>
-                <td><input type="text" [(ngModel)]="line.serialNumbers" placeholder="Batch number" [readonly]="line.deleted" /></td>
-                <td><input type="text" [(ngModel)]="line.category" [readonly]="line.deleted" /></td>
-                <td><input type="text" [(ngModel)]="line.packingCondition" [readonly]="line.deleted" /></td>
-                <td><input type="text" [(ngModel)]="line.productQuality" [readonly]="line.deleted" /></td>
-                <td><input type="text" [(ngModel)]="line.uom" [readonly]="line.deleted" /></td>
-                <td><input type="number" min="0" step="1" [(ngModel)]="line.qty" [readonly]="line.deleted" /></td>
-                <td><input type="text" [(ngModel)]="line.info" [readonly]="line.deleted" /></td>
-                <td><input type="text" [(ngModel)]="line.remarks" [readonly]="line.deleted" /></td>
-                <td class="igp-col-actions">
-                  <button
-                    *ngIf="!line.deleted"
-                    type="button"
-                    class="igp-remove-line"
-                    (click)="removeLine(i)"
-                    title="Remove line"
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr class="igp-total-row">
-                <td colspan="8" class="igp-total-label">Total</td>
-                <td class="igp-col-qty"><strong>{{ totalQty }}</strong></td>
-                <td colspan="3"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </section>
-
-      <section class="cjs-section-block">
-        <div class="cjs-row igp-remarks-block">
-          <label>Remarks</label>
-          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks"></textarea>
-        </div>
-      </section>
-
-      <div class="cjs-actions-footer">
-        <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
-        <button type="button" class="cjs-submit-btn" (click)="submitForm()">
-          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
-        </button>
+          <div class="igp-lines-scroll">
+            <table class="igp-lines-table">
+              <thead>
+                <tr>
+                  <th class="igp-col-sr">Sr.#</th>
+                  <th>Item code</th>
+                  <th>Item name</th>
+                  <th>Batch #</th>
+                  <th>Category</th>
+                  <th>Packing condition</th>
+                  <th>Product quality</th>
+                  <th>UOM</th>
+                  <th class="igp-col-qty">Qty</th>
+                  <th>Info</th>
+                  <th>Remarks</th>
+                  <th class="igp-col-actions" aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="lines.length === 0" class="igp-lines-empty">
+                  <td colspan="12">No line items yet. Click “Add line” to add rows.</td>
+                </tr>
+                <tr
+                  *ngFor="let line of lines; let i = index; trackBy: trackByIndex"
+                  [class.igp-line-deleted]="line.deleted"
+                >
+                  <td class="igp-col-sr">{{ i + 1 }}</td>
+                  <td>
+                    <app-gate-pass-item-search-input
+                      [inputId]="'ogp-item-code-' + i"
+                      [value]="line.itemCode"
+                      [disabled]="line.deleted"
+                      (valueChange)="line.itemCode = $event"
+                      (itemSelected)="applyItemMaster(line, $event)"
+                      placeholder="Search code or name"
+                    />
+                  </td>
+                  <td>
+                    <app-gate-pass-item-search-input
+                      [inputId]="'ogp-item-name-' + i"
+                      [value]="line.itemName"
+                      [disabled]="line.deleted"
+                      (valueChange)="line.itemName = $event"
+                      (itemSelected)="applyItemMaster(line, $event)"
+                      placeholder="Search code or name"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      [(ngModel)]="line.serialNumbers"
+                      placeholder="Batch number"
+                      [readonly]="line.deleted"
+                    />
+                  </td>
+                  <td><input type="text" [(ngModel)]="line.category" [readonly]="line.deleted" /></td>
+                  <td><input type="text" [(ngModel)]="line.packingCondition" [readonly]="line.deleted" /></td>
+                  <td><input type="text" [(ngModel)]="line.productQuality" [readonly]="line.deleted" /></td>
+                  <td><input type="text" [(ngModel)]="line.uom" [readonly]="line.deleted" /></td>
+                  <td class="igp-col-qty"><input type="number" min="0" step="1" [(ngModel)]="line.qty" [readonly]="line.deleted" /></td>
+                  <td><input type="text" [(ngModel)]="line.info" [readonly]="line.deleted" /></td>
+                  <td><input type="text" [(ngModel)]="line.remarks" [readonly]="line.deleted" /></td>
+                  <td class="igp-col-actions">
+                    <button
+                      *ngIf="!line.deleted"
+                      type="button"
+                      class="igp-remove-line"
+                      (click)="removeLine(i)"
+                      title="Remove line"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="igp-total-row">
+                  <td colspan="8" class="igp-total-label">Total</td>
+                  <td class="igp-col-qty"><strong>{{ totalQty }}</strong></td>
+                  <td colspan="3"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
       </div>
     </div>
-  </div>
 
-  <app-base-document-modal
-    [(open)]="showBaseDocModal"
-    gatePassModule="ogp"
-    [documentType]="type"
-    (documentPicked)="onBaseDocumentPicked($event)"
-  />
+    <div class="cjr-card scd-form-card husky-footer-card" id="ogp-form-footer-section">
+      <div class="husky-footer">
+        <div class="cjr-section-title">Document summary</div>
+
+        <div class="husky-footer-field husky-footer-field--full">
+          <label for="ogp-remarks">Remarks</label>
+          <textarea
+            id="ogp-remarks"
+            class="husky-footer-recommendations"
+            rows="4"
+            [(ngModel)]="remarks"
+            name="remarks"
+            placeholder="Header / document remarks"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-actions-footer husky-actions-footer">
+      <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
+      <button type="button" class="cjr-submit-btn" (click)="submitForm()">
+        <span class="cjr-submit-icon">✓</span>
+        {{ submitButtonLabel }}
+      </button>
+    </div>
+  </div>
 </div>
+
+<app-base-document-modal
+  [(open)]="showBaseDocModal"
+  gatePassModule="ogp"
+  [documentType]="type"
+  (documentPicked)="onBaseDocumentPicked($event)"
+/>

@@ -101,11 +101,14 @@ export class AddProbationEvaluationComponent implements OnInit {
   protected readonly adjustmentAmountInSalary = signal('');
   protected readonly effectiveDateOfRevision = signal('');
   protected readonly allowances = signal<Array<{ allowance: string; amount: string; notes: string }>>([]);
-  protected readonly totalSalary = computed(() => {
+  protected readonly revisedSalary = computed(() => {
     const current = this.toAmount(this.currentSalary());
     const adjustment = this.toAmount(this.adjustmentAmountInSalary());
+    return current + adjustment;
+  });
+  protected readonly totalSalary = computed(() => {
     const allowancesTotal = this.allowances().reduce((sum, item) => sum + this.toAmount(item.amount), 0);
-    return current + adjustment + allowancesTotal;
+    return this.revisedSalary() + allowancesTotal;
   });
 
   protected readonly ratings = signal<Record<RatingKey, { rating: string; remarks: string }>>({
@@ -390,7 +393,58 @@ export class AddProbationEvaluationComponent implements OnInit {
     if (!checked) {
       this.extensionPeriodInProbation.set('');
       this.newProbationEndDate.set('');
+      return;
     }
+    this.updateNewProbationEndDateFromExtension();
+  }
+
+  protected onExtensionPeriodChange(period: string): void {
+    this.extensionPeriodInProbation.set(period);
+    this.updateNewProbationEndDateFromExtension();
+  }
+
+  protected onExtensionProbationEndDateChange(endDate: string): void {
+    this.extensionProbationEndDate.set(endDate);
+    this.updateNewProbationEndDateFromExtension();
+  }
+
+  private parseExtensionMonths(period: string): number | null {
+    const match = period.trim().match(/^(\d+)\s*month/i);
+    if (!match) {
+      return null;
+    }
+    const months = Number.parseInt(match[1], 10);
+    return Number.isFinite(months) && months > 0 ? months : null;
+  }
+
+  private addMonthsToIsoDate(isoDate: string, monthsToAdd: number): string {
+    const parts = isoDate.trim().split('-').map(Number);
+    if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) {
+      return '';
+    }
+    const [year, month, day] = parts;
+    const date = new Date(year, month - 1, day);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    date.setMonth(date.getMonth() + monthsToAdd);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private updateNewProbationEndDateFromExtension(): void {
+    if (!this.isExtensionEnabled()) {
+      return;
+    }
+    const months = this.parseExtensionMonths(this.extensionPeriodInProbation());
+    const endDate = this.extensionProbationEndDate().trim();
+    if (!months || !endDate) {
+      this.newProbationEndDate.set('');
+      return;
+    }
+    this.newProbationEndDate.set(this.addMonthsToIsoDate(endDate, months - 1));
   }
 
   protected readonly isTerminationYes = computed(() => this.termination() === 'Yes');
@@ -534,6 +588,7 @@ export class AddProbationEvaluationComponent implements OnInit {
         currentSalary: this.toAmount(this.currentSalary()),
         adjustmentInSalary: this.toAmount(this.adjustmentInSalary()),
         adjustmentAmountInSalary: this.toAmount(this.adjustmentAmountInSalary()),
+        revisedSalary: this.revisedSalary(),
         effectiveDateOfRevision: this.effectiveDateOfRevision(),
       },
       allowances: this.buildAllowancesForPayload(),

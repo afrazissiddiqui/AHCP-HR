@@ -124,7 +124,7 @@
 
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Employee Nature:</label>
+              <label>Employment Nature:</label>
               <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" />
             </div>
 
@@ -172,7 +172,7 @@
                   <div class="rating-cell">
                     <input type="number" min="0" max="100" placeholder="Rating (%)" [ngModel]="ratings()[row.key].rating"
                       (keydown)="onRatingKeyDown($event)" (ngModelChange)="onPercentageChange(row.key, $event)" />
-                    <input type="text" placeholder="Rating remarks" [ngModel]="ratings()[row.key].remarks"
+                    <input type="text" placeholder="Rating Remarks" [ngModel]="ratings()[row.key].remarks"
                       (ngModelChange)="onRatingRemarkChange(row.key, $event)" />
                   </div>
                   @if (isRatingInvalid(row.key)) {
@@ -205,7 +205,7 @@
             <div class="cjs-row">
               <label>Probation End Date:</label>
               <input type="date" [ngModel]="extensionProbationEndDate()"
-                (ngModelChange)="extensionProbationEndDate.set($event)" />
+                (ngModelChange)="onExtensionProbationEndDateChange($event)" />
             </div>
           </div>
 
@@ -213,7 +213,7 @@
             <div class="cjs-row">
               <label>Extension Period:</label>
               <div class="extension-input-group" [class.extension-input-group--disabled]="!isExtensionEnabled()">
-                <select [ngModel]="extensionPeriodInProbation()" (ngModelChange)="extensionPeriodInProbation.set($event)"
+                <select [ngModel]="extensionPeriodInProbation()" (ngModelChange)="onExtensionPeriodChange($event)"
                   [disabled]="!isExtensionEnabled()">
                   <option value="">Select period</option>
                   @for (period of extensionPeriodOptions; track period) {
@@ -230,15 +230,16 @@
 
             <div class="cjs-row" [class.disabled-row]="!isExtensionEnabled()">
               <label>New Probation End Date:</label>
-              <input type="date" [ngModel]="newProbationEndDate()" (ngModelChange)="newProbationEndDate.set($event)"
-                [disabled]="!isExtensionEnabled()" [class.field-disabled]="!isExtensionEnabled()" />
+              <input type="date" [ngModel]="newProbationEndDate()" readonly
+                [disabled]="!isExtensionEnabled()" [class.field-disabled]="!isExtensionEnabled()"
+                title="Calculated from probation end date and extension period" />
             </div>
           </div>
         </div>
       </section>
 
       <section class="cjs-section-block" id="termination-of-probation-section">
-        <div class="cjs-section-title">Termination of Probation</div>
+        <div class="cjs-section-title">Termination After Probation</div>
 
         <div class="cjs-grid">
           <div class="cjs-col">
@@ -277,6 +278,7 @@
                 <th>Current salary</th>
                 <th>Adjustment % in salary</th>
                 <th>Adjustment amount in salary</th>
+                <th>Revised salary</th>
                 <th>Effective date of revision</th>
               </tr>
             </thead>
@@ -292,6 +294,9 @@
                 </td>
                 <td>
                   <input type="text" [ngModel]="adjustmentAmountInSalary()" readonly placeholder="Auto-calculated" />
+                </td>
+                <td>
+                  <input type="text" [value]="revisedSalary() | number:'1.0-0'" readonly placeholder="Auto-calculated" />
                 </td>
                 <td>
                   <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />

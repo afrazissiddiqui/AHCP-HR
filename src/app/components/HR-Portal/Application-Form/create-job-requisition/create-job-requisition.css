@@ -201,10 +201,46 @@
 }
 
 .cjr-row input:focus,
-.cjr-row select:focus {
+.cjr-row select:focus,
+.cjr-row textarea:focus {
   outline: none;
   border-color: #0052cc;
   box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+.cjr-row textarea {
+  min-height: 72px;
+  padding: 6px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 13px;
+  color: #333;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.cjr-row--textarea {
+  align-items: start;
+}
+
+.cjr-row--textarea label {
+  padding-top: 6px;
+}
+
+.cjr-employment-subsection {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.cjr-section-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
 }
 
 .cjr-field-with-link {

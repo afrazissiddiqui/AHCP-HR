@@ -6,14 +6,16 @@
   width: 100%;
 }
 
-.igp-create-page.husky-add-page {
+.igp-create-page.husky-add-page,
+.ogp-create-page.husky-add-page {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-.igp-create-page .husky-add-scroll {
+.igp-create-page .husky-add-scroll,
+.ogp-create-page .husky-add-scroll {
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
@@ -106,7 +108,9 @@
 }
 
 .igp-create-page .husky-sections-card,
-.igp-create-page .husky-form-sections {
+.igp-create-page .husky-form-sections,
+.ogp-create-page .husky-sections-card,
+.ogp-create-page .husky-form-sections {
   overflow: visible;
 }
 
@@ -281,7 +285,11 @@
 
 .igp-col-qty {
   width: 88px;
-  text-align: right;
+  text-align: center;
+}
+
+.igp-col-qty input {
+  text-align: center;
 }
 
 .igp-col-actions {

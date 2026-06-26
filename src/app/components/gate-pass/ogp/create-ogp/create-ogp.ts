@@ -18,6 +18,12 @@ import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-i
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
+import {
+  formatGatePassCnic,
+  formatGatePassPhoneDigits,
+  isGatePassCnicValid,
+  isGatePassPhoneValid,
+} from '../../gate-pass-input-format.util';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -33,7 +39,12 @@ function numericFieldFromDoc(value: string | undefined): string {
   standalone: true,
   imports: [CommonModule, FormsModule, BaseDocumentModalComponent, GatePassItemSearchInputComponent],
   templateUrl: './create-ogp.html',
-  styleUrl: '../../igp/create-igp/create-igp.css',
+  styleUrls: [
+    '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
+    '../../../Plant-Maintenance/setup-form/plant-maintenance-setup-form.css',
+    '../../../Plant-Maintenance/main-form/husky-form/add-husky-form/add-husky-form.css',
+    '../../igp/create-igp/create-igp.css',
+  ],
 })
 export class CreateOgpComponent implements OnInit {
   editingId: string | null = null;
@@ -154,6 +165,14 @@ export class CreateOgpComponent implements OnInit {
     this.itemMasterService.applyToLine(line, item);
   }
 
+  onTransporterCnicChange(value: string): void {
+    this.transporterCnic = formatGatePassCnic(value);
+  }
+
+  onTransporterPhoneChange(value: string): void {
+    this.transporterPhone = formatGatePassPhoneDigits(value);
+  }
+
   back(): void {
     void this.router.navigateByUrl('/gate-pass/ogp');
   }
@@ -202,8 +221,8 @@ export class CreateOgpComponent implements OnInit {
     this.store = doc.store?.trim() ?? '';
     this.freight = numericFieldFromDoc(doc.freight);
     this.transporterName = doc.transporterName?.trim() ?? '';
-    this.transporterCnic = doc.transporterCnic?.trim() ?? '';
-    this.transporterPhone = doc.transporterPhone?.trim() ?? '';
+    this.transporterCnic = formatGatePassCnic(doc.transporterCnic?.trim() ?? '');
+    this.transporterPhone = formatGatePassPhoneDigits(doc.transporterPhone?.trim() ?? '');
     this.weightMachineName = doc.weightMachineName?.trim() ?? '';
     this.weight = numericFieldFromDoc(doc.weight);
     this.location = doc.location?.trim() ?? '';
@@ -232,6 +251,16 @@ export class CreateOgpComponent implements OnInit {
 
     if (!this.lines.some((line) => !line.deleted)) {
       void this.alertService.validation('At least one line item is required.');
+      return;
+    }
+
+    if (!isGatePassPhoneValid(this.transporterPhone)) {
+      void this.alertService.validation('Transporter phone must be exactly 11 digits.');
+      return;
+    }
+
+    if (!isGatePassCnicValid(this.transporterCnic)) {
+      void this.alertService.validation('Transporter CNIC must be 13 digits (XXXXX-XXXXXXX-X).');
       return;
     }
 
@@ -277,8 +306,8 @@ export class CreateOgpComponent implements OnInit {
     this.store = emptyIfDash(record.store);
     this.freight = numericFieldFromDoc(emptyIfDash(record.freight));
     this.transporterName = emptyIfDash(record.transporterName);
-    this.transporterCnic = emptyIfDash(record.transporterCnic);
-    this.transporterPhone = emptyIfDash(record.transporterPhone);
+    this.transporterCnic = formatGatePassCnic(emptyIfDash(record.transporterCnic));
+    this.transporterPhone = formatGatePassPhoneDigits(emptyIfDash(record.transporterPhone));
     this.department = emptyIfDash(record.department);
     this.weightMachineName = emptyIfDash(record.weightMachineName);
     this.weight = numericFieldFromDoc(emptyIfDash(record.weight));

@@ -10,9 +10,6 @@
   <div class="page-content-column">
     <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
       <button class="sapMBtnBase sapMBtn sapMBarChild" aria-label="Back to samples" title="Back to samples" type="button">
-        <span class="sapMBtnInner sapMBtnHoverable sapMFocusable sapMBtnBack sapMBtnIconFirst">
-          <span class="sapUiIcon sapMBtnIcon sapMBtnIconLeft">←</span>
-        </span>
       </button>
       <button class="btn-default" pageToolbarActions (click)="createNewSIR()">Add New</button>
     </app-page-toolbar>
@@ -46,10 +43,6 @@
           [data]="sirList"
           (applied)="onTableFilterApplied()"
         />
-
-        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">
-          ⛶
-        </button>
 
         <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
           ⚙
@@ -241,6 +234,20 @@
               <dd>{{ displayDash(d.personalInfo.country) }}</dd>
               <dt>ZIP code</dt>
               <dd>{{ displayDash(d.personalInfo.zipCode) }}</dd>
+              <dt>Employment nature</dt>
+              <dd>{{ displayDash(d.personalInfo.employmentNature) }}</dd>
+              <dt>Employment category</dt>
+              <dd>{{ displayDash(d.personalInfo.employmentCategory) }}</dd>
+              <dt>Employment status</dt>
+              <dd>{{ displayDash(d.personalInfo.employmentStatus) }}</dd>
+              <dt>Department in AHCP</dt>
+              <dd>{{ displayDash(d.personalInfo.departmentInAhcp) }}</dd>
+              <dt>Designation</dt>
+              <dd>{{ displayDash(d.personalInfo.designation) }}</dd>
+              <dt>Job description</dt>
+              <dd>{{ displayDash(d.personalInfo.jobDescription) }}</dd>
+              <dt>Role &amp; salary</dt>
+              <dd>{{ displayDash(d.personalInfo.roleAndSalary) }}</dd>
             </dl>
           </section>
 

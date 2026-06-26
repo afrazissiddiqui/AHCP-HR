@@ -27,6 +27,13 @@ export interface ApplicationFormPersonalInfo {
   state: string;
   country: string;
   zipCode: string;
+  employmentNature: string;
+  employmentCategory: string;
+  employmentStatus: string;
+  departmentInAhcp: string;
+  designation: string;
+  jobDescription: string;
+  roleAndSalary: string;
 }
 
 export interface ApplicationFormEducationRow {
@@ -155,6 +162,13 @@ export interface EmployeeProfileAddPayload {
   state: string;
   country: string;
   zipCode: string;
+  employmentNature: string;
+  employmentCategory: string;
+  employmentStatus: string;
+  departmentInAhcp: string;
+  designation: string;
+  jobDescription: string;
+  roleAndSalary: string;
   educationSections: ApplicationFormEducationRow[];
   pastExperienceSections: Array<{
     company: string;
@@ -310,13 +324,29 @@ export class ApplicationFormService {
     return {
       EmployeeCode: asNumber(employeeCode, 0),
       EmployeeName: employeeName || '—',
-      Department: asString(item['department']) || '—',
-      EmployeeNature: asString(item['employeeMaster']) || asString(item['employee_master']) || '—',
+      Department:
+        asString(item['departmentInAhcp']) ||
+        asString(item['department_in_ahcp']) ||
+        asString(item['department']) ||
+        '—',
+      EmployeeNature:
+        asString(item['employmentNature']) ||
+        asString(item['employment_nature']) ||
+        asString(item['employeeMaster']) ||
+        asString(item['employee_master']) ||
+        '—',
       Designation: asString(item['designation']) || '—',
       ReportingManager: asString(item['reportingManager']) || asString(item['reporting_manager']) || '—',
       EmploymentType: asString(item['employmentType']) || asString(item['employment_type']) || '—',
-      EmploymentCategory: asString(item['employmentCategory']) || asString(item['employment_category']) || '—',
-      status: asString(item['status']) || 'Active',
+      EmploymentCategory:
+        asString(item['employmentCategory']) ||
+        asString(item['employment_category']) ||
+        '—',
+      status:
+        asString(item['employmentStatus']) ||
+        asString(item['employment_status']) ||
+        asString(item['status']) ||
+        'Active',
       selected: false,
       apiId: apiId || undefined,
     };
@@ -404,6 +434,13 @@ export class ApplicationFormService {
         state: pick('state'),
         country: pick('country'),
         zipCode: pick('zipCode', 'zip_code'),
+        employmentNature: pick('employmentNature', 'employment_nature'),
+        employmentCategory: pick('employmentCategory', 'employment_category'),
+        employmentStatus: pick('employmentStatus', 'employment_status'),
+        departmentInAhcp: pick('departmentInAhcp', 'department_in_ahcp') || pick('department'),
+        designation: pick('designation'),
+        jobDescription: pick('jobDescription', 'job_description'),
+        roleAndSalary: pick('roleAndSalary', 'role_and_salary'),
       },
       education,
       pastExperience,
