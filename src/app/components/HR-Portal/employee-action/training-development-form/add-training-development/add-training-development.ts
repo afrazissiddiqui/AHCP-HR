@@ -25,6 +25,7 @@ import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 interface TrainingEmployeeOption {
   code: string;
   name: string;
+  apiId?: string;
   department: string;
   location: string;
   designation: string;
@@ -248,9 +249,39 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     setTimeout(() => this.closeNameSuggestions(), 150);
   }
 
-  protected selectEmployeeFromSuggestion(employee: TrainingEmployeeOption): void {
+  protected selectEmployeeFromSuggestion(employee: TrainingEmployeeOption, event?: MouseEvent): void {
+    event?.preventDefault();
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
+
+    const applyRecord = (record: ApplicationFormRecord): void => {
+      this.populateFromApplicationRecord(record);
+      this.cdr.markForCheck();
+    };
+
+    const localRecord = this.findApplicationRecord(employee);
+    const detailId = localRecord?.apiId ?? employee.apiId;
+
+    if (detailId) {
+      this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
+        next: applyRecord,
+        error: () => {
+          if (localRecord) {
+            applyRecord(localRecord);
+          } else {
+            this.populateFromEmployeeOption(employee);
+            this.cdr.markForCheck();
+          }
+        },
+      });
+      return;
+    }
+
+    if (localRecord) {
+      applyRecord(localRecord);
+      return;
+    }
+
     this.populateFromEmployeeOption(employee);
     this.cdr.markForCheck();
   }
@@ -384,25 +415,91 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   }
 
   private toEmployeeOption(record: ApplicationFormRecord): TrainingEmployeeOption {
-    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
-    const designation = emptyIfDash(record.Designation);
+    const mapped = this.mapApplicationRecordToEmployeeFields(record);
 
     return {
       code: this.resolveEmployeeCode(record),
+      name: mapped.name,
+      apiId: record.apiId,
+      department: mapped.department,
+      location: mapped.location,
+      designation: mapped.designation,
+      jobTitle: mapped.jobTitle,
+      reportingManager: mapped.reportingManager,
+      employeeNature: mapped.employeeNature,
+      employeeType: mapped.employeeType,
+      gradeWorkLevel: mapped.gradeWorkLevel,
+      employmentCategory: mapped.employmentCategory,
+      dateOfJoining: mapped.dateOfJoining,
+    };
+  }
+
+  private mapApplicationRecordToEmployeeFields(record: ApplicationFormRecord): Omit<
+    TrainingEmployeeOption,
+    'code' | 'apiId'
+  > {
+    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const personal = record.detail?.personalInfo;
+    const requisition = record.detail?.requisition;
+    const designation =
+      emptyIfDash(personal?.designation ?? '') ||
+      emptyIfDash(record.Designation) ||
+      emptyIfDash(requisition?.internalJobTitle ?? '');
+
+    return {
       name: emptyIfDash(record.EmployeeName),
-      department: emptyIfDash(record.Department),
+      department:
+        emptyIfDash(personal?.departmentInAhcp ?? '') ||
+        emptyIfDash(record.Department),
       location:
-        emptyIfDash(record.detail?.requisition.location ?? '') ||
-        emptyIfDash(record.detail?.personalInfo.city ?? ''),
+        emptyIfDash(requisition?.location ?? '') ||
+        emptyIfDash(personal?.city ?? ''),
       designation,
       jobTitle: designation,
-      reportingManager: emptyIfDash(record.ReportingManager),
-      employeeNature: emptyIfDash(record.EmployeeNature),
+      reportingManager:
+        emptyIfDash(record.ReportingManager) ||
+        emptyIfDash(requisition?.hiringManager ?? ''),
+      employeeNature:
+        emptyIfDash(personal?.employmentNature ?? '') ||
+        emptyIfDash(record.EmployeeNature),
       employeeType: emptyIfDash(record.EmploymentType),
-      gradeWorkLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
-      employmentCategory: emptyIfDash(record.EmploymentCategory),
+      gradeWorkLevel: emptyIfDash(requisition?.costCenter ?? ''),
+      employmentCategory:
+        emptyIfDash(personal?.employmentCategory ?? '') ||
+        emptyIfDash(record.EmploymentCategory),
       dateOfJoining: '',
     };
+  }
+
+  private findApplicationRecord(employee: TrainingEmployeeOption): ApplicationFormRecord | undefined {
+    const code = employee.code.trim().toLowerCase();
+    const apiId = employee.apiId?.trim();
+
+    return this.applicationFormService.getApplicationRecords().find((record) => {
+      if (apiId && record.apiId === apiId) {
+        return true;
+      }
+      return code && this.resolveEmployeeCode(record).trim().toLowerCase() === code;
+    });
+  }
+
+  private populateFromApplicationRecord(record: ApplicationFormRecord): void {
+    const mapped = this.mapApplicationRecordToEmployeeFields(record);
+
+    this.employeeCode.set(this.resolveEmployeeCode(record));
+    this.employeeName.set(mapped.name);
+    this.department.set(mapped.department);
+    this.location.set(mapped.location);
+    this.designation.set(mapped.designation);
+    this.jobTitle.set(mapped.jobTitle);
+    this.reportingManager.set(mapped.reportingManager);
+    this.employeeNature.set(mapped.employeeNature);
+    this.employeeType.set(mapped.employeeType);
+    this.gradeWorkLevel.set(mapped.gradeWorkLevel);
+    this.employmentCategory.set(mapped.employmentCategory);
+    if (mapped.dateOfJoining) {
+      this.dateOfJoining.set(mapped.dateOfJoining);
+    }
   }
 
   private resolveEmployeeCode(record: ApplicationFormRecord): string {

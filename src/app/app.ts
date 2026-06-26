@@ -135,20 +135,19 @@ export class App {
       return;
     }
 
-    const isBellClick = target.closest('.ui5-shellbar-bell-button');
-    const isActionClick = target.closest('.ui5-shellbar-action-button');
+    const isShellbarActionClick = target.closest('.ui5-shellbar-action-button');
     const isSearchClick = target.closest('.ui5-shellbar-search-field-area');
     const isProfileClick =
       target.closest('[data-profile-btn]') || target.closest('.profile-trigger');
 
-    if (isBellClick || isActionClick || isSearchClick || isProfileClick) {
+    if (isShellbarActionClick || isSearchClick || isProfileClick) {
       return;
     }
 
     this.toggleHrDropdown();
   }
 
-  onNotificationsClick(event: Event): void {
+  onApprovalAuthoritySetupClick(event: Event): void {
     event.stopPropagation();
     this.hrDropdownOpen.set(false);
     this.profileDropdownOpen.set(false);

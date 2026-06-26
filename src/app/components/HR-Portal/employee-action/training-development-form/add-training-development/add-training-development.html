@@ -42,7 +42,7 @@
                     *ngFor="let emp of codeSuggestions()"
                     role="option"
                     class="employee-search-suggestion-item"
-                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                    (mousedown)="selectEmployeeFromSuggestion(emp, $event)"
                   >
                     <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
                     <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
@@ -85,7 +85,7 @@
                     *ngFor="let emp of nameSuggestions()"
                     role="option"
                     class="employee-search-suggestion-item"
-                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                    (mousedown)="selectEmployeeFromSuggestion(emp, $event)"
                   >
                     <span class="employee-search-suggestion-primary">{{ emp.name }} — {{ emp.code }}</span>
                     <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
@@ -239,7 +239,7 @@
               <input type="date" [ngModel]="evaluationDate()" (ngModelChange)="evaluationDate.set($event)" />
             </div>
             <div class="cjs-row">
-              <label>Evaluation Period:</label>
+              <label>Ratings Obtained:</label>
               <input type="text" [ngModel]="evaluationPeriod()" (ngModelChange)="evaluationPeriod.set($event)" placeholder="e.g. May 2026" />
             </div>
             <div class="cjs-row">
