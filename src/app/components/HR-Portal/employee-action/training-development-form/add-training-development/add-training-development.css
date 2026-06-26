@@ -1,0 +1,47 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.cjs-grid,
+.cjs-col,
+.cjs-row,
+.employee-search-wrap {
+  min-width: 0;
+}
+
+.cjs-section-block {
+  margin-bottom: 28px;
+}
+
+.cjs-section-block:last-of-type {
+  margin-bottom: 0;
+}
+
+.cjs-grid + .cjs-row--remarks {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f6;
+}
+
+.cjs-row--remarks + .cjs-row--remarks {
+  margin-top: 16px;
+}
+
+.cjs-row--remarks {
+  align-items: start;
+}
+
+.cjs-row--remarks label {
+  padding-top: 8px;
+}
+
+.cjs-row--remarks textarea {
+  min-height: 80px;
+  height: auto;
+  resize: vertical;
+}
+
+.cjs-form-container {
+  padding-bottom: 8px;
+}

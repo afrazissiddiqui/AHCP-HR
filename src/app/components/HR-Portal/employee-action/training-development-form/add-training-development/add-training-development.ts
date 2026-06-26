@@ -46,6 +46,7 @@ interface TrainingEmployeeOption {
   styleUrls: [
     '../../../job-specification-form/create-job-specification/create-job-specification.css',
     '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
+    './add-training-development.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -131,110 +131,112 @@
   </div>
 </div>
 
-<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog">
+<div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+<div class="js-detail-modal" *ngIf="showViewDialog()">
   <div class="js-modal-header">
-    <h2>Training &amp; Development Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+    <h2>Training &amp; Development Detail<ng-container *ngIf="selectedRecord() as record"> — {{ record.EmployeeName }}</ng-container></h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">
-    <p *ngIf="viewLoading">Loading details…</p>
-    <ng-container *ngIf="selectedRecord && !viewLoading">
+    <p *ngIf="viewLoading()">Loading details…</p>
+    <ng-container *ngIf="selectedRecord() as record">
+      <ng-container *ngIf="!viewLoading()">
       <div class="js-detail-section">
         <h3>Employee Information</h3>
         <div class="js-detail-grid">
-          <div class="js-detail-item"><label>Employee Code:</label> <span>{{ selectedRecord.EmployeeCode }}</span></div>
-          <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
-          <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
-          <div class="js-detail-item"><label>Location:</label> <span>{{ selectedRecord.Location }}</span></div>
-          <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
-          <div class="js-detail-item"><label>Job Title:</label> <span>{{ selectedRecord.JobTitle }}</span></div>
-          <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ selectedRecord.ReportingManager }}</span></div>
-          <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ selectedRecord.EmployeeNature }}</span></div>
-          <div class="js-detail-item"><label>Employee Type:</label> <span>{{ selectedRecord.EmployeeType }}</span></div>
-          <div class="js-detail-item"><label>Grade / Work Level:</label> <span>{{ selectedRecord.GradeWorkLevel }}</span></div>
-          <div class="js-detail-item"><label>Employment Category:</label> <span>{{ selectedRecord.EmploymentCategory }}</span></div>
-          <div class="js-detail-item"><label>Date of joining:</label> <span>{{ selectedRecord.DateOfJoining }}</span></div>
+          <div class="js-detail-item"><label>Employee Code:</label> <span>{{ record.EmployeeCode }}</span></div>
+          <div class="js-detail-item"><label>Employee Name:</label> <span>{{ record.EmployeeName }}</span></div>
+          <div class="js-detail-item"><label>Department:</label> <span>{{ record.Department }}</span></div>
+          <div class="js-detail-item"><label>Location:</label> <span>{{ record.Location }}</span></div>
+          <div class="js-detail-item"><label>Designation:</label> <span>{{ record.Designation }}</span></div>
+          <div class="js-detail-item"><label>Job Title:</label> <span>{{ record.JobTitle }}</span></div>
+          <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ record.ReportingManager }}</span></div>
+          <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ record.EmployeeNature }}</span></div>
+          <div class="js-detail-item"><label>Employee Type:</label> <span>{{ record.EmployeeType }}</span></div>
+          <div class="js-detail-item"><label>Grade / Work Level:</label> <span>{{ record.GradeWorkLevel }}</span></div>
+          <div class="js-detail-item"><label>Employment Category:</label> <span>{{ record.EmploymentCategory }}</span></div>
+          <div class="js-detail-item"><label>Date of joining:</label> <span>{{ record.DateOfJoining }}</span></div>
         </div>
-        <div class="js-detail-full" *ngIf="selectedRecord.Remarks && selectedRecord.Remarks !== '—'">
+        <div class="js-detail-full" *ngIf="record.Remarks && record.Remarks !== '—'">
           <label>Remarks:</label>
-          <p>{{ selectedRecord.Remarks }}</p>
+          <p>{{ record.Remarks }}</p>
         </div>
       </div>
 
       <div class="js-detail-section">
         <h3>Training Detail</h3>
         <div class="js-detail-grid">
-          <div class="js-detail-item"><label>Training Title:</label> <span>{{ selectedRecord.TrainingDetail.training_title }}</span></div>
-          <div class="js-detail-item"><label>Training Category:</label> <span>{{ selectedRecord.TrainingDetail.training_category }}</span></div>
-          <div class="js-detail-item"><label>Training Type:</label> <span>{{ selectedRecord.TrainingDetail.training_type }}</span></div>
-          <div class="js-detail-item"><label>Training Stage:</label> <span>{{ selectedRecord.TrainingDetail.training_stage }}</span></div>
-          <div class="js-detail-item"><label>Start Date:</label> <span>{{ selectedRecord.TrainingDetail.training_start_date }}</span></div>
-          <div class="js-detail-item"><label>End Date:</label> <span>{{ selectedRecord.TrainingDetail.training_end_date }}</span></div>
-          <div class="js-detail-item"><label>Duration:</label> <span>{{ selectedRecord.TrainingDetail.training_duration }}</span></div>
-          <div class="js-detail-item"><label>Trainer:</label> <span>{{ selectedRecord.TrainingDetail.trainer }}</span></div>
+          <div class="js-detail-item"><label>Training Title:</label> <span>{{ record.TrainingDetail.training_title }}</span></div>
+          <div class="js-detail-item"><label>Training Category:</label> <span>{{ record.TrainingDetail.training_category }}</span></div>
+          <div class="js-detail-item"><label>Training Type:</label> <span>{{ record.TrainingDetail.training_type }}</span></div>
+          <div class="js-detail-item"><label>Training Stage:</label> <span>{{ record.TrainingDetail.training_stage }}</span></div>
+          <div class="js-detail-item"><label>Start Date:</label> <span>{{ record.TrainingDetail.training_start_date }}</span></div>
+          <div class="js-detail-item"><label>End Date:</label> <span>{{ record.TrainingDetail.training_end_date }}</span></div>
+          <div class="js-detail-item"><label>Duration:</label> <span>{{ record.TrainingDetail.training_duration }}</span></div>
+          <div class="js-detail-item"><label>Trainer:</label> <span>{{ record.TrainingDetail.trainer }}</span></div>
         </div>
-        <div class="js-detail-full" *ngIf="selectedRecord.TrainingDetail.training_objectives">
+        <div class="js-detail-full" *ngIf="record.TrainingDetail.training_objectives">
           <label>Training Objectives:</label>
-          <p>{{ selectedRecord.TrainingDetail.training_objectives }}</p>
+          <p>{{ record.TrainingDetail.training_objectives }}</p>
         </div>
-        <div class="js-detail-full" *ngIf="selectedRecord.TrainingDetail.skills_covered">
+        <div class="js-detail-full" *ngIf="record.TrainingDetail.skills_covered">
           <label>Skills Covered:</label>
-          <p>{{ selectedRecord.TrainingDetail.skills_covered }}</p>
+          <p>{{ record.TrainingDetail.skills_covered }}</p>
         </div>
-        <div class="js-detail-full" *ngIf="selectedRecord.TrainingDetail.remarks">
+        <div class="js-detail-full" *ngIf="record.TrainingDetail.remarks">
           <label>Training Remarks:</label>
-          <p>{{ selectedRecord.TrainingDetail.remarks }}</p>
+          <p>{{ record.TrainingDetail.remarks }}</p>
         </div>
       </div>
 
       <div class="js-detail-section">
         <h3>Training Evaluation</h3>
         <div class="js-detail-grid">
-          <div class="js-detail-item"><label>Evaluation Cycle:</label> <span>{{ selectedRecord.TrainingEvaluation.evaluation_cycle_number }}</span></div>
-          <div class="js-detail-item"><label>Evaluation Date:</label> <span>{{ selectedRecord.TrainingEvaluation.evaluation_date }}</span></div>
-          <div class="js-detail-item"><label>Evaluation Period:</label> <span>{{ selectedRecord.TrainingEvaluation.evaluation_period }}</span></div>
-          <div class="js-detail-item"><label>Evaluator:</label> <span>{{ selectedRecord.TrainingEvaluation.evaluator_name }}</span></div>
-          <div class="js-detail-item"><label>Parameter:</label> <span>{{ selectedRecord.TrainingEvaluation.evaluation_parameter }}</span></div>
-          <div class="js-detail-item"><label>Parameter Rating:</label> <span>{{ selectedRecord.TrainingEvaluation.parameter_rating }}</span></div>
-          <div class="js-detail-item"><label>Overall Score:</label> <span>{{ selectedRecord.TrainingEvaluation.overall_score }}</span></div>
+          <div class="js-detail-item"><label>Evaluation Cycle:</label> <span>{{ record.TrainingEvaluation.evaluation_cycle_number }}</span></div>
+          <div class="js-detail-item"><label>Evaluation Date:</label> <span>{{ record.TrainingEvaluation.evaluation_date }}</span></div>
+          <div class="js-detail-item"><label>Evaluation Period:</label> <span>{{ record.TrainingEvaluation.evaluation_period }}</span></div>
+          <div class="js-detail-item"><label>Evaluator:</label> <span>{{ record.TrainingEvaluation.evaluator_name }}</span></div>
+          <div class="js-detail-item"><label>Parameter:</label> <span>{{ record.TrainingEvaluation.evaluation_parameter }}</span></div>
+          <div class="js-detail-item"><label>Parameter Rating:</label> <span>{{ record.TrainingEvaluation.parameter_rating }}</span></div>
+          <div class="js-detail-item"><label>Overall Score:</label> <span>{{ record.TrainingEvaluation.overall_score }}</span></div>
         </div>
-        <div class="js-detail-full" *ngIf="selectedRecord.TrainingEvaluation.performance_remarks">
+        <div class="js-detail-full" *ngIf="record.TrainingEvaluation.performance_remarks">
           <label>Performance Remarks:</label>
-          <p>{{ selectedRecord.TrainingEvaluation.performance_remarks }}</p>
+          <p>{{ record.TrainingEvaluation.performance_remarks }}</p>
         </div>
       </div>
 
       <div class="js-detail-section">
         <h3>Salary</h3>
         <div class="js-detail-grid">
-          <div class="js-detail-item"><label>Current Salary:</label> <span>{{ selectedRecord.Salary.current_salary }}</span></div>
-          <div class="js-detail-item"><label>Increment Amount:</label> <span>{{ selectedRecord.Salary.increment_amount }}</span></div>
-          <div class="js-detail-item"><label>Increment %:</label> <span>{{ selectedRecord.Salary.increment_percentage }}</span></div>
-          <div class="js-detail-item"><label>Revised Salary:</label> <span>{{ selectedRecord.Salary.revised_salary }}</span></div>
-          <div class="js-detail-item"><label>Effective Date:</label> <span>{{ selectedRecord.Salary.effective_date_of_revision }}</span></div>
-          <div class="js-detail-item"><label>Approval Authority:</label> <span>{{ selectedRecord.Salary.approval_authority }}</span></div>
+          <div class="js-detail-item"><label>Current Salary:</label> <span>{{ record.Salary.current_salary }}</span></div>
+          <div class="js-detail-item"><label>Increment Amount:</label> <span>{{ record.Salary.increment_amount }}</span></div>
+          <div class="js-detail-item"><label>Increment %:</label> <span>{{ record.Salary.increment_percentage }}</span></div>
+          <div class="js-detail-item"><label>Revised Salary:</label> <span>{{ record.Salary.revised_salary }}</span></div>
+          <div class="js-detail-item"><label>Effective Date:</label> <span>{{ record.Salary.effective_date_of_revision }}</span></div>
+          <div class="js-detail-item"><label>Approval Authority:</label> <span>{{ record.Salary.approval_authority }}</span></div>
         </div>
-        <div class="js-detail-full" *ngIf="selectedRecord.Salary.reason_for_increment">
+        <div class="js-detail-full" *ngIf="record.Salary.reason_for_increment">
           <label>Reason for Increment:</label>
-          <p>{{ selectedRecord.Salary.reason_for_increment }}</p>
+          <p>{{ record.Salary.reason_for_increment }}</p>
         </div>
       </div>
 
       <div class="js-detail-section">
         <h3>Promotion</h3>
         <div class="js-detail-grid">
-          <div class="js-detail-item"><label>Promotion Recommended:</label> <span>{{ selectedRecord.Promotion.promotion_recommended }}</span></div>
-          <div class="js-detail-item"><label>New Designation:</label> <span>{{ selectedRecord.Promotion.new_designation }}</span></div>
-          <div class="js-detail-item"><label>Effective Date:</label> <span>{{ selectedRecord.Promotion.promotion_effective_date }}</span></div>
-          <div class="js-detail-item"><label>Eligibility Check:</label> <span>{{ selectedRecord.Promotion.performance_eligibility_check }}</span></div>
-          <div class="js-detail-item"><label>Training Completion:</label> <span>{{ selectedRecord.Promotion.training_completion_verification }}</span></div>
+          <div class="js-detail-item"><label>Promotion Recommended:</label> <span>{{ record.Promotion.promotion_recommended }}</span></div>
+          <div class="js-detail-item"><label>New Designation:</label> <span>{{ record.Promotion.new_designation }}</span></div>
+          <div class="js-detail-item"><label>Effective Date:</label> <span>{{ record.Promotion.promotion_effective_date }}</span></div>
+          <div class="js-detail-item"><label>Eligibility Check:</label> <span>{{ record.Promotion.performance_eligibility_check }}</span></div>
+          <div class="js-detail-item"><label>Training Completion:</label> <span>{{ record.Promotion.training_completion_verification }}</span></div>
         </div>
-        <div class="js-detail-full" *ngIf="selectedRecord.Promotion.remarks">
+        <div class="js-detail-full" *ngIf="record.Promotion.remarks">
           <label>Promotion Remarks:</label>
-          <p>{{ selectedRecord.Promotion.remarks }}</p>
+          <p>{{ record.Promotion.remarks }}</p>
         </div>
       </div>
+      </ng-container>
     </ng-container>
   </div>
   <div class="js-modal-footer">

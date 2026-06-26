@@ -147,7 +147,7 @@
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--full">
+        <div class="cjs-row cjs-row--remarks">
           <label>Remarks:</label>
           <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
         </div>
@@ -208,18 +208,20 @@
               <label>Trainer:</label>
               <input type="text" [ngModel]="trainer()" (ngModelChange)="trainer.set($event)" />
             </div>
-            <div class="cjs-row">
-              <label>Training Objectives:</label>
-              <input type="text" [ngModel]="trainingObjectives()" (ngModelChange)="trainingObjectives.set($event)" />
-            </div>
-            <div class="cjs-row">
-              <label>Skills Covered:</label>
-              <input type="text" [ngModel]="skillsCovered()" (ngModelChange)="skillsCovered.set($event)" />
-            </div>
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--full">
+        <div class="cjs-row cjs-row--remarks">
+          <label>Training Objectives:</label>
+          <textarea rows="3" [ngModel]="trainingObjectives()" (ngModelChange)="trainingObjectives.set($event)"></textarea>
+        </div>
+
+        <div class="cjs-row cjs-row--remarks">
+          <label>Skills Covered:</label>
+          <textarea rows="3" [ngModel]="skillsCovered()" (ngModelChange)="skillsCovered.set($event)"></textarea>
+        </div>
+
+        <div class="cjs-row cjs-row--remarks">
           <label>Remarks (training detail):</label>
           <textarea rows="3" [ngModel]="trainingDetailRemarks()" (ngModelChange)="trainingDetailRemarks.set($event)"></textarea>
         </div>
@@ -273,11 +275,12 @@
                 }
               </select>
             </div>
-            <div class="cjs-row">
-              <label>Performance Remarks:</label>
-              <input type="text" [ngModel]="performanceRemarks()" (ngModelChange)="performanceRemarks.set($event)" />
-            </div>
           </div>
+        </div>
+
+        <div class="cjs-row cjs-row--remarks">
+          <label>Performance Remarks:</label>
+          <textarea rows="3" [ngModel]="performanceRemarks()" (ngModelChange)="performanceRemarks.set($event)"></textarea>
         </div>
       </section>
 
@@ -361,19 +364,20 @@
                 <option value="No">No</option>
               </select>
             </div>
-            <div class="cjs-row">
-              <label>Remarks (promotion):</label>
-              <input type="text" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)" />
-            </div>
           </div>
         </div>
-      </section>
 
-      <div class="cjs-actions-footer">
-        <button type="button" class="cjs-submit-btn" (click)="save()">
-          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
-        </button>
-      </div>
+        <div class="cjs-row cjs-row--remarks">
+          <label>Remarks (promotion):</label>
+          <textarea rows="3" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)"></textarea>
+        </div>
+      </section>
+    </div>
+
+    <div class="cjs-actions-footer">
+      <button type="button" class="cjs-submit-btn" (click)="save()">
+        <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
+      </button>
     </div>
   </div>
 </div>
