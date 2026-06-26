@@ -175,14 +175,6 @@
               <input type="date" [ngModel]="claimDate()" (ngModelChange)="claimDate.set($event)" />
             </div>
 
-            <div class="cjs-row">
-              <label>Approval Status:</label>
-              <select [ngModel]="approvalStatus()" (ngModelChange)="approvalStatus.set($event)">
-                @for (status of approvalStatusOptions; track status) {
-                  <option [value]="status">{{ status }}</option>
-                }
-              </select>
-            </div>
           </div>
         </div>
 

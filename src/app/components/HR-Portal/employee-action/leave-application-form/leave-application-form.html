@@ -71,54 +71,56 @@
         </table>
       </div>
 
-      <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-      <div class="js-detail-modal" *ngIf="showViewDialog">
+      <div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showViewDialog()">
         <div class="js-modal-header">
-          <h2>Leave Application Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+          <h2>Leave Application Detail<ng-container *ngIf="selectedRecord() as record"> — {{ record.EmployeeName }}</ng-container></h2>
           <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
         </div>
         <div class="js-modal-body">
-          <p *ngIf="viewLoading">Loading details…</p>
-          <ng-container *ngIf="selectedRecord && !viewLoading">
+          <p *ngIf="viewLoading()">Loading details…</p>
+          <ng-container *ngIf="selectedRecord() as record">
+            <ng-container *ngIf="!viewLoading()">
             <div class="js-detail-section">
               <h3>Header Information</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Form Number:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.formNumber) }}</span></div>
-                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employeeId) }}</span></div>
-                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employeeName) }}</span></div>
-                <div class="js-detail-item"><label>Employee Category:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employeeCategory) }}</span></div>
-                <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employmentNature) }}</span></div>
-                <div class="js-detail-item"><label>Employment Type:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.employmentType) }}</span></div>
-                <div class="js-detail-item"><label>Work Grade Level:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.workGradeLevel) }}</span></div>
-                <div class="js-detail-item"><label>Department:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.department) }}</span></div>
-                <div class="js-detail-item"><label>Job Title:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.jobTitle) }}</span></div>
-                <div class="js-detail-item"><label>Location:</label> <span>{{ formatDetail(selectedRecord.HeaderInfo.location) }}</span></div>
+                <div class="js-detail-item"><label>Form Number:</label> <span>{{ formatDetail(record.HeaderInfo.formNumber) }}</span></div>
+                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ formatDetail(record.HeaderInfo.employeeId) }}</span></div>
+                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ formatDetail(record.HeaderInfo.employeeName) }}</span></div>
+                <div class="js-detail-item"><label>Employee Category:</label> <span>{{ formatDetail(record.HeaderInfo.employeeCategory) }}</span></div>
+                <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ formatDetail(record.HeaderInfo.employmentNature) }}</span></div>
+                <div class="js-detail-item"><label>Employment Type:</label> <span>{{ formatDetail(record.HeaderInfo.employmentType) }}</span></div>
+                <div class="js-detail-item"><label>Work Grade Level:</label> <span>{{ formatDetail(record.HeaderInfo.workGradeLevel) }}</span></div>
+                <div class="js-detail-item"><label>Department:</label> <span>{{ formatDetail(record.HeaderInfo.department) }}</span></div>
+                <div class="js-detail-item"><label>Job Title:</label> <span>{{ formatDetail(record.HeaderInfo.jobTitle) }}</span></div>
+                <div class="js-detail-item"><label>Location:</label> <span>{{ formatDetail(record.HeaderInfo.location) }}</span></div>
               </div>
             </div>
             <div class="js-detail-section">
               <h3>Leave Request</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Request Date:</label> <span>{{ formatDetail(selectedRecord.LeaveRequest.requestDate) }}</span></div>
-                <div class="js-detail-item"><label>Leave Type:</label> <span>{{ formatDetail(selectedRecord.LeaveRequest.leaveType) }}</span></div>
-                <div class="js-detail-item"><label>Cause of Leave:</label> <span>{{ formatDetail(selectedRecord.LeaveRequest.causeOfLeave) }}</span></div>
-                <div class="js-detail-item"><label>From Date:</label> <span>{{ formatDetail(selectedRecord.LeaveRequest.fromDate) }}</span></div>
-                <div class="js-detail-item"><label>To Date:</label> <span>{{ formatDetail(selectedRecord.LeaveRequest.toDate) }}</span></div>
-                <div class="js-detail-item"><label>Total Leave Days Requested:</label> <span>{{ formatDetail(selectedRecord.LeaveRequest.totalLeaveDaysRequested) }}</span></div>
-                <div class="js-detail-item"><label>Request Status:</label> <span>{{ formatDetail(selectedRecord.LeaveRequest.requestStatus) }}</span></div>
+                <div class="js-detail-item"><label>Request Date:</label> <span>{{ formatDetail(record.LeaveRequest.requestDate) }}</span></div>
+                <div class="js-detail-item"><label>Leave Type:</label> <span>{{ formatDetail(record.LeaveRequest.leaveType) }}</span></div>
+                <div class="js-detail-item"><label>Cause of Leave:</label> <span>{{ formatDetail(record.LeaveRequest.causeOfLeave) }}</span></div>
+                <div class="js-detail-item"><label>From Date:</label> <span>{{ formatDetail(record.LeaveRequest.fromDate) }}</span></div>
+                <div class="js-detail-item"><label>To Date:</label> <span>{{ formatDetail(record.LeaveRequest.toDate) }}</span></div>
+                <div class="js-detail-item"><label>Total Leave Days Requested:</label> <span>{{ formatDetail(record.LeaveRequest.totalLeaveDaysRequested) }}</span></div>
+                <div class="js-detail-item"><label>Request Status:</label> <span>{{ formatDetail(record.LeaveRequest.requestStatus) }}</span></div>
               </div>
-              <div class="js-detail-full" *ngIf="selectedRecord.LeaveRequest.remarks">
+              <div class="js-detail-full" *ngIf="record.LeaveRequest.remarks">
                 <label>Remarks:</label>
-                <p>{{ selectedRecord.LeaveRequest.remarks }}</p>
+                <p>{{ record.LeaveRequest.remarks }}</p>
               </div>
             </div>
             <div class="js-detail-section">
               <h3>Leave Balance Information</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Total Leaves:</label> <span>{{ formatDetail(selectedRecord.LeaveBalanceInformation.totalLeaves) }}</span></div>
-                <div class="js-detail-item"><label>Leaves Availed:</label> <span>{{ formatDetail(selectedRecord.LeaveBalanceInformation.leavesAvailed) }}</span></div>
-                <div class="js-detail-item"><label>Remaining Leaves:</label> <span>{{ formatDetail(selectedRecord.LeaveBalanceInformation.remainingLeaves) }}</span></div>
+                <div class="js-detail-item"><label>Total Leaves:</label> <span>{{ formatDetail(record.LeaveBalanceInformation.totalLeaves) }}</span></div>
+                <div class="js-detail-item"><label>Leaves Availed:</label> <span>{{ formatDetail(record.LeaveBalanceInformation.leavesAvailed) }}</span></div>
+                <div class="js-detail-item"><label>Remaining Leaves:</label> <span>{{ formatDetail(record.LeaveBalanceInformation.remainingLeaves) }}</span></div>
               </div>
             </div>
+            </ng-container>
           </ng-container>
         </div>
         <div class="js-modal-footer">

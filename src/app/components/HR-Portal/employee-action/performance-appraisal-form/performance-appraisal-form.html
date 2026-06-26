@@ -89,76 +89,78 @@
         </table>
       </div>
 
-      <div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-      <div class="js-detail-modal" *ngIf="showViewDialog">
+      <div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+      <div class="js-detail-modal" *ngIf="showViewDialog()">
         <div class="js-modal-header">
-          <h2>Performance Appraisal Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+          <h2>Performance Appraisal Detail<ng-container *ngIf="selectedRecord() as record"> — {{ record.EmployeeName }}</ng-container></h2>
           <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
         </div>
         <div class="js-modal-body">
-          <p *ngIf="viewLoading">Loading details…</p>
-          <ng-container *ngIf="selectedRecord && !viewLoading">
+          <p *ngIf="viewLoading()">Loading details…</p>
+          <ng-container *ngIf="selectedRecord() as record">
+            <ng-container *ngIf="!viewLoading()">
             <div class="js-detail-section">
               <h3>Appraisal Information</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Form Number:</label> <span>{{ selectedRecord.FormNumber }}</span></div>
-                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ selectedRecord.EmployeeId }}</span></div>
-                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
-                <div class="js-detail-item"><label>Employee Category:</label> <span>{{ selectedRecord.EmployeeCategory }}</span></div>
-                <div class="js-detail-item"><label>Work / Grade Level:</label> <span>{{ selectedRecord.WorkGradeLevel }}</span></div>
-                <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ selectedRecord.EmploymentNature }}</span></div>
-                <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
-                <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
-                <div class="js-detail-item"><label>Date of Joining:</label> <span>{{ selectedRecord.DateOfJoining }}</span></div>
-                <div class="js-detail-item"><label>Employment Type:</label> <span>{{ selectedRecord.EmploymentType }}</span></div>
-                <div class="js-detail-item"><label>Job Title:</label> <span>{{ selectedRecord.JobTitle }}</span></div>
-                <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ selectedRecord.ReportingManager }}</span></div>
-                <div class="js-detail-item"><label>Appraisal Authority:</label> <span>{{ selectedRecord.AppraisalAuthority }}</span></div>
-                <div class="js-detail-item"><label>Appraisal Period:</label> <span>{{ selectedRecord.AppraisalPeriod }}</span></div>
-                <div class="js-detail-item"><label>Current Salary:</label> <span>{{ selectedRecord.CurrentSalary }}</span></div>
-                <div class="js-detail-item"><label>Evaluation Date:</label> <span>{{ selectedRecord.EvaluationDate }}</span></div>
+                <div class="js-detail-item"><label>Form Number:</label> <span>{{ record.FormNumber }}</span></div>
+                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ record.EmployeeId }}</span></div>
+                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ record.EmployeeName }}</span></div>
+                <div class="js-detail-item"><label>Employee Category:</label> <span>{{ record.EmployeeCategory }}</span></div>
+                <div class="js-detail-item"><label>Work / Grade Level:</label> <span>{{ record.WorkGradeLevel }}</span></div>
+                <div class="js-detail-item"><label>Employment Nature:</label> <span>{{ record.EmploymentNature }}</span></div>
+                <div class="js-detail-item"><label>Department:</label> <span>{{ record.Department }}</span></div>
+                <div class="js-detail-item"><label>Designation:</label> <span>{{ record.Designation }}</span></div>
+                <div class="js-detail-item"><label>Date of Joining:</label> <span>{{ record.DateOfJoining }}</span></div>
+                <div class="js-detail-item"><label>Employment Type:</label> <span>{{ record.EmploymentType }}</span></div>
+                <div class="js-detail-item"><label>Job Title:</label> <span>{{ record.JobTitle }}</span></div>
+                <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ record.ReportingManager }}</span></div>
+                <div class="js-detail-item"><label>Appraisal Authority:</label> <span>{{ record.AppraisalAuthority }}</span></div>
+                <div class="js-detail-item"><label>Appraisal Period:</label> <span>{{ record.AppraisalPeriod }}</span></div>
+                <div class="js-detail-item"><label>Current Salary:</label> <span>{{ record.CurrentSalary }}</span></div>
+                <div class="js-detail-item"><label>Evaluation Date:</label> <span>{{ record.EvaluationDate }}</span></div>
               </div>
             </div>
 
             <div class="js-detail-section">
               <h3>Increment</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Current Salary:</label> <span>{{ selectedRecord.Increment.current_salary }}</span></div>
-                <div class="js-detail-item"><label>Increment %:</label> <span>{{ selectedRecord.Increment.increment_percentage }}</span></div>
-                <div class="js-detail-item"><label>Increment Amount:</label> <span>{{ selectedRecord.Increment.increment_amount }}</span></div>
-                <div class="js-detail-item"><label>Revised Salary:</label> <span>{{ selectedRecord.Increment.revised_salary }}</span></div>
-                <div class="js-detail-item"><label>Effective Date:</label> <span>{{ selectedRecord.Increment.increment_effective_date }}</span></div>
+                <div class="js-detail-item"><label>Current Salary:</label> <span>{{ record.Increment.current_salary }}</span></div>
+                <div class="js-detail-item"><label>Increment %:</label> <span>{{ record.Increment.increment_percentage }}</span></div>
+                <div class="js-detail-item"><label>Increment Amount:</label> <span>{{ record.Increment.increment_amount }}</span></div>
+                <div class="js-detail-item"><label>Revised Salary:</label> <span>{{ record.Increment.revised_salary }}</span></div>
+                <div class="js-detail-item"><label>Effective Date:</label> <span>{{ record.Increment.increment_effective_date }}</span></div>
               </div>
-              <div class="js-detail-full" *ngIf="selectedRecord.Increment.reason_for_increment">
+              <div class="js-detail-full" *ngIf="record.Increment.reason_for_increment">
                 <label>Reason for Increment:</label>
-                <p>{{ selectedRecord.Increment.reason_for_increment }}</p>
+                <p>{{ record.Increment.reason_for_increment }}</p>
               </div>
             </div>
 
             <div class="js-detail-section">
               <h3>Promotion</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Promotion Recommended:</label> <span>{{ selectedRecord.Promotion.promotion_recommended }}</span></div>
-                <div class="js-detail-item"><label>New Designation:</label> <span>{{ selectedRecord.Promotion.new_designation }}</span></div>
-                <div class="js-detail-item"><label>Effective Date:</label> <span>{{ selectedRecord.Promotion.promotion_effective_date }}</span></div>
+                <div class="js-detail-item"><label>Promotion Recommended:</label> <span>{{ record.Promotion.promotion_recommended }}</span></div>
+                <div class="js-detail-item"><label>New Designation:</label> <span>{{ record.Promotion.new_designation }}</span></div>
+                <div class="js-detail-item"><label>Effective Date:</label> <span>{{ record.Promotion.promotion_effective_date }}</span></div>
               </div>
-              <div class="js-detail-full" *ngIf="selectedRecord.Promotion.remarks">
+              <div class="js-detail-full" *ngIf="record.Promotion.remarks">
                 <label>Remarks:</label>
-                <p>{{ selectedRecord.Promotion.remarks }}</p>
+                <p>{{ record.Promotion.remarks }}</p>
               </div>
             </div>
 
             <div class="js-detail-section">
               <h3>Other Benefits</h3>
-              <div class="js-detail-full" *ngIf="selectedRecord.OtherBenefits.existing_benefits_details">
+              <div class="js-detail-full" *ngIf="record.OtherBenefits.existing_benefits_details">
                 <label>Existing Benefits:</label>
-                <p>{{ selectedRecord.OtherBenefits.existing_benefits_details }}</p>
+                <p>{{ record.OtherBenefits.existing_benefits_details }}</p>
               </div>
-              <div class="js-detail-full" *ngIf="selectedRecord.OtherBenefits.new_benefits">
+              <div class="js-detail-full" *ngIf="record.OtherBenefits.new_benefits">
                 <label>New Benefits:</label>
-                <p>{{ selectedRecord.OtherBenefits.new_benefits }}</p>
+                <p>{{ record.OtherBenefits.new_benefits }}</p>
               </div>
             </div>
+            </ng-container>
           </ng-container>
         </div>
         <div class="js-modal-footer">

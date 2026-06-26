@@ -136,11 +136,14 @@ export class App {
     }
 
     const isShellbarActionClick = target.closest('.ui5-shellbar-action-button');
+    const isCustomShellbarItemClick = event.composedPath().some(
+      (node) => node instanceof HTMLElement && node.localName === 'ui5-shellbar-item',
+    );
     const isSearchClick = target.closest('.ui5-shellbar-search-field-area');
     const isProfileClick =
       target.closest('[data-profile-btn]') || target.closest('.profile-trigger');
 
-    if (isShellbarActionClick || isSearchClick || isProfileClick) {
+    if (isShellbarActionClick || isCustomShellbarItemClick || isSearchClick || isProfileClick) {
       return;
     }
 
@@ -148,6 +151,7 @@ export class App {
   }
 
   onApprovalAuthoritySetupClick(event: Event): void {
+    event.preventDefault();
     event.stopPropagation();
     this.hrDropdownOpen.set(false);
     this.profileDropdownOpen.set(false);

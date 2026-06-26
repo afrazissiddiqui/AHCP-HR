@@ -123,9 +123,9 @@ export class LoanAdvanceFormComponent implements OnInit {
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   activeTab: 'filter' = 'filter';
-  showViewDialog = false;
-  viewLoading = false;
-  selectedRecord: LoanAdvanceRecord | null = null;
+  readonly showViewDialog = signal(false);
+  readonly viewLoading = signal(false);
+  readonly selectedRecord = signal<LoanAdvanceRecord | null>(null);
 
   get loanList(): LoanAdvanceRecord[] {
     return this.loanService.loans();
@@ -249,18 +249,18 @@ export class LoanAdvanceFormComponent implements OnInit {
       return;
     }
 
-    this.showViewDialog = true;
-    this.selectedRecord = null;
-    this.viewLoading = true;
+    this.showViewDialog.set(true);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(true);
 
     this.loanService.fetchLoanAdvanceDetail(record.Id).subscribe({
       next: (detail) => {
-        this.selectedRecord = detail;
-        this.viewLoading = false;
+        this.selectedRecord.set(detail);
+        this.viewLoading.set(false);
       },
       error: (error: unknown) => {
-        this.viewLoading = false;
-        this.showViewDialog = false;
+        this.viewLoading.set(false);
+        this.showViewDialog.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load loan / advance details.'),
@@ -309,9 +309,9 @@ export class LoanAdvanceFormComponent implements OnInit {
   }
 
   closeViewDialog(): void {
-    this.showViewDialog = false;
-    this.selectedRecord = null;
-    this.viewLoading = false;
+    this.showViewDialog.set(false);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(false);
   }
 
   onFolderSelected(folderId: string): void {

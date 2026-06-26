@@ -114,9 +114,9 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   activeTab: 'filter' = 'filter';
-  showViewDialog = false;
-  viewLoading = false;
-  selectedRecord: ExpenseReimbursementRecord | null = null;
+  readonly showViewDialog = signal(false);
+  readonly viewLoading = signal(false);
+  readonly selectedRecord = signal<ExpenseReimbursementRecord | null>(null);
 
   get expenseList(): ExpenseReimbursementRecord[] {
     return this.expenseService.expenses();
@@ -235,18 +235,18 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
       return;
     }
 
-    this.showViewDialog = true;
-    this.selectedRecord = null;
-    this.viewLoading = true;
+    this.showViewDialog.set(true);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(true);
 
     this.expenseService.fetchExpenseReimbursementDetail(record.Id).subscribe({
       next: (detail) => {
-        this.selectedRecord = detail;
-        this.viewLoading = false;
+        this.selectedRecord.set(detail);
+        this.viewLoading.set(false);
       },
       error: (error: unknown) => {
-        this.viewLoading = false;
-        this.showViewDialog = false;
+        this.viewLoading.set(false);
+        this.showViewDialog.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load expense reimbursement details.'),
@@ -295,9 +295,9 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   }
 
   closeViewDialog(): void {
-    this.showViewDialog = false;
-    this.selectedRecord = null;
-    this.viewLoading = false;
+    this.showViewDialog.set(false);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(false);
   }
 
   onFolderSelected(folderId: string): void {

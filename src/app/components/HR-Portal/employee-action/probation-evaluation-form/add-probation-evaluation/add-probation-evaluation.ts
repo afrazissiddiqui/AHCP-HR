@@ -543,8 +543,8 @@ export class AddProbationEvaluationComponent implements OnInit {
       employee_type: this.employeeType().trim(),
       grade_work_level: this.gradeWorkLevel().trim(),
       employment_category: this.employmentCategory().trim(),
-      probation_start_date: '',
-      probation_end_date: '',
+      probation_start_date: this.extensionProbationStartDate(),
+      probation_end_date: this.extensionProbationEndDate(),
       remarks: this.remarks().trim(),
       probation_rating: {
         communication_skills: {

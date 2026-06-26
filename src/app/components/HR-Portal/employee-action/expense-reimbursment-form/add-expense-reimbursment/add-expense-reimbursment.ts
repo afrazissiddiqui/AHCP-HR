@@ -47,7 +47,6 @@ export class AddExpenseReimbursmentComponent implements OnInit {
   submitButtonLabel = 'Save Expense Reimbursement';
 
   protected readonly expenseTypeOptions = ['Fuel', 'Travel', 'Medical', 'Meals', 'Utilities', 'Lodging', 'Other'] as const;
-  protected readonly approvalStatusOptions = ['Pending', 'Approved', 'Rejected'] as const;
 
   protected readonly employeeCode = signal('');
   protected readonly headerEmployeeName = signal('');
