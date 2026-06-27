@@ -119,6 +119,7 @@ export interface ApplicationFormLoginDetails {
 
 export interface ApplicationFormAttachmentMeta {
   type: string;
+  attachmentFor?: string;
   fileName: string;
   fileUrl: string;
 }
@@ -272,7 +273,7 @@ export interface EmployeeProfileAddPayload {
     designation: string;
   }>;
   attachments: Array<{
-    type: string | null;
+    attachmentFor: string | null;
     fileName: string;
     fileUrl: string | null;
   }>;
@@ -298,9 +299,86 @@ export interface EmployeeProfileAddPayload {
 export class ApplicationFormService {
   private readonly http = inject(HttpClient);
   private readonly applicationRecords = signal<ApplicationFormRecord[]>([]);
+  private readonly attachmentMetaCache = new Map<string, ApplicationFormAttachmentMeta[]>();
 
   getApplicationRecords(): ApplicationFormRecord[] {
     return this.applicationRecords();
+  }
+
+  cacheEmployeeAttachments(identifier: string, attachments: ApplicationFormAttachmentMeta[]): void {
+    const key = identifier.trim();
+    if (!key || !attachments.length) {
+      return;
+    }
+    this.attachmentMetaCache.set(
+      key,
+      attachments.map((attachment) => ({ ...attachment })),
+    );
+  }
+
+  extractApiIdFromResponse(response: unknown): string {
+    if (!response || typeof response !== 'object') {
+      return '';
+    }
+    const obj = response as Record<string, unknown>;
+    const data = obj['data'];
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const nestedId = (data as Record<string, unknown>)['id'];
+      if (nestedId !== undefined && nestedId !== null) {
+        return String(nestedId).trim();
+      }
+    }
+    const id = obj['id'];
+    return id !== undefined && id !== null ? String(id).trim() : '';
+  }
+
+  resolveAttachmentForLabel(attachment: ApplicationFormAttachmentMeta): string {
+    return attachment.type?.trim() || attachment.attachmentFor?.trim() || '';
+  }
+
+  private mergeAttachmentsWithCache(
+    identifiers: Array<string | number | undefined | null>,
+    attachments: ApplicationFormAttachmentMeta[],
+  ): ApplicationFormAttachmentMeta[] {
+    let cached: ApplicationFormAttachmentMeta[] | undefined;
+    for (const identifier of identifiers) {
+      if (identifier === undefined || identifier === null) {
+        continue;
+      }
+      const key = String(identifier).trim();
+      if (key && this.attachmentMetaCache.has(key)) {
+        cached = this.attachmentMetaCache.get(key);
+        break;
+      }
+    }
+
+    if (!cached?.length) {
+      return attachments;
+    }
+
+    return attachments.map((attachment, index) => {
+      const cachedMatch =
+        cached![index] ??
+        cached!.find(
+          (item) =>
+            item.fileName === attachment.fileName &&
+            (item.fileUrl === attachment.fileUrl || !item.fileUrl || !attachment.fileUrl),
+        ) ??
+        cached!.find((item) => item.fileName === attachment.fileName);
+
+      const label =
+        attachment.type ||
+        attachment.attachmentFor ||
+        cachedMatch?.type ||
+        cachedMatch?.attachmentFor ||
+        '';
+
+      return {
+        ...attachment,
+        type: label,
+        attachmentFor: label,
+      };
+    });
   }
 
   getNextEmployeeCode(): number {
@@ -530,12 +608,32 @@ export class ApplicationFormService {
     const attachments = Array.isArray(attachmentsRaw)
       ? attachmentsRaw
           .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
-          .map((row) => ({
-            type: pickFrom(row, 'type'),
-            fileName: pickFrom(row, 'fileName', 'file_name') || pickFrom(row, 'file'),
-            fileUrl: pickFrom(row, 'fileUrl', 'file_url'),
-          }))
+          .map((row) => {
+            const attachmentFor =
+              pickFrom(row, 'attachmentFor', 'attachment_for') ||
+              pickFrom(row, 'type') ||
+              pickFrom(row, 'documentType', 'document_type');
+            return {
+              type: attachmentFor,
+              attachmentFor,
+              fileName: pickFrom(row, 'fileName', 'file_name') || pickFrom(row, 'file'),
+              fileUrl: pickFrom(row, 'fileUrl', 'file_url'),
+            };
+          })
       : [];
+
+    const mergedAttachments = this.mergeAttachmentsWithCache(
+      [
+        summary.apiId,
+        asString(item['id']),
+        asString(item['employeeCode']),
+        asString(item['employee_code']),
+        asString(item['userId']),
+        asString(item['user_id']),
+        summary.EmployeeCode,
+      ],
+      attachments,
+    );
 
     const roleSalary =
       pick('roleSalary', 'role_salary') || pick('roleAndSalary', 'role_and_salary');
@@ -638,7 +736,7 @@ export class ApplicationFormService {
         userId: pick('userId', 'user_id'),
         password: pick('password'),
       },
-      attachments,
+      attachments: mergedAttachments,
       requisition: {
         copyExisting: false,
         reqId: '',

@@ -8,6 +8,7 @@ import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sid
 import { Router } from '@angular/router';
 import { AlertService } from '../../../services/alert.service';
 import {
+  ApplicationFormAttachmentMeta,
   ApplicationFormRecord,
   ApplicationFormService,
 } from '../../../services/application-form.service';
@@ -283,6 +284,10 @@ export class RecruitmentComponent implements OnInit {
     }
     const s = String(value).trim();
     return s === '' ? '—' : s;
+  }
+
+  resolveAttachmentFor(attachment: ApplicationFormAttachmentMeta): string {
+    return this.applicationFormService.resolveAttachmentForLabel(attachment);
   }
 
   displayDate(value: string | number | undefined | null): string {

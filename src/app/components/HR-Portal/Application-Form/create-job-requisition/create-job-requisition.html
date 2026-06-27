@@ -760,22 +760,21 @@
           <div class="cjr-row">
             <label>Leave Days:</label>
             <input type="text" inputmode="numeric" [ngModel]="leaveDays()"
-              (ngModelChange)="onIntegerOnlyChange($event, leaveDays)" (keydown)="onIntegerKeyDown($event)"
+              (ngModelChange)="onLeaveDaysChange($event)" (keydown)="onIntegerKeyDown($event)"
               (blur)="touch('leaveDays')" />
           </div>
 
           <div class="cjr-row">
             <label>Leaves Availed:</label>
             <input type="text" inputmode="numeric" [ngModel]="leavesAvailed()"
-              (ngModelChange)="onIntegerOnlyChange($event, leavesAvailed)" (keydown)="onIntegerKeyDown($event)"
+              (ngModelChange)="onLeavesAvailedChange($event)" (keydown)="onIntegerKeyDown($event)"
               (blur)="touch('leavesAvailed')" />
           </div>
 
           <div class="cjr-row">
             <label>Remaining Leaves:</label>
-            <input type="text" inputmode="numeric" [ngModel]="remainingLeaves()"
-              (ngModelChange)="onIntegerOnlyChange($event, remainingLeaves)" (keydown)="onIntegerKeyDown($event)"
-              (blur)="touch('remainingLeaves')" />
+            <input type="text" inputmode="numeric" [ngModel]="remainingLeaves()" readonly
+              placeholder="Auto-calculated" />
           </div>
 
           <div class="cjr-row">

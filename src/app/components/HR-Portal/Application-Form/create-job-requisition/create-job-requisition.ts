@@ -358,6 +358,37 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     target.set(this.sanitizeIntegerValue(value));
   }
 
+  protected onLeaveDaysChange(value: string): void {
+    this.leaveDays.set(this.sanitizeIntegerValue(value));
+    this.updateRemainingLeaves();
+  }
+
+  protected onLeavesAvailedChange(value: string): void {
+    this.leavesAvailed.set(this.sanitizeIntegerValue(value));
+    this.updateRemainingLeaves();
+  }
+
+  private updateRemainingLeaves(): void {
+    const daysStr = this.leaveDays().trim();
+    const availedStr = this.leavesAvailed().trim();
+
+    if (!daysStr) {
+      this.remainingLeaves.set('');
+      return;
+    }
+
+    const days = Number.parseInt(daysStr, 10);
+    const availed = availedStr ? Number.parseInt(availedStr, 10) : 0;
+
+    if (!Number.isFinite(days)) {
+      this.remainingLeaves.set('');
+      return;
+    }
+
+    const remaining = Math.max(0, days - (Number.isFinite(availed) ? availed : 0));
+    this.remainingLeaves.set(String(remaining));
+  }
+
   protected onNumericOnlyChange(value: string, target: { set: (next: string) => void }): void {
     target.set(this.sanitizeDecimalValue(value));
   }
@@ -574,7 +605,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         duration: row.duration,
       })),
       attachments: this.buildAttachmentsPayload().map((row) => ({
-        type: row.type.trim() || null,
+        attachmentFor: row.type.trim() || null,
         fileName: row.fileName,
         fileUrl: row.fileUrl.trim() ? row.fileUrl.trim() : null,
       })),
@@ -1333,6 +1364,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       },
       attachments: this.buildAttachmentsPayload().map((row) => ({
         type: row.type,
+        attachmentFor: row.type,
         fileName: row.fileName,
         fileUrl: row.fileUrl,
       })),
@@ -1383,9 +1415,23 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       : this.applicationFormService.addEmployeeProfile(payload);
 
     request$.subscribe({
-      next: () => {
+      next: (response) => {
+        const responseId = this.applicationFormService.extractApiIdFromResponse(response);
+        const cacheKeys = new Set(
+          [editId, responseId, String(employeeCodeNum), this.employeeCode().trim(), this.userId().trim()].filter(
+            Boolean,
+          ),
+        );
+        for (const key of cacheKeys) {
+          this.applicationFormService.cacheEmployeeAttachments(String(key), detail.attachments);
+        }
+
         if (!editId) {
-          this.applicationFormService.addApplicationRecord(record);
+          this.applicationFormService.addApplicationRecord({
+            ...record,
+            apiId: responseId || record.apiId,
+            detail,
+          });
         }
         this.alertService.success(
           'Success',
@@ -1532,6 +1578,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.leavesAvailed.set(remuneration.leavesAvailed ?? '');
     this.remainingLeaves.set(remuneration.remainingLeaves ?? '');
     this.totalLeaves.set(remuneration.totalLeaves ?? '');
+    this.updateRemainingLeaves();
     this.medicalAllowances.set(remuneration.medicalAllowances ?? '');
     this.fuelAllowances.set(remuneration.fuelAllowances ?? '');
     this.mobileAllowances.set(remuneration.mobileAllowances ?? '');
@@ -1577,7 +1624,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       detail.attachments.length
         ? detail.attachments.map((attachment) => ({
             file: null,
-            type: attachment.type ?? '',
+            type: attachment.type ?? attachment.attachmentFor ?? '',
             fileName: attachment.fileName ?? '',
             fileUrl: attachment.fileUrl ?? '',
           }))

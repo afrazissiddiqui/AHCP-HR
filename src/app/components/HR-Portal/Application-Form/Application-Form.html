@@ -463,7 +463,7 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let a of d.attachments">
-                    <td>{{ displayDash(a.type) }}</td>
+                    <td>{{ displayDash(resolveAttachmentFor(a)) }}</td>
                     <td>{{ displayDash(a.fileName) }}</td>
                     <td>{{ displayDash(a.fileUrl) }}</td>
                   </tr>
