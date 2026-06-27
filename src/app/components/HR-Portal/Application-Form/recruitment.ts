@@ -96,8 +96,8 @@ export class RecruitmentComponent implements OnInit {
       id: 'recruitment-actions',
       title: 'Recruitment Actions',
       items: [
+        { id: 'Job-Specification-Form', label: 'Job Specification Form', route: '/job-specification-form' },
         { id: 'create-requisition', label: 'Application Form / Employee Profile', route: '/recruitment' },
-        { id: 'Job-Specification-Form', label: 'Job Specification Form', route: '/job-specification-form' }
       ]
     }
   ];

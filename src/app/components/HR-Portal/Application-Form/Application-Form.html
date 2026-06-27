@@ -410,13 +410,22 @@
 
           <section class="application-detail-section">
             <h4 class="application-detail-section-title">Attachments</h4>
-            <ul class="application-detail-attachments" *ngIf="d.attachments.length">
-              <li *ngFor="let a of d.attachments">
-                <strong>{{ a.type || 'Attachment' }}</strong>
-                <span> — {{ displayDash(a.fileName) }}</span>
-                <span *ngIf="a.fileUrl"> ({{ a.fileUrl }})</span>
-              </li>
-            </ul>
+            <div class="application-detail-table-wrap" *ngIf="d.attachments.length">
+              <table class="application-detail-table">
+                <thead>
+                  <tr>
+                    <th>File name</th>
+                    <th>File URL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let a of d.attachments">
+                    <td>{{ displayDash(a.fileName) }}</td>
+                    <td>{{ displayDash(a.fileUrl) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <p *ngIf="!d.attachments.length" class="application-detail-empty">No attachments listed.</p>
           </section>
         </ng-container>

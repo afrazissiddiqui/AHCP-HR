@@ -492,45 +492,56 @@
     <div class="cjr-personal cjr-attachments" id="attachments-section">
       <div class="cjr-section-title">Attachments</div>
 
-      @for (section of attachmentSections(); let si = $index; track section.type) {
+      @for (row of attachmentRows(); let i = $index; track i) {
       <div class="cjr-attachment-section">
-        <div class="cjr-attachment-section-header">
-          <div class="cjr-attachment-label">{{ section.type }}:</div>
-          <button type="button" class="cjr-add-education-btn cjr-add-attachment-row-btn" (click)="addAttachmentRow(si)">
-            <span class="cjr-add-icon">+</span> Add Row
+        @if (attachmentRows().length > 1) {
+        <div class="cjr-education-section-header">
+          <div class="cjr-education-label">Attachment {{ i + 1 }}</div>
+          <button type="button" class="cjr-remove-section" (click)="removeAttachmentRow(i)"
+            aria-label="Remove attachment row">
+            Remove
           </button>
         </div>
+        }
 
-        @for (row of section.rows; let ri = $index; track ri) {
-        <div class="cjr-attachment-row" [class.cjr-attachment-row--child]="ri > 0">
-          <div class="cjr-attachment-label" aria-hidden="true"></div>
-          <div class="cjr-attachment-field">
-            @if (row.fileName) {
-            <div class="cjr-attachment-info">
-              <span class="cjr-file-name">{{ row.fileName }}</span>
-              <button type="button" class="cjr-remove-attachment" (click)="clearAttachmentFile(si, ri)"
-                aria-label="Remove attachment file">
-                ✕
-              </button>
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>File Name:</label>
+              <div class="cjr-field cjr-attachment-name-field">
+                <input type="text" [ngModel]="row.fileName"
+                  (ngModelChange)="updateAttachmentField(i, 'fileName', $event)" (blur)="touch('attachmentFileName')"
+                  placeholder="e.g. resume.pdf" />
+                @if (row.fileName) {
+                <button type="button" class="cjr-remove-attachment" (click)="clearAttachmentFile(i)"
+                  aria-label="Clear file name">
+                  ✕
+                </button>
+                }
+              </div>
             </div>
-            } @else {
-            <input type="file" (change)="onAttachmentChange(si, ri, $event)"
-              [attr.aria-label]="'Upload ' + section.type" class="cjr-file-input" />
-            }
-            <input type="text" class="cjr-file-url-input" placeholder="File URL (optional)"
-              [ngModel]="row.fileUrl" (ngModelChange)="updateAttachmentFileUrl(si, ri, $event)"
-              [attr.aria-label]="'File URL for ' + section.type" />
-            @if (section.rows.length > 1) {
-            <button type="button" class="cjr-remove-section cjr-remove-attachment-row"
-              (click)="removeAttachmentRow(si, ri)" aria-label="Remove attachment row">
-              Remove
-            </button>
-            }
+
+            <div class="cjr-row">
+              <label>Upload File:</label>
+              <input type="file" (change)="onAttachmentFileChange(i, $event)" class="cjr-file-input"
+                aria-label="Upload attachment file" />
+            </div>
+          </div>
+
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>File URL:</label>
+              <input type="url" [ngModel]="row.fileUrl" (ngModelChange)="updateAttachmentField(i, 'fileUrl', $event)"
+                (blur)="touch('attachmentFileUrl')" placeholder="https://example.com/resume.pdf" />
+            </div>
           </div>
         </div>
-        }
       </div>
       }
+
+      <button type="button" class="cjr-add-education-btn" (click)="addAttachmentRow()">
+        <span class="cjr-add-icon">+</span> Add Attachment
+      </button>
     </div>
 
     <div class="cjr-personal cjr-remuneration" id="remunation-section">

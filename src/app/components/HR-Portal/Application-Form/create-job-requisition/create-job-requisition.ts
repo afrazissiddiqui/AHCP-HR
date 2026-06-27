@@ -17,38 +17,13 @@ import {
   formatDateToApiIso,
 } from '../../../../utils/date-format.util';
 
-type AttachmentType =
-  | 'CV'
-  | 'Educational Certificates'
-  | 'CNIC copy'
-  | 'Experience letters'
-  | 'Professional certificates'
-  | 'Offer letter';
-
 interface AttachmentRow {
-  file: File | null;
   fileName: string;
   fileUrl: string;
+  file: File | null;
 }
 
-interface AttachmentSection {
-  type: AttachmentType;
-  rows: AttachmentRow[];
-}
-
-const ATTACHMENT_TYPES: AttachmentType[] = [
-  'CV',
-  'Educational Certificates',
-  'CNIC copy',
-  'Experience letters',
-  'Professional certificates',
-  'Offer letter',
-];
-
-const DEFAULT_ATTACHMENT_SECTIONS: AttachmentSection[] = ATTACHMENT_TYPES.map((type) => ({
-  type,
-  rows: [{ file: null, fileName: '', fileUrl: '' }],
-}));
+const DEFAULT_ATTACHMENT_ROWS: AttachmentRow[] = [{ fileName: '', fileUrl: '', file: null }];
 
 const DEPARTMENT_OPTIONS = [
   'Production Department',
@@ -167,8 +142,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     },
   ]);
 
-  // Attachments fields — one section per type, each with one or more file rows
-  protected readonly attachmentSections = signal<AttachmentSection[]>(DEFAULT_ATTACHMENT_SECTIONS);
+  // Attachments — flat list of fileName + fileUrl (API shape)
+  protected readonly attachmentRows = signal<AttachmentRow[]>(DEFAULT_ATTACHMENT_ROWS);
 
   // Remuneration fields
   protected readonly basicSalary = signal('');
@@ -434,100 +409,59 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected updateAttachmentFileUrl(sectionIndex: number, rowIndex: number, value: string): void {
-    this.attachmentSections.update((sections) =>
-      sections.map((section, index) => {
-        if (index !== sectionIndex) {
-          return section;
-        }
-        return {
-          ...section,
-          rows: section.rows.map((row, i) =>
-            i === rowIndex ? { ...row, fileUrl: value } : row,
-          ),
-        };
-      }),
-    );
+  protected addAttachmentRow(): void {
+    this.attachmentRows.update((rows) => [...rows, this.createEmptyAttachmentRow()]);
   }
 
-  protected addAttachmentRow(sectionIndex: number): void {
-    this.attachmentSections.update((sections) =>
-      sections.map((section, index) =>
-        index === sectionIndex
-          ? { ...section, rows: [...section.rows, this.createEmptyAttachmentRow()] }
-          : section,
-      ),
-    );
+  protected removeAttachmentRow(rowIndex: number): void {
+    this.attachmentRows.update((rows) => {
+      if (rows.length <= 1) {
+        return rows;
+      }
+      return rows.filter((_, index) => index !== rowIndex);
+    });
   }
 
-  protected removeAttachmentRow(sectionIndex: number, rowIndex: number): void {
-    this.attachmentSections.update((sections) =>
-      sections.map((section, index) => {
-        if (index !== sectionIndex || section.rows.length <= 1) {
-          return section;
-        }
-        return {
-          ...section,
-          rows: section.rows.filter((_, i) => i !== rowIndex),
-        };
-      }),
-    );
+  protected updateAttachmentField(rowIndex: number, field: 'fileName' | 'fileUrl', value: string): void {
+    this.attachmentRows.update((rows) => {
+      const updated = [...rows];
+      updated[rowIndex] = { ...updated[rowIndex], [field]: value };
+      return updated;
+    });
   }
 
-  protected onAttachmentChange(sectionIndex: number, rowIndex: number, event: Event): void {
+  protected onAttachmentFileChange(rowIndex: number, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) {
-      this.attachmentSections.update((sections) =>
-        sections.map((section, index) => {
-          if (index !== sectionIndex) {
-            return section;
-          }
-          return {
-            ...section,
-            rows: section.rows.map((row, i) =>
-              i === rowIndex ? { ...row, file, fileName: file.name } : row,
-            ),
-          };
-        }),
-      );
+    if (!file) {
+      return;
     }
+    this.attachmentRows.update((rows) => {
+      const updated = [...rows];
+      updated[rowIndex] = { ...updated[rowIndex], file, fileName: file.name };
+      return updated;
+    });
   }
 
-  protected clearAttachmentFile(sectionIndex: number, rowIndex: number): void {
-    this.attachmentSections.update((sections) =>
-      sections.map((section, index) => {
-        if (index !== sectionIndex) {
-          return section;
-        }
-        return {
-          ...section,
-          rows: section.rows.map((row, i) =>
-            i === rowIndex ? { ...row, file: null, fileName: '', fileUrl: '' } : row,
-          ),
-        };
-      }),
-    );
+  protected clearAttachmentFile(rowIndex: number): void {
+    this.attachmentRows.update((rows) => {
+      const updated = [...rows];
+      updated[rowIndex] = { ...updated[rowIndex], file: null, fileName: '' };
+      return updated;
+    });
   }
 
   private createEmptyAttachmentRow(): AttachmentRow {
-    return { file: null, fileName: '', fileUrl: '' };
+    return { fileName: '', fileUrl: '', file: null };
   }
 
-  private flattenAttachments(): Array<{
-    type: AttachmentType;
-    file: File | null;
-    fileName: string;
-    fileUrl: string;
-  }> {
-    return this.attachmentSections().flatMap((section) =>
-      section.rows.map((row) => ({
-        type: section.type,
-        file: row.file,
-        fileName: row.fileName || (row.file ? row.file.name : ''),
-        fileUrl: row.fileUrl,
-      })),
-    );
+  private buildAttachmentsPayload(): Array<{ fileName: string; fileUrl: string }> {
+    return this.attachmentRows()
+      .map((row) => ({
+        fileName: row.fileName.trim() || (row.file ? row.file.name : ''),
+        fileUrl: row.fileUrl.trim(),
+      }))
+      .filter((row) => row.fileName || row.fileUrl);
   }
 
   private intersectionObserver: IntersectionObserver | null = null;
@@ -701,10 +635,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         userId: this.userId(),
         password: this.password()
       },
-      attachments: this.flattenAttachments().map((a) => ({
-        type: a.type,
-        fileName: a.fileName || (a.file ? a.file.name : ''),
-        fileUrl: a.fileUrl,
+      attachments: this.buildAttachmentsPayload().map((row) => ({
+        type: '',
+        fileName: row.fileName,
+        fileUrl: row.fileUrl,
       })),
       requisition: {
         copyExisting: this.copyExisting(),
@@ -778,12 +712,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         designation: row.designation || row.position,
         duration: row.duration,
       })),
-      attachments: this.flattenAttachments()
-        .filter((a) => a.fileName || a.fileUrl)
-        .map((a) => ({
-          fileName: a.fileName || (a.file ? a.file.name : ''),
-          fileUrl: a.fileUrl,
-        })),
+      attachments: this.buildAttachmentsPayload(),
       basicSalary: this.basicSalary(),
       paymentMode: this.paymentMode(),
       accountTitle: this.accountTitle(),
@@ -970,23 +899,15 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.loginEmployeeName.set(detail.loginDetails.employeeName);
     this.password.set(detail.loginDetails.password);
 
-    if (detail.attachments.length) {
-      this.attachmentSections.set(
-        ATTACHMENT_TYPES.map((type) => {
-          const rows = detail.attachments
-            .filter((attachment) => attachment.type === type)
-            .map((attachment) => ({
-              file: null,
-              fileName: attachment.fileName ?? '',
-              fileUrl: attachment.fileUrl ?? '',
-            }));
-          return {
-            type,
-            rows: rows.length ? rows : [this.createEmptyAttachmentRow()],
-          };
-        }),
-      );
-    }
+    this.attachmentRows.set(
+      detail.attachments.length
+        ? detail.attachments.map((attachment) => ({
+            file: null,
+            fileName: attachment.fileName ?? '',
+            fileUrl: attachment.fileUrl ?? '',
+          }))
+        : [this.createEmptyAttachmentRow()],
+    );
 
     const req = detail.requisition;
     this.copyExisting.set(req.copyExisting);
