@@ -27,8 +27,28 @@
         <li class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'login-detail-section'"
           (click)="scrollToSection('login-detail-section')">Login detail</li>
+        <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'assets-section'"
+          (click)="scrollToSection('assets-section')">Assets</li>
       </ul>
     </nav>
+
+    <div class="cjr-job-spec-picker">
+      <div class="cjr-row">
+        <label>Job specification:</label>
+        <div class="cjr-field">
+          <select [ngModel]="selectedJobSpecId()" (ngModelChange)="onJobSpecificationSelected($event)"
+            [disabled]="jobSpecificationsLoading()">
+            <option value="">No Selection</option>
+            @for (spec of jobSpecificationOptions(); track spec.Id) {
+            <option [value]="spec.Id">{{ spec.jobTitle }}</option>
+            }
+          </select>
+          @if (jobSpecificationsLoading()) {
+          <span class="cjr-job-spec-hint">Loading job specifications...</span>
+          }
+        </div>
+      </div>
+    </div>
 
     <div class="cjr-personal" id="personal-info-section">
       <div class="cjr-section-title">Personal Information</div>
@@ -557,8 +577,12 @@
 
           <div class="cjr-row">
             <label>Payment Mode:</label>
-            <input type="text" [ngModel]="paymentMode()" (ngModelChange)="paymentMode.set($event)"
-              (blur)="touch('paymentMode')" />
+            <select [ngModel]="paymentMode()" (ngModelChange)="paymentMode.set($event)" (blur)="touch('paymentMode')">
+              <option value="">No Selection</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
           </div>
 
           <div class="cjr-row">
@@ -741,6 +765,38 @@
             <label>Password:</label>
             <input type="password" [ngModel]="password()" (ngModelChange)="password.set($event)"
               (blur)="touch('password')" placeholder="Enter password..." />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cjr-personal cjr-assets" id="assets-section">
+      <div class="cjr-section-title">Assets</div>
+
+      <div class="cjr-personal-grid">
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Asset allocated:</label>
+            <input type="text" [ngModel]="assetAllocated()" (ngModelChange)="assetAllocated.set($event)"
+              (blur)="touch('assetAllocated')" placeholder="Enter allocated asset..." />
+          </div>
+
+          <div class="cjr-row">
+            <label>Allocation status:</label>
+            <select [ngModel]="allocationStatus()" (ngModelChange)="allocationStatus.set($event)"
+              (blur)="touch('allocationStatus')">
+              <option value="">No Selection</option>
+              <option value="Assigned">Assigned</option>
+              <option value="Recovered">Recovered</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Allocation date:</label>
+            <input type="date" [ngModel]="allocationDate()" (ngModelChange)="allocationDate.set($event)"
+              (blur)="touch('allocationDate')" />
           </div>
         </div>
       </div>

@@ -78,6 +78,22 @@
   flex-wrap: wrap;
 }
 
+.cjr-job-spec-picker {
+  padding: 16px 16px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.cjr-job-spec-picker .cjr-row {
+  max-width: 640px;
+}
+
+.cjr-job-spec-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
 .cjr-section-nav-item {
   font-size: 12px;
   font-weight: 600;
@@ -501,6 +517,11 @@
 }
 
 .cjr-login-detail {
+  border-top: 1px solid #eee;
+  margin-top: 4px;
+}
+
+.cjr-assets {
   border-top: 1px solid #eee;
   margin-top: 4px;
 }

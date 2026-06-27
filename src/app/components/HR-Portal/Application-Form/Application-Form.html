@@ -408,6 +408,18 @@
             </dl>
           </section>
 
+          <section class="application-detail-section" *ngIf="d.assets">
+            <h4 class="application-detail-section-title">Assets</h4>
+            <dl class="application-detail-dl">
+              <dt>Asset allocated</dt>
+              <dd>{{ displayDash(d.assets.assetAllocated) }}</dd>
+              <dt>Allocation status</dt>
+              <dd>{{ displayDash(d.assets.allocationStatus) }}</dd>
+              <dt>Allocation date</dt>
+              <dd>{{ displayDate(d.assets.allocationDate) }}</dd>
+            </dl>
+          </section>
+
           <section class="application-detail-section">
             <h4 class="application-detail-section-title">Attachments</h4>
             <div class="application-detail-table-wrap" *ngIf="d.attachments.length">

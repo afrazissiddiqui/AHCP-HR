@@ -129,6 +129,12 @@ export interface ApplicationFormRequisition {
   costCenter: string;
 }
 
+export interface ApplicationFormAssets {
+  assetAllocated: string;
+  allocationStatus: string;
+  allocationDate: string;
+}
+
 export interface ApplicationFormDetail {
   personalInfo: ApplicationFormPersonalInfo;
   education: ApplicationFormEducationRow[];
@@ -138,6 +144,7 @@ export interface ApplicationFormDetail {
   loginDetails: ApplicationFormLoginDetails;
   attachments: ApplicationFormAttachmentMeta[];
   requisition: ApplicationFormRequisition;
+  assets?: ApplicationFormAssets;
 }
 
 export interface ApplicationFormRecord {
@@ -246,6 +253,9 @@ export interface EmployeeProfileAddPayload {
   userId: number | string;
   loginEmployeeName: string;
   password: string;
+  assetAllocated: string;
+  allocationStatus: string;
+  allocationDate: string;
 }
 
 @Injectable({
@@ -586,6 +596,7 @@ export class ApplicationFormService {
         location: '',
         costCenter: summary.EmploymentCategory !== '—' ? summary.EmploymentCategory : '',
       },
+      assets: this.mapApiAssets(item),
     };
 
     return {
@@ -662,6 +673,22 @@ export class ApplicationFormService {
       EmploymentStatus: record.status,
       selected: record.selected ?? false
     }));
+  }
+
+  private mapApiAssets(item: Record<string, unknown>): ApplicationFormAssets {
+    const nested = item['assets'] ?? item['Assets'];
+    const source =
+      nested && typeof nested === 'object' && !Array.isArray(nested)
+        ? (nested as Record<string, unknown>)
+        : item;
+
+    const pickAsset = (camel: string, snake: string): string => pickFrom(source, camel, snake);
+
+    return {
+      assetAllocated: pickAsset('assetAllocated', 'asset_allocated'),
+      allocationStatus: pickAsset('allocationStatus', 'allocation_status'),
+      allocationDate: formatDateForInput(pickAsset('allocationDate', 'allocation_date')),
+    };
   }
 }
 

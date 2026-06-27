@@ -16,6 +16,10 @@ import {
   formatDateOfBirthToApi,
   formatDateToApiIso,
 } from '../../../../utils/date-format.util';
+import {
+  JobSpecificationRecord,
+  JobSpecificationService,
+} from '../../../../services/job-specification.service';
 
 interface AttachmentRow {
   fileName: string;
@@ -58,6 +62,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   );
   protected readonly copyExisting = signal(true);
   protected readonly activeSection = signal('personal-info-section');
+  protected readonly selectedJobSpecId = signal('');
+  protected readonly jobSpecificationOptions = signal<JobSpecificationRecord[]>([]);
+  protected readonly jobSpecificationsLoading = signal(false);
   // Personal Information (OHEM mappings where applicable)
   protected readonly personName = signal(''); // free text
   protected readonly firstName = signal(''); // OHEM.firstName
@@ -147,7 +154,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   // Remuneration fields
   protected readonly basicSalary = signal('');
-  protected readonly paymentMode = signal('');
+  protected readonly paymentMode = signal<'Cash' | 'Bank' | 'Hybrid' | ''>('');
   protected readonly accountTitle = signal('');
   protected readonly bankName = signal('');
   protected readonly branchName = signal('');
@@ -184,6 +191,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly loginEmployeeName = signal(''); // Employee name
   protected readonly userId = signal(''); // User ID
   protected readonly password = signal(''); // Password
+
+  // Assets fields
+  protected readonly assetAllocated = signal('');
+  protected readonly allocationStatus = signal<'Assigned' | 'Recovered' | ''>('');
+  protected readonly allocationDate = signal('');
 
   // Create Job Requisition fields
   protected readonly reqId = signal('');
@@ -472,6 +484,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     'attachments-section',
     'remunation-section',
     'login-detail-section',
+    'assets-section',
   ];
 
   protected scrollToSection(sectionId: string): void {
@@ -517,6 +530,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupIntersectionObserver();
+    this.loadJobSpecificationOptions();
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       return;
@@ -549,8 +563,129 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly viewportScroller: ViewportScroller,
     private readonly applicationFormService: ApplicationFormService,
+    private readonly jobSpecificationService: JobSpecificationService,
     private readonly alertService: AlertService,
   ) { }
+
+  protected onJobSpecificationSelected(value: string): void {
+    this.selectedJobSpecId.set(value);
+    if (!value) {
+      return;
+    }
+
+    const id = Number.parseInt(value, 10);
+    const record = this.jobSpecificationOptions().find((item) => item.Id === id);
+    if (record) {
+      this.populateFromJobSpecification(record);
+    }
+  }
+
+  private loadJobSpecificationOptions(): void {
+    this.jobSpecificationsLoading.set(true);
+    this.jobSpecificationService.fetchJobSpecificationsByStatus(2).subscribe({
+      next: (records) => {
+        this.jobSpecificationOptions.set(records);
+        this.jobSpecificationsLoading.set(false);
+      },
+      error: (error: unknown) => {
+        this.jobSpecificationsLoading.set(false);
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load job specifications.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+  }
+
+  private cleanJobSpecValue(value: string): string {
+    return value === '—' ? '' : value.trim();
+  }
+
+  private mapEmploymentTypeToStatus(employmentType: string): string {
+    switch (employmentType) {
+      case 'Permanent':
+        return 'Permenant';
+      case 'Temporary':
+        return 'Contractual';
+      default:
+        return employmentType;
+    }
+  }
+
+  private populateFromJobSpecification(record: JobSpecificationRecord): void {
+    const jobTitle = this.cleanJobSpecValue(record.jobTitle);
+    const department = this.cleanJobSpecValue(record.department);
+    const jobDescription = this.cleanJobSpecValue(record.jobDescription);
+    const keyResponsibilities = this.cleanJobSpecValue(record.keyResponsibilities);
+    const experienceRequirement = this.cleanJobSpecValue(record.experienceRequirement);
+    const employmentCategory = this.cleanJobSpecValue(record.employmentCategory);
+    const employmentNature = this.cleanJobSpecValue(record.employmentNature);
+    const employmentType = this.cleanJobSpecValue(record.employmentType);
+    const gradeWorkLevel = this.cleanJobSpecValue(record.gradeWorkLevel);
+    const packagePerks = this.cleanJobSpecValue(record.packagePerks);
+
+    this.designation.set(jobTitle);
+    this.internalJobTitle.set(jobTitle);
+    this.departmentInAhcp.set(department);
+    this.employmentCategory.set(employmentCategory);
+    this.employmentNature.set(employmentNature);
+
+    const mappedStatus = this.mapEmploymentTypeToStatus(employmentType);
+    if (mappedStatus) {
+      this.employmentStatus.set(mappedStatus);
+    }
+    if (employmentType) {
+      this.division.set(employmentType);
+    }
+
+    const descriptionParts = [
+      jobDescription,
+      keyResponsibilities ? `Key Responsibilities:\n${keyResponsibilities}` : '',
+      experienceRequirement ? `Experience Requirement: ${experienceRequirement}` : '',
+    ].filter(Boolean);
+    this.jobDescription.set(descriptionParts.join('\n\n'));
+
+    if (gradeWorkLevel) {
+      this.roleSalary.set(gradeWorkLevel);
+      this.salaryStructure.set(gradeWorkLevel);
+    }
+
+    if (record.basicSalary) {
+      this.basicSalary.set(String(record.basicSalary));
+    }
+    if (record.medicalAllowance) {
+      this.medicalAllowances.set(String(record.medicalAllowance));
+    }
+    if (record.fuelAllowance) {
+      this.fuelAllowances.set(String(record.fuelAllowance));
+    }
+    if (packagePerks) {
+      this.otherAllowances.set(packagePerks);
+    }
+
+    const qualifications = record.qualifications.filter(Boolean);
+    if (qualifications.length) {
+      this.educationSections.set(
+        qualifications.map((qualification) => ({
+          institute: '',
+          institution: '',
+          qualification,
+          passingYear: '',
+          fromDate: '',
+          toDate: '',
+          subject: '',
+          awardedQualification: '',
+          marksGrades: '',
+          notes: '',
+        })),
+      );
+    }
+
+    if (department && department !== 'No Selection') {
+      this.department.set(department);
+    }
+  }
 
   protected back(): void {
     void this.router.navigateByUrl('/recruitment');
@@ -655,7 +790,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         division: this.division(),
         location: this.location(),
         costCenter: this.costCenter()
-      }
+      },
+      assets: {
+        assetAllocated: this.assetAllocated(),
+        allocationStatus: this.allocationStatus(),
+        allocationDate: this.allocationDate(),
+      },
     };
 
     const record: ApplicationFormRecord = {
@@ -740,6 +880,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       userId: this.parseNumericField(this.userId()) || this.userId(),
       loginEmployeeName: this.loginEmployeeName(),
       password: this.password(),
+      assetAllocated: this.assetAllocated(),
+      allocationStatus: this.allocationStatus(),
+      allocationDate: formatDateToApiIso(this.allocationDate()),
     };
 
     const editId = this.editingApiId();
@@ -860,7 +1003,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     const remuneration = detail.remuneration;
     this.basicSalary.set(remuneration.basicSalary ?? '');
-    this.paymentMode.set(remuneration.paymentMode ?? '');
+    this.paymentMode.set((remuneration.paymentMode as 'Cash' | 'Bank' | 'Hybrid' | '') ?? '');
     this.accountTitle.set(remuneration.accountTitle ?? '');
     this.bankName.set(remuneration.bankName ?? '');
     this.branchName.set(remuneration.branchName ?? '');
@@ -898,6 +1041,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.userId.set(detail.loginDetails.userId);
     this.loginEmployeeName.set(detail.loginDetails.employeeName);
     this.password.set(detail.loginDetails.password);
+
+    const assets = detail.assets;
+    if (assets) {
+      this.assetAllocated.set(assets.assetAllocated ?? '');
+      this.allocationStatus.set((assets.allocationStatus as 'Assigned' | 'Recovered' | '') ?? '');
+      this.allocationDate.set(assets.allocationDate ?? '');
+    }
 
     this.attachmentRows.set(
       detail.attachments.length

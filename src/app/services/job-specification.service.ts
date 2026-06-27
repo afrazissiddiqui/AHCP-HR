@@ -56,9 +56,18 @@ export class JobSpecificationService {
   readonly jobSpecs = this.jobSpecsList.asReadonly();
 
   fetchPostedJobSpecifications(): Observable<JobSpecificationRecord[]> {
-    return this.http.get<unknown>(JOB_SPECIFICATION_LIST_URL).pipe(
+    return this.fetchJobSpecificationsByStatus();
+  }
+
+  fetchJobSpecificationsByStatus(status?: number): Observable<JobSpecificationRecord[]> {
+    const params = status !== undefined ? { status: String(status) } : undefined;
+    return this.http.get<unknown>(JOB_SPECIFICATION_LIST_URL, { params }).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
-      tap((records) => this.jobSpecsList.set(records)),
+      tap((records) => {
+        if (status === undefined) {
+          this.jobSpecsList.set(records);
+        }
+      }),
     );
   }
 
