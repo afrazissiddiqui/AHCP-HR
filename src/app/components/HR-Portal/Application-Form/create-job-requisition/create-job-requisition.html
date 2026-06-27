@@ -159,21 +159,21 @@
           </div>
 
           <div class="cjr-row">
-            <label>Street:</label>
+            <label>Home Address:</label>
             <input type="text" [ngModel]="street()" (ngModelChange)="street.set($event)" (blur)="touch('street')" />
           </div>
 
           <div class="cjr-row">
-            <label>Street No:</label>
+            <label>Communication Address:</label>
             <input type="text" [ngModel]="streetNo()" (ngModelChange)="streetNo.set($event)"
               (blur)="touch('streetNo')" />
           </div>
 
-          <div class="cjr-row">
+          <!-- <div class="cjr-row">
             <label>Building / Floor / Room:</label>
             <input type="text" [ngModel]="buildingFloorRoom()" (ngModelChange)="buildingFloorRoom.set($event)"
               (blur)="touch('buildingFloorRoom')" />
-          </div>
+          </div> -->
 
           <div class="cjr-row">
             <label>City:</label>
@@ -246,9 +246,14 @@
             </div>
 
             <div class="cjr-row">
-              <label>Department in AHCP:</label>
-              <input type="text" [ngModel]="departmentInAhcp()" (ngModelChange)="departmentInAhcp.set($event)"
-                (blur)="touch('departmentInAhcp')" placeholder="e.g. Information Technology" />
+              <label>Department:</label>
+              <select [ngModel]="departmentInAhcp()" (ngModelChange)="departmentInAhcp.set($event)"
+                (blur)="touch('departmentInAhcp')">
+                <option value="">No Selection</option>
+                @for (dept of departmentOptions; track dept) {
+                <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
             </div>
           </div>
 

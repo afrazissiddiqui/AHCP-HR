@@ -48,6 +48,23 @@ const DEFAULT_ATTACHMENT_SECTIONS: AttachmentSection[] = ATTACHMENT_TYPES.map((t
   rows: [{ file: null, fileName: '' }],
 }));
 
+const DEPARTMENT_OPTIONS = [
+  'Production Department',
+  'Plant Maintenance Department',
+  'Electrical Department',
+  'Quality Control Department',
+  'Logistics Department',
+  'Procurement Department',
+  'Admin Department',
+  'Accounts & Finance Department',
+  'Internal Audit Department',
+  'Human Resource (HR) Department',
+  'Sales & Marketing Department',
+  'IT Department',
+  'BOD Department',
+  'Common Department',
+] as const;
+
 @Component({
   selector: 'app-create-job-requisition',
   standalone: true,
@@ -91,6 +108,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly employmentCategory = signal('');
   protected readonly employmentStatus = signal('');
   protected readonly departmentInAhcp = signal('');
+  protected readonly departmentOptions = DEPARTMENT_OPTIONS;
   protected readonly designation = signal('');
   protected readonly jobDescription = signal('');
   protected readonly roleAndSalary = signal('');
