@@ -56,7 +56,7 @@ export class JobSpecificationService {
   readonly jobSpecs = this.jobSpecsList.asReadonly();
 
   fetchPostedJobSpecifications(): Observable<JobSpecificationRecord[]> {
-    return this.fetchJobSpecificationsByStatus(2);
+    return this.fetchJobSpecificationsByStatus();
   }
 
   fetchJobSpecificationsByStatus(status?: number): Observable<JobSpecificationRecord[]> {
