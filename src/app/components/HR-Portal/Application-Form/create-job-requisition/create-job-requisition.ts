@@ -62,6 +62,12 @@ const WORK_GRADE_LEVEL_OPTIONS = [
   'WL 1B–1C',
 ] as const;
 
+const BRANCH_NAME_OPTIONS = [
+  'AHCP_Peshawar',
+  'AHCP_HO',
+  'AHCP_Faisalabad',
+] as const;
+
 @Component({
   selector: 'app-create-job-requisition',
   standalone: true,
@@ -177,7 +183,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly paymentMode = signal<'Cash' | 'Bank' | 'Hybrid' | ''>('');
   protected readonly accountTitle = signal('');
   protected readonly bankName = signal('');
-  protected readonly branchName = signal('');
+  protected readonly branchName = signal<(typeof BRANCH_NAME_OPTIONS)[number] | ''>('');
+  protected readonly branchNameOptions = BRANCH_NAME_OPTIONS;
   protected readonly accountNo = signal('');
   protected readonly accountType = signal('');
   protected readonly effectiveDate = signal('');

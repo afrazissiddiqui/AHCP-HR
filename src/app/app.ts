@@ -268,7 +268,9 @@ export class App {
       routeKey === 'employee-action' ||
       routeKey.startsWith('employee-action/') ||
       routeKey === 'payroll-master' ||
-      routeKey.startsWith('payroll-master/')
+      routeKey.startsWith('payroll-master/') ||
+      routeKey === 'termination' ||
+      routeKey.startsWith('termination/')
     );
   }
 

@@ -625,8 +625,12 @@
 
           <div class="cjr-row">
             <label>Branch Name:</label>
-            <input type="text" [ngModel]="branchName()" (ngModelChange)="branchName.set($event)"
-              (blur)="touch('branchName')" />
+            <select [ngModel]="branchName()" (ngModelChange)="branchName.set($event)" (blur)="touch('branchName')">
+              <option value="">No Selection</option>
+              @for (branch of branchNameOptions; track branch) {
+              <option [value]="branch">{{ branch }}</option>
+              }
+            </select>
           </div>
 
           <div class="cjr-row">

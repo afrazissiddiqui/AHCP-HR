@@ -36,6 +36,7 @@ interface TrainingEmployeeOption {
   gradeWorkLevel: string;
   employmentCategory: string;
   dateOfJoining: string;
+  basicSalary: string;
 }
 
 @Component({
@@ -57,13 +58,13 @@ export class AddTrainingDevelopmentComponent implements OnInit {
 
   protected readonly trainingCategoryOptions = [
     'Technical',
-    'Behavioral',
-    'Compliance',
-    'Leadership',
+    'Non-Technical',
+    'Other Training',
   ] as const;
 
   protected readonly trainingTypeOptions = ['Internal', 'External'] as const;
-  protected readonly trainingStageOptions = ['Beginner', 'Intermediate', 'Advanced'] as const;
+  protected readonly trainingStageOptions = ['Internship', 'Training', 'On-Job Training'] as const;
+  protected readonly evaluationCycleNumberOptions = ['1', '2', '3', '4'] as const;
   protected readonly overallScoreOptions = ['A', 'B', 'C', 'D', 'E'] as const;
   protected readonly performanceEligibilityOptions = ['Eligible', 'Not Eligible'] as const;
 
@@ -420,18 +421,8 @@ export class AddTrainingDevelopmentComponent implements OnInit {
 
     return {
       code: this.resolveEmployeeCode(record),
-      name: mapped.name,
       apiId: record.apiId,
-      department: mapped.department,
-      location: mapped.location,
-      designation: mapped.designation,
-      jobTitle: mapped.jobTitle,
-      reportingManager: mapped.reportingManager,
-      employeeNature: mapped.employeeNature,
-      employeeType: mapped.employeeType,
-      gradeWorkLevel: mapped.gradeWorkLevel,
-      employmentCategory: mapped.employmentCategory,
-      dateOfJoining: mapped.dateOfJoining,
+      ...mapped,
     };
   }
 
@@ -442,33 +433,47 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
     const personal = record.detail?.personalInfo;
     const requisition = record.detail?.requisition;
+    const remuneration = record.detail?.remuneration;
     const designation =
       emptyIfDash(personal?.designation ?? '') ||
       emptyIfDash(record.Designation) ||
       emptyIfDash(requisition?.internalJobTitle ?? '');
+    const jobTitle =
+      emptyIfDash(requisition?.internalJobTitle ?? '') ||
+      emptyIfDash(personal?.designation ?? '') ||
+      emptyIfDash(record.Designation);
 
     return {
-      name: emptyIfDash(record.EmployeeName),
+      name: emptyIfDash(record.EmployeeName) || emptyIfDash(personal?.personName ?? ''),
       department:
         emptyIfDash(personal?.departmentInAhcp ?? '') ||
         emptyIfDash(record.Department),
       location:
+        emptyIfDash(personal?.branchLocation ?? '') ||
         emptyIfDash(requisition?.location ?? '') ||
         emptyIfDash(personal?.city ?? ''),
       designation,
-      jobTitle: designation,
+      jobTitle,
       reportingManager:
+        emptyIfDash(personal?.reportingManager ?? '') ||
         emptyIfDash(record.ReportingManager) ||
         emptyIfDash(requisition?.hiringManager ?? ''),
       employeeNature:
         emptyIfDash(personal?.employmentNature ?? '') ||
         emptyIfDash(record.EmployeeNature),
-      employeeType: emptyIfDash(record.EmploymentType),
-      gradeWorkLevel: emptyIfDash(requisition?.costCenter ?? ''),
+      employeeType:
+        emptyIfDash(requisition?.division ?? '') ||
+        emptyIfDash(record.EmploymentType),
+      gradeWorkLevel:
+        emptyIfDash(personal?.workGradeLevel ?? '') ||
+        emptyIfDash(requisition?.costCenter ?? ''),
       employmentCategory:
         emptyIfDash(personal?.employmentCategory ?? '') ||
         emptyIfDash(record.EmploymentCategory),
-      dateOfJoining: '',
+      dateOfJoining: emptyIfDash(remuneration?.dateOfJoining ?? ''),
+      basicSalary:
+        emptyIfDash(remuneration?.basicSalary ?? '') ||
+        emptyIfDash(personal?.roleSalary ?? ''),
     };
   }
 
@@ -485,22 +490,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   }
 
   private populateFromApplicationRecord(record: ApplicationFormRecord): void {
-    const mapped = this.mapApplicationRecordToEmployeeFields(record);
-
-    this.employeeCode.set(this.resolveEmployeeCode(record));
-    this.employeeName.set(mapped.name);
-    this.department.set(mapped.department);
-    this.location.set(mapped.location);
-    this.designation.set(mapped.designation);
-    this.jobTitle.set(mapped.jobTitle);
-    this.reportingManager.set(mapped.reportingManager);
-    this.employeeNature.set(mapped.employeeNature);
-    this.employeeType.set(mapped.employeeType);
-    this.gradeWorkLevel.set(mapped.gradeWorkLevel);
-    this.employmentCategory.set(mapped.employmentCategory);
-    if (mapped.dateOfJoining) {
-      this.dateOfJoining.set(mapped.dateOfJoining);
-    }
+    this.applyEmployeeFields(this.mapApplicationRecordToEmployeeFields(record), this.resolveEmployeeCode(record));
   }
 
   private resolveEmployeeCode(record: ApplicationFormRecord): string {
@@ -535,20 +525,26 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   }
 
   private populateFromEmployeeOption(employee: TrainingEmployeeOption): void {
-    this.employeeCode.set(employee.code);
-    this.employeeName.set(employee.name);
-    this.department.set(employee.department);
-    this.location.set(employee.location);
-    this.designation.set(employee.designation);
-    this.jobTitle.set(employee.jobTitle);
-    this.reportingManager.set(employee.reportingManager);
-    this.employeeNature.set(employee.employeeNature);
-    this.employeeType.set(employee.employeeType);
-    this.gradeWorkLevel.set(employee.gradeWorkLevel);
-    this.employmentCategory.set(employee.employmentCategory);
-    if (employee.dateOfJoining) {
-      this.dateOfJoining.set(employee.dateOfJoining);
-    }
+    this.applyEmployeeFields(employee, employee.code);
+  }
+
+  private applyEmployeeFields(
+    fields: Omit<TrainingEmployeeOption, 'code' | 'apiId'>,
+    employeeCode: string,
+  ): void {
+    this.employeeCode.set(employeeCode);
+    this.employeeName.set(fields.name);
+    this.department.set(fields.department);
+    this.location.set(fields.location);
+    this.designation.set(fields.designation);
+    this.jobTitle.set(fields.jobTitle);
+    this.reportingManager.set(fields.reportingManager);
+    this.employeeNature.set(fields.employeeNature);
+    this.employeeType.set(fields.employeeType);
+    this.gradeWorkLevel.set(fields.gradeWorkLevel);
+    this.employmentCategory.set(fields.employmentCategory);
+    this.dateOfJoining.set(fields.dateOfJoining);
+    this.currentSalary.set(fields.basicSalary);
   }
 
   private populateFromRecord(record: TrainingDevelopmentRecord): void {

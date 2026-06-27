@@ -234,7 +234,12 @@
           <div class="cjs-col">
             <div class="cjs-row">
               <label>Evaluation Cycle Number:</label>
-              <input type="text" [ngModel]="evaluationCycleNumber()" (ngModelChange)="evaluationCycleNumber.set($event)" placeholder="e.g. Cycle-1" />
+              <select [ngModel]="evaluationCycleNumber()" (ngModelChange)="evaluationCycleNumber.set($event)">
+                <option value="">Select cycle</option>
+                @for (cycle of evaluationCycleNumberOptions; track cycle) {
+                  <option [value]="cycle">{{ cycle }}</option>
+                }
+              </select>
             </div>
             <div class="cjs-row">
               <label>Evaluation Date:</label>
