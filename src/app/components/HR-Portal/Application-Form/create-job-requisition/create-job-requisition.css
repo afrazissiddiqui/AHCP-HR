@@ -84,7 +84,45 @@
 }
 
 .cjr-job-spec-picker .cjr-row {
-  max-width: 640px;
+  max-width: 100%;
+  grid-template-columns: 170px auto;
+  align-items: start;
+}
+
+.cjr-job-spec-picker .cjr-field {
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.cjr-job-spec-select-wrap {
+  display: inline-grid;
+  max-width: 100%;
+  vertical-align: top;
+}
+
+.cjr-job-spec-select-wrap > .cjr-job-spec-select,
+.cjr-job-spec-select-wrap > .cjr-job-spec-select-measure {
+  grid-area: 1 / 1;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 4px 28px 4px 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.cjr-job-spec-select-measure {
+  visibility: hidden;
+  min-height: 28px;
+  border: 1px solid transparent;
+  pointer-events: none;
+}
+
+.cjr-job-spec-picker .cjr-job-spec-select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 28px;
 }
 
 .cjr-job-spec-hint {

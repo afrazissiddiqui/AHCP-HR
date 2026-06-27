@@ -36,13 +36,16 @@
       <div class="cjr-row">
         <label>Job Description:</label>
         <div class="cjr-field">
-          <select [ngModel]="selectedJobSpecId()" (ngModelChange)="onJobSpecificationSelected($event)"
-            [disabled]="jobSpecificationsLoading()">
-            <option value="">No Selection</option>
-            @for (spec of jobSpecificationOptions(); track spec.Id) {
-            <option [value]="spec.Id">{{ jobSpecOptionLabel(spec) }}</option>
-            }
-          </select>
+          <div class="cjr-job-spec-select-wrap">
+            <select class="cjr-job-spec-select" [ngModel]="selectedJobSpecId()"
+              (ngModelChange)="onJobSpecificationSelected($event)" [disabled]="jobSpecificationsLoading()">
+              <option value="">No Selection</option>
+              @for (spec of jobSpecificationOptions(); track spec.Id) {
+              <option [value]="spec.Id">{{ jobSpecOptionLabel(spec) }}</option>
+              }
+            </select>
+            <span class="cjr-job-spec-select-measure" aria-hidden="true">{{ selectedJobSpecLabel() }}</span>
+          </div>
           @if (jobSpecificationsLoading()) {
           <span class="cjr-job-spec-hint">Loading job descriptions...</span>
           }
@@ -110,8 +113,8 @@
 
           <div class="cjr-row">
             <label>Date of Birth:</label>
-            <input type="text" inputmode="numeric" maxlength="10" placeholder="DD-MM-YYYY"
-              [ngModel]="dateOfBirth()" (ngModelChange)="onDateOfBirthChange($event)" (blur)="touch('dateOfBirth')" />
+            <input type="date" [ngModel]="dateOfBirthInputValue()" (ngModelChange)="onDateOfBirthChange($event)"
+              (blur)="touch('dateOfBirth')" />
           </div>
 
           <div class="cjr-row">
@@ -139,7 +142,7 @@
             <div class="cjr-field">
               <input type="text" placeholder="12345-1234567-1" inputmode="numeric" maxlength="15" minlength="15"
                 [ngModel]="nationalIdCardNo()" (ngModelChange)="onNationalIdCardNoChange($event)"
-                (blur)="touch('nationalIdCardNo')" />
+                (keydown)="onIntegerKeyDown($event)" (blur)="touch('nationalIdCardNo')" />
               @if (touched()['nationalIdCardNo'] && nationalIdCardNoInvalid()) {
               <div class="cjr-error">Format must be XXXXX-XXXXXXX-X</div>
               }
@@ -150,7 +153,8 @@
             <label>Income Tax No:</label>
             <div class="cjr-field">
               <input type="text" placeholder="12345-1234567-1" inputmode="numeric" maxlength="15" minlength="15"
-                [ngModel]="incomeTaxNo()" (ngModelChange)="onIncomeTaxNoChange($event)" (blur)="touch('incomeTaxNo')" />
+                [ngModel]="incomeTaxNo()" (ngModelChange)="onIncomeTaxNoChange($event)"
+                (keydown)="onIntegerKeyDown($event)" (blur)="touch('incomeTaxNo')" />
               @if (touched()['incomeTaxNo'] && incomeTaxNoInvalid()) {
               <div class="cjr-error">Format must be XXXXX-XXXXXXX-X</div>
               }
@@ -162,7 +166,7 @@
             <div class="cjr-field">
               <input type="text" placeholder="0300-1234567" inputmode="numeric" maxlength="12" minlength="12"
                 [ngModel]="contactNumber()" (ngModelChange)="onContactNumberChange($event)"
-                (blur)="touch('contactNumber')" />
+                (keydown)="onIntegerKeyDown($event)" (blur)="touch('contactNumber')" />
               @if (touched()['contactNumber'] && contactNumberInvalid()) {
               <div class="cjr-error">Format must be XXXX-XXXXXXX</div>
               }
@@ -174,7 +178,7 @@
             <div class="cjr-field">
               <input type="text" placeholder="0300-1234567" inputmode="numeric" maxlength="12" minlength="12"
                 [ngModel]="emergencyContactNumber()" (ngModelChange)="onEmergencyContactNumberChange($event)"
-                (blur)="touch('emergencyContactNumber')" />
+                (keydown)="onIntegerKeyDown($event)" (blur)="touch('emergencyContactNumber')" />
               @if (touched()['emergencyContactNumber'] && emergencyContactNumberInvalid()) {
               <div class="cjr-error">Format must be XXXX-XXXXXXX</div>
               }
@@ -225,7 +229,8 @@
             <label>Zip Code:</label>
             <div class="cjr-field">
               <input type="text" placeholder="54000" inputmode="numeric" maxlength="5" minlength="5"
-                [ngModel]="zipCode()" (ngModelChange)="onZipCodeChange($event)" (blur)="touch('zipCode')" />
+                [ngModel]="zipCode()" (ngModelChange)="onZipCodeChange($event)" (keydown)="onIntegerKeyDown($event)"
+                (blur)="touch('zipCode')" />
               @if (touched()['zipCode'] && zipCodeInvalid()) {
               <div class="cjr-error">Format must be XXXXX</div>
               }
@@ -293,7 +298,7 @@
             <div class="cjr-row">
               <label>Proposed Designation:</label>
               <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)"
-                (blur)="touch('designation')" placeholder="Linked to OHEM.jobTitle" />
+                (blur)="touch('designation')" placeholder="" />
             </div>
 
             <div class="cjr-row">
@@ -333,8 +338,9 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Employee Master:</label>
-              <input type="number" min="0" step="1" [ngModel]="employeeMaster()"
-                (ngModelChange)="onIntegerOnlyChange($event, employeeMaster)" (blur)="touch('employeeMaster')" />
+              <input type="text" inputmode="numeric" [ngModel]="employeeMaster()"
+                (ngModelChange)="onIntegerOnlyChange($event, employeeMaster)" (keydown)="onIntegerKeyDown($event)"
+                (blur)="touch('employeeMaster')" />
             </div>
 
             <div class="cjr-row">
@@ -394,8 +400,8 @@
 
             <div class="cjr-row">
               <label>Passing Year:</label>
-              <input type="text" [ngModel]="edu.passingYear"
-                (ngModelChange)="updateEducationField(i, 'passingYear', $event)"
+              <input type="text" inputmode="numeric" maxlength="4" [ngModel]="edu.passingYear"
+                (ngModelChange)="updateEducationField(i, 'passingYear', $event)" (keydown)="onIntegerKeyDown($event)"
                 (blur)="touch('educationPassingYear')" />
             </div>
 
@@ -521,9 +527,9 @@
 
             <div class="cjr-row">
               <label>Last Salary:</label>
-              <input type="number" [ngModel]="exp.lastSalary"
+              <input type="text" inputmode="decimal" [ngModel]="exp.lastSalary"
                 (ngModelChange)="updatePastExperienceField(i, 'lastSalary', $event)"
-                (blur)="touch('experienceLastSalary')" />
+                (keydown)="onDecimalKeyDown($event)" (blur)="touch('experienceLastSalary')" />
             </div>
           </div>
         </div>
@@ -597,8 +603,9 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Salary Offer:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="basicSalary()"
-              (ngModelChange)="basicSalary.set($event)" (blur)="touch('basicSalary')" />
+            <input type="text" inputmode="decimal" [ngModel]="basicSalary()"
+              (ngModelChange)="onNumericOnlyChange($event, basicSalary)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('basicSalary')" />
           </div>
 
           <div class="cjr-row">
@@ -635,8 +642,8 @@
 
           <div class="cjr-row">
             <label>Bank Account Number:</label>
-            <input type="text" [ngModel]="accountNo()" (ngModelChange)="accountNo.set($event)"
-              (blur)="touch('accountNo')" />
+            <input type="text" inputmode="numeric" [ngModel]="accountNo()" (ngModelChange)="onAccountNoChange($event)"
+              (keydown)="onIntegerKeyDown($event)" (blur)="touch('accountNo')" />
           </div>
 
           <div class="cjr-row">
@@ -653,8 +660,8 @@
 
           <div class="cjr-row">
             <label>Percentage (For tax arrangement):</label>
-            <input type="number" min="0" step="0.01" [ngModel]="taxPercentage()"
-              (ngModelChange)="onNumericOnlyChange($event, taxPercentage)"
+            <input type="text" inputmode="decimal" [ngModel]="taxPercentage()"
+              (ngModelChange)="onNumericOnlyChange($event, taxPercentage)" (keydown)="onDecimalKeyDown($event)"
               (blur)="touch('taxPercentage')" />
           </div>
 
@@ -666,8 +673,8 @@
 
           <div class="cjr-row">
             <label>Percentage of Salary in Cash:</label>
-            <input type="number" min="0" max="100" step="0.01" [ngModel]="cashSalaryPercentage()"
-              (ngModelChange)="onNumericOnlyChange($event, cashSalaryPercentage)"
+            <input type="text" inputmode="decimal" [ngModel]="cashSalaryPercentage()"
+              (ngModelChange)="onNumericOnlyChange($event, cashSalaryPercentage)" (keydown)="onDecimalKeyDown($event)"
               (blur)="touch('cashSalaryPercentage')" placeholder="0.00%" />
           </div>
         </div>
@@ -675,15 +682,15 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Advance % Allowed:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="advancePercentAllowed()"
-              (ngModelChange)="onNumericOnlyChange($event, advancePercentAllowed)"
+            <input type="text" inputmode="decimal" [ngModel]="advancePercentAllowed()"
+              (ngModelChange)="onNumericOnlyChange($event, advancePercentAllowed)" (keydown)="onDecimalKeyDown($event)"
               (blur)="touch('advancePercentAllowed')" />
           </div>
 
           <div class="cjr-row">
             <label>Loan Amount Allowed:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="loanAmountAllowed()"
-              (ngModelChange)="onNumericOnlyChange($event, loanAmountAllowed)"
+            <input type="text" inputmode="decimal" [ngModel]="loanAmountAllowed()"
+              (ngModelChange)="onNumericOnlyChange($event, loanAmountAllowed)" (keydown)="onDecimalKeyDown($event)"
               (blur)="touch('loanAmountAllowed')" />
           </div>
 
@@ -729,8 +736,9 @@
 
           <div class="cjr-row">
             <label>Fuel Limit:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="fuelLimit()"
-              (ngModelChange)="onNumericOnlyChange($event, fuelLimit)" (blur)="touch('fuelLimit')" />
+            <input type="text" inputmode="decimal" [ngModel]="fuelLimit()"
+              (ngModelChange)="onNumericOnlyChange($event, fuelLimit)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('fuelLimit')" />
           </div>
 
           <div class="cjr-row">
@@ -747,69 +755,79 @@
 
           <div class="cjr-row">
             <label>Leave Days:</label>
-            <input type="number" min="0" step="1" [ngModel]="leaveDays()"
-              (ngModelChange)="onIntegerOnlyChange($event, leaveDays)" (blur)="touch('leaveDays')" />
+            <input type="text" inputmode="numeric" [ngModel]="leaveDays()"
+              (ngModelChange)="onIntegerOnlyChange($event, leaveDays)" (keydown)="onIntegerKeyDown($event)"
+              (blur)="touch('leaveDays')" />
           </div>
 
           <div class="cjr-row">
             <label>Leaves Availed:</label>
-            <input type="number" min="0" step="1" [ngModel]="leavesAvailed()"
-              (ngModelChange)="onIntegerOnlyChange($event, leavesAvailed)" (blur)="touch('leavesAvailed')" />
+            <input type="text" inputmode="numeric" [ngModel]="leavesAvailed()"
+              (ngModelChange)="onIntegerOnlyChange($event, leavesAvailed)" (keydown)="onIntegerKeyDown($event)"
+              (blur)="touch('leavesAvailed')" />
           </div>
 
           <div class="cjr-row">
             <label>Remaining Leaves:</label>
-            <input type="number" min="0" step="1" [ngModel]="remainingLeaves()"
-              (ngModelChange)="onIntegerOnlyChange($event, remainingLeaves)" (blur)="touch('remainingLeaves')" />
+            <input type="text" inputmode="numeric" [ngModel]="remainingLeaves()"
+              (ngModelChange)="onIntegerOnlyChange($event, remainingLeaves)" (keydown)="onIntegerKeyDown($event)"
+              (blur)="touch('remainingLeaves')" />
           </div>
 
           <div class="cjr-row">
             <label>Total Leaves:</label>
-            <input type="number" min="0" step="1" [ngModel]="totalLeaves()"
-              (ngModelChange)="onIntegerOnlyChange($event, totalLeaves)" (blur)="touch('totalLeaves')" />
+            <input type="text" inputmode="numeric" [ngModel]="totalLeaves()"
+              (ngModelChange)="onIntegerOnlyChange($event, totalLeaves)" (keydown)="onIntegerKeyDown($event)"
+              (blur)="touch('totalLeaves')" />
           </div>
 
           <div class="cjr-row">
             <label>Medical Allowances:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="medicalAllowances()"
-              (ngModelChange)="medicalAllowances.set($event)" (blur)="touch('medicalAllowances')" />
+            <input type="text" inputmode="decimal" [ngModel]="medicalAllowances()"
+              (ngModelChange)="onNumericOnlyChange($event, medicalAllowances)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('medicalAllowances')" />
           </div>
 
           <div class="cjr-row">
             <label>Fuel Allowances:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="fuelAllowances()"
-              (ngModelChange)="fuelAllowances.set($event)" (blur)="touch('fuelAllowances')" />
+            <input type="text" inputmode="decimal" [ngModel]="fuelAllowances()"
+              (ngModelChange)="onNumericOnlyChange($event, fuelAllowances)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('fuelAllowances')" />
           </div>
 
           <div class="cjr-row">
             <label>Mobile Allowances:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="mobileAllowances()"
-              (ngModelChange)="mobileAllowances.set($event)" (blur)="touch('mobileAllowances')" />
+            <input type="text" inputmode="decimal" [ngModel]="mobileAllowances()"
+              (ngModelChange)="onNumericOnlyChange($event, mobileAllowances)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('mobileAllowances')" />
           </div>
 
           <div class="cjr-row">
             <label>Car Allowances:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="carAllowances()"
-              (ngModelChange)="carAllowances.set($event)" (blur)="touch('carAllowances')" />
+            <input type="text" inputmode="decimal" [ngModel]="carAllowances()"
+              (ngModelChange)="onNumericOnlyChange($event, carAllowances)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('carAllowances')" />
           </div>
 
           <div class="cjr-row">
             <label>Maximum Loan Capacity:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="maximumLoanCapacity()"
-              (ngModelChange)="onNumericOnlyChange($event, maximumLoanCapacity)" (blur)="touch('maximumLoanCapacity')" />
+            <input type="text" inputmode="decimal" [ngModel]="maximumLoanCapacity()"
+              (ngModelChange)="onNumericOnlyChange($event, maximumLoanCapacity)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('maximumLoanCapacity')" />
           </div>
 
           <div class="cjr-row">
             <label>Maximum Advance Capacity:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="maximumAdvanceCapacity()"
+            <input type="text" inputmode="decimal" [ngModel]="maximumAdvanceCapacity()"
               (ngModelChange)="onNumericOnlyChange($event, maximumAdvanceCapacity)"
-              (blur)="touch('maximumAdvanceCapacity')" />
+              (keydown)="onDecimalKeyDown($event)" (blur)="touch('maximumAdvanceCapacity')" />
           </div>
 
           <div class="cjr-row">
             <label>Other Allowances:</label>
-            <input type="number" min="0" step="0.01" [ngModel]="otherAllowances()"
-              (ngModelChange)="otherAllowances.set($event)" (blur)="touch('otherAllowances')" />
+            <input type="text" inputmode="decimal" [ngModel]="otherAllowances()"
+              (ngModelChange)="onNumericOnlyChange($event, otherAllowances)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('otherAllowances')" />
           </div>
         </div>
       </div>

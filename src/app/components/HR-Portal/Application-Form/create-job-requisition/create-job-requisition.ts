@@ -11,7 +11,7 @@ import {
   EmployeeProfileAddPayload,
 } from '../../../../services/application-form.service';
 import {
-  formatDateDdMmYyyyInput,
+  formatDateForInput,
   formatDateOfBirthFromApi,
   formatDateOfBirthToApi,
   formatDateToApiIso,
@@ -87,6 +87,16 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly selectedJobSpecId = signal('');
   protected readonly jobSpecificationOptions = signal<JobSpecificationRecord[]>([]);
   protected readonly jobSpecificationsLoading = signal(false);
+  protected readonly selectedJobSpecLabel = computed(() => {
+    const id = this.selectedJobSpecId();
+    if (!id) {
+      return 'No Selection';
+    }
+
+    const idNum = Number.parseInt(id, 10);
+    const record = this.jobSpecificationOptions().find((item) => item.Id === idNum);
+    return record ? this.jobSpecOptionLabel(record) : 'No Selection';
+  });
   // Personal Information (OHEM mappings where applicable)
   protected readonly personName = signal(''); // free text
   protected readonly firstName = signal(''); // OHEM.firstName
@@ -96,6 +106,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly gender = signal<'Male' | 'Female' | 'Prefer not to say' | ''>('');
   protected readonly maritalStatus = signal<'Single' | 'Married' | ''>('');
   protected readonly dateOfBirth = signal(''); // DD-MM-YYYY
+  protected readonly dateOfBirthInputValue = computed(() => formatDateForInput(this.dateOfBirth()));
   protected readonly nationality = signal(''); // free text
   protected readonly religion = signal(''); // free text
   protected readonly bloodGroup = signal(''); // free text
@@ -252,13 +263,73 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly touched = signal<Record<string, boolean>>({});
 
   protected onIntegerOnlyChange(value: string, target: { set: (next: string) => void }): void {
-    target.set(value.replace(/\D/g, ''));
+    target.set(this.sanitizeIntegerValue(value));
   }
 
   protected onNumericOnlyChange(value: string, target: { set: (next: string) => void }): void {
-    const sanitized = value.replace(/[^\d.]/g, '');
+    target.set(this.sanitizeDecimalValue(value));
+  }
+
+  protected onAccountNoChange(value: string): void {
+    this.accountNo.set(this.sanitizeIntegerValue(value));
+  }
+
+  protected onIntegerKeyDown(event: KeyboardEvent): void {
+    if (this.isInputNavigationKey(event)) {
+      return;
+    }
+
+    if (event.key.length === 1 && !/\d/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  protected onDecimalKeyDown(event: KeyboardEvent): void {
+    if (this.isInputNavigationKey(event)) {
+      return;
+    }
+
+    if (event.key === '.') {
+      const input = event.target as HTMLInputElement;
+      if (input.value.includes('.')) {
+        event.preventDefault();
+      }
+      return;
+    }
+
+    if (event.key.length === 1 && !/\d/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  private sanitizeIntegerValue(value: string): string {
+    return String(value ?? '').replace(/\D/g, '');
+  }
+
+  private sanitizeDecimalValue(value: string): string {
+    const sanitized = String(value ?? '').replace(/[^\d.]/g, '');
     const [whole, ...fraction] = sanitized.split('.');
-    target.set(fraction.length ? `${whole}.${fraction.join('')}` : whole);
+    return fraction.length ? `${whole}.${fraction.join('')}` : whole;
+  }
+
+  private isInputNavigationKey(event: KeyboardEvent): boolean {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return true;
+    }
+
+    return [
+      'Backspace',
+      'Delete',
+      'Tab',
+      'Enter',
+      'Escape',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'Home',
+      'End',
+    ].includes(event.key);
   }
 
   private buildRemunerationPayload(): ApplicationFormDetail['remuneration'] {
@@ -335,7 +406,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   protected onDateOfBirthChange(value: string): void {
-    this.dateOfBirth.set(formatDateDdMmYyyyInput(value));
+    this.dateOfBirth.set(formatDateOfBirthFromApi(value));
   }
 
   protected touch(field: string): void {
@@ -429,9 +500,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   protected updateEducationField(sectionIndex: number, field: string, value: string): void {
+    const nextValue =
+      field === 'passingYear' ? this.sanitizeIntegerValue(value) : value;
+
     this.educationSections.update(sections => {
       const updated = [...sections];
-      const row = { ...updated[sectionIndex], [field]: value };
+      const row = { ...updated[sectionIndex], [field]: nextValue };
       if (field === 'institute' || field === 'institution') {
         row.institute = value;
         row.institution = value;
@@ -468,9 +542,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   protected updatePastExperienceField(sectionIndex: number, field: string, value: string): void {
+    const nextValue = field === 'lastSalary' ? this.sanitizeDecimalValue(value) : value;
+
     this.pastExperienceSections.update(sections => {
       const updated = [...sections];
-      const row = { ...updated[sectionIndex], [field]: value };
+      const row = { ...updated[sectionIndex], [field]: nextValue };
       if (field === 'position' || field === 'designation') {
         row.position = value;
         row.designation = value;
