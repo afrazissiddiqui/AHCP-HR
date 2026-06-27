@@ -199,6 +199,8 @@
               <dd>{{ displayDash(d.personalInfo.firstName) }}</dd>
               <dt>Middle name</dt>
               <dd>{{ displayDash(d.personalInfo.middleName) }}</dd>
+              <dt>Last name</dt>
+              <dd>{{ displayDash(d.personalInfo.lastName) }}</dd>
               <dt>Father / husband name</dt>
               <dd>{{ displayDash(d.personalInfo.fatherOrHusbandName) }}</dd>
               <dt>Gender</dt>
@@ -245,12 +247,12 @@
               <dd>{{ displayDash(d.personalInfo.departmentInAhcp) }}</dd>
               <dt>Branch / location</dt>
               <dd>{{ displayDash(d.personalInfo.branchLocation || d.requisition.location) }}</dd>
-              <!--   -->
-              <dd>{{ displayDash(d.personalInfo.costCenter || d.requisition.costCenter) }}</dd>
               <dt>Proposed designation</dt>
               <dd>{{ displayDash(d.personalInfo.designation) }}</dd>
               <dt>Work / grade level</dt>
               <dd>{{ displayDash(d.personalInfo.workGradeLevel) }}</dd>
+              <dt>Role / salary grade</dt>
+              <dd>{{ displayDash(d.personalInfo.roleSalary || d.hrSettings.salaryStructure) }}</dd>
               <dt>Reporting manager</dt>
               <dd>{{ displayDash(d.personalInfo.reportingManager || d.requisition.hiringManager) }}</dd>
               <dt>Remarks</dt>
@@ -411,7 +413,7 @@
               <dd>{{ displayDash(d.remuneration.carAllowances) }}</dd>
               <dt>Maximum loan capacity</dt>
               <dd>{{ displayDash(d.remuneration.maximumLoanCapacity) }}</dd>
-              <!-- <dt>Maximum advance capacity</dt> -->
+              <dt>Maximum advance capacity</dt>
               <dd>{{ displayDash(d.remuneration.maximumAdvanceCapacity) }}</dd>
               <dt>Other allowances</dt>
               <dd>{{ displayDash(d.remuneration.otherAllowances) }}</dd>
@@ -454,12 +456,14 @@
               <table class="application-detail-table">
                 <thead>
                   <tr>
+                    <th>Attachment for</th>
                     <th>File name</th>
                     <th>File URL</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let a of d.attachments">
+                    <td>{{ displayDash(a.type) }}</td>
                     <td>{{ displayDash(a.fileName) }}</td>
                     <td>{{ displayDash(a.fileUrl) }}</td>
                   </tr>

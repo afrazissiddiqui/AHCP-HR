@@ -234,6 +234,22 @@
   line-height: 1.2;
 }
 
+.cjr-label-required::after {
+  content: ' *';
+  color: #b42318;
+}
+
+.cjr-row input.cjr-invalid,
+.cjr-row select.cjr-invalid,
+.cjr-row textarea.cjr-invalid,
+.cjr-field input.cjr-invalid,
+.cjr-field select.cjr-invalid,
+.cjr-field textarea.cjr-invalid,
+.cjr-job-spec-select.cjr-invalid {
+  border-color: #b42318 !important;
+  box-shadow: 0 0 0 1px rgba(180, 35, 24, 0.15);
+}
+
 .cjr-row label {
   font-size: 12px;
   color: #444;

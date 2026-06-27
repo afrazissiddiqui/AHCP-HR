@@ -62,15 +62,15 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Person Name:</label>
+            <label class="cjr-label-required">Person Name:</label>
             <input type="text" [ngModel]="personName()" (ngModelChange)="personName.set($event)"
-              (blur)="touch('personName')" />
+              [class.cjr-invalid]="showFieldError('personName')" (blur)="touch('personName')" />
           </div>
 
           <div class="cjr-row">
-            <label>First Name:</label>
+            <label class="cjr-label-required">First Name:</label>
             <input type="text" [ngModel]="firstName()" (ngModelChange)="firstName.set($event)"
-              (blur)="touch('firstName')" />
+              [class.cjr-invalid]="showFieldError('firstName')" (blur)="touch('firstName')" />
           </div>
 
           <div class="cjr-row">
@@ -80,20 +80,21 @@
           </div>
 
           <div class="cjr-row">
-            <label>Last Name:</label>
+            <label class="cjr-label-required">Last Name:</label>
             <input type="text" [ngModel]="lastName()" (ngModelChange)="lastName.set($event)"
-              (blur)="touch('lastName')" />
+              [class.cjr-invalid]="showFieldError('lastName')" (blur)="touch('lastName')" />
           </div>
 
           <div class="cjr-row">
-            <label>Father / Husband Name:</label>
+            <label class="cjr-label-required">Father / Husband Name:</label>
             <input type="text" [ngModel]="fatherOrHusbandName()" (ngModelChange)="fatherOrHusbandName.set($event)"
-              (blur)="touch('fatherOrHusbandName')" />
+              [class.cjr-invalid]="showFieldError('fatherOrHusbandName')" (blur)="touch('fatherOrHusbandName')" />
           </div>
 
           <div class="cjr-row">
-            <label>Gender:</label>
-            <select [ngModel]="gender()" (ngModelChange)="gender.set($event)" (blur)="touch('gender')">
+            <label class="cjr-label-required">Gender:</label>
+            <select [ngModel]="gender()" (ngModelChange)="gender.set($event)" [class.cjr-invalid]="showFieldError('gender')"
+              (blur)="touch('gender')">
               <option value="">No Selection</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -102,9 +103,9 @@
           </div>
 
           <div class="cjr-row">
-            <label>Marital Status:</label>
+            <label class="cjr-label-required">Marital Status:</label>
             <select [ngModel]="maritalStatus()" (ngModelChange)="maritalStatus.set($event)"
-              (blur)="touch('maritalStatus')">
+              [class.cjr-invalid]="showFieldError('maritalStatus')" (blur)="touch('maritalStatus')">
               <option value="">No Selection</option>
               <option value="Single">Single</option>
               <option value="Married">Married</option>
@@ -112,88 +113,101 @@
           </div>
 
           <div class="cjr-row">
-            <label>Date of Birth:</label>
+            <label class="cjr-label-required">Date of Birth:</label>
             <input type="date" [ngModel]="dateOfBirthInputValue()" (ngModelChange)="onDateOfBirthChange($event)"
-              (blur)="touch('dateOfBirth')" />
+              [class.cjr-invalid]="showFieldError('dateOfBirth')" (blur)="touch('dateOfBirth')" />
           </div>
 
           <div class="cjr-row">
-            <label>Nationality:</label>
+            <label class="cjr-label-required">Nationality:</label>
             <input type="text" [ngModel]="nationality()" (ngModelChange)="nationality.set($event)"
-              (blur)="touch('nationality')" />
+              [class.cjr-invalid]="showFieldError('nationality')" (blur)="touch('nationality')" />
           </div>
 
           <div class="cjr-row">
-            <label>Religion:</label>
+            <label class="cjr-label-required">Religion:</label>
             <input type="text" [ngModel]="religion()" (ngModelChange)="religion.set($event)"
-              (blur)="touch('religion')" />
+              [class.cjr-invalid]="showFieldError('religion')" (blur)="touch('religion')" />
           </div>
 
           <div class="cjr-row">
-            <label>Blood Group:</label>
+            <label class="cjr-label-required">Blood Group:</label>
             <input type="text" [ngModel]="bloodGroup()" (ngModelChange)="bloodGroup.set($event)"
-              (blur)="touch('bloodGroup')" />
+              [class.cjr-invalid]="showFieldError('bloodGroup')" (blur)="touch('bloodGroup')" />
           </div>
         </div>
 
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>National ID Card No:</label>
+            <label class="cjr-label-required">National ID Card No:</label>
             <div class="cjr-field">
               <input type="text" placeholder="XXXXX-XXXXXXX-X" inputmode="numeric" maxlength="15" minlength="15"
                 [ngModel]="nationalIdCardNo()" (ngModelChange)="onNationalIdCardNoChange($event)"
-                (keydown)="onIntegerKeyDown($event)" (blur)="touch('nationalIdCardNo')" />
-              @if (touched()['nationalIdCardNo'] && nationalIdCardNoInvalid()) {
+                [class.cjr-invalid]="showFieldError('nationalIdCardNo')" (keydown)="onIntegerKeyDown($event)"
+                (blur)="touch('nationalIdCardNo')" />
+              @if (isRequiredMissing('nationalIdCardNo')) {
+              <div class="cjr-error">This field is required.</div>
+              } @else if (showFieldError('nationalIdCardNo') && nationalIdCardNoInvalid()) {
               <div class="cjr-error">Format must be XXXXX-XXXXXXX-X</div>
               }
             </div>
           </div>
 
           <div class="cjr-row">
-            <label>Income Tax No:</label>
+            <label class="cjr-label-required">Income Tax No:</label>
             <div class="cjr-field">
               <input type="text" placeholder="XXXXX-XXXXXXX-X" inputmode="numeric" maxlength="15" minlength="15"
                 [ngModel]="incomeTaxNo()" (ngModelChange)="onIncomeTaxNoChange($event)"
-                (keydown)="onIntegerKeyDown($event)" (blur)="touch('incomeTaxNo')" />
-              @if (touched()['incomeTaxNo'] && incomeTaxNoInvalid()) {
+                [class.cjr-invalid]="showFieldError('incomeTaxNo')" (keydown)="onIntegerKeyDown($event)"
+                (blur)="touch('incomeTaxNo')" />
+              @if (isRequiredMissing('incomeTaxNo')) {
+              <div class="cjr-error">This field is required.</div>
+              } @else if (showFieldError('incomeTaxNo') && incomeTaxNoInvalid()) {
               <div class="cjr-error">Format must be XXXXX-XXXXXXX-X</div>
               }
             </div>
           </div>
 
           <div class="cjr-row">
-            <label>Contact Number:</label>
+            <label class="cjr-label-required">Contact Number:</label>
             <div class="cjr-field">
               <input type="text" placeholder="0300-1234567" inputmode="numeric" maxlength="12" minlength="12"
                 [ngModel]="contactNumber()" (ngModelChange)="onContactNumberChange($event)"
-                (keydown)="onIntegerKeyDown($event)" (blur)="touch('contactNumber')" />
-              @if (touched()['contactNumber'] && contactNumberInvalid()) {
+                [class.cjr-invalid]="showFieldError('contactNumber')" (keydown)="onIntegerKeyDown($event)"
+                (blur)="touch('contactNumber')" />
+              @if (isRequiredMissing('contactNumber')) {
+              <div class="cjr-error">This field is required.</div>
+              } @else if (showFieldError('contactNumber') && contactNumberInvalid()) {
               <div class="cjr-error">Format must be XXXX-XXXXXXX</div>
               }
             </div>
           </div>
 
           <div class="cjr-row">
-            <label>Emergency Contact Number:</label>
+            <label class="cjr-label-required">Emergency Contact Number:</label>
             <div class="cjr-field">
               <input type="text" placeholder="0300-1234567" inputmode="numeric" maxlength="12" minlength="12"
                 [ngModel]="emergencyContactNumber()" (ngModelChange)="onEmergencyContactNumberChange($event)"
-                (keydown)="onIntegerKeyDown($event)" (blur)="touch('emergencyContactNumber')" />
-              @if (touched()['emergencyContactNumber'] && emergencyContactNumberInvalid()) {
+                [class.cjr-invalid]="showFieldError('emergencyContactNumber')" (keydown)="onIntegerKeyDown($event)"
+                (blur)="touch('emergencyContactNumber')" />
+              @if (isRequiredMissing('emergencyContactNumber')) {
+              <div class="cjr-error">This field is required.</div>
+              } @else if (showFieldError('emergencyContactNumber') && emergencyContactNumberInvalid()) {
               <div class="cjr-error">Format must be XXXX-XXXXXXX</div>
               }
             </div>
           </div>
 
           <div class="cjr-row">
-            <label>Home Address:</label>
-            <input type="text" [ngModel]="street()" (ngModelChange)="street.set($event)" (blur)="touch('street')" />
+            <label class="cjr-label-required">Home Address:</label>
+            <input type="text" [ngModel]="street()" (ngModelChange)="street.set($event)"
+              [class.cjr-invalid]="showFieldError('street')" (blur)="touch('street')" />
           </div>
 
           <div class="cjr-row">
-            <label>Communication Address:</label>
+            <label class="cjr-label-required">Communication Address:</label>
             <input type="text" [ngModel]="streetNo()" (ngModelChange)="streetNo.set($event)"
-              (blur)="touch('streetNo')" />
+              [class.cjr-invalid]="showFieldError('streetNo')" (blur)="touch('streetNo')" />
           </div>
 
             <!-- <div class="cjr-row">
@@ -203,13 +217,15 @@
             </div> -->
 
             <div class="cjr-row">
-              <label>City:</label>
-            <input type="text" [ngModel]="city()" (ngModelChange)="city.set($event)" (blur)="touch('city')" />
+              <label class="cjr-label-required">City:</label>
+            <input type="text" [ngModel]="city()" (ngModelChange)="city.set($event)"
+              [class.cjr-invalid]="showFieldError('city')" (blur)="touch('city')" />
           </div>
 
           <div class="cjr-row">
-            <label>State:</label>
-            <select [ngModel]="state()" (ngModelChange)="state.set($event)" (blur)="touch('state')">
+            <label class="cjr-label-required">State:</label>
+            <select [ngModel]="state()" (ngModelChange)="state.set($event)" [class.cjr-invalid]="showFieldError('state')"
+              (blur)="touch('state')">
               <option value="">No Selection</option>
               <option value="Punjab">Punjab</option>
               <option value="Sindh">Sindh</option>
@@ -221,17 +237,20 @@
           </div>
 
           <div class="cjr-row">
-            <label>Country:</label>
-            <input type="text" [ngModel]="country()" (ngModelChange)="country.set($event)" (blur)="touch('country')" />
+            <label class="cjr-label-required">Country:</label>
+            <input type="text" [ngModel]="country()" (ngModelChange)="country.set($event)"
+              [class.cjr-invalid]="showFieldError('country')" (blur)="touch('country')" />
           </div>
 
           <div class="cjr-row">
-            <label>Zip Code:</label>
+            <label class="cjr-label-required">Zip Code:</label>
             <div class="cjr-field">
               <input type="text" placeholder="54000" inputmode="numeric" maxlength="5" minlength="5"
                 [ngModel]="zipCode()" (ngModelChange)="onZipCodeChange($event)" (keydown)="onIntegerKeyDown($event)"
-                (blur)="touch('zipCode')" />
-              @if (touched()['zipCode'] && zipCodeInvalid()) {
+                [class.cjr-invalid]="showFieldError('zipCode')" (blur)="touch('zipCode')" />
+              @if (isRequiredMissing('zipCode')) {
+              <div class="cjr-error">This field is required.</div>
+              } @else if (showFieldError('zipCode') && zipCodeInvalid()) {
               <div class="cjr-error">Format must be XXXXX</div>
               }
             </div>
@@ -249,9 +268,9 @@
             </div> -->
 
             <div class="cjr-row">
-              <label>Department:</label>
+              <label class="cjr-label-required">Department:</label>
               <select [ngModel]="departmentInAhcp()" (ngModelChange)="departmentInAhcp.set($event)"
-                (blur)="touch('departmentInAhcp')">
+                [class.cjr-invalid]="showFieldError('departmentInAhcp')" (blur)="touch('departmentInAhcp')">
                 <option value="">No Selection</option>
                 @for (dept of departmentOptions; track dept) {
                 <option [value]="dept">{{ dept }}</option>
@@ -260,9 +279,9 @@
             </div>
 
             <div class="cjr-row">
-              <label>Branch:</label>
+              <label class="cjr-label-required">Branch:</label>
               <select [ngModel]="branchLocation()" (ngModelChange)="branchLocation.set($event)"
-                (blur)="touch('branchLocation')">
+                [class.cjr-invalid]="showFieldError('branchLocation')" (blur)="touch('branchLocation')">
                 <option value="">No Selection</option>
                 @for (branch of branchLocationOptions; track branch) {
                 <option [value]="branch">{{ branch }}</option>
@@ -277,9 +296,9 @@
             </div> -->
 
             <div class="cjr-row">
-              <label>Employee Category:</label>
+              <label class="cjr-label-required">Employee Category:</label>
               <select [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)"
-                (blur)="touch('employmentCategory')">
+                [class.cjr-invalid]="showFieldError('employmentCategory')" (blur)="touch('employmentCategory')">
                 <option value="">No Selection</option>
                 <option value="Executive">Executive</option>
                 <option value="Non-Executive">Non-Executive</option>
@@ -288,9 +307,9 @@
             </div>
 
             <div class="cjr-row">
-              <label>Work / Grade Level:</label>
+              <label class="cjr-label-required">Work / Grade Level:</label>
               <select [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)"
-                (blur)="touch('workGradeLevel')">
+                [class.cjr-invalid]="showFieldError('workGradeLevel')" (blur)="touch('workGradeLevel')">
                 <option value="">No Selection</option>
                 @for (level of workGradeLevelOptions; track level) {
                 <option [value]="level">{{ level }}</option>
@@ -301,9 +320,9 @@
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Proposed Designation:</label>
+              <label class="cjr-label-required">Proposed Designation:</label>
               <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)"
-                (blur)="touch('designation')" placeholder="" />
+                [class.cjr-invalid]="showFieldError('designation')" (blur)="touch('designation')" placeholder="" />
             </div>
 
             <div class="cjr-row">
@@ -313,9 +332,9 @@
             </div>
 
             <div class="cjr-row">
-              <label>Employee Status:</label>
+              <label class="cjr-label-required">Employee Status:</label>
               <select [ngModel]="employmentStatus()" (ngModelChange)="employmentStatus.set($event)"
-                (blur)="touch('employmentStatus')">
+                [class.cjr-invalid]="showFieldError('employmentStatus')" (blur)="touch('employmentStatus')">
                 <option value="">No Selection</option>
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -329,9 +348,10 @@
             </div>
 
             <div class="cjr-row cjr-row--textarea">
-              <label>Job Description:</label>
+              <label class="cjr-label-required">Job Description:</label>
               <textarea rows="3" [ngModel]="jobDescription()" (ngModelChange)="jobDescription.set($event)"
-                (blur)="touch('jobDescription')" placeholder="Role description"></textarea>
+                [class.cjr-invalid]="showFieldError('jobDescription')" (blur)="touch('jobDescription')"
+                placeholder="Role description"></textarea>
             </div>
           </div>
         </div>
@@ -356,17 +376,19 @@
         <div class="cjr-personal-grid">
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Institution:</label>
+              <label class="cjr-label-required">Institution:</label>
               <input type="text" [ngModel]="edu.institute"
                 (ngModelChange)="updateEducationField(i, 'institute', $event)"
-                (blur)="touch('educationInstitute')" />
+                [class.cjr-invalid]="showFieldError(educationFieldKey('Institute', i))"
+                (blur)="touch(educationFieldKey('Institute', i))" />
             </div>
 
             <div class="cjr-row">
-              <label>Passing Year:</label>
+              <label class="cjr-label-required">Passing Year:</label>
               <input type="text" inputmode="numeric" maxlength="4" [ngModel]="edu.passingYear"
                 (ngModelChange)="updateEducationField(i, 'passingYear', $event)" (keydown)="onIntegerKeyDown($event)"
-                (blur)="touch('educationPassingYear')" />
+                [class.cjr-invalid]="showFieldError(educationFieldKey('PassingYear', i))"
+                (blur)="touch(educationFieldKey('PassingYear', i))" />
             </div>
 
             <div class="cjr-row">
@@ -390,10 +412,11 @@
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Qualification:</label>
+              <label class="cjr-label-required">Qualification:</label>
               <input type="text" [ngModel]="edu.qualification"
                 (ngModelChange)="updateEducationField(i, 'qualification', $event)"
-                (blur)="touch('educationQualification')" />
+                [class.cjr-invalid]="showFieldError(educationFieldKey('Qualification', i))"
+                (blur)="touch(educationFieldKey('Qualification', i))" />
             </div>
 
             <!-- <div class="cjr-row">
@@ -523,6 +546,17 @@
         <div class="cjr-personal-grid">
           <div class="cjr-personal-col">
             <div class="cjr-row">
+              <label>Attachment For:</label>
+              <select [ngModel]="row.type" (ngModelChange)="updateAttachmentField(i, 'type', $event)"
+                (blur)="touch('attachmentType')">
+                <option value="">Select document type</option>
+                @for (option of attachmentFieldOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="cjr-row">
               <label>File Name:</label>
               <div class="cjr-field cjr-attachment-name-field">
                 <input type="text" [ngModel]="row.fileName"
@@ -566,15 +600,16 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Salary Offer:</label>
+            <label class="cjr-label-required">Salary Offer:</label>
             <input type="text" inputmode="decimal" [ngModel]="basicSalary()"
               (ngModelChange)="onNumericOnlyChange($event, basicSalary)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('basicSalary')" />
+              [class.cjr-invalid]="showFieldError('basicSalary')" (blur)="touch('basicSalary')" />
           </div>
 
           <div class="cjr-row">
-            <label>Payment Mode:</label>
-            <select [ngModel]="paymentMode()" (ngModelChange)="paymentMode.set($event)" (blur)="touch('paymentMode')">
+            <label class="cjr-label-required">Payment Mode:</label>
+            <select [ngModel]="paymentMode()" (ngModelChange)="onPaymentModeChange($event)"
+              [class.cjr-invalid]="showFieldError('paymentMode')" (blur)="touch('paymentMode')">
               <option value="">No Selection</option>
               <option value="Cash">Cash</option>
               <option value="Bank">Bank</option>
@@ -583,56 +618,54 @@
           </div>
 
           <div class="cjr-row">
-            <label>Account Title:</label>
+            <label [class.cjr-label-required]="isMandatory('accountTitle')">Account Title:</label>
             <input type="text" [ngModel]="accountTitle()" (ngModelChange)="accountTitle.set($event)"
-              (blur)="touch('accountTitle')" />
+              [class.cjr-invalid]="showFieldError('accountTitle')" (blur)="touch('accountTitle')" />
           </div>
 
           <div class="cjr-row">
-            <label>Bank Name:</label>
+            <label [class.cjr-label-required]="isMandatory('bankName')">Bank Name:</label>
             <input type="text" [ngModel]="bankName()" (ngModelChange)="bankName.set($event)"
-              (blur)="touch('bankName')" />
+              [class.cjr-invalid]="showFieldError('bankName')" (blur)="touch('bankName')" />
           </div>
 
           <div class="cjr-row">
             <label>Branch Name:</label>
-            <select [ngModel]="branchName()" (ngModelChange)="branchName.set($event)" (blur)="touch('branchName')">
-              <option value="">No Selection</option>
-              @for (branch of branchNameOptions; track branch) {
-              <option [value]="branch">{{ branch }}</option>
-              }
-            </select>
+            <input type="text" [ngModel]="branchName()" (ngModelChange)="branchName.set($event)"
+              (blur)="touch('branchName')" />
           </div>
 
           <div class="cjr-row">
-            <label>Bank Account Number:</label>
+            <label [class.cjr-label-required]="isMandatory('accountNo')">Bank Account Number:</label>
             <input type="text" inputmode="numeric" [ngModel]="accountNo()" (ngModelChange)="onAccountNoChange($event)"
-              (keydown)="onIntegerKeyDown($event)" (blur)="touch('accountNo')" />
+              [class.cjr-invalid]="showFieldError('accountNo')" (keydown)="onIntegerKeyDown($event)"
+              (blur)="touch('accountNo')" />
           </div>
 
           <div class="cjr-row">
-            <label>Account Type:</label>
+            <label [class.cjr-label-required]="isMandatory('accountType')">Account Type:</label>
             <input type="text" [ngModel]="accountType()" (ngModelChange)="accountType.set($event)"
-              (blur)="touch('accountType')" />
+              [class.cjr-invalid]="showFieldError('accountType')" (blur)="touch('accountType')" />
           </div>
 
           <div class="cjr-row">
-            <label>Effective Date:</label>
+            <label class="cjr-label-required">Effective Date:</label>
             <input type="date" [ngModel]="effectiveDate()" (ngModelChange)="effectiveDate.set($event)"
-              (blur)="touch('effectiveDate')" />
+              [class.cjr-invalid]="showFieldError('effectiveDate')" (blur)="touch('effectiveDate')" />
           </div>
 
           <div class="cjr-row">
             <label>Percentage (For tax arrangement):</label>
             <input type="text" inputmode="decimal" [ngModel]="taxPercentage()"
               (ngModelChange)="onNumericOnlyChange($event, taxPercentage)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('taxPercentage')" />
+              [disabled]="!isTaxPercentageEnabled()" (blur)="touch('taxPercentage')"
+              placeholder="Available when payment mode is Hybrid" />
           </div>
 
           <div class="cjr-row">
-            <label>Effective Joining Date:</label>
+            <label class="cjr-label-required">Effective Joining Date:</label>
             <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)"
-              (blur)="touch('dateOfJoining')" />
+              [class.cjr-invalid]="showFieldError('dateOfJoining')" (blur)="touch('dateOfJoining')" />
           </div>
 
           <div class="cjr-row">
@@ -649,6 +682,13 @@
             <input type="text" inputmode="decimal" [ngModel]="advancePercentAllowed()"
               (ngModelChange)="onNumericOnlyChange($event, advancePercentAllowed)" (keydown)="onDecimalKeyDown($event)"
               (blur)="touch('advancePercentAllowed')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Maximum Advance Capacity:</label>
+            <input type="text" inputmode="decimal" [ngModel]="maximumAdvanceCapacity()"
+              (ngModelChange)="onNumericOnlyChange($event, maximumAdvanceCapacity)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('maximumAdvanceCapacity')" />
           </div>
 
           <div class="cjr-row">
@@ -712,9 +752,9 @@
           </div>
 
           <div class="cjr-row">
-            <label>Leave Type:</label>
+            <label class="cjr-label-required">Leave Type:</label>
             <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)"
-              (blur)="touch('leaveType')" placeholder="e.g. Annual" />
+              [class.cjr-invalid]="showFieldError('leaveType')" (blur)="touch('leaveType')" placeholder="e.g. Annual" />
           </div>
 
           <div class="cjr-row">
@@ -736,13 +776,6 @@
             <input type="text" inputmode="numeric" [ngModel]="remainingLeaves()"
               (ngModelChange)="onIntegerOnlyChange($event, remainingLeaves)" (keydown)="onIntegerKeyDown($event)"
               (blur)="touch('remainingLeaves')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Total Leaves:</label>
-            <input type="text" inputmode="numeric" [ngModel]="totalLeaves()"
-              (ngModelChange)="onIntegerOnlyChange($event, totalLeaves)" (keydown)="onIntegerKeyDown($event)"
-              (blur)="touch('totalLeaves')" />
           </div>
 
           <div class="cjr-row">
@@ -774,20 +807,6 @@
           </div>
 
           <div class="cjr-row">
-            <label>Maximum Loan Capacity:</label>
-            <input type="text" inputmode="decimal" [ngModel]="maximumLoanCapacity()"
-              (ngModelChange)="onNumericOnlyChange($event, maximumLoanCapacity)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('maximumLoanCapacity')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Maximum Advance Capacity:</label>
-            <input type="text" inputmode="decimal" [ngModel]="maximumAdvanceCapacity()"
-              (ngModelChange)="onNumericOnlyChange($event, maximumAdvanceCapacity)"
-              (keydown)="onDecimalKeyDown($event)" (blur)="touch('maximumAdvanceCapacity')" />
-          </div>
-
-          <div class="cjr-row">
             <label>Other Allowances:</label>
             <input type="text" inputmode="decimal" [ngModel]="otherAllowances()"
               (ngModelChange)="onNumericOnlyChange($event, otherAllowances)" (keydown)="onDecimalKeyDown($event)"
@@ -804,7 +823,7 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee Code:</label>
-            <input type="text" [ngModel]="employeeCode()" readonly placeholder="System generated" />
+            <input type="text" [ngModel]="employeeCode()" readonly placeholder="e.g. Emp-00003292" />
           </div>
 
           <div class="cjr-row">
@@ -816,21 +835,23 @@
 
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Employee Name:</label>
+            <label class="cjr-label-required">Employee Name:</label>
             <input type="text" [ngModel]="loginEmployeeName()" (ngModelChange)="loginEmployeeName.set($event)"
-              (blur)="touch('loginEmployeeName')" placeholder="Enter employee name..." />
+              [class.cjr-invalid]="showFieldError('loginEmployeeName')" (blur)="touch('loginEmployeeName')"
+              placeholder="Enter employee name..." />
           </div>
 
           <div class="cjr-row">
-            <label>Password:</label>
+            <label [class.cjr-label-required]="isMandatory('password')">Password:</label>
             <input type="password" [ngModel]="password()" (ngModelChange)="password.set($event)"
-              (blur)="touch('password')" placeholder="Enter password..." />
+              [class.cjr-invalid]="showFieldError('password')" (blur)="touch('password')"
+              placeholder="Enter password..." />
           </div>
         </div>
       </div>
     </div>
 
-    <div class="cjr-personal cjr-assets" id="assets-section">
+    <div class="cjr-personal cjr- ts" id="assets-section">
       <div class="cjr-section-title">Assets</div>
 
       <div class="cjr-personal-grid">

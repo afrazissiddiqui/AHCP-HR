@@ -203,21 +203,12 @@ export interface EmployeeProfileAddPayload {
   fatherOrHusbandName: string;
   gender: string;
   maritalStatus: string;
-  dateOfBirth: string;
+  dateOfBirth: string | null;
   nationality: string;
   religion: string;
   bloodGroup: string;
   nationalIdCardNo: string;
   incomeTaxNo: string;
-  contactNumber: string;
-  emergencyContactNumber: string;
-  street: string;
-  streetNo: string;
-  buildingFloorRoom: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode: string;
   employmentNature: string;
   employeeCategory: string;
   employmentStatus: string;
@@ -225,63 +216,80 @@ export interface EmployeeProfileAddPayload {
   designation: string;
   jobDescription: string;
   roleSalary: string;
-  educationSections: Array<{
-    qualification: string;
-    institution: string;
-    passingYear: string;
-  }>;
-  pastExperienceSections: Array<{
-    company: string;
-    designation: string;
-    duration: string;
-  }>;
-  attachments: Array<{
-    fileName: string;
-    fileUrl: string;
-  }>;
   basicSalary: string;
   paymentMode: string;
   accountTitle: string;
   bankName: string;
-  branchName: string;
+  branchName: string | null;
   accountNo: string;
   accountType: string;
-  effectiveDate: string;
-  taxPercentage: string;
-  dateOfJoining: string;
-  advancePercentAllowed: string;
-  loanAmountAllowed: string;
+  effectiveDate: string | null;
+  taxPercentage: string | null;
+  dateOfJoining: string | null;
+  advancePercentAllowed: string | null;
+  loanAmountAllowed: string | null;
   overTimeApplicable: boolean;
   leaveType: string;
   leaveDays: number;
   leavesAvailed: number;
   remainingLeaves: number;
   totalLeaves: number;
-  employeeMaster: number;
-  salaryStructure: string;
-  attendanceShiftManagement: string;
-  leaveManagement: string;
-  loanAdvancesForm: string;
-  employeeCode: string;
-  userId: number | string;
-  loginEmployeeName: string;
-  password: string;
-  assetAllocated: string;
-  assetOitmCode: string;
-  allocationStatus: string;
-  allocationDate: string;
-  allocationDateType: string;
-  workGradeLevel: string;
-  branchLocation: string;
-  costCenter: string;
-  reportingManager: string;
-  remarks: string;
+  requestStatus: string | null;
+  medicalAllowances: string | null;
+  fuelAllowances: string | null;
+  mobileAllowances: string | null;
+  carAllowances: string | null;
+  maximumLoanCapacity: string | null;
+  maximumAdvanceCapacity: string | null;
+  otherAllowances: string | null;
   allowancesApplicable: boolean;
-  cashSalaryPercentage: string;
+  cashSalaryPercentage: string | null;
   eobiApplicable: boolean;
   socialSecurityApplicable: boolean;
-  fuelLimit: string;
-  leaveEligibilityCriteria: string;
+  fuelLimit: string | null;
+  leaveEligibilityCriteria: string | null;
+  workGradeLevel: string | null;
+  branchLocation: string | null;
+  reportingManager: string | null;
+  remarks: string | null;
+  contactNumber: string;
+  emergencyContactNumber: string;
+  street: string;
+  streetNo: string;
+  buildingFloorRoom: string | null;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
+  educationSections: Array<{
+    institution: string;
+    passingYear: string;
+    qualification: string;
+  }>;
+  pastExperienceSections: Array<{
+    company: string;
+    duration: string;
+    designation: string;
+  }>;
+  attachments: Array<{
+    type: string | null;
+    fileName: string;
+    fileUrl: string | null;
+  }>;
+  employeeMaster: string;
+  salaryStructure: string;
+  attendanceShiftManagement: string | null;
+  leaveManagement: string | null;
+  loanAdvancesForm: string | null;
+  employeeCode: string;
+  userId: string;
+  loginEmployeeName: string;
+  password: string;
+  assetAllocated: string | null;
+  assetOitmCode: string | null;
+  allocationStatus: string | null;
+  allocationDate: string | null;
+  allocationDateType: string | null;
 }
 
 @Injectable({
@@ -301,6 +309,10 @@ export class ApplicationFormService {
       return 1;
     }
     return Math.max(...records.map((r) => r.EmployeeCode)) + 1;
+  }
+
+  formatEmployeeUserId(code: number): string {
+    return `Emp-${String(code).padStart(8, '0')}`;
   }
 
   addApplicationRecord(record: ApplicationFormRecord): void {
@@ -435,7 +447,6 @@ export class ApplicationFormService {
       status:
         asString(item['employmentStatus']) ||
         asString(item['employment_status']) ||
-        asString(item['status']) ||
         'Active',
       selected: false,
       apiId: apiId || undefined,
@@ -526,6 +537,10 @@ export class ApplicationFormService {
           }))
       : [];
 
+    const roleSalary =
+      pick('roleSalary', 'role_salary') || pick('roleAndSalary', 'role_and_salary');
+    const salaryStructure = pick('salaryStructure', 'salary_structure') || roleSalary;
+
     const detail: ApplicationFormDetail = {
       personalInfo: {
         personName: pick('personName', 'person_name'),
@@ -558,8 +573,9 @@ export class ApplicationFormService {
         departmentInAhcp: pick('department') || pick('departmentInAhcp', 'department_in_ahcp'),
         designation: pick('designation'),
         jobDescription: pick('jobDescription', 'job_description'),
-        roleSalary: pick('roleSalary', 'role_salary') || pick('roleAndSalary', 'role_and_salary'),
-        workGradeLevel: pick('workGradeLevel', 'work_grade_level'),
+        roleSalary,
+        workGradeLevel:
+          pick('workGradeLevel', 'work_grade_level') || roleSalary || salaryStructure,
         branchLocation:
           pick('branchLocation', 'branch_location') || pick('branch', 'branch') || pick('location', 'location'),
         costCenter: pick('costCenter', 'cost_center'),
@@ -610,14 +626,14 @@ export class ApplicationFormService {
       },
       hrSettings: {
         employeeMaster: asNumberString(item['employeeMaster'] ?? item['employee_master']),
-        salaryStructure: pick('salaryStructure', 'salary_structure'),
+        salaryStructure,
         attendanceShiftManagement: pick('attendanceShiftManagement', 'attendance_shift_management'),
         leaveManagement: pick('leaveManagement', 'leave_management'),
         loanAdvancesForm: pick('loanAdvancesForm', 'loan_advances_form'),
         requestStatus: pick('requestStatus', 'request_status'),
       },
       loginDetails: {
-        employeeCode: pick('employeeCode', 'employee_code'),
+        employeeCode: pick('userId', 'user_id') || pick('employeeCode', 'employee_code'),
         employeeName: pick('loginEmployeeName', 'login_employee_name'),
         userId: pick('userId', 'user_id'),
         password: pick('password'),
