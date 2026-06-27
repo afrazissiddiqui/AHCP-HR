@@ -75,6 +75,8 @@ export class App {
     this.shellbarSearch.setPlaceholder(resolveShellbarSearchPlaceholder(initialKey));
     if (initialKey.startsWith('plant-maintenance')) {
       this.expandedHrMenuValue.set('plant-maintenance');
+    } else if (initialKey.startsWith('setup/') || initialKey === 'setup') {
+      this.expandedHrMenuValue.set('setup');
     } else if (this.isHrModuleRoute(initialKey)) {
       this.expandedHrMenuValue.set('hr');
     }
@@ -93,6 +95,8 @@ export class App {
         this.selectedHrOption.set(this.resolveHrOptionValue(routeKey));
         if (routeKey.startsWith('plant-maintenance')) {
           this.expandedHrMenuValue.set('plant-maintenance');
+        } else if (routeKey.startsWith('setup/') || routeKey === 'setup') {
+          this.expandedHrMenuValue.set('setup');
         } else if (this.isHrModuleRoute(routeKey)) {
           this.expandedHrMenuValue.set('hr');
         }
@@ -256,7 +260,12 @@ export class App {
 
   private collapseHrSubmenuUnlessActiveRoute(): void {
     const routeKey = (this.router.url.split('?')[0] ?? '').replace(/^\//, '');
-    if (!routeKey.startsWith('plant-maintenance') && !this.isHrModuleRoute(routeKey)) {
+    if (
+      !routeKey.startsWith('plant-maintenance') &&
+      !routeKey.startsWith('setup/') &&
+      routeKey !== 'setup' &&
+      !this.isHrModuleRoute(routeKey)
+    ) {
       this.expandedHrMenuValue.set(null);
     }
   }
@@ -280,6 +289,12 @@ export class App {
     }
     if (routeKey === 'plant-maintenance') {
       return 'plant-maintenance';
+    }
+    if (routeKey.startsWith('setup/')) {
+      return routeKey;
+    }
+    if (routeKey === 'setup') {
+      return 'setup';
     }
     return routeKey || 'dashboard';
   }

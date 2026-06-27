@@ -45,6 +45,7 @@ const EXACT_TITLES: Record<string, string> = {
   'gate-pass/ogp': 'OGP',
   'gate-pass/agp': 'AGP',
   'gate-pass/igp': 'IGP',
+  'setup/gl-account-determination': 'GL Account Determination',
   'plant-maintenance/main-form': 'Main Form',
   'plant-maintenance/main-form/plant-maintenance-master-form': 'Plant Maintenance Master Form',
   'plant-maintenance/main-form/plant-maintenance-master-form/create': 'Add Machine',
@@ -68,6 +69,7 @@ const PREFIX_TITLES: Array<{ prefix: string; title: string }> = [
   { prefix: 'job-specification-form', title: 'Job Specification' },
   { prefix: 'recruitment', title: 'Recruitment' },
   { prefix: 'gate-pass', title: 'Gate Pass' },
+  { prefix: 'setup', title: 'Setup' },
   { prefix: 'plant-maintenance/setup-form/sub-component-definition/edit', title: 'Update Machine' },
   { prefix: 'plant-maintenance/setup-form/maintenance-activity-definition/edit', title: 'Update Machine' },
   { prefix: 'plant-maintenance/main-form/plant-maintenance-master-form/edit', title: 'Update Machine' },
@@ -82,6 +84,7 @@ const NON_SEARCH_ROUTE_KEYS = new Set([
   'profile',
   'forms-hub',
   'employee-action/approval-authority-setup',
+  'setup/gl-account-determination',
 ]);
 
 export function isShellbarSearchRoute(routeKey: string): boolean {

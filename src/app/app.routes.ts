@@ -28,6 +28,7 @@ import { AddTerminationComponent } from './components/HR-Portal/termination/add-
 import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-maintenance.routes';
 import { authGuard } from './guards/auth.guard';
 import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.routes';
+import { GlAccountDeterminationComponent } from './components/setup/gl-account-determination/gl-account-determination';
 
 export const routes: Routes = [
   {
@@ -180,6 +181,11 @@ export const routes: Routes = [
   {
     path: 'employee-action/approval-authority-setup',
     component: ApprovalAuthoritySetupComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'setup/gl-account-determination',
+    component: GlAccountDeterminationComponent,
     canActivate: [authGuard],
   },
   {

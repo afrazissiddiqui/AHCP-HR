@@ -1,0 +1,132 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div class="setup-body">
+      <div class="setup-intro">
+        <h2>GL Account Determination</h2>
+        <p>Review saved account mappings below and use the form to add new lines.</p>
+      </div>
+
+      <div class="form-panel list-panel">
+        <div class="form-panel-head">
+          <h3 class="form-panel-title">Saved lines</h3>
+        </div>
+
+        @if (loadingList()) {
+          <div class="panel-message">Loading saved lines…</div>
+        } @else if (!savedRecords().length) {
+          <div class="panel-message">No GL account determinations added yet.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="entry-table list-table">
+              <thead>
+                <tr>
+                  <th class="col-sr">SR No.</th>
+                  <th>G/L Item Types</th>
+                  <th>Salary G/L Account Codes</th>
+                  <th>Salary G/L Account Names</th>
+                  <th>Branches</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (record of savedRecords(); track $index; let index = $index) {
+                  <tr>
+                    <td class="col-sr">{{ index + 1 }}</td>
+                    <td>{{ record.Type }}</td>
+                    <td>{{ record.Code }}</td>
+                    <td>{{ record.Name }}</td>
+                    <td>{{ record.Branch }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <h3 class="form-panel-title">Add new lines</h3>
+          <button type="button" class="btn-add-row" [disabled]="saving()" (click)="addRow()">Add row</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="entry-table">
+            <thead>
+              <tr>
+                <th class="col-sr">SR No.</th>
+                <th>G/L Item Types</th>
+                <th>Salary G/L Account Codes</th>
+                <th>Salary G/L Account Names</th>
+                <th>Branches</th>
+                <th class="col-action">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.id; let index = $index) {
+                <tr>
+                  <td class="col-sr">{{ formRowSrNo(index) }}</td>
+                  <td>
+                    <input
+                      type="text"
+                      class="field-input"
+                      [(ngModel)]="row.glItemType"
+                      [name]="'glItemType-' + row.id"
+                      placeholder="G/L Item Types"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      class="field-input"
+                      [(ngModel)]="row.salaryGlAccountCode"
+                      [name]="'salaryGlAccountCode-' + row.id"
+                      placeholder="Salary G/L Account Codes"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      class="field-input"
+                      [(ngModel)]="row.salaryGlAccountName"
+                      [name]="'salaryGlAccountName-' + row.id"
+                      placeholder="Salary G/L Account Names"
+                    />
+                  </td>
+                  <td>
+                    <select
+                      class="field-select"
+                      [(ngModel)]="row.branch"
+                      [name]="'branch-' + row.id"
+                    >
+                      <option value="">Select branch</option>
+                      @for (branch of branchOptions; track branch) {
+                        <option [value]="branch">{{ branch }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="col-action">
+                    <button
+                      type="button"
+                      class="btn-remove-row"
+                      [disabled]="saving()"
+                      (click)="removeRow(row.id)"
+                      title="Remove row"
+                    >
+                      ×
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitForm()">
+          {{ saving() ? 'Saving…' : 'Submit form' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
