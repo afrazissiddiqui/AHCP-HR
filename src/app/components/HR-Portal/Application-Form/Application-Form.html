@@ -243,12 +243,20 @@
               <dd>{{ displayDash(d.personalInfo.employmentStatus) }}</dd>
               <dt>Department</dt>
               <dd>{{ displayDash(d.personalInfo.departmentInAhcp) }}</dd>
-              <dt>Designation</dt>
+              <dt>Branch / location</dt>
+              <dd>{{ displayDash(d.personalInfo.branchLocation || d.requisition.location) }}</dd>
+              <dt>Cost center</dt>
+              <dd>{{ displayDash(d.personalInfo.costCenter || d.requisition.costCenter) }}</dd>
+              <dt>Proposed designation</dt>
               <dd>{{ displayDash(d.personalInfo.designation) }}</dd>
+              <dt>Work / grade level</dt>
+              <dd>{{ displayDash(d.personalInfo.workGradeLevel) }}</dd>
+              <dt>Reporting manager</dt>
+              <dd>{{ displayDash(d.personalInfo.reportingManager || d.requisition.hiringManager) }}</dd>
+              <dt>Remarks</dt>
+              <dd>{{ displayDash(d.personalInfo.remarks) }}</dd>
               <dt>Job description</dt>
               <dd>{{ displayDash(d.personalInfo.jobDescription) }}</dd>
-              <dt>Role salary</dt>
-              <dd>{{ displayDash(d.personalInfo.roleSalary) }}</dd>
             </dl>
           </section>
 
@@ -341,18 +349,34 @@
           <section class="application-detail-section">
             <h4 class="application-detail-section-title">Remuneration</h4>
             <dl class="application-detail-dl">
-              <dt>Basic salary</dt>
+              <dt>Salary offer</dt>
               <dd>{{ displayDash(d.remuneration.basicSalary) }}</dd>
               <dt>Payment mode</dt>
               <dd>{{ displayDash(d.remuneration.paymentMode) }}</dd>
-              <dt>Account title</dt>
-              <dd>{{ displayDash(d.remuneration.accountTitle) }}</dd>
               <dt>Bank name</dt>
               <dd>{{ displayDash(d.remuneration.bankName) }}</dd>
+              <dt>Bank account number</dt>
+              <dd>{{ displayDash(d.remuneration.accountNo) }}</dd>
+              <dt>Effective joining date</dt>
+              <dd>{{ displayDate(d.remuneration.dateOfJoining) }}</dd>
+              <dt>Percentage of salary in cash</dt>
+              <dd>{{ displayDash(d.remuneration.cashSalaryPercentage) }}</dd>
+              <dt>Overtime applicable</dt>
+              <dd>{{ displayDash(d.remuneration.overTimeApplicable) }}</dd>
+              <dt>Allowances applicable</dt>
+              <dd>{{ displayDash(d.remuneration.allowancesApplicable) }}</dd>
+              <dt>EOBI applicable</dt>
+              <dd>{{ displayDash(d.remuneration.eobiApplicable) }}</dd>
+              <dt>Social security applicable</dt>
+              <dd>{{ displayDash(d.remuneration.socialSecurityApplicable) }}</dd>
+              <dt>Fuel limit</dt>
+              <dd>{{ displayDash(d.remuneration.fuelLimit) }}</dd>
+              <dt>Leave eligibility criteria</dt>
+              <dd>{{ displayDash(d.remuneration.leaveEligibilityCriteria) }}</dd>
+              <dt>Account title</dt>
+              <dd>{{ displayDash(d.remuneration.accountTitle) }}</dd>
               <dt>Branch name</dt>
               <dd>{{ displayDash(d.remuneration.branchName) }}</dd>
-              <dt>Account no.</dt>
-              <dd>{{ displayDash(d.remuneration.accountNo) }}</dd>
               <dt>Account type</dt>
               <dd>{{ displayDash(d.remuneration.accountType) }}</dd>
               <dt>Effective date</dt>
@@ -413,8 +437,12 @@
             <dl class="application-detail-dl">
               <dt>Asset allocated</dt>
               <dd>{{ displayDash(d.assets.assetAllocated) }}</dd>
+              <dt>Asset OITM code</dt>
+              <dd>{{ displayDash(d.assets.assetOitmCode) }}</dd>
               <dt>Allocation status</dt>
               <dd>{{ displayDash(d.assets.allocationStatus) }}</dd>
+              <dt>Allocation date type</dt>
+              <dd>{{ displayDash(d.assets.allocationDateType) }}</dd>
               <dt>Allocation date</dt>
               <dd>{{ displayDate(d.assets.allocationDate) }}</dd>
             </dl>

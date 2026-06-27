@@ -35,6 +35,11 @@ export interface ApplicationFormPersonalInfo {
   designation: string;
   jobDescription: string;
   roleSalary: string;
+  workGradeLevel: string;
+  branchLocation: string;
+  costCenter: string;
+  reportingManager: string;
+  remarks: string;
 }
 
 export interface ApplicationFormEducationRow {
@@ -88,6 +93,12 @@ export interface ApplicationFormRemuneration {
   maximumLoanCapacity: string;
   maximumAdvanceCapacity: string;
   otherAllowances: string;
+  allowancesApplicable: string;
+  cashSalaryPercentage: string;
+  eobiApplicable: string;
+  socialSecurityApplicable: string;
+  fuelLimit: string;
+  leaveEligibilityCriteria: string;
 }
 
 export interface ApplicationFormHrSettings {
@@ -131,8 +142,10 @@ export interface ApplicationFormRequisition {
 
 export interface ApplicationFormAssets {
   assetAllocated: string;
+  assetOitmCode: string;
   allocationStatus: string;
   allocationDate: string;
+  allocationDateType: string;
 }
 
 export interface ApplicationFormDetail {
@@ -254,8 +267,21 @@ export interface EmployeeProfileAddPayload {
   loginEmployeeName: string;
   password: string;
   assetAllocated: string;
+  assetOitmCode: string;
   allocationStatus: string;
   allocationDate: string;
+  allocationDateType: string;
+  workGradeLevel: string;
+  branchLocation: string;
+  costCenter: string;
+  reportingManager: string;
+  remarks: string;
+  allowancesApplicable: boolean;
+  cashSalaryPercentage: string;
+  eobiApplicable: boolean;
+  socialSecurityApplicable: boolean;
+  fuelLimit: string;
+  leaveEligibilityCriteria: string;
 }
 
 @Injectable({
@@ -533,6 +559,13 @@ export class ApplicationFormService {
         designation: pick('designation'),
         jobDescription: pick('jobDescription', 'job_description'),
         roleSalary: pick('roleSalary', 'role_salary') || pick('roleAndSalary', 'role_and_salary'),
+        workGradeLevel: pick('workGradeLevel', 'work_grade_level'),
+        branchLocation:
+          pick('branchLocation', 'branch_location') || pick('branch', 'branch') || pick('location', 'location'),
+        costCenter: pick('costCenter', 'cost_center'),
+        reportingManager:
+          pick('reportingManager', 'reporting_manager') || pick('hiringManager', 'hiring_manager'),
+        remarks: pick('remarks'),
       },
       education,
       pastExperience,
@@ -564,6 +597,16 @@ export class ApplicationFormService {
         maximumLoanCapacity: pick('maximumLoanCapacity', 'maximum_loan_capacity'),
         maximumAdvanceCapacity: pick('maximumAdvanceCapacity', 'maximum_advance_capacity'),
         otherAllowances: pick('otherAllowances', 'other_allowances'),
+        allowancesApplicable: this.yesNoFromApi(item['allowancesApplicable'] ?? item['allowances_applicable']),
+        cashSalaryPercentage:
+          pick('cashSalaryPercentage', 'cash_salary_percentage') ||
+          pick('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
+        eobiApplicable: this.yesNoFromApi(item['eobiApplicable'] ?? item['eobi_applicable']),
+        socialSecurityApplicable: this.yesNoFromApi(
+          item['socialSecurityApplicable'] ?? item['social_security_applicable'],
+        ),
+        fuelLimit: pick('fuelLimit', 'fuel_limit'),
+        leaveEligibilityCriteria: pick('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },
       hrSettings: {
         employeeMaster: asNumberString(item['employeeMaster'] ?? item['employee_master']),
@@ -584,7 +627,10 @@ export class ApplicationFormService {
         copyExisting: false,
         reqId: '',
         internalJobTitle: summary.Designation !== '—' ? summary.Designation : '',
-        hiringManager: summary.ReportingManager !== '—' ? summary.ReportingManager : '',
+        hiringManager:
+          pick('reportingManager', 'reporting_manager') ||
+          pick('hiringManager', 'hiring_manager') ||
+          (summary.ReportingManager !== '—' ? summary.ReportingManager : ''),
         recruiter: '',
         recruitmentCollaborator: '',
         requisitionAdministrator: '',
@@ -593,8 +639,9 @@ export class ApplicationFormService {
         company: summary.EmployeeNature !== '—' ? summary.EmployeeNature : '',
         department: summary.Department !== '—' ? summary.Department : '',
         division: summary.EmploymentType !== '—' ? summary.EmploymentType : '',
-        location: '',
-        costCenter: summary.EmploymentCategory !== '—' ? summary.EmploymentCategory : '',
+        location:
+          pick('branchLocation', 'branch_location') || pick('branch', 'branch') || pick('location', 'location'),
+        costCenter: pick('costCenter', 'cost_center'),
       },
       assets: this.mapApiAssets(item),
     };
@@ -686,9 +733,28 @@ export class ApplicationFormService {
 
     return {
       assetAllocated: pickAsset('assetAllocated', 'asset_allocated'),
+      assetOitmCode: pickAsset('assetOitmCode', 'asset_oitm_code') || pickAsset('oitmCode', 'oitm_code'),
       allocationStatus: pickAsset('allocationStatus', 'allocation_status'),
       allocationDate: formatDateForInput(pickAsset('allocationDate', 'allocation_date')),
+      allocationDateType: pickAsset('allocationDateType', 'allocation_date_type'),
     };
+  }
+
+  private yesNoFromApi(value: unknown): string {
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+    const normalized = value === undefined || value === null ? '' : String(value).trim();
+    if (!normalized) {
+      return '';
+    }
+    if (normalized.toLowerCase() === 'true' || normalized === '1') {
+      return 'Yes';
+    }
+    if (normalized.toLowerCase() === 'false' || normalized === '0') {
+      return 'No';
+    }
+    return normalized;
   }
 }
 

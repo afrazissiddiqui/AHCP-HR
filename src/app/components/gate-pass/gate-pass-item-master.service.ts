@@ -40,8 +40,14 @@ export interface GatePassLineItemFields {
   uom?: string;
 }
 
+const ALLOCATABLE_ASSET_CATEGORIES = new Set(['IT Assets', 'Tools', 'Capital']);
+
 @Injectable({ providedIn: 'root' })
 export class GatePassItemMasterService {
+  listAllocatableAssets(): GatePassItemMaster[] {
+    return ITEM_MASTER_CATALOG.filter((item) => ALLOCATABLE_ASSET_CATEGORIES.has(item.category));
+  }
+
   search(query: string, limit = 8): GatePassItemMaster[] {
     const q = query.trim().toLowerCase();
     if (!q) {

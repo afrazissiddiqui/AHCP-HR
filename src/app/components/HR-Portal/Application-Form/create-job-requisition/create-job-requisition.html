@@ -236,35 +236,8 @@
         <div class="cjr-personal-grid">
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Employment Nature:</label>
-              <select [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)"
-                (blur)="touch('employmentNature')">
-                <option value="">No Selection</option>
-                <option value="Technical">Technical</option>
-                <option value="Non-Technical">Non-Technical</option>
-              </select>
-            </div>
-
-            <div class="cjr-row">
-              <label>Employment Category:</label>
-              <select [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)"
-                (blur)="touch('employmentCategory')">
-                <option value="">No Selection</option>
-                <option value="Executive">Executive</option>
-                <option value="Non-Executive">Non-Executive</option>
-                <option value="Top Managment">Top Managment</option>
-              </select>
-            </div>
-
-            <div class="cjr-row">
-              <label>Employment Status:</label>
-              <select [ngModel]="employmentStatus()" (ngModelChange)="employmentStatus.set($event)"
-                (blur)="touch('employmentStatus')">
-                <option value="">No Selection</option>
-                <option value="Active">Active</option>
-                <option value="Contractual">Contractual</option>
-                <option value="Permenant">Permenant</option>
-              </select>
+              <label>Employee Number:</label>
+              <input type="text" [ngModel]="employeeCode()" readonly placeholder="System generated" />
             </div>
 
             <div class="cjr-row">
@@ -277,25 +250,75 @@
                 }
               </select>
             </div>
+
+            <div class="cjr-row">
+              <label>Branch / Location:</label>
+              <input type="text" [ngModel]="branchLocation()" (ngModelChange)="branchLocation.set($event)"
+                (blur)="touch('branchLocation')" placeholder="Linked to OHEM.branch" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Cost Center:</label>
+              <input type="text" [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)"
+                (blur)="touch('costCenter')" placeholder="Linked to OPRC" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Employee Category:</label>
+              <select [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)"
+                (blur)="touch('employmentCategory')">
+                <option value="">No Selection</option>
+                <option value="Executive">Executive</option>
+                <option value="Non-Executive">Non-Executive</option>
+                <option value="Daily Wagers">Daily Wagers</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
+              <label>Work / Grade Level:</label>
+              <select [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)"
+                (blur)="touch('workGradeLevel')">
+                <option value="">No Selection</option>
+                @for (level of workGradeLevelOptions; track level) {
+                <option [value]="level">{{ level }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Designation:</label>
+              <label>Proposed Designation:</label>
               <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)"
-                (blur)="touch('designation')" placeholder="e.g. Software Developer" />
+                (blur)="touch('designation')" placeholder="Linked to OHEM.jobTitle" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Reporting Manager:</label>
+              <input type="text" [ngModel]="hiringManager()" (ngModelChange)="hiringManager.set($event)"
+                (blur)="touch('hiringManager')" placeholder="Linked to OHEM.userId" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Employee Status:</label>
+              <select [ngModel]="employmentStatus()" (ngModelChange)="employmentStatus.set($event)"
+                (blur)="touch('employmentStatus')">
+                <option value="">No Selection</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+
+            <div class="cjr-row cjr-row--textarea">
+              <label>Remarks:</label>
+              <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"
+                (blur)="touch('remarks')" placeholder="Linked to OHEM.remarks"></textarea>
             </div>
 
             <div class="cjr-row cjr-row--textarea">
               <label>Job Description:</label>
               <textarea rows="3" [ngModel]="jobDescription()" (ngModelChange)="jobDescription.set($event)"
                 (blur)="touch('jobDescription')" placeholder="Role description"></textarea>
-            </div>
-
-            <div class="cjr-row">
-              <label>Role Salary:</label>
-              <input type="text" [ngModel]="roleSalary()" (ngModelChange)="roleSalary.set($event)"
-                (blur)="touch('roleSalary')" placeholder="e.g. Developer" />
             </div>
           </div>
         </div>
@@ -570,7 +593,7 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Basic Salary:</label>
+            <label>Salary Offer:</label>
             <input type="number" min="0" step="0.01" [ngModel]="basicSalary()"
               (ngModelChange)="basicSalary.set($event)" (blur)="touch('basicSalary')" />
           </div>
@@ -604,7 +627,7 @@
           </div>
 
           <div class="cjr-row">
-            <label>Account No:</label>
+            <label>Bank Account Number:</label>
             <input type="text" [ngModel]="accountNo()" (ngModelChange)="accountNo.set($event)"
               (blur)="touch('accountNo')" />
           </div>
@@ -629,9 +652,16 @@
           </div>
 
           <div class="cjr-row">
-            <label>Date of Joining:</label>
+            <label>Effective Joining Date:</label>
             <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)"
               (blur)="touch('dateOfJoining')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Percentage of Salary in Cash:</label>
+            <input type="number" min="0" max="100" step="0.01" [ngModel]="cashSalaryPercentage()"
+              (ngModelChange)="onNumericOnlyChange($event, cashSalaryPercentage)"
+              (blur)="touch('cashSalaryPercentage')" placeholder="0.00%" />
           </div>
         </div>
 
@@ -651,13 +681,55 @@
           </div>
 
           <div class="cjr-row">
-            <label>Over Time Applicable:</label>
+            <label>Overtime Applicable:</label>
             <select [ngModel]="overTimeApplicable()" (ngModelChange)="overTimeApplicable.set($event)"
               (blur)="touch('overTimeApplicable')">
               <option value="">No Selection</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
             </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Allowances Applicable:</label>
+            <select [ngModel]="allowancesApplicable()" (ngModelChange)="allowancesApplicable.set($event)"
+              (blur)="touch('allowancesApplicable')">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>EOBI Applicable:</label>
+            <select [ngModel]="eobiApplicable()" (ngModelChange)="eobiApplicable.set($event)"
+              (blur)="touch('eobiApplicable')">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Social Security Applicable:</label>
+            <select [ngModel]="socialSecurityApplicable()" (ngModelChange)="socialSecurityApplicable.set($event)"
+              (blur)="touch('socialSecurityApplicable')">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Fuel Limit:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="fuelLimit()"
+              (ngModelChange)="onNumericOnlyChange($event, fuelLimit)" (blur)="touch('fuelLimit')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Leave Eligibility Criteria:</label>
+            <input type="text" [ngModel]="leaveEligibilityCriteria()"
+              (ngModelChange)="leaveEligibilityCriteria.set($event)" (blur)="touch('leaveEligibilityCriteria')" />
           </div>
 
           <div class="cjr-row">
@@ -743,8 +815,7 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee Code:</label>
-            <input type="text" [ngModel]="employeeCode()" (ngModelChange)="employeeCode.set($event)"
-              (blur)="touch('employeeCode')" placeholder="Enter employee code..." />
+            <input type="text" [ngModel]="employeeCode()" readonly placeholder="System generated" />
           </div>
 
           <div class="cjr-row">
@@ -776,13 +847,18 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Asset allocated:</label>
-            <input type="text" [ngModel]="assetAllocated()" (ngModelChange)="assetAllocated.set($event)"
-              (blur)="touch('assetAllocated')" placeholder="Enter allocated asset..." />
+            <label>Assets Allocated:</label>
+            <select [ngModel]="assetAllocated()" (ngModelChange)="onAssetAllocatedChange($event)"
+              (blur)="touch('assetAllocated')">
+              <option value="">No Selection</option>
+              @for (asset of assetOptions; track asset.itemCode) {
+              <option [value]="asset.itemCode">{{ asset.itemCode }} — {{ asset.itemName }}</option>
+              }
+            </select>
           </div>
 
           <div class="cjr-row">
-            <label>Allocation status:</label>
+            <label>Assets Allocation Status:</label>
             <select [ngModel]="allocationStatus()" (ngModelChange)="allocationStatus.set($event)"
               (blur)="touch('allocationStatus')">
               <option value="">No Selection</option>
@@ -794,7 +870,17 @@
 
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Allocation date:</label>
+            <label>Assets Allocation Date Type:</label>
+            <select [ngModel]="allocationDateType()" (ngModelChange)="onAllocationDateTypeChange($event)"
+              (blur)="touch('allocationDateType')">
+              <option value="">No Selection</option>
+              <option value="Current Dated">Current Dated</option>
+              <option value="Back Dated">Back Dated</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Assets Allocation Date:</label>
             <input type="date" [ngModel]="allocationDate()" (ngModelChange)="allocationDate.set($event)"
               (blur)="touch('allocationDate')" />
           </div>

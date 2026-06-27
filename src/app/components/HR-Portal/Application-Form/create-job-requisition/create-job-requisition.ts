@@ -20,6 +20,10 @@ import {
   JobSpecificationRecord,
   JobSpecificationService,
 } from '../../../../services/job-specification.service';
+import {
+  GatePassItemMaster,
+  GatePassItemMasterService,
+} from '../../../gate-pass/gate-pass-item-master.service';
 
 interface AttachmentRow {
   fileName: string;
@@ -44,6 +48,18 @@ const DEPARTMENT_OPTIONS = [
   'IT Department',
   'BOD Department',
   'Common Department',
+] as const;
+
+const WORK_GRADE_LEVEL_OPTIONS = [
+  'WL 5',
+  'WL 4',
+  'WL 3B',
+  'WL 3A',
+  'WL 2C',
+  'WL 2B',
+  'WL 2A',
+  'WL 1D',
+  'WL 1B–1C',
 ] as const;
 
 @Component({
@@ -96,6 +112,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly designation = signal('');
   protected readonly jobDescription = signal('');
   protected readonly roleSalary = signal('');
+  protected readonly workGradeLevel = signal('');
+  protected readonly branchLocation = signal('');
+  protected readonly remarks = signal('');
+  protected readonly workGradeLevelOptions = WORK_GRADE_LEVEL_OPTIONS;
 
   // Education fields - array of education sections
   protected readonly educationSections = signal<Array<{
@@ -178,6 +198,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly maximumLoanCapacity = signal('');
   protected readonly maximumAdvanceCapacity = signal('');
   protected readonly otherAllowances = signal('');
+  protected readonly allowancesApplicable = signal<'Yes' | 'No' | ''>('');
+  protected readonly cashSalaryPercentage = signal('');
+  protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('');
+  protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('');
+  protected readonly fuelLimit = signal('');
+  protected readonly leaveEligibilityCriteria = signal('');
 
   // HR / payroll settings
   protected readonly employeeMaster = signal('');
@@ -194,8 +220,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   // Assets fields
   protected readonly assetAllocated = signal('');
+  protected readonly assetOitmCode = signal('');
   protected readonly allocationStatus = signal<'Assigned' | 'Recovered' | ''>('');
   protected readonly allocationDate = signal('');
+  protected readonly allocationDateType = signal<'Current Dated' | 'Back Dated' | ''>('');
+  protected readonly assetOptions: GatePassItemMaster[];
 
   // Create Job Requisition fields
   protected readonly reqId = signal('');
@@ -210,8 +239,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly company = signal('No Selection');
   protected readonly department = signal('No Selection');
   protected readonly division = signal('No Selection');
-  protected readonly location = signal('No Selection');
-  protected readonly costCenter = signal('No Selection');
+  protected readonly location = signal('');
+  protected readonly costCenter = signal('');
 
   protected readonly touched = signal<Record<string, boolean>>({});
 
@@ -252,6 +281,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       maximumLoanCapacity: this.maximumLoanCapacity(),
       maximumAdvanceCapacity: this.maximumAdvanceCapacity(),
       otherAllowances: this.otherAllowances(),
+      allowancesApplicable: this.allowancesApplicable(),
+      cashSalaryPercentage: this.cashSalaryPercentage(),
+      eobiApplicable: this.eobiApplicable(),
+      socialSecurityApplicable: this.socialSecurityApplicable(),
+      fuelLimit: this.fuelLimit(),
+      leaveEligibilityCriteria: this.leaveEligibilityCriteria(),
     };
   }
 
@@ -273,6 +308,23 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   private overTimeToBoolean(value: 'Yes' | 'No' | ''): boolean {
     return value === 'Yes';
+  }
+
+  private yesNoToBoolean(value: 'Yes' | 'No' | ''): boolean {
+    return value === 'Yes';
+  }
+
+  protected onAssetAllocatedChange(value: string): void {
+    this.assetAllocated.set(value);
+    const asset = this.assetOptions.find((item) => item.itemCode === value);
+    this.assetOitmCode.set(asset?.itemCode ?? value);
+  }
+
+  protected onAllocationDateTypeChange(value: string): void {
+    this.allocationDateType.set(value as 'Current Dated' | 'Back Dated' | '');
+    if (value === 'Current Dated') {
+      this.allocationDate.set(new Date().toISOString().slice(0, 10));
+    }
   }
 
   protected onDateOfBirthChange(value: string): void {
@@ -533,6 +585,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.loadJobSpecificationOptions();
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
+      this.employeeCode.set(String(this.applicationFormService.getNextEmployeeCode()));
       return;
     }
     this.editingApiId.set(editId);
@@ -564,8 +617,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     private readonly viewportScroller: ViewportScroller,
     private readonly applicationFormService: ApplicationFormService,
     private readonly jobSpecificationService: JobSpecificationService,
+    private readonly itemMasterService: GatePassItemMasterService,
     private readonly alertService: AlertService,
-  ) { }
+  ) {
+    this.assetOptions = this.itemMasterService.listAllocatableAssets();
+  }
 
   protected onJobSpecificationSelected(value: string): void {
     this.selectedJobSpecId.set(value);
@@ -647,6 +703,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.jobDescription.set(descriptionParts.join('\n\n'));
 
     if (gradeWorkLevel) {
+      this.workGradeLevel.set(gradeWorkLevel);
       this.roleSalary.set(gradeWorkLevel);
       this.salaryStructure.set(gradeWorkLevel);
     }
@@ -759,6 +816,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         designation: this.designation(),
         jobDescription: this.jobDescription(),
         roleSalary: this.roleSalary(),
+        workGradeLevel: this.workGradeLevel(),
+        branchLocation: this.branchLocation(),
+        costCenter: this.costCenter(),
+        reportingManager: this.hiringManager(),
+        remarks: this.remarks(),
       },
       education: this.educationSections().map((row) => ({ ...row })),
       pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
@@ -788,13 +850,15 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         company: this.company(),
         department: this.department(),
         division: this.division(),
-        location: this.location(),
+        location: this.branchLocation() || this.location(),
         costCenter: this.costCenter()
       },
       assets: {
         assetAllocated: this.assetAllocated(),
+        assetOitmCode: this.assetOitmCode(),
         allocationStatus: this.allocationStatus(),
         allocationDate: this.allocationDate(),
+        allocationDateType: this.allocationDateType(),
       },
     };
 
@@ -842,6 +906,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       designation: this.designation(),
       jobDescription: this.jobDescription(),
       roleSalary: this.roleSalary(),
+      workGradeLevel: this.workGradeLevel(),
+      branchLocation: this.branchLocation() || this.location(),
+      costCenter: this.costCenter(),
+      reportingManager: this.hiringManager(),
+      remarks: this.remarks(),
       educationSections: this.educationSections().map((row) => ({
         qualification: row.qualification,
         institution: row.institution || row.institute,
@@ -881,8 +950,16 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       loginEmployeeName: this.loginEmployeeName(),
       password: this.password(),
       assetAllocated: this.assetAllocated(),
+      assetOitmCode: this.assetOitmCode(),
       allocationStatus: this.allocationStatus(),
       allocationDate: formatDateToApiIso(this.allocationDate()),
+      allocationDateType: this.allocationDateType(),
+      allowancesApplicable: this.yesNoToBoolean(this.allowancesApplicable()),
+      cashSalaryPercentage: this.cashSalaryPercentage(),
+      eobiApplicable: this.yesNoToBoolean(this.eobiApplicable()),
+      socialSecurityApplicable: this.yesNoToBoolean(this.socialSecurityApplicable()),
+      fuelLimit: this.fuelLimit(),
+      leaveEligibilityCriteria: this.leaveEligibilityCriteria(),
     };
 
     const editId = this.editingApiId();
@@ -959,6 +1036,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     );
     this.jobDescription.set(detail.personalInfo.jobDescription);
     this.roleSalary.set(detail.personalInfo.roleSalary);
+    this.workGradeLevel.set(detail.personalInfo.workGradeLevel ?? '');
+    this.branchLocation.set(
+      detail.personalInfo.branchLocation || detail.requisition.location || '',
+    );
+    this.costCenter.set(
+      detail.personalInfo.costCenter || detail.requisition.costCenter || '',
+    );
+    this.remarks.set(detail.personalInfo.remarks ?? '');
 
     this.educationSections.set(
       detail.education.length
@@ -1027,6 +1112,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.maximumLoanCapacity.set(remuneration.maximumLoanCapacity ?? '');
     this.maximumAdvanceCapacity.set(remuneration.maximumAdvanceCapacity ?? '');
     this.otherAllowances.set(remuneration.otherAllowances ?? '');
+    this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') ?? '');
+    this.cashSalaryPercentage.set(remuneration.cashSalaryPercentage ?? '');
+    this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? '');
+    this.socialSecurityApplicable.set(
+      (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? '',
+    );
+    this.fuelLimit.set(remuneration.fuelLimit ?? '');
+    this.leaveEligibilityCriteria.set(remuneration.leaveEligibilityCriteria ?? '');
 
     const hrSettings = detail.hrSettings;
     if (hrSettings) {
@@ -1045,8 +1138,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     const assets = detail.assets;
     if (assets) {
       this.assetAllocated.set(assets.assetAllocated ?? '');
+      this.assetOitmCode.set(assets.assetOitmCode ?? '');
       this.allocationStatus.set((assets.allocationStatus as 'Assigned' | 'Recovered' | '') ?? '');
       this.allocationDate.set(assets.allocationDate ?? '');
+      this.allocationDateType.set(
+        (assets.allocationDateType as 'Current Dated' | 'Back Dated' | '') ?? '',
+      );
     }
 
     this.attachmentRows.set(
@@ -1072,7 +1169,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.company.set(req.company || 'No Selection');
     this.department.set(req.department || 'No Selection');
     this.division.set(req.division || 'No Selection');
-    this.location.set(req.location || 'No Selection');
-    this.costCenter.set(req.costCenter || 'No Selection');
+    this.location.set(req.location || detail.personalInfo.branchLocation || '');
+    this.costCenter.set(req.costCenter || detail.personalInfo.costCenter || '');
+    this.hiringManager.set(req.hiringManager || detail.personalInfo.reportingManager || '');
   }
 }
