@@ -60,6 +60,18 @@ export interface ApplicationFormPastExperienceRow {
 
 export interface ApplicationFormRemuneration {
   basicSalary: string;
+  paymentMode: string;
+  accountTitle: string;
+  bankName: string;
+  branchName: string;
+  accountNo: string;
+  accountType: string;
+  effectiveDate: string;
+  taxArrangementPercentage: string;
+  dateOfJoining: string;
+  advancePercentAllowed: string;
+  loanAmountAllowed: string;
+  overTimeApplicable: string;
   medicalAllowances: string;
   fuelAllowances: string;
   mobileAllowances: string;
@@ -190,6 +202,18 @@ export interface EmployeeProfileAddPayload {
     file: string;
   }>;
   basicSalary: string;
+  paymentMode: string;
+  accountTitle: string;
+  bankName: string;
+  branchName: string;
+  accountNo: string;
+  accountType: string;
+  effectiveDate: string;
+  taxArrangementPercentage: string;
+  dateOfJoining: string;
+  advancePercentAllowed: string;
+  loanAmountAllowed: string;
+  overTimeApplicable: string;
   medicalAllowances: string;
   fuelAllowances: string;
   mobileAllowances: string;
@@ -454,6 +478,18 @@ export class ApplicationFormService {
       pastExperience,
       remuneration: {
         basicSalary: pick('basicSalary', 'basic_salary'),
+        paymentMode: pick('paymentMode', 'payment_mode'),
+        accountTitle: pick('accountTitle', 'account_title'),
+        bankName: pick('bankName', 'bank_name'),
+        branchName: pick('branchName', 'branch_name'),
+        accountNo: pick('accountNo', 'account_no'),
+        accountType: pick('accountType', 'account_type'),
+        effectiveDate: pick('effectiveDate', 'effective_date'),
+        taxArrangementPercentage: pick('taxArrangementPercentage', 'tax_arrangement_percentage'),
+        dateOfJoining: pick('dateOfJoining', 'date_of_joining'),
+        advancePercentAllowed: pick('advancePercentAllowed', 'advance_percent_allowed'),
+        loanAmountAllowed: pick('loanAmountAllowed', 'loan_amount_allowed'),
+        overTimeApplicable: pick('overTimeApplicable', 'over_time_applicable'),
         medicalAllowances: pick('medicalAllowances', 'medical_allowances'),
         fuelAllowances: pick('fuelAllowances', 'fuel_allowances'),
         mobileAllowances: pick('mobileAllowances', 'mobile_allowances'),

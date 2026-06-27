@@ -480,6 +480,87 @@
           </div>
 
           <div class="cjr-row">
+            <label>Payment Mode:</label>
+            <input type="text" [ngModel]="paymentMode()" (ngModelChange)="paymentMode.set($event)"
+              (blur)="touch('paymentMode')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Account Title:</label>
+            <input type="text" [ngModel]="accountTitle()" (ngModelChange)="accountTitle.set($event)"
+              (blur)="touch('accountTitle')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Bank Name:</label>
+            <input type="text" [ngModel]="bankName()" (ngModelChange)="bankName.set($event)"
+              (blur)="touch('bankName')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Branch Name:</label>
+            <input type="text" [ngModel]="branchName()" (ngModelChange)="branchName.set($event)"
+              (blur)="touch('branchName')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Account No:</label>
+            <input type="text" [ngModel]="accountNo()" (ngModelChange)="accountNo.set($event)"
+              (blur)="touch('accountNo')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Account Type:</label>
+            <input type="text" [ngModel]="accountType()" (ngModelChange)="accountType.set($event)"
+              (blur)="touch('accountType')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Effective Date:</label>
+            <input type="date" [ngModel]="effectiveDate()" (ngModelChange)="effectiveDate.set($event)"
+              (blur)="touch('effectiveDate')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Percentage (For tax arrangement):</label>
+            <input type="number" min="0" step="0.01" [ngModel]="taxArrangementPercentage()"
+              (ngModelChange)="onNumericOnlyChange($event, taxArrangementPercentage)"
+              (blur)="touch('taxArrangementPercentage')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Date of Joining:</label>
+            <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)"
+              (blur)="touch('dateOfJoining')" />
+          </div>
+        </div>
+
+        <div class="cjr-personal-col">
+          <div class="cjr-row">
+            <label>Advance % Allowed:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="advancePercentAllowed()"
+              (ngModelChange)="onNumericOnlyChange($event, advancePercentAllowed)"
+              (blur)="touch('advancePercentAllowed')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Loan Amount Allowed:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="loanAmountAllowed()"
+              (ngModelChange)="onNumericOnlyChange($event, loanAmountAllowed)"
+              (blur)="touch('loanAmountAllowed')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Over Time Applicable:</label>
+            <select [ngModel]="overTimeApplicable()" (ngModelChange)="overTimeApplicable.set($event)"
+              (blur)="touch('overTimeApplicable')">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
             <label>Medical Allowances:</label>
             <input type="number" min="0" step="0.01" [ngModel]="medicalAllowances()"
               (ngModelChange)="medicalAllowances.set($event)" (blur)="touch('medicalAllowances')" />
@@ -502,9 +583,7 @@
             <input type="number" min="0" step="0.01" [ngModel]="carAllowances()"
               (ngModelChange)="carAllowances.set($event)" (blur)="touch('carAllowances')" />
           </div>
-        </div>
 
-        <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Maximum Loan Capacity:</label>
             <input type="number" min="0" step="0.01" [ngModel]="maximumLoanCapacity()"

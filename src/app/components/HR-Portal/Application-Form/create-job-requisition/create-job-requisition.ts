@@ -162,6 +162,18 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   // Remuneration fields
   protected readonly basicSalary = signal('');
+  protected readonly paymentMode = signal('');
+  protected readonly accountTitle = signal('');
+  protected readonly bankName = signal('');
+  protected readonly branchName = signal('');
+  protected readonly accountNo = signal('');
+  protected readonly accountType = signal('');
+  protected readonly effectiveDate = signal('');
+  protected readonly taxArrangementPercentage = signal('');
+  protected readonly dateOfJoining = signal('');
+  protected readonly advancePercentAllowed = signal('');
+  protected readonly loanAmountAllowed = signal('');
+  protected readonly overTimeApplicable = signal<'Yes' | 'No' | ''>('');
   protected readonly medicalAllowances = signal('');
   protected readonly fuelAllowances = signal('');
   protected readonly mobileAllowances = signal('');
@@ -208,6 +220,18 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   private buildRemunerationPayload(): ApplicationFormDetail['remuneration'] {
     return {
       basicSalary: this.basicSalary(),
+      paymentMode: this.paymentMode(),
+      accountTitle: this.accountTitle(),
+      bankName: this.bankName(),
+      branchName: this.branchName(),
+      accountNo: this.accountNo(),
+      accountType: this.accountType(),
+      effectiveDate: this.effectiveDate(),
+      taxArrangementPercentage: this.taxArrangementPercentage(),
+      dateOfJoining: this.dateOfJoining(),
+      advancePercentAllowed: this.advancePercentAllowed(),
+      loanAmountAllowed: this.loanAmountAllowed(),
+      overTimeApplicable: this.overTimeApplicable(),
       medicalAllowances: this.medicalAllowances(),
       fuelAllowances: this.fuelAllowances(),
       mobileAllowances: this.mobileAllowances(),
@@ -792,15 +816,27 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     );
 
     const remuneration = detail.remuneration;
-    this.basicSalary.set(remuneration.basicSalary);
-    this.medicalAllowances.set(remuneration.medicalAllowances);
-    this.fuelAllowances.set(remuneration.fuelAllowances);
-    this.mobileAllowances.set(remuneration.mobileAllowances);
-    this.carAllowances.set(remuneration.carAllowances);
-    this.maximumLoanCapacity.set(remuneration.maximumLoanCapacity);
-    this.maximumAdvanceCapacity.set(remuneration.maximumAdvanceCapacity);
-    this.totalLeavesAllocated.set(remuneration.totalLeavesAllocated);
-    this.otherAllowances.set(remuneration.otherAllowances);
+    this.basicSalary.set(remuneration.basicSalary ?? '');
+    this.paymentMode.set(remuneration.paymentMode ?? '');
+    this.accountTitle.set(remuneration.accountTitle ?? '');
+    this.bankName.set(remuneration.bankName ?? '');
+    this.branchName.set(remuneration.branchName ?? '');
+    this.accountNo.set(remuneration.accountNo ?? '');
+    this.accountType.set(remuneration.accountType ?? '');
+    this.effectiveDate.set(remuneration.effectiveDate ?? '');
+    this.taxArrangementPercentage.set(remuneration.taxArrangementPercentage ?? '');
+    this.dateOfJoining.set(remuneration.dateOfJoining ?? '');
+    this.advancePercentAllowed.set(remuneration.advancePercentAllowed ?? '');
+    this.loanAmountAllowed.set(remuneration.loanAmountAllowed ?? '');
+    this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? '');
+    this.medicalAllowances.set(remuneration.medicalAllowances ?? '');
+    this.fuelAllowances.set(remuneration.fuelAllowances ?? '');
+    this.mobileAllowances.set(remuneration.mobileAllowances ?? '');
+    this.carAllowances.set(remuneration.carAllowances ?? '');
+    this.maximumLoanCapacity.set(remuneration.maximumLoanCapacity ?? '');
+    this.maximumAdvanceCapacity.set(remuneration.maximumAdvanceCapacity ?? '');
+    this.totalLeavesAllocated.set(remuneration.totalLeavesAllocated ?? '');
+    this.otherAllowances.set(remuneration.otherAllowances ?? '');
 
     this.employeeCode.set(detail.loginDetails.employeeCode);
     this.userId.set(detail.loginDetails.userId);
