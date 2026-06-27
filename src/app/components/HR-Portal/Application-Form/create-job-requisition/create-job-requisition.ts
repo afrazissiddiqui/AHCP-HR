@@ -714,6 +714,16 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  private resolveBranchName(
+    branchName: string | null | undefined,
+  ): (typeof BRANCH_NAME_OPTIONS)[number] | '' {
+    const normalized = (branchName ?? '').trim();
+    if ((BRANCH_NAME_OPTIONS as readonly string[]).includes(normalized)) {
+      return normalized as (typeof BRANCH_NAME_OPTIONS)[number];
+    }
+    return '';
+  }
+
   private populateFromJobSpecification(record: JobSpecificationRecord): void {
     const jobTitle = this.cleanJobSpecValue(record.jobTitle);
     const department = this.cleanJobSpecValue(record.department);
@@ -1147,7 +1157,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.paymentMode.set((remuneration.paymentMode as 'Cash' | 'Bank' | 'Hybrid' | '') ?? '');
     this.accountTitle.set(remuneration.accountTitle ?? '');
     this.bankName.set(remuneration.bankName ?? '');
-    this.branchName.set(remuneration.branchName ?? '');
+    this.branchName.set(this.resolveBranchName(remuneration.branchName));
     this.accountNo.set(remuneration.accountNo ?? '');
     this.accountType.set(remuneration.accountType ?? '');
     this.effectiveDate.set(remuneration.effectiveDate ?? '');
