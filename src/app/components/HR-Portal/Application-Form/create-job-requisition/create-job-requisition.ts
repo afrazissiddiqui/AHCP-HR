@@ -68,6 +68,12 @@ const BRANCH_NAME_OPTIONS = [
   'AHCP_Faisalabad',
 ] as const;
 
+const BRANCH_LOCATION_OPTIONS = [
+  'AHCP_ Peshawar',
+  'AHCP_ HO',
+  'AHCP_ Faisalabad',
+] as const;
+
 @Component({
   selector: 'app-create-job-requisition',
   standalone: true,
@@ -116,7 +122,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly emergencyContactNumber = signal(''); // (XXXX-XXXXXXX)
   protected readonly street = signal(''); // OHEM.workStreet
   protected readonly streetNo = signal(''); // OHEM.StreetNoW
-  protected readonly buildingFloorRoom = signal(''); // OHEM.WorkBuild
   protected readonly city = signal(''); // OHEM.workCity
   protected readonly state = signal<'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | ''>('');
   protected readonly country = signal(''); // OHEM.workCountr
@@ -130,7 +135,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly jobDescription = signal('');
   protected readonly roleSalary = signal('');
   protected readonly workGradeLevel = signal('');
-  protected readonly branchLocation = signal('');
+  protected readonly branchLocation = signal<(typeof BRANCH_LOCATION_OPTIONS)[number] | ''>('');
+  protected readonly branchLocationOptions = BRANCH_LOCATION_OPTIONS;
   protected readonly remarks = signal('');
   protected readonly workGradeLevelOptions = WORK_GRADE_LEVEL_OPTIONS;
 
@@ -258,7 +264,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly department = signal('No Selection');
   protected readonly division = signal('No Selection');
   protected readonly location = signal('');
-  protected readonly costCenter = signal('');
 
   protected readonly touched = signal<Record<string, boolean>>({});
 
@@ -800,6 +805,16 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  private resolveBranchLocation(
+    branchLocation: string | null | undefined,
+  ): (typeof BRANCH_LOCATION_OPTIONS)[number] | '' {
+    const normalized = (branchLocation ?? '').trim();
+    if ((BRANCH_LOCATION_OPTIONS as readonly string[]).includes(normalized)) {
+      return normalized as (typeof BRANCH_LOCATION_OPTIONS)[number];
+    }
+    return '';
+  }
+
   private populateFromJobSpecification(record: JobSpecificationRecord): void {
     const jobTitle = this.cleanJobSpecValue(record.jobTitle);
     const department = this.cleanJobSpecValue(record.department);
@@ -907,7 +922,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       department: this.department(),
       division: this.division(),
       location: this.location(),
-      costCenter: this.costCenter()
     });
   }
 
@@ -946,7 +960,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         emergencyContactNumber: this.emergencyContactNumber(),
         street: this.street(),
         streetNo: this.streetNo(),
-        buildingFloorRoom: this.buildingFloorRoom(),
+        buildingFloorRoom: '',
         city: this.city(),
         state: this.state(),
         country: this.country(),
@@ -960,7 +974,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         roleSalary: this.roleSalary(),
         workGradeLevel: this.workGradeLevel(),
         branchLocation: this.branchLocation(),
-        costCenter: this.costCenter(),
+        costCenter: '',
         reportingManager: this.hiringManager(),
         remarks: this.remarks(),
       },
@@ -993,7 +1007,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         department: this.department(),
         division: this.division(),
         location: this.branchLocation() || this.location(),
-        costCenter: this.costCenter()
+        costCenter: ''
       },
       assets: {
         assetAllocated: this.assetAllocated(),
@@ -1036,7 +1050,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       emergencyContactNumber: this.emergencyContactNumber(),
       street: this.street(),
       streetNo: this.streetNo(),
-      buildingFloorRoom: this.buildingFloorRoom(),
+      buildingFloorRoom: '',
       city: this.city(),
       state: this.state(),
       country: this.country(),
@@ -1050,7 +1064,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       roleSalary: this.roleSalary(),
       workGradeLevel: this.workGradeLevel(),
       branchLocation: this.branchLocation() || this.location(),
-      costCenter: this.costCenter(),
+      costCenter: '',
       reportingManager: this.hiringManager(),
       remarks: this.remarks(),
       educationSections: this.educationSections().map((row) => ({
@@ -1153,7 +1167,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.emergencyContactNumber.set(detail.personalInfo.emergencyContactNumber);
     this.street.set(detail.personalInfo.street);
     this.streetNo.set(detail.personalInfo.streetNo);
-    this.buildingFloorRoom.set(detail.personalInfo.buildingFloorRoom);
     this.city.set(detail.personalInfo.city);
     this.state.set((detail.personalInfo.state as 'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | '') ?? '');
     this.country.set(detail.personalInfo.country);
@@ -1180,10 +1193,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.roleSalary.set(detail.personalInfo.roleSalary);
     this.workGradeLevel.set(detail.personalInfo.workGradeLevel ?? '');
     this.branchLocation.set(
-      detail.personalInfo.branchLocation || detail.requisition.location || '',
-    );
-    this.costCenter.set(
-      detail.personalInfo.costCenter || detail.requisition.costCenter || '',
+      this.resolveBranchLocation(
+        detail.personalInfo.branchLocation || detail.requisition.location || '',
+      ),
     );
     this.remarks.set(detail.personalInfo.remarks ?? '');
 
@@ -1312,7 +1324,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.department.set(req.department || 'No Selection');
     this.division.set(req.division || 'No Selection');
     this.location.set(req.location || detail.personalInfo.branchLocation || '');
-    this.costCenter.set(req.costCenter || detail.personalInfo.costCenter || '');
     this.hiringManager.set(req.hiringManager || detail.personalInfo.reportingManager || '');
   }
 }
