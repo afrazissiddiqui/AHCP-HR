@@ -692,10 +692,10 @@
           </div>
 
           <div class="cjr-row">
-            <label>Loan Amount Allowed:</label>
-            <input type="text" inputmode="decimal" [ngModel]="loanAmountAllowed()"
-              (ngModelChange)="onNumericOnlyChange($event, loanAmountAllowed)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('loanAmountAllowed')" />
+            <label>Maximum Loan Capacity:</label>
+            <input type="text" inputmode="decimal" [ngModel]="maximumLoanCapacity()"
+              (ngModelChange)="onNumericOnlyChange($event, maximumLoanCapacity)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('maximumLoanCapacity')" />
           </div>
 
           <div class="cjr-row">

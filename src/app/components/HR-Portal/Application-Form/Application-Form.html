@@ -191,6 +191,14 @@
           <p *ngIf="detailView.loading" class="application-detail-empty">Loading employee details...</p>
           <ng-container *ngIf="!detailView.loading && detailView.record?.detail as d">
           <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Job description</h4>
+            <dl class="application-detail-dl">
+              <dt>Job description</dt>
+              <dd>{{ displayDash(d.personalInfo.jobDescription) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section">
             <h4 class="application-detail-section-title">Personal information</h4>
             <dl class="application-detail-dl">
               <dt>Person name</dt>
@@ -221,62 +229,44 @@
               <dd>{{ displayDash(d.personalInfo.incomeTaxNo) }}</dd>
               <dt>Contact number</dt>
               <dd>{{ displayDash(d.personalInfo.contactNumber) }}</dd>
-              <dt>Emergency contact</dt>
+              <dt>Emergency contact number</dt>
               <dd>{{ displayDash(d.personalInfo.emergencyContactNumber) }}</dd>
-              <dt>Street</dt>
+              <dt>Home address</dt>
               <dd>{{ displayDash(d.personalInfo.street) }}</dd>
-              <dt>Street no.</dt>
+              <dt>Communication address</dt>
               <dd>{{ displayDash(d.personalInfo.streetNo) }}</dd>
-              <dt>Building / floor / room</dt>
-              <dd>{{ displayDash(d.personalInfo.buildingFloorRoom) }}</dd>
               <dt>City</dt>
               <dd>{{ displayDash(d.personalInfo.city) }}</dd>
               <dt>State</dt>
               <dd>{{ displayDash(d.personalInfo.state) }}</dd>
               <dt>Country</dt>
               <dd>{{ displayDash(d.personalInfo.country) }}</dd>
-              <dt>ZIP code</dt>
+              <dt>Zip code</dt>
               <dd>{{ displayDash(d.personalInfo.zipCode) }}</dd>
-              <dt>Employment nature</dt>
-              <dd>{{ displayDash(d.personalInfo.employmentNature) }}</dd>
-              <dt>Employment category</dt>
-              <dd>{{ displayDash(d.personalInfo.employmentCategory) }}</dd>
-              <dt>Employment status</dt>
-              <dd>{{ displayDash(d.personalInfo.employmentStatus) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Employment details</h4>
+            <dl class="application-detail-dl">
               <dt>Department</dt>
               <dd>{{ displayDash(d.personalInfo.departmentInAhcp) }}</dd>
-              <dt>Branch / location</dt>
-              <dd>{{ displayDash(d.personalInfo.branchLocation || d.requisition.location) }}</dd>
-              <dt>Proposed designation</dt>
-              <dd>{{ displayDash(d.personalInfo.designation) }}</dd>
+              <dt>Branch</dt>
+              <dd>{{ displayDash(d.personalInfo.branchLocation) }}</dd>
+              <dt>Employee category</dt>
+              <dd>{{ displayDash(d.personalInfo.employmentCategory) }}</dd>
               <dt>Work / grade level</dt>
               <dd>{{ displayDash(d.personalInfo.workGradeLevel) }}</dd>
-              <dt>Role / salary grade</dt>
-              <dd>{{ displayDash(d.personalInfo.roleSalary || d.hrSettings.salaryStructure) }}</dd>
+              <dt>Proposed designation</dt>
+              <dd>{{ displayDash(d.personalInfo.designation) }}</dd>
               <dt>Reporting manager</dt>
-              <dd>{{ displayDash(d.personalInfo.reportingManager || d.requisition.hiringManager) }}</dd>
+              <dd>{{ displayDash(d.personalInfo.reportingManager) }}</dd>
+              <dt>Employee status</dt>
+              <dd>{{ displayDash(d.personalInfo.employmentStatus) }}</dd>
               <dt>Remarks</dt>
               <dd>{{ displayDash(d.personalInfo.remarks) }}</dd>
               <dt>Job description</dt>
               <dd>{{ displayDash(d.personalInfo.jobDescription) }}</dd>
-            </dl>
-          </section>
-
-          <section class="application-detail-section" *ngIf="d.hrSettings">
-            <h4 class="application-detail-section-title">HR &amp; payroll settings</h4>
-            <dl class="application-detail-dl">
-              <dt>Employee master</dt>
-              <dd>{{ displayDash(d.hrSettings.employeeMaster) }}</dd>
-              <dt>Salary structure</dt>
-              <dd>{{ displayDash(d.hrSettings.salaryStructure) }}</dd>
-              <dt>Attendance shift management</dt>
-              <dd>{{ displayDash(d.hrSettings.attendanceShiftManagement) }}</dd>
-              <dt>Leave management</dt>
-              <dd>{{ displayDash(d.hrSettings.leaveManagement) }}</dd>
-              <dt>Loan advances form</dt>
-              <dd>{{ displayDash(d.hrSettings.loanAdvancesForm) }}</dd>
-              <dt>Request status</dt>
-              <dd>{{ displayDash(d.hrSettings.requestStatus) }}</dd>
             </dl>
           </section>
 
@@ -288,11 +278,11 @@
                   <tr>
                     <th>Institution</th>
                     <th>Passing year</th>
-                    <th>From</th>
-                    <th>To</th>
+                    <th>From date</th>
+                    <th>To date</th>
                     <th>Subject</th>
                     <th>Qualification</th>
-                    <th>Awarded</th>
+                    <th>Awarded qualification</th>
                     <th>Marks / grades</th>
                     <th>Notes</th>
                   </tr>
@@ -324,10 +314,11 @@
                     <th>Company</th>
                     <th>Designation</th>
                     <th>Duration</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Duties</th>
+                    <th>From date</th>
+                    <th>To date</th>
                     <th>Remarks</th>
+                    <th>Position</th>
+                    <th>Duties</th>
                     <th>Last salary</th>
                   </tr>
                 </thead>
@@ -338,116 +329,15 @@
                     <td>{{ displayDash(row.duration) }}</td>
                     <td>{{ displayDash(row.fromDate) }}</td>
                     <td>{{ displayDash(row.toDate) }}</td>
-                    <td>{{ displayDash(row.duties) }}</td>
                     <td>{{ displayDash(row.remarks) }}</td>
+                    <td>{{ displayDash(row.position) }}</td>
+                    <td>{{ displayDash(row.duties) }}</td>
                     <td>{{ displayDash(row.lastSalary) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p *ngIf="!d.pastExperience.length" class="application-detail-empty">No past experience rows.</p>
-          </section>
-
-          <section class="application-detail-section">
-            <h4 class="application-detail-section-title">Remuneration</h4>
-            <dl class="application-detail-dl">
-              <dt>Salary offer</dt>
-              <dd>{{ displayDash(d.remuneration.basicSalary) }}</dd>
-              <dt>Payment mode</dt>
-              <dd>{{ displayDash(d.remuneration.paymentMode) }}</dd>
-              <dt>Bank name</dt>
-              <dd>{{ displayDash(d.remuneration.bankName) }}</dd>
-              <dt>Bank account number</dt>
-              <dd>{{ displayDash(d.remuneration.accountNo) }}</dd>
-              <dt>Effective joining date</dt>
-              <dd>{{ displayDate(d.remuneration.dateOfJoining) }}</dd>
-              <dt>Percentage of salary in cash</dt>
-              <dd>{{ displayDash(d.remuneration.cashSalaryPercentage) }}</dd>
-              <dt>Overtime applicable</dt>
-              <dd>{{ displayDash(d.remuneration.overTimeApplicable) }}</dd>
-              <dt>Allowances applicable</dt>
-              <dd>{{ displayDash(d.remuneration.allowancesApplicable) }}</dd>
-              <dt>EOBI applicable</dt>
-              <dd>{{ displayDash(d.remuneration.eobiApplicable) }}</dd>
-              <dt>Social security applicable</dt>
-              <dd>{{ displayDash(d.remuneration.socialSecurityApplicable) }}</dd>
-              <dt>Fuel limit</dt>
-              <dd>{{ displayDash(d.remuneration.fuelLimit) }}</dd>
-              <dt>Leave eligibility criteria</dt>
-              <dd>{{ displayDash(d.remuneration.leaveEligibilityCriteria) }}</dd>
-              <dt>Account title</dt>
-              <dd>{{ displayDash(d.remuneration.accountTitle) }}</dd>
-              <dt>Branch name</dt>
-              <dd>{{ displayDash(d.remuneration.branchName) }}</dd>
-              <dt>Account type</dt>
-              <dd>{{ displayDash(d.remuneration.accountType) }}</dd>
-              <dt>Effective date</dt>
-              <dd>{{ displayDate(d.remuneration.effectiveDate) }}</dd>
-              <dt>Tax percentage</dt>
-              <dd>{{ displayDash(d.remuneration.taxPercentage) }}</dd>
-              <dt>Date of joining</dt>
-              <dd>{{ displayDate(d.remuneration.dateOfJoining) }}</dd>
-              <dt>Advance % allowed</dt>
-              <dd>{{ displayDash(d.remuneration.advancePercentAllowed) }}</dd>
-              <dt>Loan amount allowed</dt>
-              <dd>{{ displayDash(d.remuneration.loanAmountAllowed) }}</dd>
-              <dt>Over time applicable</dt>
-              <dd>{{ displayDash(d.remuneration.overTimeApplicable) }}</dd>
-              <dt>Leave type</dt>
-              <dd>{{ displayDash(d.remuneration.leaveType) }}</dd>
-              <dt>Leave days</dt>
-              <dd>{{ displayDash(d.remuneration.leaveDays) }}</dd>
-              <dt>Leaves availed</dt>
-              <dd>{{ displayDash(d.remuneration.leavesAvailed) }}</dd>
-              <dt>Remaining leaves</dt>
-              <dd>{{ displayDash(d.remuneration.remainingLeaves) }}</dd>
-              <dt>Total leaves</dt>
-              <dd>{{ displayDash(d.remuneration.totalLeaves) }}</dd>
-              <dt>Medical allowances</dt>
-              <dd>{{ displayDash(d.remuneration.medicalAllowances) }}</dd>
-              <dt>Fuel allowances</dt>
-              <dd>{{ displayDash(d.remuneration.fuelAllowances) }}</dd>
-              <dt>Mobile allowances</dt>
-              <dd>{{ displayDash(d.remuneration.mobileAllowances) }}</dd>
-              <dt>Car allowances</dt>
-              <dd>{{ displayDash(d.remuneration.carAllowances) }}</dd>
-              <dt>Maximum loan capacity</dt>
-              <dd>{{ displayDash(d.remuneration.maximumLoanCapacity) }}</dd>
-              <dt>Maximum advance capacity</dt>
-              <dd>{{ displayDash(d.remuneration.maximumAdvanceCapacity) }}</dd>
-              <dt>Other allowances</dt>
-              <dd>{{ displayDash(d.remuneration.otherAllowances) }}</dd>
-            </dl>
-          </section>
-
-          <section class="application-detail-section">
-            <h4 class="application-detail-section-title">Login detail</h4>
-            <dl class="application-detail-dl">
-              <dt>Employee code</dt>
-              <dd>{{ displayDash(d.loginDetails.employeeCode) }}</dd>
-              <dt>Employee name</dt>
-              <dd>{{ displayDash(d.personalInfo.personName || d.loginDetails.employeeName) }}</dd>
-              <dt>User ID</dt>
-              <dd>{{ displayDash(d.loginDetails.userId) }}</dd>
-              <dt>Password</dt>
-              <dd>{{ maskedPassword(d.loginDetails.password) }}</dd>
-            </dl>
-          </section>
-
-          <section class="application-detail-section" *ngIf="d.assets">
-            <h4 class="application-detail-section-title">Assets</h4>
-            <dl class="application-detail-dl">
-              <dt>Asset allocated</dt>
-              <dd>{{ displayDash(d.assets.assetAllocated) }}</dd>
-              <dt>Asset OITM code</dt>
-              <dd>{{ displayDash(d.assets.assetOitmCode) }}</dd>
-              <dt>Allocation status</dt>
-              <dd>{{ displayDash(d.assets.allocationStatus) }}</dd>
-              <dt>Allocation date type</dt>
-              <dd>{{ displayDash(d.assets.allocationDateType) }}</dd>
-              <dt>Allocation date</dt>
-              <dd>{{ displayDate(d.assets.allocationDate) }}</dd>
-            </dl>
           </section>
 
           <section class="application-detail-section">
@@ -471,6 +361,98 @@
               </table>
             </div>
             <p *ngIf="!d.attachments.length" class="application-detail-empty">No attachments listed.</p>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Remuneration</h4>
+            <dl class="application-detail-dl">
+              <dt>Salary offer</dt>
+              <dd>{{ displayDash(d.remuneration.basicSalary) }}</dd>
+              <dt>Payment mode</dt>
+              <dd>{{ displayDash(d.remuneration.paymentMode) }}</dd>
+              <dt>Account title</dt>
+              <dd>{{ displayDash(d.remuneration.accountTitle) }}</dd>
+              <dt>Bank name</dt>
+              <dd>{{ displayDash(d.remuneration.bankName) }}</dd>
+              <dt>Branch name</dt>
+              <dd>{{ displayDash(d.remuneration.branchName) }}</dd>
+              <dt>Bank account number</dt>
+              <dd>{{ displayDash(d.remuneration.accountNo) }}</dd>
+              <dt>Account type</dt>
+              <dd>{{ displayDash(d.remuneration.accountType) }}</dd>
+              <dt>Effective date</dt>
+              <dd>{{ displayDate(d.remuneration.effectiveDate) }}</dd>
+              <dt>Percentage (for tax arrangement)</dt>
+              <dd>{{ displayDash(d.remuneration.taxPercentage) }}</dd>
+              <dt>Effective joining date</dt>
+              <dd>{{ displayDate(d.remuneration.dateOfJoining) }}</dd>
+              <dt>Percentage of salary in cash</dt>
+              <dd>{{ displayDash(d.remuneration.cashSalaryPercentage) }}</dd>
+              <dt>Advance % allowed</dt>
+              <dd>{{ displayDash(d.remuneration.advancePercentAllowed) }}</dd>
+              <dt>Maximum advance capacity</dt>
+              <dd>{{ displayDash(d.remuneration.maximumAdvanceCapacity) }}</dd>
+              <dt>Maximum loan capacity</dt>
+              <dd>{{ displayMaximumLoanCapacity(d.remuneration) }}</dd>
+              <dt>Overtime applicable</dt>
+              <dd>{{ displayDash(d.remuneration.overTimeApplicable) }}</dd>
+              <dt>Allowances applicable</dt>
+              <dd>{{ displayDash(d.remuneration.allowancesApplicable) }}</dd>
+              <dt>EOBI applicable</dt>
+              <dd>{{ displayDash(d.remuneration.eobiApplicable) }}</dd>
+              <dt>Social security applicable</dt>
+              <dd>{{ displayDash(d.remuneration.socialSecurityApplicable) }}</dd>
+              <dt>Fuel limit</dt>
+              <dd>{{ displayDash(d.remuneration.fuelLimit) }}</dd>
+              <dt>Leave eligibility criteria</dt>
+              <dd>{{ displayDash(d.remuneration.leaveEligibilityCriteria) }}</dd>
+              <dt>Leave type</dt>
+              <dd>{{ displayDash(d.remuneration.leaveType) }}</dd>
+              <dt>Leave days</dt>
+              <dd>{{ displayDash(d.remuneration.leaveDays) }}</dd>
+              <dt>Leaves availed</dt>
+              <dd>{{ displayDash(d.remuneration.leavesAvailed) }}</dd>
+              <dt>Remaining leaves</dt>
+              <dd>{{ displayDash(d.remuneration.remainingLeaves) }}</dd>
+              <dt>Medical allowances</dt>
+              <dd>{{ displayDash(d.remuneration.medicalAllowances) }}</dd>
+              <dt>Fuel allowances</dt>
+              <dd>{{ displayDash(d.remuneration.fuelAllowances) }}</dd>
+              <dt>Mobile allowances</dt>
+              <dd>{{ displayDash(d.remuneration.mobileAllowances) }}</dd>
+              <dt>Car allowances</dt>
+              <dd>{{ displayDash(d.remuneration.carAllowances) }}</dd>
+              <dt>Other allowances</dt>
+              <dd>{{ displayDash(d.remuneration.otherAllowances) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Login detail</h4>
+            <dl class="application-detail-dl">
+              <dt>Employee code</dt>
+              <dd>{{ displayDash(d.loginDetails.employeeCode) }}</dd>
+              <dt>User ID</dt>
+              <dd>{{ displayDash(d.loginDetails.userId) }}</dd>
+              <dt>Employee name</dt>
+              <dd>{{ displayDash(d.loginDetails.employeeName) }}</dd>
+              <dt>Password</dt>
+              <dd>{{ maskedPassword(d.loginDetails.password) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section" *ngIf="d.assets">
+            <h4 class="application-detail-section-title">Assets</h4>
+            <dl class="application-detail-dl">
+              <dt>Assets allocated</dt>
+              <dd>{{ displayDash(d.assets.assetAllocated) }}</dd>
+              <dt>Assets allocation status</dt>
+              <dd>{{ displayDash(d.assets.allocationStatus) }}</dd>
+              <dt>Assets allocation date type</dt>
+              <dd>{{ displayDash(d.assets.allocationDateType) }}</dd>
+              <dt>Assets allocation date</dt>
+              <dd>{{ displayDate(d.assets.allocationDate) }}</dd>
+            </dl>
           </section>
         </ng-container>
 

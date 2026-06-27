@@ -250,7 +250,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly taxPercentage = signal('');
   protected readonly dateOfJoining = signal('');
   protected readonly advancePercentAllowed = signal('');
-  protected readonly loanAmountAllowed = signal('');
   protected readonly overTimeApplicable = signal<'Yes' | 'No' | ''>('');
   protected readonly leaveType = signal('');
   protected readonly leaveDays = signal('');
@@ -468,7 +467,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       taxPercentage: this.isTaxPercentageEnabled() ? this.taxPercentage() : '',
       dateOfJoining: this.dateOfJoining(),
       advancePercentAllowed: this.advancePercentAllowed(),
-      loanAmountAllowed: this.loanAmountAllowed(),
+      loanAmountAllowed: this.maximumLoanCapacity(),
       overTimeApplicable: this.overTimeApplicable(),
       leaveType: this.leaveType(),
       leaveDays: this.leaveDays(),
@@ -560,7 +559,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       taxPercentage: this.isTaxPercentageEnabled() ? this.nullIfEmpty(this.taxPercentage()) : null,
       dateOfJoining: this.isoDateOrNull(this.dateOfJoining()),
       advancePercentAllowed: this.nullIfEmpty(this.advancePercentAllowed()),
-      loanAmountAllowed: this.nullIfEmpty(this.loanAmountAllowed()),
+      loanAmountAllowed: this.nullIfEmpty(this.maximumLoanCapacity()),
       overTimeApplicable: this.overTimeToBoolean(this.overTimeApplicable()),
       leaveType: this.leaveType(),
       leaveDays: this.parseNumericField(this.leaveDays()),
@@ -572,7 +571,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       fuelAllowances: this.nullIfEmpty(this.fuelAllowances()),
       mobileAllowances: this.nullIfEmpty(this.mobileAllowances()),
       carAllowances: this.nullIfEmpty(this.carAllowances()),
-      maximumLoanCapacity: this.nullIfEmpty(this.maximumLoanCapacity()),
       maximumAdvanceCapacity: this.nullIfEmpty(this.maximumAdvanceCapacity()),
       otherAllowances: this.nullIfEmpty(this.otherAllowances()),
       allowancesApplicable: this.yesNoToBoolean(this.allowancesApplicable()),
@@ -1571,7 +1569,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     );
     this.dateOfJoining.set(remuneration.dateOfJoining ?? '');
     this.advancePercentAllowed.set(remuneration.advancePercentAllowed ?? '');
-    this.loanAmountAllowed.set(remuneration.loanAmountAllowed ?? '');
+    this.maximumLoanCapacity.set(
+      remuneration.loanAmountAllowed || remuneration.maximumLoanCapacity || '',
+    );
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? '');
     this.leaveType.set(remuneration.leaveType ?? '');
     this.leaveDays.set(remuneration.leaveDays ?? '');
@@ -1583,7 +1583,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.fuelAllowances.set(remuneration.fuelAllowances ?? '');
     this.mobileAllowances.set(remuneration.mobileAllowances ?? '');
     this.carAllowances.set(remuneration.carAllowances ?? '');
-    this.maximumLoanCapacity.set(remuneration.maximumLoanCapacity ?? '');
     this.maximumAdvanceCapacity.set(remuneration.maximumAdvanceCapacity ?? '');
     this.otherAllowances.set(remuneration.otherAllowances ?? '');
     this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') ?? '');

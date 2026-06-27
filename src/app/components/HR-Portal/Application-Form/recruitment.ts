@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { AlertService } from '../../../services/alert.service';
 import {
   ApplicationFormAttachmentMeta,
+  ApplicationFormRemuneration,
   ApplicationFormRecord,
   ApplicationFormService,
 } from '../../../services/application-form.service';
@@ -288,6 +289,12 @@ export class RecruitmentComponent implements OnInit {
 
   resolveAttachmentFor(attachment: ApplicationFormAttachmentMeta): string {
     return this.applicationFormService.resolveAttachmentForLabel(attachment);
+  }
+
+  displayMaximumLoanCapacity(remuneration: ApplicationFormRemuneration): string {
+    const value =
+      remuneration.loanAmountAllowed?.trim() || remuneration.maximumLoanCapacity?.trim() || '';
+    return this.displayDash(value);
   }
 
   displayDate(value: string | number | undefined | null): string {

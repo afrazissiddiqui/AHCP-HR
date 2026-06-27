@@ -240,7 +240,6 @@ export interface EmployeeProfileAddPayload {
   fuelAllowances: string | null;
   mobileAllowances: string | null;
   carAllowances: string | null;
-  maximumLoanCapacity: string | null;
   maximumAdvanceCapacity: string | null;
   otherAllowances: string | null;
   allowancesApplicable: boolean;
@@ -697,7 +696,9 @@ export class ApplicationFormService {
           pick('taxArrangementPercentage', 'tax_arrangement_percentage'),
         dateOfJoining: formatDateForInput(pick('dateOfJoining', 'date_of_joining')),
         advancePercentAllowed: pick('advancePercentAllowed', 'advance_percent_allowed'),
-        loanAmountAllowed: pick('loanAmountAllowed', 'loan_amount_allowed'),
+        loanAmountAllowed:
+          pick('loanAmountAllowed', 'loan_amount_allowed') ||
+          pick('maximumLoanCapacity', 'maximum_loan_capacity'),
         overTimeApplicable,
         leaveType: pick('leaveType', 'leave_type'),
         leaveDays: asNumberString(item['leaveDays'] ?? item['leave_days']),
@@ -708,7 +709,9 @@ export class ApplicationFormService {
         fuelAllowances: pick('fuelAllowances', 'fuel_allowances'),
         mobileAllowances: pick('mobileAllowances', 'mobile_allowances'),
         carAllowances: pick('carAllowances', 'car_allowances'),
-        maximumLoanCapacity: pick('maximumLoanCapacity', 'maximum_loan_capacity'),
+        maximumLoanCapacity:
+          pick('loanAmountAllowed', 'loan_amount_allowed') ||
+          pick('maximumLoanCapacity', 'maximum_loan_capacity'),
         maximumAdvanceCapacity: pick('maximumAdvanceCapacity', 'maximum_advance_capacity'),
         otherAllowances: pick('otherAllowances', 'other_allowances'),
         allowancesApplicable: this.yesNoFromApi(item['allowancesApplicable'] ?? item['allowances_applicable']),
