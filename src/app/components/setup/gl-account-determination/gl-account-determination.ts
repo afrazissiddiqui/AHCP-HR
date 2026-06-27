@@ -19,20 +19,9 @@ export type GlAccountDeterminationRow = {
 };
 
 export const GL_ACCOUNT_BRANCH_OPTIONS = [
-  'Production Department',
-  'Plant Maintenance Department',
-  'Electrical Department',
-  'Quality Control Department',
-  'Logistics Department',
-  'Procurement Department',
-  'Admin Department',
-  'Accounts & Finance Department',
-  'Internal Audit Department',
-  'Human Resource (HR) Department',
-  'Sales & Marketing Department',
-  'IT Department',
-  'BOD Department',
-  'Common Department',
+  'AHCP_Peshawar',
+  'AHCP_HO',
+  'AHCP_Faisalabad',
 ] as const;
 
 function newId(): string {
@@ -65,6 +54,7 @@ export class GlAccountDeterminationComponent implements OnInit {
 
   readonly branchOptions = GL_ACCOUNT_BRANCH_OPTIONS;
   readonly saving = signal(false);
+  readonly deleting = signal(false);
   readonly loadingList = signal(false);
   readonly savedRecords = signal<GlAccountDeterminationRecord[]>([]);
 
@@ -111,6 +101,42 @@ export class GlAccountDeterminationComponent implements OnInit {
 
   formRowSrNo(index: number): number {
     return this.savedRecords().length + index + 1;
+  }
+
+  async deleteRecord(record: GlAccountDeterminationRecord): Promise<void> {
+    if (this.deleting() || this.saving()) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing record id.');
+      return;
+    }
+
+    const result = await this.alertService.confirm(
+      'Delete GL account determination?',
+      `Remove ${record.Type} (${record.Code}) from the list?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.glAccountService
+      .deleteGlAccountDetermination(record.Id)
+      .pipe(finalize(() => this.deleting.set(false)))
+      .subscribe({
+        next: () => {
+          this.alertService.success('Deleted', 'GL Account Determination removed successfully.');
+          this.loadSavedRecords();
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Delete Failed',
+            formatApiErrorMessage(error, 'Failed to delete GL Account Determination.'),
+          );
+        },
+      });
   }
 
   private loadSavedRecords(): void {

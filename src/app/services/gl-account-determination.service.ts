@@ -20,6 +20,7 @@ export interface GlAccountDeterminationRecord {
 
 const GL_ACCOUNT_DETERMINATION_LIST_URL = apiUrl('gl-account-determination-list');
 const GL_ACCOUNT_DETERMINATION_ADD_URL = apiUrl('gl-account-determination-add');
+const GL_ACCOUNT_DETERMINATION_DELETE_URL = apiUrl('gl-account-determination-delete');
 
 @Injectable({
   providedIn: 'root',
@@ -39,6 +40,11 @@ export class GlAccountDeterminationService {
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
       tap((records) => this.recordList.set(records)),
     );
+  }
+
+  deleteGlAccountDetermination(id: string | number): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete(`${GL_ACCOUNT_DETERMINATION_DELETE_URL}/${identifier}`);
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {

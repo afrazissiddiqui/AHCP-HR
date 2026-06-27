@@ -39,7 +39,7 @@
   background: #ffffff;
   border: 1px solid #d0d7e2;
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding: 16px 18px 20px;
 }
 
@@ -58,7 +58,8 @@
 }
 
 .list-panel {
-  margin-bottom: 16px;
+  margin-bottom: 0;
+  margin-top: 8px;
 }
 
 .panel-message {
@@ -88,7 +89,8 @@
 }
 
 .btn-add-row:disabled,
-.btn-submit-form:disabled {
+.btn-submit-form:disabled,
+.btn-remove-row:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
@@ -165,6 +167,7 @@
 .form-footer {
   display: flex;
   justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
 .btn-submit-form {
