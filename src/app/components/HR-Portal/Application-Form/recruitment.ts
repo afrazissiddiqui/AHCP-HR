@@ -107,7 +107,7 @@ export class RecruitmentComponent implements OnInit {
 
   columns: ColumnConfig[] = [
     { key: 'EmployeeCode', label: 'Employee Code', visible: true },
-    { key: 'EmployeeName', label: 'Employee Name', visible: true },
+    { key: 'EmployeeName', label: 'Person Name', visible: true },
     { key: 'Department', label: 'Department', visible: true },
     { key: 'EmployeeNature', label: 'Employee Nature', visible: true },
     { key: 'Designation', label: 'Designation', visible: true },
@@ -181,6 +181,7 @@ export class RecruitmentComponent implements OnInit {
       list = list.filter(item =>
         String(item.EmployeeCode ?? '').toLowerCase().includes(search) ||
         String(item.EmployeeName ?? '').toLowerCase().includes(search) ||
+        String(item.detail?.personalInfo?.personName ?? '').toLowerCase().includes(search) ||
         String(item.Department ?? '').toLowerCase().includes(search) ||
         String(item.EmployeeNature ?? '').toLowerCase().includes(search) ||
         String(item.Designation ?? '').toLowerCase().includes(search) ||
@@ -286,6 +287,15 @@ export class RecruitmentComponent implements OnInit {
 
   displayDate(value: string | number | undefined | null): string {
     return displayDateOnly(value);
+  }
+
+  displayPersonName(record: ApplicationFormRecord): string {
+    const personName = record.detail?.personalInfo?.personName?.trim();
+    if (personName) {
+      return personName;
+    }
+    const name = record.EmployeeName?.trim();
+    return name && name !== '—' ? name : '—';
   }
 
   maskedPassword(password: string | undefined): string {

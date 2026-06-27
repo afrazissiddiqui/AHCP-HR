@@ -321,12 +321,13 @@ export class ApplicationFormService {
     };
 
     const employeeCode = asString(item['employeeCode']) || asString(item['employee_code']) || asString(item['id']);
-    const employeeName =
-      asString(item['loginEmployeeName']) ||
-      asString(item['login_employee_name']) ||
-      asString(item['personName']) ||
-      asString(item['person_name']) ||
-      `${asString(item['firstName'])} ${asString(item['lastName'])}`.trim();
+    const personName = asString(item['personName']) || asString(item['person_name']);
+    const composedName = [asString(item['firstName']), asString(item['middleName']), asString(item['lastName'])]
+      .filter(Boolean)
+      .join(' ');
+    const loginEmployeeName =
+      asString(item['loginEmployeeName']) || asString(item['login_employee_name']);
+    const employeeName = personName || composedName || loginEmployeeName;
 
     const apiId = asString(item['id']) || employeeCode;
 
@@ -489,6 +490,7 @@ export class ApplicationFormService {
 
     return {
       ...summary,
+      EmployeeName: detail.personalInfo.personName || summary.EmployeeName,
       detail,
     };
   }

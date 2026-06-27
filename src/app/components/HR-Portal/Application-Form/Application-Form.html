@@ -111,6 +111,9 @@
 
               <td *ngFor="let col of visibleColumns">
                 <ng-container [ngSwitch]="col.key">
+                  <!-- Person name column -->
+                  <span *ngSwitchCase="'EmployeeName'">{{ displayPersonName(s) }}</span>
+
                   <!-- Status Column -->
                   <span *ngSwitchCase="'status'" [className]="'status-badge ' + (s.status || '').toLowerCase()">
                     {{ s.status }}

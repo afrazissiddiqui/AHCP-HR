@@ -552,7 +552,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       .filter(Boolean)
       .join(' ');
     const displayName =
-      loginName || composedName || this.personName().trim() || `Applicant-${employeeCodeNum}`;
+      this.personName().trim() || composedName || loginName || `Applicant-${employeeCodeNum}`;
 
     const detail: ApplicationFormDetail = {
       personalInfo: {
