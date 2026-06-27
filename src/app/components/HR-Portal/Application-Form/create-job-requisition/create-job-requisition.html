@@ -169,14 +169,14 @@
               (blur)="touch('streetNo')" />
           </div>
 
-          <!-- <div class="cjr-row">
-            <label>Building / Floor / Room:</label>
-            <input type="text" [ngModel]="buildingFloorRoom()" (ngModelChange)="buildingFloorRoom.set($event)"
-              (blur)="touch('buildingFloorRoom')" />
-          </div> -->
+            <div class="cjr-row">
+              <label>Building / Floor / Room:</label>
+              <input type="text" [ngModel]="buildingFloorRoom()" (ngModelChange)="buildingFloorRoom.set($event)"
+                (blur)="touch('buildingFloorRoom')" />
+            </div>
 
-          <div class="cjr-row">
-            <label>City:</label>
+            <div class="cjr-row">
+              <label>City:</label>
             <input type="text" [ngModel]="city()" (ngModelChange)="city.set($event)" (blur)="touch('city')" />
           </div>
 
@@ -272,11 +272,51 @@
                 (blur)="touch('jobDescription')" placeholder="Role description"></textarea>
             </div>
 
-            <!-- <div class="cjr-row cjr-row--textarea">
-              <label>Role &amp; Salary:</label>
-              <textarea rows="3" [ngModel]="roleAndSalary()" (ngModelChange)="roleAndSalary.set($event)"
-                (blur)="touch('roleAndSalary')" placeholder="Role and salary details"></textarea>
-            </div> -->
+            <div class="cjr-row">
+              <label>Role Salary:</label>
+              <input type="text" [ngModel]="roleSalary()" (ngModelChange)="roleSalary.set($event)"
+                (blur)="touch('roleSalary')" placeholder="e.g. Developer" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjr-employment-subsection">
+        <div class="cjr-section-subtitle">HR &amp; payroll settings</div>
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>Employee Master:</label>
+              <input type="number" min="0" step="1" [ngModel]="employeeMaster()"
+                (ngModelChange)="onIntegerOnlyChange($event, employeeMaster)" (blur)="touch('employeeMaster')" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Salary Structure:</label>
+              <input type="text" [ngModel]="salaryStructure()" (ngModelChange)="salaryStructure.set($event)"
+                (blur)="touch('salaryStructure')" placeholder="e.g. Standard" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Attendance Shift Management:</label>
+              <input type="text" [ngModel]="attendanceShiftManagement()"
+                (ngModelChange)="attendanceShiftManagement.set($event)" (blur)="touch('attendanceShiftManagement')"
+                placeholder="e.g. Fixed" />
+            </div>
+          </div>
+
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>Leave Management:</label>
+              <input type="text" [ngModel]="leaveManagement()" (ngModelChange)="leaveManagement.set($event)"
+                (blur)="touch('leaveManagement')" placeholder="e.g. Enabled" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Loan Advances Form:</label>
+              <input type="text" [ngModel]="loanAdvancesForm()" (ngModelChange)="loanAdvancesForm.set($event)"
+                (blur)="touch('loanAdvancesForm')" placeholder="e.g. Enabled" />
+            </div>
           </div>
         </div>
       </div>
@@ -300,9 +340,17 @@
         <div class="cjr-personal-grid">
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Institute:</label>
+              <label>Institution:</label>
               <input type="text" [ngModel]="edu.institute"
-                (ngModelChange)="updateEducationField(i, 'institute', $event)" (blur)="touch('educationInstitute')" />
+                (ngModelChange)="updateEducationField(i, 'institute', $event)"
+                (blur)="touch('educationInstitute')" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Passing Year:</label>
+              <input type="text" [ngModel]="edu.passingYear"
+                (ngModelChange)="updateEducationField(i, 'passingYear', $event)"
+                (blur)="touch('educationPassingYear')" />
             </div>
 
             <div class="cjr-row">
@@ -376,6 +424,20 @@
               <label>Company:</label>
               <input type="text" [ngModel]="exp.company"
                 (ngModelChange)="updatePastExperienceField(i, 'company', $event)" (blur)="touch('experienceCompany')" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Designation:</label>
+              <input type="text" [ngModel]="exp.designation"
+                (ngModelChange)="updatePastExperienceField(i, 'designation', $event)"
+                (blur)="touch('experienceDesignation')" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Duration:</label>
+              <input type="text" [ngModel]="exp.duration"
+                (ngModelChange)="updatePastExperienceField(i, 'duration', $event)"
+                (blur)="touch('experienceDuration')" placeholder="e.g. 2 years" />
             </div>
 
             <div class="cjr-row">
@@ -455,6 +517,9 @@
             <input type="file" (change)="onAttachmentChange(si, ri, $event)"
               [attr.aria-label]="'Upload ' + section.type" class="cjr-file-input" />
             }
+            <input type="text" class="cjr-file-url-input" placeholder="File URL (optional)"
+              [ngModel]="row.fileUrl" (ngModelChange)="updateAttachmentFileUrl(si, ri, $event)"
+              [attr.aria-label]="'File URL for ' + section.type" />
             @if (section.rows.length > 1) {
             <button type="button" class="cjr-remove-section cjr-remove-attachment-row"
               (click)="removeAttachmentRow(si, ri)" aria-label="Remove attachment row">
@@ -523,9 +588,9 @@
 
           <div class="cjr-row">
             <label>Percentage (For tax arrangement):</label>
-            <input type="number" min="0" step="0.01" [ngModel]="taxArrangementPercentage()"
-              (ngModelChange)="onNumericOnlyChange($event, taxArrangementPercentage)"
-              (blur)="touch('taxArrangementPercentage')" />
+            <input type="number" min="0" step="0.01" [ngModel]="taxPercentage()"
+              (ngModelChange)="onNumericOnlyChange($event, taxPercentage)"
+              (blur)="touch('taxPercentage')" />
           </div>
 
           <div class="cjr-row">
@@ -558,6 +623,36 @@
               <option value="Yes">Yes</option>
               <option value="No">No</option>
             </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Leave Type:</label>
+            <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)"
+              (blur)="touch('leaveType')" placeholder="e.g. Annual" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Leave Days:</label>
+            <input type="number" min="0" step="1" [ngModel]="leaveDays()"
+              (ngModelChange)="onIntegerOnlyChange($event, leaveDays)" (blur)="touch('leaveDays')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Leaves Availed:</label>
+            <input type="number" min="0" step="1" [ngModel]="leavesAvailed()"
+              (ngModelChange)="onIntegerOnlyChange($event, leavesAvailed)" (blur)="touch('leavesAvailed')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Remaining Leaves:</label>
+            <input type="number" min="0" step="1" [ngModel]="remainingLeaves()"
+              (ngModelChange)="onIntegerOnlyChange($event, remainingLeaves)" (blur)="touch('remainingLeaves')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Total Leaves:</label>
+            <input type="number" min="0" step="1" [ngModel]="totalLeaves()"
+              (ngModelChange)="onIntegerOnlyChange($event, totalLeaves)" (blur)="touch('totalLeaves')" />
           </div>
 
           <div class="cjr-row">
@@ -595,13 +690,6 @@
             <input type="number" min="0" step="0.01" [ngModel]="maximumAdvanceCapacity()"
               (ngModelChange)="onNumericOnlyChange($event, maximumAdvanceCapacity)"
               (blur)="touch('maximumAdvanceCapacity')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Total Leaves Allocated:</label>
-            <input type="number" min="0" step="1" [ngModel]="totalLeavesAllocated()"
-              (ngModelChange)="onIntegerOnlyChange($event, totalLeavesAllocated)"
-              (blur)="touch('totalLeavesAllocated')" />
           </div>
 
           <div class="cjr-row">

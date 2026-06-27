@@ -247,8 +247,26 @@
               <dd>{{ displayDash(d.personalInfo.designation) }}</dd>
               <dt>Job description</dt>
               <dd>{{ displayDash(d.personalInfo.jobDescription) }}</dd>
-              <dt>Role &amp; salary</dt>
-              <dd>{{ displayDash(d.personalInfo.roleAndSalary) }}</dd>
+              <dt>Role salary</dt>
+              <dd>{{ displayDash(d.personalInfo.roleSalary) }}</dd>
+            </dl>
+          </section>
+
+          <section class="application-detail-section" *ngIf="d.hrSettings">
+            <h4 class="application-detail-section-title">HR &amp; payroll settings</h4>
+            <dl class="application-detail-dl">
+              <dt>Employee master</dt>
+              <dd>{{ displayDash(d.hrSettings.employeeMaster) }}</dd>
+              <dt>Salary structure</dt>
+              <dd>{{ displayDash(d.hrSettings.salaryStructure) }}</dd>
+              <dt>Attendance shift management</dt>
+              <dd>{{ displayDash(d.hrSettings.attendanceShiftManagement) }}</dd>
+              <dt>Leave management</dt>
+              <dd>{{ displayDash(d.hrSettings.leaveManagement) }}</dd>
+              <dt>Loan advances form</dt>
+              <dd>{{ displayDash(d.hrSettings.loanAdvancesForm) }}</dd>
+              <dt>Request status</dt>
+              <dd>{{ displayDash(d.hrSettings.requestStatus) }}</dd>
             </dl>
           </section>
 
@@ -258,7 +276,8 @@
               <table class="application-detail-table">
                 <thead>
                   <tr>
-                    <th>Institute</th>
+                    <th>Institution</th>
+                    <th>Passing year</th>
                     <th>From</th>
                     <th>To</th>
                     <th>Subject</th>
@@ -270,7 +289,8 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let row of d.education">
-                    <td>{{ displayDash(row.institute) }}</td>
+                    <td>{{ displayDash(row.institution || row.institute) }}</td>
+                    <td>{{ displayDash(row.passingYear) }}</td>
                     <td>{{ displayDash(row.fromDate) }}</td>
                     <td>{{ displayDash(row.toDate) }}</td>
                     <td>{{ displayDash(row.subject) }}</td>
@@ -292,7 +312,8 @@
                 <thead>
                   <tr>
                     <th>Company</th>
-                    <th>Position</th>
+                    <th>Designation</th>
+                    <th>Duration</th>
                     <th>From</th>
                     <th>To</th>
                     <th>Duties</th>
@@ -303,7 +324,8 @@
                 <tbody>
                   <tr *ngFor="let row of d.pastExperience">
                     <td>{{ displayDash(row.company) }}</td>
-                    <td>{{ displayDash(row.position) }}</td>
+                    <td>{{ displayDash(row.designation || row.position) }}</td>
+                    <td>{{ displayDash(row.duration) }}</td>
                     <td>{{ displayDash(row.fromDate) }}</td>
                     <td>{{ displayDash(row.toDate) }}</td>
                     <td>{{ displayDash(row.duties) }}</td>
@@ -335,8 +357,8 @@
               <dd>{{ displayDash(d.remuneration.accountType) }}</dd>
               <dt>Effective date</dt>
               <dd>{{ displayDate(d.remuneration.effectiveDate) }}</dd>
-              <dt>Percentage (tax arrangement)</dt>
-              <dd>{{ displayDash(d.remuneration.taxArrangementPercentage) }}</dd>
+              <dt>Tax percentage</dt>
+              <dd>{{ displayDash(d.remuneration.taxPercentage) }}</dd>
               <dt>Date of joining</dt>
               <dd>{{ displayDate(d.remuneration.dateOfJoining) }}</dd>
               <dt>Advance % allowed</dt>
@@ -345,6 +367,16 @@
               <dd>{{ displayDash(d.remuneration.loanAmountAllowed) }}</dd>
               <dt>Over time applicable</dt>
               <dd>{{ displayDash(d.remuneration.overTimeApplicable) }}</dd>
+              <dt>Leave type</dt>
+              <dd>{{ displayDash(d.remuneration.leaveType) }}</dd>
+              <dt>Leave days</dt>
+              <dd>{{ displayDash(d.remuneration.leaveDays) }}</dd>
+              <dt>Leaves availed</dt>
+              <dd>{{ displayDash(d.remuneration.leavesAvailed) }}</dd>
+              <dt>Remaining leaves</dt>
+              <dd>{{ displayDash(d.remuneration.remainingLeaves) }}</dd>
+              <dt>Total leaves</dt>
+              <dd>{{ displayDash(d.remuneration.totalLeaves) }}</dd>
               <dt>Medical allowances</dt>
               <dd>{{ displayDash(d.remuneration.medicalAllowances) }}</dd>
               <dt>Fuel allowances</dt>
@@ -357,8 +389,6 @@
               <dd>{{ displayDash(d.remuneration.maximumLoanCapacity) }}</dd>
               <dt>Maximum advance capacity</dt>
               <dd>{{ displayDash(d.remuneration.maximumAdvanceCapacity) }}</dd>
-              <dt>Total leaves allocated</dt>
-              <dd>{{ displayDash(d.remuneration.totalLeavesAllocated) }}</dd>
               <dt>Other allowances</dt>
               <dd>{{ displayDash(d.remuneration.otherAllowances) }}</dd>
             </dl>
@@ -382,8 +412,9 @@
             <h4 class="application-detail-section-title">Attachments</h4>
             <ul class="application-detail-attachments" *ngIf="d.attachments.length">
               <li *ngFor="let a of d.attachments">
-                <strong>{{ a.type }}</strong>
+                <strong>{{ a.type || 'Attachment' }}</strong>
                 <span> — {{ displayDash(a.fileName) }}</span>
+                <span *ngIf="a.fileUrl"> ({{ a.fileUrl }})</span>
               </li>
             </ul>
             <p *ngIf="!d.attachments.length" class="application-detail-empty">No attachments listed.</p>

@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
-import { formatDateOfBirthFromApi } from '../utils/date-format.util';
+import { formatDateOfBirthFromApi, formatDateForInput } from '../utils/date-format.util';
 
 /** Extended payload captured from Create Application Form — shown in Application Form view modal only. */
 export interface ApplicationFormPersonalInfo {
@@ -34,15 +34,17 @@ export interface ApplicationFormPersonalInfo {
   departmentInAhcp: string;
   designation: string;
   jobDescription: string;
-  roleAndSalary: string;
+  roleSalary: string;
 }
 
 export interface ApplicationFormEducationRow {
   institute: string;
+  institution: string;
+  qualification: string;
+  passingYear: string;
   fromDate: string;
   toDate: string;
   subject: string;
-  qualification: string;
   awardedQualification: string;
   marksGrades: string;
   notes: string;
@@ -51,6 +53,8 @@ export interface ApplicationFormEducationRow {
 export interface ApplicationFormPastExperienceRow {
   company: string;
   position: string;
+  designation: string;
+  duration: string;
   fromDate: string;
   toDate: string;
   duties: string;
@@ -67,19 +71,32 @@ export interface ApplicationFormRemuneration {
   accountNo: string;
   accountType: string;
   effectiveDate: string;
-  taxArrangementPercentage: string;
+  taxPercentage: string;
   dateOfJoining: string;
   advancePercentAllowed: string;
   loanAmountAllowed: string;
   overTimeApplicable: string;
+  leaveType: string;
+  leaveDays: string;
+  leavesAvailed: string;
+  remainingLeaves: string;
+  totalLeaves: string;
   medicalAllowances: string;
   fuelAllowances: string;
   mobileAllowances: string;
   carAllowances: string;
   maximumLoanCapacity: string;
   maximumAdvanceCapacity: string;
-  totalLeavesAllocated: string;
   otherAllowances: string;
+}
+
+export interface ApplicationFormHrSettings {
+  employeeMaster: string;
+  salaryStructure: string;
+  attendanceShiftManagement: string;
+  leaveManagement: string;
+  loanAdvancesForm: string;
+  requestStatus: string;
 }
 
 export interface ApplicationFormLoginDetails {
@@ -92,6 +109,7 @@ export interface ApplicationFormLoginDetails {
 export interface ApplicationFormAttachmentMeta {
   type: string;
   fileName: string;
+  fileUrl: string;
 }
 
 export interface ApplicationFormRequisition {
@@ -116,6 +134,7 @@ export interface ApplicationFormDetail {
   education: ApplicationFormEducationRow[];
   pastExperience: ApplicationFormPastExperienceRow[];
   remuneration: ApplicationFormRemuneration;
+  hrSettings: ApplicationFormHrSettings;
   loginDetails: ApplicationFormLoginDetails;
   attachments: ApplicationFormAttachmentMeta[];
   requisition: ApplicationFormRequisition;
@@ -159,7 +178,7 @@ const EMPLOYEE_PROFILE_DELETE_URL = apiUrl('employee-profile-delete');
 export interface EmployeeProfileAddPayload {
   personName: string;
   firstName: string;
-  middleName: string;
+  middleName: string | null;
   lastName: string;
   fatherOrHusbandName: string;
   gender: string;
@@ -180,26 +199,25 @@ export interface EmployeeProfileAddPayload {
   country: string;
   zipCode: string;
   employmentNature: string;
-  employmentCategory: string;
+  employeeCategory: string;
   employmentStatus: string;
-  departmentInAhcp: string;
+  department: string;
   designation: string;
   jobDescription: string;
-  roleAndSalary: string;
-  educationSections: ApplicationFormEducationRow[];
+  roleSalary: string;
+  educationSections: Array<{
+    qualification: string;
+    institution: string;
+    passingYear: string;
+  }>;
   pastExperienceSections: Array<{
     company: string;
-    fromDate: string;
-    toDate: string;
-    remarks: string;
-    position: string;
-    duties: string;
-    lastSalary: number;
+    designation: string;
+    duration: string;
   }>;
   attachments: Array<{
-    type: string;
     fileName: string;
-    file: string;
+    fileUrl: string;
   }>;
   basicSalary: string;
   paymentMode: string;
@@ -209,21 +227,23 @@ export interface EmployeeProfileAddPayload {
   accountNo: string;
   accountType: string;
   effectiveDate: string;
-  taxArrangementPercentage: string;
+  taxPercentage: string;
   dateOfJoining: string;
   advancePercentAllowed: string;
   loanAmountAllowed: string;
-  overTimeApplicable: string;
-  medicalAllowances: string;
-  fuelAllowances: string;
-  mobileAllowances: string;
-  carAllowances: string;
-  maximumLoanCapacity: string;
-  maximumAdvanceCapacity: string;
-  totalLeavesAllocated: string;
-  otherAllowances: string;
+  overTimeApplicable: boolean;
+  leaveType: string;
+  leaveDays: number;
+  leavesAvailed: number;
+  remainingLeaves: number;
+  totalLeaves: number;
+  employeeMaster: number;
+  salaryStructure: string;
+  attendanceShiftManagement: string;
+  leaveManagement: string;
+  loanAdvancesForm: string;
   employeeCode: string;
-  userId: string;
+  userId: number | string;
   loginEmployeeName: string;
   password: string;
 }
@@ -371,6 +391,8 @@ export class ApplicationFormService {
       ReportingManager: asString(item['reportingManager']) || asString(item['reporting_manager']) || '—',
       EmploymentType: asString(item['employmentType']) || asString(item['employment_type']) || '—',
       EmploymentCategory:
+        asString(item['employeeCategory']) ||
+        asString(item['employee_category']) ||
         asString(item['employmentCategory']) ||
         asString(item['employment_category']) ||
         '—',
@@ -404,33 +426,58 @@ export class ApplicationFormService {
       [];
     const attachmentsRaw = item['attachments'] ?? [];
 
+    const asNumberString = (value: unknown): string => {
+      if (value === undefined || value === null || value === '') {
+        return '';
+      }
+      return String(value).trim();
+    };
+
+    const overTimeRaw = item['overTimeApplicable'] ?? item['over_time_applicable'];
+    const overTimeApplicable =
+      typeof overTimeRaw === 'boolean'
+        ? overTimeRaw
+          ? 'Yes'
+          : 'No'
+        : asString(overTimeRaw);
+
     const education = Array.isArray(educationRaw)
       ? educationRaw
           .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
-          .map((row) => ({
-            institute: pickFrom(row, 'institute'),
-            fromDate: pickFrom(row, 'fromDate', 'from_date'),
-            toDate: pickFrom(row, 'toDate', 'to_date'),
-            subject: pickFrom(row, 'subject'),
-            qualification: pickFrom(row, 'qualification'),
-            awardedQualification: pickFrom(row, 'awardedQualification', 'awarded_qualification'),
-            marksGrades: pickFrom(row, 'marksGrades', 'marks_grades'),
-            notes: pickFrom(row, 'notes'),
-          }))
+          .map((row) => {
+            const institution = pickFrom(row, 'institution') || pickFrom(row, 'institute');
+            return {
+              institute: institution,
+              institution,
+              qualification: pickFrom(row, 'qualification'),
+              passingYear: pickFrom(row, 'passingYear', 'passing_year'),
+              fromDate: formatDateForInput(pickFrom(row, 'fromDate', 'from_date')),
+              toDate: formatDateForInput(pickFrom(row, 'toDate', 'to_date')),
+              subject: pickFrom(row, 'subject'),
+              awardedQualification: pickFrom(row, 'awardedQualification', 'awarded_qualification'),
+              marksGrades: pickFrom(row, 'marksGrades', 'marks_grades'),
+              notes: pickFrom(row, 'notes'),
+            };
+          })
       : [];
 
     const pastExperience = Array.isArray(experienceRaw)
       ? experienceRaw
           .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
-          .map((row) => ({
-            company: pickFrom(row, 'company'),
-            position: pickFrom(row, 'position'),
-            fromDate: pickFrom(row, 'fromDate', 'from_date'),
-            toDate: pickFrom(row, 'toDate', 'to_date'),
-            duties: pickFrom(row, 'duties'),
-            remarks: pickFrom(row, 'remarks'),
-            lastSalary: asString(row['lastSalary'] ?? row['last_salary']),
-          }))
+          .map((row) => {
+            const designation = pickFrom(row, 'designation') || pickFrom(row, 'position');
+            return {
+              company: pickFrom(row, 'company'),
+              position: designation,
+              designation,
+              duration: pickFrom(row, 'duration'),
+              fromDate: formatDateForInput(pickFrom(row, 'fromDate', 'from_date')),
+              toDate: formatDateForInput(pickFrom(row, 'toDate', 'to_date')),
+              duties: pickFrom(row, 'duties'),
+              remarks: pickFrom(row, 'remarks'),
+              lastSalary: asString(row['lastSalary'] ?? row['last_salary']),
+            };
+          })
       : [];
 
     const attachments = Array.isArray(attachmentsRaw)
@@ -439,6 +486,7 @@ export class ApplicationFormService {
           .map((row) => ({
             type: pickFrom(row, 'type'),
             fileName: pickFrom(row, 'fileName', 'file_name') || pickFrom(row, 'file'),
+            fileUrl: pickFrom(row, 'fileUrl', 'file_url'),
           }))
       : [];
 
@@ -467,12 +515,14 @@ export class ApplicationFormService {
         country: pick('country'),
         zipCode: pick('zipCode', 'zip_code'),
         employmentNature: pick('employmentNature', 'employment_nature'),
-        employmentCategory: pick('employmentCategory', 'employment_category'),
+        employmentCategory:
+          pick('employeeCategory', 'employee_category') ||
+          pick('employmentCategory', 'employment_category'),
         employmentStatus: pick('employmentStatus', 'employment_status'),
-        departmentInAhcp: pick('departmentInAhcp', 'department_in_ahcp') || pick('department'),
+        departmentInAhcp: pick('department') || pick('departmentInAhcp', 'department_in_ahcp'),
         designation: pick('designation'),
         jobDescription: pick('jobDescription', 'job_description'),
-        roleAndSalary: pick('roleAndSalary', 'role_and_salary'),
+        roleSalary: pick('roleSalary', 'role_salary') || pick('roleAndSalary', 'role_and_salary'),
       },
       education,
       pastExperience,
@@ -484,20 +534,34 @@ export class ApplicationFormService {
         branchName: pick('branchName', 'branch_name'),
         accountNo: pick('accountNo', 'account_no'),
         accountType: pick('accountType', 'account_type'),
-        effectiveDate: pick('effectiveDate', 'effective_date'),
-        taxArrangementPercentage: pick('taxArrangementPercentage', 'tax_arrangement_percentage'),
-        dateOfJoining: pick('dateOfJoining', 'date_of_joining'),
+        effectiveDate: formatDateForInput(pick('effectiveDate', 'effective_date')),
+        taxPercentage:
+          pick('taxPercentage', 'tax_percentage') ||
+          pick('taxArrangementPercentage', 'tax_arrangement_percentage'),
+        dateOfJoining: formatDateForInput(pick('dateOfJoining', 'date_of_joining')),
         advancePercentAllowed: pick('advancePercentAllowed', 'advance_percent_allowed'),
         loanAmountAllowed: pick('loanAmountAllowed', 'loan_amount_allowed'),
-        overTimeApplicable: pick('overTimeApplicable', 'over_time_applicable'),
+        overTimeApplicable,
+        leaveType: pick('leaveType', 'leave_type'),
+        leaveDays: asNumberString(item['leaveDays'] ?? item['leave_days']),
+        leavesAvailed: asNumberString(item['leavesAvailed'] ?? item['leaves_availed']),
+        remainingLeaves: asNumberString(item['remainingLeaves'] ?? item['remaining_leaves']),
+        totalLeaves: asNumberString(item['totalLeaves'] ?? item['total_leaves']),
         medicalAllowances: pick('medicalAllowances', 'medical_allowances'),
         fuelAllowances: pick('fuelAllowances', 'fuel_allowances'),
         mobileAllowances: pick('mobileAllowances', 'mobile_allowances'),
         carAllowances: pick('carAllowances', 'car_allowances'),
         maximumLoanCapacity: pick('maximumLoanCapacity', 'maximum_loan_capacity'),
         maximumAdvanceCapacity: pick('maximumAdvanceCapacity', 'maximum_advance_capacity'),
-        totalLeavesAllocated: pick('totalLeavesAllocated', 'total_leaves_allocated'),
         otherAllowances: pick('otherAllowances', 'other_allowances'),
+      },
+      hrSettings: {
+        employeeMaster: asNumberString(item['employeeMaster'] ?? item['employee_master']),
+        salaryStructure: pick('salaryStructure', 'salary_structure'),
+        attendanceShiftManagement: pick('attendanceShiftManagement', 'attendance_shift_management'),
+        leaveManagement: pick('leaveManagement', 'leave_management'),
+        loanAdvancesForm: pick('loanAdvancesForm', 'loan_advances_form'),
+        requestStatus: pick('requestStatus', 'request_status'),
       },
       loginDetails: {
         employeeCode: pick('employeeCode', 'employee_code'),

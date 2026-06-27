@@ -14,6 +14,7 @@ import {
   formatDateDdMmYyyyInput,
   formatDateOfBirthFromApi,
   formatDateOfBirthToApi,
+  formatDateToApiIso,
 } from '../../../../utils/date-format.util';
 
 type AttachmentType =
@@ -27,6 +28,7 @@ type AttachmentType =
 interface AttachmentRow {
   file: File | null;
   fileName: string;
+  fileUrl: string;
 }
 
 interface AttachmentSection {
@@ -45,7 +47,7 @@ const ATTACHMENT_TYPES: AttachmentType[] = [
 
 const DEFAULT_ATTACHMENT_SECTIONS: AttachmentSection[] = ATTACHMENT_TYPES.map((type) => ({
   type,
-  rows: [{ file: null, fileName: '' }],
+  rows: [{ file: null, fileName: '', fileUrl: '' }],
 }));
 
 const DEPARTMENT_OPTIONS = [
@@ -111,35 +113,41 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly departmentOptions = DEPARTMENT_OPTIONS;
   protected readonly designation = signal('');
   protected readonly jobDescription = signal('');
-  protected readonly roleAndSalary = signal('');
+  protected readonly roleSalary = signal('');
 
   // Education fields - array of education sections
   protected readonly educationSections = signal<Array<{
     institute: string;
+    institution: string;
+    qualification: string;
+    passingYear: string;
     fromDate: string;
     toDate: string;
     subject: string;
-    qualification: string;
     awardedQualification: string;
     marksGrades: string;
     notes: string;
   }>>([
     {
       institute: '',
+      institution: '',
+      qualification: '',
+      passingYear: '',
       fromDate: '',
       toDate: '',
       subject: '',
-      qualification: '',
       awardedQualification: '',
       marksGrades: '',
-      notes: ''
-    }
+      notes: '',
+    },
   ]);
 
   // Past Experience fields - array of past experience sections
   protected readonly pastExperienceSections = signal<Array<{
     company: string;
     position: string;
+    designation: string;
+    duration: string;
     fromDate: string;
     toDate: string;
     duties: string;
@@ -149,12 +157,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     {
       company: '',
       position: '',
+      designation: '',
+      duration: '',
       fromDate: '',
       toDate: '',
       duties: '',
       remarks: '',
-      lastSalary: ''
-    }
+      lastSalary: '',
+    },
   ]);
 
   // Attachments fields — one section per type, each with one or more file rows
@@ -169,19 +179,30 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly accountNo = signal('');
   protected readonly accountType = signal('');
   protected readonly effectiveDate = signal('');
-  protected readonly taxArrangementPercentage = signal('');
+  protected readonly taxPercentage = signal('');
   protected readonly dateOfJoining = signal('');
   protected readonly advancePercentAllowed = signal('');
   protected readonly loanAmountAllowed = signal('');
   protected readonly overTimeApplicable = signal<'Yes' | 'No' | ''>('');
+  protected readonly leaveType = signal('');
+  protected readonly leaveDays = signal('');
+  protected readonly leavesAvailed = signal('');
+  protected readonly remainingLeaves = signal('');
+  protected readonly totalLeaves = signal('');
   protected readonly medicalAllowances = signal('');
   protected readonly fuelAllowances = signal('');
   protected readonly mobileAllowances = signal('');
   protected readonly carAllowances = signal('');
   protected readonly maximumLoanCapacity = signal('');
   protected readonly maximumAdvanceCapacity = signal('');
-  protected readonly totalLeavesAllocated = signal('');
   protected readonly otherAllowances = signal('');
+
+  // HR / payroll settings
+  protected readonly employeeMaster = signal('');
+  protected readonly salaryStructure = signal('');
+  protected readonly attendanceShiftManagement = signal('');
+  protected readonly leaveManagement = signal('');
+  protected readonly loanAdvancesForm = signal('');
 
   // Login Detail fields
   protected readonly employeeCode = signal(''); // Employee code
@@ -227,20 +248,44 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       accountNo: this.accountNo(),
       accountType: this.accountType(),
       effectiveDate: this.effectiveDate(),
-      taxArrangementPercentage: this.taxArrangementPercentage(),
+      taxPercentage: this.taxPercentage(),
       dateOfJoining: this.dateOfJoining(),
       advancePercentAllowed: this.advancePercentAllowed(),
       loanAmountAllowed: this.loanAmountAllowed(),
       overTimeApplicable: this.overTimeApplicable(),
+      leaveType: this.leaveType(),
+      leaveDays: this.leaveDays(),
+      leavesAvailed: this.leavesAvailed(),
+      remainingLeaves: this.remainingLeaves(),
+      totalLeaves: this.totalLeaves(),
       medicalAllowances: this.medicalAllowances(),
       fuelAllowances: this.fuelAllowances(),
       mobileAllowances: this.mobileAllowances(),
       carAllowances: this.carAllowances(),
       maximumLoanCapacity: this.maximumLoanCapacity(),
       maximumAdvanceCapacity: this.maximumAdvanceCapacity(),
-      totalLeavesAllocated: this.totalLeavesAllocated(),
       otherAllowances: this.otherAllowances(),
     };
+  }
+
+  private buildHrSettingsPayload(): ApplicationFormDetail['hrSettings'] {
+    return {
+      employeeMaster: this.employeeMaster(),
+      salaryStructure: this.salaryStructure(),
+      attendanceShiftManagement: this.attendanceShiftManagement(),
+      leaveManagement: this.leaveManagement(),
+      loanAdvancesForm: this.loanAdvancesForm(),
+      requestStatus: '',
+    };
+  }
+
+  private parseNumericField(value: string): number {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private overTimeToBoolean(value: 'Yes' | 'No' | ''): boolean {
+    return value === 'Yes';
   }
 
   protected onDateOfBirthChange(value: string): void {
@@ -324,21 +369,28 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       ...sections,
       {
         institute: '',
+        institution: '',
+        qualification: '',
+        passingYear: '',
         fromDate: '',
         toDate: '',
         subject: '',
-        qualification: '',
         awardedQualification: '',
         marksGrades: '',
-        notes: ''
-      }
+        notes: '',
+      },
     ]);
   }
 
   protected updateEducationField(sectionIndex: number, field: string, value: string): void {
     this.educationSections.update(sections => {
       const updated = [...sections];
-      updated[sectionIndex] = { ...updated[sectionIndex], [field]: value };
+      const row = { ...updated[sectionIndex], [field]: value };
+      if (field === 'institute' || field === 'institution') {
+        row.institute = value;
+        row.institution = value;
+      }
+      updated[sectionIndex] = row;
       return updated;
     });
   }
@@ -358,21 +410,44 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       {
         company: '',
         position: '',
+        designation: '',
+        duration: '',
         fromDate: '',
         toDate: '',
         duties: '',
         remarks: '',
-        lastSalary: ''
-      }
+        lastSalary: '',
+      },
     ]);
   }
 
   protected updatePastExperienceField(sectionIndex: number, field: string, value: string): void {
     this.pastExperienceSections.update(sections => {
       const updated = [...sections];
-      updated[sectionIndex] = { ...updated[sectionIndex], [field]: value };
+      const row = { ...updated[sectionIndex], [field]: value };
+      if (field === 'position' || field === 'designation') {
+        row.position = value;
+        row.designation = value;
+      }
+      updated[sectionIndex] = row;
       return updated;
     });
+  }
+
+  protected updateAttachmentFileUrl(sectionIndex: number, rowIndex: number, value: string): void {
+    this.attachmentSections.update((sections) =>
+      sections.map((section, index) => {
+        if (index !== sectionIndex) {
+          return section;
+        }
+        return {
+          ...section,
+          rows: section.rows.map((row, i) =>
+            i === rowIndex ? { ...row, fileUrl: value } : row,
+          ),
+        };
+      }),
+    );
   }
 
   protected addAttachmentRow(sectionIndex: number): void {
@@ -428,7 +503,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         return {
           ...section,
           rows: section.rows.map((row, i) =>
-            i === rowIndex ? { ...row, file: null, fileName: '' } : row,
+            i === rowIndex ? { ...row, file: null, fileName: '', fileUrl: '' } : row,
           ),
         };
       }),
@@ -436,15 +511,21 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   private createEmptyAttachmentRow(): AttachmentRow {
-    return { file: null, fileName: '' };
+    return { file: null, fileName: '', fileUrl: '' };
   }
 
-  private flattenAttachments(): Array<{ type: AttachmentType; file: File | null; fileName: string }> {
+  private flattenAttachments(): Array<{
+    type: AttachmentType;
+    file: File | null;
+    fileName: string;
+    fileUrl: string;
+  }> {
     return this.attachmentSections().flatMap((section) =>
       section.rows.map((row) => ({
         type: section.type,
         file: row.file,
         fileName: row.fileName || (row.file ? row.file.name : ''),
+        fileUrl: row.fileUrl,
       })),
     );
   }
@@ -608,11 +689,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         departmentInAhcp: this.departmentInAhcp(),
         designation: this.designation(),
         jobDescription: this.jobDescription(),
-        roleAndSalary: this.roleAndSalary(),
+        roleSalary: this.roleSalary(),
       },
       education: this.educationSections().map((row) => ({ ...row })),
       pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
       remuneration: this.buildRemunerationPayload(),
+      hrSettings: this.buildHrSettingsPayload(),
       loginDetails: {
         employeeCode: this.employeeCode(),
         employeeName: this.loginEmployeeName(),
@@ -621,7 +703,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       },
       attachments: this.flattenAttachments().map((a) => ({
         type: a.type,
-        fileName: a.fileName || (a.file ? a.file.name : '')
+        fileName: a.fileName || (a.file ? a.file.name : ''),
+        fileUrl: a.fileUrl,
       })),
       requisition: {
         copyExisting: this.copyExisting(),
@@ -658,12 +741,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     const payload: EmployeeProfileAddPayload = {
       personName: this.personName(),
       firstName: this.firstName(),
-      middleName: this.middleName(),
+      middleName: this.middleName().trim() || null,
       lastName: this.lastName(),
       fatherOrHusbandName: this.fatherOrHusbandName(),
       gender: this.gender(),
       maritalStatus: this.maritalStatus(),
-      dateOfBirth: formatDateOfBirthToApi(this.dateOfBirth()),
+      dateOfBirth: formatDateToApiIso(formatDateOfBirthToApi(this.dateOfBirth())),
       nationality: this.nationality(),
       religion: this.religion(),
       bloodGroup: this.bloodGroup(),
@@ -679,34 +762,53 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       country: this.country(),
       zipCode: this.zipCode(),
       employmentNature: this.employmentNature(),
-      employmentCategory: this.employmentCategory(),
+      employeeCategory: this.employmentCategory(),
       employmentStatus: this.employmentStatus(),
-      departmentInAhcp: this.departmentInAhcp(),
+      department: this.departmentInAhcp(),
       designation: this.designation(),
       jobDescription: this.jobDescription(),
-      roleAndSalary: this.roleAndSalary(),
-      educationSections: this.educationSections().map((row) => ({ ...row })),
+      roleSalary: this.roleSalary(),
+      educationSections: this.educationSections().map((row) => ({
+        qualification: row.qualification,
+        institution: row.institution || row.institute,
+        passingYear: row.passingYear,
+      })),
       pastExperienceSections: this.pastExperienceSections().map((row) => ({
         company: row.company,
-        fromDate: row.fromDate,
-        toDate: row.toDate,
-        remarks: row.remarks,
-        position: row.position,
-        duties: row.duties,
-        lastSalary: Number.parseFloat(row.lastSalary || '0') || 0,
+        designation: row.designation || row.position,
+        duration: row.duration,
       })),
-      attachments: this.flattenAttachments().map((a) => {
-        const fileName = a.fileName || (a.file ? a.file.name : '');
-        return {
-          type: a.type,
-          fileName,
-          // API sample expects string path; use selected file name/path token for now.
-          file: fileName,
-        };
-      }),
-      ...this.buildRemunerationPayload(),
+      attachments: this.flattenAttachments()
+        .filter((a) => a.fileName || a.fileUrl)
+        .map((a) => ({
+          fileName: a.fileName || (a.file ? a.file.name : ''),
+          fileUrl: a.fileUrl,
+        })),
+      basicSalary: this.basicSalary(),
+      paymentMode: this.paymentMode(),
+      accountTitle: this.accountTitle(),
+      bankName: this.bankName(),
+      branchName: this.branchName(),
+      accountNo: this.accountNo(),
+      accountType: this.accountType(),
+      effectiveDate: formatDateToApiIso(this.effectiveDate()),
+      taxPercentage: this.taxPercentage(),
+      dateOfJoining: formatDateToApiIso(this.dateOfJoining()),
+      advancePercentAllowed: this.advancePercentAllowed(),
+      loanAmountAllowed: this.loanAmountAllowed(),
+      overTimeApplicable: this.overTimeToBoolean(this.overTimeApplicable()),
+      leaveType: this.leaveType(),
+      leaveDays: this.parseNumericField(this.leaveDays()),
+      leavesAvailed: this.parseNumericField(this.leavesAvailed()),
+      remainingLeaves: this.parseNumericField(this.remainingLeaves()),
+      totalLeaves: this.parseNumericField(this.totalLeaves()),
+      employeeMaster: this.parseNumericField(this.employeeMaster()),
+      salaryStructure: this.salaryStructure(),
+      attendanceShiftManagement: this.attendanceShiftManagement(),
+      leaveManagement: this.leaveManagement(),
+      loanAdvancesForm: this.loanAdvancesForm(),
       employeeCode: this.employeeCode(),
-      userId: this.userId(),
+      userId: this.parseNumericField(this.userId()) || this.userId(),
       loginEmployeeName: this.loginEmployeeName(),
       password: this.password(),
     };
@@ -784,17 +886,23 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         (record.Designation !== '—' ? record.Designation : detail.requisition.internalJobTitle),
     );
     this.jobDescription.set(detail.personalInfo.jobDescription);
-    this.roleAndSalary.set(detail.personalInfo.roleAndSalary);
+    this.roleSalary.set(detail.personalInfo.roleSalary);
 
     this.educationSections.set(
       detail.education.length
-        ? detail.education.map((row) => ({ ...row }))
+        ? detail.education.map((row) => ({
+            ...row,
+            institute: row.institute || row.institution,
+            institution: row.institution || row.institute,
+          }))
         : [{
             institute: '',
+            institution: '',
+            qualification: '',
+            passingYear: '',
             fromDate: '',
             toDate: '',
             subject: '',
-            qualification: '',
             awardedQualification: '',
             marksGrades: '',
             notes: '',
@@ -803,10 +911,16 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     this.pastExperienceSections.set(
       detail.pastExperience.length
-        ? detail.pastExperience.map((row) => ({ ...row }))
+        ? detail.pastExperience.map((row) => ({
+            ...row,
+            position: row.position || row.designation,
+            designation: row.designation || row.position,
+          }))
         : [{
             company: '',
             position: '',
+            designation: '',
+            duration: '',
             fromDate: '',
             toDate: '',
             duties: '',
@@ -824,19 +938,32 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.accountNo.set(remuneration.accountNo ?? '');
     this.accountType.set(remuneration.accountType ?? '');
     this.effectiveDate.set(remuneration.effectiveDate ?? '');
-    this.taxArrangementPercentage.set(remuneration.taxArrangementPercentage ?? '');
+    this.taxPercentage.set(remuneration.taxPercentage ?? '');
     this.dateOfJoining.set(remuneration.dateOfJoining ?? '');
     this.advancePercentAllowed.set(remuneration.advancePercentAllowed ?? '');
     this.loanAmountAllowed.set(remuneration.loanAmountAllowed ?? '');
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? '');
+    this.leaveType.set(remuneration.leaveType ?? '');
+    this.leaveDays.set(remuneration.leaveDays ?? '');
+    this.leavesAvailed.set(remuneration.leavesAvailed ?? '');
+    this.remainingLeaves.set(remuneration.remainingLeaves ?? '');
+    this.totalLeaves.set(remuneration.totalLeaves ?? '');
     this.medicalAllowances.set(remuneration.medicalAllowances ?? '');
     this.fuelAllowances.set(remuneration.fuelAllowances ?? '');
     this.mobileAllowances.set(remuneration.mobileAllowances ?? '');
     this.carAllowances.set(remuneration.carAllowances ?? '');
     this.maximumLoanCapacity.set(remuneration.maximumLoanCapacity ?? '');
     this.maximumAdvanceCapacity.set(remuneration.maximumAdvanceCapacity ?? '');
-    this.totalLeavesAllocated.set(remuneration.totalLeavesAllocated ?? '');
     this.otherAllowances.set(remuneration.otherAllowances ?? '');
+
+    const hrSettings = detail.hrSettings;
+    if (hrSettings) {
+      this.employeeMaster.set(hrSettings.employeeMaster ?? '');
+      this.salaryStructure.set(hrSettings.salaryStructure ?? '');
+      this.attendanceShiftManagement.set(hrSettings.attendanceShiftManagement ?? '');
+      this.leaveManagement.set(hrSettings.leaveManagement ?? '');
+      this.loanAdvancesForm.set(hrSettings.loanAdvancesForm ?? '');
+    }
 
     this.employeeCode.set(detail.loginDetails.employeeCode);
     this.userId.set(detail.loginDetails.userId);
@@ -851,6 +978,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
             .map((attachment) => ({
               file: null,
               fileName: attachment.fileName ?? '',
+              fileUrl: attachment.fileUrl ?? '',
             }));
           return {
             type,
