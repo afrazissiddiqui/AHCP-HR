@@ -82,7 +82,6 @@ export class TableFilterService {
     const state = this.ensureState(config);
     state.applied = cloneFilterValues(empty);
     state.draft = cloneFilterValues(empty);
-    state.dialogOpen = false;
     this.revision.update((v) => v + 1);
   }
 

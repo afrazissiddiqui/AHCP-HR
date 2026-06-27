@@ -6,6 +6,7 @@
     show-product-switch
     show-nav-button
     show-menu-button
+    [attr.show-search-field]="shellbarSearch.enabled() ? true : null"
     (click)="onShellbarClick($event)"
     (product-switch-click)="onProductSwitchClick($event)"
     (profile-click)="onProfileShellbarClick($event)"
@@ -19,11 +20,14 @@
       <ui5-avatar [attr.initials]="profileAvatarInitials()"></ui5-avatar>
     </span>
 
-    <!-- Search -->
-    <ui5-input
-      slot="searchField"
-      placeholder="Search"
-    ></ui5-input>
+    @if (shellbarSearch.enabled()) {
+      <ui5-input
+        #shellbarSearchInput
+        slot="searchField"
+        [attr.placeholder]="shellbarSearch.placeholder()"
+        (input)="onShellbarSearchInput($event)"
+      ></ui5-input>
+    }
 
     <ui5-shellbar-item
       icon="validate"

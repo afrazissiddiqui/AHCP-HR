@@ -205,7 +205,7 @@
               <dt>Marital status</dt>
               <dd>{{ displayDash(d.personalInfo.maritalStatus) }}</dd>
               <dt>Date of birth</dt>
-              <dd>{{ displayDash(d.personalInfo.dateOfBirth) }}</dd>
+              <dd>{{ displayDate(d.personalInfo.dateOfBirth) }}</dd>
               <dt>Nationality</dt>
               <dd>{{ displayDash(d.personalInfo.nationality) }}</dd>
               <dt>Religion</dt>
@@ -318,16 +318,24 @@
           <section class="application-detail-section">
             <h4 class="application-detail-section-title">Remuneration</h4>
             <dl class="application-detail-dl">
-              <dt>Employee master</dt>
-              <dd>{{ displayDash(d.remuneration.employeeMaster) }}</dd>
-              <dt>Salary structure</dt>
-              <dd>{{ displayDash(d.remuneration.salaryStructure) }}</dd>
-              <dt>Attendance &amp; shift</dt>
-              <dd>{{ displayDash(d.remuneration.attendanceShiftManagement) }}</dd>
-              <dt>Leave management</dt>
-              <dd>{{ displayDash(d.remuneration.leaveManagement) }}</dd>
-              <dt>Loan &amp; advances</dt>
-              <dd>{{ displayDash(d.remuneration.loanAdvancesForm) }}</dd>
+              <dt>Basic salary</dt>
+              <dd>{{ displayDash(d.remuneration.basicSalary) }}</dd>
+              <dt>Medical allowances</dt>
+              <dd>{{ displayDash(d.remuneration.medicalAllowances) }}</dd>
+              <dt>Fuel allowances</dt>
+              <dd>{{ displayDash(d.remuneration.fuelAllowances) }}</dd>
+              <dt>Mobile allowances</dt>
+              <dd>{{ displayDash(d.remuneration.mobileAllowances) }}</dd>
+              <dt>Car allowances</dt>
+              <dd>{{ displayDash(d.remuneration.carAllowances) }}</dd>
+              <dt>Maximum loan capacity</dt>
+              <dd>{{ displayDash(d.remuneration.maximumLoanCapacity) }}</dd>
+              <dt>Maximum advance capacity</dt>
+              <dd>{{ displayDash(d.remuneration.maximumAdvanceCapacity) }}</dd>
+              <dt>Total leaves allocated</dt>
+              <dd>{{ displayDash(d.remuneration.totalLeavesAllocated) }}</dd>
+              <dt>Other allowances</dt>
+              <dd>{{ displayDash(d.remuneration.otherAllowances) }}</dd>
             </dl>
           </section>
 

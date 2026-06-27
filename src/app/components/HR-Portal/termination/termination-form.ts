@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { TerminationRecord, TerminationService } from '../../../services/termination.service';
 import { AlertService } from '../../../services/alert.service';
+import { ShellbarSearchService } from '../../../services/shellbar-search.service';
+import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import {
   TERMINATION_TABLE_FILTER,
@@ -24,6 +26,8 @@ type TerminationColumnKey = Exclude<keyof TerminationRecord, 'selected' | 'detai
 })
 export class TerminationFormComponent implements OnInit {
   readonly terminationTableFilter = TERMINATION_TABLE_FILTER;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly shellbarSearch = inject(ShellbarSearchService);
 
   constructor(
     private readonly terminationService: TerminationService,
@@ -33,6 +37,12 @@ export class TerminationFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
+      getSearchText: () => this.searchText,
+      setSearchText: (value) => { this.searchText = value; },
+      onSearchChange: () => this.onSearchChange(),
+    });
+
     this.terminationService.fetchFinalSettlements().subscribe({
       error: (error: unknown) => {
         this.alertService.error(
@@ -136,6 +146,7 @@ export class TerminationFormComponent implements OnInit {
   }
 
   onSearchChange(): void {
+    this.shellbarSearch.syncQuery(this.searchText);
     this.currentPage = 1;
   }
 

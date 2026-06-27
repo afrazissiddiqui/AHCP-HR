@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../services/application-form.service';
+import { ShellbarSearchService } from '../../../services/shellbar-search.service';
+import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from './employee-action-sidebar';
 import {
   EMPLOYEE_ACTION_TABLE_FILTER,
@@ -21,13 +23,23 @@ type EmployeeActionDataColumnKey = Exclude<keyof ApplicationFormRecord, 'selecte
   templateUrl: './employee-action.html',
   styleUrl: '../Application-Form/Application-Form.css',
 })
-export class EmployeeActionComponent {
+export class EmployeeActionComponent implements OnInit {
   readonly employeeActionTableFilter = EMPLOYEE_ACTION_TABLE_FILTER;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly shellbarSearch = inject(ShellbarSearchService);
 
   constructor(
     private applicationFormService: ApplicationFormService,
     readonly tableFilter: TableFilterService
-  ) { }
+  ) {
+    connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
+      getSearchText: () => this.searchText,
+      setSearchText: (value) => { this.searchText = value; },
+      onSearchChange: () => this.onSearchChange(),
+    });
+  }
+
+  ngOnInit(): void {}
 
   Math = Math;
 
@@ -128,6 +140,7 @@ export class EmployeeActionComponent {
   }
 
   onSearchChange(): void {
+    this.shellbarSearch.syncQuery(this.searchText);
     this.currentPage = 1;
   }
 

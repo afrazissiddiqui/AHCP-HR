@@ -1,4 +1,4 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, signal, ChangeDetectionStrategy, computed, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, signal, ChangeDetectionStrategy, computed, ElementRef, ViewChild, HostListener, effect, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Router } from '@angular/router';
 import { NavigationEnd } from '@angular/router';
@@ -6,8 +6,9 @@ import { filter } from 'rxjs/operators';
 import { ViewProfileComponent } from './components/profile/view-profile';
 import { ApplicationFormService } from './services/application-form.service';
 import { AuthService } from './services/auth.service';
-import { resolveShellbarTitle } from './utils/shellbar-title.util';
+import { resolveShellbarTitle, resolveShellbarSearchPlaceholder } from './utils/shellbar-title.util';
 import { HR_MENU_OPTIONS, HrMenuOption } from './config/hr-menu.config';
+import { ShellbarSearchService } from './services/shellbar-search.service';
 
 type HrMenuOptionLocal = HrMenuOption;
 
@@ -34,6 +35,11 @@ export class App {
 
   @ViewChild('headerWrapper', { read: ElementRef })
   private headerWrapperRef?: ElementRef<HTMLElement>;
+
+  @ViewChild('shellbarSearchInput')
+  private shellbarSearchInput?: ElementRef<HTMLInputElement>;
+
+  protected readonly shellbarSearch = inject(ShellbarSearchService);
 
   /** Ignore document click-close briefly after opening profile menu (same click bubble). */
   private profileMenuIgnoreCloseUntil = 0;
@@ -66,6 +72,12 @@ export class App {
   ) {
     const initialKey = (this.router.url.split('?')[0] ?? '').replace(/^\//, '');
     this.showMainChrome.set(initialKey !== 'login');
+    this.shellbarSearch.setPlaceholder(resolveShellbarSearchPlaceholder(initialKey));
+    if (initialKey.startsWith('plant-maintenance')) {
+      this.expandedHrMenuValue.set('plant-maintenance');
+    } else if (this.isHrModuleRoute(initialKey)) {
+      this.expandedHrMenuValue.set('hr');
+    }
 
     this.router.events
       .pipe(
@@ -81,11 +93,22 @@ export class App {
         this.selectedHrOption.set(this.resolveHrOptionValue(routeKey));
         if (routeKey.startsWith('plant-maintenance')) {
           this.expandedHrMenuValue.set('plant-maintenance');
+        } else if (this.isHrModuleRoute(routeKey)) {
+          this.expandedHrMenuValue.set('hr');
         }
         this.showMainChrome.set(routeKey !== 'login');
+        this.shellbarSearch.setPlaceholder(resolveShellbarSearchPlaceholder(routeKey));
         this.profileDropdownOpen.set(false);
         this.profileDrawerOpen.set(false);
       });
+
+    effect(() => {
+      const query = this.shellbarSearch.query();
+      const input = this.shellbarSearchInput?.nativeElement;
+      if (input && input.value !== query) {
+        input.value = query;
+      }
+    });
   }
 
   toggleHrDropdown(): void {
@@ -148,6 +171,11 @@ export class App {
     }
 
     this.toggleHrDropdown();
+  }
+
+  onShellbarSearchInput(event: Event): void {
+    const value = (event.target as HTMLInputElement | null)?.value ?? '';
+    this.shellbarSearch.updateFromShellbar(value);
   }
 
   onApprovalAuthoritySetupClick(event: Event): void {
@@ -216,16 +244,32 @@ export class App {
   isHrOptionSelected(option: HrMenuOptionLocal): boolean {
     const selected = this.selectedHrOption();
     if (option.children?.length) {
-      return selected === option.value || selected.startsWith(`${option.value}/`);
+      if (selected === option.value || selected.startsWith(`${option.value}/`)) {
+        return true;
+      }
+      return option.children.some(
+        (child) => selected === child.value || selected.startsWith(`${child.value}/`),
+      );
     }
-    return selected === option.value;
+    return selected === option.value || selected.startsWith(`${option.value}/`);
   }
 
   private collapseHrSubmenuUnlessActiveRoute(): void {
     const routeKey = (this.router.url.split('?')[0] ?? '').replace(/^\//, '');
-    if (!routeKey.startsWith('plant-maintenance')) {
+    if (!routeKey.startsWith('plant-maintenance') && !this.isHrModuleRoute(routeKey)) {
       this.expandedHrMenuValue.set(null);
     }
+  }
+
+  private isHrModuleRoute(routeKey: string): boolean {
+    return (
+      routeKey === 'recruitment' ||
+      routeKey.startsWith('recruitment/') ||
+      routeKey === 'employee-action' ||
+      routeKey.startsWith('employee-action/') ||
+      routeKey === 'payroll-master' ||
+      routeKey.startsWith('payroll-master/')
+    );
   }
 
   private resolveHrOptionValue(routeKey: string): string {

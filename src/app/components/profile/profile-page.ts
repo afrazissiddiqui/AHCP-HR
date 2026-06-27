@@ -31,12 +31,15 @@ export class ProfilePageComponent {
     if (!record?.detail) {
       return '—';
     }
+    const basicSalary = record.detail.remuneration?.basicSalary?.trim();
+    if (basicSalary) {
+      return `PKR ${basicSalary}`;
+    }
     const lastExp = record.detail.pastExperience.at(-1);
     if (lastExp?.lastSalary?.trim()) {
       return `PKR ${lastExp.lastSalary}`;
     }
-    const structure = record.detail.remuneration?.salaryStructure?.trim();
-    return structure || '—';
+    return '—';
   });
 
   protected readonly avatarInitials = computed(() => {

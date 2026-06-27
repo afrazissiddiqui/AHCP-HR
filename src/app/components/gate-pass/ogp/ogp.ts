@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,6 +10,8 @@ import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { gatePassWarehouseLabel } from '../gate-pass-warehouse.options';
 import { formatGatePassListCell } from '../gate-pass-list-display.util';
 import { OgpRecord, OgpService } from './ogp.service';
+import { ShellbarSearchService } from '../../../services/shellbar-search.service';
+import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 
 type OgpSortableKey = Exclude<keyof OgpRecord, 'lines' | 'selected'>;
 
@@ -28,6 +30,8 @@ interface ColumnConfig {
 })
 export class OgpComponent implements OnInit {
   readonly warehouseLabel = gatePassWarehouseLabel;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly shellbarSearch = inject(ShellbarSearchService);
 
   constructor(
     private readonly router: Router,
@@ -41,6 +45,12 @@ export class OgpComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
+      getSearchText: () => this.searchText,
+      setSearchText: (value) => { this.searchText = value; },
+      onSearchChange: () => this.onSearchChange(),
+    });
+
     this.ogpService.fetchOutwardGatePasses().subscribe({
       error: (error: unknown) => {
         this.alertService.error(
@@ -225,6 +235,7 @@ export class OgpComponent implements OnInit {
   }
 
   onSearchChange(): void {
+    this.shellbarSearch.syncQuery(this.searchText);
     this.currentPage = 1;
   }
 

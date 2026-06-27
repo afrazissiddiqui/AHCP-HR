@@ -37,8 +37,8 @@
         <h3>Salary &amp; remuneration</h3>
         <div class="view-profile-grid">
           <div class="view-profile-item"><span class="view-profile-label">Salary</span><span>{{ displaySalary() }}</span></div>
-          <div class="view-profile-item"><span class="view-profile-label">Salary structure</span><span>{{ record.detail?.remuneration?.salaryStructure || '—' }}</span></div>
-          <div class="view-profile-item"><span class="view-profile-label">Employee master</span><span>{{ record.detail?.remuneration?.employeeMaster || '—' }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Medical allowances</span><span>{{ record.detail?.remuneration?.medicalAllowances || '—' }}</span></div>
+          <div class="view-profile-item"><span class="view-profile-label">Total leaves allocated</span><span>{{ record.detail?.remuneration?.totalLeavesAllocated || '—' }}</span></div>
           <div class="view-profile-item"><span class="view-profile-label">Employment type</span><span>{{ field(record, r => r.EmploymentType) }}</span></div>
           <div class="view-profile-item"><span class="view-profile-label">Employment category</span><span>{{ field(record, r => r.EmploymentCategory) }}</span></div>
           <div class="view-profile-item"><span class="view-profile-label">Company</span><span>{{ record.detail?.requisition?.company || field(record, r => r.EmployeeNature) }}</span></div>

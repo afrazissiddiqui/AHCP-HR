@@ -16,9 +16,16 @@ export interface HrMenuAction {
 /** HR shellbar dropdown — single source for navigation targets. */
 export const HR_MENU_OPTIONS: HrMenuOption[] = [
   { label: 'Home', value: 'dashboard', icon: 'home', route: '/dashboard' },
-  { label: 'Recruitment', value: 'recruitment', icon: 'employee-pane', route: '/recruitment' },
-  { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
-  { label: 'Payroll Master', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
+  {
+    label: 'HR',
+    value: 'hr',
+    icon: 'employee',
+    children: [
+      { label: 'Recruitment', value: 'recruitment', icon: 'employee-pane', route: '/recruitment' },
+      { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
+      { label: 'Payroll', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
+    ],
+  },
   { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
   { label: 'Miscellaneous', value: 'miscellaneous', icon: 'grid', route: '/miscellaneous' },
   { label: 'Termination', value: 'termination', icon: 'feedback', route: '/termination' },

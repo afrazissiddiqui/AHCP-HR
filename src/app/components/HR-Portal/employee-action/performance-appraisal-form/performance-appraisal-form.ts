@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
@@ -17,6 +17,8 @@ import {
   TableFilterComponent,
   TableFilterService,
 } from '../../../table-filter';
+import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
+import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
 
 type AppraisalColumnKey = Exclude<
   keyof PerformanceAppraisalRecord,
@@ -69,6 +71,8 @@ type AppraisalColumnKey = Exclude<
 })
 export class PerformanceAppraisalFormComponent implements OnInit {
   readonly appraisalTableFilter = PERFORMANCE_APPRAISAL_TABLE_FILTER;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly shellbarSearch = inject(ShellbarSearchService);
 
   constructor(
     private readonly appraisalService: PerformanceAppraisalService,
@@ -78,6 +82,12 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
+      getSearchText: () => this.searchText,
+      setSearchText: (value) => { this.searchText = value; },
+      onSearchChange: () => this.onSearchChange(),
+    });
+
     this.appraisalService.fetchPerformanceAppraisals().subscribe({
       error: (error: unknown) => {
         this.alertService.error(
@@ -181,6 +191,7 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   }
 
   onSearchChange(): void {
+    this.shellbarSearch.syncQuery(this.searchText);
     this.currentPage = 1;
   }
 

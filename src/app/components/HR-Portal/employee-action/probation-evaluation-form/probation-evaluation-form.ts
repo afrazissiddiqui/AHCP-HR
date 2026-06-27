@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
@@ -17,6 +17,8 @@ import {
   TableFilterComponent,
   TableFilterService,
 } from '../../../table-filter';
+import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
+import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
 
 type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 'Location' | 'ReportingManager' | 'EmployeeType' | 'GradeWorkLevel' | 'EmploymentCategory' | 'Remarks' | 'ProbationRating' | 'SupervisionRemark' | 'ExtensionOfProbation' | 'TerminationOfProbation' | 'SalaryAdjustment' | 'Allowances' | 'TotalSalary'>;
 
@@ -71,6 +73,8 @@ type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 
 })
 export class ProbationEvaluationFormComponent implements OnInit {
   readonly probationTableFilter = PROBATION_EVALUATION_TABLE_FILTER;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly shellbarSearch = inject(ShellbarSearchService);
 
   constructor(
     private readonly probationService: ProbationEvaluationService,
@@ -80,6 +84,12 @@ export class ProbationEvaluationFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
+      getSearchText: () => this.searchText,
+      setSearchText: (value) => { this.searchText = value; },
+      onSearchChange: () => this.onSearchChange(),
+    });
+
     this.probationService.fetchProbationEvaluations().subscribe({
       error: (error: unknown) => {
         this.alertService.error('Load Failed', formatApiErrorMessage(error, 'Failed to load probation evaluations.'));
@@ -178,6 +188,7 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   onSearchChange(): void {
+    this.shellbarSearch.syncQuery(this.searchText);
     this.currentPage = 1;
   }
 

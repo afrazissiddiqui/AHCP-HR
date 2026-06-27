@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { formatDateOfBirthFromApi } from '../utils/date-format.util';
 
 /** Extended payload captured from Create Application Form — shown in Application Form view modal only. */
 export interface ApplicationFormPersonalInfo {
@@ -58,11 +59,15 @@ export interface ApplicationFormPastExperienceRow {
 }
 
 export interface ApplicationFormRemuneration {
-  employeeMaster: string;
-  salaryStructure: string;
-  attendanceShiftManagement: string;
-  leaveManagement: string;
-  loanAdvancesForm: string;
+  basicSalary: string;
+  medicalAllowances: string;
+  fuelAllowances: string;
+  mobileAllowances: string;
+  carAllowances: string;
+  maximumLoanCapacity: string;
+  maximumAdvanceCapacity: string;
+  totalLeavesAllocated: string;
+  otherAllowances: string;
 }
 
 export interface ApplicationFormLoginDetails {
@@ -184,11 +189,15 @@ export interface EmployeeProfileAddPayload {
     fileName: string;
     file: string;
   }>;
-  employeeMaster: string;
-  salaryStructure: string;
-  attendanceShiftManagement: string;
-  leaveManagement: string;
-  loanAdvancesForm: string;
+  basicSalary: string;
+  medicalAllowances: string;
+  fuelAllowances: string;
+  mobileAllowances: string;
+  carAllowances: string;
+  maximumLoanCapacity: string;
+  maximumAdvanceCapacity: string;
+  totalLeavesAllocated: string;
+  otherAllowances: string;
   employeeCode: string;
   userId: string;
   loginEmployeeName: string;
@@ -332,8 +341,6 @@ export class ApplicationFormService {
       EmployeeNature:
         asString(item['employmentNature']) ||
         asString(item['employment_nature']) ||
-        asString(item['employeeMaster']) ||
-        asString(item['employee_master']) ||
         '—',
       Designation: asString(item['designation']) || '—',
       ReportingManager: asString(item['reportingManager']) || asString(item['reporting_manager']) || '—',
@@ -419,7 +426,7 @@ export class ApplicationFormService {
         fatherOrHusbandName: pick('fatherOrHusbandName', 'father_or_husband_name'),
         gender: pick('gender'),
         maritalStatus: pick('maritalStatus', 'marital_status'),
-        dateOfBirth: pick('dateOfBirth', 'date_of_birth'),
+        dateOfBirth: formatDateOfBirthFromApi(pick('dateOfBirth', 'date_of_birth')),
         nationality: pick('nationality'),
         religion: pick('religion'),
         bloodGroup: pick('bloodGroup', 'blood_group'),
@@ -445,11 +452,15 @@ export class ApplicationFormService {
       education,
       pastExperience,
       remuneration: {
-        employeeMaster: pick('employeeMaster', 'employee_master'),
-        salaryStructure: pick('salaryStructure', 'salary_structure'),
-        attendanceShiftManagement: pick('attendanceShiftManagement', 'attendance_shift_management'),
-        leaveManagement: pick('leaveManagement', 'leave_management'),
-        loanAdvancesForm: pick('loanAdvancesForm', 'loan_advances_form'),
+        basicSalary: pick('basicSalary', 'basic_salary'),
+        medicalAllowances: pick('medicalAllowances', 'medical_allowances'),
+        fuelAllowances: pick('fuelAllowances', 'fuel_allowances'),
+        mobileAllowances: pick('mobileAllowances', 'mobile_allowances'),
+        carAllowances: pick('carAllowances', 'car_allowances'),
+        maximumLoanCapacity: pick('maximumLoanCapacity', 'maximum_loan_capacity'),
+        maximumAdvanceCapacity: pick('maximumAdvanceCapacity', 'maximum_advance_capacity'),
+        totalLeavesAllocated: pick('totalLeavesAllocated', 'total_leaves_allocated'),
+        otherAllowances: pick('otherAllowances', 'other_allowances'),
       },
       loginDetails: {
         employeeCode: pick('employeeCode', 'employee_code'),

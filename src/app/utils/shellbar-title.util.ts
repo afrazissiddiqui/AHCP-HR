@@ -75,6 +75,31 @@ const PREFIX_TITLES: Array<{ prefix: string; title: string }> = [
   { prefix: 'plant-maintenance', title: 'Plant maintenance' },
 ];
 
+const NON_SEARCH_ROUTE_KEYS = new Set([
+  '',
+  'login',
+  'dashboard',
+  'profile',
+  'forms-hub',
+  'employee-action/approval-authority-setup',
+]);
+
+export function isShellbarSearchRoute(routeKey: string): boolean {
+  const key = routeKey.replace(/^\//, '').replace(/\/$/, '');
+  if (NON_SEARCH_ROUTE_KEYS.has(key)) {
+    return false;
+  }
+  if (/(^|\/)(create|edit)(\/|$)/.test(key)) {
+    return false;
+  }
+  return true;
+}
+
+export function resolveShellbarSearchPlaceholder(routeKey: string): string {
+  const title = resolveShellbarTitle(routeKey);
+  return `Search ${title} list…`;
+}
+
 export function resolveShellbarTitle(routeKey: string): string {
   const key = routeKey.replace(/^\//, '').replace(/\/$/, '');
   if (!key) {

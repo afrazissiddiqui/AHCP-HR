@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, signal, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
@@ -16,6 +16,9 @@ import {
   TableFilterComponent,
   TableFilterService,
 } from '../../table-filter';
+import { ShellbarSearchService } from '../../../services/shellbar-search.service';
+import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
+import { displayDateOnly } from '../../../utils/date-format.util';
 
 type ApplicationFormColumnKey = Exclude<keyof ApplicationFormRecord, 'detail' | 'selected'>;
 
@@ -50,6 +53,8 @@ export class RecruitmentComponent implements OnInit {
 
   readonly applicationTableFilter = APPLICATION_FORM_TABLE_FILTER;
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly shellbarSearch = inject(ShellbarSearchService);
   readonly detailViewState$ = new BehaviorSubject<ApplicationDetailViewState>({
     open: false,
     loading: false,
@@ -64,6 +69,12 @@ export class RecruitmentComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
+      getSearchText: () => this.searchText,
+      setSearchText: (value) => { this.searchText = value; },
+      onSearchChange: () => this.onSearchChange(),
+    });
+
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => this.cdr.markForCheck(),
       error: (error: unknown) => {
@@ -214,6 +225,7 @@ export class RecruitmentComponent implements OnInit {
 
   // Actions
   onSearchChange() {
+    this.shellbarSearch.syncQuery(this.searchText);
     this.currentPage = 1; // Reset to first page on search
   }
 
@@ -273,6 +285,10 @@ export class RecruitmentComponent implements OnInit {
     }
     const s = String(value).trim();
     return s === '' ? '—' : s;
+  }
+
+  displayDate(value: string | number | undefined | null): string {
+    return displayDateOnly(value);
   }
 
   maskedPassword(password: string | undefined): string {

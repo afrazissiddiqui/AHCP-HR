@@ -71,6 +71,7 @@
               <option value="">No Selection</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
+              <option value="Prefer not to say">Prefer not to say</option>
             </select>
           </div>
 
@@ -86,8 +87,8 @@
 
           <div class="cjr-row">
             <label>Date of Birth:</label>
-            <input type="date" [ngModel]="dateOfBirth()" (ngModelChange)="dateOfBirth.set($event)"
-              (blur)="touch('dateOfBirth')" />
+            <input type="text" inputmode="numeric" maxlength="10" placeholder="DD-MM-YYYY"
+              [ngModel]="dateOfBirth()" (ngModelChange)="onDateOfBirthChange($event)" (blur)="touch('dateOfBirth')" />
           </div>
 
           <div class="cjr-row">
@@ -229,7 +230,7 @@
                 <option value="">No Selection</option>
                 <option value="Executive">Executive</option>
                 <option value="Non-Executive">Non-Executive</option>
-                <option value="Daily Wagers">Daily Wagers</option>
+                <option value="Top Managment">Daily Wagers</option>
               </select>
             </div>
 
@@ -239,11 +240,8 @@
                 (blur)="touch('employmentStatus')">
                 <option value="">No Selection</option>
                 <option value="Active">Active</option>
-                <option value="On Probation">On Probation</option>
-                <option value="Submitted">Submitted</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Resigned">Resigned</option>
-                <option value="Terminated">Terminated</option>
+                <option value="Contractual">Contractual</option>
+                <option value="Permenant">Permenant</option>
               </select>
             </div>
 
@@ -267,11 +265,11 @@
                 (blur)="touch('jobDescription')" placeholder="Role description"></textarea>
             </div>
 
-            <div class="cjr-row cjr-row--textarea">
+            <!-- <div class="cjr-row cjr-row--textarea">
               <label>Role &amp; Salary:</label>
               <textarea rows="3" [ngModel]="roleAndSalary()" (ngModelChange)="roleAndSalary.set($event)"
                 (blur)="touch('roleAndSalary')" placeholder="Role and salary details"></textarea>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -282,8 +280,14 @@
 
       @for (edu of educationSections(); let i = $index; track i) {
       <div class="cjr-education-section">
-        @if (i > 0) {
-        <div class="cjr-education-label">Section {{ i + 1 }}</div>
+        @if (educationSections().length > 1) {
+        <div class="cjr-education-section-header">
+          <div class="cjr-education-label">Section {{ i + 1 }}</div>
+          <button type="button" class="cjr-remove-section" (click)="removeEducationSection(i)"
+            aria-label="Remove education section">
+            Remove
+          </button>
+        </div>
         }
 
         <div class="cjr-personal-grid">
@@ -321,12 +325,12 @@
                 (blur)="touch('educationQualification')" />
             </div>
 
-            <div class="cjr-row">
+            <!-- <div class="cjr-row">
               <label>Awarded Qualification:</label>
               <input type="text" [ngModel]="edu.awardedQualification"
                 (ngModelChange)="updateEducationField(i, 'awardedQualification', $event)"
                 (blur)="touch('educationAwardedQualification')" />
-            </div>
+            </div> -->
 
             <div class="cjr-row">
               <label>Marks / Grades:</label>
@@ -419,23 +423,40 @@
     <div class="cjr-personal cjr-attachments" id="attachments-section">
       <div class="cjr-section-title">Attachments</div>
 
-      @for (attachment of attachments(); let i = $index; track i) {
-      <div class="cjr-attachment-row">
-        <div class="cjr-attachment-label">{{ attachment.type }}:</div>
-        <div class="cjr-attachment-field">
-          @if (attachment.fileName) {
-          <div class="cjr-attachment-info">
-            <span class="cjr-file-name">{{ attachment.fileName }}</span>
-            <button type="button" class="cjr-remove-attachment" (click)="removeAttachment(i)"
-              aria-label="Remove attachment">
-              ✕
-            </button>
-          </div>
-          } @else {
-          <input type="file" (change)="onAttachmentChange(i, $event)" aria-label="Upload {{ attachment.type }}"
-            class="cjr-file-input" />
-          }
+      @for (section of attachmentSections(); let si = $index; track section.type) {
+      <div class="cjr-attachment-section">
+        <div class="cjr-attachment-section-header">
+          <div class="cjr-attachment-label">{{ section.type }}:</div>
+          <button type="button" class="cjr-add-education-btn cjr-add-attachment-row-btn" (click)="addAttachmentRow(si)">
+            <span class="cjr-add-icon">+</span> Add Row
+          </button>
         </div>
+
+        @for (row of section.rows; let ri = $index; track ri) {
+        <div class="cjr-attachment-row" [class.cjr-attachment-row--child]="ri > 0">
+          <div class="cjr-attachment-label" aria-hidden="true"></div>
+          <div class="cjr-attachment-field">
+            @if (row.fileName) {
+            <div class="cjr-attachment-info">
+              <span class="cjr-file-name">{{ row.fileName }}</span>
+              <button type="button" class="cjr-remove-attachment" (click)="clearAttachmentFile(si, ri)"
+                aria-label="Remove attachment file">
+                ✕
+              </button>
+            </div>
+            } @else {
+            <input type="file" (change)="onAttachmentChange(si, ri, $event)"
+              [attr.aria-label]="'Upload ' + section.type" class="cjr-file-input" />
+            }
+            @if (section.rows.length > 1) {
+            <button type="button" class="cjr-remove-section cjr-remove-attachment-row"
+              (click)="removeAttachmentRow(si, ri)" aria-label="Remove attachment row">
+              Remove
+            </button>
+            }
+          </div>
+        </div>
+        }
       </div>
       }
     </div>
@@ -446,36 +467,61 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Employee Master (OHEM):</label>
-            <input type="text" [ngModel]="employeeMaster()" (ngModelChange)="employeeMaster.set($event)"
-              (blur)="touch('employeeMaster')" placeholder="Search employee..." />
+            <label>Basic Salary:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="basicSalary()"
+              (ngModelChange)="basicSalary.set($event)" (blur)="touch('basicSalary')" />
           </div>
 
           <div class="cjr-row">
-            <label>Salary Structure:</label>
-            <input type="text" [ngModel]="salaryStructure()" (ngModelChange)="salaryStructure.set($event)"
-              (blur)="touch('salaryStructure')" placeholder="Search salary structure..." />
+            <label>Medical Allowances:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="medicalAllowances()"
+              (ngModelChange)="medicalAllowances.set($event)" (blur)="touch('medicalAllowances')" />
           </div>
 
           <div class="cjr-row">
-            <label>Attendance & Shift Management:</label>
-            <input type="text" [ngModel]="attendanceShiftManagement()"
-              (ngModelChange)="attendanceShiftManagement.set($event)" (blur)="touch('attendanceShiftManagement')"
-              placeholder="Search attendance & shift..." />
+            <label>Fuel Allowances:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="fuelAllowances()"
+              (ngModelChange)="fuelAllowances.set($event)" (blur)="touch('fuelAllowances')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Mobile Allowances:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="mobileAllowances()"
+              (ngModelChange)="mobileAllowances.set($event)" (blur)="touch('mobileAllowances')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Car Allowances:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="carAllowances()"
+              (ngModelChange)="carAllowances.set($event)" (blur)="touch('carAllowances')" />
           </div>
         </div>
 
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Leave Management:</label>
-            <input type="text" [ngModel]="leaveManagement()" (ngModelChange)="leaveManagement.set($event)"
-              (blur)="touch('leaveManagement')" placeholder="Search leave management..." />
+            <label>Maximum Loan Capacity:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="maximumLoanCapacity()"
+              (ngModelChange)="onNumericOnlyChange($event, maximumLoanCapacity)" (blur)="touch('maximumLoanCapacity')" />
           </div>
 
           <div class="cjr-row">
-            <label>Loan & Advances Forms:</label>
-            <input type="text" [ngModel]="loanAdvancesForm()" (ngModelChange)="loanAdvancesForm.set($event)"
-              (blur)="touch('loanAdvancesForm')" placeholder="Search loan & advances..." />
+            <label>Maximum Advance Capacity:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="maximumAdvanceCapacity()"
+              (ngModelChange)="onNumericOnlyChange($event, maximumAdvanceCapacity)"
+              (blur)="touch('maximumAdvanceCapacity')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Total Leaves Allocated:</label>
+            <input type="number" min="0" step="1" [ngModel]="totalLeavesAllocated()"
+              (ngModelChange)="onIntegerOnlyChange($event, totalLeavesAllocated)"
+              (blur)="touch('totalLeavesAllocated')" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Other Allowances:</label>
+            <input type="number" min="0" step="0.01" [ngModel]="otherAllowances()"
+              (ngModelChange)="otherAllowances.set($event)" (blur)="touch('otherAllowances')" />
           </div>
         </div>
       </div>

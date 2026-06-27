@@ -10,6 +10,38 @@ import {
   ApplicationFormService,
   EmployeeProfileAddPayload,
 } from '../../../../services/application-form.service';
+import {
+  formatDateDdMmYyyyInput,
+  formatDateOfBirthFromApi,
+  formatDateOfBirthToApi,
+} from '../../../../utils/date-format.util';
+
+type AttachmentType =
+  | 'CV'
+  | 'Educational Certificates'
+  | 'CNIC copy'
+  | 'Experience letters'
+  | 'Professional certificates'
+  | 'Offer letter';
+
+interface AttachmentRow {
+  file: File | null;
+  fileName: string;
+}
+
+interface AttachmentSection {
+  type: AttachmentType;
+  rows: AttachmentRow[];
+}
+
+const ATTACHMENT_TYPES: AttachmentType[] = [
+  'CV',
+  'Educational Certificates',
+  'CNIC copy',
+  'Experience letters',
+  'Professional certificates',
+  'Offer letter',
+];
 
 @Component({
   selector: 'app-create-job-requisition',
@@ -33,9 +65,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly middleName = signal(''); // OHEM.middleName
   protected readonly lastName = signal(''); // OHEM.lastName
   protected readonly fatherOrHusbandName = signal(''); // free text
-  protected readonly gender = signal<'Male' | 'Female' | ''>('');
+  protected readonly gender = signal<'Male' | 'Female' | 'Prefer not to say' | ''>('');
   protected readonly maritalStatus = signal<'Single' | 'Married' | ''>('');
-  protected readonly dateOfBirth = signal(''); // date (yyyy-mm-dd)
+  protected readonly dateOfBirth = signal(''); // DD-MM-YYYY
   protected readonly nationality = signal(''); // free text
   protected readonly religion = signal(''); // free text
   protected readonly bloodGroup = signal(''); // free text
@@ -102,26 +134,19 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     }
   ]);
 
-  // Attachments fields
-  protected readonly attachments = signal<Array<{
-    type: 'CV' | 'Educational Certificates' | 'CNIC copy' | 'Experience letters' | 'Professional certificates' | 'Offer letter';
-    file: File | null;
-    fileName: string;
-  }>>([
-    { type: 'CV', file: null, fileName: '' },
-    { type: 'Educational Certificates', file: null, fileName: '' },
-    { type: 'CNIC copy', file: null, fileName: '' },
-    { type: 'Experience letters', file: null, fileName: '' },
-    { type: 'Professional certificates', file: null, fileName: '' },
-    { type: 'Offer letter', file: null, fileName: '' }
-  ]);
+  // Attachments fields — one section per type, each with one or more file rows
+  protected readonly attachmentSections = signal<AttachmentSection[]>(this.createDefaultAttachmentSections());
 
   // Remuneration fields
-  protected readonly employeeMaster = signal(''); // OHEM reference
-  protected readonly salaryStructure = signal(''); // Salary structure reference
-  protected readonly attendanceShiftManagement = signal(''); // Attendance & Shift Management reference
-  protected readonly leaveManagement = signal(''); // Leave Management reference
-  protected readonly loanAdvancesForm = signal(''); // Loan & Advances Forms reference
+  protected readonly basicSalary = signal('');
+  protected readonly medicalAllowances = signal('');
+  protected readonly fuelAllowances = signal('');
+  protected readonly mobileAllowances = signal('');
+  protected readonly carAllowances = signal('');
+  protected readonly maximumLoanCapacity = signal('');
+  protected readonly maximumAdvanceCapacity = signal('');
+  protected readonly totalLeavesAllocated = signal('');
+  protected readonly otherAllowances = signal('');
 
   // Login Detail fields
   protected readonly employeeCode = signal(''); // Employee code
@@ -146,6 +171,34 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly costCenter = signal('No Selection');
 
   protected readonly touched = signal<Record<string, boolean>>({});
+
+  protected onIntegerOnlyChange(value: string, target: { set: (next: string) => void }): void {
+    target.set(value.replace(/\D/g, ''));
+  }
+
+  protected onNumericOnlyChange(value: string, target: { set: (next: string) => void }): void {
+    const sanitized = value.replace(/[^\d.]/g, '');
+    const [whole, ...fraction] = sanitized.split('.');
+    target.set(fraction.length ? `${whole}.${fraction.join('')}` : whole);
+  }
+
+  private buildRemunerationPayload(): ApplicationFormDetail['remuneration'] {
+    return {
+      basicSalary: this.basicSalary(),
+      medicalAllowances: this.medicalAllowances(),
+      fuelAllowances: this.fuelAllowances(),
+      mobileAllowances: this.mobileAllowances(),
+      carAllowances: this.carAllowances(),
+      maximumLoanCapacity: this.maximumLoanCapacity(),
+      maximumAdvanceCapacity: this.maximumAdvanceCapacity(),
+      totalLeavesAllocated: this.totalLeavesAllocated(),
+      otherAllowances: this.otherAllowances(),
+    };
+  }
+
+  protected onDateOfBirthChange(value: string): void {
+    this.dateOfBirth.set(formatDateDdMmYyyyInput(value));
+  }
 
   protected touch(field: string): void {
     this.touched.update(t => ({ ...t, [field]: true }));
@@ -243,6 +296,15 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     });
   }
 
+  protected removeEducationSection(sectionIndex: number): void {
+    this.educationSections.update((sections) => {
+      if (sections.length <= 1) {
+        return sections;
+      }
+      return sections.filter((_, index) => index !== sectionIndex);
+    });
+  }
+
   protected addPastExperienceSection(): void {
     this.pastExperienceSections.update(sections => [
       ...sections,
@@ -266,32 +328,85 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected onAttachmentChange(attachmentIndex: number, event: Event): void {
+  protected addAttachmentRow(sectionIndex: number): void {
+    this.attachmentSections.update((sections) =>
+      sections.map((section, index) =>
+        index === sectionIndex
+          ? { ...section, rows: [...section.rows, this.createEmptyAttachmentRow()] }
+          : section,
+      ),
+    );
+  }
+
+  protected removeAttachmentRow(sectionIndex: number, rowIndex: number): void {
+    this.attachmentSections.update((sections) =>
+      sections.map((section, index) => {
+        if (index !== sectionIndex || section.rows.length <= 1) {
+          return section;
+        }
+        return {
+          ...section,
+          rows: section.rows.filter((_, i) => i !== rowIndex),
+        };
+      }),
+    );
+  }
+
+  protected onAttachmentChange(sectionIndex: number, rowIndex: number, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
-      this.attachments.update(attachments => {
-        const updated = [...attachments];
-        updated[attachmentIndex] = {
-          ...updated[attachmentIndex],
-          file,
-          fileName: file.name
-        };
-        return updated;
-      });
+      this.attachmentSections.update((sections) =>
+        sections.map((section, index) => {
+          if (index !== sectionIndex) {
+            return section;
+          }
+          return {
+            ...section,
+            rows: section.rows.map((row, i) =>
+              i === rowIndex ? { ...row, file, fileName: file.name } : row,
+            ),
+          };
+        }),
+      );
     }
   }
 
-  protected removeAttachment(attachmentIndex: number): void {
-    this.attachments.update(attachments => {
-      const updated = [...attachments];
-      updated[attachmentIndex] = {
-        ...updated[attachmentIndex],
-        file: null,
-        fileName: ''
-      };
-      return updated;
-    });
+  protected clearAttachmentFile(sectionIndex: number, rowIndex: number): void {
+    this.attachmentSections.update((sections) =>
+      sections.map((section, index) => {
+        if (index !== sectionIndex) {
+          return section;
+        }
+        return {
+          ...section,
+          rows: section.rows.map((row, i) =>
+            i === rowIndex ? { ...row, file: null, fileName: '' } : row,
+          ),
+        };
+      }),
+    );
+  }
+
+  private createEmptyAttachmentRow(): AttachmentRow {
+    return { file: null, fileName: '' };
+  }
+
+  private createDefaultAttachmentSections(): AttachmentSection[] {
+    return ATTACHMENT_TYPES.map((type) => ({
+      type,
+      rows: [this.createEmptyAttachmentRow()],
+    }));
+  }
+
+  private flattenAttachments(): Array<{ type: AttachmentType; file: File | null; fileName: string }> {
+    return this.attachmentSections().flatMap((section) =>
+      section.rows.map((row) => ({
+        type: section.type,
+        file: row.file,
+        fileName: row.fileName || (row.file ? row.file.name : ''),
+      })),
+    );
   }
 
   private intersectionObserver: IntersectionObserver | null = null;
@@ -432,7 +547,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         fatherOrHusbandName: this.fatherOrHusbandName(),
         gender: this.gender(),
         maritalStatus: this.maritalStatus(),
-        dateOfBirth: this.dateOfBirth(),
+        dateOfBirth: formatDateOfBirthToApi(this.dateOfBirth()),
         nationality: this.nationality(),
         religion: this.religion(),
         bloodGroup: this.bloodGroup(),
@@ -457,20 +572,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       },
       education: this.educationSections().map((row) => ({ ...row })),
       pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
-      remuneration: {
-        employeeMaster: this.employeeMaster(),
-        salaryStructure: this.salaryStructure(),
-        attendanceShiftManagement: this.attendanceShiftManagement(),
-        leaveManagement: this.leaveManagement(),
-        loanAdvancesForm: this.loanAdvancesForm()
-      },
+      remuneration: this.buildRemunerationPayload(),
       loginDetails: {
         employeeCode: this.employeeCode(),
         employeeName: this.loginEmployeeName(),
         userId: this.userId(),
         password: this.password()
       },
-      attachments: this.attachments().map((a) => ({
+      attachments: this.flattenAttachments().map((a) => ({
         type: a.type,
         fileName: a.fileName || (a.file ? a.file.name : '')
       })),
@@ -514,7 +623,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       fatherOrHusbandName: this.fatherOrHusbandName(),
       gender: this.gender(),
       maritalStatus: this.maritalStatus(),
-      dateOfBirth: this.dateOfBirth(),
+      dateOfBirth: formatDateOfBirthToApi(this.dateOfBirth()),
       nationality: this.nationality(),
       religion: this.religion(),
       bloodGroup: this.bloodGroup(),
@@ -546,7 +655,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         duties: row.duties,
         lastSalary: Number.parseFloat(row.lastSalary || '0') || 0,
       })),
-      attachments: this.attachments().map((a) => {
+      attachments: this.flattenAttachments().map((a) => {
         const fileName = a.fileName || (a.file ? a.file.name : '');
         return {
           type: a.type,
@@ -555,11 +664,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
           file: fileName,
         };
       }),
-      employeeMaster: this.employeeMaster(),
-      salaryStructure: this.salaryStructure(),
-      attendanceShiftManagement: this.attendanceShiftManagement(),
-      leaveManagement: this.leaveManagement(),
-      loanAdvancesForm: this.loanAdvancesForm(),
+      ...this.buildRemunerationPayload(),
       employeeCode: this.employeeCode(),
       userId: this.userId(),
       loginEmployeeName: this.loginEmployeeName(),
@@ -603,9 +708,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.middleName.set(detail.personalInfo.middleName);
     this.lastName.set(detail.personalInfo.lastName);
     this.fatherOrHusbandName.set(detail.personalInfo.fatherOrHusbandName);
-    this.gender.set((detail.personalInfo.gender as 'Male' | 'Female' | '') ?? '');
+    this.gender.set((detail.personalInfo.gender as 'Male' | 'Female' | 'Prefer not to say' | '') ?? '');
     this.maritalStatus.set((detail.personalInfo.maritalStatus as 'Single' | 'Married' | '') ?? '');
-    this.dateOfBirth.set(detail.personalInfo.dateOfBirth);
+    this.dateOfBirth.set(formatDateOfBirthFromApi(detail.personalInfo.dateOfBirth));
     this.nationality.set(detail.personalInfo.nationality);
     this.religion.set(detail.personalInfo.religion);
     this.bloodGroup.set(detail.personalInfo.bloodGroup);
@@ -670,11 +775,16 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
           }],
     );
 
-    this.employeeMaster.set(detail.remuneration.employeeMaster);
-    this.salaryStructure.set(detail.remuneration.salaryStructure);
-    this.attendanceShiftManagement.set(detail.remuneration.attendanceShiftManagement);
-    this.leaveManagement.set(detail.remuneration.leaveManagement);
-    this.loanAdvancesForm.set(detail.remuneration.loanAdvancesForm);
+    const remuneration = detail.remuneration;
+    this.basicSalary.set(remuneration.basicSalary);
+    this.medicalAllowances.set(remuneration.medicalAllowances);
+    this.fuelAllowances.set(remuneration.fuelAllowances);
+    this.mobileAllowances.set(remuneration.mobileAllowances);
+    this.carAllowances.set(remuneration.carAllowances);
+    this.maximumLoanCapacity.set(remuneration.maximumLoanCapacity);
+    this.maximumAdvanceCapacity.set(remuneration.maximumAdvanceCapacity);
+    this.totalLeavesAllocated.set(remuneration.totalLeavesAllocated);
+    this.otherAllowances.set(remuneration.otherAllowances);
 
     this.employeeCode.set(detail.loginDetails.employeeCode);
     this.userId.set(detail.loginDetails.userId);
@@ -682,14 +792,17 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.password.set(detail.loginDetails.password);
 
     if (detail.attachments.length) {
-      const attachmentTypes = this.attachments().map((a) => a.type);
-      this.attachments.set(
-        attachmentTypes.map((type) => {
-          const match = detail.attachments.find((a) => a.type === type);
+      this.attachmentSections.set(
+        ATTACHMENT_TYPES.map((type) => {
+          const rows = detail.attachments
+            .filter((attachment) => attachment.type === type)
+            .map((attachment) => ({
+              file: null,
+              fileName: attachment.fileName ?? '',
+            }));
           return {
             type,
-            file: null,
-            fileName: match?.fileName ?? '',
+            rows: rows.length ? rows : [this.createEmptyAttachmentRow()],
           };
         }),
       );
