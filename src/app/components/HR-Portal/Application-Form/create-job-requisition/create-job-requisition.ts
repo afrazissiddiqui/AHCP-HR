@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, OnDestroy, computed, signal, effect } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, OnDestroy, computed, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ViewportScroller } from '@angular/common';
@@ -619,6 +619,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     private readonly jobSpecificationService: JobSpecificationService,
     private readonly itemMasterService: GatePassItemMasterService,
     private readonly alertService: AlertService,
+    private readonly cdr: ChangeDetectorRef,
   ) {
     this.assetOptions = this.itemMasterService.listAllocatableAssets();
   }
@@ -645,6 +646,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         } else {
           this.alertService.warning('Job Description', 'Selected job description could not be loaded.');
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.alertService.warning('Job Description', 'Selected job description could not be loaded.');
@@ -668,9 +670,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       next: (records) => {
         this.jobSpecificationOptions.set(records);
         this.jobSpecificationsLoading.set(false);
+        this.cdr.markForCheck();
       },
       error: (error: unknown) => {
         this.jobSpecificationsLoading.set(false);
+        this.cdr.markForCheck();
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||

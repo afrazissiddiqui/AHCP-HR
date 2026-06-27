@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
 
@@ -56,37 +56,48 @@ export class JobSpecificationService {
   readonly jobSpecs = this.jobSpecsList.asReadonly();
 
   fetchPostedJobSpecifications(): Observable<JobSpecificationRecord[]> {
-    return this.fetchJobSpecificationsByStatus();
+    return this.fetchJobSpecificationsByStatus(2);
   }
 
   fetchJobSpecificationsByStatus(status?: number): Observable<JobSpecificationRecord[]> {
-    const params = status !== undefined ? { status: String(status) } : undefined;
+    const params =
+      status !== undefined ? new HttpParams().set('status', String(status)) : undefined;
     return this.http.get<unknown>(JOB_SPECIFICATION_LIST_URL, { params }).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((response) => this.normalizeJobSpecRecords(
+        this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item)),
+      )),
       tap((records) => {
-        if (status === undefined) {
-          this.jobSpecsList.set(records);
-        }
+        this.jobSpecsList.set(records);
       }),
     );
   }
 
-  /** Posted job specs for application form — prefers status=2, falls back to full list. */
+  /** Posted job specs (status=2) for application form; falls back to full list when empty. */
   fetchJobSpecificationsForApplication(): Observable<JobSpecificationRecord[]> {
     return this.fetchJobSpecificationsByStatus(2).pipe(
       switchMap((posted) =>
         posted.length > 0 ? of(posted) : this.fetchJobSpecificationsByStatus(),
       ),
       catchError(() => this.fetchJobSpecificationsByStatus()),
-      map((records) =>
-        records.filter(
-          (record) =>
-            record.Id > 0 &&
-            (this.cleanRecordValue(record.jobTitle) ||
-              this.cleanRecordValue(record.jobDescription) ||
-              this.cleanRecordValue(record.keyResponsibilities)),
-        ),
-      ),
+      map((records) => this.normalizeJobSpecRecords(records)),
+    );
+  }
+
+  private normalizeJobSpecRecords(records: JobSpecificationRecord[]): JobSpecificationRecord[] {
+    return records
+      .filter((record) => this.hasJobSpecDisplayValue(record))
+      .map((record, index) => ({
+        ...record,
+        Id: record.Id > 0 ? record.Id : index + 1,
+      }));
+  }
+
+  private hasJobSpecDisplayValue(record: JobSpecificationRecord): boolean {
+    return !!(
+      this.cleanRecordValue(record.jobTitle) ||
+      this.cleanRecordValue(record.jobDescription) ||
+      this.cleanRecordValue(record.keyResponsibilities) ||
+      this.cleanRecordValue(record.department)
     );
   }
 
@@ -133,10 +144,21 @@ export class JobSpecificationService {
     const obj = response as Record<string, unknown>;
     const arrayKeys = [
       'data',
+      'Data',
       'items',
+      'Items',
       'results',
+      'Results',
       'records',
+      'Records',
       'list',
+      'List',
+      'rows',
+      'Rows',
+      'content',
+      'Content',
+      'values',
+      'Values',
       'jobSpecifications',
       'job_specifications',
       'job_specification_list',
@@ -150,7 +172,7 @@ export class JobSpecificationService {
       }
     }
 
-    const nestedData = obj['data'];
+    const nestedData = obj['data'] ?? obj['Data'] ?? obj['result'] ?? obj['Result'];
     if (nestedData && typeof nestedData === 'object') {
       const nestedItems = this.extractApiItems(nestedData);
       if (nestedItems.length > 0) {
@@ -158,7 +180,13 @@ export class JobSpecificationService {
       }
     }
 
-    if (obj['jobTitle'] || obj['job_title']) {
+    if (
+      obj['jobTitle'] ||
+      obj['job_title'] ||
+      obj['JobTitle'] ||
+      obj['department'] ||
+      obj['Department']
+    ) {
       return [obj];
     }
 
@@ -202,31 +230,80 @@ export class JobSpecificationService {
       return Number.isFinite(parsed) ? parsed : fallback;
     };
 
-    const id = asString(item['id']) || asString(item['Id']) || asString(item['jobId']) || asString(item['job_id']);
+    const id =
+      asString(item['id']) ||
+      asString(item['Id']) ||
+      asString(item['ID']) ||
+      asString(item['jobId']) ||
+      asString(item['job_id']) ||
+      asString(item['job_specification_id']) ||
+      asString(item['jobSpecificationId']) ||
+      asString(item['specificationId']) ||
+      asString(item['specification_id']);
 
     return {
       Id: asNumber(id, 0),
-      jobTitle: asString(item['jobTitle']) || asString(item['job_title']) || asString(item['title']) || '—',
-      department: asString(item['department']) || '—',
-      vacancyCount: asNumber(item['vacancyCount'] ?? item['vacancy'], 0),
+      jobTitle:
+        asString(item['jobTitle']) ||
+        asString(item['job_title']) ||
+        asString(item['JobTitle']) ||
+        asString(item['title']) ||
+        asString(item['Title']) ||
+        '—',
+      department: asString(item['department']) || asString(item['Department']) || '—',
+      vacancyCount: asNumber(item['vacancyCount'] ?? item['vacancy_count'] ?? item['vacancy'], 0),
       jobDescription:
-        asString(item['jobDescription']) || asString(item['job_description']) || asString(item['description']) || '—',
+        asString(item['jobDescription']) ||
+        asString(item['job_description']) ||
+        asString(item['JobDescription']) ||
+        asString(item['description']) ||
+        asString(item['Description']) ||
+        '—',
       experienceRequirement:
-        asString(item['experienceRequirement']) || asString(item['experience_requirement']) || asString(item['experience']) || '—',
+        asString(item['experienceRequirement']) ||
+        asString(item['experience_requirement']) ||
+        asString(item['ExperienceRequirement']) ||
+        asString(item['experience']) ||
+        '—',
       employmentCategory:
-        asString(item['employmentCategory']) || asString(item['employment_category']) || asString(item['category']) || '—',
+        asString(item['employmentCategory']) ||
+        asString(item['employment_category']) ||
+        asString(item['EmploymentCategory']) ||
+        asString(item['category']) ||
+        '—',
       employmentNature:
-        asString(item['employmentNature']) || asString(item['employment_nature']) || asString(item['nature']) || '—',
-      employmentType: asString(item['employmentType']) || asString(item['employment_type']) || asString(item['type']) || '—',
+        asString(item['employmentNature']) ||
+        asString(item['employment_nature']) ||
+        asString(item['EmploymentNature']) ||
+        asString(item['nature']) ||
+        '—',
+      employmentType:
+        asString(item['employmentType']) ||
+        asString(item['employment_type']) ||
+        asString(item['EmploymentType']) ||
+        asString(item['type']) ||
+        '—',
       gradeWorkLevel:
-        asString(item['gradeWorkLevel']) || asString(item['grade_work_level']) || asString(item['grade']) || '—',
+        asString(item['gradeWorkLevel']) ||
+        asString(item['grade_work_level']) ||
+        asString(item['GradeWorkLevel']) ||
+        asString(item['grade']) ||
+        '—',
       keyResponsibilities:
-        asString(item['keyResponsibilities']) || asString(item['key_responsibilities']) || asString(item['responsibilities']) || '—',
-      basicSalary: asFloat(item['basicSalary'] ?? item['basic_salary']),
-      medicalAllowance: asFloat(item['medicalAllowance'] ?? item['medical_allowance']),
-      fuelAllowance: asFloat(item['fuelAllowance'] ?? item['fuel_allowance']),
-      packagePerks: asString(item['packagePerks']) || asString(item['package_perks']) || '—',
-      qualifications: asStringArray(item['qualifications']),
+        asString(item['keyResponsibilities']) ||
+        asString(item['key_responsibilities']) ||
+        asString(item['KeyResponsibilities']) ||
+        asString(item['responsibilities']) ||
+        '—',
+      basicSalary: asFloat(item['basicSalary'] ?? item['basic_salary'] ?? item['BasicSalary']),
+      medicalAllowance: asFloat(item['medicalAllowance'] ?? item['medical_allowance'] ?? item['MedicalAllowance']),
+      fuelAllowance: asFloat(item['fuelAllowance'] ?? item['fuel_allowance'] ?? item['FuelAllowance']),
+      packagePerks:
+        asString(item['packagePerks']) ||
+        asString(item['package_perks']) ||
+        asString(item['PackagePerks']) ||
+        '—',
+      qualifications: asStringArray(item['qualifications'] ?? item['Qualifications']),
       selected: false,
     };
   }
