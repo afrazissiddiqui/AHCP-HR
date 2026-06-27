@@ -43,6 +43,11 @@ const ATTACHMENT_TYPES: AttachmentType[] = [
   'Offer letter',
 ];
 
+const DEFAULT_ATTACHMENT_SECTIONS: AttachmentSection[] = ATTACHMENT_TYPES.map((type) => ({
+  type,
+  rows: [{ file: null, fileName: '' }],
+}));
+
 @Component({
   selector: 'app-create-job-requisition',
   standalone: true,
@@ -135,7 +140,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   ]);
 
   // Attachments fields — one section per type, each with one or more file rows
-  protected readonly attachmentSections = signal<AttachmentSection[]>(this.createDefaultAttachmentSections());
+  protected readonly attachmentSections = signal<AttachmentSection[]>(DEFAULT_ATTACHMENT_SECTIONS);
 
   // Remuneration fields
   protected readonly basicSalary = signal('');
@@ -390,13 +395,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   private createEmptyAttachmentRow(): AttachmentRow {
     return { file: null, fileName: '' };
-  }
-
-  private createDefaultAttachmentSections(): AttachmentSection[] {
-    return ATTACHMENT_TYPES.map((type) => ({
-      type,
-      rows: [this.createEmptyAttachmentRow()],
-    }));
   }
 
   private flattenAttachments(): Array<{ type: AttachmentType; file: File | null; fileName: string }> {

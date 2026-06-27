@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, signal, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
@@ -47,12 +47,10 @@ interface ApplicationDetailViewState {
   ],
   templateUrl: './Application-Form.html',
   styleUrls: ['./Application-Form.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecruitmentComponent implements OnInit {
 
   readonly applicationTableFilter = APPLICATION_FORM_TABLE_FILTER;
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly shellbarSearch = inject(ShellbarSearchService);
   readonly detailViewState$ = new BehaviorSubject<ApplicationDetailViewState>({
@@ -66,24 +64,23 @@ export class RecruitmentComponent implements OnInit {
     private applicationFormService: ApplicationFormService,
     private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService
-  ) { }
-
-  ngOnInit(): void {
+  ) {
     connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
       getSearchText: () => this.searchText,
       setSearchText: (value) => { this.searchText = value; },
       onSearchChange: () => this.onSearchChange(),
     });
+  }
 
+  ngOnInit(): void {
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
-      next: () => this.cdr.markForCheck(),
+      next: () => undefined,
       error: (error: unknown) => {
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
           'Failed to load user list.';
         this.alertService.error('Load Failed', errorMessage);
-        this.cdr.markForCheck();
       },
     });
   }
@@ -182,14 +179,14 @@ export class RecruitmentComponent implements OnInit {
     if (this.searchText) {
       const search = this.searchText.toLowerCase();
       list = list.filter(item =>
-        String(item.EmployeeCode).toLowerCase().includes(search) ||
-        item.EmployeeName.toLowerCase().includes(search) ||
-        item.Department.toLowerCase().includes(search) ||
-        item.EmployeeNature.toLowerCase().includes(search) ||
-        item.Designation.toLowerCase().includes(search) ||
-        item.ReportingManager.toLowerCase().includes(search) ||
-        item.EmploymentType.toLowerCase().includes(search) ||
-        item.EmploymentCategory.toLowerCase().includes(search)
+        String(item.EmployeeCode ?? '').toLowerCase().includes(search) ||
+        String(item.EmployeeName ?? '').toLowerCase().includes(search) ||
+        String(item.Department ?? '').toLowerCase().includes(search) ||
+        String(item.EmployeeNature ?? '').toLowerCase().includes(search) ||
+        String(item.Designation ?? '').toLowerCase().includes(search) ||
+        String(item.ReportingManager ?? '').toLowerCase().includes(search) ||
+        String(item.EmploymentType ?? '').toLowerCase().includes(search) ||
+        String(item.EmploymentCategory ?? '').toLowerCase().includes(search)
       );
     }
 
@@ -337,7 +334,6 @@ export class RecruitmentComponent implements OnInit {
           this.currentPage -= 1;
         }
         this.alertService.success('Deleted', 'Employee removed successfully.');
-        this.cdr.markForCheck();
       },
       error: (error: unknown) => {
         const errorMessage =

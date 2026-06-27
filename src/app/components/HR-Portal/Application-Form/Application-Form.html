@@ -112,7 +112,7 @@
               <td *ngFor="let col of visibleColumns">
                 <ng-container [ngSwitch]="col.key">
                   <!-- Status Column -->
-                  <span *ngSwitchCase="'status'" [className]="'status-badge ' + s.status.toLowerCase()">
+                  <span *ngSwitchCase="'status'" [className]="'status-badge ' + (s.status || '').toLowerCase()">
                     {{ s.status }}
                   </span>
 
@@ -180,7 +180,7 @@
       </div>
       <div class="application-detail-dialog" *ngIf="detailView.open" (click)="$event.stopPropagation()">
         <div class="application-detail-header dialog-header">
-          <h3>Application details · {{ detailView.record!.EmployeeName }} ({{ detailView.record!.EmployeeCode }})</h3>
+          <h3>Application details · {{ detailView.record?.detail?.personalInfo?.personName || detailView.record?.EmployeeName || 'Employee' }} ({{ detailView.record?.EmployeeCode ?? '—' }})</h3>
           <button type="button" class="sapMBtnBase sapMBtn application-detail-close" (click)="closeApplicationDetail()"
             title="Close">✕</button>
         </div>
@@ -196,8 +196,6 @@
               <dd>{{ displayDash(d.personalInfo.firstName) }}</dd>
               <dt>Middle name</dt>
               <dd>{{ displayDash(d.personalInfo.middleName) }}</dd>
-              <dt>Last name</dt>
-              <dd>{{ displayDash(d.personalInfo.lastName) }}</dd>
               <dt>Father / husband name</dt>
               <dd>{{ displayDash(d.personalInfo.fatherOrHusbandName) }}</dd>
               <dt>Gender</dt>
@@ -345,7 +343,7 @@
               <dt>Employee code</dt>
               <dd>{{ displayDash(d.loginDetails.employeeCode) }}</dd>
               <dt>Employee name</dt>
-              <dd>{{ displayDash(d.loginDetails.employeeName) }}</dd>
+              <dd>{{ displayDash(d.personalInfo.personName || d.loginDetails.employeeName) }}</dd>
               <dt>User ID</dt>
               <dd>{{ displayDash(d.loginDetails.userId) }}</dd>
               <dt>Password</dt>
@@ -362,40 +360,6 @@
               </li>
             </ul>
             <p *ngIf="!d.attachments.length" class="application-detail-empty">No attachments listed.</p>
-          </section>
-
-          <section class="application-detail-section">
-            <h4 class="application-detail-section-title">Requisition &amp; organization</h4>
-            <dl class="application-detail-dl">
-              <dt>Copy existing</dt>
-              <dd>{{ d.requisition.copyExisting ? 'Yes' : 'No' }}</dd>
-              <dt>Req. ID</dt>
-              <dd>{{ displayDash(d.requisition.reqId) }}</dd>
-              <dt>Internal job title</dt>
-              <dd>{{ displayDash(d.requisition.internalJobTitle) }}</dd>
-              <dt>Hiring manager</dt>
-              <dd>{{ displayDash(d.requisition.hiringManager) }}</dd>
-              <dt>Recruiter</dt>
-              <dd>{{ displayDash(d.requisition.recruiter) }}</dd>
-              <dt>Recruitment collaborator</dt>
-              <dd>{{ displayDash(d.requisition.recruitmentCollaborator) }}</dd>
-              <dt>Requisition administrator</dt>
-              <dd>{{ displayDash(d.requisition.requisitionAdministrator) }}</dd>
-              <dt>Recruitment coordinator</dt>
-              <dd>{{ displayDash(d.requisition.recruitmentCoordinator) }}</dd>
-              <dt>HR administrator</dt>
-              <dd>{{ displayDash(d.requisition.hrAdministrator) }}</dd>
-              <dt>Company</dt>
-              <dd>{{ displayDash(d.requisition.company) }}</dd>
-              <dt>Department</dt>
-              <dd>{{ displayDash(d.requisition.department) }}</dd>
-              <dt>Division</dt>
-              <dd>{{ displayDash(d.requisition.division) }}</dd>
-              <dt>Location</dt>
-              <dd>{{ displayDash(d.requisition.location) }}</dd>
-              <dt>Cost center</dt>
-              <dd>{{ displayDash(d.requisition.costCenter) }}</dd>
-            </dl>
           </section>
         </ng-container>
 
