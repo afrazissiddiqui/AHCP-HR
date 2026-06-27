@@ -633,12 +633,38 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     const record = this.jobSpecificationOptions().find((item) => item.Id === id);
     if (record) {
       this.populateFromJobSpecification(record);
+      return;
     }
+
+    this.jobSpecificationService.fetchJobSpecificationsForApplication().subscribe({
+      next: (records) => {
+        this.jobSpecificationOptions.set(records);
+        const refreshed = records.find((item) => item.Id === id);
+        if (refreshed) {
+          this.populateFromJobSpecification(refreshed);
+        } else {
+          this.alertService.warning('Job Description', 'Selected job description could not be loaded.');
+        }
+      },
+      error: () => {
+        this.alertService.warning('Job Description', 'Selected job description could not be loaded.');
+      },
+    });
+  }
+
+  protected jobSpecOptionLabel(spec: JobSpecificationRecord): string {
+    const title = this.cleanJobSpecValue(spec.jobTitle);
+    const description = this.cleanJobSpecValue(spec.jobDescription);
+    if (title && description) {
+      const shortDescription = description.length > 72 ? `${description.slice(0, 72)}…` : description;
+      return `${title} — ${shortDescription}`;
+    }
+    return title || description || 'Untitled job description';
   }
 
   private loadJobSpecificationOptions(): void {
     this.jobSpecificationsLoading.set(true);
-    this.jobSpecificationService.fetchJobSpecificationsByStatus(2).subscribe({
+    this.jobSpecificationService.fetchJobSpecificationsForApplication().subscribe({
       next: (records) => {
         this.jobSpecificationOptions.set(records);
         this.jobSpecificationsLoading.set(false);
@@ -648,7 +674,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
-          'Failed to load job specifications.';
+          'Failed to load job descriptions.';
         this.alertService.error('Load Failed', errorMessage);
       },
     });
@@ -661,12 +687,20 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   private mapEmploymentTypeToStatus(employmentType: string): string {
     switch (employmentType) {
       case 'Permanent':
-        return 'Permenant';
+        return 'Active';
       case 'Temporary':
-        return 'Contractual';
+        return 'Inactive';
       default:
         return employmentType;
     }
+  }
+
+  private resolveWorkGradeLevel(gradeWorkLevel: string): string {
+    const normalized = gradeWorkLevel.trim();
+    if ((WORK_GRADE_LEVEL_OPTIONS as readonly string[]).includes(normalized)) {
+      return normalized;
+    }
+    return '';
   }
 
   private populateFromJobSpecification(record: JobSpecificationRecord): void {
@@ -702,8 +736,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     ].filter(Boolean);
     this.jobDescription.set(descriptionParts.join('\n\n'));
 
+    const resolvedGrade = this.resolveWorkGradeLevel(gradeWorkLevel);
+    if (resolvedGrade) {
+      this.workGradeLevel.set(resolvedGrade);
+    }
     if (gradeWorkLevel) {
-      this.workGradeLevel.set(gradeWorkLevel);
       this.roleSalary.set(gradeWorkLevel);
       this.salaryStructure.set(gradeWorkLevel);
     }
@@ -716,9 +753,16 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     }
     if (record.fuelAllowance) {
       this.fuelAllowances.set(String(record.fuelAllowance));
+      this.fuelLimit.set(String(record.fuelAllowance));
     }
     if (packagePerks) {
       this.otherAllowances.set(packagePerks);
+    }
+
+    const hasAllowances =
+      record.medicalAllowance > 0 || record.fuelAllowance > 0 || Boolean(packagePerks);
+    if (hasAllowances) {
+      this.allowancesApplicable.set('Yes');
     }
 
     const qualifications = record.qualifications.filter(Boolean);
@@ -737,6 +781,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
           notes: '',
         })),
       );
+      this.leaveEligibilityCriteria.set(qualifications.join(', '));
     }
 
     if (department && department !== 'No Selection') {

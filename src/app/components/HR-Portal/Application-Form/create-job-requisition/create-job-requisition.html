@@ -34,17 +34,20 @@
 
     <div class="cjr-job-spec-picker">
       <div class="cjr-row">
-        <label>Job specification:</label>
+        <label>Job Description:</label>
         <div class="cjr-field">
           <select [ngModel]="selectedJobSpecId()" (ngModelChange)="onJobSpecificationSelected($event)"
             [disabled]="jobSpecificationsLoading()">
             <option value="">No Selection</option>
             @for (spec of jobSpecificationOptions(); track spec.Id) {
-            <option [value]="spec.Id">{{ spec.jobTitle }}</option>
+            <option [value]="spec.Id">{{ jobSpecOptionLabel(spec) }}</option>
             }
           </select>
           @if (jobSpecificationsLoading()) {
-          <span class="cjr-job-spec-hint">Loading job specifications...</span>
+          <span class="cjr-job-spec-hint">Loading job descriptions...</span>
+          }
+          @if (!jobSpecificationsLoading() && jobSpecificationOptions().length === 0) {
+          <span class="cjr-job-spec-hint">No job descriptions found. Add one from the Job Specification Form first.</span>
           }
         </div>
       </div>

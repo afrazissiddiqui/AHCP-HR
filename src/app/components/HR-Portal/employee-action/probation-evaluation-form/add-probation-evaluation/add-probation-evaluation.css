@@ -280,6 +280,77 @@
   cursor: pointer;
 }
 
+.extension-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.extension-section-header .cjs-section-title {
+  margin-bottom: 0;
+}
+
+.add-extension-btn {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.extension-empty-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.extension-entries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.extension-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #fafbfc;
+}
+
+.extension-entry select,
+.extension-entry input[type='date'] {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.extension-entry input[type='date'][readonly] {
+  background: #f8fafc;
+}
+
+.remove-extension-btn {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .extension-input-group {
   display: flex;
   align-items: center;
@@ -361,6 +432,14 @@
 @media (max-width: 1120px) {
   .rating-cell {
     grid-template-columns: 1fr;
+  }
+
+  .extension-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .remove-extension-btn {
+    justify-self: start;
   }
 
   .extension-input-group {

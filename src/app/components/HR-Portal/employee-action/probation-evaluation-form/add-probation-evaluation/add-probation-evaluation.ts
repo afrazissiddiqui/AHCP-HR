@@ -41,7 +41,15 @@ interface ProbationEmployeeOption {
   employeeType: string;
   gradeWorkLevel: string;
   employmentCategory: string;
+  remarks: string;
+  dateOfJoining: string;
+  basicSalary: string;
   apiId?: string;
+}
+
+interface ProbationExtensionEntry {
+  period: string;
+  newProbationEndDate: string;
 }
 
 @Component({
@@ -88,12 +96,12 @@ export class AddProbationEvaluationComponent implements OnInit {
   protected readonly employeeType = signal('');
   protected readonly gradeWorkLevel = signal('');
   protected readonly employmentCategory = signal('');
-  protected readonly extensionProbationStartDate = signal('');
-  protected readonly extensionProbationEndDate = signal('');
-  protected readonly isExtensionEnabled = signal(false);
+  protected readonly probationStartDate = signal('');
+  protected readonly probationEndDate = signal('');
+  protected readonly baseProbationEndDate = signal('');
   protected readonly extensionPeriodOptions = ['3 months', '6 months', '9 months'] as const;
-  protected readonly extensionPeriodInProbation = signal('');
-  protected readonly newProbationEndDate = signal('');
+  protected readonly extensionEntries = signal<ProbationExtensionEntry[]>([]);
+  protected readonly probationCompletion = signal<'Yes' | 'No' | ''>('');
   protected readonly termination = signal<'Yes' | 'No' | ''>('');
   protected readonly terminationEffectiveDate = signal('');
   protected readonly currentSalary = signal('');
@@ -230,9 +238,41 @@ export class AddProbationEvaluationComponent implements OnInit {
     setTimeout(() => this.closeNameSuggestions(), 150);
   }
 
-  protected selectEmployeeFromSuggestion(employee: ProbationEmployeeOption): void {
+  protected selectEmployeeFromSuggestion(employee: ProbationEmployeeOption, event?: MouseEvent): void {
+    event?.preventDefault();
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
+
+    const applyRecord = (record: ApplicationFormRecord): void => {
+      this.populateFromApplicationRecord(record);
+      this.applyExistingProbationForEmployee(this.resolveEmployeeCode(record));
+      this.cdr.markForCheck();
+    };
+
+    const localRecord = this.findApplicationRecord(employee);
+    const detailId = localRecord?.apiId ?? employee.apiId;
+
+    if (detailId) {
+      this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
+        next: applyRecord,
+        error: () => {
+          if (localRecord) {
+            applyRecord(localRecord);
+          } else {
+            this.populateFromEmployeeOption(employee);
+            this.applyExistingProbationForEmployee(employee.code);
+            this.cdr.markForCheck();
+          }
+        },
+      });
+      return;
+    }
+
+    if (localRecord) {
+      applyRecord(localRecord);
+      return;
+    }
+
     this.populateFromEmployeeOption(employee);
     this.applyExistingProbationForEmployee(employee.code);
     this.cdr.markForCheck();
@@ -265,24 +305,111 @@ export class AddProbationEvaluationComponent implements OnInit {
       .filter((option) => option.code || option.name);
   }
 
-  private toEmployeeOption(record: ApplicationFormRecord): ProbationEmployeeOption {
+  private mapApplicationRecordToEmployeeFields(
+    record: ApplicationFormRecord,
+  ): Omit<ProbationEmployeeOption, 'code' | 'apiId'> {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const personal = record.detail?.personalInfo;
+    const requisition = record.detail?.requisition;
+    const remuneration = record.detail?.remuneration;
+    const designation =
+      emptyIfDash(personal?.designation ?? '') ||
+      emptyIfDash(record.Designation) ||
+      emptyIfDash(requisition?.internalJobTitle ?? '');
+
+    const dateOfJoining = emptyIfDash(remuneration?.dateOfJoining ?? '');
+    const basicSalary =
+      emptyIfDash(remuneration?.basicSalary ?? '') || emptyIfDash(personal?.roleSalary ?? '');
+
+    return {
+      name: emptyIfDash(record.EmployeeName) || emptyIfDash(personal?.personName ?? ''),
+      department:
+        emptyIfDash(personal?.departmentInAhcp ?? '') || emptyIfDash(record.Department),
+      location:
+        emptyIfDash(personal?.branchLocation ?? '') ||
+        emptyIfDash(requisition?.location ?? '') ||
+        emptyIfDash(personal?.city ?? ''),
+      designation,
+      reportingManager:
+        emptyIfDash(personal?.reportingManager ?? '') ||
+        emptyIfDash(record.ReportingManager) ||
+        emptyIfDash(requisition?.hiringManager ?? ''),
+      employeeNature:
+        emptyIfDash(personal?.employmentNature ?? '') || emptyIfDash(record.EmployeeNature),
+      employeeType:
+        emptyIfDash(requisition?.division ?? '') || emptyIfDash(record.EmploymentType),
+      gradeWorkLevel:
+        emptyIfDash(personal?.workGradeLevel ?? '') ||
+        emptyIfDash(requisition?.costCenter ?? ''),
+      employmentCategory:
+        emptyIfDash(personal?.employmentCategory ?? '') ||
+        emptyIfDash(record.EmploymentCategory),
+      remarks: emptyIfDash(personal?.remarks ?? ''),
+      dateOfJoining,
+      basicSalary,
+    };
+  }
+
+  private toEmployeeOption(record: ApplicationFormRecord): ProbationEmployeeOption {
+    const mapped = this.mapApplicationRecordToEmployeeFields(record);
 
     return {
       code: this.resolveEmployeeCode(record),
-      name: emptyIfDash(record.EmployeeName),
-      department: emptyIfDash(record.Department),
-      location:
-        emptyIfDash(record.detail?.requisition.location ?? '') ||
-        emptyIfDash(record.detail?.personalInfo.city ?? ''),
-      designation: emptyIfDash(record.Designation),
-      reportingManager: emptyIfDash(record.ReportingManager),
-      employeeNature: emptyIfDash(record.EmployeeNature),
-      employeeType: emptyIfDash(record.EmploymentType),
-      gradeWorkLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
-      employmentCategory: emptyIfDash(record.EmploymentCategory),
       apiId: record.apiId,
+      ...mapped,
     };
+  }
+
+  private findApplicationRecord(employee: ProbationEmployeeOption): ApplicationFormRecord | undefined {
+    const code = employee.code.trim().toLowerCase();
+    const apiId = employee.apiId?.trim();
+
+    return this.applicationFormService.getApplicationRecords().find((record) => {
+      if (apiId && record.apiId === apiId) {
+        return true;
+      }
+      return code && this.resolveEmployeeCode(record).trim().toLowerCase() === code;
+    });
+  }
+
+  private populateFromApplicationRecord(record: ApplicationFormRecord): void {
+    const mapped = this.mapApplicationRecordToEmployeeFields(record);
+
+    this.employeeCode.set(this.resolveEmployeeCode(record));
+    this.employeeName.set(mapped.name);
+    this.department.set(mapped.department);
+    this.location.set(mapped.location);
+    this.designation.set(mapped.designation);
+    this.reportingManager.set(mapped.reportingManager);
+    this.employeeNature.set(mapped.employeeNature);
+    this.employeeType.set(mapped.employeeType);
+    this.gradeWorkLevel.set(mapped.gradeWorkLevel);
+    this.employmentCategory.set(mapped.employmentCategory);
+    this.remarks.set(mapped.remarks);
+
+    if (mapped.basicSalary) {
+      this.currentSalary.set(mapped.basicSalary);
+      this.recalculateAdjustmentAmountFromPercent();
+    }
+
+    this.applyProbationDatesFromJoining(mapped.dateOfJoining);
+  }
+
+  private applyProbationDatesFromJoining(dateOfJoining: string): void {
+    const joiningDate = dateOfJoining.trim();
+    if (!joiningDate) {
+      this.probationStartDate.set('');
+      this.probationEndDate.set('');
+      this.baseProbationEndDate.set('');
+      this.extensionEntries.set([]);
+      return;
+    }
+
+    const probationEnd = this.addMonthsToIsoDate(joiningDate, 2);
+    this.probationStartDate.set(joiningDate);
+    this.probationEndDate.set(probationEnd);
+    this.baseProbationEndDate.set(probationEnd);
+    this.extensionEntries.set([]);
   }
 
   private resolveEmployeeCode(record: ApplicationFormRecord): string {
@@ -327,6 +454,14 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.employeeType.set(employee.employeeType);
     this.gradeWorkLevel.set(employee.gradeWorkLevel);
     this.employmentCategory.set(employee.employmentCategory);
+    this.remarks.set(employee.remarks);
+
+    if (employee.basicSalary) {
+      this.currentSalary.set(employee.basicSalary);
+      this.recalculateAdjustmentAmountFromPercent();
+    }
+
+    this.applyProbationDatesFromJoining(employee.dateOfJoining);
   }
 
   private buildAllowancesForPayload(): ProbationEvaluationAddPayload['allowances'] {
@@ -388,24 +523,28 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.adjustmentAmountInSalary.set(String(amount));
   }
 
-  protected onExtensionToggle(checked: boolean): void {
-    this.isExtensionEnabled.set(checked);
-    if (!checked) {
-      this.extensionPeriodInProbation.set('');
-      this.newProbationEndDate.set('');
-      return;
-    }
-    this.updateNewProbationEndDateFromExtension();
+  protected addExtensionEntry(): void {
+    this.extensionEntries.update((items) => [...items, { period: '', newProbationEndDate: '' }]);
   }
 
-  protected onExtensionPeriodChange(period: string): void {
-    this.extensionPeriodInProbation.set(period);
-    this.updateNewProbationEndDateFromExtension();
+  protected removeExtensionEntry(index: number): void {
+    this.extensionEntries.update((items) => items.filter((_, itemIndex) => itemIndex !== index));
+    this.recalculateExtensionEntries();
   }
 
-  protected onExtensionProbationEndDateChange(endDate: string): void {
-    this.extensionProbationEndDate.set(endDate);
-    this.updateNewProbationEndDateFromExtension();
+  protected onProbationEndDateChange(endDate: string): void {
+    this.baseProbationEndDate.set(endDate);
+    this.probationEndDate.set(endDate);
+    this.recalculateExtensionEntries();
+  }
+
+  protected onExtensionPeriodChange(index: number, period: string): void {
+    this.extensionEntries.update((items) => {
+      const updated = [...items];
+      updated[index] = { ...updated[index], period };
+      return updated;
+    });
+    this.recalculateExtensionEntries();
   }
 
   private parseExtensionMonths(period: string): number | null {
@@ -434,17 +573,40 @@ export class AddProbationEvaluationComponent implements OnInit {
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  private updateNewProbationEndDateFromExtension(): void {
-    if (!this.isExtensionEnabled()) {
-      return;
-    }
-    const months = this.parseExtensionMonths(this.extensionPeriodInProbation());
-    const endDate = this.extensionProbationEndDate().trim();
-    if (!months || !endDate) {
-      this.newProbationEndDate.set('');
-      return;
-    }
-    this.newProbationEndDate.set(this.addMonthsToIsoDate(endDate, months - 1));
+  private recalculateExtensionEntries(): void {
+    const baseEndDate = this.baseProbationEndDate().trim() || this.probationEndDate().trim();
+    let rollingEndDate = baseEndDate;
+
+    const updatedEntries = this.extensionEntries().map((entry) => {
+      if (!entry.period.trim() || !rollingEndDate) {
+        return { ...entry, newProbationEndDate: '' };
+      }
+
+      const months = this.parseExtensionMonths(entry.period);
+      if (!months) {
+        return { ...entry, newProbationEndDate: '' };
+      }
+
+      const newEndDate = this.addMonthsToIsoDate(rollingEndDate, months - 1);
+      rollingEndDate = newEndDate;
+      return { ...entry, newProbationEndDate: newEndDate };
+    });
+
+    this.extensionEntries.set(updatedEntries);
+    this.probationEndDate.set(rollingEndDate || baseEndDate);
+  }
+
+  private getActiveExtensionEntries(): ProbationExtensionEntry[] {
+    return this.extensionEntries().filter((entry) => entry.period.trim() !== '');
+  }
+
+  private getLatestExtensionEntry(): ProbationExtensionEntry | undefined {
+    const activeEntries = this.getActiveExtensionEntries();
+    return activeEntries.length > 0 ? activeEntries[activeEntries.length - 1] : undefined;
+  }
+
+  private isExtensionActive(): boolean {
+    return this.getActiveExtensionEntries().length > 0;
   }
 
   protected readonly isTerminationYes = computed(() => this.termination() === 'Yes');
@@ -532,6 +694,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     }
 
     const ratingValues = this.ratings();
+    const latestExtension = this.getLatestExtensionEntry();
     const draft: ProbationEvaluationAddPayload = {
       employee_code: this.employeeCode().trim(),
       employee_name: this.employeeName().trim(),
@@ -543,8 +706,8 @@ export class AddProbationEvaluationComponent implements OnInit {
       employee_type: this.employeeType().trim(),
       grade_work_level: this.gradeWorkLevel().trim(),
       employment_category: this.employmentCategory().trim(),
-      probation_start_date: this.extensionProbationStartDate(),
-      probation_end_date: this.extensionProbationEndDate(),
+      probation_start_date: this.probationStartDate(),
+      probation_end_date: this.probationEndDate(),
       remarks: this.remarks().trim(),
       probation_rating: {
         communication_skills: {
@@ -573,12 +736,13 @@ export class AddProbationEvaluationComponent implements OnInit {
         },
       },
       supervision_remark: this.supervisionRemark().trim(),
+      probation_completion: this.probationCompletion() || 'No',
       extension_of_probation: {
-        probation_start_date: this.extensionProbationStartDate(),
-        probation_end_date: this.extensionProbationEndDate(),
-        is_extension_enabled: this.isExtensionEnabled(),
-        extension_period_in_probation: this.extensionPeriodInProbation(),
-        new_probation_end_date: this.newProbationEndDate(),
+        probation_start_date: this.probationStartDate(),
+        probation_end_date: this.baseProbationEndDate() || this.probationEndDate(),
+        is_extension_enabled: this.isExtensionActive(),
+        extension_period_in_probation: latestExtension?.period ?? '',
+        new_probation_end_date: latestExtension?.newProbationEndDate ?? '',
       },
       termination_of_probation: {
         termination: this.termination() || 'No',
@@ -639,21 +803,20 @@ export class AddProbationEvaluationComponent implements OnInit {
     if (this.termination() === 'Yes' && !this.terminationEffectiveDate().trim()) {
       return 'Please enter Termination Effective Date when termination is Yes.';
     }
-    if (this.isExtensionEnabled()) {
-      if (!this.extensionPeriodInProbation().trim()) {
-        return 'Please select Extension Period when extension is enabled.';
-      }
-      if (!this.newProbationEndDate().trim()) {
-        return 'Please enter New Probation End Date when extension is enabled.';
+    if (this.isExtensionActive()) {
+      const incompleteExtension = this.getActiveExtensionEntries().find((entry) => !entry.newProbationEndDate.trim());
+      if (incompleteExtension) {
+        return 'Please ensure each extension has a valid New Probation End Date.';
       }
     }
+    const latestExtensionEndDate = this.getLatestExtensionEntry()?.newProbationEndDate ?? '';
     if (
       this.toAmount(this.currentSalary()) > 0 &&
       !this.effectiveDateOfRevision().trim() &&
-      !this.extensionProbationEndDate().trim() &&
-      !this.newProbationEndDate().trim()
+      !this.probationEndDate().trim() &&
+      !latestExtensionEndDate.trim()
     ) {
-      return 'Please enter Effective Date of Revision or a probation end date in Extension of Probation for salary adjustment.';
+      return 'Please enter Effective Date of Revision or a probation end date for salary adjustment.';
     }
     return null;
   }
@@ -705,15 +868,28 @@ export class AddProbationEvaluationComponent implements OnInit {
       },
     });
 
-    this.extensionProbationStartDate.set(
-      emptyIfDash(record.ExtensionOfProbation.probation_start_date) || emptyIfDash(record.ProbationStartDate),
+    const probationStart =
+      emptyIfDash(record.ExtensionOfProbation.probation_start_date) || emptyIfDash(record.ProbationStartDate);
+    const probationEnd =
+      emptyIfDash(record.ExtensionOfProbation.probation_end_date) || emptyIfDash(record.ProbationEndDate);
+    const extensionPeriod = emptyIfDash(record.ExtensionOfProbation.extension_period_in_probation);
+    const newProbationEnd = emptyIfDash(record.ExtensionOfProbation.new_probation_end_date);
+
+    this.probationStartDate.set(probationStart);
+    this.probationEndDate.set(newProbationEnd || probationEnd);
+    this.baseProbationEndDate.set(probationEnd);
+
+    if (record.ExtensionOfProbation.is_extension_enabled && extensionPeriod) {
+      this.extensionEntries.set([{ period: extensionPeriod, newProbationEndDate: newProbationEnd }]);
+    } else {
+      this.extensionEntries.set([]);
+    }
+
+    this.probationCompletion.set(
+      record.ProbationCompletion === 'Yes' || record.ProbationCompletion === 'No'
+        ? record.ProbationCompletion
+        : '',
     );
-    this.extensionProbationEndDate.set(
-      emptyIfDash(record.ExtensionOfProbation.probation_end_date) || emptyIfDash(record.ProbationEndDate),
-    );
-    this.isExtensionEnabled.set(record.ExtensionOfProbation.is_extension_enabled);
-    this.extensionPeriodInProbation.set(emptyIfDash(record.ExtensionOfProbation.extension_period_in_probation));
-    this.newProbationEndDate.set(emptyIfDash(record.ExtensionOfProbation.new_probation_end_date));
 
     this.termination.set(
       record.TerminationOfProbation.termination === 'Yes' || record.TerminationOfProbation.termination === 'No'

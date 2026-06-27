@@ -31,6 +31,7 @@ export interface ProbationEvaluationAddPayload {
     productivity: ProbationRatingItem;
   };
   supervision_remark: string;
+  probation_completion: string;
   extension_of_probation: {
     probation_start_date: string;
     probation_end_date: string;
@@ -73,6 +74,7 @@ export interface ProbationEvaluationRecord {
   Remarks: string;
   ProbationRating: ProbationEvaluationAddPayload['probation_rating'];
   SupervisionRemark: string;
+  ProbationCompletion: string;
   ExtensionOfProbation: ProbationEvaluationAddPayload['extension_of_probation'];
   TerminationOfProbation: ProbationEvaluationAddPayload['termination_of_probation'];
   SalaryAdjustment: ProbationEvaluationAddPayload['salary_adjustment'];
@@ -114,6 +116,7 @@ export function buildProbationEvaluationSubmitPayload(
   }
 
   const termination = draft.termination_of_probation.termination === 'Yes' ? 'Yes' : 'No';
+  const probationCompletion = draft.probation_completion === 'Yes' ? 'Yes' : 'No';
   let terminationEffectiveDate: string | null = draft.termination_of_probation.termination_effective_date?.trim() || null;
   if (termination === 'No') {
     terminationEffectiveDate = null;
@@ -155,6 +158,7 @@ export function buildProbationEvaluationSubmitPayload(
       productivity: normalizeRatingItem(draft.probation_rating.productivity),
     },
     supervision_remark: draft.supervision_remark.trim(),
+    probation_completion: probationCompletion,
     extension_of_probation: {
       probation_start_date: extensionStart,
       probation_end_date: extensionEnd,
@@ -372,6 +376,8 @@ export class ProbationEvaluationService {
         productivity: mapRatingItem(['productivity']),
       },
       SupervisionRemark: asString(item['supervision_remark']) || asString(item['supervisionRemark']) || '—',
+      ProbationCompletion:
+        asString(item['probation_completion']) || asString(item['probationCompletion']) || 'No',
       ExtensionOfProbation: {
         probation_start_date:
           asString(extensionSource['probation_start_date']) || asString(extensionSource['probationStartDate']),

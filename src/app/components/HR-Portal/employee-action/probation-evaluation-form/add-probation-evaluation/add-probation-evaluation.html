@@ -42,7 +42,7 @@
                     *ngFor="let emp of codeSuggestions()"
                     role="option"
                     class="employee-search-suggestion-item"
-                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                    (mousedown)="selectEmployeeFromSuggestion(emp, $event)"
                   >
                     <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
                     <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
@@ -85,7 +85,7 @@
                     *ngFor="let emp of nameSuggestions()"
                     role="option"
                     class="employee-search-suggestion-item"
-                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                    (mousedown)="selectEmployeeFromSuggestion(emp, $event)"
                   >
                     <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
                     <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
@@ -142,6 +142,16 @@
               <label>Employment Category:</label>
               <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
             </div>
+
+            <div class="cjs-row">
+              <label>Probation Start Date:</label>
+              <input type="date" [ngModel]="probationStartDate()" (ngModelChange)="probationStartDate.set($event)" />
+            </div>
+
+            <div class="cjs-row">
+              <label>Probation End Date:</label>
+              <input type="date" [ngModel]="probationEndDate()" (ngModelChange)="onProbationEndDateChange($event)" />
+            </div>
           </div>
         </div>
 
@@ -192,47 +202,52 @@
       </section>
 
       <section class="cjs-section-block" id="extension-of-probation-section">
-        <div class="cjs-section-title">Extension of Probation</div>
+        <div class="extension-section-header">
+          <div class="cjs-section-title">Extension of Probation</div>
+          <button type="button" class="add-extension-btn" (click)="addExtensionEntry()">+ Add</button>
+        </div>
+
+        @if (extensionEntries().length === 0) {
+        <p class="extension-empty-hint">Click Add to record a probation extension period.</p>
+        }
+
+        <div class="extension-entries-list">
+          @for (entry of extensionEntries(); track $index; let i = $index) {
+          <div class="extension-entry">
+            <div class="cjs-row">
+              <label>Extension Period:</label>
+              <select [ngModel]="entry.period" (ngModelChange)="onExtensionPeriodChange(i, $event)">
+                <option value="">Select period</option>
+                @for (period of extensionPeriodOptions; track period) {
+                <option [value]="period">{{ period }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="cjs-row">
+              <label>New Probation End Date:</label>
+              <input type="date" [ngModel]="entry.newProbationEndDate" readonly
+                title="Calculated from probation end date and extension period" />
+            </div>
+
+            <button type="button" class="remove-extension-btn" (click)="removeExtensionEntry(i)">Remove</button>
+          </div>
+          }
+        </div>
+      </section>
+
+      <section class="cjs-section-block" id="probation-completion-section">
+        <div class="cjs-section-title">Probation Completion</div>
 
         <div class="cjs-grid">
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Probation Start Date:</label>
-              <input type="date" [ngModel]="extensionProbationStartDate()"
-                (ngModelChange)="extensionProbationStartDate.set($event)" />
-            </div>
-
-            <div class="cjs-row">
-              <label>Probation End Date:</label>
-              <input type="date" [ngModel]="extensionProbationEndDate()"
-                (ngModelChange)="onExtensionProbationEndDateChange($event)" />
-            </div>
-          </div>
-
-          <div class="cjs-col">
-            <div class="cjs-row">
-              <label>Extension Period:</label>
-              <div class="extension-input-group" [class.extension-input-group--disabled]="!isExtensionEnabled()">
-                <select [ngModel]="extensionPeriodInProbation()" (ngModelChange)="onExtensionPeriodChange($event)"
-                  [disabled]="!isExtensionEnabled()">
-                  <option value="">Select period</option>
-                  @for (period of extensionPeriodOptions; track period) {
-                  <option [value]="period">{{ period }}</option>
-                  }
-                </select>
-                <label class="extension-toggle-label">
-                  <input type="checkbox" [ngModel]="isExtensionEnabled()"
-                    (ngModelChange)="onExtensionToggle($event === true)" />
-                  Enable
-                </label>
-              </div>
-            </div>
-
-            <div class="cjs-row" [class.disabled-row]="!isExtensionEnabled()">
-              <label>New Probation End Date:</label>
-              <input type="date" [ngModel]="newProbationEndDate()" readonly
-                [disabled]="!isExtensionEnabled()" [class.field-disabled]="!isExtensionEnabled()"
-                title="Calculated from probation end date and extension period" />
+              <label>Probation Completion:</label>
+              <select [ngModel]="probationCompletion()" (ngModelChange)="probationCompletion.set($event)">
+                <option value="">Select option</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
             </div>
           </div>
         </div>

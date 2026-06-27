@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
 
 export interface JobSpecificationRecord {
@@ -69,6 +69,29 @@ export class JobSpecificationService {
         }
       }),
     );
+  }
+
+  /** Posted job specs for application form — prefers status=2, falls back to full list. */
+  fetchJobSpecificationsForApplication(): Observable<JobSpecificationRecord[]> {
+    return this.fetchJobSpecificationsByStatus(2).pipe(
+      switchMap((posted) =>
+        posted.length > 0 ? of(posted) : this.fetchJobSpecificationsByStatus(),
+      ),
+      catchError(() => this.fetchJobSpecificationsByStatus()),
+      map((records) =>
+        records.filter(
+          (record) =>
+            record.Id > 0 &&
+            (this.cleanRecordValue(record.jobTitle) ||
+              this.cleanRecordValue(record.jobDescription) ||
+              this.cleanRecordValue(record.keyResponsibilities)),
+        ),
+      ),
+    );
+  }
+
+  private cleanRecordValue(value: string): string {
+    return value === '—' ? '' : value.trim();
   }
 
   addJobSpec(payload: JobSpecificationAddPayload): Observable<unknown> {
