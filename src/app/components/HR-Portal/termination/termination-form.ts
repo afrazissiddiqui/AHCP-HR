@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
@@ -75,9 +75,9 @@ export class TerminationFormComponent implements OnInit {
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
   activeTab: 'filter' = 'filter';
-  showViewDialog = false;
-  viewLoading = false;
-  selectedRecord: TerminationRecord | null = null;
+  readonly showViewDialog = signal(false);
+  readonly viewLoading = signal(false);
+  readonly selectedRecord = signal<TerminationRecord | null>(null);
 
   get terminationList(): TerminationRecord[] {
     return this.terminationService.getTerminationRecords();
@@ -183,18 +183,18 @@ export class TerminationFormComponent implements OnInit {
       return;
     }
 
-    this.showViewDialog = true;
-    this.selectedRecord = null;
-    this.viewLoading = true;
+    this.showViewDialog.set(true);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(true);
 
     this.terminationService.fetchFinalSettlementDetail(record.Id).subscribe({
       next: (detail) => {
-        this.selectedRecord = detail;
-        this.viewLoading = false;
+        this.selectedRecord.set(detail);
+        this.viewLoading.set(false);
       },
       error: (error: unknown) => {
-        this.viewLoading = false;
-        this.showViewDialog = false;
+        this.viewLoading.set(false);
+        this.showViewDialog.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load termination details.'),
@@ -243,9 +243,9 @@ export class TerminationFormComponent implements OnInit {
   }
 
   closeViewDialog(): void {
-    this.showViewDialog = false;
-    this.selectedRecord = null;
-    this.viewLoading = false;
+    this.showViewDialog.set(false);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(false);
   }
 
   formatDetail(value: string | number | null | undefined): string {

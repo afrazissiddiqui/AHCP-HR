@@ -9,6 +9,23 @@ import {
 } from '../../../../services/job-specification.service';
 import { AlertService } from '../../../../services/alert.service';
 
+const DEPARTMENT_OPTIONS = [
+  'Production Department',
+  'Plant Maintenance Department',
+  'Electrical Department',
+  'Quality Control Department',
+  'Logistics Department',
+  'Procurement Department',
+  'Admin Department',
+  'Accounts & Finance Department',
+  'Internal Audit Department',
+  'Human Resource (HR) Department',
+  'Sales & Marketing Department',
+  'IT Department',
+  'BOD Department',
+  'Common Department',
+] as const;
+
 @Component({
   selector: 'app-create-job-specification',
   standalone: true,
@@ -18,6 +35,8 @@ import { AlertService } from '../../../../services/alert.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateJobSpecificationComponent implements OnInit {
+  protected readonly departmentOptions = DEPARTMENT_OPTIONS;
+
   editingId: string | null = null;
   pageTitle = 'Create New Job Specification';
   submitButtonLabel = 'Save Job Specification';

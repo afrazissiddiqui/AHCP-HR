@@ -78,10 +78,12 @@
             <td *ngFor="let col of columns" [hidden]="!col.visible">
               {{ formatCellValue(item, col.key) }}
             </td>
-            <td class="termination-actions">
-              <button type="button" class="view-btn" (click)="viewRecord(item)" title="View Details">View</button>
-              <button type="button" class="update-btn" (click)="onUpdate(item)" title="Update">Update</button>
-              <button type="button" class="delete-btn" (click)="onDelete(item)" title="Delete">Delete</button>
+            <td class="table-action-cell">
+              <div class="action-buttons">
+                <button type="button" class="view-btn" (click)="viewRecord(item)" title="View Details">View</button>
+                <button type="button" class="update-btn" (click)="onUpdate(item)" title="Update">Update</button>
+                <button type="button" class="delete-btn" (click)="onDelete(item)" title="Delete">Delete</button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -113,34 +115,35 @@
   </div>
 </div>
 
-<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog">
+<div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+<div class="js-detail-modal" *ngIf="showViewDialog()">
   <div class="js-modal-header">
-    <h2>Termination Detail<ng-container *ngIf="selectedRecord"> — {{ selectedRecord.EmployeeName }}</ng-container></h2>
+    <h2>Termination Detail<ng-container *ngIf="selectedRecord() as record"> — {{ record.EmployeeName }}</ng-container></h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">
-    <p *ngIf="viewLoading">Loading details…</p>
-    <ng-container *ngIf="selectedRecord && !viewLoading">
+    <p *ngIf="viewLoading()">Loading details…</p>
+    <ng-container *ngIf="selectedRecord() as record">
+    <ng-container *ngIf="!viewLoading()">
     <div class="js-detail-section">
       <h3>General Details</h3>
       <div class="js-detail-grid">
-        <div class="js-detail-item"><label>Employee ID:</label> <span>{{ selectedRecord.EmployeeId }}</span></div>
-        <div class="js-detail-item"><label>Employee Name:</label> <span>{{ selectedRecord.EmployeeName }}</span></div>
-        <div class="js-detail-item"><label>Department:</label> <span>{{ selectedRecord.Department }}</span></div>
-        <div class="js-detail-item"><label>Employee Category:</label> <span>{{ selectedRecord.EmployeeCategory }}</span></div>
-        <div class="js-detail-item"><label>Designation:</label> <span>{{ selectedRecord.Designation }}</span></div>
-        <div class="js-detail-item"><label>Branch / Location:</label> <span>{{ selectedRecord.BranchLocation }}</span></div>
-        <div class="js-detail-item"><label>Cost Center:</label> <span>{{ selectedRecord.CostCenter }}</span></div>
-        <div class="js-detail-item"><label>Work / Grade Level:</label> <span>{{ selectedRecord.WorkGradeLevel }}</span></div>
-        <div class="js-detail-item"><label>Last Working Day:</label> <span>{{ selectedRecord.LastWorkingDay }}</span></div>
-        <div class="js-detail-item"><label>Year of Service:</label> <span>{{ selectedRecord.YearOfService.toFixed(1) }}</span></div>
-        <div class="js-detail-item"><label>Releasing Date:</label> <span>{{ selectedRecord.ReleasingDate }}</span></div>
-        <div class="js-detail-item"><label>Gross Monthly Salary:</label> <span>{{ selectedRecord.GrossMonthlySalary }}</span></div>
-        <div class="js-detail-item"><label>Committee Meeting Held:</label> <span>{{ selectedRecord.CommitteeMeetingHeld }}</span></div>
+        <div class="js-detail-item"><label>Employee ID:</label> <span>{{ record.EmployeeId }}</span></div>
+        <div class="js-detail-item"><label>Employee Name:</label> <span>{{ record.EmployeeName }}</span></div>
+        <div class="js-detail-item"><label>Department:</label> <span>{{ record.Department }}</span></div>
+        <div class="js-detail-item"><label>Employee Category:</label> <span>{{ record.EmployeeCategory }}</span></div>
+        <div class="js-detail-item"><label>Designation:</label> <span>{{ record.Designation }}</span></div>
+        <div class="js-detail-item"><label>Branch / Location:</label> <span>{{ record.BranchLocation }}</span></div>
+        <div class="js-detail-item"><label>Cost Center:</label> <span>{{ record.CostCenter }}</span></div>
+        <div class="js-detail-item"><label>Work / Grade Level:</label> <span>{{ record.WorkGradeLevel }}</span></div>
+        <div class="js-detail-item"><label>Last Working Day:</label> <span>{{ record.LastWorkingDay }}</span></div>
+        <div class="js-detail-item"><label>Year of Service:</label> <span>{{ record.YearOfService.toFixed(1) }}</span></div>
+        <div class="js-detail-item"><label>Releasing Date:</label> <span>{{ record.ReleasingDate }}</span></div>
+        <div class="js-detail-item"><label>Gross Monthly Salary:</label> <span>{{ record.GrossMonthlySalary }}</span></div>
+        <div class="js-detail-item"><label>Committee Meeting Held:</label> <span>{{ record.CommitteeMeetingHeld }}</span></div>
       </div>
     </div>
-    @if (selectedRecord.detail?.duesPayable; as dues) {
+    @if (record.detail?.duesPayable; as dues) {
     <div class="js-detail-section">
       <h3>Dues Payable</h3>
       <div class="js-detail-grid">
@@ -153,11 +156,11 @@
         <div class="js-detail-item"><label>Notice Pay:</label> <span>{{ dues.noticePay || '—' }}</span></div>
         <div class="js-detail-item"><label>Leave Encashment Amount:</label> <span>{{ dues.leaveEncashmentAmount || '—' }}</span></div>
         <div class="js-detail-item"><label>Other Payables:</label> <span>{{ dues.otherPayables || '—' }}</span></div>
-        <div class="js-detail-item"><label>Total Dues Payable:</label> <span>{{ selectedRecord.detail?.totalDuesPayable?.toFixed(2) ?? '—' }}</span></div>
+        <div class="js-detail-item"><label>Total Dues Payable:</label> <span>{{ record.detail?.totalDuesPayable?.toFixed(2) ?? '—' }}</span></div>
       </div>
     </div>
     }
-    @if (selectedRecord.detail?.recoverableAmount; as recoverable) {
+    @if (record.detail?.recoverableAmount; as recoverable) {
     <div class="js-detail-section">
       <h3>Recoverable Amount Section</h3>
       <div class="js-detail-grid">
@@ -171,10 +174,11 @@
         <div class="js-detail-item"><label>Asset Recovery(name):</label> <span>{{ recoverable.assetRecoveryName || '—' }}</span></div>
         <div class="js-detail-item"><label>Other Recoverable Amounts:</label> <span>{{ recoverable.otherRecoverableAmounts || '—' }}</span></div>
         <div class="js-detail-item"><label>sss:</label> <span>{{ recoverable.sss || '—' }}</span></div>
-        <div class="js-detail-item"><label>Total Recoverable Amount:</label> <span>{{ selectedRecord.detail?.totalRecoverableAmount?.toFixed(2) ?? '—' }}</span></div>
+        <div class="js-detail-item"><label>Total Recoverable Amount:</label> <span>{{ record.detail?.totalRecoverableAmount?.toFixed(2) ?? '—' }}</span></div>
       </div>
     </div>
     }
+    </ng-container>
     </ng-container>
   </div>
   <div class="js-modal-footer">
