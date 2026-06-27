@@ -29,6 +29,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   },
   { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
   { label: 'Miscellaneous', value: 'miscellaneous', icon: 'grid', route: '/miscellaneous' },
+  { label: 'Setup', value: 'setup', icon: 'settings' },
   { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
   { label: 'Development', value: 'development', icon: 'learning-assistant' },
   { label: 'Goals', value: 'goals', icon: 'goal' },

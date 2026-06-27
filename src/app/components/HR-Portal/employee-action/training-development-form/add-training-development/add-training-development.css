@@ -45,3 +45,94 @@
 .cjs-form-container {
   padding-bottom: 8px;
 }
+
+.training-evaluation-meta {
+  margin-bottom: 16px;
+}
+
+.training-evaluation-table-section {
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.training-evaluation-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.training-evaluation-table-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2d3e;
+}
+
+.add-evaluation-row-btn {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.training-evaluation-table-wrapper {
+  overflow-x: auto;
+}
+
+.training-evaluation-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
+}
+
+.training-evaluation-table th,
+.training-evaluation-table td {
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.training-evaluation-table th {
+  background: #f8fafc;
+  text-align: left;
+  font-weight: 600;
+}
+
+.training-evaluation-table td input,
+.training-evaluation-table td select {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.training-evaluation-table__actions {
+  width: 90px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.remove-evaluation-row-btn {
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  color: #b42318;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remove-evaluation-row-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

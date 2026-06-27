@@ -190,6 +190,15 @@
               </select>
             </div>
             <div class="cjs-row">
+              <label>Department Applicability:</label>
+              <select [ngModel]="departmentApplicability()" (ngModelChange)="departmentApplicability.set($event)">
+                <option value="">Select department</option>
+                @for (item of departmentApplicabilityOptions; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+            <div class="cjs-row">
               <label>Training Start Date:</label>
               <input type="date" [ngModel]="trainingStartDate()" (ngModelChange)="trainingStartDate.set($event)" />
             </div>
@@ -230,7 +239,7 @@
       <section class="cjs-section-block" id="training-evaluation-section">
         <div class="cjs-section-title">Training Evaluation</div>
 
-        <div class="cjs-grid">
+        <div class="cjs-grid training-evaluation-meta">
           <div class="cjs-col">
             <div class="cjs-row">
               <label>Evaluation Cycle Number:</label>
@@ -245,6 +254,9 @@
               <label>Evaluation Date:</label>
               <input type="date" [ngModel]="evaluationDate()" (ngModelChange)="evaluationDate.set($event)" />
             </div>
+          </div>
+
+          <div class="cjs-col">
             <div class="cjs-row">
               <label>Ratings Obtained:</label>
               <input type="text" [ngModel]="evaluationPeriod()" (ngModelChange)="evaluationPeriod.set($event)" placeholder="e.g. May 2026" />
@@ -254,32 +266,83 @@
               <input type="text" [ngModel]="evaluatorName()" (ngModelChange)="evaluatorName.set($event)" />
             </div>
           </div>
+        </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
-              <label>Evaluation Parameter:</label>
-              <input type="text" [ngModel]="evaluationParameter()" (ngModelChange)="evaluationParameter.set($event)" placeholder="e.g. Technical Skills" />
-            </div>
-            <div class="cjs-row">
-              <label>Parameter Rating:</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                [ngModel]="parameterRating()"
-                (keydown)="onRatingKeyDown($event)"
-                (ngModelChange)="onParameterRatingChange($event)"
-              />
-            </div>
-            <div class="cjs-row">
-              <label>Overall Score:</label>
-              <select [ngModel]="overallScore()" (ngModelChange)="overallScore.set($event)">
-                <option value="">Select score</option>
-                @for (score of overallScoreOptions; track score) {
-                  <option [value]="score">{{ score }}</option>
+        <div class="training-evaluation-table-section">
+          <div class="training-evaluation-table-header">
+            <h4>Evaluation Parameters</h4>
+            <button type="button" class="add-evaluation-row-btn" (click)="addEvaluationRow()">+ Add Row</button>
+          </div>
+
+          <div class="training-evaluation-table-wrapper">
+            <table class="training-evaluation-table">
+              <thead>
+                <tr>
+                  <th>Evaluation Parameters</th>
+                  <th>Scoring (0-100)</th>
+                  <th>Actual Score</th>
+                  <th>Overall Score</th>
+                  <th class="training-evaluation-table__actions">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of evaluationRows(); track $index; let i = $index) {
+                  <tr>
+                    <td>
+                      <input
+                        type="text"
+                        placeholder="e.g. Technical Skills"
+                        [ngModel]="row.evaluationParameter"
+                        (ngModelChange)="updateEvaluationRow(i, 'evaluationParameter', $event)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="0-100"
+                        [ngModel]="row.scoring"
+                        (keydown)="onRatingKeyDown($event)"
+                        (ngModelChange)="onEvaluationScoreChange(i, 'scoring', $event)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="0-100"
+                        [ngModel]="row.actualScore"
+                        (keydown)="onRatingKeyDown($event)"
+                        (ngModelChange)="onEvaluationScoreChange(i, 'actualScore', $event)"
+                      />
+                    </td>
+                    <td>
+                      <select
+                        [ngModel]="row.overallScore"
+                        (ngModelChange)="updateEvaluationRow(i, 'overallScore', $event)"
+                      >
+                        <option value="">Select score</option>
+                        @for (score of overallScoreOptions; track score) {
+                          <option [value]="score">{{ score }}</option>
+                        }
+                      </select>
+                    </td>
+                    <td class="training-evaluation-table__actions">
+                      <button
+                        type="button"
+                        class="remove-evaluation-row-btn"
+                        (click)="removeEvaluationRow(i)"
+                        [disabled]="evaluationRows().length <= 1"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
                 }
-              </select>
-            </div>
+              </tbody>
+            </table>
           </div>
         </div>
 

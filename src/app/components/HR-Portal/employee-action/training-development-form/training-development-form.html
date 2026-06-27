@@ -196,6 +196,29 @@
           <div class="js-detail-item"><label>Evaluation Date:</label> <span>{{ record.TrainingEvaluation.evaluation_date }}</span></div>
           <div class="js-detail-item"><label>Evaluation Period:</label> <span>{{ record.TrainingEvaluation.evaluation_period }}</span></div>
           <div class="js-detail-item"><label>Evaluator:</label> <span>{{ record.TrainingEvaluation.evaluator_name }}</span></div>
+        </div>
+        <div class="js-detail-full" *ngIf="record.TrainingEvaluation.evaluation_rows.length">
+          <label>Evaluation Parameters:</label>
+          <table class="training-evaluation-detail-table">
+            <thead>
+              <tr>
+                <th>Evaluation Parameters</th>
+                <th>Scoring (0-100)</th>
+                <th>Actual Score</th>
+                <th>Overall Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of record.TrainingEvaluation.evaluation_rows">
+                <td>{{ row.evaluation_parameter || '—' }}</td>
+                <td>{{ row.scoring || '—' }}</td>
+                <td>{{ row.actual_score || '—' }}</td>
+                <td>{{ row.overall_score || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="js-detail-grid" *ngIf="!record.TrainingEvaluation.evaluation_rows.length">
           <div class="js-detail-item"><label>Parameter:</label> <span>{{ record.TrainingEvaluation.evaluation_parameter }}</span></div>
           <div class="js-detail-item"><label>Parameter Rating:</label> <span>{{ record.TrainingEvaluation.parameter_rating }}</span></div>
           <div class="js-detail-item"><label>Overall Score:</label> <span>{{ record.TrainingEvaluation.overall_score }}</span></div>

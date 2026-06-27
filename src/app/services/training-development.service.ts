@@ -8,6 +8,7 @@ export interface TrainingDetailPayload {
   training_category: string;
   training_type: string;
   training_stage: string;
+  department_applicability: string;
   training_start_date: string;
   training_end_date: string;
   training_duration: string;
@@ -15,6 +16,20 @@ export interface TrainingDetailPayload {
   training_objectives: string;
   skills_covered: string;
   remarks: string;
+}
+
+export interface TrainingEvaluationRowPayload {
+  evaluation_parameter: string;
+  scoring: number;
+  actual_score: number;
+  overall_score: string;
+}
+
+export interface TrainingEvaluationRowFormInput {
+  evaluationParameter: string;
+  scoring: string;
+  actualScore: string;
+  overallScore: string;
 }
 
 export interface TrainingEvaluationPayload {
@@ -26,6 +41,7 @@ export interface TrainingEvaluationPayload {
   parameter_rating: number;
   overall_score: string;
   performance_remarks: string;
+  evaluation_rows: TrainingEvaluationRowPayload[];
 }
 
 export interface TrainingSalaryPayload {
@@ -109,6 +125,54 @@ function toAmount(value: string | number | null | undefined): number {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
+function clampScore(value: string | number | null | undefined): number {
+  return Math.round(Math.min(100, Math.max(0, toAmount(value))));
+}
+
+function mapFormEvaluationRows(
+  rows: TrainingEvaluationRowFormInput[],
+): TrainingEvaluationRowPayload[] {
+  return rows
+    .filter(
+      (row) =>
+        row.evaluationParameter.trim() ||
+        row.scoring.trim() ||
+        row.actualScore.trim() ||
+        row.overallScore.trim(),
+    )
+    .map((row) => ({
+      evaluation_parameter: row.evaluationParameter.trim(),
+      scoring: clampScore(row.scoring),
+      actual_score: clampScore(row.actualScore),
+      overall_score: row.overallScore.trim(),
+    }));
+}
+
+function deriveLegacyEvaluationFields(rows: TrainingEvaluationRowPayload[]): {
+  evaluation_parameter: string;
+  parameter_rating: number;
+  overall_score: string;
+} {
+  if (rows.length === 0) {
+    return { evaluation_parameter: '', parameter_rating: 0, overall_score: '' };
+  }
+
+  const actualScores = rows.map((row) => row.actual_score).filter((score) => score > 0);
+  const parameterRating =
+    actualScores.length > 0
+      ? Math.round(actualScores.reduce((sum, score) => sum + score, 0) / actualScores.length)
+      : 0;
+
+  return {
+    evaluation_parameter: rows
+      .map((row) => row.evaluation_parameter)
+      .filter(Boolean)
+      .join(', '),
+    parameter_rating: parameterRating,
+    overall_score: rows.find((row) => row.overall_score)?.overall_score ?? '',
+  };
+}
+
 /** Builds API-ready snake_case body from form draft values. */
 export function buildTrainingDevelopmentSubmitPayload(
   draft: TrainingDevelopmentAddPayload,
@@ -137,6 +201,7 @@ export function buildTrainingDevelopmentSubmitPayload(
       training_category: draft.training_detail.training_category.trim(),
       training_type: draft.training_detail.training_type.trim(),
       training_stage: draft.training_detail.training_stage.trim(),
+      department_applicability: draft.training_detail.department_applicability.trim(),
       training_start_date: draft.training_detail.training_start_date.trim(),
       training_end_date: draft.training_detail.training_end_date.trim(),
       training_duration: draft.training_detail.training_duration.trim(),
@@ -154,6 +219,12 @@ export function buildTrainingDevelopmentSubmitPayload(
       parameter_rating: Math.round(draft.training_evaluation.parameter_rating),
       overall_score: draft.training_evaluation.overall_score.trim(),
       performance_remarks: draft.training_evaluation.performance_remarks.trim(),
+      evaluation_rows: draft.training_evaluation.evaluation_rows.map((row) => ({
+        evaluation_parameter: row.evaluation_parameter.trim(),
+        scoring: clampScore(row.scoring),
+        actual_score: clampScore(row.actual_score),
+        overall_score: row.overall_score.trim(),
+      })),
     },
     salary: {
       current_salary: Math.round(draft.salary.current_salary),
@@ -195,6 +266,7 @@ export function buildTrainingDevelopmentDraftFromForm(input: {
   trainingCategory: string;
   trainingType: string;
   trainingStage: string;
+  departmentApplicability: string;
   trainingStartDate: string;
   trainingEndDate: string;
   trainingDuration: string;
@@ -206,9 +278,7 @@ export function buildTrainingDevelopmentDraftFromForm(input: {
   evaluationDate: string;
   evaluationPeriod: string;
   evaluatorName: string;
-  evaluationParameter: string;
-  parameterRating: string;
-  overallScore: string;
+  evaluationRows: TrainingEvaluationRowFormInput[];
   performanceRemarks: string;
   currentSalary: string;
   incrementAmount: string;
@@ -232,6 +302,8 @@ export function buildTrainingDevelopmentDraftFromForm(input: {
     revisedFromField > 0
       ? revisedFromField
       : current + (incrementAmount > 0 ? incrementAmount : (current * incrementPercentage) / 100);
+  const evaluationRows = mapFormEvaluationRows(input.evaluationRows);
+  const legacyEvaluation = deriveLegacyEvaluationFields(evaluationRows);
 
   return {
     employee_code: input.employeeCode,
@@ -252,6 +324,7 @@ export function buildTrainingDevelopmentDraftFromForm(input: {
       training_category: input.trainingCategory,
       training_type: input.trainingType,
       training_stage: input.trainingStage,
+      department_applicability: input.departmentApplicability,
       training_start_date: input.trainingStartDate,
       training_end_date: input.trainingEndDate,
       training_duration: input.trainingDuration,
@@ -265,10 +338,11 @@ export function buildTrainingDevelopmentDraftFromForm(input: {
       evaluation_date: input.evaluationDate,
       evaluation_period: input.evaluationPeriod,
       evaluator_name: input.evaluatorName,
-      evaluation_parameter: input.evaluationParameter,
-      parameter_rating: Math.round(toAmount(input.parameterRating)),
-      overall_score: input.overallScore,
+      evaluation_parameter: legacyEvaluation.evaluation_parameter,
+      parameter_rating: legacyEvaluation.parameter_rating,
+      overall_score: legacyEvaluation.overall_score,
       performance_remarks: input.performanceRemarks,
+      evaluation_rows: evaluationRows,
     },
     salary: {
       current_salary: current,
@@ -345,6 +419,39 @@ export class TrainingDevelopmentService {
   findTrainingById(id: string | number): TrainingDevelopmentRecord | undefined {
     const numericId = Number.parseInt(String(id), 10);
     return this.trainingList().find((item) => item.Id === numericId);
+  }
+
+  private extractEvaluationRows(
+    source: Record<string, unknown>,
+  ): TrainingEvaluationRowPayload[] {
+    const asString = (value: unknown): string =>
+      value === undefined || value === null ? '' : String(value).trim();
+    const asNumber = (value: unknown, fallback = 0): number => {
+      const parsed = Number.parseFloat(asString(value));
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    const rawRows =
+      source['evaluation_rows'] ??
+      source['evaluationRows'] ??
+      source['evaluation_parameters'] ??
+      source['evaluationParameters'];
+
+    if (!Array.isArray(rawRows)) {
+      return [];
+    }
+
+    return rawRows
+      .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+      .map((row) => ({
+        evaluation_parameter:
+          asString(row['evaluation_parameter']) || asString(row['evaluationParameter']),
+        scoring: asNumber(row['scoring'], 100),
+        actual_score: asNumber(
+          row['actual_score'] ?? row['actualScore'] ?? row['parameter_rating'] ?? row['parameterRating'],
+        ),
+        overall_score: asString(row['overall_score']) || asString(row['overallScore']),
+      }));
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
@@ -445,6 +552,9 @@ export class TrainingDevelopmentService {
         asString(detailSource['training_type']) || asString(detailSource['trainingType']),
       training_stage:
         asString(detailSource['training_stage']) || asString(detailSource['trainingStage']),
+      department_applicability:
+        asString(detailSource['department_applicability']) ||
+        asString(detailSource['departmentApplicability']),
       training_start_date:
         asString(detailSource['training_start_date']) || asString(detailSource['trainingStartDate']),
       training_end_date:
@@ -459,6 +569,29 @@ export class TrainingDevelopmentService {
       remarks: asString(detailSource['remarks']),
     };
 
+    const evaluationRows = this.extractEvaluationRows(evaluationSource);
+    const legacyEvaluationParameter =
+      asString(evaluationSource['evaluation_parameter']) ||
+      asString(evaluationSource['evaluationParameter']);
+    const legacyParameterRating = asNumber(
+      evaluationSource['parameter_rating'] ?? evaluationSource['parameterRating'],
+    );
+    const legacyOverallScore =
+      asString(evaluationSource['overall_score']) || asString(evaluationSource['overallScore']);
+    const resolvedEvaluationRows =
+      evaluationRows.length > 0
+        ? evaluationRows
+        : legacyEvaluationParameter || legacyParameterRating || legacyOverallScore
+          ? [
+              {
+                evaluation_parameter: legacyEvaluationParameter,
+                scoring: 100,
+                actual_score: legacyParameterRating,
+                overall_score: legacyOverallScore,
+              },
+            ]
+          : [];
+
     const trainingEvaluation: TrainingEvaluationPayload = {
       evaluation_cycle_number:
         asString(evaluationSource['evaluation_cycle_number']) ||
@@ -469,17 +602,13 @@ export class TrainingDevelopmentService {
         asString(evaluationSource['evaluation_period']) || asString(evaluationSource['evaluationPeriod']),
       evaluator_name:
         asString(evaluationSource['evaluator_name']) || asString(evaluationSource['evaluatorName']),
-      evaluation_parameter:
-        asString(evaluationSource['evaluation_parameter']) ||
-        asString(evaluationSource['evaluationParameter']),
-      parameter_rating: asNumber(
-        evaluationSource['parameter_rating'] ?? evaluationSource['parameterRating'],
-      ),
-      overall_score:
-        asString(evaluationSource['overall_score']) || asString(evaluationSource['overallScore']),
+      evaluation_parameter: legacyEvaluationParameter,
+      parameter_rating: legacyParameterRating,
+      overall_score: legacyOverallScore,
       performance_remarks:
         asString(evaluationSource['performance_remarks']) ||
         asString(evaluationSource['performanceRemarks']),
+      evaluation_rows: resolvedEvaluationRows,
     };
 
     const salary: TrainingSalaryPayload = {

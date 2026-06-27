@@ -17,6 +17,7 @@ import { AlertService } from '../../../../../services/alert.service';
 import {
   TrainingDevelopmentRecord,
   TrainingDevelopmentService,
+  TrainingEvaluationRowFormInput,
   buildTrainingDevelopmentDraftFromForm,
   buildTrainingDevelopmentSubmitPayload,
 } from '../../../../../services/training-development.service';
@@ -64,6 +65,22 @@ export class AddTrainingDevelopmentComponent implements OnInit {
 
   protected readonly trainingTypeOptions = ['Internal', 'External'] as const;
   protected readonly trainingStageOptions = ['Internship', 'Training', 'On-Job Training'] as const;
+  protected readonly departmentApplicabilityOptions = [
+    'Production Department',
+    'Plant Maintenance Department',
+    'Electrical Department',
+    'Quality Control Department',
+    'Logistics Department',
+    'Procurement Department',
+    'Admin Department',
+    'Accounts & Finance Department',
+    'Internal Audit Department',
+    'Human Resource (HR) Department',
+    'Sales & Marketing Department',
+    'IT Department',
+    'BOD Department',
+    'Common Department',
+  ] as const;
   protected readonly evaluationCycleNumberOptions = ['1', '2', '3', '4'] as const;
   protected readonly overallScoreOptions = ['A', 'B', 'C', 'D', 'E'] as const;
   protected readonly performanceEligibilityOptions = ['Eligible', 'Not Eligible'] as const;
@@ -86,6 +103,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   protected readonly trainingCategory = signal('');
   protected readonly trainingType = signal('');
   protected readonly trainingStage = signal('');
+  protected readonly departmentApplicability = signal('');
   protected readonly trainingStartDate = signal('');
   protected readonly trainingEndDate = signal('');
   protected readonly trainer = signal('');
@@ -97,9 +115,9 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   protected readonly evaluationDate = signal('');
   protected readonly evaluationPeriod = signal('');
   protected readonly evaluatorName = signal('');
-  protected readonly evaluationParameter = signal('');
-  protected readonly parameterRating = signal('');
-  protected readonly overallScore = signal('');
+  protected readonly evaluationRows = signal<TrainingEvaluationRowFormInput[]>([
+    { evaluationParameter: '', scoring: '', actualScore: '', overallScore: '' },
+  ]);
   protected readonly performanceRemarks = signal('');
 
   protected readonly currentSalary = signal('');
@@ -294,16 +312,65 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     }
   }
 
-  protected onParameterRatingChange(value: string | number | null): void {
+  protected addEvaluationRow(): void {
+    this.evaluationRows.update((rows) => [
+      ...rows,
+      { evaluationParameter: '', scoring: '', actualScore: '', overallScore: '' },
+    ]);
+  }
+
+  protected removeEvaluationRow(index: number): void {
+    this.evaluationRows.update((rows) =>
+      rows.length <= 1 ? rows : rows.filter((_, rowIndex) => rowIndex !== index),
+    );
+  }
+
+  protected updateEvaluationRow(
+    index: number,
+    field: keyof TrainingEvaluationRowFormInput,
+    value: string,
+  ): void {
+    this.evaluationRows.update((rows) => {
+      const next = [...rows];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  }
+
+  protected onEvaluationScoreChange(
+    index: number,
+    field: 'scoring' | 'actualScore',
+    value: string | number | null,
+  ): void {
+    const normalized = this.normalizeRating(value);
+    this.updateEvaluationRow(index, field, normalized);
+    if (field === 'actualScore') {
+      this.syncPerformanceEligibilityFromEvaluation();
+    }
+  }
+
+  private normalizeRating(value: string | number | null): string {
     const rawValue = value === null ? '' : String(value);
     const digitsOnly = rawValue.replace(/\D/g, '');
     const numericValue = Math.min(100, Math.max(0, Number(digitsOnly || '0')));
-    const normalized = digitsOnly === '' ? '' : numericValue.toString();
-    this.parameterRating.set(normalized);
+    return digitsOnly === '' ? '' : numericValue.toString();
+  }
 
-    if (!this.performanceEligibilityCheck()) {
-      this.performanceEligibilityCheck.set(numericValue >= 75 ? 'Eligible' : numericValue > 0 ? 'Not Eligible' : '');
+  private syncPerformanceEligibilityFromEvaluation(): void {
+    if (this.performanceEligibilityCheck()) {
+      return;
     }
+
+    const scores = this.evaluationRows()
+      .map((row) => this.toAmount(row.actualScore))
+      .filter((score) => score > 0);
+
+    if (scores.length === 0) {
+      return;
+    }
+
+    const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    this.performanceEligibilityCheck.set(average >= 75 ? 'Eligible' : 'Not Eligible');
   }
 
   protected onIncrementAmountChange(value: string | number | null): void {
@@ -353,6 +420,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
       trainingCategory: this.trainingCategory(),
       trainingType: this.trainingType(),
       trainingStage: this.trainingStage(),
+      departmentApplicability: this.departmentApplicability(),
       trainingStartDate: this.trainingStartDate(),
       trainingEndDate: this.trainingEndDate(),
       trainingDuration: this.trainingDuration(),
@@ -364,9 +432,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
       evaluationDate: this.evaluationDate(),
       evaluationPeriod: this.evaluationPeriod(),
       evaluatorName: this.evaluatorName(),
-      evaluationParameter: this.evaluationParameter(),
-      parameterRating: this.parameterRating(),
-      overallScore: this.overallScore(),
+      evaluationRows: this.evaluationRows(),
       performanceRemarks: this.performanceRemarks(),
       currentSalary: this.currentSalary(),
       incrementAmount: this.incrementAmount(),
@@ -571,6 +637,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.trainingCategory.set(emptyIfDash(detail.training_category));
     this.trainingType.set(emptyIfDash(detail.training_type));
     this.trainingStage.set(emptyIfDash(detail.training_stage));
+    this.departmentApplicability.set(emptyIfDash(detail.department_applicability));
     this.trainingStartDate.set(emptyIfDash(detail.training_start_date));
     this.trainingEndDate.set(emptyIfDash(detail.training_end_date));
     this.trainer.set(emptyIfDash(detail.trainer));
@@ -583,11 +650,16 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.evaluationDate.set(emptyIfDash(evaluation.evaluation_date));
     this.evaluationPeriod.set(emptyIfDash(evaluation.evaluation_period));
     this.evaluatorName.set(emptyIfDash(evaluation.evaluator_name));
-    this.evaluationParameter.set(emptyIfDash(evaluation.evaluation_parameter));
-    this.parameterRating.set(
-      evaluation.parameter_rating ? String(evaluation.parameter_rating) : '',
+    this.evaluationRows.set(
+      evaluation.evaluation_rows.length > 0
+        ? evaluation.evaluation_rows.map((row) => ({
+            evaluationParameter: emptyIfDash(row.evaluation_parameter),
+            scoring: row.scoring ? String(row.scoring) : '',
+            actualScore: row.actual_score ? String(row.actual_score) : '',
+            overallScore: emptyIfDash(row.overall_score),
+          }))
+        : [{ evaluationParameter: '', scoring: '', actualScore: '', overallScore: '' }],
     );
-    this.overallScore.set(emptyIfDash(evaluation.overall_score));
     this.performanceRemarks.set(emptyIfDash(evaluation.performance_remarks));
 
     const salary = record.Salary;
