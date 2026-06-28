@@ -513,6 +513,20 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return this.hiringManager().trim();
   }
 
+  private normalizePaymentMode(value: string): 'Cash' | 'Bank' | 'Hybrid' | '' {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'cash') {
+      return 'Cash';
+    }
+    if (normalized === 'bank') {
+      return 'Bank';
+    }
+    if (normalized === 'hybrid') {
+      return 'Hybrid';
+    }
+    return '';
+  }
+
   private buildEmployeeProfilePayload(): EmployeeProfileAddPayload {
     return {
       jobSpecificationId: this.selectedJobSpecId().trim(),
@@ -1291,6 +1305,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     const codeStr = this.employeeCode().trim();
     const employeeCodeNum = this.parseEmployeeCodeNumber(codeStr);
+    const displayEmployeeCode =
+      codeStr || this.applicationFormService.formatEmployeeUserId(employeeCodeNum);
 
     const loginName = this.loginEmployeeName().trim();
     const composedName = [this.firstName(), this.middleName(), this.lastName()]
@@ -1379,7 +1395,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     };
 
     const record: ApplicationFormRecord = {
-      EmployeeCode: employeeCodeNum,
+      EmployeeCode: displayEmployeeCode,
       EmployeeName: displayName,
       Department: this.departmentInAhcp().trim() || '—',
       EmployeeNature: noSelection(this.employmentNature()) || '—',
@@ -1403,7 +1419,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       next: (response) => {
         const responseId = this.applicationFormService.extractApiIdFromResponse(response);
         const cacheKeys = new Set(
-          [editId, responseId, String(employeeCodeNum), this.employeeCode().trim(), this.userId().trim()].filter(
+          [editId, responseId, displayEmployeeCode, String(employeeCodeNum), this.userId().trim()].filter(
             Boolean,
           ),
         );
@@ -1541,16 +1557,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     const remuneration = detail.remuneration;
     this.basicSalary.set(remuneration.basicSalary ?? '');
-    this.paymentMode.set((remuneration.paymentMode as 'Cash' | 'Bank' | 'Hybrid' | '') ?? '');
+    this.paymentMode.set(this.normalizePaymentMode(remuneration.paymentMode ?? ''));
     this.accountTitle.set(remuneration.accountTitle ?? '');
     this.bankName.set(remuneration.bankName ?? '');
     this.branchName.set(remuneration.branchName ?? '');
     this.accountNo.set(remuneration.accountNo ?? '');
     this.accountType.set(remuneration.accountType ?? '');
     this.effectiveDate.set(remuneration.effectiveDate ?? '');
-    this.taxPercentage.set(
-      this.paymentMode() === 'Hybrid' ? (remuneration.taxPercentage ?? '') : '',
-    );
+    this.taxPercentage.set(remuneration.taxPercentage ?? '');
     this.dateOfJoining.set(remuneration.dateOfJoining ?? '');
     this.advancePercentAllowed.set(remuneration.advancePercentAllowed ?? '');
     this.maximumLoanCapacity.set(
@@ -1587,7 +1601,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       this.loanAdvancesForm.set(hrSettings.loanAdvancesForm ?? '');
     }
 
-    this.employeeCode.set(detail.loginDetails.userId || detail.loginDetails.employeeCode);
+    this.employeeCode.set(detail.loginDetails.employeeCode || detail.loginDetails.userId);
     this.userId.set(detail.loginDetails.userId);
     this.loginEmployeeName.set(detail.loginDetails.employeeName);
     this.password.set(detail.loginDetails.password);

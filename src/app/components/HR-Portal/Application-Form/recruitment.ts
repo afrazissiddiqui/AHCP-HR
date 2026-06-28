@@ -108,7 +108,7 @@ export class RecruitmentComponent implements OnInit {
   sidebarCollapsed = signal(false);
 
   columns: ColumnConfig[] = [
-    { key: 'EmployeeCode', label: 'Employee Code', visible: true },
+    { key: 'EmployeeCode', label: 'Employee ID', visible: true },
     { key: 'EmployeeName', label: 'Person Name', visible: true },
     { key: 'Department', label: 'Department', visible: true },
     { key: 'EmployeeNature', label: 'Employee Nature', visible: true },

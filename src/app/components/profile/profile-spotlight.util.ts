@@ -57,7 +57,7 @@ export function buildProfileSpotlight(record: ApplicationFormRecord): ProfileSpo
     `I enjoy collaborating with colleagues and contributing to team goals. ` +
     `Passionate about professional growth and delivering quality work.`;
 
-  const directReports = hashToRange(record.EmployeeCode, 3, 8);
+  const directReports = hashToRange(employeeCodeHash(record.EmployeeCode), 3, 8);
   const teamSize = directReports;
 
   return {
@@ -89,6 +89,14 @@ function buildOrganizationSummary(record: ApplicationFormRecord): string {
     parts.push(record.EmploymentCategory.trim());
   }
   return parts.length ? parts.join(' · ') : 'Organization details will appear here when available.';
+}
+
+function employeeCodeHash(value: string): number {
+  let hash = 0;
+  for (const char of value) {
+    hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  }
+  return Math.abs(hash);
 }
 
 function hashToRange(seed: number, min: number, max: number): number {

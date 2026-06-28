@@ -162,7 +162,7 @@ export interface ApplicationFormDetail {
 }
 
 export interface ApplicationFormRecord {
-  EmployeeCode: number;
+  EmployeeCode: string;
   EmployeeName: string;
   Department: string;
   EmployeeNature: string;
@@ -310,6 +310,40 @@ export interface EmployeeProfileAddPayload {
   assets: EmployeeProfileAssetsPayload;
 }
 
+const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
+  ['basicSalary', 'basic_salary'],
+  ['paymentMode', 'payment_mode'],
+  ['accountTitle', 'account_title'],
+  ['bankName', 'bank_name'],
+  ['branchName', 'branch_name'],
+  ['accountNo', 'account_no'],
+  ['accountType', 'account_type'],
+  ['effectiveDate', 'effective_date'],
+  ['taxPercentage', 'tax_percentage'],
+  ['dateOfJoining', 'date_of_joining'],
+  ['cashSalaryPercentage', 'cash_salary_percentage'],
+  ['advancePercentAllowed', 'advance_percent_allowed'],
+  ['maximumLoanCapacity', 'maximum_loan_capacity'],
+  ['loanAmountAllowed', 'loan_amount_allowed'],
+  ['overTimeApplicable', 'over_time_applicable'],
+  ['allowancesApplicable', 'allowances_applicable'],
+  ['eobiApplicable', 'eobi_applicable'],
+  ['socialSecurityApplicable', 'social_security_applicable'],
+  ['fuelLimit', 'fuel_limit'],
+  ['leaveEligibilityCriteria', 'leave_eligibility_criteria'],
+  ['leaveType', 'leave_type'],
+  ['leaveDays', 'leave_days'],
+  ['leavesAvailed', 'leaves_availed'],
+  ['remainingLeaves', 'remaining_leaves'],
+  ['totalLeaves', 'total_leaves'],
+  ['medicalAllowances', 'medical_allowances'],
+  ['fuelAllowances', 'fuel_allowances'],
+  ['mobileAllowances', 'mobile_allowances'],
+  ['carAllowances', 'car_allowances'],
+  ['maximumAdvanceCapacity', 'maximum_advance_capacity'],
+  ['otherAllowances', 'other_allowances'],
+];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -403,7 +437,35 @@ export class ApplicationFormService {
     if (records.length === 0) {
       return 1;
     }
-    return Math.max(...records.map((r) => r.EmployeeCode)) + 1;
+
+    const numbers = records
+      .map((record) => this.parseEmployeeCodeSequence(record.EmployeeCode))
+      .filter((value) => value > 0);
+
+    if (numbers.length === 0) {
+      return 1;
+    }
+
+    return Math.max(...numbers) + 1;
+  }
+
+  parseEmployeeCodeSequence(value: string): number {
+    const trimmed = String(value ?? '').trim();
+    if (!trimmed || trimmed === '—') {
+      return 0;
+    }
+
+    const direct = Number.parseInt(trimmed, 10);
+    if (Number.isFinite(direct) && direct > 0 && String(direct) === trimmed) {
+      return direct;
+    }
+
+    const match = trimmed.match(/(\d+)$/);
+    if (match) {
+      return Number.parseInt(match[1], 10) || 0;
+    }
+
+    return 0;
   }
 
   formatEmployeeUserId(code: number): string {
@@ -466,23 +528,134 @@ export class ApplicationFormService {
     }
     if (Array.isArray(response)) {
       const first = response[0];
-      return first && typeof first === 'object' ? (first as Record<string, unknown>) : null;
+      return first && typeof first === 'object'
+        ? this.unwrapEmployeeProfileRecord(first as Record<string, unknown>)
+        : null;
     }
-    const obj = response as Record<string, unknown>;
-    const nested = obj['data'] ?? obj['employee'] ?? obj['profile'] ?? obj['user'];
-    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-      return nested as Record<string, unknown>;
+
+    return this.unwrapEmployeeProfileRecord(response as Record<string, unknown>);
+  }
+
+  private unwrapEmployeeProfileRecord(obj: Record<string, unknown>): Record<string, unknown> | null {
+    if (this.looksLikeEmployeeProfileRecord(obj)) {
+      return obj;
     }
-    if (
+
+    const nestedKeys = [
+      'data',
+      'Data',
+      'employee',
+      'Employee',
+      'profile',
+      'Profile',
+      'user',
+      'User',
+      'employeeProfile',
+      'employee_profile',
+      'EmployeeProfile',
+      'result',
+      'Result',
+    ];
+
+    for (const key of nestedKeys) {
+      const nested = obj[key];
+      if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+        const unwrapped = this.unwrapEmployeeProfileRecord(nested as Record<string, unknown>);
+        if (unwrapped) {
+          return unwrapped;
+        }
+      }
+    }
+
+    return this.looksLikeEmployeeProfileRecord(obj) ? obj : null;
+  }
+
+  private looksLikeEmployeeProfileRecord(obj: Record<string, unknown>): boolean {
+    return !!(
       obj['personName'] ||
       obj['person_name'] ||
       obj['employeeCode'] ||
       obj['employee_code'] ||
+      obj['remuneration'] ||
+      obj['Remuneration'] ||
+      obj['basicSalary'] ||
+      obj['basic_salary'] ||
+      obj['loginDetail'] ||
+      obj['loginDetails'] ||
+      obj['login_detail'] ||
       obj['id']
-    ) {
-      return obj;
+    );
+  }
+
+  private resolveRemunerationSource(item: Record<string, unknown>): Record<string, unknown> {
+    const merged: Record<string, unknown> = {};
+
+    const nestedCandidates = [
+      item['remuneration'],
+      item['Remuneration'],
+      item['remunerationDetails'],
+      item['remuneration_details'],
+    ];
+
+    for (const candidate of nestedCandidates) {
+      if (typeof candidate === 'string' && candidate.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(candidate) as unknown;
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            Object.assign(merged, parsed as Record<string, unknown>);
+          }
+        } catch {
+          // Ignore invalid JSON strings.
+        }
+        continue;
+      }
+
+      const nested = this.pickNestedRecord(candidate);
+      if (nested) {
+        Object.assign(merged, nested);
+      }
     }
-    return null;
+
+    for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
+      const flatValue = this.pickFieldValue(item, camel, snake);
+      if (flatValue !== '' && this.pickFieldValue(merged, camel, snake) === '') {
+        merged[camel] = flatValue;
+      }
+    }
+
+    return merged;
+  }
+
+  private pickFieldValue(
+    source: Record<string, unknown>,
+    camel: string,
+    snake?: string,
+  ): string {
+    const pascal = camel.charAt(0).toUpperCase() + camel.slice(1);
+    const keys = [camel, snake, pascal].filter((key): key is string => !!key);
+
+    for (const key of keys) {
+      const value = source[key];
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        return String(value).trim();
+      }
+    }
+
+    return '';
+  }
+
+  private pickRemField(
+    item: Record<string, unknown>,
+    remunerationSource: Record<string, unknown>,
+    camel: string,
+    snake?: string,
+  ): string {
+    const fromRemuneration = this.pickFieldValue(remunerationSource, camel, snake);
+    if (fromRemuneration !== '') {
+      return fromRemuneration;
+    }
+
+    return this.pickFieldValue(item, camel, snake);
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
@@ -499,15 +672,36 @@ export class ApplicationFormService {
     return [];
   }
 
+  private resolveEmployeeCodeFromApiItem(item: Record<string, unknown>): string {
+    const asString = (value: unknown): string =>
+      value === undefined || value === null ? '' : String(value).trim();
+
+    const loginSource =
+      this.pickNestedRecord(item['loginDetail']) ??
+      this.pickNestedRecord(item['loginDetails']) ??
+      this.pickNestedRecord(item['login_detail']);
+
+    const fromLogin = loginSource
+      ? pickFrom(loginSource, 'employeeCode', 'employee_code') ||
+        pickFrom(loginSource, 'userId', 'user_id')
+      : '';
+
+    const employeeCode =
+      asString(item['employeeCode']) ||
+      asString(item['employee_code']) ||
+      fromLogin ||
+      asString(item['userId']) ||
+      asString(item['user_id']) ||
+      '';
+
+    return employeeCode || '—';
+  }
+
   private mapApiItemToRecord(item: Record<string, unknown>): ApplicationFormRecord {
     const asString = (value: unknown): string =>
       value === undefined || value === null ? '' : String(value).trim();
-    const asNumber = (value: unknown, fallback: number): number => {
-      const parsed = Number.parseInt(asString(value), 10);
-      return Number.isFinite(parsed) ? parsed : fallback;
-    };
 
-    const employeeCode = asString(item['employeeCode']) || asString(item['employee_code']) || asString(item['id']);
+    const employeeCode = this.resolveEmployeeCodeFromApiItem(item);
     const personName = asString(item['personName']) || asString(item['person_name']);
     const composedName = [asString(item['firstName']), asString(item['middleName']), asString(item['lastName'])]
       .filter(Boolean)
@@ -516,10 +710,10 @@ export class ApplicationFormService {
       asString(item['loginEmployeeName']) || asString(item['login_employee_name']);
     const employeeName = personName || composedName || loginEmployeeName;
 
-    const apiId = asString(item['id']) || employeeCode;
+    const apiId = asString(item['id']) || (employeeCode !== '—' ? employeeCode : '');
 
     return {
-      EmployeeCode: asNumber(employeeCode, 0),
+      EmployeeCode: employeeCode,
       EmployeeName: employeeName || '—',
       Department:
         asString(item['departmentInAhcp']) ||
@@ -649,15 +843,14 @@ export class ApplicationFormService {
       attachments,
     );
 
-    const remunerationSource = this.pickNestedRecord(item['remuneration']);
+    const remunerationSource = this.resolveRemunerationSource(item);
     const loginSource =
       this.pickNestedRecord(item['loginDetail']) ??
       this.pickNestedRecord(item['loginDetails']) ??
       this.pickNestedRecord(item['login_detail']);
 
     const pickRem = (camel: string, snake?: string): string =>
-      (remunerationSource ? pickFrom(remunerationSource, camel, snake) : '') ||
-      pickFrom(item, camel, snake);
+      this.pickRemField(item, remunerationSource, camel, snake);
 
     const pickLogin = (camel: string, snake?: string): string =>
       (loginSource ? pickFrom(loginSource, camel, snake) : '') || pickFrom(item, camel, snake);
@@ -800,6 +993,10 @@ export class ApplicationFormService {
 
     return {
       ...summary,
+      EmployeeCode:
+        detail.loginDetails.employeeCode && detail.loginDetails.employeeCode !== '—'
+          ? detail.loginDetails.employeeCode
+          : summary.EmployeeCode,
       EmployeeName: detail.personalInfo.personName || summary.EmployeeName,
       detail,
     };
@@ -862,7 +1059,7 @@ export class ApplicationFormService {
 
   getEmployeeMasterDataRecords(): EmployeeMasterDataRecord[] {
     return this.applicationRecords().map((record) => ({
-      EmployeeID: record.EmployeeCode,
+      EmployeeID: this.parseEmployeeCodeSequence(record.EmployeeCode),
       EmployeeName: record.EmployeeName,
       Department: record.Department,
       Designation: record.Designation,
