@@ -692,6 +692,13 @@
           </div>
 
           <div class="cjr-row">
+            <label>Maximum Advance Capacity:</label>
+            <input type="text" inputmode="decimal" [ngModel]="maximumAdvanceCapacity()"
+              (ngModelChange)="onNumericOnlyChange($event, maximumAdvanceCapacity)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('maximumAdvanceCapacity')" />
+          </div>
+
+          <div class="cjr-row">
             <label>Overtime Applicable:</label>
             <select [ngModel]="overTimeApplicable()" (ngModelChange)="overTimeApplicable.set($event)"
               (blur)="touch('overTimeApplicable')">

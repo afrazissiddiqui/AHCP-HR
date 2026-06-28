@@ -345,6 +345,23 @@ const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
   ['otherAllowances', 'other_allowances'],
 ];
 
+const REMUNERATION_EXTRA_KEYS: Readonly<Record<string, readonly string[]>> = {
+  medicalAllowances: ['medicalAllowance', 'medical_allowance', 'MedicalAllowances', 'MedicalAllowance'],
+  fuelAllowances: ['fuelAllowance', 'fuel_allowance', 'FuelAllowances', 'FuelAllowance'],
+  mobileAllowances: ['mobileAllowance', 'mobile_allowance', 'MobileAllowances', 'MobileAllowance'],
+  carAllowances: ['carAllowance', 'car_allowance', 'CarAllowances', 'CarAllowance'],
+  otherAllowances: [
+    'otherAllowance',
+    'other_allowance',
+    'OtherAllowances',
+    'OtherAllowance',
+    'packagePerks',
+    'package_perks',
+  ],
+  maximumLoanCapacity: ['loanAmountAllowed', 'loan_amount_allowed', 'MaximumLoanCapacity', 'LoanAmountAllowed'],
+  maximumAdvanceCapacity: ['advanceCapacity', 'advance_capacity', 'MaximumAdvanceCapacity', 'AdvanceCapacity'],
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -554,17 +571,36 @@ export class ApplicationFormService {
     }
     if (Array.isArray(response)) {
       const first = response[0];
-      return first && typeof first === 'object'
-        ? this.unwrapEmployeeProfileRecord(first as Record<string, unknown>)
-        : null;
+      if (!first || typeof first !== 'object') {
+        return null;
+      }
+      const record = first as Record<string, unknown>;
+      const unwrapped = this.unwrapEmployeeProfileRecord(record);
+      if (!unwrapped) {
+        return null;
+      }
+      return this.mergeFlatRemunerationFields(record, unwrapped);
     }
 
-    return this.unwrapEmployeeProfileRecord(response as Record<string, unknown>);
+    const wrapper = response as Record<string, unknown>;
+    const unwrapped = this.unwrapEmployeeProfileRecord(wrapper);
+    if (!unwrapped) {
+      return null;
+    }
+
+    return this.mergeFlatRemunerationFields(wrapper, unwrapped);
   }
 
-  private unwrapEmployeeProfileRecord(obj: Record<string, unknown>): Record<string, unknown> | null {
+  private unwrapEmployeeProfileRecord(
+    obj: Record<string, unknown>,
+    ancestors: Record<string, unknown>[] = [],
+  ): Record<string, unknown> | null {
     if (this.looksLikeEmployeeProfileRecord(obj)) {
-      return obj;
+      let result = { ...obj };
+      for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+        result = this.mergeFlatRemunerationFields(ancestors[index], result);
+      }
+      return this.mergeFlatRemunerationFields(obj, result);
     }
 
     const nestedKeys = [
@@ -583,17 +619,37 @@ export class ApplicationFormService {
       'Result',
     ];
 
+    const nextAncestors = [...ancestors, obj];
     for (const key of nestedKeys) {
       const nested = obj[key];
       if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-        const unwrapped = this.unwrapEmployeeProfileRecord(nested as Record<string, unknown>);
+        const unwrapped = this.unwrapEmployeeProfileRecord(
+          nested as Record<string, unknown>,
+          nextAncestors,
+        );
         if (unwrapped) {
-          return unwrapped;
+          return this.mergeFlatRemunerationFields(obj, unwrapped);
         }
       }
     }
 
     return this.looksLikeEmployeeProfileRecord(obj) ? obj : null;
+  }
+
+  private mergeFlatRemunerationFields(
+    source: Record<string, unknown>,
+    target: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const merged = { ...target };
+
+    for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
+      const flatValue = this.pickRemunerationValue(source, camel, snake);
+      if (flatValue !== '' && this.pickRemunerationValue(merged, camel, snake) === '') {
+        merged[camel] = flatValue;
+      }
+    }
+
+    return merged;
   }
 
   private looksLikeEmployeeProfileRecord(obj: Record<string, unknown>): boolean {
@@ -643,13 +699,34 @@ export class ApplicationFormService {
     }
 
     for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
-      const flatValue = this.pickFieldValue(item, camel, snake);
-      if (flatValue !== '' && this.pickFieldValue(merged, camel, snake) === '') {
+      const flatValue = this.pickRemunerationValue(item, camel, snake);
+      if (flatValue !== '' && this.pickRemunerationValue(merged, camel, snake) === '') {
         merged[camel] = flatValue;
       }
     }
 
     return merged;
+  }
+
+  private pickRemunerationValue(
+    source: Record<string, unknown>,
+    camel: string,
+    snake?: string,
+  ): string {
+    const pascal = camel.charAt(0).toUpperCase() + camel.slice(1);
+    const extra = REMUNERATION_EXTRA_KEYS[camel] ?? [];
+    const keys = [camel, snake, pascal, ...extra].filter(
+      (key, index, list): key is string => !!key && list.indexOf(key) === index,
+    );
+
+    for (const key of keys) {
+      const value = source[key];
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        return String(value).trim();
+      }
+    }
+
+    return '';
   }
 
   private pickFieldValue(
@@ -676,12 +753,12 @@ export class ApplicationFormService {
     camel: string,
     snake?: string,
   ): string {
-    const fromRemuneration = this.pickFieldValue(remunerationSource, camel, snake);
+    const fromRemuneration = this.pickRemunerationValue(remunerationSource, camel, snake);
     if (fromRemuneration !== '') {
       return fromRemuneration;
     }
 
-    return this.pickFieldValue(item, camel, snake);
+    return this.pickRemunerationValue(item, camel, snake);
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
