@@ -238,6 +238,7 @@ export interface EmployeeProfileRemunerationPayload {
   cashSalaryPercentage: string;
   advancePercentAllowed: string;
   maximumLoanCapacity: string;
+  maximumAdvanceCapacity: string;
   overTimeApplicable: string;
   allowancesApplicable: string;
   eobiApplicable: string;
@@ -487,12 +488,37 @@ export class ApplicationFormService {
   }
 
   addEmployeeProfile(payload: EmployeeProfileAddPayload): Observable<unknown> {
-    return this.http.post(EMPLOYEE_PROFILE_ADD_URL, payload);
+    return this.http.post(EMPLOYEE_PROFILE_ADD_URL, this.serializeEmployeeProfilePayload(payload));
   }
 
   updateEmployeeProfile(id: string | number, payload: EmployeeProfileAddPayload): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.post(`${EMPLOYEE_PROFILE_UPDATE_URL}/${identifier}`, payload);
+    return this.http.post(
+      `${EMPLOYEE_PROFILE_UPDATE_URL}/${identifier}`,
+      this.serializeEmployeeProfilePayload(payload),
+    );
+  }
+
+  private serializeEmployeeProfilePayload(payload: EmployeeProfileAddPayload): Record<string, unknown> {
+    const { remuneration, loginDetail, assets, education, pastExperience, attachments, ...rest } = payload;
+
+    return {
+      ...rest,
+      ...remuneration,
+      medicalAllowances: remuneration.medicalAllowances,
+      fuelAllowances: remuneration.fuelAllowances,
+      mobileAllowances: remuneration.mobileAllowances,
+      carAllowances: remuneration.carAllowances,
+      otherAllowances: remuneration.otherAllowances,
+      maximumLoanCapacity: remuneration.maximumLoanCapacity,
+      maximumAdvanceCapacity: remuneration.maximumAdvanceCapacity,
+      education,
+      pastExperience,
+      attachments,
+      remuneration,
+      loginDetail,
+      assets,
+    };
   }
 
   deleteEmployeeProfile(id: string | number): Observable<unknown> {

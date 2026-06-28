@@ -613,6 +613,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         cashSalaryPercentage: this.cashSalaryPercentage().trim(),
         advancePercentAllowed: this.advancePercentAllowed().trim(),
         maximumLoanCapacity: this.maximumLoanCapacity().trim(),
+        maximumAdvanceCapacity: this.maximumAdvanceCapacity().trim(),
         overTimeApplicable: this.yesNoToBinaryFlag(this.overTimeApplicable()),
         allowancesApplicable: this.yesNoToBinaryFlag(this.allowancesApplicable()),
         eobiApplicable: this.yesNoToBinaryFlag(this.eobiApplicable()),
