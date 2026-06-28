@@ -1109,6 +1109,12 @@ export class ApplicationFormService {
     if (normalized.toLowerCase() === 'false' || normalized === '0') {
       return 'No';
     }
+    if (normalized.toLowerCase() === 'yes') {
+      return 'Yes';
+    }
+    if (normalized.toLowerCase() === 'no') {
+      return 'No';
+    }
     return normalized;
   }
 }

@@ -527,6 +527,17 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  private yesNoToBinaryFlag(value: string): string {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'yes' || normalized === 'true' || normalized === '1') {
+      return '1';
+    }
+    if (normalized === 'no' || normalized === 'false' || normalized === '0') {
+      return '0';
+    }
+    return '';
+  }
+
   private buildEmployeeProfilePayload(): EmployeeProfileAddPayload {
     return {
       jobSpecificationId: this.selectedJobSpecId().trim(),
@@ -602,10 +613,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         cashSalaryPercentage: this.cashSalaryPercentage().trim(),
         advancePercentAllowed: this.advancePercentAllowed().trim(),
         maximumLoanCapacity: this.maximumLoanCapacity().trim(),
-        overTimeApplicable: this.overTimeApplicable(),
-        allowancesApplicable: this.allowancesApplicable(),
-        eobiApplicable: this.eobiApplicable(),
-        socialSecurityApplicable: this.socialSecurityApplicable(),
+        overTimeApplicable: this.yesNoToBinaryFlag(this.overTimeApplicable()),
+        allowancesApplicable: this.yesNoToBinaryFlag(this.allowancesApplicable()),
+        eobiApplicable: this.yesNoToBinaryFlag(this.eobiApplicable()),
+        socialSecurityApplicable: this.yesNoToBinaryFlag(this.socialSecurityApplicable()),
         fuelLimit: this.fuelLimit().trim(),
         leaveEligibilityCriteria: this.leaveEligibilityCriteria().trim(),
         leaveType: this.leaveType().trim(),
