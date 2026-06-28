@@ -75,7 +75,6 @@ export interface PayrollProcessRow {
 }
 
 export type PayrollColumnTone =
-  | 'employee-meta'
   | 'salary'
   | 'allowances'
   | 'bonuses'
@@ -84,7 +83,7 @@ export type PayrollColumnTone =
   | 'final'
   | 'approval';
 
-export type PayrollColumnType = 'username' | 'currency' | 'readonly' | 'readonly-pill' | 'approval';
+export type PayrollColumnType = 'currency' | 'readonly' | 'readonly-pill' | 'approval';
 
 export interface PayrollColumnGroup {
   id: string;
@@ -126,9 +125,9 @@ export class AddPayrollProcessComponent implements OnInit {
   private syncingScroll = false;
 
   readonly minimumWage = this.payrollSetupService.minimumWage;
+  readonly currencyCode = 'PKR';
 
   readonly columnGroups: PayrollColumnGroup[] = [
-    { id: 'emp-meta', label: 'Employee Information', tone: 'employee-meta' },
     { id: 'salary', label: 'Basic Salary', tone: 'salary' },
     { id: 'allowances', label: 'Allowances', tone: 'allowances' },
     { id: 'bonuses', label: 'Bonuses', tone: 'bonuses' },
@@ -139,7 +138,6 @@ export class AddPayrollProcessComponent implements OnInit {
   ];
 
   readonly payrollColumns: PayrollColumnDef[] = [
-    { key: 'username', label: 'Username', groupId: 'emp-meta', type: 'username', minWidth: 130 },
     { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'currency', minWidth: 118 },
     { key: 'grossSalary', label: 'Gross Salary', groupId: 'salary', type: 'readonly', minWidth: 118 },
     { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'readonly', minWidth: 108 },
@@ -227,6 +225,29 @@ export class AddPayrollProcessComponent implements OnInit {
     return this.payrollColumns.filter((col) => col.groupId === groupId).length;
   }
 
+  groupHeaderClass(group: PayrollColumnGroup): string {
+    const visibleGroups = this.columnGroups.filter((item) => this.groupColspan(item.id) > 0);
+    const isLastGroup = visibleGroups[visibleGroups.length - 1]?.id === group.id;
+    return [`tone-${group.tone}`, isLastGroup ? '' : 'comp-section-end'].filter(Boolean).join(' ');
+  }
+
+  columnSectionClass(col: PayrollColumnDef): string {
+    const columnIndex = this.payrollColumns.findIndex((item) => item.key === col.key);
+    if (columnIndex === -1) {
+      return '';
+    }
+
+    const isLastInGroup =
+      columnIndex === this.payrollColumns.length - 1 ||
+      this.payrollColumns[columnIndex + 1].groupId !== col.groupId;
+
+    if (!isLastInGroup || columnIndex === this.payrollColumns.length - 1) {
+      return '';
+    }
+
+    return `comp-section-end comp-section-end--${col.groupId}`;
+  }
+
   onScrollPaneScroll(event: Event): void {
     if (this.syncingScroll) {
       return;
@@ -281,10 +302,10 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   formatMoney(value: number): string {
-    return value.toLocaleString(undefined, {
+    return `${this.currencyCode} ${value.toLocaleString('en-PK', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    });
+    })}`;
   }
 
   back(): void {
@@ -341,9 +362,6 @@ export class AddPayrollProcessComponent implements OnInit {
     if (column.key === 'totalEarnings') {
       return this.totalEarningsForRow(row);
     }
-    if (column.key === 'username') {
-      return row.username || '—';
-    }
     if (column.key === 'grossSalary' || column.key === 'finalGrossSalary') {
       return row.grossSalary;
     }
@@ -355,7 +373,7 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   getGroupTotal(column: PayrollColumnDef): number | null {
-    if (column.key === 'username' || column.key === 'approved') {
+    if (column.key === 'approved') {
       return null;
     }
     if (column.key === 'netPayable') {

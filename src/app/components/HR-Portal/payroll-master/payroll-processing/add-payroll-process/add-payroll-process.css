@@ -20,8 +20,6 @@
 }
 
 .comp-topbar,
-.comp-subnav,
-.comp-icon-actions,
 .comp-plan-header {
   flex-shrink: 0;
 }
@@ -198,7 +196,7 @@
 }
 
 .comp-wage-setting__input {
-  width: 96px;
+  width: 108px;
   border: none;
   background: transparent;
   font-size: 13px;
@@ -213,16 +211,14 @@
 .comp-grid-wrap {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 0 20px 20px;
+  padding: 0 20px 12px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   overflow: hidden;
 }
 
 .comp-table-card {
-  flex: 0 1 auto;
-  max-height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -234,23 +230,24 @@
 }
 
 .comp-table-layout {
-  flex: 0 1 auto;
-  max-height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   overflow: hidden;
 }
 
 .comp-table-fixed {
   flex: 0 0 280px;
   z-index: 3;
+  max-height: 100%;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   background: #fff;
-  border-right: 1px solid #e8edf2;
+  border-right: 2px solid #8a9aa8;
   box-shadow: 6px 0 16px rgba(15, 23, 42, 0.05);
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -262,6 +259,7 @@
 
 .comp-table-scroll {
   flex: 1 1 auto;
+  max-height: 100%;
   min-height: 0;
   min-width: 0;
   overflow-x: auto;
@@ -295,6 +293,84 @@
   text-align: center;
   color: #3a4552;
   letter-spacing: 0.01em;
+  border-top: 3px solid transparent;
+}
+
+.comp-section-end {
+  border-right: 2px solid #c8d3df;
+}
+
+.comp-section-end--employee {
+  border-right-color: #8a9aa8;
+}
+
+.comp-section-end--emp-meta {
+  border-right-color: #8a9aa8;
+}
+
+.comp-section-end--salary {
+  border-right-color: #2a9d8f;
+}
+
+.comp-section-end--allowances {
+  border-right-color: #1f9688;
+}
+
+.comp-section-end--bonuses {
+  border-right-color: #d4736e;
+}
+
+.comp-section-end--deductions {
+  border-right-color: #c96464;
+}
+
+.comp-section-end--loan {
+  border-right-color: #9b7bb8;
+}
+
+.comp-section-end--final {
+  border-right-color: #b8956a;
+}
+
+.tone-employee,
+.tone-employee-meta {
+  background: #e4eaed;
+  border-top-color: #8a9aa8;
+}
+
+.tone-salary {
+  background: #c9ebe8;
+  border-top-color: #2a9d8f;
+}
+
+.tone-allowances {
+  background: #a8ddd8;
+  border-top-color: #1f9688;
+}
+
+.tone-bonuses {
+  background: #f5c9c5;
+  border-top-color: #d4736e;
+}
+
+.tone-deductions {
+  background: #f0d4d4;
+  border-top-color: #c96464;
+}
+
+.tone-loan {
+  background: #e4d4f0;
+  border-top-color: #9b7bb8;
+}
+
+.tone-final {
+  background: #e8ddd1;
+  border-top-color: #b8956a;
+}
+
+.tone-approval {
+  background: #d4e4f7;
+  border-top-color: #5a94c9;
 }
 
 .comp-col-row th {
@@ -319,39 +395,6 @@
 
 .comp-table-scroll .comp-data-row--alt td {
   background: #f7f9fc;
-}
-
-.tone-employee,
-.tone-employee-meta {
-  background: #e4eaed;
-}
-
-.tone-salary {
-  background: #c9ebe8;
-}
-
-.tone-allowances {
-  background: #a8ddd8;
-}
-
-.tone-bonuses {
-  background: #f5c9c5;
-}
-
-.tone-deductions {
-  background: #f0d4d4;
-}
-
-.tone-loan {
-  background: #e4d4f0;
-}
-
-.tone-final {
-  background: #e8ddd1;
-}
-
-.tone-approval {
-  background: #d4e4f7;
 }
 
 .comp-approval-cell {
@@ -502,9 +545,15 @@
   font-weight: 600;
 }
 
+.comp-input-wrap--readonly .comp-input {
+  max-width: 118px;
+}
+
 .comp-input-prefix {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
   color: #8a96a3;
+  flex-shrink: 0;
 }
 
 .comp-total-row td {
@@ -752,11 +801,4 @@
 
 .comp-table-scroll .comp-col-row th {
   top: 42px;
-}
-
-.comp-table-scroll tfoot td,
-.comp-table-fixed tfoot td {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
 }

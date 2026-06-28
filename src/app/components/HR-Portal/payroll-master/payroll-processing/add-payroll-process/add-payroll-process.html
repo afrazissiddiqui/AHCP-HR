@@ -9,20 +9,6 @@
     </div>
   </div>
 
-  <nav class="comp-subnav" aria-label="Payroll sections">
-    <button type="button" class="comp-subnav__tab is-active">Salary</button>
-    <button type="button" class="comp-subnav__tab" disabled>Variable Pay</button>
-    <button type="button" class="comp-subnav__tab" disabled>Summary</button>
-    <span class="comp-subnav__spacer"></span>
-  </nav>
-
-  <div class="comp-icon-actions">
-    <button type="button" class="comp-icon-action"><span class="comp-icon-action__glyph">📊</span> Budgets</button>
-    <button type="button" class="comp-icon-action"><span class="comp-icon-action__glyph">📈</span> Metrics</button>
-    <button type="button" class="comp-icon-action"><span class="comp-icon-action__glyph">✓</span> Approvals</button>
-    <button type="button" class="comp-icon-action"><span class="comp-icon-action__glyph">ℹ</span> Instructions</button>
-  </div>
-
   <div class="comp-plan-header">
     <h2 class="comp-plan-header__title">
       Payroll Process Plan
@@ -32,26 +18,6 @@
         <strong>({{ rows().length }} Employees)</strong>
       }
     </h2>
-    <div class="comp-plan-header__tools">
-      <label class="comp-wage-setting">
-        <span class="comp-wage-setting__label">Minimum Wage</span>
-        <div class="comp-wage-setting__input-wrap">
-          <span class="comp-wage-setting__prefix">$</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            class="comp-wage-setting__input"
-            [ngModel]="minimumWage()"
-            (ngModelChange)="onMinimumWageChange($event)"
-            aria-label="Minimum wage for EOBI calculation"
-          />
-        </div>
-      </label>
-      <button type="button" class="comp-tool-btn"><span>⏷</span> Filter</button>
-      <button type="button" class="comp-tool-btn"><span>☰</span> Columns</button>
-      <button type="button" class="comp-tool-btn">Planner Currency (USD) ▾</button>
-    </div>
   </div>
 
   <div class="comp-grid-wrap">
@@ -68,16 +34,16 @@
             <table class="comp-grid comp-grid--fixed">
               <thead>
                 <tr class="comp-group-row">
-                  <th class="tone-employee">Employee Information</th>
+                  <th class="tone-employee comp-section-end comp-section-end--employee">Employee Information</th>
                 </tr>
                 <tr class="comp-col-row">
-                  <th>Employee</th>
+                  <th class="comp-section-end comp-section-end--employee">Employee</th>
                 </tr>
               </thead>
               <tbody>
                 @for (i of skeletonRows; track i; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
-                    <td class="comp-emp-cell">
+                    <td class="comp-emp-cell comp-section-end comp-section-end--employee">
                       <div class="comp-skeleton-emp">
                         <span class="comp-skeleton comp-skeleton--avatar" aria-hidden="true"></span>
                         <div class="comp-skeleton-emp__text">
@@ -91,7 +57,7 @@
               </tbody>
               <tfoot>
                 <tr class="comp-total-row">
-                  <td><span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md" aria-hidden="true"></span></td>
+                  <td class="comp-section-end comp-section-end--employee"><span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md" aria-hidden="true"></span></td>
                 </tr>
               </tfoot>
             </table>
@@ -103,7 +69,7 @@
                 <tr class="comp-group-row">
                   @for (group of columnGroups; track group.id) {
                     @if (groupColspan(group.id) > 0) {
-                      <th [attr.colspan]="groupColspan(group.id)" [class]="'tone-' + group.tone">
+                      <th [attr.colspan]="groupColspan(group.id)" [class]="groupHeaderClass(group)">
                         {{ group.label }}
                       </th>
                     }
@@ -111,7 +77,7 @@
                 </tr>
                 <tr class="comp-col-row">
                   @for (col of payrollColumns; track col.key) {
-                    <th [style.min-width.px]="col.minWidth">{{ col.label }}</th>
+                    <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
                   }
                 </tr>
               </thead>
@@ -119,11 +85,8 @@
                 @for (i of skeletonRows; track i; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                     @for (col of payrollColumns; track col.key) {
-                      <td [style.min-width.px]="col.minWidth">
+                      <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
                         @switch (col.type) {
-                          @case ('username') {
-                            <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md comp-skeleton--center" aria-hidden="true"></span>
-                          }
                           @case ('currency') {
                             <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
                           }
@@ -146,8 +109,8 @@
               <tfoot>
                 <tr class="comp-total-row">
                   @for (col of payrollColumns; track col.key) {
-                    <td class="comp-total-value">
-                      @if (col.key !== 'username' && col.key !== 'approved') {
+                    <td class="comp-total-value" [class]="columnSectionClass(col)">
+                      @if (col.key !== 'approved') {
                         <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-sm comp-skeleton--right" aria-hidden="true"></span>
                       }
                     </td>
@@ -172,16 +135,16 @@
             <table class="comp-grid comp-grid--fixed">
               <thead>
                 <tr class="comp-group-row">
-                  <th class="tone-employee">Employee Information</th>
+                  <th class="tone-employee comp-section-end comp-section-end--employee">Employee Information</th>
                 </tr>
                 <tr class="comp-col-row">
-                  <th>Employee</th>
+                  <th class="comp-section-end comp-section-end--employee">Employee</th>
                 </tr>
               </thead>
               <tbody>
                 @for (row of rows(); track row.apiId; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
-                    <td class="comp-emp-cell">
+                    <td class="comp-emp-cell comp-section-end comp-section-end--employee">
                       <div class="comp-emp-profile">
                         <span class="comp-emp-avatar" aria-hidden="true">{{ avatarInitials(row.personName) }}</span>
                         <div class="comp-emp-info">
@@ -206,7 +169,7 @@
               </tbody>
               <tfoot>
                 <tr class="comp-total-row">
-                  <td>Group Total</td>
+                  <td class="comp-section-end comp-section-end--employee">Group Total</td>
                 </tr>
               </tfoot>
             </table>
@@ -218,7 +181,7 @@
                 <tr class="comp-group-row">
                   @for (group of columnGroups; track group.id) {
                     @if (groupColspan(group.id) > 0) {
-                      <th [attr.colspan]="groupColspan(group.id)" [class]="'tone-' + group.tone">
+                      <th [attr.colspan]="groupColspan(group.id)" [class]="groupHeaderClass(group)">
                         {{ group.label }}
                       </th>
                     }
@@ -226,7 +189,7 @@
                 </tr>
                 <tr class="comp-col-row">
                   @for (col of payrollColumns; track col.key) {
-                    <th [style.min-width.px]="col.minWidth">{{ col.label }}</th>
+                    <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
                   }
                 </tr>
               </thead>
@@ -234,16 +197,11 @@
                 @for (row of rows(); track row.apiId; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                     @for (col of payrollColumns; track col.key) {
-                      <td [style.min-width.px]="col.minWidth">
+                      <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
                         @switch (col.type) {
-                          @case ('username') {
-                            <button type="button" class="comp-username-link" (click)="openEmployeeProfile(row.apiId)">
-                              {{ getColumnValue(row, col) }}
-                            </button>
-                          }
                           @case ('currency') {
                             <div class="comp-input-wrap">
-                              <span class="comp-input-prefix">$</span>
+                              <span class="comp-input-prefix">{{ currencyCode }}</span>
                               <input
                                 type="number"
                                 min="0"
@@ -255,8 +213,7 @@
                             </div>
                           }
                           @case ('readonly') {
-                            <div class="comp-input-wrap">
-                              <span class="comp-input-prefix">$</span>
+                            <div class="comp-input-wrap comp-input-wrap--readonly">
                               <input
                                 type="text"
                                 class="comp-input comp-input--readonly"
@@ -266,8 +223,7 @@
                             </div>
                           }
                           @case ('readonly-pill') {
-                            <div class="comp-input-wrap">
-                              <span class="comp-input-prefix">$</span>
+                            <div class="comp-input-wrap comp-input-wrap--readonly">
                               <input
                                 type="text"
                                 class="comp-input comp-input--readonly"
@@ -305,7 +261,7 @@
               <tfoot>
                 <tr class="comp-total-row">
                   @for (col of payrollColumns; track col.key) {
-                    <td class="comp-total-value">
+                    <td class="comp-total-value" [class]="columnSectionClass(col)">
                       @if (getGroupTotal(col) !== null) {
                         {{ formatMoney(getGroupTotal(col)!) }}
                       }
