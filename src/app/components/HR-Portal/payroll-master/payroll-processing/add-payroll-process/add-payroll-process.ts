@@ -5,10 +5,7 @@ import {
   Component,
   OnInit,
   computed,
-  effect,
   inject,
-  input,
-  output,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -30,7 +27,7 @@ interface PayrollProcessEmployeeOption {
   personName: string;
 }
 
-export interface PayrollAmountField {
+interface AmountField {
   key: string;
   label: string;
 }
@@ -44,10 +41,6 @@ export interface PayrollAmountField {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddPayrollProcessComponent implements OnInit {
-  readonly open = input(false);
-  readonly closed = output<void>();
-  readonly saved = output<void>();
-
   private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
   private readonly payrollSetupService = inject(PayrollSetupService);
@@ -78,25 +71,19 @@ export class AddPayrollProcessComponent implements OnInit {
 
   private selectedRecord: ApplicationFormRecord | null = null;
 
-  readonly allowanceFields: PayrollAmountField[] = [
-    { key: 'medicalAllowance', label: 'Medical Allowance' },
-    { key: 'fuelAllowance', label: 'Fuel Allowance' },
-    { key: 'mobileAllowance', label: 'Mobile Allowance' },
-    { key: 'carAllowance', label: 'Car Allowance' },
-    { key: 'otherAllowances', label: 'Other Allowances' },
+  readonly allowanceFields: AmountField[] = [
+    { key: 'medicalAllowance', label: 'Medical' },
+    { key: 'fuelAllowance', label: 'Fuel' },
+    { key: 'mobileAllowance', label: 'Mobile' },
+    { key: 'carAllowance', label: 'Car' },
+    { key: 'otherAllowances', label: 'Other' },
   ];
 
-  readonly bonusFields: PayrollAmountField[] = [
+  readonly bonusFields: AmountField[] = [
     { key: 'bonus', label: 'Bonus' },
     { key: 'overtime', label: 'Overtime' },
     { key: 'arrears', label: 'Arrears' },
   ];
-
-  readonly allowancesColspan = computed(() => this.allowanceFields.length);
-  readonly bonusesColspan = computed(() => this.bonusFields.length);
-  readonly totalColumns = computed(
-    () => 2 + 1 + this.allowancesColspan() + this.bonusesColspan() + 2,
-  );
 
   readonly totalEarnings = computed(() => {
     const allowances = this.allowances();
@@ -144,14 +131,6 @@ export class AddPayrollProcessComponent implements OnInit {
     return Math.round((this.totalEarnings() / basic) * 100);
   });
 
-  constructor() {
-    effect(() => {
-      if (this.open()) {
-        this.loadEmployees();
-      }
-    });
-  }
-
   ngOnInit(): void {
     this.loadEmployees();
   }
@@ -175,8 +154,8 @@ export class AddPayrollProcessComponent implements OnInit {
     });
   }
 
-  close(): void {
-    this.closed.emit();
+  back(): void {
+    void this.router.navigateByUrl('/payroll-master');
   }
 
   parseAmount(value: string | number): number {
@@ -290,9 +269,7 @@ export class AddPayrollProcessComponent implements OnInit {
     });
 
     void this.alertService.success('Success', 'Payroll process saved successfully.');
-    this.resetForm();
-    this.saved.emit();
-    this.closed.emit();
+    this.back();
   }
 
   private loadEmployees(): void {
@@ -353,16 +330,6 @@ export class AddPayrollProcessComponent implements OnInit {
       overtime: 0,
       arrears: 0,
     });
-  }
-
-  private resetForm(): void {
-    this.selectedEmployeeId.set('');
-    this.selectedRecord = null;
-    this.username.set('');
-    this.personName.set('');
-    this.designation.set('');
-    this.basicSalary.set(0);
-    this.resetAmounts();
   }
 
   private generateFormNumber(): string {

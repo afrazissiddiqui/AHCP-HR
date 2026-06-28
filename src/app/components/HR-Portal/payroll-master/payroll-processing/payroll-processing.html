@@ -1,6 +1,6 @@
 <div class="payroll-master-view payroll-master-view--scroll">
   <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
-    <button class="btn-default" pageToolbarActions (click)="openAddPayrollProcess()">New Payroll Process</button>
+    <button class="btn-default" pageToolbarActions (click)="createPayrollProcess()">New Payroll Process</button>
   </app-page-toolbar>
 
   <div id="table-toolbar"
@@ -81,9 +81,3 @@
     </div>
   </div>
 </div>
-
-<app-add-payroll-process
-  [open]="showAddPayrollProcess()"
-  (closed)="closeAddPayrollProcess()"
-  (saved)="closeAddPayrollProcess()"
-/>
