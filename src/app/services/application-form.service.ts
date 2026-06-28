@@ -505,37 +505,12 @@ export class ApplicationFormService {
   }
 
   addEmployeeProfile(payload: EmployeeProfileAddPayload): Observable<unknown> {
-    return this.http.post(EMPLOYEE_PROFILE_ADD_URL, this.serializeEmployeeProfilePayload(payload));
+    return this.http.post(EMPLOYEE_PROFILE_ADD_URL, payload);
   }
 
   updateEmployeeProfile(id: string | number, payload: EmployeeProfileAddPayload): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.post(
-      `${EMPLOYEE_PROFILE_UPDATE_URL}/${identifier}`,
-      this.serializeEmployeeProfilePayload(payload),
-    );
-  }
-
-  private serializeEmployeeProfilePayload(payload: EmployeeProfileAddPayload): Record<string, unknown> {
-    const { remuneration, loginDetail, assets, education, pastExperience, attachments, ...rest } = payload;
-
-    return {
-      ...rest,
-      ...remuneration,
-      medicalAllowances: remuneration.medicalAllowances,
-      fuelAllowances: remuneration.fuelAllowances,
-      mobileAllowances: remuneration.mobileAllowances,
-      carAllowances: remuneration.carAllowances,
-      otherAllowances: remuneration.otherAllowances,
-      maximumLoanCapacity: remuneration.maximumLoanCapacity,
-      maximumAdvanceCapacity: remuneration.maximumAdvanceCapacity,
-      education,
-      pastExperience,
-      attachments,
-      remuneration,
-      loginDetail,
-      assets,
-    };
+    return this.http.post(`${EMPLOYEE_PROFILE_UPDATE_URL}/${identifier}`, payload);
   }
 
   deleteEmployeeProfile(id: string | number): Observable<unknown> {
@@ -574,21 +549,40 @@ export class ApplicationFormService {
       if (!first || typeof first !== 'object') {
         return null;
       }
-      const record = first as Record<string, unknown>;
-      const unwrapped = this.unwrapEmployeeProfileRecord(record);
-      if (!unwrapped) {
-        return null;
-      }
-      return this.mergeFlatRemunerationFields(record, unwrapped);
+      return this.normalizeEmployeeProfileItem(first as Record<string, unknown>);
     }
 
-    const wrapper = response as Record<string, unknown>;
+    return this.normalizeEmployeeProfileItem(response as Record<string, unknown>);
+  }
+
+  private normalizeEmployeeProfileItem(wrapper: Record<string, unknown>): Record<string, unknown> | null {
     const unwrapped = this.unwrapEmployeeProfileRecord(wrapper);
     if (!unwrapped) {
       return null;
     }
 
-    return this.mergeFlatRemunerationFields(wrapper, unwrapped);
+    let merged = this.mergeFlatRemunerationFields(wrapper, unwrapped);
+
+    for (const key of ['data', 'Data', 'result', 'Result']) {
+      const nested = this.pickNestedRecord(wrapper[key]);
+      if (nested && nested !== unwrapped) {
+        merged = this.mergeFlatRemunerationFields(nested, merged);
+      }
+    }
+
+    const resolvedRemuneration = this.resolveRemunerationSource(merged);
+    if (Object.keys(resolvedRemuneration).length === 0) {
+      return merged;
+    }
+
+    const existingNested = this.pickNestedRecord(merged['remuneration']);
+    return {
+      ...merged,
+      remuneration: {
+        ...(existingNested ?? {}),
+        ...resolvedRemuneration,
+      },
+    };
   }
 
   private unwrapEmployeeProfileRecord(
@@ -641,12 +635,28 @@ export class ApplicationFormService {
     target: Record<string, unknown>,
   ): Record<string, unknown> {
     const merged = { ...target };
+    const layers = [source, this.resolveRemunerationSource(source)];
 
-    for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
-      const flatValue = this.pickRemunerationValue(source, camel, snake);
-      if (flatValue !== '' && this.pickRemunerationValue(merged, camel, snake) === '') {
-        merged[camel] = flatValue;
+    for (const layer of layers) {
+      if (!layer || Object.keys(layer).length === 0) {
+        continue;
       }
+
+      for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
+        const flatValue = this.pickRemunerationValue(layer, camel, snake);
+        if (flatValue !== '' && this.pickRemunerationValue(merged, camel, snake) === '') {
+          merged[camel] = flatValue;
+        }
+      }
+    }
+
+    const resolvedRemuneration = this.resolveRemunerationSource(merged);
+    if (Object.keys(resolvedRemuneration).length > 0) {
+      const existingNested = this.pickNestedRecord(merged['remuneration']);
+      merged['remuneration'] = {
+        ...(existingNested ?? {}),
+        ...resolvedRemuneration,
+      };
     }
 
     return merged;
@@ -656,6 +666,8 @@ export class ApplicationFormService {
     return !!(
       obj['personName'] ||
       obj['person_name'] ||
+      obj['firstName'] ||
+      obj['first_name'] ||
       obj['employeeCode'] ||
       obj['employee_code'] ||
       obj['remuneration'] ||
@@ -664,8 +676,7 @@ export class ApplicationFormService {
       obj['basic_salary'] ||
       obj['loginDetail'] ||
       obj['loginDetails'] ||
-      obj['login_detail'] ||
-      obj['id']
+      obj['login_detail']
     );
   }
 
@@ -684,7 +695,7 @@ export class ApplicationFormService {
         try {
           const parsed = JSON.parse(candidate) as unknown;
           if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            Object.assign(merged, parsed as Record<string, unknown>);
+            this.mergeNonEmptyRemunerationFields(merged, parsed as Record<string, unknown>);
           }
         } catch {
           // Ignore invalid JSON strings.
@@ -694,7 +705,7 @@ export class ApplicationFormService {
 
       const nested = this.pickNestedRecord(candidate);
       if (nested) {
-        Object.assign(merged, nested);
+        this.mergeNonEmptyRemunerationFields(merged, nested);
       }
     }
 
@@ -706,6 +717,21 @@ export class ApplicationFormService {
     }
 
     return merged;
+  }
+
+  private mergeNonEmptyRemunerationFields(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>,
+  ): void {
+    for (const [key, value] of Object.entries(source)) {
+      if (value === undefined || value === null || String(value).trim() === '') {
+        continue;
+      }
+
+      if (!target[key] || String(target[key]).trim() === '') {
+        target[key] = value;
+      }
+    }
   }
 
   private pickRemunerationValue(
@@ -1034,15 +1060,18 @@ export class ApplicationFormService {
         leavesAvailed: asNumberString(pickRem('leavesAvailed', 'leaves_availed')),
         remainingLeaves: asNumberString(pickRem('remainingLeaves', 'remaining_leaves')),
         totalLeaves: asNumberString(pickRem('totalLeaves', 'total_leaves')),
-        medicalAllowances: pickRem('medicalAllowances', 'medical_allowances'),
-        fuelAllowances: pickRem('fuelAllowances', 'fuel_allowances'),
-        mobileAllowances: pickRem('mobileAllowances', 'mobile_allowances'),
-        carAllowances: pickRem('carAllowances', 'car_allowances'),
-        maximumLoanCapacity:
+        medicalAllowances: asNumberString(pickRem('medicalAllowances', 'medical_allowances')),
+        fuelAllowances: asNumberString(pickRem('fuelAllowances', 'fuel_allowances')),
+        mobileAllowances: asNumberString(pickRem('mobileAllowances', 'mobile_allowances')),
+        carAllowances: asNumberString(pickRem('carAllowances', 'car_allowances')),
+        maximumLoanCapacity: asNumberString(
           pickRem('maximumLoanCapacity', 'maximum_loan_capacity') ||
           pickRem('loanAmountAllowed', 'loan_amount_allowed'),
-        maximumAdvanceCapacity: pickRem('maximumAdvanceCapacity', 'maximum_advance_capacity'),
-        otherAllowances: pickRem('otherAllowances', 'other_allowances'),
+        ),
+        maximumAdvanceCapacity: asNumberString(
+          pickRem('maximumAdvanceCapacity', 'maximum_advance_capacity'),
+        ),
+        otherAllowances: asNumberString(pickRem('otherAllowances', 'other_allowances')),
         allowancesApplicable: this.yesNoFromApi(
           pickRem('allowancesApplicable', 'allowances_applicable'),
         ),

@@ -536,6 +536,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  private remunerationValue(value: string | undefined | null): string {
+    if (value === undefined || value === null) {
+      return '';
+    }
+    return String(value).trim();
+  }
+
   private yesNoToBinaryFlag(value: string): string {
     const normalized = value.trim().toLowerCase();
     if (normalized === 'yes' || normalized === 'true' || normalized === '1') {
@@ -1590,11 +1597,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.advancePercentAllowed.set(remuneration.advancePercentAllowed ?? '');
     this.maximumLoanCapacity.set(
       this.firstNonEmpty(
-        remuneration.maximumLoanCapacity,
-        remuneration.loanAmountAllowed,
+        this.remunerationValue(remuneration.maximumLoanCapacity),
+        this.remunerationValue(remuneration.loanAmountAllowed),
       ),
     );
-    this.maximumAdvanceCapacity.set(remuneration.maximumAdvanceCapacity ?? '');
+    this.maximumAdvanceCapacity.set(this.remunerationValue(remuneration.maximumAdvanceCapacity));
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? '');
     this.leaveType.set(remuneration.leaveType ?? '');
     this.leaveDays.set(remuneration.leaveDays ?? '');
@@ -1602,11 +1609,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.remainingLeaves.set(remuneration.remainingLeaves ?? '');
     this.totalLeaves.set(remuneration.totalLeaves ?? '');
     this.updateRemainingLeaves();
-    this.medicalAllowances.set(remuneration.medicalAllowances ?? '');
-    this.fuelAllowances.set(remuneration.fuelAllowances ?? '');
-    this.mobileAllowances.set(remuneration.mobileAllowances ?? '');
-    this.carAllowances.set(remuneration.carAllowances ?? '');
-    this.otherAllowances.set(remuneration.otherAllowances ?? '');
+    this.medicalAllowances.set(this.remunerationValue(remuneration.medicalAllowances));
+    this.fuelAllowances.set(this.remunerationValue(remuneration.fuelAllowances));
+    this.mobileAllowances.set(this.remunerationValue(remuneration.mobileAllowances));
+    this.carAllowances.set(this.remunerationValue(remuneration.carAllowances));
+    this.otherAllowances.set(this.remunerationValue(remuneration.otherAllowances));
     this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') ?? '');
     this.cashSalaryPercentage.set(remuneration.cashSalaryPercentage ?? '');
     this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? '');
