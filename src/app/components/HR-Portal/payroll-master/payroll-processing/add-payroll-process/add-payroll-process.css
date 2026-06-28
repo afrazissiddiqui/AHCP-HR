@@ -146,8 +146,59 @@
 
 .comp-plan-header__tools {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 16px;
+}
+
+.comp-plan-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.comp-plan-field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5b6775;
+  white-space: nowrap;
+}
+
+.comp-plan-field__input,
+.comp-plan-field__select {
+  min-width: 140px;
+  padding: 7px 10px;
+  border: 1px solid #dce3ea;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: #3a4552;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.comp-plan-field__input {
+  width: 200px;
+}
+
+.comp-plan-field__select {
+  width: 120px;
+  cursor: pointer;
+}
+
+.comp-plan-field__input:focus,
+.comp-plan-field__select:focus {
+  outline: none;
+  border-color: #8cb8f0;
+  box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.12);
+}
+
+.comp-plan-field__input--readonly {
+  background: #f3f6f9;
+  border-color: #e4eaf0;
+  font-weight: 600;
+  cursor: default;
 }
 
 .comp-tool-btn {
@@ -245,7 +296,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   background: #fff;
   border-right: 2px solid #8a9aa8;
   box-shadow: 6px 0 16px rgba(15, 23, 42, 0.05);
@@ -264,7 +315,7 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   background: #fcfdfe;
 }
 
@@ -277,6 +328,13 @@
 
 .comp-grid--fixed {
   width: 280px;
+  table-layout: fixed;
+}
+
+.comp-grid--scroll {
+  table-layout: auto;
+  width: max-content;
+  min-width: 100%;
 }
 
 .comp-grid th,
@@ -375,18 +433,20 @@
 
 .comp-col-row th {
   height: 40px;
-  padding: 0 10px;
+  padding: 0 8px;
   font-size: 12px;
   font-weight: 600;
   text-align: center;
   color: #5b6775;
   background: #fafbfd;
+  white-space: nowrap;
 }
 
 .comp-data-row td {
   height: 72px;
-  padding: 10px 12px;
+  padding: 10px 8px;
   background: #fff;
+  overflow: visible;
 }
 
 .comp-data-row--alt td {
@@ -518,18 +578,23 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
+  width: 100%;
+  min-width: 0;
 }
 
 .comp-input {
   width: 100%;
-  max-width: 100px;
-  padding: 7px 10px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 7px 8px;
   border: 1px solid #dce3ea;
   border-radius: 8px;
   background: #fff;
-  font-size: 13px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
   text-align: right;
   color: #3a4552;
+  box-sizing: border-box;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -543,10 +608,15 @@
   background: #f3f6f9;
   border-color: #e4eaf0;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.comp-input-wrap--readonly {
+  width: 100%;
 }
 
 .comp-input-wrap--readonly .comp-input {
-  max-width: 118px;
+  max-width: 100%;
 }
 
 .comp-input-prefix {
@@ -568,6 +638,9 @@
 .comp-total-value {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .comp-pill-wrap {

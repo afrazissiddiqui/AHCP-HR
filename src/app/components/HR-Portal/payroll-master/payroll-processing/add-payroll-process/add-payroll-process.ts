@@ -19,6 +19,7 @@ import {
   ApplicationFormService,
 } from '../../../../../services/application-form.service';
 import { AlertService } from '../../../../../services/alert.service';
+import { AuthService } from '../../../../../services/auth.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   PayrollSetupService,
@@ -99,6 +100,8 @@ export interface PayrollColumnDef {
   minWidth: number;
 }
 
+export type PayrollPeriodType = 'Month' | 'Year';
+
 @Component({
   selector: 'app-add-payroll-process',
   standalone: true,
@@ -110,12 +113,18 @@ export interface PayrollColumnDef {
 export class AddPayrollProcessComponent implements OnInit {
   private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
+  private readonly authService = inject(AuthService);
   private readonly payrollSetupService = inject(PayrollSetupService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly rows = signal<PayrollProcessRow[]>([]);
   readonly loading = signal(true);
+  readonly remarks = signal('');
+  readonly periodType = signal<PayrollPeriodType>('Month');
+  readonly periodTypeOptions: PayrollPeriodType[] = ['Month', 'Year'];
+  readonly loggedInUserName = signal('—');
+  readonly loggedInUserId = signal('—');
   readonly detailOpen = signal(false);
   readonly detailLoading = signal(false);
   readonly detailRecord = signal<ApplicationFormRecord | null>(null);
@@ -138,26 +147,26 @@ export class AddPayrollProcessComponent implements OnInit {
   ];
 
   readonly payrollColumns: PayrollColumnDef[] = [
-    { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'currency', minWidth: 118 },
-    { key: 'grossSalary', label: 'Gross Salary', groupId: 'salary', type: 'readonly', minWidth: 118 },
-    { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'readonly', minWidth: 108 },
-    { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'readonly', minWidth: 108 },
-    { key: 'mobileAllowance', label: 'Mobile', groupId: 'allowances', type: 'currency', minWidth: 108 },
-    { key: 'carAllowance', label: 'Car', groupId: 'allowances', type: 'currency', minWidth: 108 },
-    { key: 'otherAllowances', label: 'Other', groupId: 'allowances', type: 'currency', minWidth: 108 },
-    { key: 'bonus', label: 'Bonus', groupId: 'bonuses', type: 'currency', minWidth: 108 },
-    { key: 'overtimeHours', label: 'OT Hours', groupId: 'bonuses', type: 'currency', minWidth: 100 },
-    { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'readonly', minWidth: 108 },
-    { key: 'providentFund', label: 'Provident Fund', groupId: 'deductions', type: 'currency', minWidth: 118 },
-    { key: 'gratuity', label: 'Gratuity', groupId: 'deductions', type: 'readonly', minWidth: 108 },
-    { key: 'eobiEmployee', label: 'EOBI (Employee)', groupId: 'deductions', type: 'readonly', minWidth: 118 },
-    { key: 'eobiEmployer', label: 'EOBI (Employer)', groupId: 'deductions', type: 'readonly', minWidth: 118 },
-    { key: 'arrears', label: 'Arrears', groupId: 'deductions', type: 'currency', minWidth: 108 },
-    { key: 'loanAdjustment', label: 'Loan Adjustment', groupId: 'loan', type: 'currency', minWidth: 128 },
-    { key: 'loanAdvForm', label: 'Loan Adv Form', groupId: 'loan', type: 'currency', minWidth: 118 },
-    { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 118 },
-    { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 138 },
-    { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 118 },
+    { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'currency', minWidth: 152 },
+    { key: 'grossSalary', label: 'Gross Salary', groupId: 'salary', type: 'readonly', minWidth: 152 },
+    { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'readonly', minWidth: 145 },
+    { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'readonly', minWidth: 145 },
+    { key: 'mobileAllowance', label: 'Mobile', groupId: 'allowances', type: 'currency', minWidth: 145 },
+    { key: 'carAllowance', label: 'Car', groupId: 'allowances', type: 'currency', minWidth: 145 },
+    { key: 'otherAllowances', label: 'Other', groupId: 'allowances', type: 'currency', minWidth: 145 },
+    { key: 'bonus', label: 'Bonus', groupId: 'bonuses', type: 'currency', minWidth: 145 },
+    { key: 'overtimeHours', label: 'OT Hours', groupId: 'bonuses', type: 'currency', minWidth: 96 },
+    { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'readonly', minWidth: 145 },
+    { key: 'providentFund', label: 'Provident Fund', groupId: 'deductions', type: 'currency', minWidth: 152 },
+    { key: 'gratuity', label: 'Gratuity', groupId: 'deductions', type: 'readonly', minWidth: 172 },
+    { key: 'eobiEmployee', label: 'EOBI (Employee)', groupId: 'deductions', type: 'readonly', minWidth: 152 },
+    { key: 'eobiEmployer', label: 'EOBI (Employer)', groupId: 'deductions', type: 'readonly', minWidth: 152 },
+    { key: 'arrears', label: 'Arrears', groupId: 'deductions', type: 'currency', minWidth: 145 },
+    { key: 'loanAdjustment', label: 'Loan Adjustment', groupId: 'loan', type: 'currency', minWidth: 158 },
+    { key: 'loanAdvForm', label: 'Loan Adv Form', groupId: 'loan', type: 'currency', minWidth: 152 },
+    { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 168 },
+    { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 152 },
     { key: 'approved', label: 'Approval', groupId: 'approval', type: 'approval', minWidth: 96 },
   ];
 
@@ -218,6 +227,8 @@ export class AddPayrollProcessComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.loggedInUserId.set(this.resolveLoggedInUserId());
+    this.loggedInUserName.set(this.resolveLoggedInUserName());
     this.loadEmployees();
   }
 
@@ -276,16 +287,33 @@ export class AddPayrollProcessComponent implements OnInit {
     this.syncingScroll = false;
   }
 
-  onFixedPaneWheel(event: WheelEvent): void {
+  onTableWheel(event: WheelEvent): void {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
+      return;
+    }
+
     const scroll = this.scrollPane()?.nativeElement;
     const fixed = this.fixedPane()?.nativeElement;
     if (!scroll) {
       return;
     }
+
+    const maxScrollTop = scroll.scrollHeight - scroll.clientHeight;
+    if (maxScrollTop <= 0) {
+      return;
+    }
+
+    const nextScrollTop = scroll.scrollTop + event.deltaY;
+    const clampedScrollTop = Math.max(0, Math.min(maxScrollTop, nextScrollTop));
+
+    if (clampedScrollTop === scroll.scrollTop) {
+      return;
+    }
+
     event.preventDefault();
-    scroll.scrollTop += event.deltaY;
+    scroll.scrollTop = clampedScrollTop;
     if (fixed) {
-      fixed.scrollTop = scroll.scrollTop;
+      fixed.scrollTop = clampedScrollTop;
     }
   }
 
@@ -666,5 +694,37 @@ export class AddPayrollProcessComponent implements OnInit {
     const year = new Date().getFullYear();
     const seq = String(Date.now()).slice(-5);
     return `PP-${year}-${seq}`;
+  }
+
+  private resolveLoggedInUserId(): string {
+    const employeeRecord = this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId(),
+    );
+    if (employeeRecord?.EmployeeCode) {
+      return String(employeeRecord.EmployeeCode);
+    }
+
+    const sessionUser = this.authService.getSessionUser();
+    if (sessionUser?.id) {
+      return String(sessionUser.id);
+    }
+
+    return this.authService.getSessionUserId()?.trim() || '—';
+  }
+
+  private resolveLoggedInUserName(): string {
+    const employeeRecord = this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId(),
+    );
+    if (employeeRecord?.EmployeeName?.trim()) {
+      return employeeRecord.EmployeeName.trim();
+    }
+
+    const sessionUser = this.authService.getSessionUser();
+    if (sessionUser?.name?.trim()) {
+      return sessionUser.name.trim();
+    }
+
+    return this.authService.getSessionUserId()?.trim() || '—';
   }
 }

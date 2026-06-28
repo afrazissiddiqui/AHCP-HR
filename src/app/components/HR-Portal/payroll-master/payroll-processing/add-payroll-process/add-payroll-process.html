@@ -18,6 +18,56 @@
         <strong>({{ rows().length }} Employees)</strong>
       }
     </h2>
+
+    <div class="comp-plan-header__tools">
+      <div class="comp-plan-field">
+        <label class="comp-plan-field__label" for="pp-remarks">Remarks</label>
+        <input
+          id="pp-remarks"
+          type="text"
+          class="comp-plan-field__input"
+          placeholder="Enter remarks"
+          [ngModel]="remarks()"
+          (ngModelChange)="remarks.set($event)"
+        />
+      </div>
+
+      <div class="comp-plan-field">
+        <label class="comp-plan-field__label" for="pp-period-type">Period</label>
+        <select
+          id="pp-period-type"
+          class="comp-plan-field__select"
+          [ngModel]="periodType()"
+          (ngModelChange)="periodType.set($event)"
+        >
+          @for (option of periodTypeOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="comp-plan-field">
+        <label class="comp-plan-field__label" for="pp-prepared-by-id">Employee ID</label>
+        <input
+          id="pp-prepared-by-id"
+          type="text"
+          class="comp-plan-field__input comp-plan-field__input--readonly"
+          [value]="loggedInUserId()"
+          readonly
+        />
+      </div>
+
+      <div class="comp-plan-field">
+        <label class="comp-plan-field__label" for="pp-prepared-by">Prepared By</label>
+        <input
+          id="pp-prepared-by"
+          type="text"
+          class="comp-plan-field__input comp-plan-field__input--readonly"
+          [value]="loggedInUserName()"
+          readonly
+        />
+      </div>
+    </div>
   </div>
 
   <div class="comp-grid-wrap">
@@ -125,12 +175,12 @@
       <div class="comp-empty-cell">No employees found.</div>
     } @else {
       <div class="comp-table-card">
-        <div class="comp-table-layout">
+          <div class="comp-table-layout">
           <div
             class="comp-table-fixed"
             #fixedPane
             (scroll)="onFixedPaneScroll($event)"
-            (wheel)="onFixedPaneWheel($event)"
+            (wheel)="onTableWheel($event)"
           >
             <table class="comp-grid comp-grid--fixed">
               <thead>
