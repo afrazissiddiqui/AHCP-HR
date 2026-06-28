@@ -33,6 +33,21 @@
       }
     </h2>
     <div class="comp-plan-header__tools">
+      <label class="comp-wage-setting">
+        <span class="comp-wage-setting__label">Minimum Wage</span>
+        <div class="comp-wage-setting__input-wrap">
+          <span class="comp-wage-setting__prefix">$</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="comp-wage-setting__input"
+            [ngModel]="minimumWage()"
+            (ngModelChange)="onMinimumWageChange($event)"
+            aria-label="Minimum wage for EOBI calculation"
+          />
+        </div>
+      </label>
       <button type="button" class="comp-tool-btn"><span>⏷</span> Filter</button>
       <button type="button" class="comp-tool-btn"><span>☰</span> Columns</button>
       <button type="button" class="comp-tool-btn">Planner Currency (USD) ▾</button>

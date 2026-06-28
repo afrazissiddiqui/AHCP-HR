@@ -100,6 +100,89 @@ export function computeNetPayable(amounts: PayrollSetupAmounts): number {
   return Math.max(0, earnings - deductions);
 }
 
+export function roundPayrollAmount(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** Medical Allowance = (Basic Salary / 110%) × 10% */
+export function computeMedicalAllowance(basicSalary: number): number {
+  if (basicSalary <= 0) {
+    return 0;
+  }
+  return roundPayrollAmount((basicSalary / 1.1) * 0.1);
+}
+
+/** Gross Salary = Basic Salary + Medical Allowance */
+export function computeGrossSalary(basicSalary: number, medicalAllowance?: number): number {
+  const medical = medicalAllowance ?? computeMedicalAllowance(basicSalary);
+  return roundPayrollAmount(basicSalary + medical);
+}
+
+/** Fuel Allowance = Allowed Liters × Monthly Fuel Rate */
+export function computeFuelAllowance(allowedLiters: number, monthlyFuelRate: number): number {
+  return roundPayrollAmount(allowedLiters * monthlyFuelRate);
+}
+
+/** Overtime Rate = Last Month Gross Salary ÷ 30 */
+export function computeOvertimeRate(lastMonthGrossSalary: number): number {
+  if (lastMonthGrossSalary <= 0) {
+    return 0;
+  }
+  return roundPayrollAmount(lastMonthGrossSalary / 30);
+}
+
+/** Overtime Amount = Overtime Rate × Overtime Hours */
+export function computeOvertimeAmount(overtimeRate: number, overtimeHours: number): number {
+  return roundPayrollAmount(overtimeRate * overtimeHours);
+}
+
+/** Years of service from date of joining to today (fractional, 2 d.p.). */
+export function computeYearsOfService(dateOfJoining: string, asOf: Date = new Date()): number {
+  const trimmed = dateOfJoining.trim();
+  if (!trimmed) {
+    return 0;
+  }
+
+  const joiningDate = new Date(trimmed);
+  if (Number.isNaN(joiningDate.getTime())) {
+    return 0;
+  }
+
+  const elapsedMs = asOf.getTime() - joiningDate.getTime();
+  if (elapsedMs <= 0) {
+    return 0;
+  }
+
+  const msPerYear = 365.25 * 24 * 60 * 60 * 1000;
+  return roundPayrollAmount(elapsedMs / msPerYear);
+}
+
+/** Gratuity = Gross Salary × Years of Service */
+export function computeGratuity(grossSalary: number, yearsOfService: number): number {
+  if (grossSalary <= 0 || yearsOfService <= 0) {
+    return 0;
+  }
+  return roundPayrollAmount(grossSalary * yearsOfService);
+}
+
+/** EOBI employee contribution = 1% of minimum wage */
+export function computeEobiEmployeeContribution(minimumWage: number): number {
+  if (minimumWage <= 0) {
+    return 0;
+  }
+  return roundPayrollAmount(minimumWage * 0.01);
+}
+
+/** EOBI employer contribution = 5% of minimum wage */
+export function computeEobiEmployerContribution(minimumWage: number): number {
+  if (minimumWage <= 0) {
+    return 0;
+  }
+  return roundPayrollAmount(minimumWage * 0.05);
+}
+
+export const DEFAULT_MINIMUM_WAGE = 37000;
+
 export type PayrollSetupInput = Omit<PayrollSetupRecord, 'id' | 'selected' | 'netPayable'> & {
   netPayable?: number;
 };
@@ -107,8 +190,15 @@ export type PayrollSetupInput = Omit<PayrollSetupRecord, 'id' | 'selected' | 'ne
 @Injectable({ providedIn: 'root' })
 export class PayrollSetupService {
   private readonly recordsSignal = signal<PayrollSetupRecord[]>([]);
+  private readonly minimumWageSignal = signal(DEFAULT_MINIMUM_WAGE);
 
   readonly records = this.recordsSignal.asReadonly();
+  readonly minimumWage = this.minimumWageSignal.asReadonly();
+
+  setMinimumWage(value: number): void {
+    const parsed = Number(value);
+    this.minimumWageSignal.set(Number.isFinite(parsed) && parsed >= 0 ? parsed : 0);
+  }
 
   addRecord(input: PayrollSetupInput): void {
     const amounts: PayrollSetupAmounts = {

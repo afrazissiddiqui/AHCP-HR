@@ -22,7 +22,16 @@ import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   PayrollSetupService,
+  computeEobiEmployeeContribution,
+  computeEobiEmployerContribution,
+  computeFuelAllowance,
+  computeGratuity,
+  computeGrossSalary,
+  computeMedicalAllowance,
   computeNetPayable,
+  computeOvertimeAmount,
+  computeOvertimeRate,
+  computeYearsOfService,
 } from '../../payroll-setup/payroll-setup.service';
 import { ApplicationDetailDialogComponent } from '../../../Application-Form/application-detail-dialog/application-detail-dialog';
 
@@ -39,19 +48,41 @@ export interface PayrollProcessRow {
   jobTitle: string;
   location: string;
   workGradeLevel: string;
+  dateOfJoining: string;
+  yearsOfService: number;
+  eobiApplicable: boolean;
   basicSalary: number;
+  grossSalary: number;
   medicalAllowance: number;
+  allowedLiters: number;
+  monthlyFuelRate: number;
   fuelAllowance: number;
   mobileAllowance: number;
   carAllowance: number;
   otherAllowances: number;
   bonus: number;
+  lastMonthGrossSalary: number;
+  overtimeHours: number;
   overtime: number;
+  providentFund: number;
+  gratuity: number;
+  eobiEmployee: number;
+  eobiEmployer: number;
   arrears: number;
+  loanAdjustment: number;
+  loanAdvForm: number;
   approved: boolean;
 }
 
-export type PayrollColumnTone = 'employee-meta' | 'salary' | 'allowances' | 'bonuses' | 'final' | 'approval';
+export type PayrollColumnTone =
+  | 'employee-meta'
+  | 'salary'
+  | 'allowances'
+  | 'bonuses'
+  | 'deductions'
+  | 'loan'
+  | 'final'
+  | 'approval';
 
 export type PayrollColumnType = 'username' | 'currency' | 'readonly' | 'readonly-pill' | 'approval';
 
@@ -94,11 +125,15 @@ export class AddPayrollProcessComponent implements OnInit {
   private readonly scrollPane = viewChild<ElementRef<HTMLElement>>('scrollPane');
   private syncingScroll = false;
 
+  readonly minimumWage = this.payrollSetupService.minimumWage;
+
   readonly columnGroups: PayrollColumnGroup[] = [
     { id: 'emp-meta', label: 'Employee Information', tone: 'employee-meta' },
     { id: 'salary', label: 'Basic Salary', tone: 'salary' },
     { id: 'allowances', label: 'Allowances', tone: 'allowances' },
     { id: 'bonuses', label: 'Bonuses', tone: 'bonuses' },
+    { id: 'deductions', label: 'Deduction', tone: 'deductions' },
+    { id: 'loan', label: 'Loan Adjustment', tone: 'loan' },
     { id: 'final', label: 'Final Totals', tone: 'final' },
     { id: 'approval', label: 'Approval', tone: 'approval' },
   ];
@@ -106,16 +141,25 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly payrollColumns: PayrollColumnDef[] = [
     { key: 'username', label: 'Username', groupId: 'emp-meta', type: 'username', minWidth: 130 },
     { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'currency', minWidth: 118 },
-    { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'currency', minWidth: 108 },
-    { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'currency', minWidth: 108 },
+    { key: 'grossSalary', label: 'Gross Salary', groupId: 'salary', type: 'readonly', minWidth: 118 },
+    { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'readonly', minWidth: 108 },
+    { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'readonly', minWidth: 108 },
     { key: 'mobileAllowance', label: 'Mobile', groupId: 'allowances', type: 'currency', minWidth: 108 },
     { key: 'carAllowance', label: 'Car', groupId: 'allowances', type: 'currency', minWidth: 108 },
     { key: 'otherAllowances', label: 'Other', groupId: 'allowances', type: 'currency', minWidth: 108 },
     { key: 'bonus', label: 'Bonus', groupId: 'bonuses', type: 'currency', minWidth: 108 },
-    { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'currency', minWidth: 108 },
-    { key: 'arrears', label: 'Arrears', groupId: 'bonuses', type: 'currency', minWidth: 108 },
+    { key: 'overtimeHours', label: 'OT Hours', groupId: 'bonuses', type: 'currency', minWidth: 100 },
+    { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'readonly', minWidth: 108 },
+    { key: 'providentFund', label: 'Provident Fund', groupId: 'deductions', type: 'currency', minWidth: 118 },
+    { key: 'gratuity', label: 'Gratuity', groupId: 'deductions', type: 'readonly', minWidth: 108 },
+    { key: 'eobiEmployee', label: 'EOBI (Employee)', groupId: 'deductions', type: 'readonly', minWidth: 118 },
+    { key: 'eobiEmployer', label: 'EOBI (Employer)', groupId: 'deductions', type: 'readonly', minWidth: 118 },
+    { key: 'arrears', label: 'Arrears', groupId: 'deductions', type: 'currency', minWidth: 108 },
+    { key: 'loanAdjustment', label: 'Loan Adjustment', groupId: 'loan', type: 'currency', minWidth: 128 },
+    { key: 'loanAdvForm', label: 'Loan Adv Form', groupId: 'loan', type: 'currency', minWidth: 118 },
     { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 118 },
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 138 },
+    { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 118 },
     { key: 'approved', label: 'Approval', groupId: 'approval', type: 'approval', minWidth: 96 },
   ];
 
@@ -128,30 +172,48 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly groupTotals = computed(() => {
     const totals = {
       basicSalary: 0,
+      grossSalary: 0,
       medicalAllowance: 0,
       fuelAllowance: 0,
       mobileAllowance: 0,
       carAllowance: 0,
       otherAllowances: 0,
       bonus: 0,
+      overtimeHours: 0,
       overtime: 0,
+      providentFund: 0,
+      gratuity: 0,
+      eobiEmployee: 0,
+      eobiEmployer: 0,
       arrears: 0,
+      loanAdjustment: 0,
+      loanAdvForm: 0,
       netPayable: 0,
       totalEarnings: 0,
+      finalGrossSalary: 0,
     };
 
     for (const row of this.rows()) {
       totals.basicSalary += row.basicSalary;
+      totals.grossSalary += row.grossSalary;
       totals.medicalAllowance += row.medicalAllowance;
       totals.fuelAllowance += row.fuelAllowance;
       totals.mobileAllowance += row.mobileAllowance;
       totals.carAllowance += row.carAllowance;
       totals.otherAllowances += row.otherAllowances;
       totals.bonus += row.bonus;
+      totals.overtimeHours += row.overtimeHours;
       totals.overtime += row.overtime;
+      totals.providentFund += row.providentFund;
+      totals.gratuity += row.gratuity;
+      totals.eobiEmployee += row.eobiEmployee;
+      totals.eobiEmployer += row.eobiEmployer;
       totals.arrears += row.arrears;
+      totals.loanAdjustment += row.loanAdjustment;
+      totals.loanAdvForm += row.loanAdvForm;
       totals.netPayable += this.netPayableForRow(row);
       totals.totalEarnings += this.totalEarningsForRow(row);
+      totals.finalGrossSalary += row.grossSalary;
     }
 
     return totals;
@@ -236,15 +298,13 @@ export class AddPayrollProcessComponent implements OnInit {
 
   totalEarningsForRow(row: PayrollProcessRow): number {
     return (
-      row.basicSalary +
-      row.medicalAllowance +
+      row.grossSalary +
       row.fuelAllowance +
       row.mobileAllowance +
       row.carAllowance +
       row.otherAllowances +
       row.bonus +
-      row.overtime +
-      row.arrears
+      row.overtime
     );
   }
 
@@ -258,12 +318,12 @@ export class AddPayrollProcessComponent implements OnInit {
       otherAllowances: row.otherAllowances,
       overtime: row.overtime,
       bonus: row.bonus,
-      arrears: row.arrears,
-      providentFund: 0,
-      gratuity: 0,
-      eobi: 0,
-      loanInstallment: 0,
-      otherDeductions: 0,
+      arrears: 0,
+      providentFund: row.providentFund,
+      gratuity: row.gratuity,
+      eobi: row.eobiEmployee,
+      loanInstallment: row.loanAdjustment,
+      otherDeductions: row.loanAdvForm + row.arrears,
     });
   }
 
@@ -284,6 +344,12 @@ export class AddPayrollProcessComponent implements OnInit {
     if (column.key === 'username') {
       return row.username || '—';
     }
+    if (column.key === 'grossSalary' || column.key === 'finalGrossSalary') {
+      return row.grossSalary;
+    }
+    if (column.key === 'overtimeHours') {
+      return row.overtimeHours;
+    }
     const value = row[column.key as keyof PayrollProcessRow];
     return typeof value === 'number' ? value : String(value ?? '');
   }
@@ -298,8 +364,16 @@ export class AddPayrollProcessComponent implements OnInit {
     if (column.key === 'totalEarnings') {
       return this.groupTotals().totalEarnings;
     }
+    if (column.key === 'finalGrossSalary') {
+      return this.groupTotals().finalGrossSalary;
+    }
     const totals = this.groupTotals();
     return totals[column.key as keyof typeof totals] ?? 0;
+  }
+
+  onMinimumWageChange(value: string | number): void {
+    this.payrollSetupService.setMinimumWage(this.parseAmount(value));
+    this.rows.update((list) => list.map((row) => this.recalculateRow(row)));
   }
 
   setApproval(apiId: string, approved: boolean): void {
@@ -317,14 +391,15 @@ export class AddPayrollProcessComponent implements OnInit {
   ): void {
     const numericFields: Array<keyof PayrollProcessRow> = [
       'basicSalary',
-      'medicalAllowance',
-      'fuelAllowance',
       'mobileAllowance',
       'carAllowance',
       'otherAllowances',
       'bonus',
-      'overtime',
+      'overtimeHours',
+      'providentFund',
       'arrears',
+      'loanAdjustment',
+      'loanAdvForm',
     ];
     const parsed = numericFields.includes(field)
       ? this.parseAmount(value)
@@ -332,7 +407,7 @@ export class AddPayrollProcessComponent implements OnInit {
 
     this.rows.update((list) =>
       list.map((row) =>
-        row.apiId === apiId ? { ...row, [field]: parsed } : row,
+        row.apiId === apiId ? this.recalculateRow({ ...row, [field]: parsed }) : row,
       ),
     );
   }
@@ -402,11 +477,11 @@ export class AddPayrollProcessComponent implements OnInit {
         overtime: row.overtime,
         bonus: row.bonus,
         arrears: row.arrears,
-        providentFund: 0,
-        gratuity: 0,
-        eobi: 0,
-        loanInstallment: 0,
-        otherDeductions: 0,
+        providentFund: row.providentFund,
+        gratuity: row.gratuity,
+        eobi: row.eobiEmployee,
+        loanInstallment: row.loanAdjustment,
+        otherDeductions: row.loanAdvForm,
         netPayable: this.netPayableForRow(row),
       });
     });
@@ -469,8 +544,19 @@ export class AddPayrollProcessComponent implements OnInit {
   private mapRecordToRow(record: ApplicationFormRecord): PayrollProcessRow {
     const detail = record.detail;
     const remuneration = detail?.remuneration;
+    const basicSalary = this.parseAmount(remuneration?.basicSalary ?? 0);
+    const allowedLiters = this.parseAmount(remuneration?.fuelLimit ?? 0);
+    const profileFuelAmount = this.parseAmount(remuneration?.fuelAllowances ?? 0);
+    const monthlyFuelRate =
+      allowedLiters > 0 && profileFuelAmount > 0
+        ? profileFuelAmount / allowedLiters
+        : 0;
+    const lastMonthGrossSalary = this.resolveLastMonthGrossSalary(
+      record.EmployeeCode,
+      basicSalary,
+    );
 
-    return {
+    return this.recalculateRow({
       apiId: record.apiId ?? record.EmployeeCode,
       employeeCode: record.EmployeeCode,
       personName: detail?.personalInfo.personName || record.EmployeeName,
@@ -483,17 +569,79 @@ export class AddPayrollProcessComponent implements OnInit {
       jobTitle: detail?.personalInfo.designation ?? record.Designation,
       location: detail?.personalInfo.branchLocation ?? '',
       workGradeLevel: detail?.personalInfo.workGradeLevel ?? '',
-      basicSalary: this.parseAmount(remuneration?.basicSalary ?? 0),
-      medicalAllowance: this.parseAmount(remuneration?.medicalAllowances ?? 0),
-      fuelAllowance: this.parseAmount(remuneration?.fuelAllowances ?? 0),
+      dateOfJoining: remuneration?.dateOfJoining ?? '',
+      yearsOfService: 0,
+      eobiApplicable: this.isEobiApplicable(remuneration?.eobiApplicable),
+      basicSalary,
+      grossSalary: 0,
+      medicalAllowance: 0,
+      allowedLiters,
+      monthlyFuelRate,
+      fuelAllowance: 0,
       mobileAllowance: this.parseAmount(remuneration?.mobileAllowances ?? 0),
       carAllowance: this.parseAmount(remuneration?.carAllowances ?? 0),
       otherAllowances: this.parseAmount(remuneration?.otherAllowances ?? 0),
       bonus: 0,
+      lastMonthGrossSalary,
+      overtimeHours: 0,
       overtime: 0,
+      providentFund: 0,
+      gratuity: 0,
+      eobiEmployee: 0,
+      eobiEmployer: 0,
       arrears: 0,
+      loanAdjustment: 0,
+      loanAdvForm: 0,
       approved: false,
+    });
+  }
+
+  private recalculateRow(row: PayrollProcessRow): PayrollProcessRow {
+    const medicalAllowance = computeMedicalAllowance(row.basicSalary);
+    const grossSalary = computeGrossSalary(row.basicSalary, medicalAllowance);
+    const fuelAllowance = computeFuelAllowance(row.allowedLiters, row.monthlyFuelRate);
+    const overtimeRate = computeOvertimeRate(row.lastMonthGrossSalary);
+    const overtime = computeOvertimeAmount(overtimeRate, row.overtimeHours);
+    const yearsOfService = computeYearsOfService(row.dateOfJoining);
+    const gratuity = computeGratuity(grossSalary, yearsOfService);
+    const minimumWage = this.payrollSetupService.minimumWage();
+    const eobiEmployee = row.eobiApplicable
+      ? computeEobiEmployeeContribution(minimumWage)
+      : 0;
+    const eobiEmployer = row.eobiApplicable
+      ? computeEobiEmployerContribution(minimumWage)
+      : 0;
+
+    return {
+      ...row,
+      medicalAllowance,
+      grossSalary,
+      fuelAllowance,
+      overtime,
+      yearsOfService,
+      gratuity,
+      eobiEmployee,
+      eobiEmployer,
     };
+  }
+
+  private isEobiApplicable(value: string | undefined): boolean {
+    const normalized = (value ?? '').trim().toLowerCase();
+    return normalized === 'yes' || normalized === 'y' || normalized === '1' || normalized === 'true';
+  }
+
+  private resolveLastMonthGrossSalary(employeeCode: string, basicSalary: number): number {
+    const priorRecords = this.payrollSetupService
+      .records()
+      .filter((record) => record.employeeId === employeeCode)
+      .sort((a, b) => b.id - a.id);
+
+    if (priorRecords.length > 0) {
+      const lastRecord = priorRecords[0];
+      return computeGrossSalary(lastRecord.basicSalary, lastRecord.medicalAllowance);
+    }
+
+    return computeGrossSalary(basicSalary, computeMedicalAllowance(basicSalary));
   }
 
   private generateFormNumber(): string {
