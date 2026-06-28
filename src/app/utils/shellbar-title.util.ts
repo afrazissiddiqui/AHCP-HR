@@ -31,7 +31,6 @@ const EXACT_TITLES: Record<string, string> = {
   termination: 'Termination',
   'termination/create': 'Termination Form',
   'payroll-master': 'Payroll Processing',
-  'payroll-master/payroll-processing/create': 'New Payroll Process',
   'payroll-master/attendance-managment': 'Attendance Management',
   'payroll-master/tax-managment': 'Tax Allowance Form',
   'payroll-master/tax-computation': 'Tax Computation',
