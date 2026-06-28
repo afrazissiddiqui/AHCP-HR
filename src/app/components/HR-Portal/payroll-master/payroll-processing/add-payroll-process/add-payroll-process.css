@@ -214,17 +214,9 @@
   min-width: 220px;
 }
 
-.comp-emp-picker {
-  margin-bottom: 8px;
-}
-
-.comp-emp-picker select {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #89919a;
-  border-radius: 2px;
-  font-size: 13px;
-  background: #fff;
+.comp-emp-designation {
+  font-size: 12px;
+  color: #6a6d70;
 }
 
 .comp-emp-profile {
@@ -450,6 +442,17 @@
   font-size: 12px;
   color: #6a6d70;
   font-style: italic;
+}
+
+.comp-loading--page {
+  padding: 24px 20px;
+  font-size: 14px;
+}
+
+.comp-empty-cell {
+  padding: 24px;
+  text-align: center;
+  color: #6a6d70;
 }
 
 .comp-cell-center {

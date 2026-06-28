@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import {
   ApplicationFormRecord,
   ApplicationFormService,
@@ -21,14 +23,42 @@ import {
   computeNetPayable,
 } from '../../payroll-setup/payroll-setup.service';
 
-interface PayrollProcessEmployeeOption {
+export interface PayrollProcessRow {
   apiId: string;
   employeeCode: string;
   personName: string;
+  username: string;
+  designation: string;
+  department: string;
+  employeeCategory: string;
+  employmentNature: string;
+  employmentType: string;
+  jobTitle: string;
+  location: string;
+  workGradeLevel: string;
+  basicSalary: number;
+  medicalAllowance: number;
+  fuelAllowance: number;
+  mobileAllowance: number;
+  carAllowance: number;
+  otherAllowances: number;
+  bonus: number;
+  overtime: number;
+  arrears: number;
 }
 
 interface AmountField {
-  key: string;
+  key: keyof Pick<
+    PayrollProcessRow,
+    | 'medicalAllowance'
+    | 'fuelAllowance'
+    | 'mobileAllowance'
+    | 'carAllowance'
+    | 'otherAllowances'
+    | 'bonus'
+    | 'overtime'
+    | 'arrears'
+  >;
   label: string;
 }
 
@@ -47,29 +77,8 @@ export class AddPayrollProcessComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly employeeOptions = signal<PayrollProcessEmployeeOption[]>([]);
-  readonly selectedEmployeeId = signal('');
-  readonly loadingEmployee = signal(false);
-  readonly username = signal('');
-  readonly personName = signal('');
-  readonly designation = signal('');
-  readonly basicSalary = signal(0);
-
-  private readonly allowances = signal<Record<string, number>>({
-    medicalAllowance: 0,
-    fuelAllowance: 0,
-    mobileAllowance: 0,
-    carAllowance: 0,
-    otherAllowances: 0,
-  });
-
-  private readonly bonuses = signal<Record<string, number>>({
-    bonus: 0,
-    overtime: 0,
-    arrears: 0,
-  });
-
-  private selectedRecord: ApplicationFormRecord | null = null;
+  readonly rows = signal<PayrollProcessRow[]>([]);
+  readonly loading = signal(true);
 
   readonly allowanceFields: AmountField[] = [
     { key: 'medicalAllowance', label: 'Medical' },
@@ -85,62 +94,48 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'arrears', label: 'Arrears' },
   ];
 
-  readonly totalEarnings = computed(() => {
-    const allowances = this.allowances();
-    const bonuses = this.bonuses();
-    return (
-      this.basicSalary() +
-      (allowances['medicalAllowance'] ?? 0) +
-      (allowances['fuelAllowance'] ?? 0) +
-      (allowances['mobileAllowance'] ?? 0) +
-      (allowances['carAllowance'] ?? 0) +
-      (allowances['otherAllowances'] ?? 0) +
-      (bonuses['bonus'] ?? 0) +
-      (bonuses['overtime'] ?? 0) +
-      (bonuses['arrears'] ?? 0)
-    );
-  });
+  readonly groupTotals = computed(() => {
+    const totals = {
+      basicSalary: 0,
+      medicalAllowance: 0,
+      fuelAllowance: 0,
+      mobileAllowance: 0,
+      carAllowance: 0,
+      otherAllowances: 0,
+      bonus: 0,
+      overtime: 0,
+      arrears: 0,
+      netPayable: 0,
+      totalEarnings: 0,
+    };
 
-  readonly netPayable = computed(() => {
-    const allowances = this.allowances();
-    const bonuses = this.bonuses();
-    const basic = this.basicSalary();
-    return computeNetPayable({
-      basicSalary: basic,
-      medicalAllowance: allowances['medicalAllowance'] ?? 0,
-      fuelAllowance: allowances['fuelAllowance'] ?? 0,
-      mobileAllowance: allowances['mobileAllowance'] ?? 0,
-      carAllowance: allowances['carAllowance'] ?? 0,
-      otherAllowances: allowances['otherAllowances'] ?? 0,
-      overtime: bonuses['overtime'] ?? 0,
-      bonus: bonuses['bonus'] ?? 0,
-      arrears: bonuses['arrears'] ?? 0,
-      providentFund: 0,
-      gratuity: 0,
-      eobi: 0,
-      loanInstallment: 0,
-      otherDeductions: 0,
-    });
-  });
-
-  readonly earningsRatio = computed(() => {
-    const basic = this.basicSalary();
-    if (basic <= 0) {
-      return 0;
+    for (const row of this.rows()) {
+      totals.basicSalary += row.basicSalary;
+      totals.medicalAllowance += row.medicalAllowance;
+      totals.fuelAllowance += row.fuelAllowance;
+      totals.mobileAllowance += row.mobileAllowance;
+      totals.carAllowance += row.carAllowance;
+      totals.otherAllowances += row.otherAllowances;
+      totals.bonus += row.bonus;
+      totals.overtime += row.overtime;
+      totals.arrears += row.arrears;
+      totals.netPayable += this.netPayableForRow(row);
+      totals.totalEarnings += this.totalEarningsForRow(row);
     }
-    return Math.round((this.totalEarnings() / basic) * 100);
+
+    return totals;
   });
 
   ngOnInit(): void {
     this.loadEmployees();
   }
 
-  avatarInitials(): string {
-    const name = this.personName().trim();
-    if (!name) {
+  avatarInitials(name: string): string {
+    const trimmed = name.trim();
+    if (!trimmed) {
       return '?';
     }
-    const parts = name.split(/\s+/).filter(Boolean);
+    const parts = trimmed.split(/\s+/).filter(Boolean);
     if (parts.length === 1) {
       return parts[0].slice(0, 2).toUpperCase();
     }
@@ -163,63 +158,74 @@ export class AddPayrollProcessComponent implements OnInit {
     return Number.isFinite(num) ? num : 0;
   }
 
-  getAllowance(key: string): number {
-    return this.allowances()[key] ?? 0;
+  totalEarningsForRow(row: PayrollProcessRow): number {
+    return (
+      row.basicSalary +
+      row.medicalAllowance +
+      row.fuelAllowance +
+      row.mobileAllowance +
+      row.carAllowance +
+      row.otherAllowances +
+      row.bonus +
+      row.overtime +
+      row.arrears
+    );
   }
 
-  setAllowance(key: string, value: string | number): void {
-    this.allowances.update((state) => ({
-      ...state,
-      [key]: this.parseAmount(value),
-    }));
-  }
-
-  getBonus(key: string): number {
-    return this.bonuses()[key] ?? 0;
-  }
-
-  setBonus(key: string, value: string | number): void {
-    this.bonuses.update((state) => ({
-      ...state,
-      [key]: this.parseAmount(value),
-    }));
-  }
-
-  onEmployeeChange(apiId: string): void {
-    this.selectedEmployeeId.set(apiId);
-    this.selectedRecord = null;
-    this.username.set('');
-    this.personName.set('');
-    this.designation.set('');
-    this.basicSalary.set(0);
-    this.resetAmounts();
-
-    if (!apiId) {
-      this.cdr.markForCheck();
-      return;
-    }
-
-    this.loadingEmployee.set(true);
-    this.applicationFormService.fetchEmployeeProfileDetail(apiId).subscribe({
-      next: (record) => {
-        this.selectedRecord = record;
-        this.populateFromRecord(record);
-        this.loadingEmployee.set(false);
-        this.cdr.markForCheck();
-      },
-      error: (error: unknown) => {
-        this.loadingEmployee.set(false);
-        void this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load employee profile.'),
-        );
-        this.cdr.markForCheck();
-      },
+  netPayableForRow(row: PayrollProcessRow): number {
+    return computeNetPayable({
+      basicSalary: row.basicSalary,
+      medicalAllowance: row.medicalAllowance,
+      fuelAllowance: row.fuelAllowance,
+      mobileAllowance: row.mobileAllowance,
+      carAllowance: row.carAllowance,
+      otherAllowances: row.otherAllowances,
+      overtime: row.overtime,
+      bonus: row.bonus,
+      arrears: row.arrears,
+      providentFund: 0,
+      gratuity: 0,
+      eobi: 0,
+      loanInstallment: 0,
+      otherDeductions: 0,
     });
   }
 
-  openEmployeeProfile(): void {
-    const apiId = this.selectedEmployeeId();
+  earningsRatioForRow(row: PayrollProcessRow): number {
+    if (row.basicSalary <= 0) {
+      return 0;
+    }
+    return Math.round((this.totalEarningsForRow(row) / row.basicSalary) * 100);
+  }
+
+  updateRowField(
+    apiId: string,
+    field: keyof PayrollProcessRow,
+    value: string | number,
+  ): void {
+    const numericFields: Array<keyof PayrollProcessRow> = [
+      'basicSalary',
+      'medicalAllowance',
+      'fuelAllowance',
+      'mobileAllowance',
+      'carAllowance',
+      'otherAllowances',
+      'bonus',
+      'overtime',
+      'arrears',
+    ];
+    const parsed = numericFields.includes(field)
+      ? this.parseAmount(value)
+      : String(value);
+
+    this.rows.update((list) =>
+      list.map((row) =>
+        row.apiId === apiId ? { ...row, [field]: parsed } : row,
+      ),
+    );
+  }
+
+  openEmployeeProfile(apiId: string): void {
     if (!apiId) {
       return;
     }
@@ -227,109 +233,126 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   save(): void {
-    const record = this.selectedRecord;
-    if (!record || !this.selectedEmployeeId()) {
-      void this.alertService.validation('Please select an employee before saving.');
-      this.cdr.markForCheck();
+    const rows = this.rows();
+    if (rows.length === 0) {
+      void this.alertService.validation('No employees available to save.');
       return;
     }
 
-    const allowances = this.allowances();
-    const bonuses = this.bonuses();
-    const detail = record.detail;
-    const basic = this.basicSalary();
-
-    this.payrollSetupService.addRecord({
-      formNumber: this.generateFormNumber(),
-      employeeId: record.EmployeeCode,
-      employeeName: this.personName() || record.EmployeeName,
-      employeeCategory: record.EmploymentCategory,
-      employmentNature: record.EmployeeNature,
-      employmentType: record.EmploymentType,
-      workGradeLevel: detail?.personalInfo.workGradeLevel ?? '',
-      department: record.Department,
-      designation: record.Designation,
-      jobTitle: detail?.personalInfo.designation ?? record.Designation,
-      location: detail?.personalInfo.branchLocation ?? '',
-      basicSalary: basic,
-      medicalAllowance: allowances['medicalAllowance'] ?? 0,
-      fuelAllowance: allowances['fuelAllowance'] ?? 0,
-      mobileAllowance: allowances['mobileAllowance'] ?? 0,
-      carAllowance: allowances['carAllowance'] ?? 0,
-      otherAllowances: allowances['otherAllowances'] ?? 0,
-      overtime: bonuses['overtime'] ?? 0,
-      bonus: bonuses['bonus'] ?? 0,
-      arrears: bonuses['arrears'] ?? 0,
-      providentFund: 0,
-      gratuity: 0,
-      eobi: 0,
-      loanInstallment: 0,
-      otherDeductions: 0,
-      netPayable: this.netPayable(),
+    const batchId = this.generateFormNumber();
+    rows.forEach((row, index) => {
+      this.payrollSetupService.addRecord({
+        formNumber: `${batchId}-${String(index + 1).padStart(3, '0')}`,
+        employeeId: row.employeeCode,
+        employeeName: row.personName,
+        employeeCategory: row.employeeCategory,
+        employmentNature: row.employmentNature,
+        employmentType: row.employmentType,
+        workGradeLevel: row.workGradeLevel,
+        department: row.department,
+        designation: row.designation,
+        jobTitle: row.jobTitle,
+        location: row.location,
+        basicSalary: row.basicSalary,
+        medicalAllowance: row.medicalAllowance,
+        fuelAllowance: row.fuelAllowance,
+        mobileAllowance: row.mobileAllowance,
+        carAllowance: row.carAllowance,
+        otherAllowances: row.otherAllowances,
+        overtime: row.overtime,
+        bonus: row.bonus,
+        arrears: row.arrears,
+        providentFund: 0,
+        gratuity: 0,
+        eobi: 0,
+        loanInstallment: 0,
+        otherDeductions: 0,
+        netPayable: this.netPayableForRow(row),
+      });
     });
 
-    void this.alertService.success('Success', 'Payroll process saved successfully.');
+    void this.alertService.success('Success', `Payroll process saved for ${rows.length} employee(s).`);
     this.back();
   }
 
   private loadEmployees(): void {
+    this.loading.set(true);
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
-      next: () => {
-        this.employeeOptions.set(this.buildEmployeeOptions());
-        this.cdr.markForCheck();
+      next: (records) => {
+        const withApiId = records.filter((record) => !!record.apiId);
+        if (withApiId.length === 0) {
+          this.rows.set([]);
+          this.loading.set(false);
+          this.cdr.markForCheck();
+          return;
+        }
+
+        forkJoin(
+          withApiId.map((record) =>
+            this.applicationFormService.fetchEmployeeProfileDetail(record.apiId!).pipe(
+              catchError(() => of(record)),
+            ),
+          ),
+        ).subscribe({
+          next: (details) => {
+            this.rows.set(
+              details
+                .map((record) => this.mapRecordToRow(record))
+                .sort((a, b) =>
+                  a.personName.localeCompare(b.personName, undefined, { sensitivity: 'base' }),
+                ),
+            );
+            this.loading.set(false);
+            this.cdr.markForCheck();
+          },
+          error: (error: unknown) => {
+            this.loading.set(false);
+            void this.alertService.error(
+              'Load Failed',
+              formatApiErrorMessage(error, 'Failed to load employee payroll details.'),
+            );
+            this.cdr.markForCheck();
+          },
+        });
       },
       error: (error: unknown) => {
+        this.loading.set(false);
         void this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load employees.'),
         );
+        this.cdr.markForCheck();
       },
     });
   }
 
-  private buildEmployeeOptions(): PayrollProcessEmployeeOption[] {
-    return this.applicationFormService
-      .getApplicationRecords()
-      .filter((record) => !!record.apiId)
-      .map((record) => ({
-        apiId: record.apiId!,
-        employeeCode: record.EmployeeCode,
-        personName: record.EmployeeName,
-      }))
-      .sort((a, b) => a.personName.localeCompare(b.personName, undefined, { sensitivity: 'base' }));
-  }
-
-  private populateFromRecord(record: ApplicationFormRecord): void {
+  private mapRecordToRow(record: ApplicationFormRecord): PayrollProcessRow {
     const detail = record.detail;
     const remuneration = detail?.remuneration;
 
-    this.personName.set(detail?.personalInfo.personName || record.EmployeeName);
-    this.designation.set(record.Designation || detail?.personalInfo.designation || '');
-    this.username.set(detail?.loginDetails.userId || record.EmployeeCode);
-    this.basicSalary.set(this.parseAmount(remuneration?.basicSalary ?? 0));
-
-    this.allowances.set({
+    return {
+      apiId: record.apiId ?? record.EmployeeCode,
+      employeeCode: record.EmployeeCode,
+      personName: detail?.personalInfo.personName || record.EmployeeName,
+      username: detail?.loginDetails.userId || record.EmployeeCode,
+      designation: record.Designation || detail?.personalInfo.designation || '',
+      department: record.Department,
+      employeeCategory: record.EmploymentCategory,
+      employmentNature: record.EmployeeNature,
+      employmentType: record.EmploymentType,
+      jobTitle: detail?.personalInfo.designation ?? record.Designation,
+      location: detail?.personalInfo.branchLocation ?? '',
+      workGradeLevel: detail?.personalInfo.workGradeLevel ?? '',
+      basicSalary: this.parseAmount(remuneration?.basicSalary ?? 0),
       medicalAllowance: this.parseAmount(remuneration?.medicalAllowances ?? 0),
       fuelAllowance: this.parseAmount(remuneration?.fuelAllowances ?? 0),
       mobileAllowance: this.parseAmount(remuneration?.mobileAllowances ?? 0),
       carAllowance: this.parseAmount(remuneration?.carAllowances ?? 0),
       otherAllowances: this.parseAmount(remuneration?.otherAllowances ?? 0),
-    });
-  }
-
-  private resetAmounts(): void {
-    this.allowances.set({
-      medicalAllowance: 0,
-      fuelAllowance: 0,
-      mobileAllowance: 0,
-      carAllowance: 0,
-      otherAllowances: 0,
-    });
-    this.bonuses.set({
       bonus: 0,
       overtime: 0,
       arrears: 0,
-    });
+    };
   }
 
   private generateFormNumber(): string {
