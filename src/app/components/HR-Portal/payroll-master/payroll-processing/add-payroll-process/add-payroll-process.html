@@ -26,7 +26,11 @@
   <div class="comp-plan-header">
     <h2 class="comp-plan-header__title">
       Payroll Process Plan
-      <strong>({{ rows().length }} Employees)</strong>
+      @if (loading()) {
+        <span class="comp-skeleton comp-skeleton--title-count" aria-hidden="true"></span>
+      } @else {
+        <strong>({{ rows().length }} Employees)</strong>
+      }
     </h2>
     <div class="comp-plan-header__tools">
       <button type="button" class="comp-tool-btn"><span>⏷</span> Filter</button>
@@ -37,7 +41,108 @@
 
   <div class="comp-grid-wrap">
     @if (loading()) {
-      <div class="comp-loading comp-loading--page">Loading employee payroll data…</div>
+      <div
+        class="comp-table-card comp-table-card--skeleton"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Loading employee payroll data"
+      >
+        <div class="comp-table-layout">
+          <div class="comp-table-fixed">
+            <table class="comp-grid comp-grid--fixed">
+              <thead>
+                <tr class="comp-group-row">
+                  <th class="tone-employee">Employee Information</th>
+                </tr>
+                <tr class="comp-col-row">
+                  <th>Employee</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (i of skeletonRows; track i; let odd = $odd) {
+                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                    <td class="comp-emp-cell">
+                      <div class="comp-skeleton-emp">
+                        <span class="comp-skeleton comp-skeleton--avatar" aria-hidden="true"></span>
+                        <div class="comp-skeleton-emp__text">
+                          <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-lg" aria-hidden="true"></span>
+                          <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-sm" aria-hidden="true"></span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="comp-total-row">
+                  <td><span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md" aria-hidden="true"></span></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="comp-table-scroll">
+            <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+              <thead>
+                <tr class="comp-group-row">
+                  @for (group of columnGroups; track group.id) {
+                    @if (groupColspan(group.id) > 0) {
+                      <th [attr.colspan]="groupColspan(group.id)" [class]="'tone-' + group.tone">
+                        {{ group.label }}
+                      </th>
+                    }
+                  }
+                </tr>
+                <tr class="comp-col-row">
+                  @for (col of payrollColumns; track col.key) {
+                    <th [style.min-width.px]="col.minWidth">{{ col.label }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (i of skeletonRows; track i; let odd = $odd) {
+                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                    @for (col of payrollColumns; track col.key) {
+                      <td [style.min-width.px]="col.minWidth">
+                        @switch (col.type) {
+                          @case ('username') {
+                            <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md comp-skeleton--center" aria-hidden="true"></span>
+                          }
+                          @case ('currency') {
+                            <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                          }
+                          @case ('readonly') {
+                            <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                          }
+                          @case ('readonly-pill') {
+                            <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                            <span class="comp-skeleton comp-skeleton--pill comp-skeleton--center" aria-hidden="true"></span>
+                          }
+                          @case ('approval') {
+                            <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
+                          }
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="comp-total-row">
+                  @for (col of payrollColumns; track col.key) {
+                    <td class="comp-total-value">
+                      @if (col.key !== 'username' && col.key !== 'approved') {
+                        <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-sm comp-skeleton--right" aria-hidden="true"></span>
+                      }
+                    </td>
+                  }
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
     } @else if (rows().length === 0) {
       <div class="comp-empty-cell">No employees found.</div>
     } @else {
@@ -163,6 +268,17 @@
                               >
                                 {{ earningsRatioForRow(row) }}%
                               </span>
+                            </div>
+                          }
+                          @case ('approval') {
+                            <div class="comp-approval-cell">
+                              <input
+                                type="checkbox"
+                                class="comp-approval-checkbox"
+                                [ngModel]="row.approved"
+                                (ngModelChange)="setApproval(row.apiId, $event)"
+                                [attr.aria-label]="'Approve payroll for ' + row.personName"
+                              />
                             </div>
                           }
                         }

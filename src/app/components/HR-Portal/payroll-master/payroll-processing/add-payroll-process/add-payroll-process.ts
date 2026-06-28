@@ -48,11 +48,12 @@ export interface PayrollProcessRow {
   bonus: number;
   overtime: number;
   arrears: number;
+  approved: boolean;
 }
 
-export type PayrollColumnTone = 'employee-meta' | 'salary' | 'allowances' | 'bonuses' | 'final';
+export type PayrollColumnTone = 'employee-meta' | 'salary' | 'allowances' | 'bonuses' | 'final' | 'approval';
 
-export type PayrollColumnType = 'username' | 'currency' | 'readonly' | 'readonly-pill';
+export type PayrollColumnType = 'username' | 'currency' | 'readonly' | 'readonly-pill' | 'approval';
 
 export interface PayrollColumnGroup {
   id: string;
@@ -99,6 +100,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { id: 'allowances', label: 'Allowances', tone: 'allowances' },
     { id: 'bonuses', label: 'Bonuses', tone: 'bonuses' },
     { id: 'final', label: 'Final Totals', tone: 'final' },
+    { id: 'approval', label: 'Approval', tone: 'approval' },
   ];
 
   readonly payrollColumns: PayrollColumnDef[] = [
@@ -114,11 +116,14 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'arrears', label: 'Arrears', groupId: 'bonuses', type: 'currency', minWidth: 108 },
     { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 118 },
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 138 },
+    { key: 'approved', label: 'Approval', groupId: 'approval', type: 'approval', minWidth: 96 },
   ];
 
   readonly scrollMinWidth = computed(() =>
     this.payrollColumns.reduce((sum, col) => sum + col.minWidth, 0),
   );
+
+  readonly skeletonRows = Array.from({ length: 8 }, (_, index) => index);
 
   readonly groupTotals = computed(() => {
     const totals = {
@@ -284,7 +289,7 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   getGroupTotal(column: PayrollColumnDef): number | null {
-    if (column.key === 'username') {
+    if (column.key === 'username' || column.key === 'approved') {
       return null;
     }
     if (column.key === 'netPayable') {
@@ -295,6 +300,14 @@ export class AddPayrollProcessComponent implements OnInit {
     }
     const totals = this.groupTotals();
     return totals[column.key as keyof typeof totals] ?? 0;
+  }
+
+  setApproval(apiId: string, approved: boolean): void {
+    this.rows.update((list) =>
+      list.map((row) =>
+        row.apiId === apiId ? { ...row, approved } : row,
+      ),
+    );
   }
 
   updateRowField(
@@ -479,6 +492,7 @@ export class AddPayrollProcessComponent implements OnInit {
       bonus: 0,
       overtime: 0,
       arrears: 0,
+      approved: false,
     };
   }
 
