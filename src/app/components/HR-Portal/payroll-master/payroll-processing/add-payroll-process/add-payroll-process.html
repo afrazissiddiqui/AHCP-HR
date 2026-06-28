@@ -39,159 +39,149 @@
   <div class="comp-grid-wrap">
     @if (loading()) {
       <div class="comp-loading comp-loading--page">Loading employee payroll data…</div>
+    } @else if (rows().length === 0) {
+      <div class="comp-empty-cell">No employees found.</div>
     } @else {
-      <table class="comp-grid" aria-label="Payroll process entry grid">
-        <thead>
-          <tr class="comp-group-row">
-            <th colspan="2" class="grp-employee">Employee Information</th>
-            <th colspan="1" class="grp-employee">Basic Salary</th>
-            <th colspan="5" class="grp-allowances">Allowances</th>
-            <th colspan="3" class="grp-bonuses">Bonuses</th>
-            <th colspan="2" class="grp-final">Final Totals</th>
-          </tr>
-          <tr class="comp-col-row">
-            <th>Employee</th>
-            <th>Username</th>
-            <th>Basic Salary</th>
-            <th>Medical</th>
-            <th>Fuel</th>
-            <th>Mobile</th>
-            <th>Car</th>
-            <th>Other</th>
-            <th>Bonus</th>
-            <th>Overtime</th>
-            <th>Arrears</th>
-            <th>Net Payable</th>
-            <th>Total Earnings</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (rows().length === 0) {
-            <tr class="comp-data-row">
-              <td colspan="13" class="comp-empty-cell">No employees found.</td>
-            </tr>
-          }
-          @for (row of rows(); track row.apiId) {
-            <tr class="comp-data-row">
-              <td class="comp-emp-cell">
-                <div class="comp-emp-profile">
-                  <span class="comp-emp-avatar" aria-hidden="true">{{ avatarInitials(row.personName) }}</span>
-                  <div class="comp-emp-info">
-                    <button type="button" class="comp-emp-name" (click)="openEmployeeProfile(row.apiId)">
-                      {{ row.personName }}
-                    </button>
-                    <div class="comp-emp-meta">
-                      <span class="comp-emp-id-icon" title="Employee profile">🪪</span>
-                      @if (row.designation) {
-                        <span class="comp-emp-designation">{{ row.designation }}</span>
+      <div class="comp-table-card">
+        <div class="comp-table-layout">
+          <div class="comp-table-fixed" aria-hidden="false">
+            <table class="comp-grid comp-grid--fixed">
+              <thead>
+                <tr class="comp-group-row">
+                  <th class="tone-employee">Employee Information</th>
+                </tr>
+                <tr class="comp-col-row">
+                  <th>Employee</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows(); track row.apiId; let odd = $odd) {
+                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                    <td class="comp-emp-cell">
+                      <div class="comp-emp-profile">
+                        <span class="comp-emp-avatar" aria-hidden="true">{{ avatarInitials(row.personName) }}</span>
+                        <div class="comp-emp-info">
+                          <button type="button" class="comp-emp-name" (click)="openEmployeeProfile(row.apiId)">
+                            {{ row.personName }}
+                          </button>
+                          @if (row.designation) {
+                            <div class="comp-emp-meta">
+                              <span class="comp-emp-id-icon" title="Employee profile">🪪</span>
+                              <span class="comp-emp-designation">{{ row.designation }}</span>
+                            </div>
+                          }
+                        </div>
+                        <div class="comp-emp-actions">
+                          <button type="button" class="comp-emp-action-btn" title="Comment" aria-label="Comment">💬</button>
+                          <button type="button" class="comp-emp-action-btn" title="More actions" aria-label="More actions">⋯</button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="comp-total-row">
+                  <td>Group Total</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="comp-table-scroll">
+            <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+              <thead>
+                <tr class="comp-group-row">
+                  @for (group of columnGroups; track group.id) {
+                    @if (groupColspan(group.id) > 0) {
+                      <th [attr.colspan]="groupColspan(group.id)" [class]="'tone-' + group.tone">
+                        {{ group.label }}
+                      </th>
+                    }
+                  }
+                </tr>
+                <tr class="comp-col-row">
+                  @for (col of payrollColumns; track col.key) {
+                    <th [style.min-width.px]="col.minWidth">{{ col.label }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows(); track row.apiId; let odd = $odd) {
+                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                    @for (col of payrollColumns; track col.key) {
+                      <td [style.min-width.px]="col.minWidth">
+                        @switch (col.type) {
+                          @case ('username') {
+                            <button type="button" class="comp-username-link" (click)="openEmployeeProfile(row.apiId)">
+                              {{ getColumnValue(row, col) }}
+                            </button>
+                          }
+                          @case ('currency') {
+                            <div class="comp-input-wrap">
+                              <span class="comp-input-prefix">$</span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                class="comp-input"
+                                [ngModel]="getColumnValue(row, col)"
+                                (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
+                              />
+                            </div>
+                          }
+                          @case ('readonly') {
+                            <div class="comp-input-wrap">
+                              <span class="comp-input-prefix">$</span>
+                              <input
+                                type="text"
+                                class="comp-input comp-input--readonly"
+                                [value]="formatMoney($any(getColumnValue(row, col)))"
+                                readonly
+                              />
+                            </div>
+                          }
+                          @case ('readonly-pill') {
+                            <div class="comp-input-wrap">
+                              <span class="comp-input-prefix">$</span>
+                              <input
+                                type="text"
+                                class="comp-input comp-input--readonly"
+                                [value]="formatMoney($any(getColumnValue(row, col)))"
+                                readonly
+                              />
+                            </div>
+                            <div class="comp-cell-center comp-pill-wrap">
+                              <span
+                                class="comp-pill"
+                                [class.comp-pill--green]="earningsRatioForRow(row) >= 95 && earningsRatioForRow(row) <= 110"
+                                [class.comp-pill--yellow]="earningsRatioForRow(row) > 110"
+                              >
+                                {{ earningsRatioForRow(row) }}%
+                              </span>
+                            </div>
+                          }
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="comp-total-row">
+                  @for (col of payrollColumns; track col.key) {
+                    <td class="comp-total-value">
+                      @if (getGroupTotal(col) !== null) {
+                        {{ formatMoney(getGroupTotal(col)!) }}
                       }
-                    </div>
-                  </div>
-                  <div class="comp-emp-actions">
-                    <button type="button" class="comp-emp-action-btn" title="Comment" aria-label="Comment">💬</button>
-                    <button type="button" class="comp-emp-action-btn" title="More actions" aria-label="More actions">⋯</button>
-                  </div>
-                </div>
-              </td>
-              <td class="comp-cell-center">
-                <button type="button" class="comp-username-link" (click)="openEmployeeProfile(row.apiId)">
-                  {{ row.username || '—' }}
-                </button>
-              </td>
-              <td>
-                <div class="comp-input-wrap">
-                  <span class="comp-input-prefix">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="comp-input"
-                    [ngModel]="row.basicSalary"
-                    (ngModelChange)="updateRowField(row.apiId, 'basicSalary', $event)"
-                  />
-                </div>
-              </td>
-              @for (field of allowanceFields; track field.key) {
-                <td>
-                  <div class="comp-input-wrap">
-                    <span class="comp-input-prefix">$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      class="comp-input"
-                      [ngModel]="row[field.key]"
-                      (ngModelChange)="updateRowField(row.apiId, field.key, $event)"
-                    />
-                  </div>
-                </td>
-              }
-              @for (field of bonusFields; track field.key) {
-                <td>
-                  <div class="comp-input-wrap">
-                    <span class="comp-input-prefix">$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      class="comp-input"
-                      [ngModel]="row[field.key]"
-                      (ngModelChange)="updateRowField(row.apiId, field.key, $event)"
-                    />
-                  </div>
-                </td>
-              }
-              <td>
-                <div class="comp-input-wrap">
-                  <span class="comp-input-prefix">$</span>
-                  <input
-                    type="text"
-                    class="comp-input comp-input--readonly"
-                    [value]="formatMoney(netPayableForRow(row))"
-                    readonly
-                  />
-                </div>
-              </td>
-              <td>
-                <div class="comp-input-wrap">
-                  <span class="comp-input-prefix">$</span>
-                  <input
-                    type="text"
-                    class="comp-input comp-input--readonly"
-                    [value]="formatMoney(totalEarningsForRow(row))"
-                    readonly
-                  />
-                </div>
-                <div class="comp-cell-center" style="margin-top: 6px;">
-                  <span
-                    class="comp-pill"
-                    [class.comp-pill--green]="earningsRatioForRow(row) >= 95 && earningsRatioForRow(row) <= 110"
-                    [class.comp-pill--yellow]="earningsRatioForRow(row) > 110"
-                  >
-                    {{ earningsRatioForRow(row) }}%
-                  </span>
-                </div>
-              </td>
-            </tr>
-          }
-          @if (rows().length > 0) {
-            <tr class="comp-total-row">
-              <td colspan="2">Group Total</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().basicSalary) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().medicalAllowance) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().fuelAllowance) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().mobileAllowance) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().carAllowance) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().otherAllowances) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().bonus) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().overtime) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().arrears) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().netPayable) }}</td>
-              <td class="comp-total-value">{{ formatMoney(groupTotals().totalEarnings) }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+                    </td>
+                  }
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
     }
   </div>
 

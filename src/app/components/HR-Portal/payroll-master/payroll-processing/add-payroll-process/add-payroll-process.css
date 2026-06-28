@@ -2,9 +2,9 @@
   display: block;
   height: 100%;
   overflow: auto;
-  background: #f7f9fa;
+  background: #f3f6f9;
   font-family: '72', '72full', Arial, Helvetica, sans-serif;
-  color: #32363a;
+  color: #3a4552;
 }
 
 .comp-page {
@@ -19,7 +19,7 @@
   justify-content: space-between;
   padding: 10px 20px;
   background: #fff;
-  border-bottom: 1px solid #d9d9d9;
+  border-bottom: 1px solid #e8edf2;
 }
 
 .comp-topbar__left {
@@ -31,23 +31,25 @@
 .comp-back {
   width: 36px;
   height: 36px;
-  border: 1px solid #89919a;
-  border-radius: 4px;
+  border: 1px solid #d5dce3;
+  border-radius: 8px;
   background: #fff;
-  color: #0064d9;
+  color: #0070f2;
   font-size: 16px;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .comp-back:hover {
-  background: #ebf5fe;
+  background: #f0f7ff;
+  border-color: #b8d4f5;
 }
 
 .comp-topbar__title {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: #32363a;
+  color: #3a4552;
 }
 
 .comp-topbar__actions {
@@ -58,10 +60,9 @@
 .comp-subnav {
   display: flex;
   align-items: center;
-  gap: 0;
   padding: 0 20px;
   background: #fff;
-  border-bottom: 1px solid #d9d9d9;
+  border-bottom: 1px solid #e8edf2;
 }
 
 .comp-subnav__tab {
@@ -69,16 +70,20 @@
   border: none;
   border-bottom: 3px solid transparent;
   background: transparent;
-  color: #32363a;
+  color: #5b6775;
   font-size: 14px;
-  font-weight: 400;
   cursor: pointer;
 }
 
 .comp-subnav__tab.is-active {
-  color: #0064d9;
+  color: #0070f2;
   font-weight: 700;
-  border-bottom-color: #0064d9;
+  border-bottom-color: #0070f2;
+}
+
+.comp-subnav__tab:disabled {
+  color: #a9b4c0;
+  cursor: default;
 }
 
 .comp-subnav__spacer {
@@ -91,7 +96,7 @@
   gap: 18px;
   padding: 10px 20px;
   background: #fff;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #eef2f6;
 }
 
 .comp-icon-action {
@@ -100,7 +105,7 @@
   gap: 6px;
   border: none;
   background: none;
-  color: #0064d9;
+  color: #0070f2;
   font-size: 13px;
   cursor: pointer;
 }
@@ -121,7 +126,7 @@
   margin: 0;
   font-size: 20px;
   font-weight: 400;
-  color: #32363a;
+  color: #3a4552;
 }
 
 .comp-plan-header__title strong {
@@ -141,82 +146,131 @@
   padding: 6px 10px;
   border: none;
   background: transparent;
-  color: #0064d9;
+  color: #0070f2;
   font-size: 14px;
   cursor: pointer;
+  border-radius: 8px;
 }
 
 .comp-tool-btn:hover {
-  background: #ebf5fe;
-  border-radius: 4px;
+  background: #f0f7ff;
 }
 
 .comp-grid-wrap {
   flex: 1;
   padding: 0 20px 20px;
+  min-height: 0;
+}
+
+.comp-table-card {
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.comp-table-layout {
+  display: flex;
+  align-items: stretch;
+  max-height: calc(100vh - 280px);
+  min-height: 320px;
+}
+
+.comp-table-fixed {
+  flex: 0 0 280px;
+  z-index: 3;
+  background: #fff;
+  border-right: 1px solid #e8edf2;
+  box-shadow: 6px 0 16px rgba(15, 23, 42, 0.05);
+}
+
+.comp-table-scroll {
+  flex: 1 1 auto;
   overflow: auto;
+  min-width: 0;
+  background: #fcfdfe;
 }
 
 .comp-grid {
   width: 100%;
-  min-width: 1200px;
-  border-collapse: collapse;
-  background: #fff;
-  border: 1px solid #d9d9d9;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
+}
+
+.comp-grid--fixed {
+  width: 280px;
 }
 
 .comp-grid th,
 .comp-grid td {
-  border: 1px solid #d9d9d9;
+  border-bottom: 1px solid #eef2f6;
   vertical-align: middle;
 }
 
 .comp-group-row th {
-  padding: 8px 10px;
-  font-size: 13px;
+  height: 42px;
+  padding: 0 12px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
-  color: #32363a;
+  color: #3a4552;
+  letter-spacing: 0.01em;
 }
 
 .comp-col-row th {
-  padding: 8px 10px;
+  height: 40px;
+  padding: 0 10px;
   font-size: 12px;
   font-weight: 600;
   text-align: center;
-  color: #32363a;
-  background: #fff;
-}
-
-.grp-employee {
-  background: #d9e1e2;
-}
-
-.grp-allowances {
-  background: #81d4cf;
-}
-
-.grp-bonuses {
-  background: #f4b4b0;
-}
-
-.grp-final {
-  background: #e3d5c5;
+  color: #5b6775;
+  background: #fafbfd;
 }
 
 .comp-data-row td {
-  padding: 10px 8px;
+  height: 72px;
+  padding: 10px 12px;
   background: #fff;
 }
 
+.comp-data-row--alt td {
+  background: #fafbfd;
+}
+
+.comp-table-scroll .comp-data-row--alt td {
+  background: #f7f9fc;
+}
+
+.tone-employee,
+.tone-employee-meta {
+  background: #e4eaed;
+}
+
+.tone-salary {
+  background: #c9ebe8;
+}
+
+.tone-allowances {
+  background: #a8ddd8;
+}
+
+.tone-bonuses {
+  background: #f5c9c5;
+}
+
+.tone-final {
+  background: #e8ddd1;
+}
+
 .comp-emp-cell {
-  min-width: 220px;
+  width: 280px;
 }
 
 .comp-emp-designation {
-  font-size: 12px;
-  color: #6a6d70;
+  font-size: 11px;
+  color: #7a8794;
 }
 
 .comp-emp-profile {
@@ -229,18 +283,15 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #0064d9;
+  background: linear-gradient(135deg, #4d9dff, #0070f2);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
-}
-
-.comp-emp-avatar--empty {
-  background: #89919a;
+  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.22);
 }
 
 .comp-emp-info {
@@ -253,9 +304,9 @@
   padding: 0;
   border: none;
   background: none;
-  color: #0064d9;
-  font-size: 14px;
-  font-weight: 400;
+  color: #0070f2;
+  font-size: 13px;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
@@ -268,28 +319,22 @@
   text-decoration: underline;
 }
 
-.comp-emp-name:disabled {
-  color: #6a6d70;
-  cursor: default;
-  text-decoration: none;
-}
-
 .comp-emp-meta {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .comp-emp-id-icon {
-  color: #0064d9;
-  font-size: 12px;
+  color: #0070f2;
+  font-size: 11px;
 }
 
 .comp-emp-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -298,33 +343,27 @@
   height: 28px;
   border: none;
   background: transparent;
-  color: #0064d9;
+  color: #0070f2;
   font-size: 14px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .comp-emp-action-btn:hover {
-  background: #ebf5fe;
+  background: #eef5ff;
 }
 
 .comp-username-link {
   padding: 0;
   border: none;
   background: none;
-  color: #0064d9;
-  font-size: 14px;
+  color: #0070f2;
+  font-size: 13px;
   cursor: pointer;
 }
 
 .comp-username-link:hover {
   text-decoration: underline;
-}
-
-.comp-username-link:disabled {
-  color: #6a6d70;
-  cursor: default;
-  text-decoration: none;
 }
 
 .comp-input-wrap {
@@ -336,41 +375,41 @@
 
 .comp-input {
   width: 100%;
-  max-width: 96px;
-  padding: 6px 8px;
-  border: 1px solid #89919a;
-  border-radius: 2px;
+  max-width: 100px;
+  padding: 7px 10px;
+  border: 1px solid #dce3ea;
+  border-radius: 8px;
   background: #fff;
   font-size: 13px;
   text-align: right;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  color: #3a4552;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .comp-input:focus {
   outline: none;
-  border-color: #0064d9;
+  border-color: #8cb8f0;
+  box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.12);
 }
 
 .comp-input--readonly {
-  background: #f5f6f7;
-  border-color: #d9d9d9;
-  font-weight: 700;
+  background: #f3f6f9;
+  border-color: #e4eaf0;
+  font-weight: 600;
 }
 
 .comp-input-prefix {
-  font-size: 13px;
-  color: #6a6d70;
+  font-size: 12px;
+  color: #8a96a3;
 }
 
 .comp-total-row td {
-  padding: 10px 8px;
-  background: #eef0f2;
+  height: 48px;
+  padding: 10px 12px;
+  background: #eef2f6;
   font-weight: 700;
   font-size: 13px;
-}
-
-.comp-total-row td:first-child {
-  text-align: left;
+  color: #3a4552;
 }
 
 .comp-total-value {
@@ -378,26 +417,30 @@
   font-variant-numeric: tabular-nums;
 }
 
+.comp-pill-wrap {
+  margin-top: 6px;
+}
+
 .comp-pill {
   display: inline-block;
   min-width: 52px;
   padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
+  border-radius: 999px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
   background: #e8edf2;
-  color: #32363a;
+  color: #3a4552;
 }
 
 .comp-pill--green {
-  background: #abe2ab;
-  color: #256029;
+  background: #d7f0d8;
+  color: #1f6b28;
 }
 
 .comp-pill--yellow {
-  background: #ffe066;
-  color: #6d5100;
+  background: #fff0b3;
+  color: #7a5b00;
 }
 
 .comp-footer {
@@ -406,26 +449,32 @@
   gap: 10px;
   padding: 14px 20px;
   background: #fff;
-  border-top: 1px solid #d9d9d9;
+  border-top: 1px solid #e8edf2;
 }
 
 .comp-btn {
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.comp-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .comp-btn--secondary {
   background: #fff;
-  border-color: #89919a;
-  color: #32363a;
+  border-color: #d5dce3;
+  color: #3a4552;
 }
 
-.comp-btn--secondary:hover {
-  background: #f5f6f7;
+.comp-btn--secondary:hover:not(:disabled) {
+  background: #f7f9fb;
 }
 
 .comp-btn--primary {
@@ -433,14 +482,14 @@
   color: #fff;
 }
 
-.comp-btn--primary:hover {
+.comp-btn--primary:hover:not(:disabled) {
   background: #0064d9;
 }
 
 .comp-loading {
   padding: 8px;
   font-size: 12px;
-  color: #6a6d70;
+  color: #7a8794;
   font-style: italic;
 }
 
@@ -450,11 +499,54 @@
 }
 
 .comp-empty-cell {
-  padding: 24px;
+  padding: 32px 24px;
   text-align: center;
-  color: #6a6d70;
+  color: #7a8794;
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 14px;
 }
 
 .comp-cell-center {
   text-align: center;
+}
+
+.comp-table-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.comp-table-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+
+.comp-table-scroll::-webkit-scrollbar-thumb {
+  background: #c8d3df;
+  border-radius: 999px;
+}
+
+.comp-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #aebccb;
+}
+
+.comp-table-fixed .comp-grid thead th,
+.comp-table-scroll .comp-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.comp-table-fixed .comp-col-row th {
+  top: 42px;
+}
+
+.comp-table-scroll .comp-col-row th {
+  top: 42px;
+}
+
+.comp-table-scroll tfoot td,
+.comp-table-fixed tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
 }

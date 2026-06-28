@@ -47,19 +47,22 @@ export interface PayrollProcessRow {
   arrears: number;
 }
 
-interface AmountField {
-  key: keyof Pick<
-    PayrollProcessRow,
-    | 'medicalAllowance'
-    | 'fuelAllowance'
-    | 'mobileAllowance'
-    | 'carAllowance'
-    | 'otherAllowances'
-    | 'bonus'
-    | 'overtime'
-    | 'arrears'
-  >;
+export type PayrollColumnTone = 'employee-meta' | 'salary' | 'allowances' | 'bonuses' | 'final';
+
+export type PayrollColumnType = 'username' | 'currency' | 'readonly' | 'readonly-pill';
+
+export interface PayrollColumnGroup {
+  id: string;
   label: string;
+  tone: PayrollColumnTone;
+}
+
+export interface PayrollColumnDef {
+  key: string;
+  label: string;
+  groupId: string;
+  type: PayrollColumnType;
+  minWidth: number;
 }
 
 @Component({
@@ -80,19 +83,32 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly rows = signal<PayrollProcessRow[]>([]);
   readonly loading = signal(true);
 
-  readonly allowanceFields: AmountField[] = [
-    { key: 'medicalAllowance', label: 'Medical' },
-    { key: 'fuelAllowance', label: 'Fuel' },
-    { key: 'mobileAllowance', label: 'Mobile' },
-    { key: 'carAllowance', label: 'Car' },
-    { key: 'otherAllowances', label: 'Other' },
+  readonly columnGroups: PayrollColumnGroup[] = [
+    { id: 'emp-meta', label: 'Employee Information', tone: 'employee-meta' },
+    { id: 'salary', label: 'Basic Salary', tone: 'salary' },
+    { id: 'allowances', label: 'Allowances', tone: 'allowances' },
+    { id: 'bonuses', label: 'Bonuses', tone: 'bonuses' },
+    { id: 'final', label: 'Final Totals', tone: 'final' },
   ];
 
-  readonly bonusFields: AmountField[] = [
-    { key: 'bonus', label: 'Bonus' },
-    { key: 'overtime', label: 'Overtime' },
-    { key: 'arrears', label: 'Arrears' },
+  readonly payrollColumns: PayrollColumnDef[] = [
+    { key: 'username', label: 'Username', groupId: 'emp-meta', type: 'username', minWidth: 130 },
+    { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'currency', minWidth: 118 },
+    { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'currency', minWidth: 108 },
+    { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'currency', minWidth: 108 },
+    { key: 'mobileAllowance', label: 'Mobile', groupId: 'allowances', type: 'currency', minWidth: 108 },
+    { key: 'carAllowance', label: 'Car', groupId: 'allowances', type: 'currency', minWidth: 108 },
+    { key: 'otherAllowances', label: 'Other', groupId: 'allowances', type: 'currency', minWidth: 108 },
+    { key: 'bonus', label: 'Bonus', groupId: 'bonuses', type: 'currency', minWidth: 108 },
+    { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'currency', minWidth: 108 },
+    { key: 'arrears', label: 'Arrears', groupId: 'bonuses', type: 'currency', minWidth: 108 },
+    { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 118 },
+    { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 138 },
   ];
+
+  readonly scrollMinWidth = computed(() =>
+    this.payrollColumns.reduce((sum, col) => sum + col.minWidth, 0),
+  );
 
   readonly groupTotals = computed(() => {
     const totals = {
@@ -128,6 +144,10 @@ export class AddPayrollProcessComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEmployees();
+  }
+
+  groupColspan(groupId: string): number {
+    return this.payrollColumns.filter((col) => col.groupId === groupId).length;
   }
 
   avatarInitials(name: string): string {
@@ -196,6 +216,34 @@ export class AddPayrollProcessComponent implements OnInit {
       return 0;
     }
     return Math.round((this.totalEarningsForRow(row) / row.basicSalary) * 100);
+  }
+
+  getColumnValue(row: PayrollProcessRow, column: PayrollColumnDef): number | string {
+    if (column.key === 'netPayable') {
+      return this.netPayableForRow(row);
+    }
+    if (column.key === 'totalEarnings') {
+      return this.totalEarningsForRow(row);
+    }
+    if (column.key === 'username') {
+      return row.username || '—';
+    }
+    const value = row[column.key as keyof PayrollProcessRow];
+    return typeof value === 'number' ? value : String(value ?? '');
+  }
+
+  getGroupTotal(column: PayrollColumnDef): number | null {
+    if (column.key === 'username') {
+      return null;
+    }
+    if (column.key === 'netPayable') {
+      return this.groupTotals().netPayable;
+    }
+    if (column.key === 'totalEarnings') {
+      return this.groupTotals().totalEarnings;
+    }
+    const totals = this.groupTotals();
+    return totals[column.key as keyof typeof totals] ?? 0;
   }
 
   updateRowField(
