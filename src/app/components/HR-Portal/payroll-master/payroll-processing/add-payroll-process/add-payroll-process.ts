@@ -100,7 +100,10 @@ export interface PayrollColumnDef {
   minWidth: number;
 }
 
-export type PayrollPeriodType = 'Month' | 'Year';
+interface PayrollMonthOption {
+  value: number;
+  label: string;
+}
 
 @Component({
   selector: 'app-add-payroll-process',
@@ -121,8 +124,23 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly rows = signal<PayrollProcessRow[]>([]);
   readonly loading = signal(true);
   readonly remarks = signal('');
-  readonly periodType = signal<PayrollPeriodType>('Month');
-  readonly periodTypeOptions: PayrollPeriodType[] = ['Month', 'Year'];
+  readonly selectedMonth = signal(new Date().getMonth() + 1);
+  readonly selectedYear = signal(new Date().getFullYear());
+  readonly monthOptions: PayrollMonthOption[] = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
+  ];
+  readonly yearOptions = this.buildYearOptions();
   readonly loggedInUserName = signal('—');
   readonly loggedInUserId = signal('—');
   readonly detailOpen = signal(false);
@@ -227,8 +245,6 @@ export class AddPayrollProcessComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loggedInUserId.set(this.resolveLoggedInUserId());
-    this.loggedInUserName.set(this.resolveLoggedInUserName());
     this.loadEmployees();
   }
 
@@ -540,6 +556,8 @@ export class AddPayrollProcessComponent implements OnInit {
     this.loading.set(true);
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: (records) => {
+        this.loadLoggedInUserProfile();
+
         const withApiId = records.filter((record) => !!record.apiId);
         if (withApiId.length === 0) {
           this.rows.set([]);
@@ -696,26 +714,83 @@ export class AddPayrollProcessComponent implements OnInit {
     return `PP-${year}-${seq}`;
   }
 
-  private resolveLoggedInUserId(): string {
+  private buildYearOptions(): number[] {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+    for (let year = currentYear - 5; year <= currentYear + 5; year += 1) {
+      years.push(year);
+    }
+    return years;
+  }
+
+  private loadLoggedInUserProfile(): void {
     const employeeRecord = this.applicationFormService.getSignedInUserRecord(
       this.authService.getSessionUserId(),
     );
-    if (employeeRecord?.EmployeeCode) {
-      return String(employeeRecord.EmployeeCode);
+
+    const existingUserId = employeeRecord?.detail?.loginDetails.userId?.trim();
+    if (existingUserId) {
+      this.loggedInUserId.set(existingUserId);
+      this.loggedInUserName.set(this.resolveLoggedInUserName(employeeRecord));
+      this.cdr.markForCheck();
+      return;
     }
 
-    const sessionUser = this.authService.getSessionUser();
-    if (sessionUser?.id) {
-      return String(sessionUser.id);
+    const apiId = employeeRecord?.apiId;
+    if (!apiId) {
+      this.refreshLoggedInUserFields();
+      return;
+    }
+
+    this.applicationFormService.fetchEmployeeProfileDetail(apiId).subscribe({
+      next: (record) => {
+        const userId = record.detail?.loginDetails.userId?.trim();
+        if (userId) {
+          this.loggedInUserId.set(userId);
+        } else {
+          this.loggedInUserId.set(this.resolveLoggedInUserId(record));
+        }
+
+        const name =
+          record.EmployeeName?.trim() ||
+          record.detail?.loginDetails.employeeName?.trim() ||
+          record.detail?.personalInfo.personName?.trim();
+        if (name) {
+          this.loggedInUserName.set(name);
+        } else {
+          this.loggedInUserName.set(this.resolveLoggedInUserName(record));
+        }
+
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.refreshLoggedInUserFields();
+      },
+    });
+  }
+
+  private refreshLoggedInUserFields(): void {
+    this.loggedInUserId.set(this.resolveLoggedInUserId());
+    this.loggedInUserName.set(this.resolveLoggedInUserName());
+    this.cdr.markForCheck();
+  }
+
+  private resolveLoggedInUserId(record?: ApplicationFormRecord): string {
+    const employeeRecord =
+      record ??
+      this.applicationFormService.getSignedInUserRecord(this.authService.getSessionUserId());
+    const loginUserId = employeeRecord?.detail?.loginDetails.userId?.trim();
+    if (loginUserId) {
+      return loginUserId;
     }
 
     return this.authService.getSessionUserId()?.trim() || '—';
   }
 
-  private resolveLoggedInUserName(): string {
-    const employeeRecord = this.applicationFormService.getSignedInUserRecord(
-      this.authService.getSessionUserId(),
-    );
+  private resolveLoggedInUserName(record?: ApplicationFormRecord): string {
+    const employeeRecord =
+      record ??
+      this.applicationFormService.getSignedInUserRecord(this.authService.getSessionUserId());
     if (employeeRecord?.EmployeeName?.trim()) {
       return employeeRecord.EmployeeName.trim();
     }

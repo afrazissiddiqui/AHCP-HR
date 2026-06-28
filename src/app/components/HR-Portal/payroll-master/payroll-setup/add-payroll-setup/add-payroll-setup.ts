@@ -1,3 +1,4 @@
+/* Payroll Setup module — commented out
 import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -196,3 +197,4 @@ export class AddPayrollSetupComponent {
     return `PSF-${year}-${seq}`;
   }
 }
+*/

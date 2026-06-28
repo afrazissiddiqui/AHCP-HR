@@ -29,5 +29,5 @@ export const HR_FORM_TABS: HrFormTab[] = [
   { id: 'attendance', tabText: 'Attendance', title: 'Attendance Management', category: 'Payroll', description: 'Maintain attendance input used for payroll calculations.', route: '/payroll-master/attendance-managment' },
   { id: 'tax', tabText: 'Tax Allowance', title: 'Tax Allowance Form', category: 'Payroll', description: 'Map payroll components to GL codes for tax allowance posting.', route: '/payroll-master/tax-managment' },
   { id: 'tax-computation', tabText: 'Tax Compute', title: 'Tax Computation', category: 'Payroll', description: 'Review employee payroll components and compute tax from salary breakdown.', route: '/payroll-master/tax-computation' },
-  { id: 'setup', tabText: 'Setup', title: 'Payroll Setup', category: 'Payroll', description: 'Define payroll settings, periods, and core defaults.', route: '/payroll-master/payroll-setup' },
+  // { id: 'setup', tabText: 'Setup', title: 'Payroll Setup', category: 'Payroll', description: 'Define payroll settings, periods, and core defaults.', route: '/payroll-master/payroll-setup' },
 ];

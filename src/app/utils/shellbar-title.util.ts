@@ -35,7 +35,7 @@ const EXACT_TITLES: Record<string, string> = {
   'payroll-master/attendance-managment': 'Attendance Management',
   'payroll-master/tax-managment': 'Tax Allowance Form',
   'payroll-master/tax-computation': 'Tax Computation',
-  'payroll-master/payroll-setup': 'Payroll Setup',
+  // 'payroll-master/payroll-setup': 'Payroll Setup',
   miscellaneous: 'Miscellaneous',
   'miscellaneous/good-receipt-note': 'Good Receipt Note',
   'miscellaneous/delivery': 'Delivery',

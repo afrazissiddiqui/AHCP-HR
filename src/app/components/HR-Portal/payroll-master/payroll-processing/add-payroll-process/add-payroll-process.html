@@ -33,17 +33,32 @@
       </div>
 
       <div class="comp-plan-field">
-        <label class="comp-plan-field__label" for="pp-period-type">Period</label>
-        <select
-          id="pp-period-type"
-          class="comp-plan-field__select"
-          [ngModel]="periodType()"
-          (ngModelChange)="periodType.set($event)"
-        >
-          @for (option of periodTypeOptions; track option) {
-            <option [value]="option">{{ option }}</option>
-          }
-        </select>
+        <span class="comp-plan-field__label">Period</span>
+        <div class="comp-plan-period">
+          <select
+            id="pp-period-month"
+            class="comp-plan-field__select comp-plan-field__select--month"
+            [ngModel]="selectedMonth()"
+            (ngModelChange)="selectedMonth.set(+$event)"
+            aria-label="Payroll month"
+          >
+            @for (month of monthOptions; track month.value) {
+              <option [value]="month.value">{{ month.label }}</option>
+            }
+          </select>
+
+          <select
+            id="pp-period-year"
+            class="comp-plan-field__select comp-plan-field__select--year"
+            [ngModel]="selectedYear()"
+            (ngModelChange)="selectedYear.set(+$event)"
+            aria-label="Payroll year"
+          >
+            @for (year of yearOptions; track year) {
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+        </div>
       </div>
 
       <div class="comp-plan-field">

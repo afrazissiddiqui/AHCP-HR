@@ -187,6 +187,20 @@
   cursor: pointer;
 }
 
+.comp-plan-period {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comp-plan-field__select--month {
+  width: 132px;
+}
+
+.comp-plan-field__select--year {
+  width: 92px;
+}
+
 .comp-plan-field__input:focus,
 .comp-plan-field__select:focus {
   outline: none;

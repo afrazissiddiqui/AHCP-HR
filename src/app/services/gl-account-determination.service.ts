@@ -8,6 +8,7 @@ export interface GlAccountDeterminationAddPayload {
   code: string;
   name: string;
   branch: string;
+  debit_credit_type: string;
 }
 
 export interface GlAccountDeterminationRecord {
@@ -16,6 +17,7 @@ export interface GlAccountDeterminationRecord {
   Code: string;
   Name: string;
   Branch: string;
+  DebitCreditType: string;
 }
 
 const GL_ACCOUNT_DETERMINATION_LIST_URL = apiUrl('gl-account-determination-list');
@@ -87,7 +89,7 @@ export class GlAccountDeterminationService {
       }
     }
 
-    if (obj['type'] || obj['code'] || obj['name'] || obj['branch']) {
+    if (obj['type'] || obj['code'] || obj['name'] || obj['branch'] || obj['debit_credit_type']) {
       return [obj];
     }
 
@@ -102,6 +104,11 @@ export class GlAccountDeterminationService {
       Code: this.pickString(sources, ['Code', 'code', 'salaryGlAccountCode', 'salary_gl_account_code']),
       Name: this.pickString(sources, ['Name', 'name', 'salaryGlAccountName', 'salary_gl_account_name']),
       Branch: this.pickString(sources, ['Branch', 'branch']),
+      DebitCreditType: this.pickString(sources, [
+        'DebitCreditType',
+        'debitCreditType',
+        'debit_credit_type',
+      ]),
     };
   }
 

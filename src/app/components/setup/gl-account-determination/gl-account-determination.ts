@@ -16,6 +16,7 @@ export type GlAccountDeterminationRow = {
   salaryGlAccountCode: string;
   salaryGlAccountName: string;
   branch: string;
+  debitCreditType: string;
 };
 
 export const GL_ACCOUNT_BRANCH_OPTIONS = [
@@ -23,6 +24,8 @@ export const GL_ACCOUNT_BRANCH_OPTIONS = [
   'AHCP_HO',
   'AHCP_Faisalabad',
 ] as const;
+
+export const GL_ACCOUNT_DEBIT_CREDIT_OPTIONS = ['Debit', 'Credit'] as const;
 
 function newId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -38,6 +41,7 @@ function emptyRow(): GlAccountDeterminationRow {
     salaryGlAccountCode: '',
     salaryGlAccountName: '',
     branch: '',
+    debitCreditType: '',
   };
 }
 
@@ -53,6 +57,7 @@ export class GlAccountDeterminationComponent implements OnInit {
   private readonly glAccountService = inject(GlAccountDeterminationService);
 
   readonly branchOptions = GL_ACCOUNT_BRANCH_OPTIONS;
+  readonly debitCreditOptions = GL_ACCOUNT_DEBIT_CREDIT_OPTIONS;
   readonly saving = signal(false);
   readonly deleting = signal(false);
   readonly loadingList = signal(false);
@@ -170,6 +175,9 @@ export class GlAccountDeterminationComponent implements OnInit {
     if (!row.branch) {
       return `Row ${srNo}: select Branches.`;
     }
+    if (!row.debitCreditType) {
+      return `Row ${srNo}: select Debit / Credit.`;
+    }
     return null;
   }
 
@@ -179,6 +187,7 @@ export class GlAccountDeterminationComponent implements OnInit {
       code: row.salaryGlAccountCode.trim(),
       name: row.salaryGlAccountName.trim(),
       branch: row.branch,
+      debit_credit_type: row.debitCreditType,
     };
   }
 
