@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
 import { PayrollSetupService } from '../payroll-setup/payroll-setup.service';
-import { AddPayrollProcessPanelComponent } from './add-payroll-process-panel/add-payroll-process-panel';
 
 type PayrollProcessingRow = {
   employeeCode: number;
@@ -40,15 +40,15 @@ type PayrollProcessingColumnKey = keyof PayrollProcessingRow;
 @Component({
   selector: 'app-payroll-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageToolbarComponent, AddPayrollProcessPanelComponent],
+  imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './payroll-processing.html',
   styleUrl: '../../Application-Form/Application-Form.css',
 })
 export class PayrollProcessingComponent {
   private readonly layout = inject(PayrollMasterLayoutService);
+  private readonly router = inject(Router);
 
   constructor(private readonly payrollSetupService: PayrollSetupService) {}
-  readonly showPayrollProcessPanel = signal(false);
   searchText = '';
   /** Empty string means all departments. */
   selectedDepartment = '';
@@ -173,12 +173,8 @@ export class PayrollProcessingComponent {
     this.showDialog = false;
   }
 
-  openPayrollProcessPanel(): void {
-    this.showPayrollProcessPanel.set(true);
-  }
-
-  closePayrollProcessPanel(): void {
-    this.showPayrollProcessPanel.set(false);
+  createPayrollProcess(): void {
+    void this.router.navigateByUrl('/payroll-master/payroll-processing/create');
   }
 
   toggleSidebar(): void {

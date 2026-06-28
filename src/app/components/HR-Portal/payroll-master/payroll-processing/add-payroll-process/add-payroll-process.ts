@@ -4,9 +4,8 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
+  computed,
   inject,
-  input,
-  output,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -22,8 +21,6 @@ import {
   computeNetPayable,
 } from '../../payroll-setup/payroll-setup.service';
 
-type PayrollProcessTab = 'employee' | 'allowances' | 'bonuses';
-
 interface PayrollProcessEmployeeOption {
   apiId: string;
   employeeCode: string;
@@ -36,30 +33,26 @@ interface AmountField {
 }
 
 @Component({
-  selector: 'app-add-payroll-process-panel',
+  selector: 'app-add-payroll-process',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './add-payroll-process-panel.html',
-  styleUrl: './add-payroll-process-panel.css',
+  templateUrl: './add-payroll-process.html',
+  styleUrl: './add-payroll-process.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddPayrollProcessPanelComponent implements OnInit {
-  readonly open = input(false);
-  readonly closed = output<void>();
-  readonly saved = output<void>();
-
+export class AddPayrollProcessComponent implements OnInit {
   private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
   private readonly payrollSetupService = inject(PayrollSetupService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly activeTab = signal<PayrollProcessTab>('employee');
   readonly employeeOptions = signal<PayrollProcessEmployeeOption[]>([]);
   readonly selectedEmployeeId = signal('');
   readonly loadingEmployee = signal(false);
   readonly username = signal('');
   readonly personName = signal('');
+  readonly designation = signal('');
   readonly basicSalary = signal(0);
 
   private readonly allowances = signal<Record<string, number>>({
@@ -79,11 +72,11 @@ export class AddPayrollProcessPanelComponent implements OnInit {
   private selectedRecord: ApplicationFormRecord | null = null;
 
   readonly allowanceFields: AmountField[] = [
-    { key: 'medicalAllowance', label: 'Medical Allowance' },
-    { key: 'fuelAllowance', label: 'Fuel Allowance' },
-    { key: 'mobileAllowance', label: 'Mobile Allowance' },
-    { key: 'carAllowance', label: 'Car Allowance' },
-    { key: 'otherAllowances', label: 'Other Allowances' },
+    { key: 'medicalAllowance', label: 'Medical' },
+    { key: 'fuelAllowance', label: 'Fuel' },
+    { key: 'mobileAllowance', label: 'Mobile' },
+    { key: 'carAllowance', label: 'Car' },
+    { key: 'otherAllowances', label: 'Other' },
   ];
 
   readonly bonusFields: AmountField[] = [
@@ -92,16 +85,77 @@ export class AddPayrollProcessPanelComponent implements OnInit {
     { key: 'arrears', label: 'Arrears' },
   ];
 
+  readonly totalEarnings = computed(() => {
+    const allowances = this.allowances();
+    const bonuses = this.bonuses();
+    return (
+      this.basicSalary() +
+      (allowances['medicalAllowance'] ?? 0) +
+      (allowances['fuelAllowance'] ?? 0) +
+      (allowances['mobileAllowance'] ?? 0) +
+      (allowances['carAllowance'] ?? 0) +
+      (allowances['otherAllowances'] ?? 0) +
+      (bonuses['bonus'] ?? 0) +
+      (bonuses['overtime'] ?? 0) +
+      (bonuses['arrears'] ?? 0)
+    );
+  });
+
+  readonly netPayable = computed(() => {
+    const allowances = this.allowances();
+    const bonuses = this.bonuses();
+    const basic = this.basicSalary();
+    return computeNetPayable({
+      basicSalary: basic,
+      medicalAllowance: allowances['medicalAllowance'] ?? 0,
+      fuelAllowance: allowances['fuelAllowance'] ?? 0,
+      mobileAllowance: allowances['mobileAllowance'] ?? 0,
+      carAllowance: allowances['carAllowance'] ?? 0,
+      otherAllowances: allowances['otherAllowances'] ?? 0,
+      overtime: bonuses['overtime'] ?? 0,
+      bonus: bonuses['bonus'] ?? 0,
+      arrears: bonuses['arrears'] ?? 0,
+      providentFund: 0,
+      gratuity: 0,
+      eobi: 0,
+      loanInstallment: 0,
+      otherDeductions: 0,
+    });
+  });
+
+  readonly earningsRatio = computed(() => {
+    const basic = this.basicSalary();
+    if (basic <= 0) {
+      return 0;
+    }
+    return Math.round((this.totalEarnings() / basic) * 100);
+  });
+
   ngOnInit(): void {
     this.loadEmployees();
   }
 
-  setActiveTab(tab: PayrollProcessTab): void {
-    this.activeTab.set(tab);
+  avatarInitials(): string {
+    const name = this.personName().trim();
+    if (!name) {
+      return '?';
+    }
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
   }
 
-  close(): void {
-    this.closed.emit();
+  formatMoney(value: number): string {
+    return value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  back(): void {
+    void this.router.navigateByUrl('/payroll-master');
   }
 
   parseAmount(value: string | number): number {
@@ -136,6 +190,7 @@ export class AddPayrollProcessPanelComponent implements OnInit {
     this.selectedRecord = null;
     this.username.set('');
     this.personName.set('');
+    this.designation.set('');
     this.basicSalary.set(0);
     this.resetAmounts();
 
@@ -175,7 +230,6 @@ export class AddPayrollProcessPanelComponent implements OnInit {
     const record = this.selectedRecord;
     if (!record || !this.selectedEmployeeId()) {
       void this.alertService.validation('Please select an employee before saving.');
-      this.activeTab.set('employee');
       this.cdr.markForCheck();
       return;
     }
@@ -211,28 +265,11 @@ export class AddPayrollProcessPanelComponent implements OnInit {
       eobi: 0,
       loanInstallment: 0,
       otherDeductions: 0,
-      netPayable: computeNetPayable({
-        basicSalary: basic,
-        medicalAllowance: allowances['medicalAllowance'] ?? 0,
-        fuelAllowance: allowances['fuelAllowance'] ?? 0,
-        mobileAllowance: allowances['mobileAllowance'] ?? 0,
-        carAllowance: allowances['carAllowance'] ?? 0,
-        otherAllowances: allowances['otherAllowances'] ?? 0,
-        overtime: bonuses['overtime'] ?? 0,
-        bonus: bonuses['bonus'] ?? 0,
-        arrears: bonuses['arrears'] ?? 0,
-        providentFund: 0,
-        gratuity: 0,
-        eobi: 0,
-        loanInstallment: 0,
-        otherDeductions: 0,
-      }),
+      netPayable: this.netPayable(),
     });
 
     void this.alertService.success('Success', 'Payroll process saved successfully.');
-    this.resetForm();
-    this.saved.emit();
-    this.closed.emit();
+    this.back();
   }
 
   private loadEmployees(): void {
@@ -266,9 +303,8 @@ export class AddPayrollProcessPanelComponent implements OnInit {
     const detail = record.detail;
     const remuneration = detail?.remuneration;
 
-    this.personName.set(
-      detail?.personalInfo.personName || record.EmployeeName,
-    );
+    this.personName.set(detail?.personalInfo.personName || record.EmployeeName);
+    this.designation.set(record.Designation || detail?.personalInfo.designation || '');
     this.username.set(detail?.loginDetails.userId || record.EmployeeCode);
     this.basicSalary.set(this.parseAmount(remuneration?.basicSalary ?? 0));
 
@@ -276,8 +312,7 @@ export class AddPayrollProcessPanelComponent implements OnInit {
       medicalAllowance: this.parseAmount(remuneration?.medicalAllowances ?? 0),
       fuelAllowance: this.parseAmount(remuneration?.fuelAllowances ?? 0),
       mobileAllowance: this.parseAmount(remuneration?.mobileAllowances ?? 0),
-      carAllowance: this.parseAmount(remuneration?.carAllowances ?? 0,
-      ),
+      carAllowance: this.parseAmount(remuneration?.carAllowances ?? 0),
       otherAllowances: this.parseAmount(remuneration?.otherAllowances ?? 0),
     });
   }
@@ -295,16 +330,6 @@ export class AddPayrollProcessPanelComponent implements OnInit {
       overtime: 0,
       arrears: 0,
     });
-  }
-
-  private resetForm(): void {
-    this.activeTab.set('employee');
-    this.selectedEmployeeId.set('');
-    this.selectedRecord = null;
-    this.username.set('');
-    this.personName.set('');
-    this.basicSalary.set(0);
-    this.resetAmounts();
   }
 
   private generateFormNumber(): string {
