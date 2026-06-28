@@ -3,6 +3,22 @@
   height: 100%;
 }
 
+.cjs-label-required::after {
+  content: ' *';
+  color: #b42318;
+}
+
+.cjs-row input.cjs-invalid,
+.cjs-row select.cjs-invalid,
+.cjs-row textarea.cjs-invalid,
+.rating-cell input.cjs-invalid,
+.salary-adjustment-table td input.cjs-invalid,
+.extension-entry select.cjs-invalid,
+.employee-search-wrap input.cjs-invalid {
+  border-color: #b42318 !important;
+  box-shadow: 0 0 0 1px rgba(180, 35, 24, 0.15);
+}
+
 .employee-search-wrap {
   position: relative;
   width: 100%;
@@ -305,6 +321,20 @@
   margin: 0 0 12px;
   font-size: 13px;
   color: #64748b;
+}
+
+.post-submit-locked-section {
+  padding: 12px 14px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.post-submit-locked-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
 }
 
 .extension-entries-list {

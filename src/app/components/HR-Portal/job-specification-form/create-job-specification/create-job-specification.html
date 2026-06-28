@@ -43,7 +43,15 @@
 
             <div class="cjs-row">
               <label>Experience Requirement:</label>
-              <input type="text" [(ngModel)]="experienceRequirement" placeholder="Years of experience" />
+              <input
+                type="number"
+                [(ngModel)]="experienceYears"
+                min="0"
+                step="1"
+                inputmode="numeric"
+                placeholder="Enter number of years"
+                (keydown)="preventNonNumericExperienceInput($event)"
+              />
             </div>
           </div>
 
@@ -72,7 +80,7 @@
               <select [(ngModel)]="employmentType">
                 <option value="">No Selection</option>
                 <option value="Permanent">Permanent</option>
-                <option value="Temporary">Temporary</option>
+                <option value="Temporary">Contractual</option>
               </select>
             </div>
 
@@ -80,11 +88,9 @@
               <label>Grade / Work Level:</label>
               <select [(ngModel)]="gradeWorkLevel">
                 <option value="">No Selection</option>
-                <option value="Grade 1">Grade 1</option>
-                <option value="Grade 2">Grade 2</option>
-                <option value="Grade 3">Grade 3</option>
-                <option value="Grade 4">Grade 4</option>
-                <option value="Grade 5">Grade 5</option>
+                @for (level of gradeWorkLevelOptions; track level) {
+                <option [value]="level">{{ level }}</option>
+                }
               </select>
             </div>
 
@@ -102,17 +108,38 @@
           <div class="cjs-col">
             <div class="cjs-row">
               <label>Basic Salary:</label>
-              <input type="text" [(ngModel)]="basicSalary" placeholder="Enter basic salary" />
+              <input
+                type="text"
+                inputmode="decimal"
+                [ngModel]="basicSalary"
+                (ngModelChange)="onSalaryInput($event, 'basicSalary')"
+                (keydown)="onDecimalKeyDown($event)"
+                placeholder="Enter basic salary"
+              />
             </div>
             <div class="cjs-row">
               <label>Medical Allowance:</label>
-              <input type="text" [(ngModel)]="medicalAllowance" placeholder="Enter medical allowance" />
+              <input
+                type="text"
+                inputmode="decimal"
+                [ngModel]="medicalAllowance"
+                (ngModelChange)="onSalaryInput($event, 'medicalAllowance')"
+                (keydown)="onDecimalKeyDown($event)"
+                placeholder="Enter medical allowance"
+              />
             </div>
           </div>
           <div class="cjs-col">
             <div class="cjs-row">
               <label>Fuel Allowance:</label>
-              <input type="text" [(ngModel)]="fuelAllowance" placeholder="Enter fuel allowance" />
+              <input
+                type="text"
+                inputmode="decimal"
+                [ngModel]="fuelAllowance"
+                (ngModelChange)="onSalaryInput($event, 'fuelAllowance')"
+                (keydown)="onDecimalKeyDown($event)"
+                placeholder="Enter fuel allowance"
+              />
             </div>
             <div class="cjs-row">
               <label>Package / Perks:</label>

@@ -26,6 +26,18 @@ const DEPARTMENT_OPTIONS = [
   'Common Department',
 ] as const;
 
+const GRADE_WORK_LEVEL_OPTIONS = [
+  'WL 5',
+  'WL 4',
+  'WL 3B',
+  'WL 3A',
+  'WL 2C',
+  'WL 2B',
+  'WL 2A',
+  'WL 1D',
+  'WL 1B–1C',
+] as const;
+
 @Component({
   selector: 'app-create-job-specification',
   standalone: true,
@@ -36,6 +48,7 @@ const DEPARTMENT_OPTIONS = [
 })
 export class CreateJobSpecificationComponent implements OnInit {
   protected readonly departmentOptions = DEPARTMENT_OPTIONS;
+  protected readonly gradeWorkLevelOptions = GRADE_WORK_LEVEL_OPTIONS;
 
   editingId: string | null = null;
   pageTitle = 'Create New Job Specification';
@@ -45,7 +58,7 @@ export class CreateJobSpecificationComponent implements OnInit {
   jobTitle = '';  department = '';
   vacancyCount: number | null = null;
   jobDescription = '';
-  experienceRequirement = '';
+  experienceYears: number | null = null;
   employmentCategory = '';
   employmentNature = '';
   employmentType = '';
@@ -121,6 +134,37 @@ export class CreateJobSpecificationComponent implements OnInit {
     return index;
   }
 
+  preventNonNumericExperienceInput(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  onSalaryInput(value: string, field: 'basicSalary' | 'medicalAllowance' | 'fuelAllowance'): void {
+    this[field] = this.sanitizeDecimalValue(value);
+    this.cdr.markForCheck();
+  }
+
+  onDecimalKeyDown(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (event.key === '.' && !(event.target as HTMLInputElement).value.includes('.')) {
+      return;
+    }
+
+    if (event.key.length === 1 && !/\d/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
   back(): void {
     void this.router.navigateByUrl('/job-specification-form');
   }
@@ -137,15 +181,15 @@ export class CreateJobSpecificationComponent implements OnInit {
       department: this.department.trim(),
       vacancyCount: this.vacancyCount ?? 0,
       jobDescription: this.jobDescription.trim(),
-      experienceRequirement: this.experienceRequirement.trim(),
+      experienceRequirement: this.formatExperienceRequirement(this.experienceYears),
       employmentCategory: this.employmentCategory,
       employmentNature: this.employmentNature,
       employmentType: this.employmentType,
       gradeWorkLevel: this.gradeWorkLevel,
       keyResponsibilities: this.keyResponsibilities.trim(),
-      basicSalary: Number.parseFloat(this.basicSalary) || 0,
-      medicalAllowance: Number.parseFloat(this.medicalAllowance) || 0,
-      fuelAllowance: Number.parseFloat(this.fuelAllowance) || 0,
+      basicSalary: this.parseAmount(this.basicSalary),
+      medicalAllowance: this.parseAmount(this.medicalAllowance),
+      fuelAllowance: this.parseAmount(this.fuelAllowance),
       packagePerks: this.packagePerks.trim(),
       qualifications: this.qualifications.filter(q => q.trim() !== ''),
     };
@@ -156,13 +200,10 @@ export class CreateJobSpecificationComponent implements OnInit {
 
     request$.subscribe({
       next: () => {
-        this.alertService.success(
-          'Success',
-          this.editingId
-            ? 'Job specification updated successfully!'
-            : 'Job specification saved successfully!',
-        );
-        this.back();
+        this.jobSpecService.fetchPostedJobSpecifications().subscribe({
+          next: () => this.handleSubmitSuccess(),
+          error: () => this.handleSubmitSuccess(),
+        });
       },
       error: (error: unknown) => {
         const errorMessage =
@@ -179,16 +220,54 @@ export class CreateJobSpecificationComponent implements OnInit {
     this.department = record.department === '—' ? '' : record.department;
     this.vacancyCount = record.vacancyCount || null;
     this.jobDescription = record.jobDescription === '—' ? '' : record.jobDescription;
-    this.experienceRequirement = record.experienceRequirement === '—' ? '' : record.experienceRequirement;
+    this.experienceYears = this.parseExperienceYears(record.experienceRequirement);
     this.employmentCategory = record.employmentCategory === '—' ? '' : record.employmentCategory;
     this.employmentNature = record.employmentNature === '—' ? '' : record.employmentNature;
     this.employmentType = record.employmentType === '—' ? '' : record.employmentType;
     this.gradeWorkLevel = record.gradeWorkLevel === '—' ? '' : record.gradeWorkLevel;
     this.keyResponsibilities = record.keyResponsibilities === '—' ? '' : record.keyResponsibilities;
-    this.basicSalary = record.basicSalary ? String(record.basicSalary) : '';
-    this.medicalAllowance = record.medicalAllowance ? String(record.medicalAllowance) : '';
-    this.fuelAllowance = record.fuelAllowance ? String(record.fuelAllowance) : '';
+    this.basicSalary = record.basicSalary > 0 ? String(record.basicSalary) : '';
+    this.medicalAllowance = record.medicalAllowance > 0 ? String(record.medicalAllowance) : '';
+    this.fuelAllowance = record.fuelAllowance > 0 ? String(record.fuelAllowance) : '';
     this.packagePerks = record.packagePerks === '—' ? '' : record.packagePerks;
     this.qualifications = record.qualifications.length ? [...record.qualifications] : [''];
+  }
+
+  private formatExperienceRequirement(years: number | null): string {
+    if (years === null || !Number.isFinite(years) || years < 0) {
+      return '';
+    }
+
+    return years === 1 ? '1 year' : `${years} years`;
+  }
+
+  private parseExperienceYears(value: string): number | null {
+    if (!value || value === '—') {
+      return null;
+    }
+
+    const match = value.trim().match(/^(\d+)/);
+    return match ? Number.parseInt(match[1], 10) : null;
+  }
+
+  private handleSubmitSuccess(): void {
+    this.alertService.success(
+      'Success',
+      this.editingId
+        ? 'Job specification updated successfully!'
+        : 'Job specification saved successfully!',
+    );
+    this.back();
+  }
+
+  private sanitizeDecimalValue(value: string): string {
+    const sanitized = String(value ?? '').replace(/[^\d.]/g, '');
+    const [whole, ...fraction] = sanitized.split('.');
+    return fraction.length ? `${whole}.${fraction.join('')}` : whole;
+  }
+
+  private parseAmount(value: string): number {
+    const parsed = Number.parseFloat(this.sanitizeDecimalValue(value));
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 }

@@ -302,7 +302,7 @@
                 <option value="">No Selection</option>
                 <option value="Executive">Executive</option>
                 <option value="Non-Executive">Non-Executive</option>
-                <option value="Daily Wagers">Daily Wagers</option>
+                <option value="Daily Wagers">Top Managment</option>
               </select>
             </div>
 
@@ -336,8 +336,8 @@
               <select [ngModel]="employmentStatus()" (ngModelChange)="employmentStatus.set($event)"
                 [class.cjr-invalid]="showFieldError('employmentStatus')" (blur)="touch('employmentStatus')">
                 <option value="">No Selection</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+                <option value="Active">Permanent</option>
+                <option value="Inactive">Contractual</option>
               </select>
             </div>
 

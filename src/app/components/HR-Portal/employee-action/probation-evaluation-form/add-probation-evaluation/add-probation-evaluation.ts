@@ -21,6 +21,7 @@ import {
 } from '../../../../../services/probation-evaluation.service';
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import { formatDateForInput } from '../../../../../utils/date-format.util';
 
 type RatingKey =
   | 'communication_skills'
@@ -29,6 +30,14 @@ type RatingKey =
   | 'discipline'
   | 'teamwork'
   | 'productivity';
+
+type ProbationValidationField =
+  | 'employeeCode'
+  | 'employeeName'
+  | 'department'
+  | 'designation'
+  | 'terminationEffectiveDate'
+  | 'effectiveDateOfRevision';
 
 interface ProbationEmployeeOption {
   code: string;
@@ -296,6 +305,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.editingId = null;
     this.pageTitle = 'Add Probation Evaluation';
     this.submitButtonLabel = 'Save Probation Evaluation';
+    this.resetPostSubmitFields();
   }
 
   private buildEmployeeOptions(): ProbationEmployeeOption[] {
@@ -387,7 +397,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.employmentCategory.set(mapped.employmentCategory);
     this.remarks.set(mapped.remarks);
 
-    if (mapped.basicSalary) {
+    if (mapped.basicSalary && this.isPostSubmitSectionsAvailable()) {
       this.currentSalary.set(mapped.basicSalary);
       this.recalculateAdjustmentAmountFromPercent();
     }
@@ -396,7 +406,7 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   private applyProbationDatesFromJoining(dateOfJoining: string): void {
-    const joiningDate = dateOfJoining.trim();
+    const joiningDate = formatDateForInput(dateOfJoining);
     if (!joiningDate) {
       this.probationStartDate.set('');
       this.probationEndDate.set('');
@@ -456,7 +466,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.employmentCategory.set(employee.employmentCategory);
     this.remarks.set(employee.remarks);
 
-    if (employee.basicSalary) {
+    if (employee.basicSalary && this.isPostSubmitSectionsAvailable()) {
       this.currentSalary.set(employee.basicSalary);
       this.recalculateAdjustmentAmountFromPercent();
     }
@@ -533,8 +543,9 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   protected onProbationEndDateChange(endDate: string): void {
-    this.baseProbationEndDate.set(endDate);
-    this.probationEndDate.set(endDate);
+    const normalized = formatDateForInput(endDate);
+    this.baseProbationEndDate.set(normalized);
+    this.probationEndDate.set(normalized);
     this.recalculateExtensionEntries();
   }
 
@@ -556,8 +567,9 @@ export class AddProbationEvaluationComponent implements OnInit {
     return Number.isFinite(months) && months > 0 ? months : null;
   }
 
-  private addMonthsToIsoDate(isoDate: string, monthsToAdd: number): string {
-    const parts = isoDate.trim().split('-').map(Number);
+  private addMonthsToIsoDate(dateValue: string, monthsToAdd: number): string {
+    const isoDate = formatDateForInput(dateValue);
+    const parts = isoDate.split('-').map(Number);
     if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) {
       return '';
     }
@@ -574,7 +586,8 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   private recalculateExtensionEntries(): void {
-    const baseEndDate = this.baseProbationEndDate().trim() || this.probationEndDate().trim();
+    const baseEndDate =
+      formatDateForInput(this.baseProbationEndDate()) || formatDateForInput(this.probationEndDate());
     let rollingEndDate = baseEndDate;
 
     const updatedEntries = this.extensionEntries().map((entry) => {
@@ -587,7 +600,7 @@ export class AddProbationEvaluationComponent implements OnInit {
         return { ...entry, newProbationEndDate: '' };
       }
 
-      const newEndDate = this.addMonthsToIsoDate(rollingEndDate, months - 1);
+      const newEndDate = this.addMonthsToIsoDate(rollingEndDate, months);
       rollingEndDate = newEndDate;
       return { ...entry, newProbationEndDate: newEndDate };
     });
@@ -620,6 +633,7 @@ export class AddProbationEvaluationComponent implements OnInit {
 
   protected readonly remarks = signal('');
   protected readonly supervisionRemark = signal('');
+  protected readonly validationTouched = signal(false);
   protected readonly ratingValidationTouched = signal(false);
 
   protected onPercentageChange(key: RatingKey, value: string | number | null): void {
@@ -655,6 +669,78 @@ export class AddProbationEvaluationComponent implements OnInit {
     return !this.isRatingValidValue(this.ratings()[key].rating);
   }
 
+  protected isPostSubmitSectionsAvailable(): boolean {
+    return !!this.editingId;
+  }
+
+  private resetPostSubmitFields(): void {
+    this.extensionEntries.set([]);
+    this.termination.set('');
+    this.terminationEffectiveDate.set('');
+    this.currentSalary.set('');
+    this.adjustmentInSalary.set('');
+    this.adjustmentAmountInSalary.set('');
+    this.effectiveDateOfRevision.set('');
+    this.allowances.set([]);
+  }
+
+  protected isFieldInvalid(field: ProbationValidationField): boolean {
+    if (!this.validationTouched()) {
+      return false;
+    }
+
+    switch (field) {
+      case 'employeeCode':
+        return !this.employeeCode().trim();
+      case 'employeeName':
+        return !this.employeeName().trim();
+      case 'department':
+        return !this.department().trim();
+      case 'designation':
+        return !this.designation().trim();
+      case 'terminationEffectiveDate':
+        return (
+          this.isPostSubmitSectionsAvailable() &&
+          this.termination() === 'Yes' &&
+          !this.terminationEffectiveDate().trim()
+        );
+      case 'effectiveDateOfRevision':
+        return (
+          this.isPostSubmitSectionsAvailable() &&
+          this.isEffectiveDateRequired() &&
+          !this.effectiveDateOfRevision().trim()
+        );
+      default:
+        return false;
+    }
+  }
+
+  protected isExtensionPeriodInvalid(index: number): boolean {
+    if (!this.validationTouched() || !this.isPostSubmitSectionsAvailable()) {
+      return false;
+    }
+
+    const entry = this.extensionEntries()[index];
+    if (!entry) {
+      return false;
+    }
+
+    return !entry.period.trim() || (!!entry.period.trim() && !entry.newProbationEndDate.trim());
+  }
+
+  protected isEffectiveDateRequired(): boolean {
+    if (!this.isPostSubmitSectionsAvailable()) {
+      return false;
+    }
+
+    const latestExtensionEndDate = this.getLatestExtensionEntry()?.newProbationEndDate ?? '';
+    return (
+      this.toAmount(this.currentSalary()) > 0 &&
+      !this.probationEndDate().trim() &&
+      !latestExtensionEndDate.trim()
+    );
+  }
+
   protected areAllRatingsValid(): boolean {
     return this.ratingParameters.every((row) => this.isRatingValidValue(this.ratings()[row.key].rating));
   }
@@ -672,6 +758,32 @@ export class AddProbationEvaluationComponent implements OnInit {
     }, 0);
   }
 
+  private scrollToFirstInvalidSection(): void {
+    if (
+      this.isFieldInvalid('employeeCode') ||
+      this.isFieldInvalid('employeeName') ||
+      this.isFieldInvalid('department') ||
+      this.isFieldInvalid('designation')
+    ) {
+      this.scrollToSectionById('probation-info-section');
+      return;
+    }
+
+    if (this.isPostSubmitSectionsAvailable() && this.extensionEntries().some((_, index) => this.isExtensionPeriodInvalid(index))) {
+      this.scrollToSectionById('extension-of-probation-section');
+      return;
+    }
+
+    if (this.isPostSubmitSectionsAvailable() && this.isFieldInvalid('terminationEffectiveDate')) {
+      this.scrollToSectionById('termination-of-probation-section');
+      return;
+    }
+
+    if (this.isPostSubmitSectionsAvailable() && this.isFieldInvalid('effectiveDateOfRevision')) {
+      this.scrollToSectionById('salary-adjustment-section');
+    }
+  }
+
   protected cancel(): void {
     void this.router.navigateByUrl('/employee-action/probation-evaluation-form');
   }
@@ -681,15 +793,20 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   protected save(): void {
+    this.validationTouched.set(true);
+    this.ratingValidationTouched.set(true);
+
     const validationMessage = this.validateBeforeSubmit();
     if (validationMessage) {
       this.alertService.validation(validationMessage);
+      this.scrollToFirstInvalidSection();
+      this.cdr.markForCheck();
       return;
     }
 
-    this.ratingValidationTouched.set(true);
     if (!this.areAllRatingsValid()) {
       this.scrollToSectionById('probation-rating-section');
+      this.cdr.markForCheck();
       return;
     }
 
@@ -800,10 +917,18 @@ export class AddProbationEvaluationComponent implements OnInit {
     if (!this.designation().trim()) {
       return 'Please enter Designation.';
     }
-    if (this.termination() === 'Yes' && !this.terminationEffectiveDate().trim()) {
+    if (this.isPostSubmitSectionsAvailable() && this.termination() === 'Yes' && !this.terminationEffectiveDate().trim()) {
       return 'Please enter Termination Effective Date when termination is Yes.';
     }
-    if (this.isExtensionActive()) {
+    if (this.isPostSubmitSectionsAvailable() && this.extensionEntries().length > 0) {
+      const incompleteExtension = this.extensionEntries().find(
+        (entry) => !entry.period.trim() || !entry.newProbationEndDate.trim(),
+      );
+      if (incompleteExtension) {
+        return 'Please select an extension period for each added row.';
+      }
+    }
+    if (this.isPostSubmitSectionsAvailable() && this.isExtensionActive()) {
       const incompleteExtension = this.getActiveExtensionEntries().find((entry) => !entry.newProbationEndDate.trim());
       if (incompleteExtension) {
         return 'Please ensure each extension has a valid New Probation End Date.';
@@ -811,6 +936,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     }
     const latestExtensionEndDate = this.getLatestExtensionEntry()?.newProbationEndDate ?? '';
     if (
+      this.isPostSubmitSectionsAvailable() &&
       this.toAmount(this.currentSalary()) > 0 &&
       !this.effectiveDateOfRevision().trim() &&
       !this.probationEndDate().trim() &&
@@ -868,21 +994,24 @@ export class AddProbationEvaluationComponent implements OnInit {
       },
     });
 
-    const probationStart =
-      emptyIfDash(record.ExtensionOfProbation.probation_start_date) || emptyIfDash(record.ProbationStartDate);
-    const probationEnd =
-      emptyIfDash(record.ExtensionOfProbation.probation_end_date) || emptyIfDash(record.ProbationEndDate);
+    const probationStart = formatDateForInput(
+      emptyIfDash(record.ExtensionOfProbation.probation_start_date) || emptyIfDash(record.ProbationStartDate),
+    );
+    const probationEnd = formatDateForInput(
+      emptyIfDash(record.ExtensionOfProbation.probation_end_date) || emptyIfDash(record.ProbationEndDate),
+    );
     const extensionPeriod = emptyIfDash(record.ExtensionOfProbation.extension_period_in_probation);
-    const newProbationEnd = emptyIfDash(record.ExtensionOfProbation.new_probation_end_date);
+    const newProbationEnd = formatDateForInput(emptyIfDash(record.ExtensionOfProbation.new_probation_end_date));
 
     this.probationStartDate.set(probationStart);
-    this.probationEndDate.set(newProbationEnd || probationEnd);
     this.baseProbationEndDate.set(probationEnd);
 
     if (record.ExtensionOfProbation.is_extension_enabled && extensionPeriod) {
       this.extensionEntries.set([{ period: extensionPeriod, newProbationEndDate: newProbationEnd }]);
+      this.recalculateExtensionEntries();
     } else {
       this.extensionEntries.set([]);
+      this.probationEndDate.set(probationEnd);
     }
 
     this.probationCompletion.set(

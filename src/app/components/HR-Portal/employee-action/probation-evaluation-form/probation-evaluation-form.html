@@ -84,7 +84,7 @@
                 <input type="checkbox" [(ngModel)]="item.selected" />
               </td>
               <td *ngFor="let col of visibleColumns">
-                {{ item[col.key] }}
+                {{ displayCellValue(item, col.key) }}
               </td>
               <td class="table-action-cell">
                 <div class="action-buttons">
@@ -146,8 +146,8 @@
           <div class="js-detail-item"><label>Employment Type:</label> <span>{{ selectedRecord.EmployeeType }}</span></div>
           <div class="js-detail-item"><label>Grade / Work Level:</label> <span>{{ selectedRecord.GradeWorkLevel }}</span></div>
           <div class="js-detail-item"><label>Employment Category:</label> <span>{{ selectedRecord.EmploymentCategory }}</span></div>
-          <div class="js-detail-item"><label>Probation Start Date:</label> <span>{{ selectedRecord.ProbationStartDate }}</span></div>
-          <div class="js-detail-item"><label>Probation End Date:</label> <span>{{ selectedRecord.ProbationEndDate }}</span></div>
+          <div class="js-detail-item"><label>Probation Start Date:</label> <span>{{ displayDate(selectedRecord.ProbationStartDate) }}</span></div>
+          <div class="js-detail-item"><label>Probation End Date:</label> <span>{{ displayDate(selectedRecord.ProbationEndDate) }}</span></div>
           <div class="js-detail-item"><label>Probation Completion:</label> <span>{{ selectedRecord.ProbationCompletion }}</span></div>
           <div class="js-detail-item"><label>Total Salary:</label> <span>{{ selectedRecord.TotalSalary }}</span></div>
         </div>

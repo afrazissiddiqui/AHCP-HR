@@ -106,12 +106,74 @@ export class JobSpecificationService {
   }
 
   addJobSpec(payload: JobSpecificationAddPayload): Observable<unknown> {
-    return this.http.post(JOB_SPECIFICATION_ADD_URL, payload);
+    return this.http.post(JOB_SPECIFICATION_ADD_URL, this.buildSubmitBody(payload));
   }
 
   updateJobSpec(id: string | number, payload: JobSpecificationAddPayload): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.post(`${JOB_SPECIFICATION_UPDATE_URL}/${identifier}`, payload);
+    return this.http.post(`${JOB_SPECIFICATION_UPDATE_URL}/${identifier}`, this.buildSubmitBody(payload));
+  }
+
+  private buildSubmitBody(payload: JobSpecificationAddPayload): Record<string, unknown> {
+    const basicSalary = this.toAmount(payload.basicSalary);
+    const medicalAllowance = this.toAmount(payload.medicalAllowance);
+    const fuelAllowance = this.toAmount(payload.fuelAllowance);
+
+    return {
+      jobTitle: payload.jobTitle.trim(),
+      department: payload.department.trim(),
+      vacancyCount: payload.vacancyCount ?? 0,
+      jobDescription: payload.jobDescription.trim(),
+      experienceRequirement: payload.experienceRequirement.trim(),
+      employmentCategory: payload.employmentCategory,
+      employmentNature: payload.employmentNature,
+      employmentType: payload.employmentType,
+      gradeWorkLevel: payload.gradeWorkLevel,
+      keyResponsibilities: payload.keyResponsibilities.trim(),
+      basicSalary,
+      medicalAllowance,
+      fuelAllowance,
+      packagePerks: payload.packagePerks.trim(),
+      qualifications: payload.qualifications,
+      job_title: payload.jobTitle.trim(),
+      vacancy_count: payload.vacancyCount ?? 0,
+      job_description: payload.jobDescription.trim(),
+      experience_requirement: payload.experienceRequirement.trim(),
+      employment_category: payload.employmentCategory,
+      employment_nature: payload.employmentNature,
+      employment_type: payload.employmentType,
+      grade_work_level: payload.gradeWorkLevel,
+      key_responsibilities: payload.keyResponsibilities.trim(),
+      basic_salary: basicSalary,
+      medical_allowance: medicalAllowance,
+      fuel_allowance: fuelAllowance,
+      package_perks: payload.packagePerks.trim(),
+    };
+  }
+
+  private toAmount(value: number): number {
+    if (!Number.isFinite(value) || value < 0) {
+      return 0;
+    }
+
+    return value;
+  }
+
+  private pickAmount(source: Record<string, unknown>, keys: string[]): number {
+    for (const key of keys) {
+      const parsed = Number.parseFloat(String(source[key] ?? '').replace(/,/g, '').trim());
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+
+    return 0;
+  }
+
+  private pickNestedRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
   }
 
   findJobSpecById(id: string | number): JobSpecificationRecord | undefined {
@@ -225,11 +287,6 @@ export class JobSpecificationService {
       return [];
     };
 
-    const asFloat = (value: unknown, fallback = 0): number => {
-      const parsed = Number.parseFloat(asString(value));
-      return Number.isFinite(parsed) ? parsed : fallback;
-    };
-
     const id =
       asString(item['id']) ||
       asString(item['Id']) ||
@@ -240,6 +297,12 @@ export class JobSpecificationService {
       asString(item['jobSpecificationId']) ||
       asString(item['specificationId']) ||
       asString(item['specification_id']);
+
+    const remuneration =
+      this.pickNestedRecord(item['remuneration']) ??
+      this.pickNestedRecord(item['Remuneration']) ??
+      this.pickNestedRecord(item['remuneration_details']) ??
+      this.pickNestedRecord(item['remunerationDetails']);
 
     return {
       Id: asNumber(id, 0),
@@ -295,9 +358,18 @@ export class JobSpecificationService {
         asString(item['KeyResponsibilities']) ||
         asString(item['responsibilities']) ||
         '—',
-      basicSalary: asFloat(item['basicSalary'] ?? item['basic_salary'] ?? item['BasicSalary']),
-      medicalAllowance: asFloat(item['medicalAllowance'] ?? item['medical_allowance'] ?? item['MedicalAllowance']),
-      fuelAllowance: asFloat(item['fuelAllowance'] ?? item['fuel_allowance'] ?? item['FuelAllowance']),
+      basicSalary: this.pickAmount(
+        { ...item, ...(remuneration ?? {}) },
+        ['basicSalary', 'basic_salary', 'BasicSalary', 'salary', 'Salary'],
+      ),
+      medicalAllowance: this.pickAmount(
+        { ...item, ...(remuneration ?? {}) },
+        ['medicalAllowance', 'medical_allowance', 'MedicalAllowance'],
+      ),
+      fuelAllowance: this.pickAmount(
+        { ...item, ...(remuneration ?? {}) },
+        ['fuelAllowance', 'fuel_allowance', 'FuelAllowance'],
+      ),
       packagePerks:
         asString(item['packagePerks']) ||
         asString(item['package_perks']) ||
