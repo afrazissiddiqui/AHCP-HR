@@ -501,135 +501,122 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     };
   }
 
-  private parseNumericField(value: string): number {
-    const parsed = Number.parseFloat(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-
-  private nullIfEmpty(value: string): string | null {
-    const trimmed = value.trim();
-    return trimmed ? trimmed : null;
-  }
-
-  private isoDateOrNull(value: string): string | null {
+  private apiDateOrEmpty(value: string): string {
     const trimmed = value.trim();
     if (!trimmed) {
-      return null;
+      return '';
     }
     return formatDateToApiIso(trimmed);
   }
 
-  private buildEmployeeProfilePayload(): EmployeeProfileAddPayload {
-    const roleSalary =
-      this.roleSalary().trim() ||
-      this.salaryStructure().trim() ||
-      this.workGradeLevel().trim();
+  private reportingManagerValue(): string {
+    return this.hiringManager().trim();
+  }
 
+  private buildEmployeeProfilePayload(): EmployeeProfileAddPayload {
     return {
-      personName: this.personName(),
-      firstName: this.firstName(),
-      middleName: this.nullIfEmpty(this.middleName()),
-      lastName: this.lastName(),
-      fatherOrHusbandName: this.fatherOrHusbandName(),
+      jobSpecificationId: this.selectedJobSpecId().trim(),
+      personName: this.personName().trim(),
+      firstName: this.firstName().trim(),
+      middleName: this.middleName().trim(),
+      lastName: this.lastName().trim(),
+      fatherOrHusbandName: this.fatherOrHusbandName().trim(),
       gender: this.gender(),
       maritalStatus: this.maritalStatus(),
       dateOfBirth: this.dateOfBirth().trim()
         ? formatDateToApiIso(formatDateOfBirthToApi(this.dateOfBirth()))
-        : null,
-      nationality: this.nationality(),
-      religion: this.religion(),
-      bloodGroup: this.bloodGroup(),
-      nationalIdCardNo: this.nationalIdCardNo(),
-      incomeTaxNo: this.incomeTaxNo(),
-      employmentNature: this.employmentNature(),
-      employeeCategory: this.employmentCategory(),
-      employmentStatus: this.employmentStatus(),
-      department: this.departmentInAhcp(),
-      designation: this.designation(),
-      jobDescription: this.jobDescription(),
-      roleSalary,
-      basicSalary: this.basicSalary(),
-      paymentMode: this.paymentMode(),
-      accountTitle: this.accountTitle(),
-      bankName: this.bankName(),
-      branchName: this.nullIfEmpty(this.branchName()),
-      accountNo: this.accountNo(),
-      accountType: this.accountType(),
-      effectiveDate: this.isoDateOrNull(this.effectiveDate()),
-      taxPercentage: this.isTaxPercentageEnabled() ? this.nullIfEmpty(this.taxPercentage()) : null,
-      dateOfJoining: this.isoDateOrNull(this.dateOfJoining()),
-      advancePercentAllowed: this.nullIfEmpty(this.advancePercentAllowed()),
-      loanAmountAllowed: this.nullIfEmpty(this.maximumLoanCapacity()),
-      overTimeApplicable: this.overTimeToBoolean(this.overTimeApplicable()),
-      leaveType: this.leaveType(),
-      leaveDays: this.parseNumericField(this.leaveDays()),
-      leavesAvailed: this.parseNumericField(this.leavesAvailed()),
-      remainingLeaves: this.parseNumericField(this.remainingLeaves()),
-      totalLeaves: this.parseNumericField(this.totalLeaves()),
-      requestStatus: null,
-      medicalAllowances: this.nullIfEmpty(this.medicalAllowances()),
-      fuelAllowances: this.nullIfEmpty(this.fuelAllowances()),
-      mobileAllowances: this.nullIfEmpty(this.mobileAllowances()),
-      carAllowances: this.nullIfEmpty(this.carAllowances()),
-      maximumAdvanceCapacity: this.nullIfEmpty(this.maximumAdvanceCapacity()),
-      otherAllowances: this.nullIfEmpty(this.otherAllowances()),
-      allowancesApplicable: this.yesNoToBoolean(this.allowancesApplicable()),
-      cashSalaryPercentage: this.nullIfEmpty(this.cashSalaryPercentage()),
-      eobiApplicable: this.yesNoToBoolean(this.eobiApplicable()),
-      socialSecurityApplicable: this.yesNoToBoolean(this.socialSecurityApplicable()),
-      fuelLimit: this.nullIfEmpty(this.fuelLimit()),
-      leaveEligibilityCriteria: this.nullIfEmpty(this.leaveEligibilityCriteria()),
-      workGradeLevel: this.nullIfEmpty(this.workGradeLevel()),
-      branchLocation: this.nullIfEmpty(this.branchLocation()) || this.nullIfEmpty(this.location()),
-      reportingManager: this.nullIfEmpty(this.hiringManager()),
-      remarks: this.nullIfEmpty(this.remarks()),
-      contactNumber: this.contactNumber(),
-      emergencyContactNumber: this.emergencyContactNumber(),
-      street: this.street(),
-      streetNo: this.streetNo(),
-      buildingFloorRoom: null,
-      city: this.city(),
+        : '',
+      nationality: this.nationality().trim(),
+      religion: this.religion().trim(),
+      bloodGroup: this.bloodGroup().trim(),
+      nationalIdCardNo: this.nationalIdCardNo().trim(),
+      incomeTaxNo: this.incomeTaxNo().trim(),
+      contactNumber: this.contactNumber().trim(),
+      emergencyContactNumber: this.emergencyContactNumber().trim(),
+      street: this.street().trim(),
+      streetNo: this.streetNo().trim(),
+      city: this.city().trim(),
       state: this.state(),
-      country: this.country(),
-      zipCode: this.zipCode(),
-      educationSections: this.educationSections().map((row) => ({
-        qualification: row.qualification,
-        institution: row.institution || row.institute,
-        passingYear: row.passingYear,
+      country: this.country().trim(),
+      zipCode: this.zipCode().trim(),
+      departmentInAhcp: this.departmentInAhcp().trim(),
+      branchLocation: this.branchLocation().trim() || this.location().trim(),
+      employmentCategory: this.employmentCategory(),
+      workGradeLevel: this.workGradeLevel().trim(),
+      designation: this.designation().trim(),
+      hiringManager: this.reportingManagerValue(),
+      reportingManager: this.reportingManagerValue(),
+      employmentStatus: this.employmentStatus(),
+      remarks: this.remarks().trim(),
+      jobDescription: this.jobDescription().trim(),
+      education: this.educationSections().map((row) => ({
+        institute: (row.institute || row.institution).trim(),
+        qualification: row.qualification.trim(),
+        passingYear: row.passingYear.trim(),
+        fromDate: this.apiDateOrEmpty(row.fromDate),
+        toDate: this.apiDateOrEmpty(row.toDate),
+        subject: row.subject.trim(),
+        marksGrades: row.marksGrades.trim(),
+        notes: row.notes.trim(),
       })),
-      pastExperienceSections: this.pastExperienceSections().map((row) => ({
-        company: row.company,
-        designation: row.designation || row.position,
-        duration: row.duration,
+      pastExperience: this.pastExperienceSections().map((row) => ({
+        company: row.company.trim(),
+        designation: (row.designation || row.position).trim(),
+        position: (row.position || row.designation).trim(),
+        duties: row.duties.trim(),
+        duration: row.duration.trim(),
+        fromDate: this.apiDateOrEmpty(row.fromDate),
+        toDate: this.apiDateOrEmpty(row.toDate),
+        lastSalary: row.lastSalary.trim(),
+        remarks: row.remarks.trim(),
       })),
       attachments: this.buildAttachmentsPayload().map((row) => ({
-        attachmentFor: row.type.trim() || null,
-        fileName: row.fileName,
-        fileUrl: row.fileUrl.trim() ? row.fileUrl.trim() : null,
+        type: row.type.trim(),
+        fileName: row.fileName.trim(),
+        fileUrl: row.fileUrl.trim(),
       })),
-      employeeMaster: this.employeeMaster().trim() || '0',
-      salaryStructure: this.salaryStructure().trim() || roleSalary,
-      attendanceShiftManagement: this.nullIfEmpty(this.attendanceShiftManagement()),
-      leaveManagement: this.nullIfEmpty(this.leaveManagement()),
-      loanAdvancesForm: this.nullIfEmpty(this.loanAdvancesForm()),
-      employeeCode: this.employeeCode().trim(),
-      userId: this.userId().trim() || this.employeeCode().trim(),
-      loginEmployeeName: this.loginEmployeeName(),
-      password: this.password(),
-      assetAllocated: this.nullIfEmpty(this.assetAllocated()),
-      assetOitmCode: this.nullIfEmpty(this.assetOitmCode()),
-      allocationStatus: this.nullIfEmpty(this.allocationStatus()),
-      allocationDate: this.isoDateOrNull(this.allocationDate()),
-      allocationDateType: this.nullIfEmpty(this.allocationDateType()),
+      remuneration: {
+        basicSalary: this.basicSalary().trim(),
+        paymentMode: this.paymentMode(),
+        accountTitle: this.accountTitle().trim(),
+        bankName: this.bankName().trim(),
+        accountNo: this.accountNo().trim(),
+        accountType: this.accountType().trim(),
+        effectiveDate: this.apiDateOrEmpty(this.effectiveDate()),
+        taxPercentage: this.isTaxPercentageEnabled() ? this.taxPercentage().trim() : '',
+        dateOfJoining: this.apiDateOrEmpty(this.dateOfJoining()),
+        cashSalaryPercentage: this.cashSalaryPercentage().trim(),
+        advancePercentAllowed: this.advancePercentAllowed().trim(),
+        maximumLoanCapacity: this.maximumLoanCapacity().trim(),
+        overTimeApplicable: this.overTimeApplicable(),
+        allowancesApplicable: this.allowancesApplicable(),
+        eobiApplicable: this.eobiApplicable(),
+        socialSecurityApplicable: this.socialSecurityApplicable(),
+        fuelLimit: this.fuelLimit().trim(),
+        leaveEligibilityCriteria: this.leaveEligibilityCriteria().trim(),
+        leaveType: this.leaveType().trim(),
+        leaveDays: this.leaveDays().trim(),
+        leavesAvailed: this.leavesAvailed().trim(),
+        remainingLeaves: this.remainingLeaves().trim(),
+        medicalAllowances: this.medicalAllowances().trim(),
+        fuelAllowances: this.fuelAllowances().trim(),
+        mobileAllowances: this.mobileAllowances().trim(),
+        carAllowances: this.carAllowances().trim(),
+        otherAllowances: this.otherAllowances().trim(),
+      },
+      loginDetail: {
+        employeeCode: this.employeeCode().trim(),
+        userId: this.userId().trim() || this.employeeCode().trim(),
+        loginEmployeeName: this.loginEmployeeName().trim(),
+        password: this.password(),
+      },
+      assets: {
+        assetAllocated: this.assetAllocated().trim(),
+        allocationStatus: this.allocationStatus(),
+        allocationDateType: this.allocationDateType(),
+        allocationDate: this.apiDateOrEmpty(this.allocationDate()),
+      },
     };
-  }
-
-  private overTimeToBoolean(value: 'Yes' | 'No' | ''): boolean {
-    return value === 'Yes';
-  }
-
-  private yesNoToBoolean(value: 'Yes' | 'No' | ''): boolean {
-    return value === 'Yes';
   }
 
   protected onAssetAllocatedChange(value: string): void {
@@ -1347,7 +1334,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         workGradeLevel: this.workGradeLevel(),
         branchLocation: this.branchLocation(),
         costCenter: '',
-        reportingManager: this.hiringManager(),
+        reportingManager: this.reportingManagerValue(),
         remarks: this.remarks(),
       },
       education: this.educationSections().map((row) => ({ ...row })),
@@ -1368,9 +1355,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       })),
       requisition: {
         copyExisting: this.copyExisting(),
-        reqId: this.reqId(),
+        reqId: this.selectedJobSpecId().trim() || this.reqId(),
         internalJobTitle: this.internalJobTitle(),
-        hiringManager: this.hiringManager(),
+        hiringManager: this.reportingManagerValue(),
         recruiter: this.recruiter(),
         recruitmentCollaborator: this.recruitmentCollaborator(),
         requisitionAdministrator: this.requisitionAdministrator(),
@@ -1397,7 +1384,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       Department: this.departmentInAhcp().trim() || '—',
       EmployeeNature: noSelection(this.employmentNature()) || '—',
       Designation: this.designation().trim() || '—',
-      ReportingManager: this.hiringManager().trim() || '—',
+      ReportingManager: this.reportingManagerValue() || '—',
       EmploymentType: noSelection(this.division()) || '—',
       EmploymentCategory: noSelection(this.employmentCategory()) || '—',
       status: noSelection(this.employmentStatus()) || 'Submitted',
@@ -1503,9 +1490,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       detail.personalInfo.workGradeLevel ||
       this.resolveWorkGradeLevel(roleSalaryValue) ||
       '',
-    );
-    this.hiringManager.set(
-      detail.personalInfo.reportingManager || detail.requisition.hiringManager || '',
     );
     this.branchLocation.set(
       this.resolveBranchLocation(
@@ -1633,6 +1617,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     const req = detail.requisition;
     this.copyExisting.set(req.copyExisting);
     this.reqId.set(req.reqId);
+    this.selectedJobSpecId.set(req.reqId);
     this.internalJobTitle.set(req.internalJobTitle);
     this.recruiter.set(req.recruiter);
     this.recruitmentCollaborator.set(req.recruitmentCollaborator);
@@ -1643,7 +1628,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.department.set(req.department || 'No Selection');
     this.division.set(req.division || 'No Selection');
     this.location.set(req.location || detail.personalInfo.branchLocation || '');
-    this.hiringManager.set(req.hiringManager || detail.personalInfo.reportingManager || '');
+    this.hiringManager.set(
+      detail.personalInfo.reportingManager ||
+      req.hiringManager ||
+      detail.requisition.hiringManager ||
+      (record.ReportingManager !== '—' ? record.ReportingManager : ''),
+    );
     this.cdr.markForCheck();
   }
 }

@@ -196,100 +196,118 @@ const EMPLOYEE_PROFILE_VIEW_URL = apiUrl('employee-profile-detail');
 const EMPLOYEE_PROFILE_UPDATE_URL = apiUrl('employee-profile-update');
 const EMPLOYEE_PROFILE_DELETE_URL = apiUrl('employee-profile-delete');
 
+export interface EmployeeProfileEducationPayload {
+  institute: string;
+  qualification: string;
+  passingYear: string;
+  fromDate: string;
+  toDate: string;
+  subject: string;
+  marksGrades: string;
+  notes: string;
+}
+
+export interface EmployeeProfilePastExperiencePayload {
+  company: string;
+  designation: string;
+  position: string;
+  duties: string;
+  duration: string;
+  fromDate: string;
+  toDate: string;
+  lastSalary: string;
+  remarks: string;
+}
+
+export interface EmployeeProfileAttachmentPayload {
+  type: string;
+  fileName: string;
+  fileUrl: string;
+}
+
+export interface EmployeeProfileRemunerationPayload {
+  basicSalary: string;
+  paymentMode: string;
+  accountTitle: string;
+  bankName: string;
+  accountNo: string;
+  accountType: string;
+  effectiveDate: string;
+  taxPercentage: string;
+  dateOfJoining: string;
+  cashSalaryPercentage: string;
+  advancePercentAllowed: string;
+  maximumLoanCapacity: string;
+  overTimeApplicable: string;
+  allowancesApplicable: string;
+  eobiApplicable: string;
+  socialSecurityApplicable: string;
+  fuelLimit: string;
+  leaveEligibilityCriteria: string;
+  leaveType: string;
+  leaveDays: string;
+  leavesAvailed: string;
+  remainingLeaves: string;
+  medicalAllowances: string;
+  fuelAllowances: string;
+  mobileAllowances: string;
+  carAllowances: string;
+  otherAllowances: string;
+}
+
+export interface EmployeeProfileLoginDetailPayload {
+  employeeCode: string;
+  userId: string;
+  loginEmployeeName: string;
+  password: string;
+}
+
+export interface EmployeeProfileAssetsPayload {
+  assetAllocated: string;
+  allocationStatus: string;
+  allocationDateType: string;
+  allocationDate: string;
+}
+
 export interface EmployeeProfileAddPayload {
+  jobSpecificationId: string;
   personName: string;
   firstName: string;
-  middleName: string | null;
+  middleName: string;
   lastName: string;
   fatherOrHusbandName: string;
   gender: string;
   maritalStatus: string;
-  dateOfBirth: string | null;
+  dateOfBirth: string;
   nationality: string;
   religion: string;
   bloodGroup: string;
   nationalIdCardNo: string;
   incomeTaxNo: string;
-  employmentNature: string;
-  employeeCategory: string;
-  employmentStatus: string;
-  department: string;
-  designation: string;
-  jobDescription: string;
-  roleSalary: string;
-  basicSalary: string;
-  paymentMode: string;
-  accountTitle: string;
-  bankName: string;
-  branchName: string | null;
-  accountNo: string;
-  accountType: string;
-  effectiveDate: string | null;
-  taxPercentage: string | null;
-  dateOfJoining: string | null;
-  advancePercentAllowed: string | null;
-  loanAmountAllowed: string | null;
-  overTimeApplicable: boolean;
-  leaveType: string;
-  leaveDays: number;
-  leavesAvailed: number;
-  remainingLeaves: number;
-  totalLeaves: number;
-  requestStatus: string | null;
-  medicalAllowances: string | null;
-  fuelAllowances: string | null;
-  mobileAllowances: string | null;
-  carAllowances: string | null;
-  maximumAdvanceCapacity: string | null;
-  otherAllowances: string | null;
-  allowancesApplicable: boolean;
-  cashSalaryPercentage: string | null;
-  eobiApplicable: boolean;
-  socialSecurityApplicable: boolean;
-  fuelLimit: string | null;
-  leaveEligibilityCriteria: string | null;
-  workGradeLevel: string | null;
-  branchLocation: string | null;
-  reportingManager: string | null;
-  remarks: string | null;
   contactNumber: string;
   emergencyContactNumber: string;
   street: string;
   streetNo: string;
-  buildingFloorRoom: string | null;
   city: string;
   state: string;
   country: string;
   zipCode: string;
-  educationSections: Array<{
-    institution: string;
-    passingYear: string;
-    qualification: string;
-  }>;
-  pastExperienceSections: Array<{
-    company: string;
-    duration: string;
-    designation: string;
-  }>;
-  attachments: Array<{
-    attachmentFor: string | null;
-    fileName: string;
-    fileUrl: string | null;
-  }>;
-  employeeMaster: string;
-  salaryStructure: string;
-  attendanceShiftManagement: string | null;
-  leaveManagement: string | null;
-  loanAdvancesForm: string | null;
-  employeeCode: string;
-  userId: string;
-  loginEmployeeName: string;
-  password: string;
-  assetAllocated: string | null;
-  assetOitmCode: string | null;
-  allocationStatus: string | null;
-  allocationDate: string | null;
-  allocationDateType: string | null;
+  departmentInAhcp: string;
+  branchLocation: string;
+  employmentCategory: string;
+  workGradeLevel: string;
+  designation: string;
+  hiringManager: string;
+  reportingManager: string;
+  employmentStatus: string;
+  remarks: string;
+  jobDescription: string;
+  education: EmployeeProfileEducationPayload[];
+  pastExperience: EmployeeProfilePastExperiencePayload[];
+  attachments: EmployeeProfileAttachmentPayload[];
+  remuneration: EmployeeProfileRemunerationPayload;
+  loginDetail: EmployeeProfileLoginDetailPayload;
+  assets: EmployeeProfileAssetsPayload;
 }
 
 @Injectable({
@@ -513,7 +531,12 @@ export class ApplicationFormService {
         asString(item['employment_nature']) ||
         '—',
       Designation: asString(item['designation']) || '—',
-      ReportingManager: asString(item['reportingManager']) || asString(item['reporting_manager']) || '—',
+      ReportingManager:
+        asString(item['reportingManager']) ||
+        asString(item['reporting_manager']) ||
+        asString(item['hiringManager']) ||
+        asString(item['hiring_manager']) ||
+        '—',
       EmploymentType: asString(item['employmentType']) || asString(item['employment_type']) || '—',
       EmploymentCategory:
         asString(item['employeeCategory']) ||
@@ -556,14 +579,6 @@ export class ApplicationFormService {
       }
       return String(value).trim();
     };
-
-    const overTimeRaw = item['overTimeApplicable'] ?? item['over_time_applicable'];
-    const overTimeApplicable =
-      typeof overTimeRaw === 'boolean'
-        ? overTimeRaw
-          ? 'Yes'
-          : 'No'
-        : asString(overTimeRaw);
 
     const education = Array.isArray(educationRaw)
       ? educationRaw
@@ -634,9 +649,26 @@ export class ApplicationFormService {
       attachments,
     );
 
+    const remunerationSource = this.pickNestedRecord(item['remuneration']);
+    const loginSource =
+      this.pickNestedRecord(item['loginDetail']) ??
+      this.pickNestedRecord(item['loginDetails']) ??
+      this.pickNestedRecord(item['login_detail']);
+
+    const pickRem = (camel: string, snake?: string): string =>
+      (remunerationSource ? pickFrom(remunerationSource, camel, snake) : '') ||
+      pickFrom(item, camel, snake);
+
+    const pickLogin = (camel: string, snake?: string): string =>
+      (loginSource ? pickFrom(loginSource, camel, snake) : '') || pickFrom(item, camel, snake);
+
+    const overTimeRaw = pickRem('overTimeApplicable', 'over_time_applicable');
+    const overTimeApplicable = this.yesNoFromApi(overTimeRaw);
+
     const roleSalary =
       pick('roleSalary', 'role_salary') || pick('roleAndSalary', 'role_and_salary');
     const salaryStructure = pick('salaryStructure', 'salary_structure') || roleSalary;
+    const jobSpecificationId = pick('jobSpecificationId', 'job_specification_id');
 
     const detail: ApplicationFormDetail = {
       personalInfo: {
@@ -677,53 +709,56 @@ export class ApplicationFormService {
           pick('branchLocation', 'branch_location') || pick('branch', 'branch') || pick('location', 'location'),
         costCenter: pick('costCenter', 'cost_center'),
         reportingManager:
-          pick('reportingManager', 'reporting_manager') || pick('hiringManager', 'hiring_manager'),
+          pick('reportingManager', 'reporting_manager') ||
+          pick('hiringManager', 'hiring_manager'),
         remarks: pick('remarks'),
       },
       education,
       pastExperience,
       remuneration: {
-        basicSalary: pick('basicSalary', 'basic_salary'),
-        paymentMode: pick('paymentMode', 'payment_mode'),
-        accountTitle: pick('accountTitle', 'account_title'),
-        bankName: pick('bankName', 'bank_name'),
-        branchName: pick('branchName', 'branch_name'),
-        accountNo: pick('accountNo', 'account_no'),
-        accountType: pick('accountType', 'account_type'),
-        effectiveDate: formatDateForInput(pick('effectiveDate', 'effective_date')),
+        basicSalary: pickRem('basicSalary', 'basic_salary'),
+        paymentMode: pickRem('paymentMode', 'payment_mode'),
+        accountTitle: pickRem('accountTitle', 'account_title'),
+        bankName: pickRem('bankName', 'bank_name'),
+        branchName: pickRem('branchName', 'branch_name'),
+        accountNo: pickRem('accountNo', 'account_no'),
+        accountType: pickRem('accountType', 'account_type'),
+        effectiveDate: formatDateForInput(pickRem('effectiveDate', 'effective_date')),
         taxPercentage:
-          pick('taxPercentage', 'tax_percentage') ||
-          pick('taxArrangementPercentage', 'tax_arrangement_percentage'),
-        dateOfJoining: formatDateForInput(pick('dateOfJoining', 'date_of_joining')),
-        advancePercentAllowed: pick('advancePercentAllowed', 'advance_percent_allowed'),
+          pickRem('taxPercentage', 'tax_percentage') ||
+          pickRem('taxArrangementPercentage', 'tax_arrangement_percentage'),
+        dateOfJoining: formatDateForInput(pickRem('dateOfJoining', 'date_of_joining')),
+        advancePercentAllowed: pickRem('advancePercentAllowed', 'advance_percent_allowed'),
         loanAmountAllowed:
-          pick('loanAmountAllowed', 'loan_amount_allowed') ||
-          pick('maximumLoanCapacity', 'maximum_loan_capacity'),
+          pickRem('loanAmountAllowed', 'loan_amount_allowed') ||
+          pickRem('maximumLoanCapacity', 'maximum_loan_capacity'),
         overTimeApplicable,
-        leaveType: pick('leaveType', 'leave_type'),
-        leaveDays: asNumberString(item['leaveDays'] ?? item['leave_days']),
-        leavesAvailed: asNumberString(item['leavesAvailed'] ?? item['leaves_availed']),
-        remainingLeaves: asNumberString(item['remainingLeaves'] ?? item['remaining_leaves']),
-        totalLeaves: asNumberString(item['totalLeaves'] ?? item['total_leaves']),
-        medicalAllowances: pick('medicalAllowances', 'medical_allowances'),
-        fuelAllowances: pick('fuelAllowances', 'fuel_allowances'),
-        mobileAllowances: pick('mobileAllowances', 'mobile_allowances'),
-        carAllowances: pick('carAllowances', 'car_allowances'),
+        leaveType: pickRem('leaveType', 'leave_type'),
+        leaveDays: asNumberString(pickRem('leaveDays', 'leave_days')),
+        leavesAvailed: asNumberString(pickRem('leavesAvailed', 'leaves_availed')),
+        remainingLeaves: asNumberString(pickRem('remainingLeaves', 'remaining_leaves')),
+        totalLeaves: asNumberString(pickRem('totalLeaves', 'total_leaves')),
+        medicalAllowances: pickRem('medicalAllowances', 'medical_allowances'),
+        fuelAllowances: pickRem('fuelAllowances', 'fuel_allowances'),
+        mobileAllowances: pickRem('mobileAllowances', 'mobile_allowances'),
+        carAllowances: pickRem('carAllowances', 'car_allowances'),
         maximumLoanCapacity:
-          pick('loanAmountAllowed', 'loan_amount_allowed') ||
-          pick('maximumLoanCapacity', 'maximum_loan_capacity'),
-        maximumAdvanceCapacity: pick('maximumAdvanceCapacity', 'maximum_advance_capacity'),
-        otherAllowances: pick('otherAllowances', 'other_allowances'),
-        allowancesApplicable: this.yesNoFromApi(item['allowancesApplicable'] ?? item['allowances_applicable']),
-        cashSalaryPercentage:
-          pick('cashSalaryPercentage', 'cash_salary_percentage') ||
-          pick('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
-        eobiApplicable: this.yesNoFromApi(item['eobiApplicable'] ?? item['eobi_applicable']),
-        socialSecurityApplicable: this.yesNoFromApi(
-          item['socialSecurityApplicable'] ?? item['social_security_applicable'],
+          pickRem('maximumLoanCapacity', 'maximum_loan_capacity') ||
+          pickRem('loanAmountAllowed', 'loan_amount_allowed'),
+        maximumAdvanceCapacity: pickRem('maximumAdvanceCapacity', 'maximum_advance_capacity'),
+        otherAllowances: pickRem('otherAllowances', 'other_allowances'),
+        allowancesApplicable: this.yesNoFromApi(
+          pickRem('allowancesApplicable', 'allowances_applicable'),
         ),
-        fuelLimit: pick('fuelLimit', 'fuel_limit'),
-        leaveEligibilityCriteria: pick('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
+        cashSalaryPercentage:
+          pickRem('cashSalaryPercentage', 'cash_salary_percentage') ||
+          pickRem('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
+        eobiApplicable: this.yesNoFromApi(pickRem('eobiApplicable', 'eobi_applicable')),
+        socialSecurityApplicable: this.yesNoFromApi(
+          pickRem('socialSecurityApplicable', 'social_security_applicable'),
+        ),
+        fuelLimit: pickRem('fuelLimit', 'fuel_limit'),
+        leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },
       hrSettings: {
         employeeMaster: asNumberString(item['employeeMaster'] ?? item['employee_master']),
@@ -734,19 +769,19 @@ export class ApplicationFormService {
         requestStatus: pick('requestStatus', 'request_status'),
       },
       loginDetails: {
-        employeeCode: pick('userId', 'user_id') || pick('employeeCode', 'employee_code'),
-        employeeName: pick('loginEmployeeName', 'login_employee_name'),
-        userId: pick('userId', 'user_id'),
-        password: pick('password'),
+        employeeCode: pickLogin('employeeCode', 'employee_code') || pickLogin('userId', 'user_id'),
+        employeeName: pickLogin('loginEmployeeName', 'login_employee_name'),
+        userId: pickLogin('userId', 'user_id'),
+        password: pickLogin('password'),
       },
       attachments: mergedAttachments,
       requisition: {
         copyExisting: false,
-        reqId: '',
+        reqId: jobSpecificationId,
         internalJobTitle: summary.Designation !== '—' ? summary.Designation : '',
         hiringManager:
-          pick('reportingManager', 'reporting_manager') ||
           pick('hiringManager', 'hiring_manager') ||
+          pick('reportingManager', 'reporting_manager') ||
           (summary.ReportingManager !== '—' ? summary.ReportingManager : ''),
         recruiter: '',
         recruitmentCollaborator: '',
@@ -837,6 +872,12 @@ export class ApplicationFormService {
       EmploymentStatus: record.status,
       selected: record.selected ?? false
     }));
+  }
+
+  private pickNestedRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
   }
 
   private mapApiAssets(item: Record<string, unknown>): ApplicationFormAssets {
