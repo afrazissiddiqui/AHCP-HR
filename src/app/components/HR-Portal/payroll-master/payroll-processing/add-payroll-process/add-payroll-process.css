@@ -233,10 +233,13 @@
   min-width: 280px;
 }
 
-.comp-emp-designation {
-  font-size: 12px;
-  color: #6a6d70;
-  margin-top: 2px;
+.comp-emp-picker select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #89919a;
+  border-radius: 2px;
+  font-size: 14px;
+  background: #fff;
 }
 
 .comp-emp-profile {
@@ -455,11 +458,6 @@
   font-size: 12px;
   color: #6a6d70;
   font-style: italic;
-}
-
-.comp-loading--page {
-  margin: 24px;
-  font-size: 14px;
 }
 
 @media (max-width: 900px) {

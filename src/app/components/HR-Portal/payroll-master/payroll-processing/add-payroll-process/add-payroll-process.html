@@ -32,183 +32,198 @@
         <div class="comp-plan-header">
           <h2 class="comp-plan-header__title">
             Payroll Process Plan
-            <strong>{{ rows().length }} Employee{{ rows().length === 1 ? '' : 's' }}</strong>
+            <strong>{{ personName() || 'New Entry' }}</strong>
+            @if (designation()) {
+              <span class="comp-plan-header__meta">({{ designation() }})</span>
+            }
           </h2>
-          <p class="comp-plan-header__hint">Each employee has a dedicated row. Scroll horizontally to adjust all fields.</p>
+          <p class="comp-plan-header__hint">Scroll horizontally inside the grid to adjust all fields comfortably.</p>
         </div>
 
         <div class="comp-grid-scroll">
-          @if (loadingRows()) {
-            <div class="comp-loading comp-loading--page">Loading employee payroll rows…</div>
-          } @else if (rows().length === 0) {
-            <div class="comp-loading comp-loading--page">No employees found.</div>
-          } @else {
-            <table class="comp-grid" [style.--comp-col-count]="totalColumns()" aria-label="Payroll process entry grid">
-              <colgroup>
-                <col class="col-employee" />
-                <col class="col-username" />
+          <table class="comp-grid" [style.--comp-col-count]="totalColumns()" aria-label="Payroll process entry grid">
+            <colgroup>
+              <col class="col-employee" />
+              <col class="col-username" />
+              <col class="col-amount" />
+              @for (field of allowanceFields; track field.key) {
                 <col class="col-amount" />
+              }
+              @for (field of bonusFields; track field.key) {
+                <col class="col-amount" />
+              }
+              <col class="col-amount" />
+              <col class="col-total" />
+            </colgroup>
+            <thead>
+              <tr class="comp-group-row">
+                <th colspan="2" class="grp-employee">Employee Information</th>
+                <th colspan="1" class="grp-employee">Basic Salary</th>
+                <th [attr.colspan]="allowancesColspan()" class="grp-allowances">Allowances</th>
+                <th [attr.colspan]="bonusesColspan()" class="grp-bonuses">Bonuses</th>
+                <th colspan="2" class="grp-final">Final Totals</th>
+              </tr>
+              <tr class="comp-col-row">
+                <th>Employee</th>
+                <th>Username</th>
+                <th>Basic Salary</th>
                 @for (field of allowanceFields; track field.key) {
-                  <col class="col-amount" />
+                  <th>{{ field.label }}</th>
                 }
                 @for (field of bonusFields; track field.key) {
-                  <col class="col-amount" />
+                  <th>{{ field.label }}</th>
                 }
-                <col class="col-amount" />
-                <col class="col-total" />
-              </colgroup>
-              <thead>
-                <tr class="comp-group-row">
-                  <th colspan="2" class="grp-employee">Employee Information</th>
-                  <th colspan="1" class="grp-employee">Basic Salary</th>
-                  <th [attr.colspan]="allowancesColspan()" class="grp-allowances">Allowances</th>
-                  <th [attr.colspan]="bonusesColspan()" class="grp-bonuses">Bonuses</th>
-                  <th colspan="2" class="grp-final">Final Totals</th>
-                </tr>
-                <tr class="comp-col-row">
-                  <th>Employee</th>
-                  <th>Username</th>
-                  <th>Basic Salary</th>
-                  @for (field of allowanceFields; track field.key) {
-                    <th>{{ field.label }}</th>
+                <th>Net Payable</th>
+                <th>Total Earnings</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="comp-data-row">
+                <td class="comp-emp-cell">
+                  <div class="comp-emp-picker">
+                    <select
+                      [ngModel]="selectedEmployeeId()"
+                      (ngModelChange)="onEmployeeChange($event)"
+                      aria-label="Select employee"
+                    >
+                      <option value="">Select employee…</option>
+                      @for (emp of employeeOptions(); track emp.apiId) {
+                        <option [value]="emp.apiId">{{ emp.employeeCode }} — {{ emp.personName }}</option>
+                      }
+                    </select>
+                  </div>
+                  @if (loadingEmployee()) {
+                    <div class="comp-loading">Loading employee details…</div>
                   }
-                  @for (field of bonusFields; track field.key) {
-                    <th>{{ field.label }}</th>
-                  }
-                  <th>Net Payable</th>
-                  <th>Total Earnings</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of rows(); track row.apiId) {
-                  <tr class="comp-data-row">
-                    <td class="comp-emp-cell">
-                      <div class="comp-emp-profile">
-                        <span class="comp-emp-avatar" aria-hidden="true">{{ avatarInitials(row.personName) }}</span>
-                        <div class="comp-emp-info">
-                          <button
-                            type="button"
-                            class="comp-emp-name"
-                            (click)="openEmployeeProfile(row.apiId)"
-                          >
-                            {{ row.personName }}
-                          </button>
-                          @if (row.designation) {
-                            <div class="comp-emp-designation">{{ row.designation }}</div>
-                          }
-                          <div class="comp-emp-meta">
-                            <span class="comp-emp-id-icon" title="Employee profile">🪪</span>
-                            <button type="button" class="comp-username-link" (click)="openEmployeeProfile(row.apiId)">
-                              {{ row.username }}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
+                  <div class="comp-emp-profile">
+                    <span
+                      class="comp-emp-avatar"
+                      [class.comp-emp-avatar--empty]="!personName()"
+                      aria-hidden="true"
+                    >{{ avatarInitials() }}</span>
+                    <div class="comp-emp-info">
                       <button
                         type="button"
-                        class="comp-username-link comp-username-link--block"
-                        (click)="openEmployeeProfile(row.apiId)"
+                        class="comp-emp-name"
+                        [disabled]="!selectedEmployeeId()"
+                        (click)="openEmployeeProfile()"
                       >
-                        {{ row.username }}
+                        {{ personName() || 'Select an employee' }}
                       </button>
-                    </td>
-                    <td>
-                      <label class="comp-input-wrap">
-                        <span class="comp-input-prefix">$</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          class="comp-input"
-                          [ngModel]="row.basicSalary"
-                          (ngModelChange)="updateRowBasicSalary(row.apiId, $event)"
-                        />
-                      </label>
-                    </td>
-                    @for (field of allowanceFields; track field.key) {
-                      <td>
-                        <label class="comp-input-wrap">
-                          <span class="comp-input-prefix">$</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            class="comp-input"
-                            [attr.aria-label]="field.label + ' for ' + row.personName"
-                            [ngModel]="row.allowances[field.key]"
-                            (ngModelChange)="updateRowAllowance(row.apiId, field.key, $event)"
-                          />
-                        </label>
-                      </td>
-                    }
-                    @for (field of bonusFields; track field.key) {
-                      <td>
-                        <label class="comp-input-wrap">
-                          <span class="comp-input-prefix">$</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            class="comp-input"
-                            [attr.aria-label]="field.label + ' for ' + row.personName"
-                            [ngModel]="row.bonuses[field.key]"
-                            (ngModelChange)="updateRowBonus(row.apiId, field.key, $event)"
-                          />
-                        </label>
-                      </td>
-                    }
-                    <td>
-                      <label class="comp-input-wrap">
-                        <span class="comp-input-prefix">$</span>
-                        <input
-                          type="text"
-                          class="comp-input comp-input--readonly"
-                          [value]="formatMoney(rowNetPayable(row))"
-                          readonly
-                          [attr.aria-label]="'Net payable for ' + row.personName"
-                        />
-                      </label>
-                    </td>
-                    <td>
-                      <div class="comp-total-cell">
-                        <label class="comp-input-wrap">
-                          <span class="comp-input-prefix">$</span>
-                          <input
-                            type="text"
-                            class="comp-input comp-input--readonly"
-                            [value]="formatMoney(rowTotalEarnings(row))"
-                            readonly
-                            [attr.aria-label]="'Total earnings for ' + row.personName"
-                          />
-                        </label>
-                        <span
-                          class="comp-pill"
-                          [class.comp-pill--green]="rowEarningsRatio(row) >= 95 && rowEarningsRatio(row) <= 110"
-                          [class.comp-pill--yellow]="rowEarningsRatio(row) > 110"
-                        >
-                          {{ rowEarningsRatio(row) }}%
-                        </span>
+                      <div class="comp-emp-meta">
+                        <span class="comp-emp-id-icon" title="Employee profile">🪪</span>
+                        @if (username()) {
+                          <button type="button" class="comp-username-link" (click)="openEmployeeProfile()">
+                            {{ username() }}
+                          </button>
+                        }
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="comp-username-link comp-username-link--block"
+                    [disabled]="!username()"
+                    (click)="openEmployeeProfile()"
+                  >
+                    {{ username() || '—' }}
+                  </button>
+                </td>
+                <td>
+                  <label class="comp-input-wrap">
+                    <span class="comp-input-prefix">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      class="comp-input"
+                      [ngModel]="basicSalary()"
+                      (ngModelChange)="basicSalary.set(parseAmount($event))"
+                    />
+                  </label>
+                </td>
+                @for (field of allowanceFields; track field.key) {
+                  <td>
+                    <label class="comp-input-wrap">
+                      <span class="comp-input-prefix">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        class="comp-input"
+                        [attr.aria-label]="field.label"
+                        [ngModel]="getAllowance(field.key)"
+                        (ngModelChange)="setAllowance(field.key, $event)"
+                      />
+                    </label>
+                  </td>
                 }
-                <tr class="comp-total-row">
-                  <td colspan="2">Group Total</td>
-                  <td class="comp-total-value">{{ formatMoney(groupTotals().basicSalary) }}</td>
-                  @for (field of allowanceFields; track field.key) {
-                    <td class="comp-total-value">{{ formatMoney(groupTotals().allowances[field.key]) }}</td>
-                  }
-                  @for (field of bonusFields; track field.key) {
-                    <td class="comp-total-value">{{ formatMoney(groupTotals().bonuses[field.key]) }}</td>
-                  }
-                  <td class="comp-total-value">{{ formatMoney(groupTotals().netPayable) }}</td>
-                  <td class="comp-total-value">{{ formatMoney(groupTotals().totalEarnings) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          }
+                @for (field of bonusFields; track field.key) {
+                  <td>
+                    <label class="comp-input-wrap">
+                      <span class="comp-input-prefix">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        class="comp-input"
+                        [attr.aria-label]="field.label"
+                        [ngModel]="getBonus(field.key)"
+                        (ngModelChange)="setBonus(field.key, $event)"
+                      />
+                    </label>
+                  </td>
+                }
+                <td>
+                  <label class="comp-input-wrap">
+                    <span class="comp-input-prefix">$</span>
+                    <input
+                      type="text"
+                      class="comp-input comp-input--readonly"
+                      [value]="formatMoney(netPayable())"
+                      readonly
+                      aria-label="Net payable"
+                    />
+                  </label>
+                </td>
+                <td>
+                  <div class="comp-total-cell">
+                    <label class="comp-input-wrap">
+                      <span class="comp-input-prefix">$</span>
+                      <input
+                        type="text"
+                        class="comp-input comp-input--readonly"
+                        [value]="formatMoney(totalEarnings())"
+                        readonly
+                        aria-label="Total earnings"
+                      />
+                    </label>
+                    <span
+                      class="comp-pill"
+                      [class.comp-pill--green]="earningsRatio() >= 95 && earningsRatio() <= 110"
+                      [class.comp-pill--yellow]="earningsRatio() > 110"
+                    >
+                      {{ earningsRatio() }}%
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="comp-total-row">
+                <td colspan="2">Group Total</td>
+                <td class="comp-total-value">{{ formatMoney(basicSalary()) }}</td>
+                @for (field of allowanceFields; track field.key) {
+                  <td class="comp-total-value">{{ formatMoney(getAllowance(field.key)) }}</td>
+                }
+                @for (field of bonusFields; track field.key) {
+                  <td class="comp-total-value">{{ formatMoney(getBonus(field.key)) }}</td>
+                }
+                <td class="comp-total-value">{{ formatMoney(netPayable()) }}</td>
+                <td class="comp-total-value">{{ formatMoney(totalEarnings()) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <footer class="comp-footer">
