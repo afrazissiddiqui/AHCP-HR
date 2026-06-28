@@ -175,20 +175,31 @@
   align-items: stretch;
   max-height: calc(100vh - 280px);
   min-height: 320px;
+  overflow: hidden;
 }
 
 .comp-table-fixed {
   flex: 0 0 280px;
   z-index: 3;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: #fff;
   border-right: 1px solid #e8edf2;
   box-shadow: 6px 0 16px rgba(15, 23, 42, 0.05);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.comp-table-fixed::-webkit-scrollbar {
+  display: none;
 }
 
 .comp-table-scroll {
   flex: 1 1 auto;
-  overflow: auto;
+  min-height: 0;
   min-width: 0;
+  overflow: auto;
   background: #fcfdfe;
 }
 

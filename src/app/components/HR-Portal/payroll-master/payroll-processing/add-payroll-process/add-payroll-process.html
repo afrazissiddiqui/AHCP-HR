@@ -5,7 +5,6 @@
       <h1 class="comp-topbar__title">Payroll Processing</h1>
     </div>
     <div class="comp-topbar__actions">
-      <button type="button" class="comp-btn comp-btn--secondary" (click)="back()">Cancel</button>
       <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || rows().length === 0">Save</button>
     </div>
   </div>
@@ -44,7 +43,12 @@
     } @else {
       <div class="comp-table-card">
         <div class="comp-table-layout">
-          <div class="comp-table-fixed" aria-hidden="false">
+          <div
+            class="comp-table-fixed"
+            #fixedPane
+            (scroll)="onFixedPaneScroll($event)"
+            (wheel)="onFixedPaneWheel($event)"
+          >
             <table class="comp-grid comp-grid--fixed">
               <thead>
                 <tr class="comp-group-row">
@@ -88,7 +92,7 @@
             </table>
           </div>
 
-          <div class="comp-table-scroll">
+          <div class="comp-table-scroll" #scrollPane (scroll)="onScrollPaneScroll($event)">
             <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
               <thead>
                 <tr class="comp-group-row">
@@ -184,11 +188,11 @@
       </div>
     }
   </div>
-
-  <footer class="comp-footer">
-    <button type="button" class="comp-btn comp-btn--secondary" (click)="back()">Cancel</button>
-    <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || rows().length === 0">
-      Save Payroll Process
-    </button>
-  </footer>
 </div>
+
+<app-application-detail-dialog
+  [open]="detailOpen()"
+  [loading]="detailLoading()"
+  [record]="detailRecord()"
+  (closed)="closeEmployeeDetail()"
+/>

@@ -3,10 +3,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   OnInit,
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -22,6 +24,7 @@ import {
   PayrollSetupService,
   computeNetPayable,
 } from '../../payroll-setup/payroll-setup.service';
+import { ApplicationDetailDialogComponent } from '../../../Application-Form/application-detail-dialog/application-detail-dialog';
 
 export interface PayrollProcessRow {
   apiId: string;
@@ -68,7 +71,7 @@ export interface PayrollColumnDef {
 @Component({
   selector: 'app-add-payroll-process',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ApplicationDetailDialogComponent],
   templateUrl: './add-payroll-process.html',
   styleUrl: './add-payroll-process.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,6 +85,13 @@ export class AddPayrollProcessComponent implements OnInit {
 
   readonly rows = signal<PayrollProcessRow[]>([]);
   readonly loading = signal(true);
+  readonly detailOpen = signal(false);
+  readonly detailLoading = signal(false);
+  readonly detailRecord = signal<ApplicationFormRecord | null>(null);
+
+  private readonly fixedPane = viewChild<ElementRef<HTMLElement>>('fixedPane');
+  private readonly scrollPane = viewChild<ElementRef<HTMLElement>>('scrollPane');
+  private syncingScroll = false;
 
   readonly columnGroups: PayrollColumnGroup[] = [
     { id: 'emp-meta', label: 'Employee Information', tone: 'employee-meta' },
@@ -148,6 +158,47 @@ export class AddPayrollProcessComponent implements OnInit {
 
   groupColspan(groupId: string): number {
     return this.payrollColumns.filter((col) => col.groupId === groupId).length;
+  }
+
+  onScrollPaneScroll(event: Event): void {
+    if (this.syncingScroll) {
+      return;
+    }
+    const fixed = this.fixedPane()?.nativeElement;
+    const scroll = event.target as HTMLElement;
+    if (!fixed) {
+      return;
+    }
+    this.syncingScroll = true;
+    fixed.scrollTop = scroll.scrollTop;
+    this.syncingScroll = false;
+  }
+
+  onFixedPaneScroll(event: Event): void {
+    if (this.syncingScroll) {
+      return;
+    }
+    const scroll = this.scrollPane()?.nativeElement;
+    const fixed = event.target as HTMLElement;
+    if (!scroll) {
+      return;
+    }
+    this.syncingScroll = true;
+    scroll.scrollTop = fixed.scrollTop;
+    this.syncingScroll = false;
+  }
+
+  onFixedPaneWheel(event: WheelEvent): void {
+    const scroll = this.scrollPane()?.nativeElement;
+    const fixed = this.fixedPane()?.nativeElement;
+    if (!scroll) {
+      return;
+    }
+    event.preventDefault();
+    scroll.scrollTop += event.deltaY;
+    if (fixed) {
+      fixed.scrollTop = scroll.scrollTop;
+    }
   }
 
   avatarInitials(name: string): string {
@@ -277,7 +328,35 @@ export class AddPayrollProcessComponent implements OnInit {
     if (!apiId) {
       return;
     }
-    void this.router.navigate(['/recruitment/edit', apiId]);
+
+    this.detailOpen.set(true);
+    this.detailLoading.set(true);
+    this.detailRecord.set(null);
+    this.cdr.markForCheck();
+
+    this.applicationFormService.fetchEmployeeProfileDetail(apiId).subscribe({
+      next: (record) => {
+        this.detailRecord.set(record);
+        this.detailLoading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.detailOpen.set(false);
+        this.detailLoading.set(false);
+        this.detailRecord.set(null);
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load employee details.'),
+        );
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  closeEmployeeDetail(): void {
+    this.detailOpen.set(false);
+    this.detailLoading.set(false);
+    this.detailRecord.set(null);
   }
 
   save(): void {
