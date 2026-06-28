@@ -25,10 +25,9 @@ export const HR_FORM_TABS: HrFormTab[] = [
   { id: 'expense', tabText: 'Expense', title: 'Expense Reimbursement Form', category: 'Employee Action', description: 'Manage reimbursement submissions and approval flow.', route: '/employee-action/expense-reimbursement-form' },
   { id: 'loan', tabText: 'Loan', title: 'Loan / Advance Form', category: 'Employee Action', description: 'Process employee loan and salary advance requests.', route: '/employee-action/loan-advance-form' },
   { id: 'leave-app', tabText: 'Leave App.', title: 'Leave Application Form', category: 'Leave', description: 'Submit and review individual leave applications.', route: '/employee-action/leave-application-form' },
-  { id: 'payroll', tabText: 'Payroll', title: 'Payroll Master', category: 'Payroll', description: 'Access core payroll controls and master setup.', route: '/payroll-master' },
+  { id: 'processing', tabText: 'Processing', title: 'Payroll Processing', category: 'Payroll', description: 'Run payroll cycles and review processing outcomes.', route: '/payroll-master' },
   { id: 'attendance', tabText: 'Attendance', title: 'Attendance Management', category: 'Payroll', description: 'Maintain attendance input used for payroll calculations.', route: '/payroll-master/attendance-managment' },
   { id: 'tax', tabText: 'Tax Allowance', title: 'Tax Allowance Form', category: 'Payroll', description: 'Map payroll components to GL codes for tax allowance posting.', route: '/payroll-master/tax-managment' },
   { id: 'tax-computation', tabText: 'Tax Compute', title: 'Tax Computation', category: 'Payroll', description: 'Review employee payroll components and compute tax from salary breakdown.', route: '/payroll-master/tax-computation' },
-  { id: 'processing', tabText: 'Processing', title: 'Payroll Processing', category: 'Payroll', description: 'Run payroll cycles and review processing outcomes.', route: '/payroll-master/payroll-processing' },
   { id: 'setup', tabText: 'Setup', title: 'Payroll Setup', category: 'Payroll', description: 'Define payroll settings, periods, and core defaults.', route: '/payroll-master/payroll-setup' },
 ];

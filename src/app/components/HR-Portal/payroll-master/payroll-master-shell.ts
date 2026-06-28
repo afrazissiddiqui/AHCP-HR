@@ -25,7 +25,7 @@ export class PayrollMasterShellComponent {
   readonly sidebarItems = PAYROLL_MASTER_SIDEBAR_ITEMS;
   readonly sidebarSections = PAYROLL_MASTER_SIDEBAR_SECTIONS;
 
-  readonly activeSidebarItemId = signal('payroll-master-list');
+  readonly activeSidebarItemId = signal('payroll-processing');
   readonly showSidebar = signal(true);
 
   constructor() {
