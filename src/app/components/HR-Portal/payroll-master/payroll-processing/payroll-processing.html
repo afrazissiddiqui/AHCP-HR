@@ -14,13 +14,13 @@
     <div class="sapMTBSpacer"></div>
 
     <div style="display: flex; align-items: center; gap: 8px; margin-right: 8px;">
-      <label for="payroll-department-filter" class="sapMTitle sapMTitleStyleH6" style="white-space: nowrap;">
-        Department
+      <label for="payroll-status-filter" class="sapMTitle sapMTitleStyleH6" style="white-space: nowrap;">
+        Status
       </label>
-      <select id="payroll-department-filter" [(ngModel)]="selectedDepartment"
+      <select id="payroll-status-filter" [(ngModel)]="selectedStatus"
         style="min-width: 160px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
-        <option value="">All departments</option>
-        <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+        <option value="">All statuses</option>
+        <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
       </select>
     </div>
 
@@ -56,17 +56,24 @@
 
   <div class="table-wrapper" style="padding: 16px;">
     <div style="overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 6px;">
-      <table style="width: 100%; border-collapse: collapse; min-width: 2800px;">
+      <table style="width: 100%; border-collapse: collapse; min-width: 1100px;">
         <thead style="background-color: #f8fafc;">
           <tr>
             <th *ngFor="let col of visibleColumns" style="border: 1px solid #e2e8f0; padding: 10px; text-align: left;">
               {{ col.label }}
             </th>
+            <th style="border: 1px solid #e2e8f0; padding: 10px; text-align: left; min-width: 180px;">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngIf="filteredPayrollRows.length === 0">
-            <td [attr.colspan]="visibleColumns.length || 1"
+          <tr *ngIf="loading()">
+            <td [attr.colspan]="visibleColumns.length + 1"
+              style="border: 1px solid #e2e8f0; padding: 14px; text-align: center; color: #64748b;">
+              Loading payroll processes…
+            </td>
+          </tr>
+          <tr *ngIf="!loading() && filteredPayrollRows.length === 0">
+            <td [attr.colspan]="visibleColumns.length + 1"
               style="border: 1px solid #e2e8f0; padding: 14px; text-align: center; color: #64748b;">
               No payroll records to display.
             </td>
@@ -74,6 +81,11 @@
           <tr *ngFor="let row of filteredPayrollRows">
             <td *ngFor="let col of visibleColumns" style="border: 1px solid #e2e8f0; padding: 10px; text-align: left;">
               {{ getCellValue(row, col.key) }}
+            </td>
+            <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: left; white-space: nowrap;">
+              <button class="update-btn" type="button" (click)="viewRecord(row)" title="View payroll process">View</button>
+              <button class="update-btn" type="button" (click)="onUpdate(row)" title="Update payroll process">Edit</button>
+              <button class="delete-btn" type="button" [disabled]="deleting()" (click)="onDelete(row)" title="Delete payroll process">Delete</button>
             </td>
           </tr>
         </tbody>

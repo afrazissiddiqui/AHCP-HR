@@ -9,6 +9,10 @@ import {
   GlAccountDeterminationService,
 } from '../../../services/gl-account-determination.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
+import {
+  GL_ACCOUNT_BRANCH_OPTIONS,
+  glAccountBranchCode,
+} from './gl-account-branch.options';
 
 export type GlAccountDeterminationRow = {
   id: string;
@@ -18,12 +22,6 @@ export type GlAccountDeterminationRow = {
   branch: string;
   debitCreditType: string;
 };
-
-export const GL_ACCOUNT_BRANCH_OPTIONS = [
-  'AHCP_Peshawar',
-  'AHCP_HO',
-  'AHCP_Faisalabad',
-] as const;
 
 export const GL_ACCOUNT_DEBIT_CREDIT_OPTIONS = ['Debit', 'Credit'] as const;
 
@@ -186,7 +184,7 @@ export class GlAccountDeterminationComponent implements OnInit {
       type: row.glItemType.trim(),
       code: row.salaryGlAccountCode.trim(),
       name: row.salaryGlAccountName.trim(),
-      branch: row.branch,
+      branch: glAccountBranchCode(row.branch),
       debit_credit_type: row.debitCreditType,
     };
   }

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
+import { glAccountBranchLabel } from '../components/setup/gl-account-determination/gl-account-branch.options';
 import { apiUrl } from '../config/api.config';
 
 export interface GlAccountDeterminationAddPayload {
@@ -103,7 +104,7 @@ export class GlAccountDeterminationService {
       Type: this.pickString(sources, ['Type', 'type', 'glItemType', 'gl_item_type']),
       Code: this.pickString(sources, ['Code', 'code', 'salaryGlAccountCode', 'salary_gl_account_code']),
       Name: this.pickString(sources, ['Name', 'name', 'salaryGlAccountName', 'salary_gl_account_name']),
-      Branch: this.pickString(sources, ['Branch', 'branch']),
+      Branch: glAccountBranchLabel(this.pickString(sources, ['Branch', 'branch'])),
       DebitCreditType: this.pickString(sources, [
         'DebitCreditType',
         'debitCreditType',

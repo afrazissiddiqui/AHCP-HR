@@ -1,41 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
+import { AlertService } from '../../../../services/alert.service';
+import {
+  PayrollProcessingListRecord,
+  PayrollProcessingService,
+} from '../../../../services/payroll-processing.service';
+import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
-import { PayrollSetupService } from '../payroll-setup/payroll-setup.service';
 
-type PayrollProcessingRow = {
-  employeeCode: number;
-  employeeName: string;
-  employeeCategory: string;
-  employementNature: string;
-  employmentType: string;
-  department: string;
-  designation: string;
-  jobTitle: string;
-  payrollPeriod: string;
-  basicSalary: number;
-  medicalAllowance: number;
-  fuelAllowance: number;
-  mobileAllowance: number;
-  carAllowance: number;
-  otherAllowance: number;
-  overtime: number;
-  bonus: number;
-  arrears: number;
-  provientFund: number;
-  gratuity: number;
-  eobi: number;
-  loanInstallment: number;
-  otherDeduction: number;
-  netPayable: number;
-  tax: number;
-  taxableSalary: number;
-};
-
-type PayrollProcessingColumnKey = keyof PayrollProcessingRow;
+type PayrollProcessingColumnKey = Exclude<keyof PayrollProcessingListRecord, never>;
 
 @Component({
   selector: 'app-payroll-processing',
@@ -44,96 +20,55 @@ type PayrollProcessingColumnKey = keyof PayrollProcessingRow;
   templateUrl: './payroll-processing.html',
   styleUrl: '../../Application-Form/Application-Form.css',
 })
-export class PayrollProcessingComponent {
+export class PayrollProcessingComponent implements OnInit {
   private readonly layout = inject(PayrollMasterLayoutService);
   private readonly router = inject(Router);
+  private readonly payrollProcessingService = inject(PayrollProcessingService);
+  private readonly alertService = inject(AlertService);
 
-  constructor(private readonly payrollSetupService: PayrollSetupService) {}
+  readonly loading = signal(false);
+  readonly deleting = signal(false);
   searchText = '';
-  /** Empty string means all departments. */
-  selectedDepartment = '';
+  selectedStatus = '';
   showDialog = false;
   activeTab: 'filter' = 'filter';
 
   readonly columns: Array<{ key: PayrollProcessingColumnKey; label: string; visible: boolean }> = [
-    { key: 'employeeCode', label: 'Employee Code', visible: true },
-    { key: 'employeeName', label: 'Employee Name', visible: true },
-    { key: 'employeeCategory', label: 'Employee Category', visible: true },
-    { key: 'employementNature', label: 'Employement Nature', visible: true },
-    { key: 'employmentType', label: 'Employment Type', visible: true },
-    { key: 'department', label: 'Department', visible: true },
-    { key: 'designation', label: 'Designation', visible: true },
-    { key: 'jobTitle', label: 'Job Title', visible: true },
-    { key: 'payrollPeriod', label: 'Payroll Period', visible: true },
-    { key: 'basicSalary', label: 'Basic Salary', visible: true },
-    { key: 'medicalAllowance', label: 'Medical Allowance', visible: true },
-    { key: 'fuelAllowance', label: 'Fuel Allowance', visible: true },
-    { key: 'mobileAllowance', label: 'Mobile Allowance', visible: true },
-    { key: 'carAllowance', label: 'Car Allowance', visible: true },
-    { key: 'otherAllowance', label: 'Other Allowance', visible: true },
-    { key: 'overtime', label: 'Overtime', visible: true },
-    { key: 'bonus', label: 'Bonus', visible: true },
-    { key: 'arrears', label: 'Arrears', visible: true },
-    { key: 'provientFund', label: 'Provient Fund', visible: true },
-    { key: 'gratuity', label: 'Gratuity', visible: true },
-    { key: 'eobi', label: 'EOBI', visible: true },
-    { key: 'loanInstallment', label: 'Loan Installment', visible: true },
-    { key: 'otherDeduction', label: 'Other deduction', visible: true },
-    { key: 'netPayable', label: 'Net Payable', visible: true },
-    { key: 'tax', label: 'Tax', visible: true },
-    { key: 'taxableSalary', label: 'Taxable Salary', visible: true }
+    { key: 'Id', label: 'ID', visible: true },
+    { key: 'Month', label: 'Month', visible: true },
+    { key: 'Year', label: 'Year', visible: true },
+    { key: 'Remarks', label: 'Remarks', visible: true },
+    { key: 'Currency', label: 'Currency', visible: true },
+    { key: 'Status', label: 'Status', visible: true },
+    { key: 'ProcessedBy', label: 'Processed By', visible: false },
+    { key: 'ProcessedDate', label: 'Processed Date', visible: true },
+    { key: 'EmployeeCount', label: 'Employees', visible: true },
   ];
 
-  get payrollProcessingList(): PayrollProcessingRow[] {
-    return this.payrollSetupService.records().map((record) => ({
-      employeeCode: Number(record.employeeId) || 0,
-      employeeName: record.employeeName,
-      employeeCategory: record.employeeCategory,
-      employementNature: record.employmentNature,
-      employmentType: record.employmentType,
-      department: record.department,
-      designation: record.designation,
-      jobTitle: record.jobTitle,
-      payrollPeriod: record.formNumber,
-      basicSalary: record.basicSalary,
-      medicalAllowance: record.medicalAllowance,
-      fuelAllowance: record.fuelAllowance,
-      mobileAllowance: record.mobileAllowance,
-      carAllowance: record.carAllowance,
-      otherAllowance: record.otherAllowances,
-      overtime: record.overtime,
-      bonus: record.bonus,
-      arrears: record.arrears,
-      provientFund: record.providentFund,
-      gratuity: record.gratuity,
-      eobi: record.eobi,
-      loanInstallment: record.loanInstallment,
-      otherDeduction: record.otherDeductions,
-      netPayable: record.netPayable,
-      tax: 0,
-      taxableSalary: 0,
-    }));
+  ngOnInit(): void {
+    this.loadRecords();
   }
 
-  /** Distinct department values from current payroll data, sorted. */
-  get departmentOptions(): string[] {
+  get payrollProcessingList(): PayrollProcessingListRecord[] {
+    return this.payrollProcessingService.records();
+  }
+
+  get statusOptions(): string[] {
     const seen = new Set<string>();
     for (const row of this.payrollProcessingList) {
-      const d = row.department?.trim() ?? '';
-      if (d) {
-        seen.add(d);
+      const status = row.Status?.trim();
+      if (status) {
+        seen.add(status);
       }
     }
     return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }
 
-  get filteredPayrollRows(): PayrollProcessingRow[] {
+  get filteredPayrollRows(): PayrollProcessingListRecord[] {
     let list = this.payrollProcessingList;
 
-    if (this.selectedDepartment) {
-      list = list.filter(
-        (row) => (row.department?.trim() ?? '') === this.selectedDepartment
-      );
+    if (this.selectedStatus) {
+      list = list.filter((row) => row.Status === this.selectedStatus);
     }
 
     if (!this.searchText.trim()) {
@@ -142,14 +77,14 @@ export class PayrollProcessingComponent {
 
     const search = this.searchText.toLowerCase();
     return list.filter((row) =>
-      String(row.employeeCode).toLowerCase().includes(search) ||
-      row.employeeName.toLowerCase().includes(search) ||
-      row.employeeCategory.toLowerCase().includes(search) ||
-      row.employementNature.toLowerCase().includes(search) ||
-      row.employmentType.toLowerCase().includes(search) ||
-      row.department.toLowerCase().includes(search) ||
-      row.designation.toLowerCase().includes(search) ||
-      row.jobTitle.toLowerCase().includes(search)
+      String(row.Id).includes(search) ||
+      this.formatMonth(row.Month).toLowerCase().includes(search) ||
+      String(row.Year).includes(search) ||
+      row.Remarks.toLowerCase().includes(search) ||
+      row.Currency.toLowerCase().includes(search) ||
+      row.Status.toLowerCase().includes(search) ||
+      row.ProcessedDate.toLowerCase().includes(search) ||
+      String(row.EmployeeCount).includes(search),
     );
   }
 
@@ -157,12 +92,34 @@ export class PayrollProcessingComponent {
     return this.columns.filter((column) => column.visible);
   }
 
-  getCellValue(row: PayrollProcessingRow, key: PayrollProcessingColumnKey): string | number {
+  getCellValue(row: PayrollProcessingListRecord, key: PayrollProcessingColumnKey): string | number {
+    if (key === 'Month') {
+      return this.formatMonth(row.Month);
+    }
     return row[key];
   }
 
+  formatMonth(month: number): string {
+    const labels = [
+      '',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return labels[month] ?? String(month);
+  }
+
   onSearchChange(): void {
-    // Keeping parity with Employee Action search behavior hook.
+    // Hook for shellbar search parity.
   }
 
   openDialog(): void {
@@ -177,7 +134,71 @@ export class PayrollProcessingComponent {
     void this.router.navigateByUrl('/payroll-master/payroll-processing/create');
   }
 
+  viewRecord(record: PayrollProcessingListRecord): void {
+    if (!record.Id) {
+      void this.alertService.warning('View', 'Unable to view this row: missing payroll process id.');
+      return;
+    }
+    void this.router.navigate(['/payroll-master/payroll-processing/view', record.Id]);
+  }
+
+  onUpdate(record: PayrollProcessingListRecord): void {
+    if (!record.Id) {
+      void this.alertService.warning('Update', 'Unable to update this row: missing payroll process id.');
+      return;
+    }
+    void this.router.navigate(['/payroll-master/payroll-processing/edit', record.Id]);
+  }
+
+  async onDelete(record: PayrollProcessingListRecord): Promise<void> {
+    if (!record.Id) {
+      void this.alertService.warning('Delete', 'Unable to delete this row: missing payroll process id.');
+      return;
+    }
+
+    const period = `${this.formatMonth(record.Month)} ${record.Year}`;
+    const result = await this.alertService.confirm(
+      'Delete payroll process?',
+      `Remove payroll process for ${period}?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.payrollProcessingService.deletePayrollProcessing(record.Id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.payrollProcessingService.removeRecord(record);
+        void this.alertService.success('Deleted', 'Payroll process removed successfully.');
+      },
+      error: (error: unknown) => {
+        this.deleting.set(false);
+        void this.alertService.error(
+          'Delete Failed',
+          formatApiErrorMessage(error, 'Failed to delete payroll process.'),
+        );
+      },
+    });
+  }
+
   toggleSidebar(): void {
     this.layout.toggleSidebar();
+  }
+
+  private loadRecords(): void {
+    this.loading.set(true);
+    this.payrollProcessingService.fetchPayrollProcessingList().subscribe({
+      next: () => {
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        this.loading.set(false);
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load payroll processing list.'),
+        );
+      },
+    });
   }
 }

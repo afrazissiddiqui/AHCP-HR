@@ -1,0 +1,312 @@
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../config/api.config';
+
+export interface PayrollProcessingHeaderPayload {
+  month: number;
+  year: number;
+  remarks: string;
+  currency: string;
+  status: string;
+  processedBy: number;
+  processedDate: string;
+}
+
+export interface PayrollProcessingDetailPayload {
+  employeeId: string;
+  employeeCode: string;
+  personName: string;
+  basicSalary: number;
+  grossSalary: number;
+  medicalAllowance: number;
+  allowedLiters: number;
+  monthlyFuelRate: number;
+  fuelAllowance: number;
+  mobileAllowance: number;
+  carAllowance: number;
+  otherAllowances: number;
+  bonus: number;
+  lastMonthGrossSalary: number;
+  overtimeHours: number;
+  overtime: number;
+  providentFund: number;
+  gratuity: number;
+  eobiEmployee: number;
+  eobiEmployer: number;
+  arrears: number;
+  loanAdjustment: number;
+  loanAdvForm: number;
+  totalEarnings: number;
+  netPayable: number;
+  approved: boolean;
+}
+
+export interface PayrollProcessingSubmitPayload {
+  header: PayrollProcessingHeaderPayload;
+  details: PayrollProcessingDetailPayload[];
+}
+
+export interface PayrollProcessingListRecord {
+  Id: number;
+  Month: number;
+  Year: number;
+  Remarks: string;
+  Currency: string;
+  Status: string;
+  ProcessedBy: number;
+  ProcessedDate: string;
+  EmployeeCount: number;
+}
+
+export interface PayrollProcessingRecord {
+  Id: number;
+  Header: PayrollProcessingHeaderPayload;
+  Details: PayrollProcessingDetailPayload[];
+}
+
+const PAYROLL_PROCESSING_LIST_URL = apiUrl('payroll-processing-list');
+const PAYROLL_PROCESSING_ADD_URL = apiUrl('payroll-processing-add');
+const PAYROLL_PROCESSING_DETAIL_URL = apiUrl('payroll-processing-detail');
+const PAYROLL_PROCESSING_UPDATE_URL = apiUrl('payroll-processing-update');
+const PAYROLL_PROCESSING_DELETE_URL = apiUrl('payroll-processing-delete');
+
+@Injectable({
+  providedIn: 'root',
+})
+export class PayrollProcessingService {
+  private readonly http = inject(HttpClient);
+  private readonly recordList = signal<PayrollProcessingListRecord[]>([]);
+
+  readonly records = this.recordList.asReadonly();
+
+  fetchPayrollProcessingList(): Observable<PayrollProcessingListRecord[]> {
+    return this.http.get<unknown>(PAYROLL_PROCESSING_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToListRecord(item))),
+      tap((records) => this.recordList.set(records)),
+    );
+  }
+
+  fetchPayrollProcessingDetail(id: string | number): Observable<PayrollProcessingRecord> {
+    const identifier = encodeURIComponent(String(id));
+    const numericId = Number.parseInt(String(id), 10) || 0;
+
+    return this.http.get<unknown>(`${PAYROLL_PROCESSING_DETAIL_URL}/${identifier}`).pipe(
+      map((response) => {
+        const record = this.mapDetailResponse(response);
+        if (!record.Id && numericId) {
+          return { ...record, Id: numericId };
+        }
+        return record;
+      }),
+    );
+  }
+
+  addPayrollProcessing(payload: PayrollProcessingSubmitPayload): Observable<unknown> {
+    return this.http.post(PAYROLL_PROCESSING_ADD_URL, payload);
+  }
+
+  updatePayrollProcessing(id: string | number, payload: PayrollProcessingSubmitPayload): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post(`${PAYROLL_PROCESSING_UPDATE_URL}/${identifier}`, payload);
+  }
+
+  deletePayrollProcessing(id: string | number): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete(`${PAYROLL_PROCESSING_DELETE_URL}/${identifier}`);
+  }
+
+  removeRecord(record: PayrollProcessingListRecord): void {
+    this.recordList.update((list) => list.filter((item) => item.Id !== record.Id));
+  }
+
+  private mapDetailResponse(response: unknown): PayrollProcessingRecord {
+    const root = this.unwrapRecord(response);
+    const headerSource = this.pickNestedRecord(root['header']) ?? root;
+    const detailsSource = this.extractDetailItems(root);
+
+    return {
+      Id: this.pickNumber([root, headerSource], ['Id', 'id', 'ID']),
+      Header: this.mapHeader(headerSource),
+      Details: detailsSource.map((item) => this.mapDetailItem(item)),
+    };
+  }
+
+  private mapApiItemToListRecord(item: Record<string, unknown>): PayrollProcessingListRecord {
+    const header = this.pickNestedRecord(item['header']) ?? item;
+    const details = this.extractDetailItems(item);
+    const sources = [item, header];
+
+    return {
+      Id: this.pickNumber(sources, ['Id', 'id', 'ID']),
+      Month: this.pickNumber(sources, ['month', 'Month']),
+      Year: this.pickNumber(sources, ['year', 'Year']),
+      Remarks: this.pickString(sources, ['remarks', 'Remarks']),
+      Currency: this.pickString(sources, ['currency', 'Currency']) || 'PKR',
+      Status: this.pickString(sources, ['status', 'Status']),
+      ProcessedBy: this.pickNumber(sources, ['processedBy', 'processed_by', 'ProcessedBy']),
+      ProcessedDate: this.pickString(sources, ['processedDate', 'processed_date', 'ProcessedDate']),
+      EmployeeCount:
+        details.length ||
+        this.pickNumber(sources, ['employeeCount', 'employee_count', 'EmployeeCount', 'detailsCount', 'details_count']),
+    };
+  }
+
+  private mapHeader(source: Record<string, unknown>): PayrollProcessingHeaderPayload {
+    return {
+      month: this.pickNumber([source], ['month', 'Month']),
+      year: this.pickNumber([source], ['year', 'Year']),
+      remarks: this.pickString([source], ['remarks', 'Remarks']),
+      currency: this.pickString([source], ['currency', 'Currency']) || 'PKR',
+      status: this.pickString([source], ['status', 'Status']) || 'Draft',
+      processedBy: this.pickNumber([source], ['processedBy', 'processed_by', 'ProcessedBy']),
+      processedDate: this.pickString([source], ['processedDate', 'processed_date', 'ProcessedDate']),
+    };
+  }
+
+  private mapDetailItem(item: Record<string, unknown>): PayrollProcessingDetailPayload {
+    return {
+      employeeId: this.pickString([item], ['employeeId', 'employee_id', 'EmployeeId']),
+      employeeCode: this.pickString([item], ['employeeCode', 'employee_code', 'EmployeeCode']),
+      personName: this.pickString([item], ['personName', 'person_name', 'PersonName', 'employeeName', 'employee_name']),
+      basicSalary: this.pickAmount(item, ['basicSalary', 'basic_salary', 'BasicSalary']),
+      grossSalary: this.pickAmount(item, ['grossSalary', 'gross_salary', 'GrossSalary']),
+      medicalAllowance: this.pickAmount(item, ['medicalAllowance', 'medical_allowance', 'MedicalAllowance']),
+      allowedLiters: this.pickAmount(item, ['allowedLiters', 'allowed_liters', 'AllowedLiters']),
+      monthlyFuelRate: this.pickAmount(item, ['monthlyFuelRate', 'monthly_fuel_rate', 'MonthlyFuelRate']),
+      fuelAllowance: this.pickAmount(item, ['fuelAllowance', 'fuel_allowance', 'FuelAllowance']),
+      mobileAllowance: this.pickAmount(item, ['mobileAllowance', 'mobile_allowance', 'MobileAllowance']),
+      carAllowance: this.pickAmount(item, ['carAllowance', 'car_allowance', 'CarAllowance']),
+      otherAllowances: this.pickAmount(item, ['otherAllowances', 'other_allowances', 'OtherAllowances']),
+      bonus: this.pickAmount(item, ['bonus', 'Bonus']),
+      lastMonthGrossSalary: this.pickAmount(item, ['lastMonthGrossSalary', 'last_month_gross_salary', 'LastMonthGrossSalary']),
+      overtimeHours: this.pickAmount(item, ['overtimeHours', 'overtime_hours', 'OvertimeHours']),
+      overtime: this.pickAmount(item, ['overtime', 'Overtime']),
+      providentFund: this.pickAmount(item, ['providentFund', 'provident_fund', 'ProvidentFund']),
+      gratuity: this.pickAmount(item, ['gratuity', 'Gratuity']),
+      eobiEmployee: this.pickAmount(item, ['eobiEmployee', 'eobi_employee', 'EobiEmployee', 'eobi', 'EOBI']),
+      eobiEmployer: this.pickAmount(item, ['eobiEmployer', 'eobi_employer', 'EobiEmployer']),
+      arrears: this.pickAmount(item, ['arrears', 'Arrears']),
+      loanAdjustment: this.pickAmount(item, ['loanAdjustment', 'loan_adjustment', 'LoanAdjustment', 'loanInstallment', 'loan_installment']),
+      loanAdvForm: this.pickAmount(item, ['loanAdvForm', 'loan_adv_form', 'LoanAdvForm', 'otherDeductions', 'other_deductions']),
+      totalEarnings: this.pickAmount(item, ['totalEarnings', 'total_earnings', 'TotalEarnings']),
+      netPayable: this.pickAmount(item, ['netPayable', 'net_payable', 'NetPayable']),
+      approved: this.pickBoolean(item, ['approved', 'Approved']),
+    };
+  }
+
+  private extractDetailItems(source: Record<string, unknown>): Array<Record<string, unknown>> {
+    const details = source['details'] ?? source['Details'] ?? source['payrollDetails'] ?? source['payroll_details'];
+    if (Array.isArray(details)) {
+      return details.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+    return [];
+  }
+
+  private unwrapRecord(response: unknown): Record<string, unknown> {
+    if (!response || typeof response !== 'object') {
+      return {};
+    }
+
+    const obj = response as Record<string, unknown>;
+    const nested = obj['data'] ?? obj['record'] ?? obj['result'];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      return nested as Record<string, unknown>;
+    }
+
+    return obj;
+  }
+
+  private pickNestedRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return null;
+    }
+    return value as Record<string, unknown>;
+  }
+
+  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (!response) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = [
+      'data',
+      'items',
+      'results',
+      'records',
+      'list',
+      'payrollProcessingList',
+      'payroll_processing_list',
+      'payrollProcessings',
+      'payroll_processings',
+    ];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (obj['header'] || obj['month'] || obj['year'] || obj['remarks']) {
+      return [obj];
+    }
+
+    return [];
+  }
+
+  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
+    for (const source of sources) {
+      for (const key of keys) {
+        const value = source[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          return String(value).trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  private pickNumber(sources: Array<Record<string, unknown>>, keys: string[]): number {
+    const text = this.pickString(sources, keys);
+    const parsed = Number.parseFloat(text);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private pickAmount(source: Record<string, unknown>, keys: string[]): number {
+    return this.pickNumber([source], keys);
+  }
+
+  private pickBoolean(source: Record<string, unknown>, keys: string[]): boolean {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === 'boolean') {
+        return value;
+      }
+      if (value === 1 || value === '1' || String(value).toLowerCase() === 'true' || String(value).toLowerCase() === 'yes') {
+        return true;
+      }
+      if (value === 0 || value === '0' || String(value).toLowerCase() === 'false' || String(value).toLowerCase() === 'no') {
+        return false;
+      }
+    }
+    return false;
+  }
+}

@@ -1146,16 +1146,12 @@ export class ApplicationFormService {
     });
   }
 
-  /** Profile for the signed-in user; falls back to the first application record. */
+  /** Profile for the signed-in user when a matching employee application record exists. */
   getSignedInUserRecord(sessionUserId: string | null): ApplicationFormRecord | undefined {
-    if (sessionUserId) {
-      const match = this.findRecordByLoginUserId(sessionUserId);
-      if (match) {
-        return match;
-      }
+    if (!sessionUserId?.trim()) {
+      return undefined;
     }
-    const records = this.applicationRecords();
-    return records.length > 0 ? records[0] : undefined;
+    return this.findRecordByLoginUserId(sessionUserId);
   }
 
   updateLoginPassword(sessionUserId: string, newPassword: string): boolean {

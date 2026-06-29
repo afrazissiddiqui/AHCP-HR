@@ -14,6 +14,8 @@ export const payrollMasterRoutes: Routes = [
     children: [
       { path: '', component: PayrollProcessingComponent },
       { path: 'payroll-processing/create', component: AddPayrollProcessComponent },
+      { path: 'payroll-processing/edit/:id', component: AddPayrollProcessComponent },
+      { path: 'payroll-processing/view/:id', component: AddPayrollProcessComponent },
       { path: 'attendance-managment', component: AttendanceManagmentComponent },
       { path: 'tax-managment', component: TaxManagmentComponent },
       { path: 'tax-computation', component: TaxComputationComponent },

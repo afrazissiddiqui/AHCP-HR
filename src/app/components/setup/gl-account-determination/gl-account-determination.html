@@ -63,8 +63,8 @@
                       [name]="'branch-' + row.id"
                     >
                       <option value="">Select branch</option>
-                      @for (branch of branchOptions; track branch) {
-                        <option [value]="branch">{{ branch }}</option>
+                      @for (branch of branchOptions; track branch.code) {
+                        <option [value]="branch.name">{{ branch.name }}</option>
                       }
                     </select>
                   </td>
