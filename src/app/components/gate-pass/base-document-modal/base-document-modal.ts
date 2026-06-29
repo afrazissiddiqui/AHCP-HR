@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
-import { Observable, finalize } from 'rxjs';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
+import { Observable, Subscription, finalize } from 'rxjs';
 import { GatePassModule, OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documents.service';
 
 @Component({
@@ -10,7 +10,7 @@ import { GatePassModule, OpenBaseDocument, OpenBaseDocumentsService } from '../o
   templateUrl: './base-document-modal.html',
   styleUrl: './base-document-modal.css',
 })
-export class BaseDocumentModalComponent implements OnChanges {
+export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
   private readonly openBaseDocuments = inject(OpenBaseDocumentsService);
 
   @Input() open = false;
@@ -24,6 +24,11 @@ export class BaseDocumentModalComponent implements OnChanges {
   documents: OpenBaseDocument[] = [];
   loading = false;
   readonly skeletonRows = Array.from({ length: 5 }, (_, index) => index);
+  private loadSubscription?: Subscription;
+
+  ngOnDestroy(): void {
+    this.loadSubscription?.unsubscribe();
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if ((changes['open'] || changes['documentType'] || changes['gatePassModule']) && this.open) {
@@ -55,11 +60,13 @@ export class BaseDocumentModalComponent implements OnChanges {
   }
 
   private loadDocuments(): void {
+    this.loadSubscription?.unsubscribe();
+
     const fetch$ = this.getApiFetch$();
     if (fetch$) {
       this.loading = true;
       this.documents = [];
-      fetch$.pipe(finalize(() => (this.loading = false))).subscribe({
+      this.loadSubscription = fetch$.pipe(finalize(() => (this.loading = false))).subscribe({
         next: (documents) => {
           this.documents = documents;
         },

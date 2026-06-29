@@ -167,7 +167,14 @@
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>From Date:</label>
-            <input type="date" [ngModel]="fromDate()" (ngModelChange)="onFromDateChange($event)" />
+            <input
+              type="text"
+              [ngModel]="fromDate()"
+              (ngModelChange)="onFromDateChange($event)"
+              placeholder="DD/MM/YYYY"
+              inputmode="numeric"
+              maxlength="10"
+            />
           </div>
           <div class="cjr-row">
             <label>To Date:</label>

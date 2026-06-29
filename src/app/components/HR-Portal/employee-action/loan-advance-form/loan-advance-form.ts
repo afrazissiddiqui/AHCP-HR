@@ -8,6 +8,7 @@ import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/
 import { LoanAdvanceRecord, LoanAdvanceService } from '../../../../services/loan-advance.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { displayDateSlash } from '../../../../utils/date-format.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   LOAN_ADVANCE_TABLE_FILTER,
@@ -342,6 +343,9 @@ export class LoanAdvanceFormComponent implements OnInit {
     if (value === undefined || value === null) {
       return '—';
     }
+    if (key === 'RequestDate') {
+      return displayDateSlash(String(value));
+    }
     const text = String(value).trim();
     return text === '' || text === '—' ? '—' : text;
   }
@@ -349,5 +353,9 @@ export class LoanAdvanceFormComponent implements OnInit {
   formatDetail(value: string | undefined): string {
     const text = (value ?? '').trim();
     return text ? text : '—';
+  }
+
+  formatDateDetail(value: string | undefined): string {
+    return displayDateSlash(value ?? '');
   }
 }

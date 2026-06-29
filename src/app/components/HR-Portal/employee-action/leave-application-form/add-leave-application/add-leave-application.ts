@@ -19,6 +19,12 @@ import {
 } from '../../../../../services/leave-application.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import {
+  formatApiToDateSlash,
+  formatDateInputSlash,
+  formatDateSlashToApi,
+  parseSlashOrIsoDate,
+} from '../../../../../utils/date-format.util';
 
 interface LeaveEmployeeOption {
   employeeId: string;
@@ -202,7 +208,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   }
 
   protected onFromDateChange(value: string): void {
-    this.fromDate.set(value);
+    this.fromDate.set(formatDateInputSlash(value));
     this.syncTotalLeaveDays();
   }
 
@@ -303,7 +309,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.requestDate.set(emptyIfDash(leave.requestDate) || this.getTodayDate());
     this.leaveType.set(emptyIfDash(leave.leaveType));
     this.causeOfLeave.set(emptyIfDash(leave.causeOfLeave));
-    this.fromDate.set(emptyIfDash(leave.fromDate));
+    this.fromDate.set(formatApiToDateSlash(emptyIfDash(leave.fromDate)));
     this.toDate.set(emptyIfDash(leave.toDate));
     this.totalLeaveDaysRequested.set(
       leave.totalLeaveDaysRequested > 0 ? leave.totalLeaveDaysRequested : null,
@@ -340,7 +346,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         requestDate: this.requestDate().trim() || this.getTodayDate(),
         leaveType: this.leaveType().trim(),
         causeOfLeave: this.causeOfLeave().trim(),
-        fromDate: this.fromDate().trim(),
+        fromDate: formatDateSlashToApi(this.fromDate().trim()),
         toDate: this.toDate().trim(),
         totalLeaveDaysRequested: this.totalLeaveDaysRequested() ?? 0,
         requestStatus: this.requestStatus(),
@@ -452,11 +458,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   }
 
   private parseDate(value: string): Date | null {
-    if (!value.trim()) {
-      return null;
-    }
-    const parsed = new Date(`${value}T00:00:00`);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
+    return parseSlashOrIsoDate(value);
   }
 
   private generateFormNumber(): string {

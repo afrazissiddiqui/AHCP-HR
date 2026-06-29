@@ -11,6 +11,7 @@ import {
 } from '../../../../services/leave-application.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { displayDateSlash } from '../../../../utils/date-format.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   LEAVE_APPLICATION_TABLE_FILTER,
@@ -324,6 +325,9 @@ export class LeaveApplicationFormComponent implements OnInit {
     if (value === undefined || value === null) {
       return '—';
     }
+    if (key === 'FromDate') {
+      return displayDateSlash(String(value));
+    }
     const text = String(value).trim();
     return text === '' || text === '—' ? '—' : text;
   }
@@ -334,5 +338,9 @@ export class LeaveApplicationFormComponent implements OnInit {
     }
     const text = String(value).trim();
     return text ? text : '—';
+  }
+
+  formatDateDetail(value: string | number | undefined): string {
+    return displayDateSlash(value ?? '');
   }
 }

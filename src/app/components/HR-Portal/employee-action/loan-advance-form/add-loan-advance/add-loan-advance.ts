@@ -15,6 +15,7 @@ import { AlertService } from '../../../../../services/alert.service';
 import { LoanAdvanceService } from '../../../../../services/loan-advance.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import { formatApiToDateSlash, formatDateSlashToApi } from '../../../../../utils/date-format.util';
 
 interface LoanEmployeeOption {
   code: string;
@@ -81,7 +82,7 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
   protected readonly employeeCategory = signal('');
   protected readonly reportingManager = signal('');
   protected readonly requestType = signal('');
-  protected readonly requestDate = signal(this.getTodayDate());
+  protected readonly requestDate = signal(this.getTodayDateDisplay());
   protected readonly status = signal('');
   protected readonly joiningDate = signal('');
   protected readonly department = signal('');
@@ -294,9 +295,8 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
     return `LA-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   }
 
-  private getTodayDate(): string {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+  private getTodayDateDisplay(): string {
+    return formatApiToDateSlash(new Date().toISOString().split('T')[0]);
   }
 
   private getCurrentPayrollMonth(): string {
@@ -371,7 +371,7 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
         location: this.location(),
         joiningDate: this.joiningDate(),
         yearsOfService: this.yearsOfService(),
-        requestDate: this.requestDate(),
+        requestDate: formatDateSlashToApi(this.requestDate()),
         payrollMonth: this.payrollMonth(),
         status: this.status(),
         employeeNature: this.employeeNature(),

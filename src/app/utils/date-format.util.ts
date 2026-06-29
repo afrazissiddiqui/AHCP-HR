@@ -103,3 +103,42 @@ export function displayDateOnly(value: string | number | undefined | null): stri
   const formatted = formatDateOfBirthFromApi(String(value));
   return formatted || '—';
 }
+
+/** Displays a stored date as DD/MM/YYYY without time components. */
+export function displayDateSlash(value: string | number | undefined | null): string {
+  const formatted = displayDateOnly(value);
+  return formatted === '—' ? '—' : formatted.replace(/-/g, '/');
+}
+
+/** Formats user input into DD/MM/YYYY as the user types. */
+export function formatDateInputSlash(value: string): string {
+  return formatDateDdMmYyyyInput(value).replace(/-/g, '/');
+}
+
+/** Converts DD/MM/YYYY display input to yyyy-MM-dd for API payloads. */
+export function formatDateSlashToApi(value: string): string {
+  return formatDateOfBirthToApi(value.replace(/\//g, '-'));
+}
+
+/** Normalizes API / ISO values to DD/MM/YYYY for display and editing. */
+export function formatApiToDateSlash(value: string): string {
+  return formatDateOfBirthFromApi(value).replace(/-/g, '/');
+}
+
+/** Parses DD/MM/YYYY, DD-MM-YYYY, or yyyy-MM-dd into a local Date. */
+export function parseSlashOrIsoDate(value: string): Date | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const dmyMatch = trimmed.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
+  if (dmyMatch) {
+    const [, day, month, year] = dmyMatch;
+    const parsed = new Date(`${year}-${month}-${day}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const parsed = new Date(`${trimmed}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}

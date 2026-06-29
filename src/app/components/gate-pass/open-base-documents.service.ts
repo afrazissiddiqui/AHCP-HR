@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { apiUrl } from '../../config/api.config';
 
 export type GatePassModule = 'igp' | 'ogp' | 'agp';
@@ -719,13 +719,19 @@ export class OpenBaseDocumentsService {
 
   fetchIgpPurchaseOrders(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(GET_PO_RECORDS_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item))),
+      map((response) =>
+        this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
+      ),
+      catchError(() => of([])),
     );
   }
 
   fetchIgpSalesReturnRequests(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(SALES_RETURN_REQUESTS_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item))),
+      map((response) =>
+        this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
+      ),
+      catchError(() => of([])),
     );
   }
 
@@ -763,6 +769,12 @@ export class OpenBaseDocumentsService {
       if (Array.isArray(value)) {
         return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
       }
+      if (value && typeof value === 'object') {
+        const nestedItems = this.extractApiItems(value);
+        if (nestedItems.length > 0) {
+          return nestedItems;
+        }
+      }
     }
 
     const nestedData = obj['data'];
@@ -785,7 +797,9 @@ export class OpenBaseDocumentsService {
       obj['salesReturnRequestNo'] ||
       obj['sales_return_request_no'] ||
       obj['number'] ||
-      obj['docNum']
+      obj['docNum'] ||
+      obj['DocNum'] ||
+      obj['DocEntry']
     ) {
       return [obj];
     }
@@ -831,16 +845,18 @@ export class OpenBaseDocumentsService {
       number,
       title,
       partner: businessPartnerName,
-      date: this.pickString(sources, [
-        'date',
-        'documentDate',
-        'document_date',
-        'poDate',
-        'po_date',
-        'returnDate',
-        'return_date',
-        'DocDate',
-      ]),
+      date: this.normalizeApiDate(
+        this.pickString(sources, [
+          'date',
+          'documentDate',
+          'document_date',
+          'poDate',
+          'po_date',
+          'returnDate',
+          'return_date',
+          'DocDate',
+        ]),
+      ),
       businessPartnerCode: this.pickString(sources, [
         'businessPartnerCode',
         'business_partner_code',
@@ -849,20 +865,30 @@ export class OpenBaseDocumentsService {
         'CardCode',
       ]),
       businessPartnerName,
-      vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']),
-      fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit']),
+      vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo', 'U_VehicleNo']),
+      fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit', 'Branch']),
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']),
       department: this.pickString(sources, ['department', 'Department']),
-      biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']),
+      biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo', 'U_BuiltyNo']),
       store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse']),
       freight: this.pickString(sources, ['freight', 'Freight', 'freightAmount', 'freight_amount']),
       weightMachineName: this.pickString(sources, ['weightMachineName', 'weight_machine_name', 'WeightMachineName']),
       weight: this.pickString(sources, ['weight', 'Weight']),
       location: this.pickString(sources, ['location', 'Location']),
-      referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo']),
+      referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo', 'U_CusPoNo']),
       remarks: this.pickString(sources, ['remarks', 'Remarks']),
+      transporterName: this.pickString(sources, ['transporterName', 'transporter_name', 'U_TransporterName']),
       lines: this.mapDocumentLines(item),
     };
+  }
+
+  private normalizeApiDate(value: string): string {
+    if (!value) {
+      return '';
+    }
+    const cleaned = value.replace(/\0/g, '').trim();
+    const iso = cleaned.match(/^(\d{4}-\d{2}-\d{2})/);
+    return iso ? iso[1] : cleaned.slice(0, 10);
   }
 
   private mapDocumentLines(item: Record<string, unknown>): BaseDocLinePayload[] | undefined {
@@ -875,7 +901,16 @@ export class OpenBaseDocumentsService {
       .filter((line): line is Record<string, unknown> => !!line && typeof line === 'object')
       .map((line) => ({
         itemCode: this.pickString([line], ['itemCode', 'item_code', 'ItemCode', 'code', 'Code']),
-        itemName: this.pickString([line], ['itemName', 'item_name', 'ItemName', 'name', 'Name', 'description']),
+        itemName: this.pickString([line], [
+          'itemName',
+          'item_name',
+          'ItemName',
+          'name',
+          'Name',
+          'description',
+          'Description',
+          'Dscription',
+        ]),
         category: this.pickString([line], ['category', 'Category']),
         packingCondition: this.pickString([line], ['packingCondition', 'packing_condition', 'PackingCondition']),
         productQuality: this.pickString([line], ['productQuality', 'product_quality', 'ProductQuality']),
@@ -891,7 +926,7 @@ export class OpenBaseDocumentsService {
       for (const key of keys) {
         const value = source[key];
         if (value !== undefined && value !== null && String(value).trim() !== '') {
-          return String(value).trim();
+          return String(value).replace(/\0/g, '').trim();
         }
       }
     }
