@@ -9,9 +9,17 @@ export interface PlantMaintenanceMasterLineAttachment {
   dataUrl: string;
 }
 
+export interface PlantMaintenanceMasterReplacementLine {
+  machineId: string;
+  machineNumber: string;
+  quantity: number | null;
+}
+
 export interface PlantMaintenanceMasterInspectionLine {
   itemsToBeInspected: string;
   whatToCheck: string;
+  replacement: string;
+  replacementItems: PlantMaintenanceMasterReplacementLine[];
   instructions: string;
   status: string;
   recommendation: string;
@@ -116,6 +124,15 @@ export function buildPlantMaintenanceMasterFormPayload(
         status: line.status.trim(),
         itemsToBeInspected: line.itemsToBeInspected.trim(),
         whatToCheck: line.whatToCheck.trim(),
+        replacement: line.replacement.trim() || 'No',
+        replacementItems:
+          line.replacement.trim() === 'Yes'
+            ? line.replacementItems.map((item) => ({
+                machineId: item.machineId.trim(),
+                machineNumber: item.machineNumber.trim(),
+                quantity: item.quantity ?? 0,
+              }))
+            : [],
         instructions: line.instructions.trim(),
         recommendation: line.recommendation.trim(),
         attachments: line.attachments.map((attachment) => ({
@@ -331,7 +348,31 @@ export class PlantMaintenanceMasterFormService {
       .filter((attachment) => attachment.fileName || attachment.dataUrl);
   }
 
+  private mapReplacementItems(raw: Record<string, unknown>): PlantMaintenanceMasterReplacementLine[] {
+    const rawItems =
+      raw['replacementItems'] ?? raw['replacement_items'] ?? raw['ReplacementItems'];
+    if (!Array.isArray(rawItems)) {
+      return [];
+    }
+
+    return rawItems
+      .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object')
+      .map((item) => ({
+        machineId: this.pickString([item], ['machineId', 'machine_id', 'MachineId']),
+        machineNumber: this.pickString([item], [
+          'machineNumber',
+          'machine_number',
+          'MachineNumber',
+        ]),
+        quantity: this.pickNumber([item], ['quantity', 'Quantity', 'qty', 'Qty']),
+      }))
+      .filter(
+        (item) => item.machineId || item.machineNumber || item.quantity !== null,
+      );
+  }
+
   private mapInspectionLine(raw: Record<string, unknown>): PlantMaintenanceMasterInspectionLine {
+    const replacement = this.pickString([raw], ['replacement', 'Replacement']) || 'No';
     return {
       itemsToBeInspected: this.pickString([raw], [
         'itemsToBeInspected',
@@ -339,6 +380,9 @@ export class PlantMaintenanceMasterFormService {
         'ItemsToBeInspected',
       ]),
       whatToCheck: this.pickString([raw], ['whatToCheck', 'what_to_check', 'WhatToCheck']),
+      replacement,
+      replacementItems:
+        replacement === 'Yes' ? this.mapReplacementItems(raw) : [],
       instructions: this.pickString([raw], ['instructions', 'Instructions']),
       status: this.pickString([raw], ['status', 'Status']),
       recommendation: this.pickString([raw], ['recommendation', 'Recommendation']),

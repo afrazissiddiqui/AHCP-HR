@@ -279,6 +279,32 @@
                   <span>{{ line.whatToCheck || '—' }}</span>
                 </div>
                 <div class="mad-view-inspection-item">
+                  <label>Replacement:</label>
+                  <span>{{ line.replacement || 'No' }}</span>
+                </div>
+                <div
+                  class="mad-view-inspection-item mad-view-inspection-item--full"
+                  *ngIf="line.replacement === 'Yes' && line.replacementItems.length"
+                >
+                  <label>Replacement details:</label>
+                  <table class="mountain-table pmm-view-replacement-table">
+                    <thead>
+                      <tr>
+                        <th>Machine ID</th>
+                        <th>Machine Number</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let replacementRow of line.replacementItems">
+                        <td>{{ replacementRow.machineId || '—' }}</td>
+                        <td>{{ replacementRow.machineNumber || '—' }}</td>
+                        <td>{{ replacementRow.quantity ?? '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="mad-view-inspection-item">
                   <label>Instructions:</label>
                   <span>{{ line.instructions || '—' }}</span>
                 </div>

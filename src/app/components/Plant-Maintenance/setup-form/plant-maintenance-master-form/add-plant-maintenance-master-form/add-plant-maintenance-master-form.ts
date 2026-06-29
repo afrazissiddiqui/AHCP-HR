@@ -7,8 +7,6 @@ import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   MachineSearchOption,
-  resolveSparePartIdentity,
-  SparePartSearchOption,
   toMachineSearchOptions,
 } from '../../plant-maintenance-machine.model';
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
@@ -21,15 +19,26 @@ import {
   PlantMaintenanceMasterFormService,
   PlantMaintenanceMasterInspectionLine,
   PlantMaintenanceMasterRecord,
+  PlantMaintenanceMasterReplacementLine,
   PlantMaintenanceMasterSparePartLine,
 } from '../plant-maintenance-master-form.service';
 
 type InspectionLineField = keyof PlantMaintenanceMasterInspectionLine;
 
+function createEmptyReplacementLine(): PlantMaintenanceMasterReplacementLine {
+  return {
+    machineId: '',
+    machineNumber: '',
+    quantity: null,
+  };
+}
+
 function createEmptyInspectionLine(): PlantMaintenanceMasterInspectionLine {
   return {
     itemsToBeInspected: '',
     whatToCheck: '',
+    replacement: 'No',
+    replacementItems: [],
     instructions: '',
     status: '',
     recommendation: '',
@@ -41,16 +50,6 @@ function createEmptyComponent(): PlantMaintenanceMasterComponent {
   return {
     name: '',
     inspectionLines: [createEmptyInspectionLine()],
-  };
-}
-
-function createEmptySparePartLine(): PlantMaintenanceMasterSparePartLine {
-  return {
-    sparePartId: '',
-    sparePartDescription: '',
-    quantity: null,
-    warehouseCode: '',
-    uomCode: '',
   };
 }
 
@@ -161,18 +160,13 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     'Pre-Cautionary',
   ] as const;
   readonly lineStatusOptions = ['Pass', 'Fail', 'N/A'] as const;
+  readonly replacementOptions = ['Yes', 'No'] as const;
 
   readonly idSuggestions = computed(() => this.filterMachineSuggestions(this.machineId()));
   readonly nameSuggestions = computed(() => this.filterMachineSuggestions(this.machineName()));
-  readonly sparePartIdSuggestionsRow = signal<number | null>(null);
-  readonly sparePartDescSuggestionsRow = signal<number | null>(null);
 
   private get machineOptions(): MachineSearchOption[] {
     return toMachineSearchOptions(this.subComponentService.records());
-  }
-
-  private get sparePartOptions(): SparePartSearchOption[] {
-    return [];
   }
 
   private syncingScheduleFields = false;
@@ -281,120 +275,6 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.syncScheduleFromEndDate();
   }
 
-  getSparePartIdSuggestions(rowIndex: number): SparePartSearchOption[] {
-    const row = this.spareParts()[rowIndex];
-    return row ? this.filterSparePartSuggestions(row.sparePartId) : [];
-  }
-
-  getSparePartDescSuggestions(rowIndex: number): SparePartSearchOption[] {
-    const row = this.spareParts()[rowIndex];
-    return row ? this.filterSparePartSuggestions(row.sparePartDescription) : [];
-  }
-
-  isSparePartIdSuggestionsOpen(rowIndex: number): boolean {
-    return (
-      this.sparePartIdSuggestionsRow() === rowIndex &&
-      (this.spareParts()[rowIndex]?.sparePartId.trim() ?? '').length > 0
-    );
-  }
-
-  isSparePartDescSuggestionsOpen(rowIndex: number): boolean {
-    return (
-      this.sparePartDescSuggestionsRow() === rowIndex &&
-      (this.spareParts()[rowIndex]?.sparePartDescription.trim() ?? '').length > 0
-    );
-  }
-
-  onSparePartIdInput(rowIndex: number, value: string): void {
-    this.updateSparePartRow(rowIndex, { sparePartId: value });
-    this.sparePartIdSuggestionsRow.set(value.trim() ? rowIndex : null);
-    this.sparePartDescSuggestionsRow.set(null);
-  }
-
-  onSparePartDescriptionInput(rowIndex: number, value: string): void {
-    this.updateSparePartRow(rowIndex, { sparePartDescription: value });
-    this.sparePartDescSuggestionsRow.set(value.trim() ? rowIndex : null);
-    this.sparePartIdSuggestionsRow.set(null);
-  }
-
-  onSparePartQuantityInput(rowIndex: number, value: number | string | null): void {
-    if (value === null || value === '') {
-      this.updateSparePartRow(rowIndex, { quantity: null });
-      return;
-    }
-    const quantity = typeof value === 'number' ? value : Number.parseFloat(String(value));
-    if (!Number.isFinite(quantity) || quantity < 0) {
-      return;
-    }
-    this.updateSparePartRow(rowIndex, { quantity });
-  }
-
-  onSparePartWarehouseInput(rowIndex: number, warehouseCode: string): void {
-    this.updateSparePartRow(rowIndex, { warehouseCode });
-  }
-
-  onSparePartUomInput(rowIndex: number, uomCode: string): void {
-    this.updateSparePartRow(rowIndex, { uomCode });
-  }
-
-  openSparePartIdSuggestions(rowIndex: number): void {
-    if (this.spareParts()[rowIndex]?.sparePartId.trim()) {
-      this.sparePartIdSuggestionsRow.set(rowIndex);
-      this.sparePartDescSuggestionsRow.set(null);
-    }
-  }
-
-  openSparePartDescSuggestions(rowIndex: number): void {
-    if (this.spareParts()[rowIndex]?.sparePartDescription.trim()) {
-      this.sparePartDescSuggestionsRow.set(rowIndex);
-      this.sparePartIdSuggestionsRow.set(null);
-    }
-  }
-
-  onSparePartIdBlur(): void {
-    setTimeout(() => this.sparePartIdSuggestionsRow.set(null), 150);
-  }
-
-  onSparePartDescBlur(): void {
-    setTimeout(() => this.sparePartDescSuggestionsRow.set(null), 150);
-  }
-
-  selectSparePartFromSuggestion(rowIndex: number, part: SparePartSearchOption): void {
-    this.sparePartIdSuggestionsRow.set(null);
-    this.sparePartDescSuggestionsRow.set(null);
-    this.updateSparePartRow(rowIndex, {
-      sparePartId: part.sparePartId,
-      sparePartDescription: part.sparePartDescription,
-      uomCode: this.spareParts()[rowIndex]?.uomCode.trim()
-        ? this.spareParts()[rowIndex].uomCode
-        : part.defaultUomCode,
-    });
-  }
-
-  addSparePartRow(): void {
-    this.spareParts.update((list) => [...list, createEmptySparePartLine()]);
-  }
-
-  removeSparePartRow(rowIndex: number): void {
-    this.spareParts.update((list) => list.filter((_, i) => i !== rowIndex));
-    if (this.sparePartIdSuggestionsRow() === rowIndex) {
-      this.sparePartIdSuggestionsRow.set(null);
-    } else if (
-      this.sparePartIdSuggestionsRow() !== null &&
-      this.sparePartIdSuggestionsRow()! > rowIndex
-    ) {
-      this.sparePartIdSuggestionsRow.update((i) => (i === null ? null : i - 1));
-    }
-    if (this.sparePartDescSuggestionsRow() === rowIndex) {
-      this.sparePartDescSuggestionsRow.set(null);
-    } else if (
-      this.sparePartDescSuggestionsRow() !== null &&
-      this.sparePartDescSuggestionsRow()! > rowIndex
-    ) {
-      this.sparePartDescSuggestionsRow.update((i) => (i === null ? null : i - 1));
-    }
-  }
-
   onDurationInput(value: number | string | null): void {
     if (value === null || value === '') {
       this.durationDays.set(null);
@@ -429,6 +309,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     if (
       field !== 'status' &&
       field !== 'recommendation' &&
+      field !== 'replacement' &&
       this.hasLoadedActivityData()
     ) {
       return;
@@ -441,6 +322,120 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
         const inspectionLines = component.inspectionLines.map((line, li) =>
           li === lineIndex ? { ...line, [field]: value } : line,
         );
+        return { ...component, inspectionLines };
+      }),
+    );
+  }
+
+  onReplacementChange(componentIndex: number, lineIndex: number, value: string): void {
+    this.components.update((list) =>
+      list.map((component, ci) => {
+        if (ci !== componentIndex) {
+          return component;
+        }
+        const inspectionLines = component.inspectionLines.map((line, li) => {
+          if (li !== lineIndex) {
+            return line;
+          }
+          if (value === 'Yes') {
+            return {
+              ...line,
+              replacement: value,
+              replacementItems: line.replacementItems.length
+                ? line.replacementItems
+                : [createEmptyReplacementLine()],
+            };
+          }
+          return {
+            ...line,
+            replacement: value,
+            replacementItems: [],
+          };
+        });
+        return { ...component, inspectionLines };
+      }),
+    );
+  }
+
+  addReplacementRow(componentIndex: number, lineIndex: number): void {
+    this.components.update((list) =>
+      list.map((component, ci) => {
+        if (ci !== componentIndex) {
+          return component;
+        }
+        const inspectionLines = component.inspectionLines.map((line, li) =>
+          li === lineIndex
+            ? {
+                ...line,
+                replacementItems: [...line.replacementItems, createEmptyReplacementLine()],
+              }
+            : line,
+        );
+        return { ...component, inspectionLines };
+      }),
+    );
+  }
+
+  removeReplacementRow(
+    componentIndex: number,
+    lineIndex: number,
+    replacementRowIndex: number,
+  ): void {
+    this.components.update((list) =>
+      list.map((component, ci) => {
+        if (ci !== componentIndex) {
+          return component;
+        }
+        const inspectionLines = component.inspectionLines.map((line, li) => {
+          if (li !== lineIndex) {
+            return line;
+          }
+          const replacementItems =
+            line.replacementItems.length > 1
+              ? line.replacementItems.filter((_, ri) => ri !== replacementRowIndex)
+              : [createEmptyReplacementLine()];
+          return { ...line, replacementItems };
+        });
+        return { ...component, inspectionLines };
+      }),
+    );
+  }
+
+  updateReplacementRow(
+    componentIndex: number,
+    lineIndex: number,
+    replacementRowIndex: number,
+    field: keyof PlantMaintenanceMasterReplacementLine,
+    value: string | number | null,
+  ): void {
+    this.components.update((list) =>
+      list.map((component, ci) => {
+        if (ci !== componentIndex) {
+          return component;
+        }
+        const inspectionLines = component.inspectionLines.map((line, li) => {
+          if (li !== lineIndex) {
+            return line;
+          }
+          const replacementItems = line.replacementItems.map((row, ri) => {
+            if (ri !== replacementRowIndex) {
+              return row;
+            }
+            if (field === 'quantity') {
+              if (value === null || value === '') {
+                return { ...row, quantity: null };
+              }
+              const quantity =
+                typeof value === 'number' ? value : Number.parseFloat(String(value));
+              if (!Number.isFinite(quantity) || quantity < 0) {
+                return row;
+              }
+              return { ...row, quantity };
+            }
+            return { ...row, [field]: String(value) };
+          });
+          return { ...line, replacementItems };
+        });
         return { ...component, inspectionLines };
       }),
     );
@@ -648,6 +643,20 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
           .map((line) => ({
             itemsToBeInspected: line.itemsToBeInspected.trim(),
             whatToCheck: line.whatToCheck.trim(),
+            replacement: line.replacement.trim() || 'No',
+            replacementItems:
+              line.replacement.trim() === 'Yes'
+                ? line.replacementItems
+                    .map((item) => ({
+                      machineId: item.machineId.trim(),
+                      machineNumber: item.machineNumber.trim(),
+                      quantity: item.quantity,
+                    }))
+                    .filter(
+                      (item) =>
+                        item.machineId || item.machineNumber || item.quantity !== null,
+                    )
+                : [],
             instructions: line.instructions.trim(),
             status: line.status.trim(),
             recommendation: line.recommendation.trim(),
@@ -706,12 +715,32 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       return;
     }
 
-    const excludeId = this.editingRecordId() ?? undefined;
-    const { spareParts, sparePartsError } = this.normalizeSparePartsForSave();
-    if (sparePartsError) {
-      this.alertService.validation(sparePartsError);
+    const invalidReplacementDetails = components.some((component) =>
+      component.inspectionLines.some((line) => {
+        if (line.replacement !== 'Yes') {
+          return false;
+        }
+        if (line.replacementItems.length === 0) {
+          return true;
+        }
+        return line.replacementItems.some(
+          (item) =>
+            !item.machineId ||
+            !item.machineNumber ||
+            item.quantity === null ||
+            item.quantity <= 0,
+        );
+      }),
+    );
+    if (invalidReplacementDetails) {
+      this.alertService.validation(
+        'When Replacement is Yes, add at least one row with Machine ID, Machine Number, and Quantity.',
+      );
       return;
     }
+
+    const excludeId = this.editingRecordId() ?? undefined;
+    const spareParts = this.isCreateMode() ? [] : this.spareParts();
 
     const payload = {
       machineId,
@@ -882,83 +911,6 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     return '';
   }
 
-  private updateSparePartRow(
-    rowIndex: number,
-    patch: Partial<PlantMaintenanceMasterSparePartLine>,
-  ): void {
-    this.spareParts.update((list) =>
-      list.map((row, i) => (i === rowIndex ? { ...row, ...patch } : row)),
-    );
-  }
-
-  private normalizeSparePartsForSave(): {
-    spareParts: PlantMaintenanceMasterSparePartLine[];
-    sparePartsError?: string;
-  } {
-    const filledRows = this.spareParts().filter(
-      (row) =>
-        row.sparePartId.trim() ||
-        row.sparePartDescription.trim() ||
-        row.quantity !== null ||
-        row.warehouseCode.trim() ||
-        row.uomCode.trim(),
-    );
-
-    if (filledRows.length === 0) {
-      return { spareParts: [] };
-    }
-
-    const spareParts: PlantMaintenanceMasterSparePartLine[] = [];
-
-    for (let index = 0; index < filledRows.length; index++) {
-      const row = filledRows[index];
-      const identity = resolveSparePartIdentity(row.sparePartId, row.sparePartDescription);
-      const sparePartId = identity.sparePartId;
-      const sparePartDescription = identity.sparePartDescription;
-      const warehouseCode = row.warehouseCode.trim();
-      const uomCode = row.uomCode.trim();
-      const quantity = row.quantity;
-
-      if (!sparePartId || !sparePartDescription) {
-        return {
-          spareParts: [],
-          sparePartsError: `Spare Parts row ${index + 1}: enter Spare Part ID and Description from SAP.`,
-        };
-      }
-
-      if (quantity === null || quantity <= 0) {
-        return {
-          spareParts: [],
-          sparePartsError: `Spare Parts row ${index + 1}: enter a valid Quantity.`,
-        };
-      }
-
-      if (!warehouseCode) {
-        return {
-          spareParts: [],
-          sparePartsError: `Spare Parts row ${index + 1}: select a Warehouse.`,
-        };
-      }
-
-      if (!uomCode) {
-        return {
-          spareParts: [],
-          sparePartsError: `Spare Parts row ${index + 1}: select a UOM.`,
-        };
-      }
-
-      spareParts.push({
-        sparePartId,
-        sparePartDescription,
-        quantity,
-        warehouseCode,
-        uomCode,
-      });
-    }
-
-    return { spareParts };
-  }
-
   private populateFromRecord(record: PlantMaintenanceMasterRecord): void {
     this.machineId.set(record.machineId === '—' ? '' : record.machineId);
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
@@ -988,20 +940,6 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       }));
     }
     return [];
-  }
-
-  private filterSparePartSuggestions(query: string): SparePartSearchOption[] {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      return [];
-    }
-    return this.sparePartOptions
-      .filter(
-        (p) =>
-          p.sparePartId.toLowerCase().includes(q) ||
-          p.sparePartDescription.toLowerCase().includes(q),
-      )
-      .slice(0, 10);
   }
 
   private filterMachineSuggestions(query: string): MachineSearchOption[] {
@@ -1126,6 +1064,15 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     return {
       itemsToBeInspected: line.itemsToBeInspected ?? '',
       whatToCheck: line.whatToCheck ?? '',
+      replacement: line.replacement === 'Yes' ? 'Yes' : 'No',
+      replacementItems:
+        line.replacement === 'Yes'
+          ? (line.replacementItems ?? []).map((item) => ({
+              machineId: item.machineId ?? '',
+              machineNumber: item.machineNumber ?? '',
+              quantity: item.quantity ?? null,
+            }))
+          : [],
       instructions: line.instructions ?? '',
       status: line.status ?? '',
       recommendation: line.recommendation ?? '',

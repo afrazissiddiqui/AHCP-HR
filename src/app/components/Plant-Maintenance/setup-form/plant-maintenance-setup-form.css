@@ -503,7 +503,7 @@
 }
 
 .pmm-line-grid--inspect {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding-top: 12px;
 }
 
@@ -1217,6 +1217,58 @@
 
 .pmm-spare-parts-add-row {
   margin-top: 4px;
+}
+
+.pmm-replacement-table-section {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e8eef5;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.pmm-replacement-table {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.pmm-replacement-table th,
+.pmm-replacement-table td {
+  vertical-align: middle;
+}
+
+.pmm-replacement-table__actions {
+  width: 44px;
+  text-align: center;
+}
+
+.pmm-replacement-table__input {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  font-size: 13px;
+  color: #333;
+  background: #fff;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.pmm-replacement-table__input:focus {
+  outline: none;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+.pmm-replacement-table__add-row {
+  margin-top: 4px;
+}
+
+.pmm-view-replacement-table {
+  width: 100%;
+  margin-top: 6px;
 }
 
 .pmm-schedule-section {
