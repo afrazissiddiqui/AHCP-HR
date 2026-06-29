@@ -21,6 +21,11 @@ import {
   buildExpenseReimbursementSubmitPayload,
 } from '../../../../../services/expense-reimbursement.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import {
+  formatDateDdMmYyyyInput,
+  formatDateOfBirthFromApi,
+  formatDateOfBirthToApi,
+} from '../../../../../utils/date-format.util';
 
 interface ExpenseEmployeeOption {
   code: string;
@@ -264,7 +269,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
       detailDepartment: this.detailDepartment() || this.headerDepartment(),
       expenseType: this.expenseType(),
       claimAmount: this.claimAmount(),
-      claimDate: this.claimDate(),
+      claimDate: formatDateOfBirthToApi(this.claimDate().replace(/\//g, '-')),
       approvalStatus: this.approvalStatus(),
       expenseRemarks: this.expenseRemarks(),
       travelFromDate: this.travelFromDate(),
@@ -362,6 +367,10 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.costCenter.set(employee.costCenter);
   }
 
+  onClaimDateChange(value: string): void {
+    this.claimDate.set(formatDateDdMmYyyyInput(value).replace(/-/g, '/'));
+  }
+
   private populateFromRecord(record: ExpenseReimbursementRecord): void {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
     const yesNo = (value: string): 'Yes' | 'No' | '' =>
@@ -383,7 +392,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.detailDepartment.set(emptyIfDash(detail.department));
     this.expenseType.set(emptyIfDash(detail.expenseType));
     this.claimAmount.set(emptyIfDash(detail.claimAmount));
-    this.claimDate.set(emptyIfDash(detail.claimDate));
+    this.claimDate.set(formatDateOfBirthFromApi(emptyIfDash(detail.claimDate)).replace(/-/g, '/'));
     this.approvalStatus.set(emptyIfDash(detail.approvalStatus) || 'Pending');
     this.expenseRemarks.set(emptyIfDash(detail.remarks));
 

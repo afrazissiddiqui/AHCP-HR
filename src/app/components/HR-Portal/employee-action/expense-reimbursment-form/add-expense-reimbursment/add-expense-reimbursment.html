@@ -172,7 +172,14 @@
 
             <div class="cjs-row">
               <label>Claim Date:</label>
-              <input type="date" [ngModel]="claimDate()" (ngModelChange)="claimDate.set($event)" />
+              <input
+                type="text"
+                [ngModel]="claimDate()"
+                (ngModelChange)="onClaimDateChange($event)"
+                placeholder="DD/MM/YYYY"
+                inputmode="numeric"
+                maxlength="10"
+              />
             </div>
 
           </div>

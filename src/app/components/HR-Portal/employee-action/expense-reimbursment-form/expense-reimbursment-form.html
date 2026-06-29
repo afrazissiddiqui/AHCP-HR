@@ -105,7 +105,7 @@
                 <div class="js-detail-item"><label>Department:</label> <span>{{ record.ExpenseDetail.department }}</span></div>
                 <div class="js-detail-item"><label>Expense Type:</label> <span>{{ record.ExpenseDetail.expenseType }}</span></div>
                 <div class="js-detail-item"><label>Claim Amount:</label> <span>{{ record.ExpenseDetail.claimAmount }}</span></div>
-                <div class="js-detail-item"><label>Claim Date:</label> <span>{{ record.ExpenseDetail.claimDate }}</span></div>
+                <div class="js-detail-item"><label>Claim Date:</label> <span>{{ formatClaimDate(record.ExpenseDetail.claimDate) }}</span></div>
                 <div class="js-detail-item"><label>Approval Status:</label> <span>{{ record.ExpenseDetail.approvalStatus }}</span></div>
               </div>
               <div class="js-detail-full" *ngIf="record.ExpenseDetail.remarks">
