@@ -1,0 +1,87 @@
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
+import { apiUrl } from '../config/api.config';
+
+export type UserListItem = Record<string, unknown>;
+export type UserSetupPayload = Record<string, unknown>;
+
+const USER_LIST_URL = apiUrl('user-list');
+const USER_ADD_URL = apiUrl('user-add');
+const USER_UPDATE_URL = apiUrl('user-update');
+const USER_DELETE_URL = apiUrl('user-delete');
+
+@Injectable({
+  providedIn: 'root',
+})
+export class UserSetupService {
+  private readonly http = inject(HttpClient);
+  private readonly userList = signal<UserListItem[]>([]);
+
+  readonly users = this.userList.asReadonly();
+
+  fetchUsers(): Observable<UserListItem[]> {
+    return this.http.get<unknown>(USER_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response)),
+      tap((users) => this.userList.set(users)),
+    );
+  }
+
+  addUser(payload: UserSetupPayload): Observable<unknown> {
+    return this.http.post(USER_ADD_URL, payload);
+  }
+
+  updateUser(id: string | number, payload: UserSetupPayload): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post(`${USER_UPDATE_URL}/${identifier}`, payload);
+  }
+
+  deleteUser(id: string | number): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.delete(`${USER_DELETE_URL}/${identifier}`);
+  }
+
+  private extractApiItems(response: unknown): UserListItem[] {
+    if (!response) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response.filter((item): item is UserListItem => !!item && typeof item === 'object');
+    }
+
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = ['data', 'items', 'results', 'records', 'list', 'users', 'userList', 'user_list'];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is UserListItem => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (this.looksLikeUserRecord(obj)) {
+      return [obj];
+    }
+
+    return [];
+  }
+
+  private looksLikeUserRecord(item: Record<string, unknown>): boolean {
+    return ['id', 'Id', 'ID', 'name', 'Name', 'email', 'Email', 'username', 'Username'].some(
+      (key) => key in item,
+    );
+  }
+}

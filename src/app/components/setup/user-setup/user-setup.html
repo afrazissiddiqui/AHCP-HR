@@ -1,0 +1,117 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div class="setup-body">
+      <div class="setup-intro">
+        <h2>User Setup</h2>
+        <p>View all users returned by the user list API.</p>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">{{ formTitle() }}</h3>
+            <p class="panel-subtitle">
+              @if (formMode() === 'edit') {
+                Update the selected user record.
+              } @else {
+                Enter user details to create a new user.
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          @for (field of formFields(); track trackByColumn($index, field)) {
+            <label class="field-block">
+              <span class="field-label">{{ columnLabel(field) }}</span>
+              @if (field === 'is_admin' || field === 'isAdmin') {
+                <select
+                  class="field-input"
+                  [ngModel]="fieldValue(field)"
+                  (ngModelChange)="updateField(field, $event)"
+                  [name]="'user-field-' + field">
+                  <option value="0">No</option>
+                  <option value="1">Yes</option>
+                </select>
+              } @else {
+                <input
+                  [type]="field.toLowerCase() === 'password' ? 'password' : 'text'"
+                  class="field-input"
+                  [ngModel]="fieldValue(field)"
+                  (ngModelChange)="updateField(field, $event)"
+                  [name]="'user-field-' + field"
+                  [placeholder]="columnLabel(field)"
+                />
+              }
+            </label>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitUser()">
+            {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}
+          </button>
+          @if (formMode() === 'edit') {
+            <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
+          }
+        </div>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">Users</h3>
+            <p class="panel-subtitle">Total users: {{ totalUsers() }}</p>
+          </div>
+          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">
+            {{ loading() ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+
+        @if (loading()) {
+          <div class="panel-message">Loading users…</div>
+        } @else if (!users().length) {
+          <div class="panel-message">No users found.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="entry-table">
+              <thead>
+                <tr>
+                  <th class="col-sr">SR No.</th>
+                  @for (column of columns(); track trackByColumn($index, column)) {
+                    <th>{{ columnLabel(column) }}</th>
+                  }
+                  <th class="col-action">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of users(); track $index; let index = $index) {
+                  <tr>
+                    <td class="col-sr">{{ index + 1 }}</td>
+                    @for (column of columns(); track trackByColumn($index, column)) {
+                      <td>{{ cellValue(user, column) }}</td>
+                    }
+                    <td class="col-action">
+                      <div class="action-buttons">
+                        <button type="button" class="btn-edit" [disabled]="saving() || deleting()" (click)="startEdit(user)">
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-delete"
+                          [disabled]="saving() || deleting()"
+                          (click)="deleteUser(user)">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

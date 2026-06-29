@@ -29,6 +29,7 @@ import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-mai
 import { authGuard } from './guards/auth.guard';
 import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.routes';
 import { GlAccountDeterminationComponent } from './components/setup/gl-account-determination/gl-account-determination';
+import { UserSetupComponent } from './components/setup/user-setup/user-setup';
 
 export const routes: Routes = [
   {
@@ -186,6 +187,11 @@ export const routes: Routes = [
   {
     path: 'setup/gl-account-determination',
     component: GlAccountDeterminationComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'setup/user-setup',
+    component: UserSetupComponent,
     canActivate: [authGuard],
   },
   {

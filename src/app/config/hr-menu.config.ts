@@ -40,6 +40,12 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         icon: 'account',
         route: '/setup/gl-account-determination',
       },
+      {
+        label: 'User Setup',
+        value: 'setup/user-setup',
+        icon: 'employee',
+        route: '/setup/user-setup',
+      },
     ],
   },
   { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
