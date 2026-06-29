@@ -6,6 +6,7 @@ import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { AlertService } from '../../../../services/alert.service';
 import {
   PayrollProcessingListRecord,
+  PayrollProcessingRecord,
   PayrollProcessingService,
 } from '../../../../services/payroll-processing.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
@@ -19,6 +20,14 @@ type PayrollProcessingColumnKey = Exclude<keyof PayrollProcessingListRecord, nev
   imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './payroll-processing.html',
   styleUrl: '../../Application-Form/Application-Form.css',
+  styles: [`
+    .payroll-list-row {
+      cursor: pointer;
+    }
+    .payroll-list-row:hover td {
+      background: #f8fafc;
+    }
+  `],
 })
 export class PayrollProcessingComponent implements OnInit {
   private readonly layout = inject(PayrollMasterLayoutService);
@@ -27,7 +36,9 @@ export class PayrollProcessingComponent implements OnInit {
   private readonly alertService = inject(AlertService);
 
   readonly loading = signal(false);
-  readonly deleting = signal(false);
+  readonly showViewDialog = signal(false);
+  readonly viewLoading = signal(false);
+  readonly selectedRecord = signal<PayrollProcessingRecord | null>(null);
   searchText = '';
   selectedStatus = '';
   showDialog = false;
@@ -134,52 +145,43 @@ export class PayrollProcessingComponent implements OnInit {
     void this.router.navigateByUrl('/payroll-master/payroll-processing/create');
   }
 
+  formatMoney(value: number, currency = 'PKR'): string {
+    return `${currency} ${value.toLocaleString('en-PK', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
   viewRecord(record: PayrollProcessingListRecord): void {
     if (!record.Id) {
       void this.alertService.warning('View', 'Unable to view this row: missing payroll process id.');
       return;
     }
-    void this.router.navigate(['/payroll-master/payroll-processing/view', record.Id]);
-  }
 
-  onUpdate(record: PayrollProcessingListRecord): void {
-    if (!record.Id) {
-      void this.alertService.warning('Update', 'Unable to update this row: missing payroll process id.');
-      return;
-    }
-    void this.router.navigate(['/payroll-master/payroll-processing/edit', record.Id]);
-  }
+    this.showViewDialog.set(true);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(true);
 
-  async onDelete(record: PayrollProcessingListRecord): Promise<void> {
-    if (!record.Id) {
-      void this.alertService.warning('Delete', 'Unable to delete this row: missing payroll process id.');
-      return;
-    }
-
-    const period = `${this.formatMonth(record.Month)} ${record.Year}`;
-    const result = await this.alertService.confirm(
-      'Delete payroll process?',
-      `Remove payroll process for ${period}?`,
-    );
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    this.deleting.set(true);
-    this.payrollProcessingService.deletePayrollProcessing(record.Id).subscribe({
-      next: () => {
-        this.deleting.set(false);
-        this.payrollProcessingService.removeRecord(record);
-        void this.alertService.success('Deleted', 'Payroll process removed successfully.');
+    this.payrollProcessingService.fetchPayrollProcessingDetail(record.Id).subscribe({
+      next: (detail) => {
+        this.selectedRecord.set(detail);
+        this.viewLoading.set(false);
       },
       error: (error: unknown) => {
-        this.deleting.set(false);
+        this.viewLoading.set(false);
+        this.showViewDialog.set(false);
         void this.alertService.error(
-          'Delete Failed',
-          formatApiErrorMessage(error, 'Failed to delete payroll process.'),
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load payroll process details.'),
         );
       },
     });
+  }
+
+  closeViewDialog(): void {
+    this.showViewDialog.set(false);
+    this.selectedRecord.set(null);
+    this.viewLoading.set(false);
   }
 
   toggleSidebar(): void {

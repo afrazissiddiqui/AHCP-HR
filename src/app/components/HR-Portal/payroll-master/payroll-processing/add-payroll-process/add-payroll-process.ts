@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import {
@@ -21,8 +21,6 @@ import {
 import { AlertService } from '../../../../../services/alert.service';
 import { AuthService } from '../../../../../services/auth.service';
 import {
-  PayrollProcessingDetailPayload,
-  PayrollProcessingRecord,
   PayrollProcessingService,
   PayrollProcessingSubmitPayload,
 } from '../../../../../services/payroll-processing.service';
@@ -126,16 +124,11 @@ export class AddPayrollProcessComponent implements OnInit {
   private readonly payrollSetupService = inject(PayrollSetupService);
   private readonly payrollProcessingService = inject(PayrollProcessingService);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly rows = signal<PayrollProcessRow[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
-  readonly readOnly = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly pageTitle = signal('Payroll Processing');
-  readonly saveButtonLabel = signal('Save');
   readonly remarks = signal('');
   readonly selectedMonth = signal(new Date().getMonth() + 1);
   readonly selectedYear = signal(new Date().getFullYear());
@@ -258,19 +251,6 @@ export class AddPayrollProcessComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const editId = this.route.snapshot.paramMap.get('id');
-    const isViewMode = this.route.snapshot.routeConfig?.path?.startsWith('payroll-processing/view') ?? false;
-
-    if (editId) {
-      this.editingId.set(editId);
-      this.readOnly.set(isViewMode);
-      this.pageTitle.set(isViewMode ? 'View Payroll Process' : 'Edit Payroll Process');
-      this.saveButtonLabel.set('Update');
-      this.loadPayrollDetail(editId);
-      return;
-    }
-
-    this.pageTitle.set('New Payroll Process');
     this.loadEmployees();
   }
 
@@ -536,7 +516,7 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   save(): void {
-    if (this.saving() || this.readOnly()) {
+    if (this.saving()) {
       return;
     }
 
@@ -546,20 +526,23 @@ export class AddPayrollProcessComponent implements OnInit {
       return;
     }
 
-    this.saving.set(true);
-    const payload = this.buildPayload(rows);
-    const request$ = this.editingId()
-      ? this.payrollProcessingService.updatePayrollProcessing(this.editingId()!, payload)
-      : this.payrollProcessingService.addPayrollProcessing(payload);
+    const approvedRows = rows.filter((row) => row.approved);
+    if (approvedRows.length === 0) {
+      void this.alertService.validation('Select at least one approved employee before saving.');
+      return;
+    }
 
-    request$
+    this.saving.set(true);
+    const payload = this.buildPayload(approvedRows);
+
+    this.payrollProcessingService
+      .addPayrollProcessing(payload)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          const actionLabel = this.editingId() ? 'updated' : 'saved';
           void this.alertService.success(
             'Success',
-            `Payroll process ${actionLabel} for ${rows.length} employee(s).`,
+            `Payroll process saved for ${approvedRows.length} approved employee(s).`,
           );
           this.back();
         },
@@ -625,74 +608,6 @@ export class AddPayrollProcessComponent implements OnInit {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  private loadPayrollDetail(id: string): void {
-    this.loading.set(true);
-    this.payrollProcessingService.fetchPayrollProcessingDetail(id).subscribe({
-      next: (record) => {
-        this.populateFromRecord(record);
-        this.loading.set(false);
-        this.cdr.markForCheck();
-      },
-      error: (error: unknown) => {
-        this.loading.set(false);
-        void this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load payroll process details.'),
-        );
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  private populateFromRecord(record: PayrollProcessingRecord): void {
-    const header = record.Header;
-    this.remarks.set(header.remarks);
-    this.selectedMonth.set(header.month || new Date().getMonth() + 1);
-    this.selectedYear.set(header.year || new Date().getFullYear());
-    this.rows.set(record.Details.map((detail) => this.mapDetailToRow(detail)));
-  }
-
-  private mapDetailToRow(detail: PayrollProcessingDetailPayload): PayrollProcessRow {
-    return this.recalculateRow({
-      apiId: detail.employeeId,
-      employeeCode: detail.employeeCode,
-      personName: detail.personName,
-      username: detail.employeeCode,
-      designation: '',
-      department: '',
-      employeeCategory: '',
-      employmentNature: '',
-      employmentType: '',
-      jobTitle: '',
-      location: '',
-      workGradeLevel: '',
-      dateOfJoining: '',
-      yearsOfService: 0,
-      eobiApplicable: detail.eobiEmployee > 0 || detail.eobiEmployer > 0,
-      basicSalary: detail.basicSalary,
-      grossSalary: detail.grossSalary,
-      medicalAllowance: detail.medicalAllowance,
-      allowedLiters: detail.allowedLiters,
-      monthlyFuelRate: detail.monthlyFuelRate,
-      fuelAllowance: detail.fuelAllowance,
-      mobileAllowance: detail.mobileAllowance,
-      carAllowance: detail.carAllowance,
-      otherAllowances: detail.otherAllowances,
-      bonus: detail.bonus,
-      lastMonthGrossSalary: detail.lastMonthGrossSalary,
-      overtimeHours: detail.overtimeHours,
-      overtime: detail.overtime,
-      providentFund: detail.providentFund,
-      gratuity: detail.gratuity,
-      eobiEmployee: detail.eobiEmployee,
-      eobiEmployer: detail.eobiEmployer,
-      arrears: detail.arrears,
-      loanAdjustment: detail.loanAdjustment,
-      loanAdvForm: detail.loanAdvForm,
-      approved: detail.approved,
-    });
   }
 
   private loadEmployees(): void {

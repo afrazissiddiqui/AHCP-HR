@@ -250,7 +250,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly taxPercentage = signal('');
   protected readonly dateOfJoining = signal('');
   protected readonly advancePercentAllowed = signal('');
-  protected readonly overTimeApplicable = signal<'Yes' | 'No' | ''>('');
+  protected readonly overTimeApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly leaveType = signal('');
   protected readonly leaveDays = signal('');
   protected readonly leavesAvailed = signal('');
@@ -263,10 +263,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly maximumLoanCapacity = signal('');
   protected readonly maximumAdvanceCapacity = signal('');
   protected readonly otherAllowances = signal('');
-  protected readonly allowancesApplicable = signal<'Yes' | 'No' | ''>('');
+  protected readonly allowancesApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly cashSalaryPercentage = signal('');
-  protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('');
-  protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('');
+  protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('No');
+  protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly fuelLimit = signal('');
   protected readonly leaveEligibilityCriteria = signal('');
 
@@ -1602,7 +1602,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       ),
     );
     this.maximumAdvanceCapacity.set(this.remunerationValue(remuneration.maximumAdvanceCapacity));
-    this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? '');
+    this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.leaveType.set(remuneration.leaveType ?? '');
     this.leaveDays.set(remuneration.leaveDays ?? '');
     this.leavesAvailed.set(remuneration.leavesAvailed ?? '');
@@ -1614,11 +1614,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.mobileAllowances.set(this.remunerationValue(remuneration.mobileAllowances));
     this.carAllowances.set(this.remunerationValue(remuneration.carAllowances));
     this.otherAllowances.set(this.remunerationValue(remuneration.otherAllowances));
-    this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') ?? '');
+    this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.cashSalaryPercentage.set(remuneration.cashSalaryPercentage ?? '');
-    this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? '');
+    this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.socialSecurityApplicable.set(
-      (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? '',
+      (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',
     );
     this.fuelLimit.set(remuneration.fuelLimit ?? '');
     this.leaveEligibilityCriteria.set(remuneration.leaveEligibilityCriteria ?? '');

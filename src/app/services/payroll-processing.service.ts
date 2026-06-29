@@ -68,8 +68,6 @@ export interface PayrollProcessingRecord {
 const PAYROLL_PROCESSING_LIST_URL = apiUrl('payroll-processing-list');
 const PAYROLL_PROCESSING_ADD_URL = apiUrl('payroll-processing-add');
 const PAYROLL_PROCESSING_DETAIL_URL = apiUrl('payroll-processing-detail');
-const PAYROLL_PROCESSING_UPDATE_URL = apiUrl('payroll-processing-update');
-const PAYROLL_PROCESSING_DELETE_URL = apiUrl('payroll-processing-delete');
 
 @Injectable({
   providedIn: 'root',
@@ -104,20 +102,6 @@ export class PayrollProcessingService {
 
   addPayrollProcessing(payload: PayrollProcessingSubmitPayload): Observable<unknown> {
     return this.http.post(PAYROLL_PROCESSING_ADD_URL, payload);
-  }
-
-  updatePayrollProcessing(id: string | number, payload: PayrollProcessingSubmitPayload): Observable<unknown> {
-    const identifier = encodeURIComponent(String(id));
-    return this.http.post(`${PAYROLL_PROCESSING_UPDATE_URL}/${identifier}`, payload);
-  }
-
-  deletePayrollProcessing(id: string | number): Observable<unknown> {
-    const identifier = encodeURIComponent(String(id));
-    return this.http.delete(`${PAYROLL_PROCESSING_DELETE_URL}/${identifier}`);
-  }
-
-  removeRecord(record: PayrollProcessingListRecord): void {
-    this.recordList.update((list) => list.filter((item) => item.Id !== record.Id));
   }
 
   private mapDetailResponse(response: unknown): PayrollProcessingRecord {

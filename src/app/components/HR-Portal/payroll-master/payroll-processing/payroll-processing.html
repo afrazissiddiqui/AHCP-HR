@@ -78,18 +78,90 @@
               No payroll records to display.
             </td>
           </tr>
-          <tr *ngFor="let row of filteredPayrollRows">
+          <tr *ngFor="let row of filteredPayrollRows" class="payroll-list-row" (click)="viewRecord(row)">
             <td *ngFor="let col of visibleColumns" style="border: 1px solid #e2e8f0; padding: 10px; text-align: left;">
               {{ getCellValue(row, col.key) }}
             </td>
-            <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: left; white-space: nowrap;">
+            <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: left; white-space: nowrap;" (click)="$event.stopPropagation()">
               <button class="update-btn" type="button" (click)="viewRecord(row)" title="View payroll process">View</button>
-              <button class="update-btn" type="button" (click)="onUpdate(row)" title="Update payroll process">Edit</button>
-              <button class="delete-btn" type="button" [disabled]="deleting()" (click)="onDelete(row)" title="Delete payroll process">Delete</button>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+  <div class="js-detail-modal" *ngIf="showViewDialog()">
+    <div class="js-modal-header">
+      <h2>
+        Payroll Process Detail
+        <ng-container *ngIf="selectedRecord() as record">
+          — {{ formatMonth(record.Header.month) }} {{ record.Header.year }}
+        </ng-container>
+      </h2>
+      <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
+    </div>
+    <div class="js-modal-body">
+      <p *ngIf="viewLoading()">Loading details…</p>
+      <ng-container *ngIf="selectedRecord() as record">
+        <ng-container *ngIf="!viewLoading()">
+          <div class="js-detail-section">
+            <h3>Header</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item"><label>ID:</label> <span>{{ record.Id }}</span></div>
+              <div class="js-detail-item"><label>Period:</label> <span>{{ formatMonth(record.Header.month) }} {{ record.Header.year }}</span></div>
+              <div class="js-detail-item"><label>Currency:</label> <span>{{ record.Header.currency }}</span></div>
+              <div class="js-detail-item"><label>Status:</label> <span>{{ record.Header.status }}</span></div>
+              <div class="js-detail-item"><label>Processed By:</label> <span>{{ record.Header.processedBy }}</span></div>
+              <div class="js-detail-item"><label>Processed Date:</label> <span>{{ record.Header.processedDate }}</span></div>
+            </div>
+            <div class="js-detail-full" *ngIf="record.Header.remarks">
+              <label>Remarks:</label>
+              <p>{{ record.Header.remarks }}</p>
+            </div>
+          </div>
+
+          <div class="js-detail-section">
+            <h3>Employee Lines ({{ record.Details.length }})</h3>
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; min-width: 1400px;">
+                <thead style="background-color: #f8fafc;">
+                  <tr>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Employee Code</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Name</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Basic Salary</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Gross Salary</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Fuel</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Overtime</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Bonus</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Total Earnings</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Net Payable</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;">Approved</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let detail of record.Details">
+                    <td style="border: 1px solid #e2e8f0; padding: 8px;">{{ detail.employeeCode }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px;">{{ detail.personName }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">{{ formatMoney(detail.basicSalary, record.Header.currency) }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">{{ formatMoney(detail.grossSalary, record.Header.currency) }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">{{ formatMoney(detail.fuelAllowance, record.Header.currency) }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">{{ formatMoney(detail.overtime, record.Header.currency) }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">{{ formatMoney(detail.bonus, record.Header.currency) }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">{{ formatMoney(detail.totalEarnings, record.Header.currency) }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">{{ formatMoney(detail.netPayable, record.Header.currency) }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;">{{ detail.approved ? 'Yes' : 'No' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
+    <div class="js-modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
     </div>
   </div>
 </div>

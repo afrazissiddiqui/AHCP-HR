@@ -2,14 +2,12 @@
   <div class="comp-topbar">
     <div class="comp-topbar__left">
       <button type="button" class="comp-back" (click)="back()" aria-label="Back">❮</button>
-      <h1 class="comp-topbar__title">{{ pageTitle() }}</h1>
+      <h1 class="comp-topbar__title">Payroll Processing</h1>
     </div>
     <div class="comp-topbar__actions">
-      @if (!readOnly()) {
-        <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || saving() || rows().length === 0">
-          {{ saving() ? 'Saving…' : saveButtonLabel() }}
-        </button>
-      }
+      <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || saving() || rows().length === 0">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
     </div>
   </div>
 
@@ -33,7 +31,6 @@
           placeholder="Enter remarks"
           [ngModel]="remarks()"
           (ngModelChange)="remarks.set($event)"
-          [readonly]="readOnly()"
         />
       </div>
 
@@ -45,7 +42,6 @@
             class="comp-plan-field__select comp-plan-field__select--month"
             [ngModel]="selectedMonth()"
             (ngModelChange)="selectedMonth.set(+$event)"
-            [disabled]="readOnly()"
             aria-label="Payroll month"
           >
             @for (month of monthOptions; track month.value) {
@@ -58,7 +54,6 @@
             class="comp-plan-field__select comp-plan-field__select--year"
             [ngModel]="selectedYear()"
             (ngModelChange)="selectedYear.set(+$event)"
-            [disabled]="readOnly()"
             aria-label="Payroll year"
           >
             @for (year of yearOptions; track year) {
@@ -281,7 +276,6 @@
                                 class="comp-input"
                                 [ngModel]="getColumnValue(row, col)"
                                 (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
-                                [disabled]="readOnly()"
                               />
                             </div>
                           }
@@ -321,7 +315,6 @@
                                 class="comp-approval-checkbox"
                                 [ngModel]="row.approved"
                                 (ngModelChange)="setApproval(row.apiId, $event)"
-                                [disabled]="readOnly()"
                                 [attr.aria-label]="'Approve payroll for ' + row.personName"
                               />
                             </div>
