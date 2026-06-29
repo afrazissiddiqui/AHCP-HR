@@ -107,6 +107,9 @@ export class PayrollProcessingComponent implements OnInit {
     if (key === 'Month') {
       return this.formatMonth(row.Month);
     }
+    if (key === 'ProcessedDate') {
+      return this.formatProcessedDate(row.ProcessedDate);
+    }
     return row[key];
   }
 
@@ -127,6 +130,28 @@ export class PayrollProcessingComponent implements OnInit {
       'December',
     ];
     return labels[month] ?? String(month);
+  }
+
+  formatProcessedDate(value: string): string {
+    const trimmed = value?.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const directMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (directMatch) {
+      return `${directMatch[3]}/${directMatch[2]}/${directMatch[1]}`;
+    }
+
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) {
+      return trimmed;
+    }
+
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 
   onSearchChange(): void {

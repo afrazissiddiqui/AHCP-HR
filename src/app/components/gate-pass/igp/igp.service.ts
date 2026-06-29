@@ -17,6 +17,18 @@ export interface IgpLineItem {
   deleted: boolean;
 }
 
+export interface IgpPayloadLineItem {
+  itemCode: string;
+  itemName: string;
+  category: string;
+  packingCondition: string;
+  productQuality: string;
+  uom: string;
+  qty: number;
+  info: string;
+  remarks: string;
+}
+
 export interface IgpAddPayload {
   type: string;
   baseDocNo: string;
@@ -36,7 +48,7 @@ export interface IgpAddPayload {
   location: string;
   employee: string;
   remarks: string;
-  lines: IgpLineItem[];
+  lines: IgpPayloadLineItem[];
   totalQty: number;
 }
 
