@@ -106,6 +106,9 @@ export class IgpComponent implements OnInit {
   readonly showDetailDialog = signal(false);
   readonly detailLoading = signal(false);
   readonly selectedRow = signal<IgpRecord | null>(null);
+  readonly skeletonDetailFields = Array.from({ length: 12 }, (_, index) => index);
+  readonly skeletonLineRows = Array.from({ length: 3 }, (_, index) => index);
+  readonly skeletonLineColumns = Array.from({ length: 8 }, (_, index) => index);
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
   openDialog(): void {

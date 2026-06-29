@@ -1,17 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { GatePassItemMaster, GatePassItemMasterService } from '../gate-pass-item-master.service';
+import {
+  GatePassBusinessPartner,
+  GatePassBusinessPartnerService,
+} from '../gate-pass-business-partner.service';
 
 @Component({
-  selector: 'app-gate-pass-item-search-input',
+  selector: 'app-gate-pass-business-partner-search-input',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './item-search-input.html',
-  styleUrl: './item-search-input.css',
+  templateUrl: './business-partner-search-input.html',
+  styleUrl: './business-partner-search-input.css',
 })
-export class GatePassItemSearchInputComponent {
-  private readonly itemMaster = inject(GatePassItemMasterService);
+export class GatePassBusinessPartnerSearchInputComponent {
+  private readonly businessPartnerService = inject(GatePassBusinessPartnerService);
 
   @Input() value = '';
   @Input() placeholder = 'Search code or name';
@@ -19,10 +22,10 @@ export class GatePassItemSearchInputComponent {
   @Input() disabled = false;
 
   @Output() valueChange = new EventEmitter<string>();
-  @Output() itemSelected = new EventEmitter<GatePassItemMaster>();
+  @Output() partnerSelected = new EventEmitter<GatePassBusinessPartner>();
 
   suggestionsOpen = false;
-  suggestions: GatePassItemMaster[] = [];
+  suggestions: GatePassBusinessPartner[] = [];
   loadingSuggestions = false;
 
   onInput(next: string): void {
@@ -48,11 +51,11 @@ export class GatePassItemSearchInputComponent {
     }, 150);
   }
 
-  selectItem(item: GatePassItemMaster): void {
+  selectPartner(partner: GatePassBusinessPartner): void {
     if (this.disabled) {
       return;
     }
-    this.itemSelected.emit(item);
+    this.partnerSelected.emit(partner);
     this.suggestionsOpen = false;
   }
 
@@ -66,9 +69,9 @@ export class GatePassItemSearchInputComponent {
 
     this.suggestionsOpen = true;
     this.loadingSuggestions = true;
-    this.itemMaster.ensureLoaded().subscribe({
+    this.businessPartnerService.ensureLoaded().subscribe({
       next: () => {
-        this.suggestions = this.itemMaster.search(query);
+        this.suggestions = this.businessPartnerService.search(query);
         this.loadingSuggestions = false;
       },
       error: () => {

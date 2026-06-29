@@ -114,7 +114,49 @@
           <button type="button" class="js-close-modal" (click)="closeDetailDialog()">×</button>
         </div>
         <div class="js-modal-body">
-          <p *ngIf="detailLoading()">Loading details…</p>
+          <div
+            *ngIf="detailLoading()"
+            class="igp-detail-skeleton"
+            aria-busy="true"
+            aria-label="Loading IGP details"
+          >
+            <div class="js-detail-section">
+              <span class="igp-skeleton igp-skeleton--section-title" aria-hidden="true"></span>
+              <div class="js-detail-grid">
+                <div class="js-detail-item" *ngFor="let field of skeletonDetailFields">
+                  <span class="igp-skeleton igp-skeleton--label" aria-hidden="true"></span>
+                  <span class="igp-skeleton igp-skeleton--value" aria-hidden="true"></span>
+                </div>
+              </div>
+              <div class="js-detail-full">
+                <span class="igp-skeleton igp-skeleton--label" aria-hidden="true"></span>
+                <span class="igp-skeleton igp-skeleton--remarks" aria-hidden="true"></span>
+              </div>
+            </div>
+
+            <div class="js-detail-section">
+              <span class="igp-skeleton igp-skeleton--section-title" aria-hidden="true"></span>
+              <div class="table-scroll">
+                <table class="mountain-table igp-detail-skeleton-table">
+                  <thead>
+                    <tr>
+                      <th *ngFor="let column of skeletonLineColumns">
+                        <span class="igp-skeleton igp-skeleton--table-head" aria-hidden="true"></span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of skeletonLineRows">
+                      <td *ngFor="let column of skeletonLineColumns">
+                        <span class="igp-skeleton igp-skeleton--table-cell" aria-hidden="true"></span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <ng-container *ngIf="selectedRow() as row">
           <ng-container *ngIf="!detailLoading()">
           <div class="js-detail-section">

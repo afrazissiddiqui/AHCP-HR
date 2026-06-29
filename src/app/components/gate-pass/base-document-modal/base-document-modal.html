@@ -13,8 +13,35 @@
   </div>
   <p class="gp-bdm-type-line">Type: <strong>{{ documentType }}</strong></p>
   <div class="gp-bdm-body">
-    <p class="gp-bdm-empty" *ngIf="documents.length === 0">No open documents for this type.</p>
-    <div class="gp-bdm-table-wrap" *ngIf="documents.length > 0">
+    <div *ngIf="loading" class="gp-bdm-skeleton" aria-busy="true" aria-label="Loading base documents">
+      <div class="gp-bdm-table-wrap">
+        <table class="gp-bdm-table">
+          <thead>
+            <tr>
+              <th>Document no.</th>
+              <th>Title</th>
+              <th>Partner</th>
+              <th>Date</th>
+              <th class="gp-bdm-col-action"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of skeletonRows">
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--md" aria-hidden="true"></span></td>
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--lg" aria-hidden="true"></span></td>
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--lg" aria-hidden="true"></span></td>
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--sm" aria-hidden="true"></span></td>
+              <td class="gp-bdm-col-action">
+                <span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--btn" aria-hidden="true"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="gp-bdm-empty" *ngIf="!loading && documents.length === 0">No open documents for this type.</p>
+    <div class="gp-bdm-table-wrap" *ngIf="!loading && documents.length > 0">
       <table class="gp-bdm-table">
         <thead>
           <tr>
@@ -29,7 +56,7 @@
           <tr *ngFor="let doc of documents">
             <td>{{ doc.number }}</td>
             <td>{{ doc.title }}</td>
-                <td>{{ doc.businessPartnerName || doc.partner || '—' }}</td>
+            <td>{{ doc.businessPartnerName || doc.partner || '—' }}</td>
             <td>{{ doc.date || '—' }}</td>
             <td class="gp-bdm-col-action">
               <button type="button" class="gp-bdm-select-btn" (click)="select(doc)">Select</button>

@@ -15,20 +15,19 @@
   />
   <ul class="gp-item-suggestions" role="listbox" *ngIf="suggestionsOpen && value.trim()">
     <li *ngIf="loadingSuggestions" class="gp-item-suggestion-empty" role="presentation">
-      Loading items…
+      Loading business partners…
     </li>
     <ng-container *ngIf="!loadingSuggestions">
       <li
-        *ngFor="let item of suggestions"
+        *ngFor="let partner of suggestions"
         role="option"
         class="gp-item-suggestion-item"
-        (mousedown)="selectItem(item)"
+        (mousedown)="selectPartner(partner)"
       >
-        <span class="gp-item-suggestion-primary">{{ item.itemCode }} — {{ item.itemName }}</span>
-        <span class="gp-item-suggestion-meta">{{ item.category }} · {{ item.uom }}</span>
+        <span class="gp-item-suggestion-primary">{{ partner.code }} — {{ partner.name }}</span>
       </li>
       <li *ngIf="suggestions.length === 0" class="gp-item-suggestion-empty" role="presentation">
-        No matching items
+        No matching business partners
       </li>
     </ng-container>
   </ul>

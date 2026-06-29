@@ -1,4 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { apiUrl } from '../../config/api.config';
 
 export type GatePassModule = 'igp' | 'ogp' | 'agp';
 
@@ -699,13 +702,205 @@ const OPEN_BY_MODULE: Record<GatePassModule, Record<string, OpenBaseDocument[]>>
   agp: AGP_OPEN_BY_TYPE,
 };
 
+const GET_PO_RECORDS_URL = apiUrl('get_po_records');
+const SALES_RETURN_REQUESTS_URL = apiUrl('sales_return_requests');
+
 @Injectable({ providedIn: 'root' })
 export class OpenBaseDocumentsService {
+  private readonly http = inject(HttpClient);
+
   /** Open (linkable) documents for the selected gate-pass module and document type. */
   listOpenByType(gatePassModule: GatePassModule, documentType: string): OpenBaseDocument[] {
     const key = documentType?.trim() || '';
     const list = OPEN_BY_MODULE[gatePassModule]?.[key];
     if (!list) return [];
     return cloneDocuments(list);
+  }
+
+  fetchIgpPurchaseOrders(): Observable<OpenBaseDocument[]> {
+    return this.http.get<unknown>(GET_PO_RECORDS_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item))),
+    );
+  }
+
+  fetchIgpSalesReturnRequests(): Observable<OpenBaseDocument[]> {
+    return this.http.get<unknown>(SALES_RETURN_REQUESTS_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item))),
+    );
+  }
+
+  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+    if (!response) {
+      return [];
+    }
+
+    if (Array.isArray(response)) {
+      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    }
+
+    if (typeof response !== 'object') {
+      return [];
+    }
+
+    const obj = response as Record<string, unknown>;
+    const arrayKeys = [
+      'data',
+      'items',
+      'results',
+      'records',
+      'list',
+      'purchaseOrders',
+      'purchase_orders',
+      'poRecords',
+      'po_records',
+      'getPoRecords',
+      'salesReturnRequests',
+      'sales_return_requests',
+    ];
+
+    for (const key of arrayKeys) {
+      const value = obj[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object') {
+      const nestedItems = this.extractApiItems(nestedData);
+      if (nestedItems.length > 0) {
+        return nestedItems;
+      }
+    }
+
+    if (
+      obj['baseDocNo'] ||
+      obj['base_doc_no'] ||
+      obj['poNumber'] ||
+      obj['po_number'] ||
+      obj['srrNumber'] ||
+      obj['srr_number'] ||
+      obj['requestNo'] ||
+      obj['request_no'] ||
+      obj['salesReturnRequestNo'] ||
+      obj['sales_return_request_no'] ||
+      obj['number'] ||
+      obj['docNum']
+    ) {
+      return [obj];
+    }
+
+    return [];
+  }
+
+  private mapApiRecordToOpenBaseDocument(item: Record<string, unknown>): OpenBaseDocument {
+    const sources = [item];
+    const number = this.pickString(sources, [
+      'baseDocNo',
+      'base_doc_no',
+      'poNumber',
+      'po_number',
+      'srrNumber',
+      'srr_number',
+      'requestNo',
+      'request_no',
+      'salesReturnRequestNo',
+      'sales_return_request_no',
+      'returnRequestNo',
+      'return_request_no',
+      'number',
+      'docNum',
+      'DocNum',
+      'documentNo',
+      'document_no',
+    ]);
+    const businessPartnerName = this.pickString(sources, [
+      'businessPartnerName',
+      'business_partner_name',
+      'partner',
+      'vendorName',
+      'vendor_name',
+      'CardName',
+    ]);
+    const title =
+      this.pickString(sources, ['title', 'Title', 'description', 'Description', 'remarks', 'Remarks']) ||
+      businessPartnerName ||
+      number;
+
+    return {
+      number,
+      title,
+      partner: businessPartnerName,
+      date: this.pickString(sources, [
+        'date',
+        'documentDate',
+        'document_date',
+        'poDate',
+        'po_date',
+        'returnDate',
+        'return_date',
+        'DocDate',
+      ]),
+      businessPartnerCode: this.pickString(sources, [
+        'businessPartnerCode',
+        'business_partner_code',
+        'vendorCode',
+        'vendor_code',
+        'CardCode',
+      ]),
+      businessPartnerName,
+      vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']),
+      fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit']),
+      kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']),
+      department: this.pickString(sources, ['department', 'Department']),
+      biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']),
+      store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse']),
+      freight: this.pickString(sources, ['freight', 'Freight', 'freightAmount', 'freight_amount']),
+      weightMachineName: this.pickString(sources, ['weightMachineName', 'weight_machine_name', 'WeightMachineName']),
+      weight: this.pickString(sources, ['weight', 'Weight']),
+      location: this.pickString(sources, ['location', 'Location']),
+      referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo']),
+      remarks: this.pickString(sources, ['remarks', 'Remarks']),
+      lines: this.mapDocumentLines(item),
+    };
+  }
+
+  private mapDocumentLines(item: Record<string, unknown>): BaseDocLinePayload[] | undefined {
+    const rawLines = item['lines'] ?? item['Lines'] ?? item['items'] ?? item['lineItems'] ?? item['line_items'];
+    if (!Array.isArray(rawLines)) {
+      return undefined;
+    }
+
+    return rawLines
+      .filter((line): line is Record<string, unknown> => !!line && typeof line === 'object')
+      .map((line) => ({
+        itemCode: this.pickString([line], ['itemCode', 'item_code', 'ItemCode', 'code', 'Code']),
+        itemName: this.pickString([line], ['itemName', 'item_name', 'ItemName', 'name', 'Name', 'description']),
+        category: this.pickString([line], ['category', 'Category']),
+        packingCondition: this.pickString([line], ['packingCondition', 'packing_condition', 'PackingCondition']),
+        productQuality: this.pickString([line], ['productQuality', 'product_quality', 'ProductQuality']),
+        uom: this.pickString([line], ['uom', 'UOM', 'Uom', 'unit']),
+        qty: this.pickNumber([line], ['qty', 'quantity', 'Qty', 'Quantity']),
+        info: this.pickString([line], ['info', 'Info']),
+        remarks: this.pickString([line], ['remarks', 'Remarks']),
+      }));
+  }
+
+  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
+    for (const source of sources) {
+      for (const key of keys) {
+        const value = source[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          return String(value).trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  private pickNumber(sources: Array<Record<string, unknown>>, keys: string[]): number {
+    const text = this.pickString(sources, keys);
+    const parsed = Number.parseFloat(text);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 }

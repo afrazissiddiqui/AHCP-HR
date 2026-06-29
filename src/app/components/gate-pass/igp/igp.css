@@ -796,3 +796,60 @@ app-root {
   gap: 12px;
   background: #f8f9fa;
 }
+
+@keyframes igp-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.igp-skeleton {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e8edf2 0%, #f3f6f9 45%, #e8edf2 90%);
+  background-size: 200% 100%;
+  animation: igp-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.igp-skeleton--section-title {
+  width: 120px;
+  height: 16px;
+  margin-bottom: 16px;
+}
+
+.igp-skeleton--label {
+  width: 72px;
+  height: 10px;
+}
+
+.igp-skeleton--value {
+  width: 100%;
+  max-width: 160px;
+  height: 14px;
+}
+
+.igp-skeleton--remarks {
+  width: 100%;
+  height: 72px;
+  margin-top: 8px;
+  border-radius: 6px;
+}
+
+.igp-detail-skeleton-table {
+  min-width: 0;
+}
+
+.igp-skeleton--table-head {
+  width: 72px;
+  height: 12px;
+}
+
+.igp-skeleton--table-cell {
+  width: 100%;
+  max-width: 96px;
+  height: 12px;
+}

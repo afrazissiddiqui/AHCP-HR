@@ -16,6 +16,11 @@ import {
 import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
 import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
+import {
+  GatePassBusinessPartner,
+  GatePassBusinessPartnerService,
+} from '../../gate-pass-business-partner.service';
+import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
@@ -32,7 +37,13 @@ function numericFieldFromDoc(value: string | undefined): string {
 @Component({
   selector: 'app-create-igp',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseDocumentModalComponent, GatePassItemSearchInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    BaseDocumentModalComponent,
+    GatePassItemSearchInputComponent,
+    GatePassBusinessPartnerSearchInputComponent,
+  ],
   templateUrl: './create-igp.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
@@ -81,12 +92,16 @@ export class CreateIgpComponent implements OnInit {
     private readonly igpService: IgpService,
     private readonly alertService: AlertService,
     private readonly itemMasterService: GatePassItemMasterService,
+    private readonly businessPartnerService: GatePassBusinessPartnerService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
   }
 
   ngOnInit(): void {
+    this.itemMasterService.ensureLoaded().subscribe();
+    this.businessPartnerService.ensureLoaded().subscribe();
+
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       this.assignNextReferenceNo();
@@ -136,6 +151,10 @@ export class CreateIgpComponent implements OnInit {
       .reduce((s, l) => s + (Number(l.qty) || 0), 0);
   }
 
+  get isBaseDocumentDisabled(): boolean {
+    return !!this.editingId || this.type === 'Stand Alone Documents';
+  }
+
   trackByIndex(index: number): number {
     return index;
   }
@@ -153,6 +172,11 @@ export class CreateIgpComponent implements OnInit {
 
   applyItemMaster(line: IgpLineItem, item: GatePassItemMaster): void {
     this.itemMasterService.applyToLine(line, item);
+  }
+
+  applyBusinessPartner(partner: GatePassBusinessPartner): void {
+    this.businessPartnerCode = partner.code;
+    this.businessPartnerName = partner.name;
   }
 
   onTransporterCnicChange(value: string): void {
@@ -182,7 +206,7 @@ export class CreateIgpComponent implements OnInit {
   }
 
   openBaseDocumentModal(): void {
-    if (this.editingId) {
+    if (this.isBaseDocumentDisabled) {
       return;
     }
     if (!this.type?.trim()) {

@@ -453,8 +453,18 @@
   cursor: pointer;
 }
 
-.gate-pass-base-doc-btn:hover {
+.gate-pass-base-doc-btn:hover:not(:disabled) {
   background: #f0f7ff;
+}
+
+.gate-pass-base-doc-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.igp-base-doc-row--disabled .gate-pass-base-doc-summary {
+  color: #888;
+  font-style: italic;
 }
 
 .gate-pass-base-doc-summary {

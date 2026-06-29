@@ -113,3 +113,41 @@
 .gp-bdm-select-btn:hover {
   background: #0043a3;
 }
+
+@keyframes gp-bdm-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gp-bdm-skeleton-block {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e8edf2 0%, #f3f6f9 45%, #e8edf2 90%);
+  background-size: 200% 100%;
+  animation: gp-bdm-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.gp-bdm-skeleton-block--sm {
+  width: 72px;
+}
+
+.gp-bdm-skeleton-block--md {
+  width: 96px;
+}
+
+.gp-bdm-skeleton-block--lg {
+  width: 100%;
+  max-width: 160px;
+}
+
+.gp-bdm-skeleton-block--btn {
+  width: 64px;
+  height: 28px;
+  margin: 0 auto;
+}

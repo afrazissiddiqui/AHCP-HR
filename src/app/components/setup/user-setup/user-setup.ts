@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import { UserListItem, UserSetupPayload, UserSetupService } from '../../../services/user-setup.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
+import { displayDateOnly } from '../../../utils/date-format.util';
 
 type UserFormMode = 'add' | 'edit';
 
@@ -74,6 +75,9 @@ export class UserSetupComponent implements OnInit {
     if (value === null || value === undefined || value === '') {
       return '—';
     }
+    if (this.isDateColumn(column)) {
+      return this.formatDateColumn(value);
+    }
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
     }
@@ -81,6 +85,19 @@ export class UserSetupComponent implements OnInit {
       return JSON.stringify(value);
     }
     return String(value);
+  }
+
+  private isDateColumn(column: string): boolean {
+    const normalized = column.toLowerCase();
+    return normalized.endsWith('_at') || normalized === 'createdat' || normalized === 'updatedat';
+  }
+
+  private formatDateColumn(value: unknown): string {
+    const formatted = displayDateOnly(value as string | number);
+    if (formatted === '—') {
+      return '—';
+    }
+    return formatted.replace(/-/g, '/');
   }
 
   trackByColumn(_index: number, column: string): string {
