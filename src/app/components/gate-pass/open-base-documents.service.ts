@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, timeout } from 'rxjs';
 import { apiUrl } from '../../config/api.config';
 
 export type GatePassModule = 'igp' | 'ogp' | 'agp';
@@ -717,8 +717,9 @@ export class OpenBaseDocumentsService {
     return cloneDocuments(list);
   }
 
-  fetchIgpPurchaseOrders(): Observable<OpenBaseDocument[]> {
+  fetchPurchaseOrders(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(GET_PO_RECORDS_URL).pipe(
+      timeout(30_000),
       map((response) =>
         this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
       ),
@@ -726,8 +727,14 @@ export class OpenBaseDocumentsService {
     );
   }
 
+  /** @deprecated Use fetchPurchaseOrders */
+  fetchIgpPurchaseOrders(): Observable<OpenBaseDocument[]> {
+    return this.fetchPurchaseOrders();
+  }
+
   fetchSalesReturnRequests(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(SALES_RETURN_REQUESTS_URL).pipe(
+      timeout(30_000),
       map((response) =>
         this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
       ),

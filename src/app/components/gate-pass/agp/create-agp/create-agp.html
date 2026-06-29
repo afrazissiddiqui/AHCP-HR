@@ -17,37 +17,20 @@
           <div class="ogp-header-group">
             <p class="ogp-header-group-label">Document details</p>
             <div class="ogp-header-grid ogp-header-grid--4">
-              <div class="ogp-field">
-                <label for="agp-type">Type</label>
-                <select id="agp-type" [(ngModel)]="type" (ngModelChange)="onBaseDocumentTypeChange()" [disabled]="headerLocked || !!editingId">
-                  <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
-                </select>
-              </div>
-              <div class="ogp-field ogp-field--span-3">
+              <div class="ogp-field ogp-field--span-4 igp-base-doc-row igp-base-doc-row--disabled">
                 <span class="gate-pass-base-doc-label">Base document</span>
                 <div class="gate-pass-base-doc-row">
-                  <button type="button" class="gate-pass-base-doc-btn" (click)="openBaseDocumentModal()" [disabled]="!!editingId">
+                  <button type="button" class="gate-pass-base-doc-btn" disabled>
                     Choose base document…
                   </button>
-                  <span
-                    class="gate-pass-base-doc-summary"
-                    [class.gate-pass-base-doc-summary--muted]="!baseDocNo"
-                    >{{ baseDocNo || 'None selected' }}</span>
-                  <button
-                    *ngIf="headerLocked && !editingId"
-                    type="button"
-                    class="gate-pass-clear-base-doc"
-                    (click)="clearBaseDocumentSelection()"
-                  >
-                    Clear selection
-                  </button>
+                  <span class="gate-pass-base-doc-summary gate-pass-base-doc-summary--muted">Not applicable</span>
                 </div>
               </div>
             </div>
             <div class="ogp-header-grid ogp-header-grid--2 ogp-header-grid--nested">
               <div class="ogp-field">
                 <label for="agp-date">Date</label>
-                <input id="agp-date" type="date" [(ngModel)]="documentDate" [readonly]="headerLocked" />
+                <input id="agp-date" type="date" [(ngModel)]="documentDate" />
               </div>
               <div class="ogp-field">
                 <label for="agp-ref">AGP no.</label>
@@ -66,15 +49,15 @@
             <div class="ogp-header-grid ogp-header-grid--3">
               <div class="ogp-field">
                 <label for="agp-bp-code">Business partner code</label>
-                <input id="agp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" [readonly]="headerLocked" />
+                <input id="agp-bp-code" type="text" [(ngModel)]="businessPartnerCode" placeholder="Code" />
               </div>
               <div class="ogp-field ogp-field--span-2">
                 <label for="agp-bp-name">Business partner name</label>
-                <input id="agp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" [readonly]="headerLocked" />
+                <input id="agp-bp-name" type="text" [(ngModel)]="businessPartnerName" placeholder="Partner name" />
               </div>
               <div class="ogp-field">
                 <label for="agp-vehicle">Vehicle no.</label>
-                <input id="agp-vehicle" type="text" [(ngModel)]="vehicleNo" [readonly]="headerLocked" />
+                <input id="agp-vehicle" type="text" [(ngModel)]="vehicleNo" />
               </div>
             </div>
           </div>
@@ -115,14 +98,14 @@
               </div>
               <div class="ogp-field">
                 <label for="agp-location">Location</label>
-                <select id="agp-location" [(ngModel)]="location" [disabled]="headerLocked">
+                <select id="agp-location" [(ngModel)]="location">
                   <option value="">No selection</option>
                   <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
                 </select>
               </div>
               <div class="ogp-field">
                 <label for="agp-store">Warehouse</label>
-                <select id="agp-store" [(ngModel)]="store" [disabled]="headerLocked">
+                <select id="agp-store" [(ngModel)]="store">
                   <option value="">No selection</option>
                   <option *ngFor="let wh of warehouseOptions" [value]="wh.code">{{ wh.code }} — {{ wh.name }}</option>
                 </select>
@@ -272,7 +255,7 @@
       <section class="cjs-section-block">
         <div class="cjs-row igp-remarks-block">
           <label>Remarks</label>
-          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks" [readonly]="headerLocked"></textarea>
+          <textarea [(ngModel)]="remarks" rows="4" placeholder="Header / document remarks"></textarea>
         </div>
       </section>
 
@@ -284,11 +267,4 @@
       </div>
     </div>
   </div>
-
-  <app-base-document-modal
-    [(open)]="showBaseDocModal"
-    gatePassModule="agp"
-    [documentType]="type"
-    (documentPicked)="onBaseDocumentPicked($event)"
-  />
 </div>

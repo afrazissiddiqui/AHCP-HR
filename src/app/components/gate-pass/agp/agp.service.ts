@@ -20,6 +20,21 @@ export interface AgpLineItem {
   deleted: boolean;
 }
 
+export interface AgpLinePayload {
+  oitmCode: string;
+  itemCode: string;
+  itemName: string;
+  serialNumbers: string;
+  category: string;
+  packingCondition: string;
+  productQuality: string;
+  uom: string;
+  qtySent: number;
+  qtyReceived: number;
+  info: string;
+  remarks: string;
+}
+
 export interface AgpAddPayload {
   type: string;
   baseDocNo: string;
@@ -35,8 +50,6 @@ export interface AgpAddPayload {
   issuedTo: string;
   articleOutDate: string;
   articleReturnedDate: string;
-  location: string;
-  store: string;
   transporterName: string;
   transporterCnic: string;
   transporterPhone: string;
@@ -45,7 +58,7 @@ export interface AgpAddPayload {
   attachmentFileName: string;
   headOfSupplyChainApproval: boolean;
   remarks: string;
-  lines: AgpLineItem[];
+  lines: AgpLinePayload[];
   totalQtySent: number;
   totalQtyReceived: number;
 }
@@ -155,6 +168,7 @@ export class AgpService {
   fetchArticleGatePassDetail(id: string | number): Observable<AgpRecord> {
     const identifier = encodeURIComponent(String(id));
     const numericId = Number.parseInt(String(id), 10) || 0;
+    const cached = this.agpList().find((record) => record.Id === numericId);
 
     return this.http.get<unknown>(`${ARTICLE_GATE_PASS_DETAIL_URL}/${identifier}`).pipe(
       map((response) => {
@@ -164,7 +178,18 @@ export class AgpService {
         }
         return record;
       }),
+      map((record) => {
+        if (record.lines.length > 0 || !cached?.lines.length) {
+          return record;
+        }
+        return { ...record, lines: cached.lines };
+      }),
     );
+  }
+
+  findCachedRecord(id: string | number): AgpRecord | undefined {
+    const numericId = Number.parseInt(String(id), 10) || 0;
+    return this.agpList().find((record) => record.Id === numericId);
   }
 
   addArticleGatePass(payload: AgpAddPayload): Observable<AgpApiResponse> {
@@ -221,6 +246,7 @@ export class AgpService {
       'article_gate_passes',
       'articleGatePasses',
       'articleGatePassList',
+      'article_gate_pass_list',
       'agpList',
       'agps',
     ];
@@ -229,6 +255,12 @@ export class AgpService {
       const value = obj[key];
       if (Array.isArray(value)) {
         return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+      if (value && typeof value === 'object') {
+        const nestedItems = this.extractApiItems(value);
+        if (nestedItems.length > 0) {
+          return nestedItems;
+        }
       }
     }
 

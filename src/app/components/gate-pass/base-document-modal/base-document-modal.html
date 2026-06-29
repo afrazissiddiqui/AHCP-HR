@@ -13,7 +13,7 @@
   </div>
   <p class="gp-bdm-type-line">Type: <strong>{{ documentType }}</strong></p>
   <div class="gp-bdm-body">
-    <div *ngIf="loading" class="gp-bdm-skeleton" aria-busy="true" aria-label="Loading base documents">
+    <div *ngIf="loading()" class="gp-bdm-skeleton" aria-busy="true" aria-label="Loading base documents">
       <div class="gp-bdm-table-wrap">
         <table class="gp-bdm-table">
           <thead>
@@ -40,8 +40,8 @@
       </div>
     </div>
 
-    <p class="gp-bdm-empty" *ngIf="!loading && documents.length === 0">No open documents for this type.</p>
-    <div class="gp-bdm-table-wrap" *ngIf="!loading && documents.length > 0">
+    <p class="gp-bdm-empty" *ngIf="!loading() && documents().length === 0">No open documents for this type.</p>
+    <div class="gp-bdm-table-wrap" *ngIf="!loading() && documents().length > 0">
       <table class="gp-bdm-table">
         <thead>
           <tr>
@@ -53,7 +53,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let doc of documents">
+          <tr *ngFor="let doc of documents()">
             <td>{{ doc.number }}</td>
             <td>{{ doc.title }}</td>
             <td>{{ doc.businessPartnerName || doc.partner || '—' }}</td>

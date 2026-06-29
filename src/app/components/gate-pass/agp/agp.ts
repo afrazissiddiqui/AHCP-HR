@@ -108,7 +108,7 @@ export class AgpComponent implements OnInit {
     }
 
     this.showDetailDialog.set(true);
-    this.selectedRow.set(null);
+    this.selectedRow.set(record);
     this.detailLoading.set(true);
 
     this.agpService.fetchArticleGatePassDetail(record.Id).subscribe({
@@ -117,11 +117,12 @@ export class AgpComponent implements OnInit {
         this.detailLoading.set(false);
       },
       error: (error: unknown) => {
+        const cached = this.agpService.findCachedRecord(record.Id) ?? record;
+        this.selectedRow.set(cached);
         this.detailLoading.set(false);
-        this.showDetailDialog.set(false);
-        this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load AGP details.'),
+        this.alertService.warning(
+          'Detail unavailable',
+          formatApiErrorMessage(error, 'Showing list data — full detail could not be loaded.'),
         );
       },
     });
@@ -142,12 +143,20 @@ export class AgpComponent implements OnInit {
     }
 
     this.agpService.deleteArticleGatePass(record.Id).subscribe({
-      next: () => {
+      next: (response) => {
+        if (response?.status === false || response?.success === false) {
+          this.alertService.error(
+            'Delete Failed',
+            response.message || 'Failed to delete AGP record.',
+          );
+          return;
+        }
+
         this.agpService.removeAgpRecord(record);
         if (this.paginatedList.length === 0 && this.currentPage > 1) {
           this.currentPage -= 1;
         }
-        this.alertService.success('Deleted', 'AGP record removed successfully.');
+        this.alertService.success('Deleted', response?.message || 'AGP record removed successfully.');
       },
       error: (error: unknown) => {
         this.alertService.error(

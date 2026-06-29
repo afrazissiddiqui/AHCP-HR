@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { GatePassModule, OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documents.service';
 
@@ -21,13 +21,13 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
   @Output() openChange = new EventEmitter<boolean>();
   @Output() documentPicked = new EventEmitter<OpenBaseDocument>();
 
-  documents: OpenBaseDocument[] = [];
-  loading = false;
+  readonly documents = signal<OpenBaseDocument[]>([]);
+  readonly loading = signal(false);
   readonly skeletonRows = Array.from({ length: 5 }, (_, index) => index);
   private loadSubscription?: Subscription;
 
   ngOnDestroy(): void {
-    this.loadSubscription?.unsubscribe();
+    this.cancelLoad();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -37,8 +37,9 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     }
 
     if (changes['open'] && !this.open) {
-      this.documents = [];
-      this.loading = false;
+      this.cancelLoad();
+      this.documents.set([]);
+      this.loading.set(false);
     }
   }
 
@@ -59,37 +60,49 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     this.close();
   }
 
-  private loadDocuments(): void {
+  private cancelLoad(): void {
     this.loadSubscription?.unsubscribe();
+    this.loadSubscription = undefined;
+  }
+
+  private loadDocuments(): void {
+    this.cancelLoad();
 
     const fetch$ = this.getApiFetch$();
     if (fetch$) {
-      this.loading = true;
-      this.documents = [];
-      this.loadSubscription = fetch$.pipe(finalize(() => (this.loading = false))).subscribe({
-        next: (documents) => {
-          this.documents = documents;
-        },
-        error: () => {
-          this.documents = [];
-        },
-      });
+      this.loading.set(true);
+      this.documents.set([]);
+      this.loadSubscription = fetch$
+        .pipe(finalize(() => this.loading.set(false)))
+        .subscribe({
+          next: (documents) => {
+            this.documents.set(documents);
+          },
+          error: () => {
+            this.documents.set([]);
+          },
+        });
       return;
     }
 
-    this.loading = false;
-    this.documents = this.openBaseDocuments.listOpenByType(this.gatePassModule, this.documentType);
+    this.loading.set(false);
+    this.documents.set(this.openBaseDocuments.listOpenByType(this.gatePassModule, this.documentType));
   }
 
   private getApiFetch$(): Observable<OpenBaseDocument[]> | null {
-    if (this.documentType === 'Sales return request' || this.documentType === 'Sales Return Request') {
-      if (this.gatePassModule === 'igp' || this.gatePassModule === 'ogp') {
-        return this.openBaseDocuments.fetchSalesReturnRequests();
-      }
+    const usesApi =
+      this.gatePassModule === 'igp' || this.gatePassModule === 'ogp';
+
+    if (!usesApi) {
+      return null;
     }
 
-    if (this.gatePassModule === 'igp' && this.documentType === 'Purchase Order') {
-      return this.openBaseDocuments.fetchIgpPurchaseOrders();
+    if (this.documentType === 'Sales return request' || this.documentType === 'Sales Return Request') {
+      return this.openBaseDocuments.fetchSalesReturnRequests();
+    }
+
+    if (this.documentType === 'Purchase Order') {
+      return this.openBaseDocuments.fetchPurchaseOrders();
     }
 
     return null;
