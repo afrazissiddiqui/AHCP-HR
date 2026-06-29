@@ -29,6 +29,7 @@ function emptyIfDash(value: string): string {
 
 interface TerminationEmployeeOption {
   employeeId: string;
+  employeeNumericId: number;
   employeeName: string;
   department: string;
   employeeCategory: string;
@@ -81,6 +82,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
   protected readonly nameSuggestions = computed(() => this.filterEmployeeSuggestions(this.employeeName()));
 
   protected readonly employeeId = signal('');
+  protected readonly employeeNumericId = signal(0);
   protected readonly employeeName = signal('');
   protected readonly department = signal('');
   protected readonly employeeCategory = signal('');
@@ -202,6 +204,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
 
   protected onEmployeeIdInput(value: string): void {
     this.employeeId.set(value);
+    this.employeeNumericId.set(0);
     if (this.editingId) {
       return;
     }
@@ -259,14 +262,15 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
 
   protected save(): void {
     this.validationTouched.set(true);
+    this.cdr.markForCheck();
 
-    const employeeId = Number(this.employeeId().trim());
+    const employeeNumericId = this.resolvePayloadEmployeeId();
     const employeeName = this.employeeName().trim();
     const lastWorkingDay = this.lastWorkingDay().trim();
     const yearOfService = Number(this.yearOfService().trim());
 
-    if (!Number.isFinite(employeeId) || employeeId <= 0) {
-      void this.alertService.validation('Please enter a valid Employee ID.');
+    if (employeeNumericId <= 0) {
+      void this.alertService.validation('Please select a valid employee or enter a numeric Employee ID.');
       this.scrollToSection('header-section');
       return;
     }
@@ -281,7 +285,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
       return;
     }
 
-    const payload = this.buildPayload();
+    const payload = this.buildPayload(employeeNumericId);
     const request$ = this.editingId
       ? this.terminationService.updateFinalSettlement(this.editingId, payload)
       : this.terminationService.addFinalSettlement(payload);
@@ -292,7 +296,8 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
           const fallback = this.editingId
             ? 'Failed to update termination.'
             : 'Failed to save termination.';
-          this.alertService.error('Error', response.message || fallback);
+          void this.alertService.error('Error', response.message || fallback);
+          this.cdr.markForCheck();
           return;
         }
 
@@ -308,7 +313,8 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
         const fallback = this.editingId
           ? 'Failed to update termination.'
           : 'Failed to save termination.';
-        this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+        void this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+        this.cdr.markForCheck();
       },
     });
   }
@@ -319,8 +325,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     if (field === 'employeeId') {
-      const id = Number(this.employeeId().trim());
-      return !Number.isFinite(id) || id <= 0;
+      return this.resolvePayloadEmployeeId() <= 0;
     }
     if (field === 'employeeName') {
       return !this.employeeName().trim();
@@ -340,8 +345,10 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private toEmployeeOption(record: ApplicationFormRecord): TerminationEmployeeOption {
+    const employeeId = this.resolveEmployeeCode(record);
     return {
-      employeeId: this.resolveEmployeeId(record),
+      employeeId,
+      employeeNumericId: this.resolveEmployeeNumericIdFromRecord(record, employeeId),
       employeeName: emptyIfDash(record.EmployeeName),
       department: emptyIfDash(record.Department),
       employeeCategory: emptyIfDash(record.EmploymentCategory),
@@ -354,7 +361,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     };
   }
 
-  private resolveEmployeeId(record: ApplicationFormRecord): string {
+  private resolveEmployeeCode(record: ApplicationFormRecord): string {
     const fromLogin = record.detail?.loginDetails.employeeCode?.trim();
     if (fromLogin) {
       return fromLogin;
@@ -366,6 +373,59 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
       return String(record.EmployeeCode);
     }
     return '';
+  }
+
+  private resolveEmployeeNumericIdFromRecord(
+    record: ApplicationFormRecord,
+    employeeCode: string,
+  ): number {
+    if (record.apiId?.trim()) {
+      const apiNumeric = Number(record.apiId.trim());
+      if (Number.isFinite(apiNumeric) && apiNumeric > 0) {
+        return apiNumeric;
+      }
+    }
+
+    const fromCode = this.applicationFormService.parseEmployeeCodeSequence(
+      record.EmployeeCode || employeeCode,
+    );
+    if (fromCode > 0) {
+      return fromCode;
+    }
+
+    return this.resolveEmployeeNumericId(employeeCode);
+  }
+
+  private resolveEmployeeNumericId(value: string): number {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return 0;
+    }
+
+    if (!/[A-Za-z]/.test(trimmed)) {
+      const direct = Number(trimmed);
+      if (Number.isFinite(direct) && direct > 0) {
+        return direct;
+      }
+    }
+
+    return this.applicationFormService.parseEmployeeCodeSequence(trimmed);
+  }
+
+  private resolvePayloadEmployeeId(): number {
+    const stored = this.employeeNumericId();
+    if (stored > 0) {
+      return stored;
+    }
+
+    const fromInput = this.resolveEmployeeNumericId(this.employeeId());
+    if (fromInput > 0) {
+      return fromInput;
+    }
+
+    const code = this.employeeId().trim();
+    const match = this.employeeOptions().find((employee) => employee.employeeId === code);
+    return match?.employeeNumericId ?? 0;
   }
 
   private filterEmployeeSuggestions(query: string): TerminationEmployeeOption[] {
@@ -387,6 +447,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
 
   private populateFromEmployeeOption(employee: TerminationEmployeeOption): void {
     this.employeeId.set(employee.employeeId);
+    this.employeeNumericId.set(employee.employeeNumericId);
     this.employeeName.set(employee.employeeName);
     this.department.set(employee.department);
     this.employeeCategory.set(employee.employeeCategory);
@@ -397,6 +458,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private populateFromRecord(record: TerminationRecord): void {
+    this.employeeNumericId.set(record.EmployeeId > 0 ? record.EmployeeId : 0);
     this.employeeId.set(record.EmployeeId > 0 ? String(record.EmployeeId) : '');
     this.employeeName.set(emptyIfDash(record.EmployeeName));
     this.department.set(emptyIfDash(record.Department));
@@ -451,10 +513,10 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     }
   }
 
-  private buildPayload(): FinalSettlementAddPayload {
+  private buildPayload(employeeNumericId: number): FinalSettlementAddPayload {
     return {
       headerSection: {
-        employeeId: Number(this.employeeId().trim()),
+        employeeId: employeeNumericId,
         employeeName: this.employeeName().trim(),
         department: this.department().trim(),
         employeeCategory: this.employeeCategory().trim(),
