@@ -27,8 +27,8 @@ type InspectionLineField = keyof PlantMaintenanceMasterInspectionLine;
 
 function createEmptyReplacementLine(): PlantMaintenanceMasterReplacementLine {
   return {
-    machineId: '',
-    machineNumber: '',
+    itemCode: '',
+    itemName: '',
     quantity: null,
   };
 }
@@ -648,13 +648,13 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
               line.replacement.trim() === 'Yes'
                 ? line.replacementItems
                     .map((item) => ({
-                      machineId: item.machineId.trim(),
-                      machineNumber: item.machineNumber.trim(),
+                      itemCode: item.itemCode.trim(),
+                      itemName: item.itemName.trim(),
                       quantity: item.quantity,
                     }))
                     .filter(
                       (item) =>
-                        item.machineId || item.machineNumber || item.quantity !== null,
+                        item.itemCode || item.itemName || item.quantity !== null,
                     )
                 : [],
             instructions: line.instructions.trim(),
@@ -725,8 +725,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
         }
         return line.replacementItems.some(
           (item) =>
-            !item.machineId ||
-            !item.machineNumber ||
+            !item.itemCode ||
+            !item.itemName ||
             item.quantity === null ||
             item.quantity <= 0,
         );
@@ -734,7 +734,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     );
     if (invalidReplacementDetails) {
       this.alertService.validation(
-        'When Replacement is Yes, add at least one row with Machine ID, Machine Number, and Quantity.',
+        'When Replacement is Yes, add at least one row with Item Code, Item Name, and Quantity.',
       );
       return;
     }
@@ -1068,8 +1068,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       replacementItems:
         line.replacement === 'Yes'
           ? (line.replacementItems ?? []).map((item) => ({
-              machineId: item.machineId ?? '',
-              machineNumber: item.machineNumber ?? '',
+              itemCode: item.itemCode ?? '',
+              itemName: item.itemName ?? '',
               quantity: item.quantity ?? null,
             }))
           : [],

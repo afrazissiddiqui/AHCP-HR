@@ -12,7 +12,12 @@
         <div class="cjr-personal" id="plant-maintenance-master-form-section">
           <div class="cjr-section-title">Plant Maintenance Master Form</div>
 
-          <div class="cjr-personal-grid pmm-profile-grid">
+          <section class="pmm-form-panel pmm-form-panel--profile">
+            <div class="pmm-form-panel__heading">
+              <span class="pmm-form-panel__title">Machine Profile</span>
+              <span class="pmm-form-panel__subtitle">Select machine and maintenance profile</span>
+            </div>
+            <div class="cjr-personal-grid pmm-profile-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="pmm-machine-id">Machine ID:</label>
@@ -182,7 +187,8 @@
                 </select>
               </div>
             </div>
-          </div>
+            </div>
+          </section>
 
           <p
             class="mad-components-hint"
@@ -191,8 +197,11 @@
             Select Plant Maintenance Frequency, Plant Maintenance Type, Machine Type, and Maintenance Nature. Change any dropdown to load a different activity profile when a match exists.
           </p>
 
-          <section class="pmm-schedule-section">
-            <div class="cjr-section-title">Schedule</div>
+          <section class="pmm-form-panel pmm-form-panel--schedule pmm-schedule-section">
+            <div class="pmm-form-panel__heading">
+              <span class="pmm-form-panel__title">Schedule</span>
+              <span class="pmm-form-panel__subtitle">Set maintenance window and duration</span>
+            </div>
             <div class="cjr-personal-grid pmm-schedule-grid">
               <div class="cjr-personal-col">
                 <div class="cjr-row">
@@ -236,8 +245,13 @@
             </div>
           </section>
 
-          <section class="mad-components-section">
-            <div class="cjr-section-title scd-sub-components__title">Components</div>
+          <section class="mad-components-section pmm-components-section">
+            <div class="pmm-section-heading">
+              <div class="pmm-form-panel__heading">
+                <span class="pmm-form-panel__title">Components</span>
+                <span class="pmm-form-panel__subtitle">Inspection lines, replacement items, and findings</span>
+              </div>
+            </div>
 
             <p class="mad-components-hint" *ngIf="hasLoadedActivityData()">
               Inspection details are loaded from the matching Maintenance Activity Defination. Change the profile dropdowns above to switch profiles. Select Status for each line and save.
@@ -345,122 +359,129 @@
                       </button>
                     </div>
 
-                    <div class="pmm-line-grid pmm-line-grid--inspect">
-                      <div class="pmm-line-field">
-                        <label [attr.for]="'pmm-items-' + ci + '-' + li">Items to be inspected</label>
-                        <input
-                          [id]="'pmm-items-' + ci + '-' + li"
-                          type="text"
-                          class="mad-input-readonly"
-                          [ngModel]="line.itemsToBeInspected"
-                          (ngModelChange)="updateInspectionLine(ci, li, 'itemsToBeInspected', $event)"
-                          [name]="'itemsToBeInspected' + ci + '_' + li"
-                          placeholder="Enter items to be inspected"
-                          readonly
-                        />
-                      </div>
-                      <div class="pmm-line-field">
-                        <label [attr.for]="'pmm-check-' + ci + '-' + li">What to check</label>
-                        <input
-                          [id]="'pmm-check-' + ci + '-' + li"
-                          type="text"
-                          class="mad-input-readonly"
-                          [ngModel]="line.whatToCheck"
-                          (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
-                          [name]="'whatToCheck' + ci + '_' + li"
-                          placeholder="Enter what to check"
-                          readonly
-                        />
-                      </div>
-                      <div class="pmm-line-field">
-                        <label [attr.for]="'pmm-replacement-' + ci + '-' + li">Replacement</label>
-                        <select
-                          [id]="'pmm-replacement-' + ci + '-' + li"
-                          class="mad-select"
-                          [ngModel]="line.replacement || 'No'"
-                          (ngModelChange)="onReplacementChange(ci, li, $event)"
-                          [name]="'replacement' + ci + '_' + li"
-                        >
-                          <option *ngFor="let option of replacementOptions" [value]="option">
-                            {{ option }}
-                          </option>
-                        </select>
-                      </div>
-                      <div class="pmm-line-field">
-                        <label [attr.for]="'pmm-instructions-' + ci + '-' + li">Instructions</label>
-                        <textarea
-                          [id]="'pmm-instructions-' + ci + '-' + li"
-                          class="mad-textarea mad-input-readonly"
-                          rows="3"
-                          [ngModel]="line.instructions"
-                          (ngModelChange)="updateInspectionLine(ci, li, 'instructions', $event)"
-                          [name]="'instructions' + ci + '_' + li"
-                          placeholder="Enter instructions"
-                          readonly
-                        ></textarea>
+                    <div class="pmm-line-block pmm-line-block--inspection">
+                      <div class="pmm-line-block__title">Inspection details</div>
+                      <div class="pmm-line-grid pmm-line-grid--inspect">
+                        <div class="pmm-line-field">
+                          <label [attr.for]="'pmm-items-' + ci + '-' + li">Items to be inspected</label>
+                          <input
+                            [id]="'pmm-items-' + ci + '-' + li"
+                            type="text"
+                            class="mad-input-readonly"
+                            [ngModel]="line.itemsToBeInspected"
+                            (ngModelChange)="updateInspectionLine(ci, li, 'itemsToBeInspected', $event)"
+                            [name]="'itemsToBeInspected' + ci + '_' + li"
+                            placeholder="Enter items to be inspected"
+                            readonly
+                          />
+                        </div>
+                        <div class="pmm-line-field">
+                          <label [attr.for]="'pmm-check-' + ci + '-' + li">What to check</label>
+                          <input
+                            [id]="'pmm-check-' + ci + '-' + li"
+                            type="text"
+                            class="mad-input-readonly"
+                            [ngModel]="line.whatToCheck"
+                            (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
+                            [name]="'whatToCheck' + ci + '_' + li"
+                            placeholder="Enter what to check"
+                            readonly
+                          />
+                        </div>
+                        <div class="pmm-line-field pmm-line-field--replacement">
+                          <label [attr.for]="'pmm-replacement-' + ci + '-' + li">Replacement</label>
+                          <select
+                            [id]="'pmm-replacement-' + ci + '-' + li"
+                            class="mad-select"
+                            [class.mad-select--replacement-yes]="line.replacement === 'Yes'"
+                            [ngModel]="line.replacement || 'No'"
+                            (ngModelChange)="onReplacementChange(ci, li, $event)"
+                            [name]="'replacement' + ci + '_' + li"
+                          >
+                            <option *ngFor="let option of replacementOptions" [value]="option">
+                              {{ option }}
+                            </option>
+                          </select>
+                        </div>
+                        <div class="pmm-line-field pmm-line-field--span-full">
+                          <label [attr.for]="'pmm-instructions-' + ci + '-' + li">Instructions</label>
+                          <textarea
+                            [id]="'pmm-instructions-' + ci + '-' + li"
+                            class="mad-textarea mad-input-readonly"
+                            rows="3"
+                            [ngModel]="line.instructions"
+                            (ngModelChange)="updateInspectionLine(ci, li, 'instructions', $event)"
+                            [name]="'instructions' + ci + '_' + li"
+                            placeholder="Enter instructions"
+                            readonly
+                          ></textarea>
+                        </div>
                       </div>
                     </div>
 
-                    <div class="pmm-replacement-table-section" *ngIf="line.replacement === 'Yes'">
-                      <table class="mountain-table pmm-replacement-table">
-                        <thead>
-                          <tr>
-                            <th>Machine ID</th>
-                            <th>Machine Number</th>
-                            <th>Quantity</th>
-                            <th class="pmm-replacement-table__actions"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            *ngFor="let replacementRow of line.replacementItems; let ri = index; trackBy: trackByIndex"
-                          >
-                            <td>
-                              <input
-                                type="text"
-                                class="pmm-replacement-table__input"
-                                [ngModel]="replacementRow.machineId"
-                                (ngModelChange)="updateReplacementRow(ci, li, ri, 'machineId', $event)"
-                                placeholder="Enter machine ID"
-                                [name]="'replacementMachineId' + ci + '_' + li + '_' + ri"
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                class="pmm-replacement-table__input"
-                                [ngModel]="replacementRow.machineNumber"
-                                (ngModelChange)="updateReplacementRow(ci, li, ri, 'machineNumber', $event)"
-                                placeholder="Enter machine number"
-                                [name]="'replacementMachineNumber' + ci + '_' + li + '_' + ri"
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                min="0"
-                                step="any"
-                                class="pmm-replacement-table__input"
-                                [ngModel]="replacementRow.quantity"
-                                (ngModelChange)="updateReplacementRow(ci, li, ri, 'quantity', $event)"
-                                placeholder="Enter quantity"
-                                [name]="'replacementQuantity' + ci + '_' + li + '_' + ri"
-                              />
-                            </td>
-                            <td class="pmm-replacement-table__actions">
-                              <button
-                                type="button"
-                                class="mad-line-remove-btn"
-                                (click)="removeReplacementRow(ci, li, ri)"
-                                title="Remove row"
-                                [attr.aria-label]="'Remove replacement row ' + (ri + 1)"
-                              >
-                                ×
-                              </button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    <div class="pmm-line-block pmm-line-block--replacement" *ngIf="line.replacement === 'Yes'">
+                      <div class="pmm-line-block__title">Replacement items</div>
+                      <div class="pmm-replacement-table-wrap">
+                        <table class="mountain-table pmm-replacement-table">
+                          <thead>
+                            <tr>
+                              <th>Item Code</th>
+                              <th>Item Name</th>
+                              <th class="pmm-replacement-table__qty-col">Quantity</th>
+                              <th class="pmm-replacement-table__actions"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              *ngFor="let replacementRow of line.replacementItems; let ri = index; trackBy: trackByIndex"
+                            >
+                              <td>
+                                <input
+                                  type="text"
+                                  class="pmm-replacement-table__input"
+                                  [ngModel]="replacementRow.itemCode"
+                                  (ngModelChange)="updateReplacementRow(ci, li, ri, 'itemCode', $event)"
+                                  placeholder="Enter item code"
+                                  [name]="'replacementItemCode' + ci + '_' + li + '_' + ri"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  class="pmm-replacement-table__input"
+                                  [ngModel]="replacementRow.itemName"
+                                  (ngModelChange)="updateReplacementRow(ci, li, ri, 'itemName', $event)"
+                                  placeholder="Enter item name"
+                                  [name]="'replacementItemName' + ci + '_' + li + '_' + ri"
+                                />
+                              </td>
+                              <td class="pmm-replacement-table__qty-col">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  class="pmm-replacement-table__input pmm-replacement-table__input--qty"
+                                  [ngModel]="replacementRow.quantity"
+                                  (ngModelChange)="updateReplacementRow(ci, li, ri, 'quantity', $event)"
+                                  placeholder="Qty"
+                                  [name]="'replacementQuantity' + ci + '_' + li + '_' + ri"
+                                />
+                              </td>
+                              <td class="pmm-replacement-table__actions">
+                                <button
+                                  type="button"
+                                  class="pmm-replacement-table__remove-btn"
+                                  (click)="removeReplacementRow(ci, li, ri)"
+                                  title="Remove row"
+                                  [attr.aria-label]="'Remove replacement row ' + (ri + 1)"
+                                >
+                                  ×
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                       <button
                         type="button"
                         class="mad-add-line-btn pmm-replacement-table__add-row"
@@ -473,7 +494,9 @@
                       </button>
                     </div>
 
-                    <div class="pmm-line-grid pmm-line-grid--results">
+                    <div class="pmm-line-block pmm-line-block--results">
+                      <div class="pmm-line-block__title">Findings &amp; attachments</div>
+                      <div class="pmm-line-grid pmm-line-grid--results">
                       <div class="pmm-line-field">
                         <label [attr.for]="'pmm-recommendation-' + ci + '-' + li">Recommendation</label>
                         <textarea
@@ -530,6 +553,7 @@
                             />
                           </label>
                         </div>
+                      </div>
                       </div>
                     </div>
                   </section>

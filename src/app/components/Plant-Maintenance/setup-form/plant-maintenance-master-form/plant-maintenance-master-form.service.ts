@@ -10,8 +10,8 @@ export interface PlantMaintenanceMasterLineAttachment {
 }
 
 export interface PlantMaintenanceMasterReplacementLine {
-  machineId: string;
-  machineNumber: string;
+  itemCode: string;
+  itemName: string;
   quantity: number | null;
 }
 
@@ -128,8 +128,8 @@ export function buildPlantMaintenanceMasterFormPayload(
         replacementItems:
           line.replacement.trim() === 'Yes'
             ? line.replacementItems.map((item) => ({
-                machineId: item.machineId.trim(),
-                machineNumber: item.machineNumber.trim(),
+                itemCode: item.itemCode.trim(),
+                itemName: item.itemName.trim(),
                 quantity: item.quantity ?? 0,
               }))
             : [],
@@ -358,8 +358,18 @@ export class PlantMaintenanceMasterFormService {
     return rawItems
       .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object')
       .map((item) => ({
-        machineId: this.pickString([item], ['machineId', 'machine_id', 'MachineId']),
-        machineNumber: this.pickString([item], [
+        itemCode: this.pickString([item], [
+          'itemCode',
+          'item_code',
+          'ItemCode',
+          'machineId',
+          'machine_id',
+          'MachineId',
+        ]),
+        itemName: this.pickString([item], [
+          'itemName',
+          'item_name',
+          'ItemName',
           'machineNumber',
           'machine_number',
           'MachineNumber',
@@ -367,7 +377,7 @@ export class PlantMaintenanceMasterFormService {
         quantity: this.pickNumber([item], ['quantity', 'Quantity', 'qty', 'Qty']),
       }))
       .filter(
-        (item) => item.machineId || item.machineNumber || item.quantity !== null,
+        (item) => item.itemCode || item.itemName || item.quantity !== null,
       );
   }
 

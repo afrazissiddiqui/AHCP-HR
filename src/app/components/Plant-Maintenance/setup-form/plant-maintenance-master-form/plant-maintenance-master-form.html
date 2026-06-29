@@ -290,15 +290,15 @@
                   <table class="mountain-table pmm-view-replacement-table">
                     <thead>
                       <tr>
-                        <th>Machine ID</th>
-                        <th>Machine Number</th>
+                        <th>Item Code</th>
+                        <th>Item Name</th>
                         <th>Quantity</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr *ngFor="let replacementRow of line.replacementItems">
-                        <td>{{ replacementRow.machineId || '—' }}</td>
-                        <td>{{ replacementRow.machineNumber || '—' }}</td>
+                        <td>{{ replacementRow.itemCode || '—' }}</td>
+                        <td>{{ replacementRow.itemName || '—' }}</td>
                         <td>{{ replacementRow.quantity ?? '—' }}</td>
                       </tr>
                     </tbody>
