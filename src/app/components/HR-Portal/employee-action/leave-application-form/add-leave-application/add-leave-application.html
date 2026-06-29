@@ -9,10 +9,6 @@
   </div>
 
   <div class="cjr-card">
-    <div class="cjr-options">
-      <div class="cjr-options-title">Options:</div>
-    </div>
-
     <nav class="cjr-section-nav" aria-label="Leave request sections">
       <ul class="cjr-section-nav-list">
         <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'header-info-section'"
@@ -29,11 +25,11 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Form Number:</label>
+            <label class="cjs-label-required">Form Number:</label>
             <input type="text" [ngModel]="formNumber()" (ngModelChange)="formNumber.set($event)" />
           </div>
           <div class="cjr-row">
-            <label>Employee ID:</label>
+            <label class="cjs-label-required">Employee ID:</label>
             <div class="employee-search-wrap">
               <input
                 type="search"
@@ -71,7 +67,7 @@
             </div>
           </div>
           <div class="cjr-row">
-            <label>Employee Name:</label>
+            <label class="cjs-label-required">Employee Name:</label>
             <div class="employee-search-wrap">
               <input
                 type="search"
@@ -155,7 +151,7 @@
             <input type="date" [ngModel]="requestDate()" (ngModelChange)="requestDate.set($event)" />
           </div>
           <div class="cjr-row">
-            <label>Leave Type:</label>
+            <label class="cjs-label-required">Leave Type:</label>
             <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)" placeholder="e.g. Annual Leave" />
           </div>
           <div class="cjr-row">
@@ -166,7 +162,7 @@
 
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>From Date:</label>
+            <label class="cjs-label-required">From Date:</label>
             <input
               type="text"
               [ngModel]="fromDate()"
@@ -177,11 +173,11 @@
             />
           </div>
           <div class="cjr-row">
-            <label>To Date:</label>
+            <label class="cjs-label-required">To Date:</label>
             <input type="date" [ngModel]="toDate()" (ngModelChange)="onToDateChange($event)" />
           </div>
           <div class="cjr-row">
-            <label>Total Leave Days Requested:</label>
+            <label class="cjs-label-required">Total Leave Days Requested:</label>
             <input
               type="number"
               min="0"

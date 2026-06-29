@@ -9,6 +9,11 @@
   </div>
 
   <div class="cjr-card">
+    <div class="cjr-save-overlay" *ngIf="isSaving()" aria-live="polite" aria-busy="true">
+      <div class="cjr-save-spinner" aria-hidden="true"></div>
+      <span class="cjr-save-overlay-text">Saving Loan/Advance...</span>
+    </div>
+
     <div class="cjr-options">
       <div class="cjr-options-title">Options:</div>
     </div>
@@ -40,7 +45,7 @@
             <input type="text" [value]="requestDate()" readonly />
           </div>
           <div class="cjr-row">
-            <label>Request Type:</label>
+            <label class="cjs-label-required">Request Type:</label>
             <select [ngModel]="requestType()" (ngModelChange)="requestType.set($event)">
               <option value="">Select Type</option>
               <option value="Loan">Loan</option>
@@ -48,7 +53,7 @@
             </select>
           </div>
           <div class="cjr-row">
-            <label>Status:</label>
+            <label class="cjs-label-required">Status:</label>
             <select [ngModel]="status()" (ngModelChange)="status.set($event)">
               <option value="Draft">Draft</option>
               <option value="Pending">Pending</option>
@@ -61,7 +66,7 @@
 
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Employee Code:</label>
+            <label class="cjs-label-required">Employee Code:</label>
             <div class="employee-search-wrap">
               <input
                 type="search"
@@ -103,7 +108,7 @@
           </div>
 
           <div class="cjr-row">
-            <label>Employee Name:</label>
+            <label class="cjs-label-required">Employee Name:</label>
             <div class="employee-search-wrap">
               <input
                 type="search"
@@ -167,7 +172,7 @@
             <input type="text" [value]="yearsOfService()" readonly />
           </div>
           <div class="cjr-row">
-            <label>Payroll Month:</label>
+            <label class="cjs-label-required">Payroll Month:</label>
             <input type="month" [ngModel]="payrollMonth()" (ngModelChange)="payrollMonth.set($event)" />
           </div>
         </div>
@@ -180,7 +185,7 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Existing Loan (Yes/No):</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Existing Loan (Yes/No):</label>
             <select [ngModel]="existingLoan()" (ngModelChange)="existingLoan.set($event)">
               <option value="">Select option</option>
               <option value="Yes">Yes</option>
@@ -242,7 +247,7 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Purpose:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Purpose:</label>
             <input type="text" [ngModel]="newLoanPurpose()" (ngModelChange)="newLoanPurpose.set($event)" />
           </div>
           <div class="cjr-row">
@@ -252,17 +257,17 @@
         </div>
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Loan Amount Requested:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Loan Amount Requested:</label>
             <input type="text" [ngModel]="loanAmountRequested()" (ngModelChange)="loanAmountRequested.set($event)" />
           </div>
           <div class="cjr-row">
-            <label>Loan Start Month:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Loan Start Month:</label>
             <input type="month" [ngModel]="loanStartMonth()" (ngModelChange)="loanStartMonth.set($event)" />
           </div>
         </div>
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Installment Amount:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Installment Amount:</label>
             <input type="text" [ngModel]="installmentAmount()" (ngModelChange)="installmentAmount.set($event)" />
           </div>
           <div class="cjr-row">
@@ -272,7 +277,7 @@
         </div>
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>No of Installments:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">No of Installments:</label>
             <input type="text" [ngModel]="noOfInstallments()" (ngModelChange)="noOfInstallments.set($event)" />
           </div>
           <div class="cjr-row">
@@ -293,7 +298,7 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Exiting Advance (Yes/No)</label>
+            <label [class.cjs-label-required]="isAdvanceRequest()">Exiting Advance (Yes/No)</label>
             <select [ngModel]="existingAdvance()" (ngModelChange)="existingAdvance.set($event)">
               <option value="">Select option</option>
               <option value="Yes">Yes</option>
@@ -345,7 +350,7 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Purpose</label>
+            <label [class.cjs-label-required]="isAdvanceRequest()">Purpose</label>
             <input type="text" [ngModel]="newAdvancePurpose()" (ngModelChange)="newAdvancePurpose.set($event)" />
           </div>
         </div>
@@ -358,7 +363,7 @@
         </div>
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Advance Amount Requested</label>
+            <label [class.cjs-label-required]="isAdvanceRequest()">Advance Amount Requested</label>
             <input type="text" [ngModel]="newAdvanceAmountRequested()"
               (ngModelChange)="newAdvanceAmountRequested.set($event)" />
           </div>
@@ -371,17 +376,17 @@
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Repayment Start Date:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Repayment Start Date:</label>
             <input type="date" [ngModel]="repaymentStartDate()" (ngModelChange)="repaymentStartDate.set($event)" />
           </div>
           <div class="cjr-row">
-            <label>Repayment Frequency:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Repayment Frequency:</label>
             <input type="text" [ngModel]="repaymentFrequency()" (ngModelChange)="repaymentFrequency.set($event)" />
           </div>
         </div>
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label>Deduction Amount:</label>
+            <label [class.cjs-label-required]="isLoanRequest()">Deduction Amount:</label>
             <input type="text" [ngModel]="deductionAmount()" (ngModelChange)="deductionAmount.set($event)" />
           </div>
           <div class="cjr-row">
@@ -393,8 +398,9 @@
     </div>
 
     <div class="cjr-actions-footer">
-      <button type="button" class="cjr-submit-btn" (click)="save()">
-        <span class="cjr-submit-icon">✓</span> Save Loan/Advance
+      <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="isSaving()">
+        <span class="cjr-submit-icon">✓</span>
+        {{ isSaving() ? 'Saving...' : 'Save Loan/Advance' }}
       </button>
     </div>
   </div>

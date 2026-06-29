@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import { LoanAdvanceService } from '../../../../../services/loan-advance.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
@@ -38,7 +39,8 @@ interface LoanEmployeeOption {
   templateUrl: './add-loan-advance.html',
   styleUrls: [
     '../../../Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css'
+    '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
+    './add-loan-advance.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -137,6 +139,10 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
   protected readonly repaymentFrequency = signal('');
   protected readonly deductionAmount = signal('');
   protected readonly repaymentRemarks = signal('');
+
+  protected readonly isLoanRequest = computed(() => this.requestType() === 'Loan');
+  protected readonly isAdvanceRequest = computed(() => this.requestType() === 'Salary Advance');
+  protected readonly isSaving = signal(false);
 
   ngOnInit(): void {
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
@@ -359,7 +365,11 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
     }
   }
 
-  protected async save(): Promise<void> {
+  protected save(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
     const payload = {
       headerInfo: {
         documentNo: this.documentNo(),
@@ -426,20 +436,33 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
       }
     };
 
-    this.loanAdvanceService.submitLoanAdvance(payload).subscribe({
-      next: async (response) => {
-        if (response.status) {
-          await this.alertService.successAndWait('Saved', response.message || 'Loan/Advance submitted successfully.');
-          this.loanAdvanceService.fetchLoanAdvances().subscribe();
-          void this.router.navigateByUrl('/employee-action/loan-advance-form');
-        } else {
-          this.alertService.error('Error', response.message || 'Failed to submit loan/advance request.');
-        }
-      },
-      error: (error: any) => {
-        const errorMessage = error?.error?.message || error?.message || 'Failed to submit loan/advance request.';
-        this.alertService.error('Error', errorMessage);
-      }
-    });
+    this.isSaving.set(true);
+    this.cdr.markForCheck();
+
+    this.loanAdvanceService
+      .submitLoanAdvance(payload)
+      .pipe(
+        finalize(() => {
+          this.isSaving.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: async (response) => {
+          if (response.status) {
+            await this.alertService.successAndWait('Saved', response.message || 'Loan/Advance submitted successfully.');
+            this.loanAdvanceService.fetchLoanAdvances().subscribe();
+            void this.router.navigateByUrl('/employee-action/loan-advance-form');
+          } else {
+            void this.alertService.error('Error', response.message || 'Failed to submit loan/advance request.');
+          }
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Error',
+            formatApiErrorMessage(error, 'Failed to submit loan/advance request.'),
+          );
+        },
+      });
   }
 }
