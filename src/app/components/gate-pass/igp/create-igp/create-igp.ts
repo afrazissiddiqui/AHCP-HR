@@ -18,12 +18,7 @@ import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-i
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
-import {
-  formatGatePassCnic,
-  formatGatePassPhoneDigits,
-  isGatePassCnicValid,
-  isGatePassPhoneValid,
-} from '../../gate-pass-input-format.util';
+import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -249,16 +244,6 @@ export class CreateIgpComponent implements OnInit {
       return;
     }
 
-    if (!isGatePassPhoneValid(this.transporterPhone)) {
-      void this.alertService.validation('Transporter phone must be exactly 11 digits.');
-      return;
-    }
-
-    if (!isGatePassCnicValid(this.transporterCnic)) {
-      void this.alertService.validation('Transporter CNIC must be 13 digits (XXXXX-XXXXXXX-X).');
-      return;
-    }
-
     const payload = this.buildPayload();
     const request$ = this.editingId
       ? this.igpService.updateInwardGatePass(this.editingId, payload)
@@ -326,30 +311,25 @@ export class CreateIgpComponent implements OnInit {
       biltyNo: this.biltyNo.trim(),
       store: this.store.trim(),
       freight: this.freight.trim(),
-      transporterName: this.transporterName.trim(),
-      transporterCnic: this.transporterCnic.trim(),
-      transporterPhone: this.transporterPhone.trim(),
       department: this.department.trim(),
       weightMachineName: this.weightMachineName.trim(),
       weight: this.weight.trim(),
-      location: this.location,
+      location: this.location.trim(),
       employee: this.employee.trim(),
       remarks: this.remarks.trim(),
       lines: this.lines
         .filter((line) => !line.deleted)
         .map((line) => ({
-        itemCode: line.itemCode.trim(),
-        itemName: line.itemName.trim(),
-        serialNumbers: line.serialNumbers.trim(),
-        category: line.category.trim(),
-        packingCondition: line.packingCondition.trim(),
-        productQuality: line.productQuality.trim(),
-        uom: line.uom.trim(),
-        qty: Number(line.qty) || 0,
-        info: line.info.trim(),
-        remarks: line.remarks.trim(),
-        deleted: false,
-      })),
+          itemCode: line.itemCode.trim(),
+          itemName: line.itemName.trim(),
+          category: line.category.trim(),
+          packingCondition: line.packingCondition.trim(),
+          productQuality: line.productQuality.trim(),
+          uom: line.uom.trim(),
+          qty: Number(line.qty) || 0,
+          info: line.info.trim(),
+          remarks: line.remarks.trim(),
+        })),
       totalQty: this.totalQty,
     };
   }

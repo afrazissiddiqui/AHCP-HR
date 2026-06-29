@@ -30,9 +30,6 @@ export interface IgpAddPayload {
   biltyNo: string;
   store: string;
   freight: string;
-  transporterName: string;
-  transporterCnic: string;
-  transporterPhone: string;
   department: string;
   weightMachineName: string;
   weight: string;
@@ -173,9 +170,6 @@ export class IgpService {
       biltyNo: record.biltyNo,
       store: record.store,
       freight: record.freight,
-      transporterName: record.transporterName,
-      transporterCnic: record.transporterCnic,
-      transporterPhone: record.transporterPhone,
       department: record.department,
       weightMachineName: record.weightMachineName,
       weight: record.weight,
