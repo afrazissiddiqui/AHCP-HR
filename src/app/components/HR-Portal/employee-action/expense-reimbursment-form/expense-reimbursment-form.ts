@@ -97,7 +97,7 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
     { key: 'EmployeeName', label: 'Employee Name', visible: true },
     { key: 'Department', label: 'Department', visible: true },
     { key: 'Designation', label: 'Designation', visible: false },
-    { key: 'CostCenter', label: 'Cost Center', visible: false },
+    // { key: 'CostCenter', label: 'Cost Center', visible: false },
     { key: 'ClaimMonth', label: 'Claim Month', visible: false },
     { key: 'SubmissionDate', label: 'Submission Date', visible: false },
     { key: 'ExpenseType', label: 'Expense Type', visible: true },
