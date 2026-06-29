@@ -435,24 +435,22 @@
                             <tr
                               *ngFor="let replacementRow of line.replacementItems; let ri = index; trackBy: trackByIndex"
                             >
-                              <td>
-                                <input
-                                  type="text"
-                                  class="pmm-replacement-table__input"
-                                  [ngModel]="replacementRow.itemCode"
-                                  (ngModelChange)="updateReplacementRow(ci, li, ri, 'itemCode', $event)"
-                                  placeholder="Enter item code"
-                                  [name]="'replacementItemCode' + ci + '_' + li + '_' + ri"
+                              <td class="pmm-replacement-table__search-cell">
+                                <app-gate-pass-item-search-input
+                                  [inputId]="'pmm-replacement-item-code-' + ci + '-' + li + '-' + ri"
+                                  [value]="replacementRow.itemCode"
+                                  (valueChange)="updateReplacementRow(ci, li, ri, 'itemCode', $event)"
+                                  (itemSelected)="applyReplacementItemMaster(ci, li, ri, $event)"
+                                  placeholder="Search by code or name"
                                 />
                               </td>
-                              <td>
-                                <input
-                                  type="text"
-                                  class="pmm-replacement-table__input"
-                                  [ngModel]="replacementRow.itemName"
-                                  (ngModelChange)="updateReplacementRow(ci, li, ri, 'itemName', $event)"
-                                  placeholder="Enter item name"
-                                  [name]="'replacementItemName' + ci + '_' + li + '_' + ri"
+                              <td class="pmm-replacement-table__search-cell">
+                                <app-gate-pass-item-search-input
+                                  [inputId]="'pmm-replacement-item-name-' + ci + '-' + li + '-' + ri"
+                                  [value]="replacementRow.itemName"
+                                  (valueChange)="updateReplacementRow(ci, li, ri, 'itemName', $event)"
+                                  (itemSelected)="applyReplacementItemMaster(ci, li, ri, $event)"
+                                  placeholder="Search by name or code"
                                 />
                               </td>
                               <td class="pmm-replacement-table__qty-col">

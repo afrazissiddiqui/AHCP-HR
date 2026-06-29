@@ -1307,6 +1307,7 @@
   border: 1px solid #dbeafe;
   border-radius: 8px;
   background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  overflow: visible;
 }
 
 .pmm-line-block--replacement .pmm-line-block__title {
@@ -1316,8 +1317,36 @@
 .pmm-replacement-table-wrap {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   background: #fff;
+}
+
+.pmm-replacement-table__search-cell {
+  position: relative;
+  overflow: visible;
+  min-width: 180px;
+}
+
+.pmm-replacement-table__search-cell app-gate-pass-item-search-input {
+  display: block;
+  width: 100%;
+}
+
+.pmm-replacement-table__search-cell .gp-item-search-wrap input[type='search'] {
+  height: 32px;
+  padding: 5px 10px;
+  border: 1px solid #d0d0d0;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.pmm-replacement-table__search-cell .gp-item-search-wrap input[type='search']:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+.pmm-replacement-table__search-cell .gp-item-suggestions {
+  z-index: 30;
 }
 
 .pmm-replacement-table {

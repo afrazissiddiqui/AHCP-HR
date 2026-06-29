@@ -3,6 +3,11 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import {
+  GatePassItemMaster,
+  GatePassItemMasterService,
+} from '../../../../gate-pass/gate-pass-item-master.service';
+import { GatePassItemSearchInputComponent } from '../../../../gate-pass/item-search-input/item-search-input';
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
@@ -86,7 +91,7 @@ function todayDateValue(): string {
 @Component({
   selector: 'app-add-plant-maintenance-master-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, GatePassItemSearchInputComponent],
   templateUrl: './add-plant-maintenance-master-form.html',
   styleUrls: [
     '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
@@ -98,6 +103,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   private readonly masterService = inject(PlantMaintenanceMasterFormService);
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
   private readonly subComponentService = inject(SubComponentDefinitionService);
+  private readonly itemMasterService = inject(GatePassItemMasterService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -175,6 +181,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.subComponentService.fetchMachines().subscribe({ error: () => {} });
     this.activityService.fetchMaintenanceActivityDefinitions().subscribe({ error: () => {} });
     this.masterService.fetchPlantMaintenanceMasterForms().subscribe({ error: () => {} });
+    this.itemMasterService.ensureLoaded().subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -434,6 +441,33 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
             }
             return { ...row, [field]: String(value) };
           });
+          return { ...line, replacementItems };
+        });
+        return { ...component, inspectionLines };
+      }),
+    );
+  }
+
+  applyReplacementItemMaster(
+    componentIndex: number,
+    lineIndex: number,
+    replacementRowIndex: number,
+    item: GatePassItemMaster,
+  ): void {
+    this.components.update((list) =>
+      list.map((component, ci) => {
+        if (ci !== componentIndex) {
+          return component;
+        }
+        const inspectionLines = component.inspectionLines.map((line, li) => {
+          if (li !== lineIndex) {
+            return line;
+          }
+          const replacementItems = line.replacementItems.map((row, ri) =>
+            ri === replacementRowIndex
+              ? { ...row, itemCode: item.itemCode, itemName: item.itemName }
+              : row,
+          );
           return { ...line, replacementItems };
         });
         return { ...component, inspectionLines };
