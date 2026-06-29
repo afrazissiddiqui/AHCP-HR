@@ -19,10 +19,13 @@ import { GatePassItemSearchInputComponent } from '../../item-search-input/item-s
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
 import {
+  GatePassBusinessPartner,
+  GatePassBusinessPartnerService,
+} from '../../gate-pass-business-partner.service';
+import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
+import {
   formatGatePassCnic,
   formatGatePassPhoneDigits,
-  isGatePassCnicValid,
-  isGatePassPhoneValid,
 } from '../../gate-pass-input-format.util';
 
 function emptyIfDash(value: string): string {
@@ -37,7 +40,13 @@ function numericFieldFromDoc(value: string | undefined): string {
 @Component({
   selector: 'app-create-ogp',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseDocumentModalComponent, GatePassItemSearchInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    BaseDocumentModalComponent,
+    GatePassItemSearchInputComponent,
+    GatePassBusinessPartnerSearchInputComponent,
+  ],
   templateUrl: './create-ogp.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
@@ -51,7 +60,7 @@ export class CreateOgpComponent implements OnInit {
   pageTitle = 'Add OGP';
   submitButtonLabel = 'Save OGP';
 
-  type = 'Delivery';
+  type = 'Standalone';
   documentDate = '';
   businessPartnerCode = '';
   baseDocNo = '';
@@ -76,12 +85,7 @@ export class CreateOgpComponent implements OnInit {
 
   showBaseDocModal = false;
 
-  readonly typeOptions = [
-    'Delivery',
-    'Purchase Order',
-    'Sales Return Request',
-    'Stand Alone Documents',
-  ] as const;
+  readonly typeOptions = ['Standalone', 'Sales return request'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 
@@ -91,12 +95,16 @@ export class CreateOgpComponent implements OnInit {
     private readonly ogpService: OgpService,
     private readonly alertService: AlertService,
     private readonly itemMasterService: GatePassItemMasterService,
+    private readonly businessPartnerService: GatePassBusinessPartnerService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
   }
 
   ngOnInit(): void {
+    this.itemMasterService.ensureLoaded().subscribe();
+    this.businessPartnerService.ensureLoaded().subscribe();
+
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       this.assignNextReferenceNo();
@@ -146,6 +154,10 @@ export class CreateOgpComponent implements OnInit {
       .reduce((s, l) => s + (Number(l.qty) || 0), 0);
   }
 
+  get isBaseDocumentDisabled(): boolean {
+    return !!this.editingId || this.type === 'Standalone';
+  }
+
   trackByIndex(index: number): number {
     return index;
   }
@@ -163,6 +175,11 @@ export class CreateOgpComponent implements OnInit {
 
   applyItemMaster(line: OgpLineItem, item: GatePassItemMaster): void {
     this.itemMasterService.applyToLine(line, item);
+  }
+
+  applyBusinessPartner(partner: GatePassBusinessPartner): void {
+    this.businessPartnerCode = partner.code;
+    this.businessPartnerName = partner.name;
   }
 
   onTransporterCnicChange(value: string): void {
@@ -192,7 +209,7 @@ export class CreateOgpComponent implements OnInit {
   }
 
   openBaseDocumentModal(): void {
-    if (this.editingId) {
+    if (this.isBaseDocumentDisabled) {
       return;
     }
     if (!this.type?.trim()) {
@@ -254,16 +271,6 @@ export class CreateOgpComponent implements OnInit {
       return;
     }
 
-    if (!isGatePassPhoneValid(this.transporterPhone)) {
-      void this.alertService.validation('Transporter phone must be exactly 11 digits.');
-      return;
-    }
-
-    if (!isGatePassCnicValid(this.transporterCnic)) {
-      void this.alertService.validation('Transporter CNIC must be 13 digits (XXXXX-XXXXXXX-X).');
-      return;
-    }
-
     const payload = this.buildPayload();
     const request$ = this.editingId
       ? this.ogpService.updateOutwardGatePass(this.editingId, payload)
@@ -293,7 +300,7 @@ export class CreateOgpComponent implements OnInit {
   }
 
   private populateFromRecord(record: OgpRecord): void {
-    this.type = emptyIfDash(record.type) || 'Delivery';
+    this.type = emptyIfDash(record.type) || 'Standalone';
     this.documentDate = emptyIfDash(record.submittedDate) || this.documentDate;
     this.referenceNo = emptyIfDash(record.referenceNo);
     this.businessPartnerCode = emptyIfDash(record.businessPartnerCode);
@@ -331,9 +338,6 @@ export class CreateOgpComponent implements OnInit {
       biltyNo: this.biltyNo.trim(),
       store: this.store.trim(),
       freight: this.freight.trim(),
-      transporterName: this.transporterName.trim(),
-      transporterCnic: this.transporterCnic.trim(),
-      transporterPhone: this.transporterPhone.trim(),
       department: this.department.trim(),
       weightMachineName: this.weightMachineName.trim(),
       weight: this.weight.trim(),
@@ -343,18 +347,16 @@ export class CreateOgpComponent implements OnInit {
       lines: this.lines
         .filter((line) => !line.deleted)
         .map((line) => ({
-        itemCode: line.itemCode.trim(),
-        itemName: line.itemName.trim(),
-        serialNumbers: line.serialNumbers.trim(),
-        category: line.category.trim(),
-        packingCondition: line.packingCondition.trim(),
-        productQuality: line.productQuality.trim(),
-        uom: line.uom.trim(),
-        qty: Number(line.qty) || 0,
-        info: line.info.trim(),
-        remarks: line.remarks.trim(),
-        deleted: false,
-      })),
+          itemCode: line.itemCode.trim(),
+          itemName: line.itemName.trim(),
+          category: line.category.trim(),
+          packingCondition: line.packingCondition.trim(),
+          productQuality: line.productQuality.trim(),
+          uom: line.uom.trim(),
+          qty: Number(line.qty) || 0,
+          info: line.info.trim(),
+          remarks: line.remarks.trim(),
+        })),
       totalQty: this.totalQty,
     };
   }

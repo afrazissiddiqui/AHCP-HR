@@ -82,16 +82,14 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
   }
 
   private getApiFetch$(): Observable<OpenBaseDocument[]> | null {
-    if (this.gatePassModule !== 'igp') {
-      return null;
+    if (this.documentType === 'Sales return request' || this.documentType === 'Sales Return Request') {
+      if (this.gatePassModule === 'igp' || this.gatePassModule === 'ogp') {
+        return this.openBaseDocuments.fetchSalesReturnRequests();
+      }
     }
 
-    if (this.documentType === 'Purchase Order') {
+    if (this.gatePassModule === 'igp' && this.documentType === 'Purchase Order') {
       return this.openBaseDocuments.fetchIgpPurchaseOrders();
-    }
-
-    if (this.documentType === 'Sales Return Request') {
-      return this.openBaseDocuments.fetchIgpSalesReturnRequests();
     }
 
     return null;

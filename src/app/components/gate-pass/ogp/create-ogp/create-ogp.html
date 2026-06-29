@@ -41,25 +41,25 @@
           </div>
 
           <div class="cjr-personal-col">
-            <div class="cjr-row igp-base-doc-row">
+            <div class="cjr-row igp-base-doc-row" [class.igp-base-doc-row--disabled]="isBaseDocumentDisabled">
               <label>Base document:</label>
               <div class="igp-base-doc-field">
-                <span class="gate-pass-optional">(optional)</span>
+                <span class="gate-pass-optional" *ngIf="!isBaseDocumentDisabled">(optional)</span>
                 <div class="gate-pass-base-doc-row">
                   <button
                     type="button"
                     class="gate-pass-base-doc-btn"
                     (click)="openBaseDocumentModal()"
-                    [disabled]="!!editingId"
+                    [disabled]="isBaseDocumentDisabled"
                   >
                     Choose base document…
                   </button>
                   <span
                     class="gate-pass-base-doc-summary"
-                    [class.gate-pass-base-doc-summary--muted]="!baseDocNo"
-                  >{{ baseDocNo || 'None selected' }}</span>
+                    [class.gate-pass-base-doc-summary--muted]="!baseDocNo || isBaseDocumentDisabled"
+                  >{{ isBaseDocumentDisabled ? 'Not applicable' : (baseDocNo || 'None selected') }}</span>
                   <button
-                    *ngIf="baseDocNo && !editingId"
+                    *ngIf="baseDocNo && !isBaseDocumentDisabled"
                     type="button"
                     class="gate-pass-clear-base-doc"
                     (click)="clearBaseDocumentSelection()"
@@ -72,25 +72,25 @@
 
             <div class="cjr-row">
               <label for="ogp-bp-code">Business partner code:</label>
-              <input
-                id="ogp-bp-code"
-                type="text"
+              <app-gate-pass-business-partner-search-input
+                inputId="ogp-bp-code"
                 class="igp-input--code"
-                [(ngModel)]="businessPartnerCode"
-                name="businessPartnerCode"
-                placeholder="Code"
+                [value]="businessPartnerCode"
+                (valueChange)="businessPartnerCode = $event"
+                (partnerSelected)="applyBusinessPartner($event)"
+                placeholder="Search code or name"
               />
             </div>
 
             <div class="cjr-row">
               <label for="ogp-bp-name">Business partner name:</label>
-              <input
-                id="ogp-bp-name"
-                type="text"
+              <app-gate-pass-business-partner-search-input
+                inputId="ogp-bp-name"
                 class="igp-input--wide"
-                [(ngModel)]="businessPartnerName"
-                name="businessPartnerName"
-                placeholder="Partner name"
+                [value]="businessPartnerName"
+                (valueChange)="businessPartnerName = $event"
+                (partnerSelected)="applyBusinessPartner($event)"
+                placeholder="Search code or name"
               />
             </div>
           </div>

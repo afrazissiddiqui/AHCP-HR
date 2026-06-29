@@ -108,7 +108,7 @@ export class OgpComponent implements OnInit {
     }
 
     this.showDetailDialog.set(true);
-    this.selectedRow.set(null);
+    this.selectedRow.set(record);
     this.detailLoading.set(true);
 
     this.ogpService.fetchOutwardGatePassDetail(record.Id).subscribe({
@@ -117,11 +117,12 @@ export class OgpComponent implements OnInit {
         this.detailLoading.set(false);
       },
       error: (error: unknown) => {
+        const cached = this.ogpService.findCachedRecord(record.Id) ?? record;
+        this.selectedRow.set(cached);
         this.detailLoading.set(false);
-        this.showDetailDialog.set(false);
-        this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load OGP details.'),
+        this.alertService.warning(
+          'Detail unavailable',
+          formatApiErrorMessage(error, 'Showing list data — full detail could not be loaded.'),
         );
       },
     });
@@ -142,12 +143,20 @@ export class OgpComponent implements OnInit {
     }
 
     this.ogpService.deleteOutwardGatePass(record.Id).subscribe({
-      next: () => {
+      next: (response) => {
+        if (response?.status === false || response?.success === false) {
+          this.alertService.error(
+            'Delete Failed',
+            response.message || 'Failed to delete OGP record.',
+          );
+          return;
+        }
+
         this.ogpService.removeOgpRecord(record);
         if (this.paginatedList.length === 0 && this.currentPage > 1) {
           this.currentPage -= 1;
         }
-        this.alertService.success('Deleted', 'OGP record removed successfully.');
+        this.alertService.success('Deleted', response?.message || 'OGP record removed successfully.');
       },
       error: (error: unknown) => {
         this.alertService.error(

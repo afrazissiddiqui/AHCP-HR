@@ -17,6 +17,18 @@ export interface OgpLineItem {
   deleted: boolean;
 }
 
+export interface OgpLinePayload {
+  itemCode: string;
+  itemName: string;
+  category: string;
+  packingCondition: string;
+  productQuality: string;
+  uom: string;
+  qty: number;
+  info: string;
+  remarks: string;
+}
+
 export interface OgpAddPayload {
   type: string;
   baseDocNo: string;
@@ -30,16 +42,13 @@ export interface OgpAddPayload {
   biltyNo: string;
   store: string;
   freight: string;
-  transporterName: string;
-  transporterCnic: string;
-  transporterPhone: string;
   department: string;
   weightMachineName: string;
   weight: string;
   location: string;
   employee: string;
   remarks: string;
-  lines: OgpLineItem[];
+  lines: OgpLinePayload[];
   totalQty: number;
 }
 
@@ -129,6 +138,7 @@ export class OgpService {
   fetchOutwardGatePassDetail(id: string | number): Observable<OgpRecord> {
     const identifier = encodeURIComponent(String(id));
     const numericId = Number.parseInt(String(id), 10) || 0;
+    const cached = this.ogpList().find((record) => record.Id === numericId);
 
     return this.http.get<unknown>(`${OUTWARD_GATE_PASS_DETAIL_URL}/${identifier}`).pipe(
       map((response) => {
@@ -138,7 +148,18 @@ export class OgpService {
         }
         return record;
       }),
+      map((record) => {
+        if (record.lines.length > 0 || !cached?.lines.length) {
+          return record;
+        }
+        return { ...record, lines: cached.lines };
+      }),
     );
+  }
+
+  findCachedRecord(id: string | number): OgpRecord | undefined {
+    const numericId = Number.parseInt(String(id), 10) || 0;
+    return this.ogpList().find((record) => record.Id === numericId);
   }
 
   addOutwardGatePass(payload: OgpAddPayload): Observable<OgpApiResponse> {
@@ -195,6 +216,7 @@ export class OgpService {
       'outward_gate_passes',
       'outwardGatePasses',
       'outwardGatePassList',
+      'outward_gate_pass_list',
       'ogpList',
       'ogps',
     ];

@@ -32,7 +32,6 @@ interface ExpenseEmployeeOption {
   name: string;
   department: string;
   designation: string;
-  costCenter: string;
 }
 
 @Component({
@@ -57,7 +56,8 @@ export class AddExpenseReimbursmentComponent implements OnInit {
   protected readonly headerEmployeeName = signal('');
   protected readonly headerDepartment = signal('');
   protected readonly designation = signal('');
-  protected readonly costCenter = signal('');
+  private readonly preservedCostCenter = signal('');
+
   protected readonly claimMonth = signal('');
   protected readonly formNumber = signal('');
   protected readonly submissionDate = signal(new Date().toISOString().slice(0, 10));
@@ -260,7 +260,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
       headerEmployeeName: this.headerEmployeeName(),
       headerDepartment: this.headerDepartment(),
       designation: this.designation(),
-      costCenter: this.costCenter(),
+      costCenter: this.editingId ? this.preservedCostCenter() : '',
       claimMonth: this.claimMonth(),
       formNumber: this.formNumber(),
       submissionDate: this.submissionDate(),
@@ -322,7 +322,6 @@ export class AddExpenseReimbursmentComponent implements OnInit {
       name: emptyIfDash(record.EmployeeName),
       department: emptyIfDash(record.Department),
       designation: emptyIfDash(record.Designation),
-      costCenter: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
     };
   }
 
@@ -364,7 +363,6 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.headerDepartment.set(employee.department);
     this.detailDepartment.set(employee.department);
     this.designation.set(employee.designation);
-    this.costCenter.set(employee.costCenter);
   }
 
   onClaimDateChange(value: string): void {
@@ -381,7 +379,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.headerEmployeeName.set(emptyIfDash(header.employeeName));
     this.headerDepartment.set(emptyIfDash(header.department));
     this.designation.set(emptyIfDash(header.designation));
-    this.costCenter.set(emptyIfDash(header.costCenter));
+    this.preservedCostCenter.set(emptyIfDash(header.costCenter));
     this.claimMonth.set(emptyIfDash(header.claimMonth));
     this.formNumber.set(emptyIfDash(header.formNumber));
     this.submissionDate.set(emptyIfDash(header.submissionDate) || new Date().toISOString().slice(0, 10));

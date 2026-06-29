@@ -726,13 +726,18 @@ export class OpenBaseDocumentsService {
     );
   }
 
-  fetchIgpSalesReturnRequests(): Observable<OpenBaseDocument[]> {
+  fetchSalesReturnRequests(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(SALES_RETURN_REQUESTS_URL).pipe(
       map((response) =>
         this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
       ),
       catchError(() => of([])),
     );
+  }
+
+  /** @deprecated Use fetchSalesReturnRequests */
+  fetchIgpSalesReturnRequests(): Observable<OpenBaseDocument[]> {
+    return this.fetchSalesReturnRequests();
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
