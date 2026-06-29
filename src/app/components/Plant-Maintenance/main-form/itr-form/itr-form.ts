@@ -6,43 +6,58 @@ import { ColumnResizeDirective } from '../../../../column-resize';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
-import { PlantMaintenanceMainLayoutService } from '../../main-form/plant-maintenance-main-layout.service';
-import {
-  PlantMaintenanceMasterFormService,
-  PlantMaintenanceMasterRecord,
-} from './plant-maintenance-master-form.service';
+import { PlantMaintenanceMainLayoutService } from '../plant-maintenance-main-layout.service';
+import { ItrFormRecord, ItrFormService } from './itr-form.service';
 
-type MasterTableColumnKey =
+type ItrTableColumnKey =
   | 'machineId'
   | 'machineName'
-  | 'machineType'
-  | 'maintenanceNature'
-  | 'plantMaintenanceFrequency'
-  | 'plantMaintenanceType'
+  | 'maintenanceType'
+  | 'maintenanceFrequency'
+  | 'serialNo'
+  | 'moldNo'
+  | 'hotRunnerJobNo'
+  | 'hourMeterReading'
+  | 'robotSerialNo'
+  | 'inspector'
+  | 'inspectionDate'
+  | 'submitDate'
+  | 'documentNo'
   | 'status';
 
 type RowActionKey = 'view' | 'update' | 'delete';
 
 @Component({
-  selector: 'app-plant-maintenance-master-form',
+  selector: 'app-itr-form',
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent, ColumnResizeDirective],
-  templateUrl: './plant-maintenance-master-form.html',
+  templateUrl: './itr-form.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/Application-Form.css',
-    './plant-maintenance-master-form.css',
+    '../../setup-form/plant-maintenance-setup-form.css',
+  ],
+  styles: [
+    `
+      :host {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+      }
+    `,
   ],
 })
-export class PlantMaintenanceMasterFormComponent implements OnInit {
+export class ItrFormComponent implements OnInit {
   private readonly layout = inject(PlantMaintenanceMainLayoutService);
-  private readonly masterService = inject(PlantMaintenanceMasterFormService);
+  private readonly itrService = inject(ItrFormService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
 
   readonly Math = Math;
 
   searchText = '';
-  sortColumn: MasterTableColumnKey = 'machineId';
+  sortColumn: ItrTableColumnKey = 'machineId';
   sortDirection: 'asc' | 'desc' = 'asc';
   currentPage = 1;
   pageSize = 10;
@@ -50,15 +65,15 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
   showDialog = false;
   showViewDialog = false;
   detailLoading = false;
-  selectedRecord: PlantMaintenanceMasterRecord | null = null;
+  selectedRecord: ItrFormRecord | null = null;
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
   ngOnInit(): void {
-    this.masterService.fetchPlantMaintenanceMasterForms().subscribe({
+    this.itrService.fetchItrForms().subscribe({
       error: (error: unknown) => {
         void this.alertService.error(
           'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load plant maintenance master forms.'),
+          formatApiErrorMessage(error, 'Failed to load ITR Forms.'),
         );
       },
     });
@@ -66,13 +81,20 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
 
   readonly rowActions: RowActionKey[] = ['view', 'update', 'delete'];
 
-  readonly columns: Array<{ key: MasterTableColumnKey; label: string; visible: boolean }> = [
+  readonly columns: Array<{ key: ItrTableColumnKey; label: string; visible: boolean }> = [
     { key: 'machineId', label: 'Machine ID', visible: true },
     { key: 'machineName', label: 'Machine Name', visible: true },
-    { key: 'machineType', label: 'Machine Type', visible: true },
-    { key: 'maintenanceNature', label: 'Maintenance Nature', visible: true },
-    { key: 'plantMaintenanceFrequency', label: 'Plant Maintenance Frequency', visible: true },
-    { key: 'plantMaintenanceType', label: 'Plant Maintenance Type', visible: true },
+    { key: 'maintenanceType', label: 'Maintenance Type', visible: true },
+    { key: 'maintenanceFrequency', label: 'Maintenance Frequency', visible: true },
+    { key: 'serialNo', label: 'SN# (Machine Serial No.)', visible: true },
+    { key: 'moldNo', label: 'Mold #', visible: true },
+    { key: 'hotRunnerJobNo', label: 'Hot Runner Job #', visible: false },
+    { key: 'hourMeterReading', label: 'Hour Meter Reading', visible: false },
+    { key: 'robotSerialNo', label: 'Robot Serial #', visible: false },
+    { key: 'inspector', label: 'Inspector', visible: true },
+    { key: 'inspectionDate', label: 'Inspection Date', visible: true },
+    { key: 'submitDate', label: 'Submit Date', visible: true },
+    { key: 'documentNo', label: 'Document No.', visible: true },
     { key: 'status', label: 'Status', visible: true },
   ];
 
@@ -84,36 +106,21 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
     return this.rowActions.includes(action);
   }
 
-  get machineList(): PlantMaintenanceMasterRecord[] {
-    return this.masterService.records();
+  get recordList(): ItrFormRecord[] {
+    return this.itrService.records();
   }
 
-  get filteredList(): PlantMaintenanceMasterRecord[] {
-    let list = [...this.machineList];
+  get filteredList(): ItrFormRecord[] {
+    let list = [...this.recordList];
     const search = this.searchText.trim().toLowerCase();
 
     if (search) {
-      list = list.filter(
-        (item) =>
-          item.machineId.toLowerCase().includes(search) ||
-          item.machineName.toLowerCase().includes(search) ||
-          item.machineType.toLowerCase().includes(search) ||
-          item.maintenanceNature.toLowerCase().includes(search) ||
-          item.plantMaintenanceFrequency.toLowerCase().includes(search) ||
-          item.plantMaintenanceType.toLowerCase().includes(search) ||
-          item.remarks.toLowerCase().includes(search) ||
-          (item.components ?? []).some(
-            (c) =>
-              c.name.toLowerCase().includes(search) ||
-              c.inspectionLines.some(
-                (line) =>
-                  line.status.toLowerCase().includes(search) ||
-                  (line.recommendation ?? '').toLowerCase().includes(search) ||
-                  line.itemsToBeInspected.toLowerCase().includes(search) ||
-                  line.whatToCheck.toLowerCase().includes(search) ||
-                  line.instructions.toLowerCase().includes(search),
-              ),
-          ),
+      list = list.filter((item) =>
+        Object.values(item).some((value) =>
+          String(value ?? '')
+            .toLowerCase()
+            .includes(search),
+        ),
       );
     }
 
@@ -132,7 +139,7 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
     return list;
   }
 
-  get paginatedList(): PlantMaintenanceMasterRecord[] {
+  get paginatedList(): ItrFormRecord[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredList.slice(start, start + this.pageSize);
   }
@@ -157,13 +164,11 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
     this.layout.toggleSidebar();
   }
 
-  addMachine(): void {
-    void this.router.navigate([
-      '/plant-maintenance/main-form/plant-maintenance-master-form/create',
-    ]);
+  addRecord(): void {
+    void this.router.navigate(['/plant-maintenance/main-form/itr-form/create']);
   }
 
-  viewRecord(item: PlantMaintenanceMasterRecord): void {
+  viewRecord(item: ItrFormRecord): void {
     if (!item.id) {
       void this.alertService.warning('View', 'Unable to view this row: missing record id.');
       return;
@@ -173,7 +178,7 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
     this.selectedRecord = null;
     this.detailLoading = true;
 
-    this.masterService.fetchPlantMaintenanceMasterFormDetail(item.id).subscribe({
+    this.itrService.fetchItrFormDetail(item.id).subscribe({
       next: (detail) => {
         this.selectedRecord = detail;
         this.detailLoading = false;
@@ -183,7 +188,7 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
         this.showViewDialog = false;
         void this.alertService.error(
           'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load plant maintenance master form details.'),
+          formatApiErrorMessage(error, 'Failed to load ITR Form details.'),
         );
       },
     });
@@ -195,21 +200,18 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
     this.detailLoading = false;
   }
 
-  updateRecord(item: PlantMaintenanceMasterRecord): void {
+  updateRecord(item: ItrFormRecord): void {
     if (!item.id) {
       void this.alertService.warning('Update', 'Unable to update this row: missing record id.');
       return;
     }
-    void this.router.navigate([
-      '/plant-maintenance/main-form/plant-maintenance-master-form/edit',
-      item.id,
-    ]);
+    void this.router.navigate(['/plant-maintenance/main-form/itr-form/edit', item.id]);
   }
 
-  async deleteRecord(item: PlantMaintenanceMasterRecord): Promise<void> {
+  async deleteRecord(item: ItrFormRecord): Promise<void> {
     const result = await this.alertService.confirm(
-      'Delete machine?',
-      `Remove ${item.machineId} — ${item.machineName} from the list?`,
+      'Delete record?',
+      `Remove ${item.documentNo || item.machineId} — ${item.machineName} from the list?`,
     );
     if (!result.isConfirmed) {
       return;
@@ -220,34 +222,28 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
       return;
     }
 
-    this.masterService.deletePlantMaintenanceMasterForm(item.id).subscribe({
+    this.itrService.deleteItrForm(item.id).subscribe({
       next: () => {
-        this.masterService.removePlantMaintenanceMasterRecord(item);
+        this.itrService.removeItrFormRecord(item);
         if (this.paginatedList.length === 0 && this.currentPage > 1) {
           this.currentPage -= 1;
         }
-        void this.alertService.success('Deleted', 'Plant maintenance master form removed successfully.');
+        void this.alertService.success('Deleted', 'ITR Form removed successfully.');
       },
       error: (error: unknown) => {
         void this.alertService.error(
           'Delete Failed',
-          formatApiErrorMessage(error, 'Failed to delete plant maintenance master form.'),
+          formatApiErrorMessage(error, 'Failed to delete ITR Form.'),
         );
       },
     });
   }
 
-  getCellValue(item: PlantMaintenanceMasterRecord, columnKey: MasterTableColumnKey): string {
-    if (columnKey === 'status') {
-      const statuses = (item.components ?? []).flatMap((c) =>
-        c.inspectionLines.map((line) => line.status?.trim()).filter(Boolean),
-      );
-      return statuses.length ? statuses.join(', ') : '';
-    }
+  getCellValue(item: ItrFormRecord, columnKey: ItrTableColumnKey): string {
     return item[columnKey] ?? '';
   }
 
-  onHeaderClick(columnKey: MasterTableColumnKey): void {
+  onHeaderClick(columnKey: ItrTableColumnKey): void {
     if (this.sortColumn === columnKey) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
       return;
@@ -259,22 +255,20 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     const ids = this.filteredList.map((r) => r.id);
-    this.masterService.setAllSelected(checked, ids);
+    this.itrService.setAllSelected(checked, ids);
   }
 
   isAllSelected(): boolean {
-    return (
-      this.filteredList.length > 0 && this.filteredList.every((item) => item.selected)
-    );
+    return this.filteredList.length > 0 && this.filteredList.every((item) => item.selected);
   }
 
-  onRowSelectChange(item: PlantMaintenanceMasterRecord, event: Event): void {
+  onRowSelectChange(item: ItrFormRecord, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.masterService.updateSelection(item.id, checked);
+    this.itrService.updateSelection(item.id, checked);
   }
 
   getSelectedCount(): number {
-    return this.machineList.filter((item) => item.selected).length;
+    return this.recordList.filter((item) => item.selected).length;
   }
 
   onSearchChange(): void {
@@ -299,4 +293,3 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
     this.showDialog = false;
   }
 }
-

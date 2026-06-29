@@ -52,6 +52,8 @@ const EXACT_TITLES: Record<string, string> = {
   'plant-maintenance/main-form/plant-maintenance-master-form/create': 'Add Machine',
   'plant-maintenance/main-form/husky-form': 'Husky Form',
   'plant-maintenance/main-form/husky-form/create': 'Add Husky Form',
+  'plant-maintenance/main-form/itr-form': 'ITR',
+  'plant-maintenance/main-form/itr-form/create': 'Add ITR Form',
   'plant-maintenance/setup-form': 'Setup Form',
   'plant-maintenance/setup-form/sub-component-definition': 'Sub Component Defination',
   'plant-maintenance/setup-form/sub-component-definition/create': 'Add Machine',
@@ -75,6 +77,7 @@ const PREFIX_TITLES: Array<{ prefix: string; title: string }> = [
   { prefix: 'plant-maintenance/setup-form/maintenance-activity-definition/edit', title: 'Update Machine' },
   { prefix: 'plant-maintenance/main-form/plant-maintenance-master-form/edit', title: 'Update Machine' },
   { prefix: 'plant-maintenance/main-form/husky-form/edit', title: 'Update Husky Form' },
+  { prefix: 'plant-maintenance/main-form/itr-form/edit', title: 'Update ITR Form' },
   { prefix: 'plant-maintenance', title: 'Plant maintenance' },
 ];
 

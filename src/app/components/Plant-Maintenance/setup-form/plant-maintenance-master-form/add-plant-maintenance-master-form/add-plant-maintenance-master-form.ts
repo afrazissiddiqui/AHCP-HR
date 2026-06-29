@@ -96,7 +96,7 @@ function todayDateValue(): string {
   styleUrls: [
     '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
     '../../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../plant-maintenance-setup-form.css',
+    './plant-maintenance-master-form-add.css',
   ],
 })
 export class AddPlantMaintenanceMasterFormComponent implements OnInit {

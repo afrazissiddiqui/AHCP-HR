@@ -17,11 +17,19 @@ export const PLANT_MAINTENANCE_MAIN_SIDEBAR_SECTIONS: SidebarSection[] = [
         label: 'Husky Form',
         route: '/plant-maintenance/main-form/husky-form',
       },
+      {
+        id: 'itr-form',
+        label: 'ITR',
+        route: '/plant-maintenance/main-form/itr-form',
+      },
     ],
   },
 ];
 
 export function plantMaintenanceMainActiveItemFromUrl(url: string): string {
+  if (url.includes('/plant-maintenance/main-form/itr-form')) {
+    return 'itr-form';
+  }
   if (url.includes('/plant-maintenance/main-form/husky-form')) {
     return 'husky-form';
   }

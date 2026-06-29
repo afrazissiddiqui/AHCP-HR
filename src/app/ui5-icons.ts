@@ -2,6 +2,7 @@
  * Register only the SAP icons used in the app (avoids bundling all icon sets).
  */
 import '@ui5/webcomponents-icons/dist/accept.js';
+import '@ui5/webcomponents-icons/dist/account.js';
 import '@ui5/webcomponents-icons/dist/activity-items.js';
 import '@ui5/webcomponents-icons/dist/add.js';
 import '@ui5/webcomponents-icons/dist/bbyd-dashboard.js';

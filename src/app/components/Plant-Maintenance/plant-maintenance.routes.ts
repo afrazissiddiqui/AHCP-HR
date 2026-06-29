@@ -9,6 +9,8 @@ import { PlantMaintenanceMasterFormComponent } from './setup-form/plant-maintena
 import { AddPlantMaintenanceMasterFormComponent } from './setup-form/plant-maintenance-master-form/add-plant-maintenance-master-form/add-plant-maintenance-master-form';
 import { HuskyFormComponent } from './main-form/husky-form/husky-form';
 import { AddHuskyFormComponent } from './main-form/husky-form/add-husky-form/add-husky-form';
+import { ItrFormComponent } from './main-form/itr-form/itr-form';
+import { AddItrFormComponent } from './main-form/itr-form/add-itr-form/add-itr-form';
 
 export const plantMaintenanceRoutes: Routes = [
   {
@@ -39,6 +41,18 @@ export const plantMaintenanceRoutes: Routes = [
       {
         path: 'husky-form/edit/:id',
         component: AddHuskyFormComponent,
+      },
+      {
+        path: 'itr-form',
+        component: ItrFormComponent,
+      },
+      {
+        path: 'itr-form/create',
+        component: AddItrFormComponent,
+      },
+      {
+        path: 'itr-form/edit/:id',
+        component: AddItrFormComponent,
       },
     ],
   },
