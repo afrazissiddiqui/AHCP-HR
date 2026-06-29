@@ -14,8 +14,14 @@ import {
 import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
 import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
+import {
+  GatePassBusinessPartner,
+  GatePassBusinessPartnerService,
+} from '../../gate-pass-business-partner.service';
+import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
+import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 
 const AGP_TYPE = 'Article Gate Pass';
 
@@ -26,9 +32,19 @@ function emptyIfDash(value: string): string {
 @Component({
   selector: 'app-create-agp',
   standalone: true,
-  imports: [CommonModule, FormsModule, GatePassItemSearchInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    GatePassItemSearchInputComponent,
+    GatePassBusinessPartnerSearchInputComponent,
+  ],
   templateUrl: './create-agp.html',
-  styleUrl: '../../igp/create-igp/create-igp.css',
+  styleUrls: [
+    '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
+    '../../../Plant-Maintenance/setup-form/plant-maintenance-setup-form.css',
+    '../../../Plant-Maintenance/main-form/husky-form/add-husky-form/add-husky-form.css',
+    '../../igp/create-igp/create-igp.css',
+  ],
 })
 export class CreateAgpComponent implements OnInit {
   editingId: string | null = null;
@@ -85,6 +101,7 @@ export class CreateAgpComponent implements OnInit {
     private readonly agpService: AgpService,
     private readonly alertService: AlertService,
     private readonly itemMasterService: GatePassItemMasterService,
+    private readonly businessPartnerService: GatePassBusinessPartnerService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -92,6 +109,7 @@ export class CreateAgpComponent implements OnInit {
 
   ngOnInit(): void {
     this.itemMasterService.ensureLoaded().subscribe();
+    this.businessPartnerService.ensureLoaded().subscribe();
 
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
@@ -166,6 +184,19 @@ export class CreateAgpComponent implements OnInit {
   applyItemMaster(line: AgpLineItem, item: GatePassItemMaster): void {
     this.itemMasterService.applyToLine(line, item);
     line.oitmCode = item.itemCode;
+  }
+
+  applyBusinessPartner(partner: GatePassBusinessPartner): void {
+    this.businessPartnerCode = partner.code;
+    this.businessPartnerName = partner.name;
+  }
+
+  onTransporterCnicChange(value: string): void {
+    this.transporterCnic = formatGatePassCnic(value);
+  }
+
+  onTransporterPhoneChange(value: string): void {
+    this.transporterPhone = formatGatePassPhoneDigits(value);
   }
 
   onAttachmentChange(event: Event): void {

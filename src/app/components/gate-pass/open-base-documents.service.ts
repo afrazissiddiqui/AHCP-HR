@@ -704,6 +704,7 @@ const OPEN_BY_MODULE: Record<GatePassModule, Record<string, OpenBaseDocument[]>>
 
 const GET_PO_RECORDS_URL = apiUrl('get_po_records');
 const SALES_RETURN_REQUESTS_URL = apiUrl('sales_return_requests');
+const DELIVERY_URL = apiUrl('delivery');
 
 @Injectable({ providedIn: 'root' })
 export class OpenBaseDocumentsService {
@@ -734,6 +735,16 @@ export class OpenBaseDocumentsService {
 
   fetchSalesReturnRequests(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(SALES_RETURN_REQUESTS_URL).pipe(
+      timeout(30_000),
+      map((response) =>
+        this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
+      ),
+      catchError(() => of([])),
+    );
+  }
+
+  fetchDeliveries(): Observable<OpenBaseDocument[]> {
+    return this.http.get<unknown>(DELIVERY_URL).pipe(
       timeout(30_000),
       map((response) =>
         this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
@@ -774,6 +785,10 @@ export class OpenBaseDocumentsService {
       'getPoRecords',
       'salesReturnRequests',
       'sales_return_requests',
+      'deliveries',
+      'delivery',
+      'deliveryList',
+      'delivery_list',
     ];
 
     for (const key of arrayKeys) {
@@ -808,6 +823,14 @@ export class OpenBaseDocumentsService {
       obj['request_no'] ||
       obj['salesReturnRequestNo'] ||
       obj['sales_return_request_no'] ||
+      obj['deliveryNo'] ||
+      obj['delivery_no'] ||
+      obj['deliveryNumber'] ||
+      obj['delivery_number'] ||
+      obj['soNumber'] ||
+      obj['so_number'] ||
+      obj['salesOrderNo'] ||
+      obj['sales_order_no'] ||
       obj['number'] ||
       obj['docNum'] ||
       obj['DocNum'] ||
@@ -834,6 +857,14 @@ export class OpenBaseDocumentsService {
       'sales_return_request_no',
       'returnRequestNo',
       'return_request_no',
+      'deliveryNo',
+      'delivery_no',
+      'deliveryNumber',
+      'delivery_number',
+      'soNumber',
+      'so_number',
+      'salesOrderNo',
+      'sales_order_no',
       'number',
       'docNum',
       'DocNum',
@@ -866,6 +897,10 @@ export class OpenBaseDocumentsService {
           'po_date',
           'returnDate',
           'return_date',
+          'deliveryDate',
+          'delivery_date',
+          'soDate',
+          'so_date',
           'DocDate',
         ]),
       ),

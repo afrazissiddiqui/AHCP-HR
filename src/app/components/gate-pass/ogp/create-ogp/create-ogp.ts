@@ -85,7 +85,7 @@ export class CreateOgpComponent implements OnInit {
 
   showBaseDocModal = false;
 
-  readonly typeOptions = ['Standalone', 'Sales return request'] as const;
+  readonly typeOptions = ['Delivery', 'Standalone'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 

@@ -7,7 +7,8 @@
 }
 
 .igp-create-page.husky-add-page,
-.ogp-create-page.husky-add-page {
+.ogp-create-page.husky-add-page,
+.agp-create-page.husky-add-page {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -15,7 +16,8 @@
 }
 
 .igp-create-page .husky-add-scroll,
-.ogp-create-page .husky-add-scroll {
+.ogp-create-page .husky-add-scroll,
+.agp-create-page .husky-add-scroll {
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
@@ -110,7 +112,9 @@
 .igp-create-page .husky-sections-card,
 .igp-create-page .husky-form-sections,
 .ogp-create-page .husky-sections-card,
-.ogp-create-page .husky-form-sections {
+.ogp-create-page .husky-form-sections,
+.agp-create-page .husky-sections-card,
+.agp-create-page .husky-form-sections {
   overflow: visible;
 }
 
@@ -600,12 +604,23 @@
   }
 }
 
-/* AGP create — attachment & approval */
-.agp-attachment-row {
+.husky-form-section .agp-attachment-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+
+.husky-form-section .ogp-field-hint {
+  margin: 4px 0 0;
+  padding-left: calc(minmax(120px, 34%) + 8px);
+}
+
+@media (max-width: 720px) {
+  .husky-form-section .ogp-field-hint {
+    padding-left: 0;
+  }
 }
 
 .agp-attachment-name {
