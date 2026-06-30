@@ -17,6 +17,8 @@ export interface MaintenanceActivityInspectionLinePayload {
   itemsToBeInspected: string | null;
   whatToCheck: string | null;
   instructions: string | null;
+  items_to_be_inspected: string | null;
+  what_to_check: string | null;
 }
 
 export interface MaintenanceActivityComponent {
@@ -49,6 +51,8 @@ type MaintenanceActivityProfileField =
 export interface MaintenanceActivityDefinitionInput {
   machineId: string;
   machineName: string;
+  /** Required by API; resolved from SAP item or existing record, not shown in the form. */
+  machineType?: string;
   maintenanceNature: string;
   plantMaintenanceFrequency: string;
   plantMaintenanceType: string;
@@ -58,12 +62,14 @@ export interface MaintenanceActivityDefinitionInput {
 export interface MaintenanceActivityDefinitionPayload {
   machine_id: string;
   machine_name: string;
+  machine_type: string;
   maintenance_nature: string;
   plant_maintenance_frequency: string;
   plant_maintenance_type: string;
   components: Array<{
     name: string;
     inspectionLines: MaintenanceActivityInspectionLinePayload[];
+    inspection_lines?: MaintenanceActivityInspectionLinePayload[];
   }>;
 }
 
@@ -80,22 +86,40 @@ const MAINTENANCE_ACTIVITY_DEFINITION_DETAIL_URL = apiUrl('maintenance-activity-
 const MAINTENANCE_ACTIVITY_DEFINITION_UPDATE_URL = apiUrl('maintenance-activity-definition-update');
 const MAINTENANCE_ACTIVITY_DEFINITION_DELETE_URL = apiUrl('maintenance-activity-definition-delete');
 
+const DEFAULT_MACHINE_ITEM_TYPE = 'F';
+
 function toNullableTrimmed(value: string): string | null {
   const trimmed = value.trim();
   return trimmed === '' ? null : trimmed;
 }
 
+function mapInspectionLineForPayload(
+  line: MaintenanceActivityInspectionLine,
+): MaintenanceActivityInspectionLinePayload {
+  const itemsToBeInspected = toNullableTrimmed(line.itemsToBeInspected);
+  const whatToCheck = toNullableTrimmed(line.whatToCheck);
+  const instructions = toNullableTrimmed(line.instructions);
+
+  return {
+    itemsToBeInspected,
+    whatToCheck,
+    instructions,
+    items_to_be_inspected: itemsToBeInspected,
+    what_to_check: whatToCheck,
+  };
+}
+
 function mapInspectionLinesForPayload(
   lines: MaintenanceActivityInspectionLine[],
 ): MaintenanceActivityInspectionLinePayload[] {
-  const mapped = lines.map((line) => ({
-    itemsToBeInspected: toNullableTrimmed(line.itemsToBeInspected),
-    whatToCheck: toNullableTrimmed(line.whatToCheck),
-    instructions: toNullableTrimmed(line.instructions),
-  }));
+  const mapped = lines.map((line) => mapInspectionLineForPayload(line));
 
   if (mapped.length === 0) {
-    return [{ itemsToBeInspected: null, whatToCheck: null, instructions: null }];
+    return [mapInspectionLineForPayload({
+      itemsToBeInspected: '',
+      whatToCheck: '',
+      instructions: '',
+    })];
   }
 
   return mapped;
@@ -107,13 +131,18 @@ export function buildMaintenanceActivityPayload(
   return {
     machine_id: entry.machineId.trim(),
     machine_name: entry.machineName.trim(),
+    machine_type: (entry.machineType ?? '').trim() || DEFAULT_MACHINE_ITEM_TYPE,
     maintenance_nature: entry.maintenanceNature.trim(),
     plant_maintenance_frequency: entry.plantMaintenanceFrequency.trim(),
     plant_maintenance_type: entry.plantMaintenanceType.trim(),
-    components: entry.components.map((component) => ({
-      name: component.name.trim(),
-      inspectionLines: mapInspectionLinesForPayload(component.inspectionLines),
-    })),
+    components: entry.components.map((component) => {
+      const inspectionLines = mapInspectionLinesForPayload(component.inspectionLines);
+      return {
+        name: component.name.trim(),
+        inspectionLines,
+        inspection_lines: inspectionLines,
+      };
+    }),
   };
 }
 

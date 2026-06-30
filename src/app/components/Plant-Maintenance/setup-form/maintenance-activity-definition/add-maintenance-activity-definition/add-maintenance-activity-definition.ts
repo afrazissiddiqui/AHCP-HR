@@ -629,6 +629,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
       machineName: resolved.machineName,
 
+      machineType: this.resolveMachineType(resolved.machineId),
+
       maintenanceNature,
 
       plantMaintenanceFrequency,
@@ -731,6 +733,29 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.applyComponentsFromSubComponentDefinition(machine.machineId);
 
+  }
+
+
+
+  /** Backend requires machine_type; derived from SAP item metadata, not shown in the form. */
+  private resolveMachineType(machineId: string): string {
+    const selected = this.machineItemService
+      .getAll()
+      .find((item) => item.machineId === machineId);
+    const fromItem = selected?.defaultMachineType.trim();
+    if (fromItem) {
+      return fromItem;
+    }
+
+    if (this.editingRecordId()) {
+      const record = this.activityService.getById(this.editingRecordId()!);
+      const fromRecord = record?.machineType.trim();
+      if (fromRecord && fromRecord !== '—') {
+        return fromRecord;
+      }
+    }
+
+    return 'F';
   }
 
 
