@@ -1,8 +1,233 @@
 <div class="payroll-master-view payroll-master-view--scroll">
   <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()"></app-page-toolbar>
 
-  <div class="table-wrapper" style="padding: 16px;">
-    <div class="sapMTitle sapMTitleStyleH5" role="heading" aria-level="5">Attendance Managment</div>
-    <div style="margin-top: 12px; color: #475569;">Attendance Managment component page is ready.</div>
+  <div
+    id="table-toolbar"
+    class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar"
+  >
+    <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
+      <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
+        Attendance Records ({{ filteredList.length }}<ng-container *ngIf="hasActiveListFilters()"> of {{ attendanceList.length }}</ng-container>) · Selected ({{ selectedCount }})
+      </div>
+    </div>
+
+    <div class="sapMTBSpacer"></div>
+
+    <div class="attendance-toolbar-filter">
+      <label for="attendance-status-filter">Status</label>
+      <select
+        id="attendance-status-filter"
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="onFilterChange()"
+      >
+        <option value="">All statuses</option>
+        <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+      </select>
+    </div>
+
+    <div class="attendance-toolbar-filter">
+      <label for="attendance-month-filter">Month</label>
+      <select
+        id="attendance-month-filter"
+        [(ngModel)]="selectedMonth"
+        (ngModelChange)="onFilterChange()"
+      >
+        <option value="">All months</option>
+        <option *ngFor="let month of monthOptions" [value]="month">{{ formatMonth(month) }}</option>
+      </select>
+    </div>
+
+    <div class="attendance-toolbar-filter">
+      <label for="attendance-year-filter">Year</label>
+      <select
+        id="attendance-year-filter"
+        [(ngModel)]="selectedYear"
+        (ngModelChange)="onFilterChange()"
+      >
+        <option value="">All years</option>
+        <option *ngFor="let year of yearOptions" [value]="year">{{ year }}</option>
+      </select>
+    </div>
+
+    <div class="sapMSearchField">
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search..."
+      />
+      <span class="sapUiIcon search-icon">🔍</span>
+    </div>
+
+    <div class="sapMTBActions">
+      <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="View Settings">⚙</button>
+    </div>
+
+    <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+    <div class="view-settings-dialog" *ngIf="showDialog">
+      <div class="dialog-header">
+        <h3>View Settings</h3>
+      </div>
+      <div class="dialog-tabs">
+        <button (click)="activeTab = 'filter'" [class.active]="activeTab === 'filter'">Columns</button>
+      </div>
+      <div class="dialog-body">
+        <div *ngIf="activeTab === 'filter'">
+          <div *ngFor="let col of columns">
+            <label>
+              <input type="checkbox" [(ngModel)]="col.visible" />
+              {{ col.label }}
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table class="mountain-table">
+        <thead>
+          <tr>
+            <th>
+              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
+            </th>
+            <th
+              *ngFor="let col of visibleColumns"
+              appColumnResize
+              (click)="sortData(col.key)"
+              class="sortable-header"
+            >
+              {{ col.label }}
+              <span *ngIf="sortColumn === col.key" class="sort-indicator">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="loading()">
+            <td [attr.colspan]="visibleColumns.length + 2" style="text-align: center; color: #64748b; padding: 14px;">
+              Loading attendance records…
+            </td>
+          </tr>
+          <tr *ngIf="!loading() && filteredList.length === 0">
+            <td [attr.colspan]="visibleColumns.length + 2" style="text-align: center; color: #64748b; padding: 14px;">
+              No attendance records to display.
+            </td>
+          </tr>
+          <tr
+            *ngFor="let row of paginatedList"
+            class="attendance-list-row"
+            (click)="viewRecord(row)"
+          >
+            <td (click)="$event.stopPropagation()">
+              <input type="checkbox" [(ngModel)]="row.selected" />
+            </td>
+            <td *ngFor="let col of visibleColumns">
+              <ng-container *ngIf="col.key === 'Status'; else defaultCell">
+                <span class="attendance-status" [ngClass]="getStatusClass(row.Status)">
+                  {{ row.Status || '—' }}
+                </span>
+              </ng-container>
+              <ng-template #defaultCell>
+                {{ displayCellValue(row, col.key) }}
+              </ng-template>
+            </td>
+            <td class="table-action-cell" (click)="$event.stopPropagation()">
+              <button type="button" class="view-btn" (click)="viewRecord(row)" title="View attendance record">
+                View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-pagination">
+      <div class="pagination-info">
+        Showing {{ filteredList.length ? (currentPage - 1) * pageSize + 1 : 0 }} to
+        {{ Math.min(currentPage * pageSize, filteredList.length) }} of {{ filteredList.length }} entries
+      </div>
+
+      <div class="pagination-controls">
+        <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+        <div class="page-numbers">
+          <button
+            *ngFor="let page of pages"
+            [class.active]="page === currentPage"
+            (click)="setPage(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+        <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+      </div>
+
+      <div class="page-size-selector">
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+  <div class="js-detail-modal" *ngIf="showViewDialog()">
+    <div class="js-modal-header">
+      <h2>
+        Attendance Detail
+        <ng-container *ngIf="selectedRecord() as record">
+          — {{ record.EmployeeName }} ({{ formatAttendanceDate(record.AttendanceDate) }})
+        </ng-container>
+      </h2>
+      <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
+    </div>
+    <div class="js-modal-body">
+      <p *ngIf="viewLoading()">Loading details…</p>
+      <ng-container *ngIf="selectedRecord() as record">
+        <ng-container *ngIf="!viewLoading()">
+          <div class="js-detail-section">
+            <h3>Employee &amp; Attendance</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item"><label>Employee Code:</label> <span>{{ record.EmployeeCode }}</span></div>
+              <div class="js-detail-item"><label>Employee Name:</label> <span>{{ record.EmployeeName }}</span></div>
+              <div class="js-detail-item"><label>Department:</label> <span>{{ record.Department || '—' }}</span></div>
+              <div class="js-detail-item"><label>Designation:</label> <span>{{ record.Designation || '—' }}</span></div>
+              <div class="js-detail-item"><label>Location:</label> <span>{{ record.Location || '—' }}</span></div>
+              <div class="js-detail-item"><label>Attendance Date:</label> <span>{{ formatAttendanceDate(record.AttendanceDate) }}</span></div>
+              <div class="js-detail-item"><label>Shift:</label> <span>{{ record.Shift || '—' }}</span></div>
+              <div class="js-detail-item">
+                <label>Status:</label>
+                <span class="attendance-status" [ngClass]="getStatusClass(record.Status)">{{ record.Status || '—' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="js-detail-section">
+            <h3>Time Summary</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item"><label>Check In:</label> <span>{{ record.CheckIn || '—' }}</span></div>
+              <div class="js-detail-item"><label>Check Out:</label> <span>{{ record.CheckOut || '—' }}</span></div>
+              <div class="js-detail-item"><label>Working Hours:</label> <span>{{ formatHours(record.WorkingHours) }}</span></div>
+              <div class="js-detail-item"><label>Late (min):</label> <span>{{ record.LateMinutes }}</span></div>
+              <div class="js-detail-item"><label>Early Leave (min):</label> <span>{{ record.EarlyLeaveMinutes }}</span></div>
+              <div class="js-detail-item"><label>Overtime (hrs):</label> <span>{{ formatHours(record.OvertimeHours) }}</span></div>
+              <div class="js-detail-item"><label>Payroll Period:</label> <span>{{ formatMonth(record.PayrollMonth) }} {{ record.PayrollYear }}</span></div>
+              <div class="js-detail-item"><label>Approved By:</label> <span>{{ record.ApprovedBy || '—' }}</span></div>
+              <div class="js-detail-item"><label>Approved Date:</label> <span>{{ record.ApprovedDate ? formatAttendanceDate(record.ApprovedDate) : '—' }}</span></div>
+            </div>
+            <div class="js-detail-full" *ngIf="record.Remarks">
+              <label>Remarks:</label>
+              <p>{{ record.Remarks }}</p>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
+    <div class="js-modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeViewDialog()">Close</button>
+    </div>
   </div>
 </div>
