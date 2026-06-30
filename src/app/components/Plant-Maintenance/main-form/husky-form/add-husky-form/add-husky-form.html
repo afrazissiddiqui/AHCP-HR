@@ -251,34 +251,18 @@
                     </div>
 
                     <div class="husky-kpi-row__fields">
-                      <div class="cjr-row husky-kpi-row__field">
-                        <label [attr.for]="'kpiIssues-' + row.key">Issues Score:</label>
-                        <input
-                          [id]="'kpiIssues-' + row.key"
-                          type="number"
-                          class="husky-kpi-input"
-                          min="0"
-                          step="1"
-                          [ngModel]="row.issuesScore ?? ''"
-                          (ngModelChange)="updateKpiIssuesScore(row.key, $event)"
-                          [name]="'kpiIssues-' + row.key"
-                          placeholder="0"
-                        />
+                      <div class="cjr-row husky-kpi-row__field husky-kpi-row__field--readonly">
+                        <label>Issues Score:</label>
+                        <div class="husky-kpi-readonly">
+                          {{ row.issuesScore ?? '—' }}
+                        </div>
                       </div>
 
-                      <div class="cjr-row husky-kpi-row__field">
-                        <label [attr.for]="'kpiMax-' + row.key">Max Possible Score:</label>
-                        <input
-                          [id]="'kpiMax-' + row.key"
-                          type="number"
-                          class="husky-kpi-input"
-                          min="0"
-                          step="1"
-                          [ngModel]="row.maxPossibleScore ?? ''"
-                          (ngModelChange)="updateKpiMaxScore(row.key, $event)"
-                          [name]="'kpiMax-' + row.key"
-                          placeholder="0"
-                        />
+                      <div class="cjr-row husky-kpi-row__field husky-kpi-row__field--readonly">
+                        <label>Max Possible Score:</label>
+                        <div class="husky-kpi-readonly">
+                          {{ row.maxPossibleScore ?? '—' }}
+                        </div>
                       </div>
 
                       <div class="cjr-row husky-kpi-row__field husky-kpi-row__field--readonly">
@@ -290,6 +274,22 @@
                               : getKpiPercentage(row) + '%'
                           }}
                         </div>
+                      </div>
+
+                      <div class="cjr-row husky-kpi-row__field">
+                        <label [attr.for]="'kpiPassing-' + row.key">Passing %:</label>
+                        <input
+                          [id]="'kpiPassing-' + row.key"
+                          type="number"
+                          class="husky-kpi-input"
+                          min="0"
+                          max="100"
+                          step="any"
+                          [ngModel]="row.passingPercentage ?? ''"
+                          (ngModelChange)="updateKpiPassingPercentage(row.key, $event)"
+                          [name]="'kpiPassing-' + row.key"
+                          placeholder="Enter passing %"
+                        />
                       </div>
 
                       <div class="cjr-row husky-kpi-row__field husky-kpi-row__field--readonly">

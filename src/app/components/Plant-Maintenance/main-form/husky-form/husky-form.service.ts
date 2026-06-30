@@ -13,6 +13,7 @@ export interface HuskyKpiRow {
   formulaLabel: string;
   issuesScore: number | null;
   maxPossibleScore: number | null;
+  passingPercentage: number | null;
   notes: string;
 }
 
@@ -55,21 +56,25 @@ export function createEmptyHuskyKpiRows(): HuskyKpiRow[] {
     formulaLabel: row.formulaLabel,
     issuesScore: null,
     maxPossibleScore: null,
+    passingPercentage: null,
     notes: '',
   }));
 }
 
-export function resolveHuskyKpiStatus(percentage: number | null): HuskyKpiStatus {
-  if (percentage === null) {
+export function resolveHuskyKpiStatusByPassingThreshold(
+  resultPercentage: number | null,
+  passingPercentage: number | null,
+): HuskyKpiStatus {
+  if (resultPercentage === null || passingPercentage === null) {
     return '';
   }
-  if (percentage <= 30) {
+  if (resultPercentage > passingPercentage) {
+    return 'Fail';
+  }
+  if (resultPercentage < passingPercentage) {
     return 'Pass';
   }
-  if (percentage <= 60) {
-    return 'Warning';
-  }
-  return 'Fail';
+  return '';
 }
 
 export type HuskyCheckpointEvaluation = 'Pass' | 'Fail' | 'N/A' | '';
@@ -896,6 +901,12 @@ function buildKpiSection(row: HuskyKpiRow): HuskyFormSectionPayload | null {
   if (row.maxPossibleScore !== null) {
     answers.push({ question: 'Max Possible Score', value: String(row.maxPossibleScore) });
   }
+  if (row.passingPercentage !== null) {
+    answers.push({
+      question: 'Passing Percentage',
+      value: String(row.passingPercentage),
+    });
+  }
   if (row.notes.trim()) {
     answers.push({ question: 'Notes', value: row.notes.trim() });
   }
@@ -1135,6 +1146,7 @@ function findSections(
 function applyKpiSection(row: HuskyKpiRow, answers: Array<Record<string, string>>): HuskyKpiRow {
   let issuesScore = row.issuesScore;
   let maxPossibleScore = row.maxPossibleScore;
+  let passingPercentage = row.passingPercentage;
   let notes = row.notes;
 
   for (const answer of answers) {
@@ -1144,12 +1156,14 @@ function applyKpiSection(row: HuskyKpiRow, answers: Array<Record<string, string>
       issuesScore = parseNumberOrNull(value);
     } else if (question === 'Max Possible Score') {
       maxPossibleScore = parseNumberOrNull(value);
+    } else if (question === 'Passing Percentage' || question === 'Passing %') {
+      passingPercentage = parseNumberOrNull(value);
     } else if (question === 'Notes') {
       notes = value;
     }
   }
 
-  return { ...row, issuesScore, maxPossibleScore, notes };
+  return { ...row, issuesScore, maxPossibleScore, passingPercentage, notes };
 }
 
 function applyCheckpointSection(

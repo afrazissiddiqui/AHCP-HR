@@ -54,7 +54,7 @@ import {
   mergeHuskyCycleTimeComparison,
   mergeHuskyLevelParallelism,
   mergeHuskyMeasurements,
-  resolveHuskyKpiStatus,
+  resolveHuskyKpiStatusByPassingThreshold,
 } from '../husky-form.service';
 
 export interface HuskySectionNavItem {
@@ -300,17 +300,18 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getKpiStatus(row: HuskyKpiRow): HuskyKpiStatus {
-    return resolveHuskyKpiStatus(this.getKpiPercentage(row));
+    return resolveHuskyKpiStatusByPassingThreshold(
+      this.getKpiPercentage(row),
+      row.passingPercentage,
+    );
   }
 
   getKpiStatusLabel(status: HuskyKpiStatus): string {
     switch (status) {
       case 'Pass':
-        return 'Green (Pass)';
-      case 'Warning':
-        return 'Yellow (Warning)';
+        return 'Pass';
       case 'Fail':
-        return 'Red (Fail)';
+        return 'Fail';
       default:
         return '—';
     }
@@ -329,12 +330,8 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  updateKpiIssuesScore(key: string, value: string): void {
-    this.updateKpiRow(key, { issuesScore: this.parseScoreValue(value) });
-  }
-
-  updateKpiMaxScore(key: string, value: string): void {
-    this.updateKpiRow(key, { maxPossibleScore: this.parseScoreValue(value) });
+  updateKpiPassingPercentage(key: string, value: string): void {
+    this.updateKpiRow(key, { passingPercentage: this.parseScoreValue(value) });
   }
 
   updateKpiNotes(key: string, value: string): void {
@@ -621,7 +618,10 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.intersectionObserver = null;
   }
 
-  private updateKpiRow(key: string, patch: Partial<Pick<HuskyKpiRow, 'issuesScore' | 'maxPossibleScore' | 'notes'>>): void {
+  private updateKpiRow(
+    key: string,
+    patch: Partial<Pick<HuskyKpiRow, 'issuesScore' | 'maxPossibleScore' | 'passingPercentage' | 'notes'>>,
+  ): void {
     this.kpiRows.update((rows) =>
       rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
     );
