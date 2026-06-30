@@ -1,241 +1,290 @@
-<div class="husky-add-page cjr-page scd-add-page">
-  <div class="husky-add-scroll">
-    <div class="cjr-header">
+<div class="itr-add-page cjr-page scd-add-page">
+  <div class="itr-add-scroll">
+    <div class="cjr-header itr-add-header">
       <div class="cjr-header-left">
         <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
           <span class="cjr-back-icon">❮</span>
         </button>
-        <h1>{{ pageTitle() }}</h1>
-      </div>
-    </div>
-
-    <div class="cjr-card scd-form-card husky-header-card">
-      <div class="cjr-personal" id="itr-form-header-section">
-        <div class="cjr-section-title">ITR Form</div>
-
-        <div class="cjr-personal-grid pmm-profile-grid">
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label for="husky-machine-id">Machine ID:</label>
-              <select
-                id="husky-machine-id"
-                class="mad-select"
-                [ngModel]="machineId()"
-                (ngModelChange)="onMachineIdChange($event)"
-                name="machineId"
-              >
-                <option value="">Select machine</option>
-                <option *ngFor="let machine of machineOptions()" [value]="machine.machineId">
-                  {{ machine.machineId }} — {{ machine.machineName }}
-                </option>
-              </select>
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-machine-name">Machine Name:</label>
-              <input
-                id="husky-machine-name"
-                type="text"
-                [ngModel]="machineName()"
-                name="machineName"
-                placeholder="Auto-populated from Machine ID"
-                readonly
-              />
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-maintenance-type">Maintenance Type:</label>
-              <select
-                id="husky-maintenance-type"
-                class="mad-select"
-                [ngModel]="maintenanceType()"
-                (ngModelChange)="onMaintenanceTypeChange($event)"
-                name="maintenanceType"
-              >
-                <option value="">Select maintenance type</option>
-                <option *ngFor="let option of maintenanceTypeOptions" [value]="option">
-                  {{ option }}
-                </option>
-              </select>
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-maintenance-frequency">Maintenance Frequency:</label>
-              <select
-                id="husky-maintenance-frequency"
-                class="mad-select"
-                [ngModel]="maintenanceFrequency()"
-                (ngModelChange)="onMaintenanceFrequencyChange($event)"
-                name="maintenanceFrequency"
-              >
-                <option value="">Select maintenance frequency</option>
-                <option *ngFor="let option of maintenanceFrequencyOptions" [value]="option">
-                  {{ option }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label for="husky-serial-no">SN# (Machine Serial No.):</label>
-              <input
-                id="husky-serial-no"
-                type="text"
-                [ngModel]="serialNo()"
-                (ngModelChange)="serialNo.set($event)"
-                name="serialNo"
-                placeholder="Enter machine serial number"
-              />
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-mold-no">Mold #:</label>
-              <input
-                id="husky-mold-no"
-                type="text"
-                [ngModel]="moldNo()"
-                (ngModelChange)="moldNo.set($event)"
-                name="moldNo"
-                placeholder="Enter mold number"
-              />
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-hot-runner-job-no">Hot Runner Job #:</label>
-              <input
-                id="husky-hot-runner-job-no"
-                type="text"
-                [ngModel]="hotRunnerJobNo()"
-                (ngModelChange)="hotRunnerJobNo.set($event)"
-                name="hotRunnerJobNo"
-                placeholder="Enter hot runner job number"
-              />
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-hour-meter-reading">Hour Meter Reading:</label>
-              <input
-                id="husky-hour-meter-reading"
-                type="text"
-                [ngModel]="hourMeterReading()"
-                (ngModelChange)="hourMeterReading.set($event)"
-                name="hourMeterReading"
-                placeholder="Enter hour meter reading"
-              />
-            </div>
-          </div>
-
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label for="husky-robot-serial-no">Robot Serial #:</label>
-              <input
-                id="husky-robot-serial-no"
-                type="text"
-                [ngModel]="robotSerialNo()"
-                (ngModelChange)="robotSerialNo.set($event)"
-                name="robotSerialNo"
-                placeholder="Enter robot serial number"
-              />
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-inspector">Inspector:</label>
-              <select
-                id="husky-inspector"
-                class="mad-select"
-                [ngModel]="inspector()"
-                (ngModelChange)="onInspectorChange($event)"
-                name="inspector"
-              >
-                <option value="">Select inspector</option>
-                <option *ngFor="let user of inspectorUsers()" [value]="user.displayName">
-                  {{ user.displayName }}
-                </option>
-              </select>
-            </div>
-
-            <div class="cjr-row">
-              <label for="husky-inspection-date">Inspection Date:</label>
-              <input
-                id="husky-inspection-date"
-                type="date"
-                [ngModel]="inspectionDate()"
-                (ngModelChange)="onInspectionDateChange($event)"
-                name="inspectionDate"
-              />
-            </div>
-
-            <div class="cjr-row" *ngIf="!isCreateMode()">
-              <label for="husky-submit-date">Submit Date:</label>
-              <input
-                id="husky-submit-date"
-                type="text"
-                [ngModel]="submitDate()"
-                name="submitDate"
-                readonly
-                placeholder="System-generated on submit"
-              />
-            </div>
-
-            <div class="cjr-row" *ngIf="!isCreateMode()">
-              <label for="husky-document-no">Document No.:</label>
-              <input
-                id="husky-document-no"
-                type="text"
-                [ngModel]="documentNo()"
-                name="documentNo"
-                readonly
-                placeholder="Auto-generated"
-              />
-            </div>
-
-            <div class="cjr-row" *ngIf="!isCreateMode()">
-              <label for="husky-status">Status:</label>
-              <input
-                id="husky-status"
-                type="text"
-                [ngModel]="status()"
-                name="status"
-                readonly
-                placeholder="System-driven workflow"
-              />
-            </div>
-          </div>
+        <div class="itr-add-header__text">
+          <h1>{{ pageTitle() }}</h1>
+          <p class="itr-add-header__subtitle">
+            Inspection Test Report for machines with replacement items from Plant Maintenance Master.
+          </p>
         </div>
       </div>
     </div>
 
+    <div class="cjr-card scd-form-card itr-form-card">
+      <div class="cjr-personal" id="itr-form-header-section">
+        <div class="cjr-section-title">ITR Form</div>
+
+        <section class="pmm-form-panel pmm-form-panel--profile itr-form-panel">
+          <div class="pmm-form-panel__heading">
+            <span class="pmm-form-panel__title">Machine &amp; Maintenance</span>
+            <span class="pmm-form-panel__subtitle">Select an eligible machine and maintenance profile</span>
+          </div>
+
+          <div class="cjr-personal-grid pmm-profile-grid itr-form-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="husky-machine-id">Machine ID:</label>
+                <select
+                  id="husky-machine-id"
+                  class="mad-select"
+                  [ngModel]="machineId()"
+                  (ngModelChange)="onMachineIdChange($event)"
+                  name="machineId"
+                >
+                  <option value="">Select machine</option>
+                  <option *ngFor="let machine of machineOptions()" [value]="machine.machineId">
+                    {{ machine.machineId }} — {{ machine.machineName }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-machine-name">Machine Name:</label>
+                <input
+                  id="husky-machine-name"
+                  type="text"
+                  class="itr-field--readonly"
+                  [ngModel]="machineName()"
+                  name="machineName"
+                  placeholder="Auto-populated from Machine ID"
+                  readonly
+                />
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="husky-maintenance-type">Maintenance Type:</label>
+                <select
+                  id="husky-maintenance-type"
+                  class="mad-select"
+                  [ngModel]="maintenanceType()"
+                  (ngModelChange)="onMaintenanceTypeChange($event)"
+                  name="maintenanceType"
+                >
+                  <option value="">Select maintenance type</option>
+                  <option *ngFor="let option of maintenanceTypeOptions" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-maintenance-frequency">Maintenance Frequency:</label>
+                <select
+                  id="husky-maintenance-frequency"
+                  class="mad-select"
+                  [ngModel]="maintenanceFrequency()"
+                  (ngModelChange)="onMaintenanceFrequencyChange($event)"
+                  name="maintenanceFrequency"
+                >
+                  <option value="">Select maintenance frequency</option>
+                  <option *ngFor="let option of maintenanceFrequencyOptions" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pmm-form-panel itr-form-panel">
+          <div class="pmm-form-panel__heading">
+            <span class="pmm-form-panel__title">Equipment Details</span>
+            <span class="pmm-form-panel__subtitle">Serial numbers and meter readings</span>
+          </div>
+
+          <div class="cjr-personal-grid pmm-profile-grid itr-form-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="husky-serial-no">SN# (Machine Serial No.):</label>
+                <input
+                  id="husky-serial-no"
+                  type="text"
+                  [ngModel]="serialNo()"
+                  (ngModelChange)="serialNo.set($event)"
+                  name="serialNo"
+                  placeholder="Enter machine serial number"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-mold-no">Mold #:</label>
+                <input
+                  id="husky-mold-no"
+                  type="text"
+                  [ngModel]="moldNo()"
+                  (ngModelChange)="moldNo.set($event)"
+                  name="moldNo"
+                  placeholder="Enter mold number"
+                />
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="husky-hot-runner-job-no">Hot Runner Job #:</label>
+                <input
+                  id="husky-hot-runner-job-no"
+                  type="text"
+                  [ngModel]="hotRunnerJobNo()"
+                  (ngModelChange)="hotRunnerJobNo.set($event)"
+                  name="hotRunnerJobNo"
+                  placeholder="Enter hot runner job number"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-hour-meter-reading">Hour Meter Reading:</label>
+                <input
+                  id="husky-hour-meter-reading"
+                  type="text"
+                  [ngModel]="hourMeterReading()"
+                  (ngModelChange)="hourMeterReading.set($event)"
+                  name="hourMeterReading"
+                  placeholder="Enter hour meter reading"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-robot-serial-no">Robot Serial #:</label>
+                <input
+                  id="husky-robot-serial-no"
+                  type="text"
+                  [ngModel]="robotSerialNo()"
+                  (ngModelChange)="robotSerialNo.set($event)"
+                  name="robotSerialNo"
+                  placeholder="Enter robot serial number"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pmm-form-panel itr-form-panel itr-form-panel--last">
+          <div class="pmm-form-panel__heading">
+            <span class="pmm-form-panel__title">Inspection Details</span>
+            <span class="pmm-form-panel__subtitle">Inspector assignment and inspection date</span>
+          </div>
+
+          <div class="cjr-personal-grid pmm-profile-grid itr-form-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="husky-inspector">Inspector:</label>
+                <select
+                  id="husky-inspector"
+                  class="mad-select"
+                  [ngModel]="inspector()"
+                  (ngModelChange)="onInspectorChange($event)"
+                  name="inspector"
+                >
+                  <option value="">Select inspector</option>
+                  <option *ngFor="let user of inspectorUsers()" [value]="user.displayName">
+                    {{ user.displayName }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-inspection-date">Inspection Date:</label>
+                <input
+                  id="husky-inspection-date"
+                  type="date"
+                  [ngModel]="inspectionDate()"
+                  (ngModelChange)="onInspectionDateChange($event)"
+                  name="inspectionDate"
+                />
+              </div>
+            </div>
+
+            <div class="cjr-personal-col" *ngIf="!isCreateMode()">
+              <div class="cjr-row">
+                <label for="husky-submit-date">Submit Date:</label>
+                <input
+                  id="husky-submit-date"
+                  type="text"
+                  class="itr-field--readonly"
+                  [ngModel]="submitDate()"
+                  name="submitDate"
+                  readonly
+                  placeholder="System-generated on submit"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-document-no">Document No.:</label>
+                <input
+                  id="husky-document-no"
+                  type="text"
+                  class="itr-field--readonly"
+                  [ngModel]="documentNo()"
+                  name="documentNo"
+                  readonly
+                  placeholder="Auto-generated"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label for="husky-status">Status:</label>
+                <input
+                  id="husky-status"
+                  type="text"
+                  class="itr-field--readonly"
+                  [ngModel]="status()"
+                  name="status"
+                  readonly
+                  placeholder="System-driven workflow"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
     <div
-      class="cjr-card scd-form-card husky-replacement-card"
+      class="cjr-card scd-form-card itr-replacement-card"
       *ngIf="replacementLineGroups().length > 0"
     >
-      <div class="cjr-personal">
-        <div class="cjr-section-title">Replacement Items</div>
-        <p class="itr-replacement-intro">
-          Lines from Plant Maintenance Master Form with Replacement = Yes. Update quantity as needed.
-        </p>
+      <div class="cjr-personal itr-replacement-card__body">
+        <div class="itr-replacement-card__header">
+          <div>
+            <div class="cjr-section-title itr-replacement-card__title">Replacement Items</div>
+            <p class="itr-replacement-intro">
+              Lines from Plant Maintenance Master with Replacement = Yes. Set quantity and warehouse transfer details.
+            </p>
+          </div>
+          <span class="itr-replacement-badge">{{ replacementLineGroups().length }} line(s)</span>
+        </div>
 
         <div
           class="itr-replacement-line-block"
           *ngFor="let group of replacementLineGroups(); let gi = index; trackBy: trackByIndex"
         >
-          <div class="itr-replacement-line-block__meta">
-            <div class="itr-replacement-line-block__meta-item" *ngIf="group.componentName">
-              <span class="itr-replacement-line-block__label">Component</span>
-              <span class="itr-replacement-line-block__value">{{ group.componentName }}</span>
+          <div class="itr-replacement-line-block__head">
+            <span class="itr-replacement-line-block__index">{{ gi + 1 }}</span>
+            <div class="itr-replacement-line-block__head-text">
+              <h3 class="itr-replacement-line-block__title">
+                {{ group.componentName || 'Inspection Line' }}
+              </h3>
+              <p class="itr-replacement-line-block__subtitle" *ngIf="group.itemsToBeInspected">
+                {{ group.itemsToBeInspected }}
+              </p>
             </div>
-            <div class="itr-replacement-line-block__meta-item" *ngIf="group.itemsToBeInspected">
-              <span class="itr-replacement-line-block__label">Items to be Inspected</span>
-              <span class="itr-replacement-line-block__value">{{ group.itemsToBeInspected }}</span>
-            </div>
-            <div class="itr-replacement-line-block__meta-item" *ngIf="group.whatToCheck">
+          </div>
+
+          <div class="itr-replacement-line-block__meta" *ngIf="group.whatToCheck">
+            <div class="itr-replacement-line-block__meta-item itr-replacement-line-block__meta-item--full">
               <span class="itr-replacement-line-block__label">What to Check</span>
               <span class="itr-replacement-line-block__value">{{ group.whatToCheck }}</span>
             </div>
           </div>
 
-          <div class="pmm-replacement-table-wrap">
+          <div class="pmm-replacement-table-wrap itr-replacement-table-wrap">
             <table class="mountain-table pmm-replacement-table itr-replacement-table">
               <thead>
                 <tr>
@@ -247,11 +296,13 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  *ngFor="let item of group.items; let ii = index; trackBy: trackByIndex"
-                >
-                  <td>{{ item.itemCode || '—' }}</td>
-                  <td>{{ item.itemName || '—' }}</td>
+                <tr *ngFor="let item of group.items; let ii = index; trackBy: trackByIndex">
+                  <td>
+                    <span class="itr-replacement-table__readonly">{{ item.itemCode || '—' }}</span>
+                  </td>
+                  <td>
+                    <span class="itr-replacement-table__readonly">{{ item.itemName || '—' }}</span>
+                  </td>
                   <td class="pmm-replacement-table__qty-col">
                     <input
                       type="number"
@@ -304,12 +355,22 @@
       </div>
     </div>
 
-    <div class="cjr-actions-footer husky-actions-footer">
-      <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
-      <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="isSaving()">
-        <span class="cjr-submit-icon">✓</span>
-        {{ isSaving() ? (isCreateMode() ? 'Submitting...' : 'Updating...') : isCreateMode() ? 'Submit' : 'Update' }}
-      </button>
+    <div class="cjr-card scd-form-card itr-actions-card">
+      <div class="cjr-actions-footer itr-actions-footer">
+        <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
+        <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="isSaving()">
+          <span class="cjr-submit-icon">✓</span>
+          {{
+            isSaving()
+              ? isCreateMode()
+                ? 'Submitting...'
+                : 'Updating...'
+              : isCreateMode()
+                ? 'Submit'
+                : 'Update'
+          }}
+        </button>
+      </div>
     </div>
   </div>
 </div>
