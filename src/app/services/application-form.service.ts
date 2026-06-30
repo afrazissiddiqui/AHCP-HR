@@ -554,6 +554,13 @@ export class ApplicationFormService {
     );
   }
 
+  mergeEmployeeProfileRecordsForAttendance(
+    summaries: ApplicationFormRecord[],
+    detailed: ApplicationFormRecord[],
+  ): ApplicationFormRecord[] {
+    return this.mergeEmployeeProfileRecords(summaries, detailed);
+  }
+
   private mergeEmployeeProfileRecords(
     summaries: ApplicationFormRecord[],
     detailed: ApplicationFormRecord[],

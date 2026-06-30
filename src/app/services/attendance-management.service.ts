@@ -1,6 +1,6 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { Observable, catchError, forkJoin, last, map, of, switchMap } from 'rxjs';
 import { BIOMETRICS_API_BASE_URL } from '../config/api.config';
 import { ApplicationFormRecord, ApplicationFormService } from './application-form.service';
 
@@ -38,6 +38,29 @@ export interface AttendanceDailyRecord {
   selected?: boolean;
 }
 
+/** Lightweight row used for filtering, sorting, and pagination before page materialization. */
+export interface AttendanceSlotRef {
+  employeeKey: string;
+  displayId: string;
+  employeeName: string;
+  date: string;
+  status: 'Present' | 'Absent';
+  punchIn: string;
+  punchOut: string;
+  punchInDevice: string;
+  punchOutDevice: string;
+  workingMinutes: number;
+  punchCount: number;
+}
+
+interface AttendanceSession {
+  query: AttendanceQuery;
+  employees: ApplicationFormRecord[];
+  index: EmployeeAttendanceIndex;
+  punchGroups: Map<string, AttendancePunchRecord[]>;
+  slots: AttendanceSlotRef[];
+}
+
 interface BiometricsPunchApiRecord {
   No?: number;
   'Employee ID'?: string;
@@ -62,24 +85,73 @@ interface BiometricsPunchApiRecord {
 export class AttendanceManagementService {
   private readonly http = inject(HttpClient);
   private readonly applicationFormService = inject(ApplicationFormService);
-  private readonly recordList = signal<AttendanceDailyRecord[]>([]);
+  private readonly sessionState = signal<AttendanceSession | null>(null);
   private lastQuery: AttendanceQuery = { mode: 'today' };
 
-  readonly records = this.recordList.asReadonly();
+  readonly slots = computed(() => this.sessionState()?.slots ?? []);
+  readonly totalSlotCount = computed(() => this.slots().length);
 
-  fetchAttendance(query: AttendanceQuery): Observable<AttendanceDailyRecord[]> {
+  /** Loads punch data + employee list summaries only (no per-employee detail calls). */
+  loadSession(query: AttendanceQuery): Observable<number> {
     this.lastQuery = this.normalizeQuery(query);
 
     return forkJoin({
       punches: this.fetchPunches(this.lastQuery),
-      employees: this.applicationFormService.fetchEmployeeProfilesForAttendance().pipe(
-        catchError(() => of([])),
-      ),
+      employees: this.applicationFormService.fetchEmployeeProfiles().pipe(catchError(() => of([]))),
     }).pipe(
-      map(({ punches, employees }) =>
-        this.buildDailyAttendance(punches, employees, this.lastQuery),
-      ),
-      tap((records) => this.recordList.set(records)),
+      map(({ punches, employees }) => {
+        const session = this.createSession(punches, employees, this.lastQuery);
+        this.sessionState.set(session);
+        return session.slots.length;
+      }),
+    );
+  }
+
+  materializeSlots(slotRefs: AttendanceSlotRef[]): AttendanceDailyRecord[] {
+    const session = this.sessionState();
+    if (!session) {
+      return [];
+    }
+
+    return slotRefs.map((slot) => {
+      const punches = sortPunchesChronologically(
+        session.punchGroups.get(`${slot.employeeKey}|${slot.date}`) ?? [],
+      );
+      return this.slotToDailyRecord(slot, punches);
+    });
+  }
+
+  /** Fetches profile detail only for the given summaries (current page). */
+  enrichEmployeeSummaries(summaries: ApplicationFormRecord[]): Observable<void> {
+    const session = this.sessionState();
+    if (!session || summaries.length === 0) {
+      return of(void 0);
+    }
+
+    const targets = summaries.filter((record) => !!record.apiId?.trim());
+    if (targets.length === 0) {
+      return of(void 0);
+    }
+
+    return this.applicationFormService.fetchEmployeeProfileDetailsInBatches(targets, targets.length).pipe(
+      last(),
+      map((detailed) => {
+        if (detailed.length === 0) {
+          return;
+        }
+
+        const merged = this.applicationFormService.mergeEmployeeProfileRecordsForAttendance(
+          session.employees,
+          detailed,
+        );
+        const refreshed = this.createSessionFromEmployees(
+          session.query,
+          merged,
+          session.punchGroups,
+        );
+        this.sessionState.set(refreshed);
+      }),
+      catchError(() => of(void 0)),
     );
   }
 
@@ -87,56 +159,241 @@ export class AttendanceManagementService {
     return { ...this.lastQuery };
   }
 
+  clearSession(): void {
+    this.sessionState.set(null);
+  }
+
+  getEmployeeSummariesForKeys(employeeKeys: string[]): ApplicationFormRecord[] {
+    const session = this.sessionState();
+    if (!session || employeeKeys.length === 0) {
+      return [];
+    }
+
+    const wanted = new Set(employeeKeys);
+    return session.employees.filter((employee) => {
+      if (!employee.apiId?.trim()) {
+        return false;
+      }
+
+      const userId = resolveAttendanceUserId(employee);
+      if (!userId) {
+        return false;
+      }
+
+      return wanted.has(canonicalAttendanceKey(userId));
+    });
+  }
+
+  private createSession(
+    punches: AttendancePunchRecord[],
+    employees: ApplicationFormRecord[],
+    query: AttendanceQuery,
+  ): AttendanceSession {
+    const dates = resolveQueryDates(query);
+    const dateSet = new Set(dates);
+    const index = buildEmployeeAttendanceIndex(employees);
+    const punchGroups = new Map<string, AttendancePunchRecord[]>();
+
+    for (const punch of punches) {
+      const punchDate = extractIsoDate(punch.PunchDatetime);
+      if (!punchDate || !dateSet.has(punchDate)) {
+        continue;
+      }
+
+      const employeeKey =
+        resolvePunchKey(punch.EmployeeId, index.aliasToCanonical) ||
+        canonicalAttendanceKey(punch.EmployeeId) ||
+        punch.EmployeeId.trim();
+      if (!employeeKey) {
+        continue;
+      }
+
+      ensurePunchOnlyEmployee(index, employeeKey, punch.EmployeeId);
+      attachEmployeeNameFromAliases(index, employeeKey, punch.EmployeeId);
+
+      const groupKey = `${employeeKey}|${punchDate}`;
+      const group = punchGroups.get(groupKey) ?? [];
+      group.push(punch);
+      punchGroups.set(groupKey, group);
+    }
+
+    const slots = this.buildAttendanceSlots(query, dates, index, punchGroups);
+
+    return {
+      query,
+      employees,
+      index,
+      punchGroups,
+      slots,
+    };
+  }
+
+  private createSessionFromEmployees(
+    query: AttendanceQuery,
+    employees: ApplicationFormRecord[],
+    punchGroups: Map<string, AttendancePunchRecord[]>,
+  ): AttendanceSession {
+    const dates = resolveQueryDates(query);
+    const index = buildEmployeeAttendanceIndex(employees);
+
+    for (const groupKey of punchGroups.keys()) {
+      const [employeeKey, date] = groupKey.split('|');
+      if (!employeeKey || !date) {
+        continue;
+      }
+      const punches = punchGroups.get(groupKey) ?? [];
+      const rawId = punches[0]?.EmployeeId ?? employeeKey;
+      ensurePunchOnlyEmployee(index, employeeKey, rawId);
+      attachEmployeeNameFromAliases(index, employeeKey, rawId);
+    }
+
+    const slots = this.buildAttendanceSlots(query, dates, index, punchGroups);
+
+    return {
+      query,
+      employees,
+      index,
+      punchGroups,
+      slots,
+    };
+  }
+
+  private buildAttendanceSlots(
+    query: AttendanceQuery,
+    dates: string[],
+    index: EmployeeAttendanceIndex,
+    punchGroups: Map<string, AttendancePunchRecord[]>,
+  ): AttendanceSlotRef[] {
+    const employeeKeys = collectAttendanceEmployeeKeys(query, index, punchGroups);
+    const slots: AttendanceSlotRef[] = [];
+
+    for (const employeeKey of employeeKeys) {
+      const displayId = index.displayIdByKey.get(employeeKey) ?? formatAttendanceUserId(employeeKey);
+      const employeeName = index.nameByKey.get(employeeKey) ?? '';
+
+      for (const date of dates) {
+        const dayPunches = sortPunchesChronologically(punchGroups.get(`${employeeKey}|${date}`) ?? []);
+        slots.push(this.buildSlotRef(employeeKey, displayId, employeeName, date, dayPunches));
+      }
+    }
+
+    return slots.sort((left, right) => {
+      const dateCompare = right.date.localeCompare(left.date);
+      if (dateCompare !== 0) {
+        return dateCompare;
+      }
+      return left.displayId.localeCompare(right.displayId, undefined, { numeric: true });
+    });
+  }
+
+  private buildSlotRef(
+    employeeKey: string,
+    displayId: string,
+    employeeName: string,
+    date: string,
+    punches: AttendancePunchRecord[],
+  ): AttendanceSlotRef {
+    // API returns punch rows only (no punch-in / punch-out fields). Any row = Present.
+    if (punches.length === 0) {
+      return {
+        employeeKey,
+        displayId,
+        employeeName,
+        date,
+        status: 'Absent',
+        punchIn: '',
+        punchOut: '',
+        punchInDevice: '',
+        punchOutDevice: '',
+        workingMinutes: 0,
+        punchCount: 0,
+      };
+    }
+
+    const sorted = sortPunchesChronologically(punches);
+    const firstPunch = sorted[0];
+    const secondPunch = sorted.length >= 2 ? sorted[1] : null;
+
+    return {
+      employeeKey,
+      displayId,
+      employeeName,
+      date,
+      status: 'Present',
+      punchIn: firstPunch.PunchDatetime,
+      punchOut: secondPunch?.PunchDatetime ?? '',
+      punchInDevice: firstPunch.DeviceNo,
+      punchOutDevice: secondPunch?.DeviceNo ?? '',
+      workingMinutes: calcWorkingMinutes(firstPunch.PunchDatetime, secondPunch?.PunchDatetime ?? ''),
+      punchCount: sorted.length,
+    };
+  }
+
+  private slotToDailyRecord(slot: AttendanceSlotRef, punches: AttendancePunchRecord[]): AttendanceDailyRecord {
+    const sorted = sortPunchesChronologically(punches);
+
+    return {
+      EmployeeId: slot.displayId,
+      EmployeeName: slot.employeeName,
+      AttendanceDate: slot.date,
+      PunchIn: slot.punchIn,
+      PunchOut: slot.punchOut,
+      PunchInDevice: slot.punchInDevice,
+      PunchOutDevice: slot.punchOutDevice,
+      WorkingMinutes: slot.workingMinutes,
+      AttendanceStatus: slot.status,
+      PunchCount: slot.punchCount,
+      Punches: sorted,
+      selected: false,
+    };
+  }
+
+  /**
+   * Pioneer biometrics endpoints (see API docs):
+   * - Today all:        /EmployeeData
+   * - Today employee:   /EmployeeData/{employeeId}
+   * - Date all:         /EmployeeData/Date/{yyyy-MM-dd}
+   * - Date employee:    /EmployeeData/Date/{yyyy-MM-dd}/{employeeId}
+   * - Range all:        /EmployeeData/DateRange/{from}/{to}/
+   * - Range employee:   /EmployeeData/DateRange/{from}/{to}/{employeeId}
+   */
   buildQueryUrl(query: AttendanceQuery): string {
     const normalized = this.normalizeQuery(query);
-    const userId = normalized.userId?.trim();
-    const apiEmployeeId = userId ? biometricsPathEmployeeId(userId) : '';
-    const employeeSuffix = apiEmployeeId ? `/${encodeURIComponent(apiEmployeeId)}` : '';
+    const apiEmployeeId = normalized.userId?.trim()
+      ? biometricsPathEmployeeId(normalized.userId.trim())
+      : '';
+    const employeePath = apiEmployeeId ? `/${encodeURIComponent(apiEmployeeId)}` : '';
 
     switch (normalized.mode) {
-      case 'today': {
-        const date = formatIsoDate(new Date());
-        return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${date}/${date}${employeeSuffix}`;
-      }
+      case 'today':
+        return `${BIOMETRICS_API_BASE_URL}/EmployeeData${employeePath}`;
 
       case 'date': {
         const date = normalized.date ?? formatIsoDate(new Date());
-        return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${date}/${date}${employeeSuffix}`;
+        return `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}${employeePath}`;
       }
 
       case 'dateRange': {
         const fromDate = normalized.fromDate ?? formatIsoDate(new Date());
         const toDate = normalized.toDate ?? fromDate;
         const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
-        return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}${employeeSuffix}`;
+        if (apiEmployeeId) {
+          return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/${encodeURIComponent(apiEmployeeId)}`;
+        }
+        return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/`;
       }
     }
   }
 
-  /** Fallback when date-scoped biometrics URLs return no rows or fail. */
+  /** Fallback when the scoped URL returns no rows or fails. */
   buildFallbackPunchUrl(query: AttendanceQuery): string {
     const normalized = this.normalizeQuery(query);
-    const userId = normalized.userId?.trim();
-    const apiEmployeeId = userId ? biometricsPathEmployeeId(userId) : '';
+    const apiEmployeeId = normalized.userId?.trim()
+      ? biometricsPathEmployeeId(normalized.userId.trim())
+      : '';
 
     if (apiEmployeeId) {
-      const fromDate =
-        normalized.mode === 'dateRange'
-          ? normalizeDateRange(
-              normalized.fromDate ?? formatIsoDate(new Date()),
-              normalized.toDate ?? normalized.fromDate ?? formatIsoDate(new Date()),
-            )[0]
-          : normalized.mode === 'date'
-            ? (normalized.date ?? formatIsoDate(new Date()))
-            : formatIsoDate(new Date());
-      const toDate =
-        normalized.mode === 'dateRange'
-          ? normalizeDateRange(
-              normalized.fromDate ?? formatIsoDate(new Date()),
-              normalized.toDate ?? normalized.fromDate ?? formatIsoDate(new Date()),
-            )[1]
-          : fromDate;
-      return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${fromDate}/${toDate}/${encodeURIComponent(apiEmployeeId)}`;
+      return `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(apiEmployeeId)}`;
     }
 
     return `${BIOMETRICS_API_BASE_URL}/EmployeeData`;
@@ -170,108 +427,6 @@ export class AttendanceManagementService {
         return loadUrl(fallbackUrl);
       }),
     );
-  }
-
-  private buildDailyAttendance(
-    punches: AttendancePunchRecord[],
-    employees: ApplicationFormRecord[],
-    query: AttendanceQuery,
-  ): AttendanceDailyRecord[] {
-    const dates = resolveQueryDates(query);
-    const dateSet = new Set(dates);
-    const index = buildEmployeeAttendanceIndex(employees);
-    const punchGroups = new Map<string, AttendancePunchRecord[]>();
-
-    // API punch rows are the source of truth for Present / punch-in / punch-out.
-    for (const punch of punches) {
-      const punchDate = extractIsoDate(punch.PunchDatetime);
-      if (!punchDate || !dateSet.has(punchDate)) {
-        continue;
-      }
-
-      const employeeKey =
-        resolvePunchKey(punch.EmployeeId, index.aliasToCanonical) ||
-        canonicalAttendanceKey(punch.EmployeeId) ||
-        punch.EmployeeId.trim();
-      if (!employeeKey) {
-        continue;
-      }
-
-      ensurePunchOnlyEmployee(index, employeeKey, punch.EmployeeId);
-      attachEmployeeNameFromAliases(index, employeeKey, punch.EmployeeId);
-
-      const groupKey = `${employeeKey}|${punchDate}`;
-      const group = punchGroups.get(groupKey) ?? [];
-      group.push(punch);
-      punchGroups.set(groupKey, group);
-    }
-
-    const employeeKeys = collectAttendanceEmployeeKeys(query, index, punchGroups);
-    const records: AttendanceDailyRecord[] = [];
-
-    for (const employeeKey of employeeKeys) {
-      const displayId = index.displayIdByKey.get(employeeKey) ?? formatAttendanceUserId(employeeKey);
-      const employeeName = index.nameByKey.get(employeeKey) ?? '';
-
-      for (const date of dates) {
-        const dayPunches = sortPunchesChronologically(punchGroups.get(`${employeeKey}|${date}`) ?? []);
-        records.push(this.aggregateEmployeeDay(displayId, date, dayPunches, employeeName));
-      }
-    }
-
-    return records.sort((left, right) => {
-      const dateCompare = right.AttendanceDate.localeCompare(left.AttendanceDate);
-      if (dateCompare !== 0) {
-        return dateCompare;
-      }
-      return left.EmployeeId.localeCompare(right.EmployeeId, undefined, { numeric: true });
-    });
-  }
-
-  private aggregateEmployeeDay(
-    employeeId: string,
-    date: string,
-    punches: AttendancePunchRecord[],
-    employeeName: string,
-  ): AttendanceDailyRecord {
-    // Any punch row from the biometrics API for this employee/day = Present.
-    if (punches.length === 0) {
-      return {
-        EmployeeId: employeeId,
-        EmployeeName: employeeName,
-        AttendanceDate: date,
-        PunchIn: '',
-        PunchOut: '',
-        PunchInDevice: '',
-        PunchOutDevice: '',
-        WorkingMinutes: 0,
-        AttendanceStatus: 'Absent',
-        PunchCount: 0,
-        Punches: [],
-        selected: false,
-      };
-    }
-
-    const sorted = sortPunchesChronologically(punches);
-    const checkIn = sorted[0];
-    const checkOut = sorted.length >= 2 ? sorted[1] : null;
-    const punchIn = checkIn.PunchDatetime;
-    const punchOut = checkOut?.PunchDatetime ?? '';
-
-    return {
-      EmployeeId: employeeId,
-      EmployeeName: employeeName,
-      AttendanceDate: date,
-      PunchIn: punchIn,
-      PunchOut: punchOut,
-      PunchInDevice: checkIn.DeviceNo,
-      PunchOutDevice: checkOut?.DeviceNo ?? '',
-      WorkingMinutes: calcWorkingMinutes(punchIn, punchOut),
-      AttendanceStatus: 'Present',
-      PunchCount: sorted.length,
-      Punches: sorted,
-      selected: false,
-    };
   }
 
   private normalizeQuery(query: AttendanceQuery): AttendanceQuery {

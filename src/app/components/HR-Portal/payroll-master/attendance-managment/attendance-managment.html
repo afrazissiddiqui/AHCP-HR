@@ -9,7 +9,7 @@
         </div>
         <div class="attendance-kpi__content">
           <span class="attendance-kpi__label">Daily Records</span>
-          <strong class="attendance-kpi__value">{{ filteredList.length }}</strong>
+          <strong class="attendance-kpi__value">{{ filteredSlotCount }}</strong>
         </div>
       </article>
       <article class="attendance-kpi attendance-kpi--teal">
@@ -180,8 +180,8 @@
             Daily Attendance
           </h2>
           <p class="attendance-module__subtitle">
-            {{ filteredList.length }} record(s)
-            <ng-container *ngIf="hasActiveListFilters()"> · filtered from {{ attendanceList.length }}</ng-container>
+            {{ filteredSlotCount }} record(s)
+            <ng-container *ngIf="hasActiveListFilters()"> · filtered from {{ totalSlotCount }}</ng-container>
             · First punch = In, second visit = Out
           </p>
         </div>
@@ -247,7 +247,7 @@
                   </div>
                 </td>
               </tr>
-              <tr *ngIf="!loading() && filteredList.length === 0">
+              <tr *ngIf="!loading() && filteredSlotCount === 0">
                 <td class="attendance-table__empty" [attr.colspan]="visibleColumns.length + 2">
                   No attendance records found for the selected query.
                 </td>
@@ -301,8 +301,8 @@
 
         <div class="attendance-pagination table-pagination">
           <div class="pagination-info">
-            Showing {{ filteredList.length ? (currentPage - 1) * pageSize + 1 : 0 }} to
-            {{ Math.min(currentPage * pageSize, filteredList.length) }} of {{ filteredList.length }} entries
+            Showing {{ filteredSlotCount ? (currentPage - 1) * pageSize + 1 : 0 }} to
+            {{ Math.min(currentPage * pageSize, filteredSlotCount) }} of {{ filteredSlotCount }} entries
           </div>
 
           <div class="attendance-pagination__bottom">
