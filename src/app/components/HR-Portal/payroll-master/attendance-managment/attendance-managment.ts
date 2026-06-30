@@ -5,17 +5,20 @@ import { ColumnResizeDirective } from '../../../../column-resize';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { AlertService } from '../../../../services/alert.service';
 import {
-  AttendanceListRecord,
   AttendanceManagementService,
-  AttendanceRecord,
+  AttendancePunchRecord,
+  AttendanceQuery,
+  AttendanceQueryMode,
+  formatIsoDate,
+  formatPunchDate,
+  formatPunchTime,
 } from '../../../../services/attendance-management.service';
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
-import { displayDateOnly } from '../../../../utils/date-format.util';
 import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
 
-type AttendanceColumnKey = Exclude<keyof AttendanceListRecord, 'selected' | 'Id' | 'Remarks'>;
+type AttendanceColumnKey = 'No' | 'EmployeeId' | 'PunchDate' | 'PunchTime' | 'PunchDatetime' | 'DeviceNo' | 'Status';
 
 @Component({
   selector: 'app-attendance-managment',
@@ -33,37 +36,38 @@ export class AttendanceManagmentComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly showViewDialog = signal(false);
-  readonly viewLoading = signal(false);
-  readonly selectedRecord = signal<AttendanceRecord | null>(null);
+  readonly selectedRecord = signal<AttendancePunchRecord | null>(null);
 
   Math = Math;
   searchText = '';
   selectedStatus = '';
-  selectedMonth = '';
-  selectedYear = '';
+  selectedDeviceNo = '';
+  queryMode: AttendanceQueryMode = 'today';
+  employeeId = '';
+  selectedDate = formatIsoDate(new Date());
+  fromDate = formatIsoDate(new Date());
+  toDate = formatIsoDate(new Date());
   showDialog = false;
   activeTab: 'filter' = 'filter';
-  sortColumn: AttendanceColumnKey | '' = '';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: AttendanceColumnKey | '' = 'PunchDatetime';
+  sortDirection: 'asc' | 'desc' = 'desc';
   currentPage = 1;
-  pageSize = 10;
+  pageSize = 25;
   readonly pageSizeOptions = [10, 25, 50, 100];
+  readonly queryModeOptions: Array<{ value: AttendanceQueryMode; label: string }> = [
+    { value: 'today', label: 'Today' },
+    { value: 'date', label: 'Specific Date' },
+    { value: 'dateRange', label: 'Date Range' },
+  ];
 
   readonly columns: Array<{ key: AttendanceColumnKey; label: string; visible: boolean }> = [
-    { key: 'EmployeeCode', label: 'Employee Code', visible: true },
-    { key: 'EmployeeName', label: 'Employee Name', visible: true },
-    { key: 'Department', label: 'Department', visible: true },
-    { key: 'AttendanceDate', label: 'Attendance Date', visible: true },
-    { key: 'Shift', label: 'Shift', visible: true },
-    { key: 'CheckIn', label: 'Check In', visible: true },
-    { key: 'CheckOut', label: 'Check Out', visible: true },
-    { key: 'WorkingHours', label: 'Working Hours', visible: true },
-    { key: 'LateMinutes', label: 'Late (min)', visible: true },
-    { key: 'EarlyLeaveMinutes', label: 'Early Leave (min)', visible: false },
-    { key: 'OvertimeHours', label: 'Overtime (hrs)', visible: true },
+    { key: 'No', label: 'No', visible: true },
+    { key: 'EmployeeId', label: 'Employee ID', visible: true },
+    { key: 'PunchDate', label: 'Punch Date', visible: true },
+    { key: 'PunchTime', label: 'Punch Time', visible: true },
+    { key: 'PunchDatetime', label: 'Punch Datetime', visible: false },
+    { key: 'DeviceNo', label: 'Device No', visible: true },
     { key: 'Status', label: 'Status', visible: true },
-    { key: 'PayrollMonth', label: 'Payroll Month', visible: false },
-    { key: 'PayrollYear', label: 'Payroll Year', visible: false },
   ];
 
   ngOnInit(): void {
@@ -78,7 +82,7 @@ export class AttendanceManagmentComponent implements OnInit {
     this.loadRecords();
   }
 
-  get attendanceList(): AttendanceListRecord[] {
+  get attendanceList(): AttendancePunchRecord[] {
     return this.attendanceService.records();
   }
 
@@ -93,58 +97,38 @@ export class AttendanceManagmentComponent implements OnInit {
     return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }
 
-  get monthOptions(): number[] {
-    const seen = new Set<number>();
+  get deviceOptions(): string[] {
+    const seen = new Set<string>();
     for (const row of this.attendanceList) {
-      if (row.PayrollMonth) {
-        seen.add(row.PayrollMonth);
+      const deviceNo = row.DeviceNo?.trim();
+      if (deviceNo) {
+        seen.add(deviceNo);
       }
     }
-    return Array.from(seen).sort((a, b) => a - b);
+    return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }
 
-  get yearOptions(): number[] {
-    const seen = new Set<number>();
-    for (const row of this.attendanceList) {
-      if (row.PayrollYear) {
-        seen.add(row.PayrollYear);
-      }
-    }
-    return Array.from(seen).sort((a, b) => b - a);
-  }
-
-  get filteredList(): AttendanceListRecord[] {
+  get filteredList(): AttendancePunchRecord[] {
     let list = this.attendanceList;
 
     if (this.selectedStatus) {
       list = list.filter((row) => row.Status === this.selectedStatus);
     }
 
-    if (this.selectedMonth) {
-      const month = Number(this.selectedMonth);
-      list = list.filter((row) => row.PayrollMonth === month);
-    }
-
-    if (this.selectedYear) {
-      const year = Number(this.selectedYear);
-      list = list.filter((row) => row.PayrollYear === year);
+    if (this.selectedDeviceNo) {
+      list = list.filter((row) => row.DeviceNo === this.selectedDeviceNo);
     }
 
     if (this.searchText.trim()) {
       const search = this.searchText.toLowerCase();
       list = list.filter((row) =>
-        row.EmployeeCode.toLowerCase().includes(search) ||
-        row.EmployeeName.toLowerCase().includes(search) ||
-        row.Department.toLowerCase().includes(search) ||
-        row.AttendanceDate.toLowerCase().includes(search) ||
-        row.Shift.toLowerCase().includes(search) ||
-        row.CheckIn.toLowerCase().includes(search) ||
-        row.CheckOut.toLowerCase().includes(search) ||
-        row.Status.toLowerCase().includes(search) ||
-        row.Remarks.toLowerCase().includes(search) ||
-        String(row.WorkingHours).includes(search) ||
-        String(row.LateMinutes).includes(search) ||
-        String(row.OvertimeHours).includes(search),
+        String(row.No).includes(search) ||
+        row.EmployeeId.toLowerCase().includes(search) ||
+        row.PunchDatetime.toLowerCase().includes(search) ||
+        formatPunchDate(row.PunchDatetime).toLowerCase().includes(search) ||
+        formatPunchTime(row.PunchDatetime).toLowerCase().includes(search) ||
+        row.DeviceNo.toLowerCase().includes(search) ||
+        row.Status.toLowerCase().includes(search),
       );
     }
 
@@ -171,6 +155,18 @@ export class AttendanceManagmentComponent implements OnInit {
     return this.columns.filter((column) => column.visible);
   }
 
+  get visibleIdentityColumnCount(): number {
+    return this.visibleColumns.filter((column) => this.getColumnGroup(column.key) === 'identity').length;
+  }
+
+  get visibleTimeColumnCount(): number {
+    return this.visibleColumns.filter((column) => this.getColumnGroup(column.key) === 'time').length;
+  }
+
+  get visibleDeviceColumnCount(): number {
+    return this.visibleColumns.filter((column) => this.getColumnGroup(column.key) === 'device').length;
+  }
+
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.filteredList.length / this.pageSize));
   }
@@ -179,7 +175,7 @@ export class AttendanceManagmentComponent implements OnInit {
     return Array.from({ length: this.totalPages }, (_, index) => index + 1);
   }
 
-  get paginatedList(): AttendanceListRecord[] {
+  get paginatedList(): AttendancePunchRecord[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredList.slice(start, start + this.pageSize);
   }
@@ -188,8 +184,46 @@ export class AttendanceManagmentComponent implements OnInit {
     return this.attendanceList.filter((row) => row.selected).length;
   }
 
+  get uniqueEmployeeCount(): number {
+    return new Set(this.filteredList.map((row) => row.EmployeeId).filter(Boolean)).size;
+  }
+
+  get uniqueDeviceCount(): number {
+    return new Set(this.filteredList.map((row) => row.DeviceNo).filter(Boolean)).size;
+  }
+
+  getColumnGroup(key: AttendanceColumnKey): 'identity' | 'time' | 'device' {
+    switch (key) {
+      case 'No':
+      case 'EmployeeId':
+        return 'identity';
+      case 'PunchDate':
+      case 'PunchTime':
+      case 'PunchDatetime':
+        return 'time';
+      default:
+        return 'device';
+    }
+  }
+
+  getColumnGroupClass(key: AttendanceColumnKey): string {
+    return `attendance-col--${this.getColumnGroup(key)}`;
+  }
+
+  get currentQueryLabel(): string {
+    const employeeSuffix = this.employeeId.trim() ? ` · Employee ${this.employeeId.trim()}` : '';
+    switch (this.queryMode) {
+      case 'today':
+        return `Today${employeeSuffix}`;
+      case 'date':
+        return `${this.selectedDate}${employeeSuffix}`;
+      case 'dateRange':
+        return `${this.fromDate} to ${this.toDate}${employeeSuffix}`;
+    }
+  }
+
   hasActiveListFilters(): boolean {
-    return !!this.selectedStatus || !!this.selectedMonth || !!this.selectedYear || !!this.searchText.trim();
+    return !!this.selectedStatus || !!this.selectedDeviceNo || !!this.searchText.trim();
   }
 
   toggleSidebar(): void {
@@ -202,6 +236,17 @@ export class AttendanceManagmentComponent implements OnInit {
 
   onFilterChange(): void {
     this.currentPage = 1;
+  }
+
+  onQueryModeChange(): void {
+    if (this.queryMode === 'today') {
+      this.loadRecords();
+    }
+  }
+
+  applyQuery(): void {
+    this.currentPage = 1;
+    this.loadRecords();
   }
 
   openDialog(): void {
@@ -219,7 +264,7 @@ export class AttendanceManagmentComponent implements OnInit {
     }
 
     this.sortColumn = column;
-    this.sortDirection = 'asc';
+    this.sortDirection = column === 'PunchDatetime' || column === 'PunchDate' || column === 'PunchTime' ? 'desc' : 'asc';
   }
 
   setPage(page: number): void {
@@ -244,132 +289,88 @@ export class AttendanceManagmentComponent implements OnInit {
     }
   }
 
-  displayCellValue(row: AttendanceListRecord, key: AttendanceColumnKey): string | number {
-    if (key === 'AttendanceDate') {
-      return this.formatAttendanceDate(row.AttendanceDate);
+  displayCellValue(row: AttendancePunchRecord, key: AttendanceColumnKey): string | number {
+    switch (key) {
+      case 'PunchDate':
+        return formatPunchDate(row.PunchDatetime);
+      case 'PunchTime':
+        return formatPunchTime(row.PunchDatetime);
+      case 'PunchDatetime':
+        return row.PunchDatetime || '—';
+      case 'Status':
+        return row.Status || '—';
+      default:
+        return row[key];
     }
-    if (key === 'PayrollMonth') {
-      return this.formatMonth(row.PayrollMonth);
-    }
-    if (key === 'WorkingHours' || key === 'OvertimeHours') {
-      return this.formatHours(row[key]);
-    }
-    return row[key];
   }
 
-  formatAttendanceDate(value: string): string {
-    return displayDateOnly(value) || value || '—';
-  }
-
-  formatMonth(month: number): string {
-    const labels = [
-      '',
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return labels[month] ?? String(month || '—');
-  }
-
-  formatHours(value: number): string {
-    if (!value) {
-      return '0.00';
-    }
-    return value.toFixed(2);
-  }
+  formatAttendanceDate = formatPunchDate;
+  formatAttendanceTime = formatPunchTime;
 
   getStatusClass(status: string): string {
-    switch (status.trim().toLowerCase()) {
-      case 'present':
-        return 'attendance-status--present';
-      case 'absent':
-        return 'attendance-status--absent';
-      case 'half day':
-        return 'attendance-status--half-day';
-      case 'leave':
-        return 'attendance-status--leave';
-      case 'holiday':
-        return 'attendance-status--holiday';
-      case 'weekend':
-        return 'attendance-status--weekend';
-      default:
-        return 'attendance-status--default';
+    const normalized = status.trim().toLowerCase();
+    if (!normalized) {
+      return 'attendance-status--empty';
     }
+    if (normalized.includes('in') || normalized.includes('present')) {
+      return 'attendance-status--present';
+    }
+    if (normalized.includes('out') || normalized.includes('absent')) {
+      return 'attendance-status--absent';
+    }
+    return 'attendance-status--default';
   }
 
-  viewRecord(record: AttendanceListRecord): void {
-    if (!record.Id) {
-      void this.alertService.warning('View', 'Unable to view this row: missing attendance id.');
+  viewRecord(record: AttendancePunchRecord): void {
+    if (!record.No) {
+      void this.alertService.warning('View', 'Unable to view this row: missing punch record number.');
       return;
     }
 
     this.showViewDialog.set(true);
-    this.selectedRecord.set(null);
-    this.viewLoading.set(true);
-
-    this.attendanceService.fetchAttendanceDetail(record.Id).subscribe({
-      next: (detail) => {
-        this.selectedRecord.set(detail);
-        this.viewLoading.set(false);
-      },
-      error: (error: unknown) => {
-        this.viewLoading.set(false);
-        this.showViewDialog.set(false);
-        void this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load attendance details.'),
-        );
-      },
-    });
+    this.selectedRecord.set(record);
   }
 
   closeViewDialog(): void {
     this.showViewDialog.set(false);
     this.selectedRecord.set(null);
-    this.viewLoading.set(false);
   }
 
   private loadRecords(): void {
     this.loading.set(true);
-    this.attendanceService.fetchAttendanceList().subscribe({
+
+    const query: AttendanceQuery = {
+      mode: this.queryMode,
+      employeeId: this.employeeId,
+      date: this.selectedDate,
+      fromDate: this.fromDate,
+      toDate: this.toDate,
+    };
+
+    this.attendanceService.fetchAttendance(query).subscribe({
       next: () => {
         this.loading.set(false);
-        if (!this.selectedMonth && this.monthOptions.length) {
-          this.selectedMonth = String(this.monthOptions[this.monthOptions.length - 1]);
-        }
-        if (!this.selectedYear && this.yearOptions.length) {
-          this.selectedYear = String(this.yearOptions[0]);
-        }
       },
       error: (error: unknown) => {
         this.loading.set(false);
         void this.alertService.error(
           'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load attendance records.'),
+          formatApiErrorMessage(error, 'Failed to load attendance records from Pioneer Biometrics.'),
         );
       },
     });
   }
 
-  private getSortableValue(row: AttendanceListRecord, key: AttendanceColumnKey): string | number {
-    if (key === 'AttendanceDate') {
-      return row.AttendanceDate;
+  private getSortableValue(row: AttendancePunchRecord, key: AttendanceColumnKey): string | number {
+    switch (key) {
+      case 'PunchDate':
+      case 'PunchTime':
+      case 'PunchDatetime':
+        return row.PunchDatetime;
+      case 'No':
+        return row.No;
+      default:
+        return String(row[key] ?? '').toLowerCase();
     }
-    if (key === 'PayrollMonth' || key === 'PayrollYear') {
-      return row[key];
-    }
-    if (key === 'WorkingHours' || key === 'LateMinutes' || key === 'EarlyLeaveMinutes' || key === 'OvertimeHours') {
-      return row[key];
-    }
-    return String(row[key] ?? '').toLowerCase();
   }
 }

@@ -68,9 +68,10 @@
             "production": {
               "buildTarget": "SAPQC:build:production"
             },
-            "development": {
-              "buildTarget": "SAPQC:build:development"
-            }
+        "development": {
+          "buildTarget": "SAPQC:build:development",
+          "proxyConfig": "proxy.conf.json"
+        }
           },
           "defaultConfiguration": "development"
         },

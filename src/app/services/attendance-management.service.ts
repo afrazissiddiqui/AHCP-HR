@@ -1,107 +1,39 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, tap } from 'rxjs';
-import { apiUrl } from '../config/api.config';
+import { Observable, map, tap } from 'rxjs';
+import { BIOMETRICS_API_BASE_URL } from '../config/api.config';
 
-export type AttendanceStatus =
-  | 'Present'
-  | 'Absent'
-  | 'Half Day'
-  | 'Leave'
-  | 'Holiday'
-  | 'Weekend';
+export type AttendanceQueryMode = 'today' | 'date' | 'dateRange';
 
-export interface AttendanceListRecord {
-  Id: number;
-  EmployeeCode: string;
-  EmployeeName: string;
-  Department: string;
-  AttendanceDate: string;
-  Shift: string;
-  CheckIn: string;
-  CheckOut: string;
-  WorkingHours: number;
-  LateMinutes: number;
-  EarlyLeaveMinutes: number;
-  OvertimeHours: number;
-  Status: AttendanceStatus | string;
-  PayrollMonth: number;
-  PayrollYear: number;
-  Remarks: string;
+export interface AttendanceQuery {
+  mode: AttendanceQueryMode;
+  employeeId?: string;
+  date?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface AttendancePunchRecord {
+  No: number;
+  EmployeeId: string;
+  PunchDatetime: string;
+  DeviceNo: string;
+  Status: string;
   selected?: boolean;
 }
 
-export interface AttendanceRecord extends AttendanceListRecord {
-  Designation: string;
-  Location: string;
-  ApprovedBy: string;
-  ApprovedDate: string;
-}
-
-const ATTENDANCE_LIST_URL = apiUrl('attendance-list');
-const ATTENDANCE_DETAIL_URL = apiUrl('attendance-detail');
-
-function createSampleAttendanceRecords(): AttendanceListRecord[] {
-  const statuses: AttendanceStatus[] = ['Present', 'Present', 'Absent', 'Half Day', 'Leave', 'Present', 'Holiday'];
-  const departments = ['Production', 'HR', 'Finance', 'Maintenance', 'Sales', 'IT', 'Admin'];
-  const shifts = ['General', 'Morning', 'Evening', 'Night'];
-  const employees = [
-    { code: 'EMP-1001', name: 'Ahmed Khan' },
-    { code: 'EMP-1002', name: 'Sara Ali' },
-    { code: 'EMP-1003', name: 'Bilal Hussain' },
-    { code: 'EMP-1004', name: 'Fatima Noor' },
-    { code: 'EMP-1005', name: 'Usman Raza' },
-    { code: 'EMP-1006', name: 'Ayesha Malik' },
-    { code: 'EMP-1007', name: 'Hassan Iqbal' },
-    { code: 'EMP-1008', name: 'Nadia Sheikh' },
-    { code: 'EMP-1009', name: 'Imran Javed' },
-    { code: 'EMP-1010', name: 'Rabia Aslam' },
-  ];
-
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
-
-  return employees.flatMap((employee, employeeIndex) =>
-    Array.from({ length: 5 }, (_, dayOffset) => {
-      const date = new Date(year, month - 1, Math.max(1, today.getDate() - dayOffset - employeeIndex));
-      const status = statuses[(employeeIndex + dayOffset) % statuses.length];
-      const isWorkingDay = status === 'Present' || status === 'Half Day';
-      const checkIn = isWorkingDay ? '08:' + String(5 + (employeeIndex % 4) * 3).padStart(2, '0') : '—';
-      const checkOut = isWorkingDay
-        ? status === 'Half Day'
-          ? '13:00'
-          : '17:' + String(10 + (employeeIndex % 3) * 5).padStart(2, '0')
-        : '—';
-
-      return {
-        Id: employeeIndex * 10 + dayOffset + 1,
-        EmployeeCode: employee.code,
-        EmployeeName: employee.name,
-        Department: departments[employeeIndex % departments.length],
-        AttendanceDate: formatIsoDate(date),
-        Shift: shifts[employeeIndex % shifts.length],
-        CheckIn: checkIn,
-        CheckOut: checkOut,
-        WorkingHours: status === 'Present' ? 8 + (employeeIndex % 2) * 0.5 : status === 'Half Day' ? 4 : 0,
-        LateMinutes: isWorkingDay ? (employeeIndex + dayOffset) % 3 === 0 ? 15 : 0 : 0,
-        EarlyLeaveMinutes: status === 'Half Day' ? 240 : 0,
-        OvertimeHours: status === 'Present' && employeeIndex % 4 === 0 ? 1.5 : 0,
-        Status: status,
-        PayrollMonth: month,
-        PayrollYear: year,
-        Remarks: status === 'Leave' ? 'Annual leave' : status === 'Absent' ? 'Uninformed absence' : '',
-        selected: false,
-      } satisfies AttendanceListRecord;
-    }),
-  );
-}
-
-function formatIsoDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+interface BiometricsPunchApiRecord {
+  No?: number;
+  'Employee ID'?: string;
+  EmployeeId?: string;
+  employeeId?: string;
+  PunchDatetime?: string;
+  punchDatetime?: string;
+  'Device No'?: string;
+  DeviceNo?: string;
+  deviceNo?: string;
+  Status?: string | null;
+  status?: string | null;
 }
 
 @Injectable({
@@ -109,92 +41,102 @@ function formatIsoDate(date: Date): string {
 })
 export class AttendanceManagementService {
   private readonly http = inject(HttpClient);
-  private readonly recordList = signal<AttendanceListRecord[]>([]);
+  private readonly recordList = signal<AttendancePunchRecord[]>([]);
+  private lastQuery: AttendanceQuery = { mode: 'today' };
 
   readonly records = this.recordList.asReadonly();
 
-  fetchAttendanceList(): Observable<AttendanceListRecord[]> {
-    return this.http.get<unknown>(ATTENDANCE_LIST_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToListRecord(item))),
+  fetchAttendance(query: AttendanceQuery): Observable<AttendancePunchRecord[]> {
+    this.lastQuery = this.normalizeQuery(query);
+    const url = this.buildQueryUrl(this.lastQuery);
+
+    return this.http.get<unknown>(url).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItem(item))),
+      map((records) => this.sortRecords(records)),
       tap((records) => this.recordList.set(records)),
-      catchError(() => {
-        const sample = createSampleAttendanceRecords();
-        this.recordList.set(sample);
-        return of(sample);
-      }),
     );
   }
 
-  fetchAttendanceDetail(id: string | number): Observable<AttendanceRecord> {
-    const identifier = encodeURIComponent(String(id));
+  fetchAttendanceDetail(no: number): Observable<AttendancePunchRecord> {
+    const cached = this.recordList().find((row) => row.No === no);
+    if (cached) {
+      return new Observable((subscriber) => {
+        subscriber.next(cached);
+        subscriber.complete();
+      });
+    }
 
-    return this.http.get<unknown>(`${ATTENDANCE_DETAIL_URL}/${identifier}`).pipe(
-      map((response) => this.mapDetailResponse(response, id)),
-      catchError(() => {
-        const match = this.recordList().find((row) => String(row.Id) === String(id));
+    const employeeId = this.lastQuery.employeeId?.trim();
+    const query = this.lastQuery;
+    return this.fetchAttendance(query).pipe(
+      map((records) => {
+        const match = records.find((row) => row.No === no);
         if (!match) {
-          throw new Error('Attendance record not found.');
+          throw new Error('Attendance punch record not found.');
         }
-        return of(this.mapListRecordToDetail(match));
+        return match;
       }),
     );
   }
 
-  private mapListRecordToDetail(record: AttendanceListRecord): AttendanceRecord {
+  getLastQuery(): AttendanceQuery {
+    return { ...this.lastQuery };
+  }
+
+  buildQueryUrl(query: AttendanceQuery): string {
+    const normalized = this.normalizeQuery(query);
+    const employeeId = normalized.employeeId?.trim();
+
+    switch (normalized.mode) {
+      case 'today':
+        return employeeId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(employeeId)}`
+          : `${BIOMETRICS_API_BASE_URL}/EmployeeData`;
+
+      case 'date': {
+        const date = normalized.date ?? formatIsoDate(new Date());
+        return employeeId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}/${encodeURIComponent(employeeId)}`
+          : `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}`;
+      }
+
+      case 'dateRange': {
+        const fromDate = normalized.fromDate ?? formatIsoDate(new Date());
+        const toDate = normalized.toDate ?? fromDate;
+        const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
+        return employeeId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/${encodeURIComponent(employeeId)}`
+          : `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/`;
+      }
+    }
+  }
+
+  private normalizeQuery(query: AttendanceQuery): AttendanceQuery {
     return {
-      ...record,
-      Designation: '—',
-      Location: '—',
-      ApprovedBy: '—',
-      ApprovedDate: '—',
+      mode: query.mode,
+      employeeId: query.employeeId?.trim() || undefined,
+      date: query.date?.trim() || undefined,
+      fromDate: query.fromDate?.trim() || undefined,
+      toDate: query.toDate?.trim() || undefined,
     };
   }
 
-  private mapDetailResponse(response: unknown, id: string | number): AttendanceRecord {
-    const root = this.unwrapRecord(response);
-    const listRecord = this.mapApiItemToListRecord(root);
+  private mapApiItem(item: BiometricsPunchApiRecord): AttendancePunchRecord {
+    const punchDatetime = String(item.PunchDatetime ?? item.punchDatetime ?? '').trim();
 
     return {
-      ...listRecord,
-      Id: listRecord.Id || Number(id) || 0,
-      Designation: this.pickString([root], ['designation', 'Designation', 'jobTitle', 'job_title']),
-      Location: this.pickString([root], ['location', 'Location']),
-      ApprovedBy: this.pickString([root], ['approvedBy', 'approved_by', 'ApprovedBy']),
-      ApprovedDate: this.pickString([root], ['approvedDate', 'approved_date', 'ApprovedDate']),
-    };
-  }
-
-  private mapApiItemToListRecord(item: Record<string, unknown>): AttendanceListRecord {
-    return {
-      Id: this.pickNumber([item], ['Id', 'id', 'ID']),
-      EmployeeCode: this.pickString([item], ['employeeCode', 'employee_code', 'EmployeeCode']),
-      EmployeeName: this.pickString([item], [
-        'employeeName',
-        'employee_name',
-        'EmployeeName',
-        'personName',
-        'person_name',
-      ]),
-      Department: this.pickString([item], ['department', 'Department']),
-      AttendanceDate: this.pickString([item], ['attendanceDate', 'attendance_date', 'AttendanceDate', 'date', 'Date']),
-      Shift: this.pickString([item], ['shift', 'Shift']),
-      CheckIn: this.pickString([item], ['checkIn', 'check_in', 'CheckIn']),
-      CheckOut: this.pickString([item], ['checkOut', 'check_out', 'CheckOut']),
-      WorkingHours: this.pickNumber([item], ['workingHours', 'working_hours', 'WorkingHours']),
-      LateMinutes: this.pickNumber([item], ['lateMinutes', 'late_minutes', 'LateMinutes']),
-      EarlyLeaveMinutes: this.pickNumber([item], ['earlyLeaveMinutes', 'early_leave_minutes', 'EarlyLeaveMinutes']),
-      OvertimeHours: this.pickNumber([item], ['overtimeHours', 'overtime_hours', 'OvertimeHours']),
-      Status: this.pickString([item], ['status', 'Status']) || 'Present',
-      PayrollMonth: this.pickNumber([item], ['payrollMonth', 'payroll_month', 'PayrollMonth', 'month', 'Month']),
-      PayrollYear: this.pickNumber([item], ['payrollYear', 'payroll_year', 'PayrollYear', 'year', 'Year']),
-      Remarks: this.pickString([item], ['remarks', 'Remarks']),
+      No: Number(item.No ?? 0),
+      EmployeeId: String(item['Employee ID'] ?? item.EmployeeId ?? item.employeeId ?? '').trim(),
+      PunchDatetime: punchDatetime,
+      DeviceNo: String(item['Device No'] ?? item.DeviceNo ?? item.deviceNo ?? '').trim(),
+      Status: String(item.Status ?? item.status ?? '').trim(),
       selected: false,
     };
   }
 
-  private extractApiItems(response: unknown): Array<Record<string, unknown>> {
+  private extractApiItems(response: unknown): BiometricsPunchApiRecord[] {
     if (Array.isArray(response)) {
-      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      return response.filter((item): item is BiometricsPunchApiRecord => !!item && typeof item === 'object');
     }
 
     if (!response || typeof response !== 'object') {
@@ -206,52 +148,82 @@ export class AttendanceManagementService {
 
     for (const candidate of candidates) {
       if (Array.isArray(candidate)) {
-        return candidate.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+        return candidate.filter((item): item is BiometricsPunchApiRecord => !!item && typeof item === 'object');
       }
     }
 
     return [];
   }
 
-  private unwrapRecord(response: unknown): Record<string, unknown> {
-    if (!response || typeof response !== 'object') {
-      return {};
-    }
-
-    const root = response as Record<string, unknown>;
-    const nested = root['data'] ?? root['Data'] ?? root['record'] ?? root['Record'];
-    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-      return nested as Record<string, unknown>;
-    }
-
-    return root;
-  }
-
-  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
-    for (const source of sources) {
-      for (const key of keys) {
-        const value = source[key];
-        if (value !== undefined && value !== null && String(value).trim() !== '') {
-          return String(value).trim();
-        }
+  private sortRecords(records: AttendancePunchRecord[]): AttendancePunchRecord[] {
+    return [...records].sort((left, right) => {
+      const leftTime = Date.parse(left.PunchDatetime);
+      const rightTime = Date.parse(right.PunchDatetime);
+      if (Number.isFinite(leftTime) && Number.isFinite(rightTime) && leftTime !== rightTime) {
+        return rightTime - leftTime;
       }
-    }
-    return '';
+      return right.No - left.No;
+    });
+  }
+}
+
+export function formatIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function normalizeDateRange(fromDate: string, toDate: string): [string, string] {
+  const from = Date.parse(fromDate);
+  const to = Date.parse(toDate);
+  if (Number.isFinite(from) && Number.isFinite(to) && from > to) {
+    return [toDate, fromDate];
+  }
+  return [fromDate, toDate];
+}
+
+export function formatPunchDate(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '—';
   }
 
-  private pickNumber(sources: Array<Record<string, unknown>>, keys: string[]): number {
-    for (const source of sources) {
-      for (const key of keys) {
-        const value = source[key];
-        if (value === undefined || value === null || value === '') {
-          continue;
-        }
-        const parsed = Number(value);
-        if (Number.isFinite(parsed)) {
-          return parsed;
-        }
-      }
-    }
-    return 0;
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
   }
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    return trimmed;
+  }
+
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const year = parsed.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+export function formatPunchTime(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '—';
+  }
+
+  const match = trimmed.match(/T(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (match) {
+    const seconds = match[3] ? `:${match[3]}` : '';
+    return `${match[1]}:${match[2]}${seconds}`;
+  }
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    return trimmed;
+  }
+
+  const hours = String(parsed.getHours()).padStart(2, '0');
+  const minutes = String(parsed.getMinutes()).padStart(2, '0');
+  const seconds = String(parsed.getSeconds()).padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
 }

@@ -1,0 +1,10 @@
+{
+  "/biometrics-api": {
+    "target": "http://pioneerbiometrics.com:71",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/biometrics-api": "/api"
+    }
+  }
+}
