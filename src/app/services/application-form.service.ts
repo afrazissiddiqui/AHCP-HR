@@ -564,11 +564,24 @@ export class ApplicationFormService {
 
     const detailByKey = new Map<string, ApplicationFormRecord>();
     for (const record of detailed) {
-      for (const key of [record.apiId, record.userId, record.EmployeeCode]) {
+      const keys = new Set<string>();
+      for (const key of [record.apiId, record.userId, record.EmployeeCode, record.detail?.loginDetails.userId]) {
         const normalized = key?.trim();
-        if (normalized) {
-          detailByKey.set(normalized, record);
+        if (!normalized) {
+          continue;
         }
+        keys.add(normalized);
+        if (/^\d+$/.test(normalized)) {
+          keys.add(normalized.padStart(8, '0'));
+        }
+        const empMatch = normalized.match(/^Emp-(\d+)$/i);
+        if (empMatch) {
+          keys.add(empMatch[1].padStart(8, '0'));
+        }
+      }
+
+      for (const key of keys) {
+        detailByKey.set(key, record);
       }
     }
 
