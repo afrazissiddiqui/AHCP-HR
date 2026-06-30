@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, catchError, concatMap, forkJoin, from, map, of, scan, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
 import { formatDateOfBirthFromApi, formatDateForInput } from '../utils/date-format.util';
 
@@ -538,6 +538,43 @@ export class ApplicationFormService {
         return this.mapApiItemToFullRecord(item);
       }),
     );
+  }
+
+  /**
+   * Loads employee profile details in small batches to avoid API rate limits (HTTP 429).
+   * Emits the accumulated list after each batch so callers can render progressively.
+   */
+  fetchEmployeeProfileDetailsInBatches(
+    records: ApplicationFormRecord[],
+    batchSize = 5,
+  ): Observable<ApplicationFormRecord[]> {
+    const targets = records.filter((record) => !!record.apiId);
+    if (targets.length === 0) {
+      return of([]);
+    }
+
+    const safeBatchSize = Math.max(1, batchSize);
+
+    return from(this.chunkRecords(targets, safeBatchSize)).pipe(
+      concatMap((batch) =>
+        forkJoin(
+          batch.map((record) =>
+            this.fetchEmployeeProfileDetail(record.apiId!).pipe(
+              catchError(() => of(record)),
+            ),
+          ),
+        ),
+      ),
+      scan((allResults, batchResults) => [...allResults, ...batchResults], [] as ApplicationFormRecord[]),
+    );
+  }
+
+  private chunkRecords<T>(items: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let index = 0; index < items.length; index += size) {
+      chunks.push(items.slice(index, index + size));
+    }
+    return chunks;
   }
 
   private extractApiSingle(response: unknown): Record<string, unknown> | null {

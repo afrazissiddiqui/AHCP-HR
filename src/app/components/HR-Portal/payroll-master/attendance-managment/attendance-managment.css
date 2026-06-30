@@ -75,6 +75,71 @@
   color: #0070f2;
 }
 
+.attendance-list-row--absent {
+  background: rgba(254, 242, 242, 0.55);
+}
+
+.attendance-time-value--in {
+  color: #047857;
+  font-weight: 600;
+}
+
+.attendance-time-value--out {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.attendance-punch-log {
+  overflow-x: auto;
+}
+
+.attendance-punch-log__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.attendance-punch-log__table th,
+.attendance-punch-log__table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.attendance-punch-log__table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+.attendance-punch-role {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.attendance-punch-role--in {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.attendance-punch-role--out {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.attendance-absent-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
 .attendance-kpi--violet .attendance-kpi__icon ui5-icon {
   color: #7c3aed;
 }

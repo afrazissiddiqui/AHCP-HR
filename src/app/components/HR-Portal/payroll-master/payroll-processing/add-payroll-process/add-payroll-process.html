@@ -209,7 +209,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (row of rows(); track row.apiId; let odd = $odd) {
+                @for (row of paginatedRows(); track row.apiId; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                     <td class="comp-emp-cell comp-section-end comp-section-end--employee">
                       <div class="comp-emp-profile">
@@ -261,7 +261,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (row of rows(); track row.apiId; let odd = $odd) {
+                @for (row of paginatedRows(); track row.apiId; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                     @for (col of payrollColumns; track col.key) {
                       <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
@@ -337,6 +337,66 @@
                 </tr>
               </tfoot>
             </table>
+          </div>
+        </div>
+
+        <div class="comp-pagination table-pagination">
+          <div class="pagination-info">
+            @if (rows().length > 0) {
+              Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
+              {{ Math.min(currentPage() * pageSize(), rows().length) }} of {{ rows().length }} employees
+            } @else {
+              No employees to display
+            }
+          </div>
+
+          <div class="pagination-controls comp-pagination__controls">
+            <button type="button" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+
+            <div class="page-numbers comp-pagination__numbers">
+              @for (item of paginationFooterItems(); track paginationItemTrack($index, item); let last = $last) {
+                @switch (item.kind) {
+                  @case ('page') {
+                    <button
+                      type="button"
+                      [class.active]="item.page === currentPage()"
+                      (click)="setPage(item.page)"
+                    >
+                      {{ item.page }}
+                    </button>
+                  }
+                  @case ('ellipsis') {
+                    <span class="comp-pagination__ellipsis" aria-hidden="true">.........</span>
+                  }
+                  @case ('last') {
+                    <button
+                      type="button"
+                      [class.active]="isLastPageActive()"
+                      (click)="setPage(totalPages())"
+                    >
+                      Last
+                    </button>
+                  }
+                }
+                @if (!last) {
+                  <span class="comp-pagination__comma" aria-hidden="true">,</span>
+                }
+              }
+            </div>
+
+            <button type="button" [disabled]="currentPage() >= totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
+          </div>
+
+          <div class="page-size-selector">
+            <select
+              [ngModel]="pageSize()"
+              (ngModelChange)="pageSize.set(+$event); onPageSizeChange()"
+              aria-label="Rows per page"
+            >
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">Show {{ size }}</option>
+              }
+            </select>
           </div>
         </div>
       </div>

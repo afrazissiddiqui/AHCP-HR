@@ -889,3 +889,49 @@
 .comp-table-scroll .comp-col-row th {
   top: 42px;
 }
+
+.comp-pagination {
+  flex-shrink: 0;
+  border-top: 1px solid #e8edf2;
+  background: #fff;
+}
+
+.comp-pagination__controls {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.comp-pagination__numbers {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.comp-pagination__comma {
+  color: #6a6d70;
+  padding: 0 2px;
+  user-select: none;
+  line-height: 1;
+}
+
+.comp-pagination__ellipsis {
+  color: #6a6d70;
+  letter-spacing: 0.08em;
+  padding: 0 6px;
+  user-select: none;
+  font-weight: 600;
+}
+
+.comp-pagination .page-numbers button.active {
+  background: #0070f2;
+  border-color: #0070f2;
+  color: #fff;
+}
+
+.comp-pagination .page-size-selector select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #1d2d3e;
+  background: #fff;
+}

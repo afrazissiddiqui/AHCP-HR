@@ -21,12 +21,10 @@ function resolveBiometricsApiBaseUrl(): string {
     return 'http://pioneerbiometrics.com:71/api';
   }
 
-  const hostname = window.location.hostname.toLowerCase();
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return '/biometrics-api';
-  }
-
-  return 'http://pioneerbiometrics.com:71/api';
+  // Always use same-origin proxy in the browser. Direct calls to pioneerbiometrics.com
+  // are blocked by CORS. Local dev uses proxy.conf.json; production needs a matching
+  // reverse-proxy route for /biometrics-api.
+  return '/biometrics-api';
 }
 
 /** Backend server root — resolved from where the app is accessed. */

@@ -8,8 +8,26 @@
           <ui5-icon name="time-entry-request"></ui5-icon>
         </div>
         <div class="attendance-kpi__content">
-          <span class="attendance-kpi__label">Total Punches</span>
+          <span class="attendance-kpi__label">Daily Records</span>
           <strong class="attendance-kpi__value">{{ filteredList.length }}</strong>
+        </div>
+      </article>
+      <article class="attendance-kpi attendance-kpi--teal">
+        <div class="attendance-kpi__icon" aria-hidden="true">
+          <ui5-icon name="accept"></ui5-icon>
+        </div>
+        <div class="attendance-kpi__content">
+          <span class="attendance-kpi__label">Present</span>
+          <strong class="attendance-kpi__value">{{ presentCount }}</strong>
+        </div>
+      </article>
+      <article class="attendance-kpi attendance-kpi--amber">
+        <div class="attendance-kpi__icon" aria-hidden="true">
+          <ui5-icon name="decline"></ui5-icon>
+        </div>
+        <div class="attendance-kpi__content">
+          <span class="attendance-kpi__label">Absent</span>
+          <strong class="attendance-kpi__value">{{ absentCount }}</strong>
         </div>
       </article>
       <article class="attendance-kpi attendance-kpi--violet">
@@ -17,26 +35,8 @@
           <ui5-icon name="employee"></ui5-icon>
         </div>
         <div class="attendance-kpi__content">
-          <span class="attendance-kpi__label">Employees</span>
-          <strong class="attendance-kpi__value">{{ uniqueEmployeeCount }}</strong>
-        </div>
-      </article>
-      <article class="attendance-kpi attendance-kpi--teal">
-        <div class="attendance-kpi__icon" aria-hidden="true">
-          <ui5-icon name="factory"></ui5-icon>
-        </div>
-        <div class="attendance-kpi__content">
-          <span class="attendance-kpi__label">Devices</span>
-          <strong class="attendance-kpi__value">{{ uniqueDeviceCount }}</strong>
-        </div>
-      </article>
-      <article class="attendance-kpi attendance-kpi--amber">
-        <div class="attendance-kpi__icon" aria-hidden="true">
-          <ui5-icon name="accept"></ui5-icon>
-        </div>
-        <div class="attendance-kpi__content">
-          <span class="attendance-kpi__label">Selected</span>
-          <strong class="attendance-kpi__value">{{ selectedCount }}</strong>
+          <span class="attendance-kpi__label">Total Punches</span>
+          <strong class="attendance-kpi__value">{{ totalPunchCount }}</strong>
         </div>
       </article>
     </section>
@@ -114,7 +114,7 @@
             <ui5-icon name="filter" class="attendance-module__title-icon" aria-hidden="true"></ui5-icon>
             Filters &amp; Search
           </h2>
-          <p class="attendance-module__subtitle">Refine the loaded punch list before export or review</p>
+          <p class="attendance-module__subtitle">Refine the daily attendance list before export or review</p>
         </div>
       </header>
 
@@ -132,26 +132,13 @@
           </select>
         </div>
 
-        <div class="attendance-toolbar-filter">
-          <label for="attendance-device-filter">Device</label>
-          <select
-            id="attendance-device-filter"
-            class="attendance-control"
-            [(ngModel)]="selectedDeviceNo"
-            (ngModelChange)="onFilterChange()"
-          >
-            <option value="">All devices</option>
-            <option *ngFor="let device of deviceOptions" [value]="device">{{ device }}</option>
-          </select>
-        </div>
-
         <div class="attendance-search-field">
           <input
             type="text"
             class="attendance-control"
             [(ngModel)]="searchText"
             (ngModelChange)="onSearchChange()"
-            placeholder="Search employee, punch, device..."
+            placeholder="Search employee, date, punch time..."
           />
           <span class="attendance-search-field__icon" aria-hidden="true">
             <ui5-icon name="search"></ui5-icon>
@@ -190,17 +177,18 @@
         <div class="attendance-module__heading">
           <h2 class="attendance-module__title">
             <ui5-icon name="table-view" class="attendance-module__title-icon" aria-hidden="true"></ui5-icon>
-            Attendance Punches
+            Daily Attendance
           </h2>
           <p class="attendance-module__subtitle">
             {{ filteredList.length }} record(s)
             <ng-container *ngIf="hasActiveListFilters()"> · filtered from {{ attendanceList.length }}</ng-container>
+            · First punch = In, second visit = Out
           </p>
         </div>
         <div class="attendance-legend" aria-label="Column group legend">
-          <span class="attendance-legend__item attendance-legend__item--identity">Identity</span>
-          <span class="attendance-legend__item attendance-legend__item--time">Punch Time</span>
-          <span class="attendance-legend__item attendance-legend__item--device">Device &amp; Status</span>
+          <span class="attendance-legend__item attendance-legend__item--identity">Employee</span>
+          <span class="attendance-legend__item attendance-legend__item--time">Punch In / Out</span>
+          <span class="attendance-legend__item attendance-legend__item--device">Status</span>
         </div>
       </header>
 
@@ -217,7 +205,7 @@
                   [attr.colspan]="visibleIdentityColumnCount"
                   *ngIf="visibleIdentityColumnCount > 0"
                 >
-                  Identity
+                  Employee
                 </th>
                 <th
                   class="attendance-table__group attendance-table__group--time"
@@ -228,10 +216,10 @@
                 </th>
                 <th
                   class="attendance-table__group attendance-table__group--device"
-                  [attr.colspan]="visibleDeviceColumnCount"
-                  *ngIf="visibleDeviceColumnCount > 0"
+                  [attr.colspan]="visibleStatusColumnCount"
+                  *ngIf="visibleStatusColumnCount > 0"
                 >
-                  Device &amp; Status
+                  Status
                 </th>
                 <th class="attendance-table__group attendance-table__group--actions" rowspan="2">Actions</th>
               </tr>
@@ -255,19 +243,20 @@
                 <td class="attendance-table__empty" [attr.colspan]="visibleColumns.length + 2">
                   <div class="attendance-table__empty-content">
                     <span class="attendance-table__spinner" aria-hidden="true"></span>
-                    Loading attendance punches…
+                    Loading attendance records…
                   </div>
                 </td>
               </tr>
               <tr *ngIf="!loading() && filteredList.length === 0">
                 <td class="attendance-table__empty" [attr.colspan]="visibleColumns.length + 2">
-                  No attendance punches found for the selected query.
+                  No attendance records found for the selected query.
                 </td>
               </tr>
               <tr
                 *ngFor="let row of paginatedList; let i = index"
                 class="attendance-list-row"
                 [class.attendance-list-row--alt]="i % 2 === 1"
+                [class.attendance-list-row--absent]="row.AttendanceStatus === 'Absent'"
                 (click)="viewRecord(row)"
               >
                 <td class="attendance-table__select" (click)="$event.stopPropagation()">
@@ -278,26 +267,29 @@
                   [ngClass]="getColumnGroupClass(col.key)"
                 >
                   <ng-container [ngSwitch]="col.key">
-                    <span *ngSwitchCase="'Status'" class="attendance-status" [ngClass]="getStatusClass(row.Status)">
-                      {{ row.Status || '—' }}
+                    <span *ngSwitchCase="'AttendanceStatus'" class="attendance-status" [ngClass]="getStatusClass(row.AttendanceStatus)">
+                      {{ row.AttendanceStatus }}
                     </span>
                     <span *ngSwitchCase="'EmployeeId'" class="attendance-employee-chip">
                       {{ displayCellValue(row, col.key) }}
                     </span>
-                    <span *ngSwitchCase="'DeviceNo'" class="attendance-device-chip">
+                    <span *ngSwitchCase="'EmployeeName'">
+                      {{ row.EmployeeName || '—' }}
+                    </span>
+                    <span *ngSwitchCase="'PunchIn'" class="attendance-time-value attendance-time-value--in">
                       {{ displayCellValue(row, col.key) }}
                     </span>
-                    <span *ngSwitchCase="'PunchDate'" class="attendance-time-value">
+                    <span *ngSwitchCase="'PunchOut'" class="attendance-time-value attendance-time-value--out">
                       {{ displayCellValue(row, col.key) }}
                     </span>
-                    <span *ngSwitchCase="'PunchTime'" class="attendance-time-value">
+                    <span *ngSwitchCase="'AttendanceDate'" class="attendance-time-value">
                       {{ displayCellValue(row, col.key) }}
                     </span>
                     <span *ngSwitchDefault>{{ displayCellValue(row, col.key) }}</span>
                   </ng-container>
                 </td>
                 <td class="attendance-table__actions" (click)="$event.stopPropagation()">
-                  <button type="button" class="attendance-view-btn" (click)="viewRecord(row)" title="View punch record">
+                  <button type="button" class="attendance-view-btn" (click)="viewRecord(row)" title="View attendance detail">
                     <ui5-icon name="detail-view" class="attendance-btn-icon" aria-hidden="true"></ui5-icon>
                     View
                   </button>
@@ -341,9 +333,11 @@
   <div class="attendance-detail-modal js-detail-modal" *ngIf="showViewDialog()">
     <div class="attendance-detail-modal__header js-modal-header">
       <h2>
-        Attendance Punch Detail
+        Attendance Detail
         <ng-container *ngIf="selectedRecord() as record">
-          — {{ record.EmployeeId }} ({{ formatAttendanceDate(record.PunchDatetime) }})
+          — {{ record.EmployeeId }}
+          <ng-container *ngIf="record.EmployeeName"> ({{ record.EmployeeName }})</ng-container>
+          · {{ formatAttendanceDate(record.AttendanceDate) }}
         </ng-container>
       </h2>
       <button type="button" class="js-close-modal attendance-close-btn" (click)="closeViewDialog()" aria-label="Close">
@@ -353,29 +347,57 @@
     <div class="js-modal-body">
       <ng-container *ngIf="selectedRecord() as record">
         <div class="attendance-detail-section attendance-detail-section--identity">
-          <h3>Identity</h3>
+          <h3>Summary</h3>
           <div class="js-detail-grid">
-            <div class="js-detail-item"><label>No:</label> <span>{{ record.No }}</span></div>
             <div class="js-detail-item"><label>Employee ID:</label> <span class="attendance-employee-chip">{{ record.EmployeeId }}</span></div>
+            <div class="js-detail-item"><label>Employee Name:</label> <span>{{ record.EmployeeName || '—' }}</span></div>
+            <div class="js-detail-item"><label>Date:</label> <span class="attendance-time-value">{{ formatAttendanceDate(record.AttendanceDate) }}</span></div>
+            <div class="js-detail-item">
+              <label>Status:</label>
+              <span class="attendance-status" [ngClass]="getStatusClass(record.AttendanceStatus)">{{ record.AttendanceStatus }}</span>
+            </div>
           </div>
         </div>
         <div class="attendance-detail-section attendance-detail-section--time">
-          <h3>Punch Details</h3>
+          <h3>Punch In / Out</h3>
           <div class="js-detail-grid">
-            <div class="js-detail-item"><label>Punch Date:</label> <span class="attendance-time-value">{{ formatAttendanceDate(record.PunchDatetime) }}</span></div>
-            <div class="js-detail-item"><label>Punch Time:</label> <span class="attendance-time-value">{{ formatAttendanceTime(record.PunchDatetime) }}</span></div>
-            <div class="js-detail-item"><label>Punch Datetime:</label> <span>{{ record.PunchDatetime || '—' }}</span></div>
+            <div class="js-detail-item"><label>Punch In:</label> <span class="attendance-time-value attendance-time-value--in">{{ formatAttendanceTime(record.PunchIn) }}</span></div>
+            <div class="js-detail-item"><label>Punch Out:</label> <span class="attendance-time-value attendance-time-value--out">{{ formatAttendanceTime(record.PunchOut) }}</span></div>
+            <div class="js-detail-item"><label>Working Hours:</label> <span>{{ formatWorkingDuration(record.WorkingMinutes) }}</span></div>
+            <div class="js-detail-item"><label>In Device:</label> <span class="attendance-device-chip">{{ record.PunchInDevice || '—' }}</span></div>
+            <div class="js-detail-item"><label>Out Device:</label> <span class="attendance-device-chip">{{ record.PunchOutDevice || '—' }}</span></div>
+            <div class="js-detail-item"><label>Total Punches:</label> <span>{{ record.PunchCount }}</span></div>
           </div>
         </div>
-        <div class="attendance-detail-section attendance-detail-section--device">
-          <h3>Device &amp; Status</h3>
-          <div class="js-detail-grid">
-            <div class="js-detail-item"><label>Device No:</label> <span class="attendance-device-chip">{{ record.DeviceNo || '—' }}</span></div>
-            <div class="js-detail-item">
-              <label>Status:</label>
-              <span class="attendance-status" [ngClass]="getStatusClass(record.Status)">{{ record.Status || '—' }}</span>
-            </div>
+        <div class="attendance-detail-section attendance-detail-section--device" *ngIf="record.Punches.length > 0">
+          <h3>All Punches ({{ record.Punches.length }})</h3>
+          <div class="attendance-punch-log">
+            <table class="attendance-punch-log__table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Time</th>
+                  <th>Role</th>
+                  <th>Device</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let punch of record.Punches; let pi = index">
+                  <td>{{ punch.No }}</td>
+                  <td>{{ formatAttendanceTime(punch.PunchDatetime) }}</td>
+                  <td>
+                    <span class="attendance-punch-role" [class.attendance-punch-role--in]="pi === 0" [class.attendance-punch-role--out]="pi === record.Punches.length - 1 && record.Punches.length > 1">
+                      {{ pi === 0 ? 'Punch In' : (pi === record.Punches.length - 1 && record.Punches.length > 1 ? 'Punch Out' : 'Punch') }}
+                    </span>
+                  </td>
+                  <td>{{ punch.DeviceNo || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+        </div>
+        <div class="attendance-detail-section attendance-detail-section--device" *ngIf="record.AttendanceStatus === 'Absent'">
+          <p class="attendance-absent-note">No punch in or punch out recorded for this employee on this date.</p>
         </div>
       </ng-container>
     </div>

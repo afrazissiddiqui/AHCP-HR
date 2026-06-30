@@ -12,7 +12,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import {
   ApplicationFormRecord,
@@ -38,6 +37,11 @@ import {
   computeYearsOfService,
 } from '../../payroll-setup/payroll-setup.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import {
+  buildPaginationFooterItems,
+  paginationItemTrack,
+  PaginationFooterItem,
+} from '../../../../../utils/pagination.util';
 import { ApplicationDetailDialogComponent } from '../../../Application-Form/application-detail-dialog/application-detail-dialog';
 
 export interface PayrollProcessRow {
@@ -129,6 +133,9 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly rows = signal<PayrollProcessRow[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+  readonly pageSizeOptions = [10, 25, 50, 100];
   readonly remarks = signal('');
   readonly selectedMonth = signal(new Date().getMonth() + 1);
   readonly selectedYear = signal(new Date().getFullYear());
@@ -198,6 +205,23 @@ export class AddPayrollProcessComponent implements OnInit {
     this.payrollColumns.reduce((sum, col) => sum + col.minWidth, 0),
   );
 
+  readonly paginatedRows = computed(() => {
+    const list = this.rows();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.rows().length / this.pageSize())),
+  );
+
+  readonly paginationFooterItems = computed((): PaginationFooterItem[] =>
+    buildPaginationFooterItems(this.totalPages()),
+  );
+
+  readonly paginationItemTrack = paginationItemTrack;
+  Math = Math;
+
   readonly skeletonRows = Array.from({ length: 8 }, (_, index) => index);
 
   readonly groupTotals = computed(() => {
@@ -252,6 +276,37 @@ export class AddPayrollProcessComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEmployees();
+  }
+
+  setPage(page: number): void {
+    const total = this.totalPages();
+    if (page < 1 || page > total) {
+      return;
+    }
+    this.currentPage.set(page);
+    this.scrollTablesToTop();
+    this.cdr.markForCheck();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage.set(1);
+    this.scrollTablesToTop();
+    this.cdr.markForCheck();
+  }
+
+  isLastPageActive(): boolean {
+    return this.currentPage() === this.totalPages();
+  }
+
+  private scrollTablesToTop(): void {
+    const fixed = this.fixedPane()?.nativeElement;
+    const scroll = this.scrollPane()?.nativeElement;
+    if (fixed) {
+      fixed.scrollTop = 0;
+    }
+    if (scroll) {
+      scroll.scrollTop = 0;
+    }
   }
 
   groupColspan(groupId: string): number {
@@ -624,13 +679,7 @@ export class AddPayrollProcessComponent implements OnInit {
           return;
         }
 
-        forkJoin(
-          withApiId.map((record) =>
-            this.applicationFormService.fetchEmployeeProfileDetail(record.apiId!).pipe(
-              catchError(() => of(record)),
-            ),
-          ),
-        ).subscribe({
+        this.applicationFormService.fetchEmployeeProfileDetailsInBatches(withApiId, 5).subscribe({
           next: (details) => {
             this.rows.set(
               details
@@ -639,6 +688,7 @@ export class AddPayrollProcessComponent implements OnInit {
                   a.personName.localeCompare(b.personName, undefined, { sensitivity: 'base' }),
                 ),
             );
+            this.currentPage.set(1);
             this.loading.set(false);
             this.cdr.markForCheck();
           },
