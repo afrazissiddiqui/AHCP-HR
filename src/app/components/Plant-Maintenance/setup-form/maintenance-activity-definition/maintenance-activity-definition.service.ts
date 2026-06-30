@@ -88,16 +88,20 @@ const MAINTENANCE_ACTIVITY_DEFINITION_DELETE_URL = apiUrl('maintenance-activity-
 
 const DEFAULT_MACHINE_ITEM_TYPE = 'F';
 
-function toOptionalTrimmed(value: string): string {
-  return value.trim();
+/** Satisfies Laravel `required` for blank fields; PHP trim does not remove ZWSP. */
+const EMPTY_INSPECTION_FIELD = '\u200B';
+
+function toApiInspectionField(value: string): string {
+  const trimmed = value.trim();
+  return trimmed === '' ? EMPTY_INSPECTION_FIELD : trimmed;
 }
 
 function mapInspectionLineForPayload(
   line: MaintenanceActivityInspectionLine,
 ): MaintenanceActivityInspectionLinePayload {
-  const itemsToBeInspected = toOptionalTrimmed(line.itemsToBeInspected);
-  const whatToCheck = toOptionalTrimmed(line.whatToCheck);
-  const instructions = toOptionalTrimmed(line.instructions);
+  const itemsToBeInspected = toApiInspectionField(line.itemsToBeInspected);
+  const whatToCheck = toApiInspectionField(line.whatToCheck);
+  const instructions = toApiInspectionField(line.instructions);
 
   return {
     itemsToBeInspected,
