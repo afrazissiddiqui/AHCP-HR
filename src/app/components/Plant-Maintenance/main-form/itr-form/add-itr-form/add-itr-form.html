@@ -14,13 +14,13 @@
         <div class="itr-form-card-head">
           <div class="cjr-section-title">ITR Form</div>
           <p class="itr-form-card-head__hint">
-            Select a machine with replacement items, then complete scheduling and warehouse details.
+            Select a machine with replacement items, then complete the date, warehouse, and remarks details.
           </p>
         </div>
 
         <div class="itr-form-sections">
           <section class="itr-form-section">
-            <h3 class="itr-form-section__title">Machine &amp; Maintenance</h3>
+            <h3 class="itr-form-section__title">Machine</h3>
             <div class="itr-form-fields">
               <div class="itr-field">
                 <label class="itr-field__label" for="husky-machine-id">Machine ID</label>
@@ -34,51 +34,6 @@
                   <option value="">Select machine</option>
                   <option *ngFor="let machine of machineOptions()" [value]="machine.machineId">
                     {{ machine.machineId }} — {{ machine.machineName }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="itr-field">
-                <label class="itr-field__label" for="husky-machine-name">Machine Name</label>
-                <input
-                  id="husky-machine-name"
-                  type="text"
-                  class="itr-field__control itr-field__control--readonly"
-                  [ngModel]="machineName()"
-                  name="machineName"
-                  placeholder="Auto-populated from Machine ID"
-                  readonly
-                />
-              </div>
-
-              <div class="itr-field">
-                <label class="itr-field__label" for="husky-maintenance-type">Maintenance Type</label>
-                <select
-                  id="husky-maintenance-type"
-                  class="mad-select itr-field__control"
-                  [ngModel]="maintenanceType()"
-                  (ngModelChange)="onMaintenanceTypeChange($event)"
-                  name="maintenanceType"
-                >
-                  <option value="">Select maintenance type</option>
-                  <option *ngFor="let option of maintenanceTypeOptions" [value]="option">
-                    {{ option }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="itr-field">
-                <label class="itr-field__label" for="husky-maintenance-frequency">Maintenance Frequency</label>
-                <select
-                  id="husky-maintenance-frequency"
-                  class="mad-select itr-field__control"
-                  [ngModel]="maintenanceFrequency()"
-                  (ngModelChange)="onMaintenanceFrequencyChange($event)"
-                  name="maintenanceFrequency"
-                >
-                  <option value="">Select maintenance frequency</option>
-                  <option *ngFor="let option of maintenanceFrequencyOptions" [value]="option">
-                    {{ option }}
                   </option>
                 </select>
               </div>
@@ -101,18 +56,6 @@
               </div>
 
               <div class="itr-field">
-                <label class="itr-field__label" for="husky-due-date">Due Date</label>
-                <input
-                  id="husky-due-date"
-                  type="date"
-                  class="itr-field__control"
-                  [ngModel]="dueDate()"
-                  (ngModelChange)="onDueDateChange($event)"
-                  name="dueDate"
-                />
-              </div>
-
-              <div class="itr-field">
                 <label class="itr-field__label" for="husky-doc-date">Doc Date</label>
                 <input
                   id="husky-doc-date"
@@ -121,18 +64,6 @@
                   [ngModel]="docDate()"
                   (ngModelChange)="onDocDateChange($event)"
                   name="docDate"
-                />
-              </div>
-
-              <div class="itr-field">
-                <label class="itr-field__label" for="husky-inspection-date">Inspection Date</label>
-                <input
-                  id="husky-inspection-date"
-                  type="date"
-                  class="itr-field__control"
-                  [ngModel]="inspectionDate()"
-                  (ngModelChange)="onInspectionDateChange($event)"
-                  name="inspectionDate"
                 />
               </div>
 
@@ -244,32 +175,14 @@
       *ngIf="replacementLineGroups().length > 0"
     >
       <div class="cjr-personal itr-replacement-card__body">
-        <div class="itr-form-card-head">
-          <div class="cjr-section-title">Replacement Items</div>
-          <p class="itr-form-card-head__hint">
-            Quantities and warehouses can be adjusted per line. Default warehouses come from the form above.
-          </p>
+        <div class="itr-form-card-head itr-form-card-head--compact">
+          <div class="cjr-section-title">Content</div>
         </div>
 
         <div
           class="itr-replacement-line-block"
           *ngFor="let group of replacementLineGroups(); let gi = index; trackBy: trackByIndex"
         >
-          <div class="itr-replacement-line-block__head">
-            <span class="itr-replacement-line-block__index">{{ gi + 1 }}</span>
-            <div class="itr-replacement-line-block__head-text">
-              <span class="itr-replacement-line-block__title">
-                {{ group.componentName || 'Inspection Line' }}
-              </span>
-              <span class="itr-replacement-line-block__subtitle" *ngIf="group.itemsToBeInspected">
-                {{ group.itemsToBeInspected }}
-              </span>
-              <span class="itr-replacement-line-block__subtitle" *ngIf="group.whatToCheck">
-                {{ group.whatToCheck }}
-              </span>
-            </div>
-          </div>
-
           <div class="pmm-replacement-table-wrap itr-replacement-table-wrap">
             <table class="mountain-table pmm-replacement-table itr-replacement-table">
               <thead>

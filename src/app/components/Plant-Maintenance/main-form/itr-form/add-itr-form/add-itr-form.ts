@@ -266,24 +266,8 @@ export class AddItrFormComponent implements OnInit {
     );
   }
 
-  onMaintenanceTypeChange(value: string): void {
-    this.maintenanceType.set(value);
-  }
-
-  onMaintenanceFrequencyChange(value: string): void {
-    this.maintenanceFrequency.set(value);
-  }
-
-  onInspectionDateChange(value: string): void {
-    this.inspectionDate.set(value);
-  }
-
   onPostingDateChange(value: string): void {
     this.postingDate.set(value);
-  }
-
-  onDueDateChange(value: string): void {
-    this.dueDate.set(value);
   }
 
   onDocDateChange(value: string): void {
@@ -314,7 +298,6 @@ export class AddItrFormComponent implements OnInit {
     const maintenanceType = this.maintenanceType().trim();
     const maintenanceFrequency = this.maintenanceFrequency().trim();
     const inspector = this.inspector().trim() || this.resolveInspectorName();
-    const inspectionDate = this.inspectionDate().trim();
 
     if (!machineId) {
       this.alertService.validation('Please select a Machine ID.');
@@ -329,31 +312,13 @@ export class AddItrFormComponent implements OnInit {
       );
       return;
     }
-    if (!maintenanceType) {
-      this.alertService.validation('Please select a Maintenance Type.');
-      return;
-    }
-    if (!maintenanceFrequency) {
-      this.alertService.validation('Please select a Maintenance Frequency.');
-      return;
-    }
-    if (!inspectionDate) {
-      this.alertService.validation('Please enter an Inspection Date.');
-      return;
-    }
-
     const postingDate = this.postingDate().trim();
-    const dueDate = this.dueDate().trim();
     const docDate = this.docDate().trim();
     const fromWarehouseCode = this.fromWarehouseCode().trim();
     const toWarehouseCode = this.toWarehouseCode().trim();
 
     if (!postingDate) {
       this.alertService.validation('Please enter a Posting Date.');
-      return;
-    }
-    if (!dueDate) {
-      this.alertService.validation('Please enter a Due Date.');
       return;
     }
     if (!docDate) {
@@ -410,9 +375,7 @@ export class AddItrFormComponent implements OnInit {
       hourMeterReading: this.hourMeterReading().trim(),
       robotSerialNo: this.robotSerialNo().trim(),
       inspector,
-      inspectionDate,
       postingDate,
-      dueDate,
       docDate,
       fromWarehouseCode,
       toWarehouseCode,
@@ -468,7 +431,7 @@ export class AddItrFormComponent implements OnInit {
     this.hourMeterReading.set(record.hourMeterReading);
     this.robotSerialNo.set(record.robotSerialNo);
     this.inspector.set(record.inspector);
-    this.inspectionDate.set(record.inspectionDate);
+    this.inspectionDate.set(record.inspectionDate || '');
     this.postingDate.set(record.postingDate);
     this.dueDate.set(record.dueDate);
     this.docDate.set(record.docDate);
@@ -553,14 +516,8 @@ export class AddItrFormComponent implements OnInit {
     if (!this.postingDate()) {
       this.postingDate.set(today);
     }
-    if (!this.dueDate()) {
-      this.dueDate.set(today);
-    }
     if (!this.docDate()) {
       this.docDate.set(today);
-    }
-    if (!this.inspectionDate()) {
-      this.inspectionDate.set(today);
     }
   }
 

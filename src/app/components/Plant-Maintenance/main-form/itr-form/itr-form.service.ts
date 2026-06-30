@@ -807,7 +807,7 @@ export interface ItrFormRecord {
   hourMeterReading: string;
   robotSerialNo: string;
   inspector: string;
-  inspectionDate: string;
+  inspectionDate?: string;
   postingDate: string;
   dueDate: string;
   docDate: string;
@@ -854,7 +854,7 @@ export interface ItrFormAddInput {
   hourMeterReading: string;
   robotSerialNo: string;
   inspector: string;
-  inspectionDate: string;
+  inspectionDate?: string;
   postingDate?: string;
   dueDate?: string;
   docDate?: string;
@@ -872,6 +872,22 @@ export interface ItrFormAddInput {
   measurements: ItrMeasurementsData;
   levelParallelism: ItrLevelParallelismData;
   replacementLineGroups?: ItrReplacementLineGroup[];
+}
+
+export interface ItrSapSubmitItemPayload {
+  item_code: string;
+  quantity: string;
+  FromWhsCod: string;
+  ToWhsCode: string;
+}
+
+export interface ItrSapSubmitPayload {
+  DocDate: string;
+  TaxDate: string;
+  from_warehouse: string;
+  to_warehouse: string;
+  Remarks: string;
+  items: ItrSapSubmitItemPayload[];
 }
 
 export interface ItrFormSectionPayload {
@@ -915,6 +931,8 @@ const ITR_FORM_ADD_URL = apiUrl('itr-form-add');
 const ITR_FORM_DETAIL_URL = apiUrl('itr-form-detail');
 const ITR_FORM_UPDATE_URL = apiUrl('itr-form-update');
 const ITR_FORM_DELETE_URL = apiUrl('itr-form-delete');
+const ITR_FORM_SAP_SUBMIT_URL =
+  'http://alhafiz.vdc.services:8084/ahcp/public/api/itr_submit_in_sap';
 
 function getKpiSectionName(row: ItrKpiRow): string {
   if (row.key === 'safety') {
@@ -1124,7 +1142,7 @@ export function buildItrFormAddPayload(entry: ItrFormAddInput): ItrFormAddPayloa
     hour_meter_reading: Number.isFinite(hourMeter) ? hourMeter : 0,
     robot_serial_no: entry.robotSerialNo.trim(),
     inspector: entry.inspector.trim(),
-    inspection_date: entry.inspectionDate.trim(),
+    inspection_date: entry.inspectionDate?.trim() || '',
     posting_date: entry.postingDate?.trim() || '',
     due_date: entry.dueDate?.trim() || '',
     doc_date: entry.docDate?.trim() || '',
@@ -1139,6 +1157,37 @@ export function buildItrFormAddPayload(entry: ItrFormAddInput): ItrFormAddPayloa
 }
 
 export const buildItrFormPayload = buildItrFormAddPayload;
+
+export function buildItrSapSubmitPayload(entry: ItrFormAddInput): ItrSapSubmitPayload {
+  const items = (entry.replacementLineGroups ?? [])
+    .flatMap((group) =>
+      group.items.map((item) => ({
+        item_code: item.itemCode.trim(),
+        quantity:
+          item.quantity === null || item.quantity === undefined
+            ? ''
+            : String(item.quantity),
+        FromWhsCod: item.fromWarehouseCode.trim(),
+        ToWhsCode: item.toWarehouseCode.trim(),
+      })),
+    )
+    .filter(
+      (item) =>
+        item.item_code &&
+        item.quantity &&
+        item.FromWhsCod &&
+        item.ToWhsCode,
+    );
+
+  return {
+    DocDate: entry.postingDate?.trim() || '',
+    TaxDate: entry.docDate?.trim() || '',
+    from_warehouse: entry.fromWarehouseCode?.trim() || '',
+    to_warehouse: entry.toWarehouseCode?.trim() || '',
+    Remarks: entry.remarks?.trim() || '',
+    items,
+  };
+}
 
 function pickStringValue(sources: Array<Record<string, unknown>>, keys: string[]): string {
   for (const source of sources) {
@@ -1596,7 +1645,10 @@ export class ItrFormService {
   }
 
   addItrForm(entry: ItrFormAddInput): Observable<ItrFormApiResponse> {
-    return this.http.post<ItrFormApiResponse>(ITR_FORM_ADD_URL, buildItrFormAddPayload(entry));
+    return this.http.post<ItrFormApiResponse>(
+      ITR_FORM_SAP_SUBMIT_URL,
+      buildItrSapSubmitPayload(entry),
+    );
   }
 
   updateItrForm(id: string | number, entry: ItrFormAddInput): Observable<ItrFormApiResponse> {
