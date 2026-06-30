@@ -35,6 +35,7 @@ import {
   ItrHydraulicCheckpoint,
   ItrKpiRow,
   ItrMechanicalCheckpoint,
+  ItrReplacementItem,
   ItrReplacementLineGroup,
   ItrRobotCheckpoint,
   ItrSafetyCheckpoint,
@@ -482,15 +483,24 @@ export class AddItrFormComponent implements OnInit {
     groups: PlantMaintenanceMasterReplacementLineGroup[],
   ): ItrReplacementLineGroup[] {
     return groups.map((group) => ({
-      ...group,
-      items: group.items.map((item) => ({
-        itemCode: item.itemCode,
-        itemName: item.itemName,
-        quantity: item.quantity,
-        fromWarehouseCode: '',
-        toWarehouseCode: '',
-      })),
+      lineKey: group.lineKey,
+      componentName: group.componentName,
+      itemsToBeInspected: group.itemsToBeInspected,
+      whatToCheck: group.whatToCheck,
+      items: group.items.map((item) => this.normalizeReplacementItem(item)),
     }));
+  }
+
+  private normalizeReplacementItem(
+    item: Partial<ItrReplacementItem>,
+  ): ItrReplacementItem {
+    return {
+      itemCode: item.itemCode ?? '',
+      itemName: item.itemName ?? '',
+      quantity: item.quantity ?? null,
+      fromWarehouseCode: item.fromWarehouseCode ?? '',
+      toWarehouseCode: item.toWarehouseCode ?? '',
+    };
   }
 
   private mergeReplacementLineGroups(
@@ -521,12 +531,12 @@ export class AddItrFormComponent implements OnInit {
           if (!savedItem) {
             return item;
           }
-          return {
+          return this.normalizeReplacementItem({
             ...item,
             quantity: savedItem.quantity ?? item.quantity,
             fromWarehouseCode: savedItem.fromWarehouseCode || item.fromWarehouseCode,
             toWarehouseCode: savedItem.toWarehouseCode || item.toWarehouseCode,
-          };
+          });
         }),
       };
     });
@@ -536,8 +546,11 @@ export class AddItrFormComponent implements OnInit {
     groups: ItrReplacementLineGroup[],
   ): ItrReplacementLineGroup[] {
     return groups.map((group) => ({
-      ...group,
-      items: group.items.map((item) => ({ ...item })),
+      lineKey: group.lineKey,
+      componentName: group.componentName,
+      itemsToBeInspected: group.itemsToBeInspected,
+      whatToCheck: group.whatToCheck,
+      items: group.items.map((item) => this.normalizeReplacementItem(item)),
     }));
   }
 
