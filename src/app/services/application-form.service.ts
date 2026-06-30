@@ -174,6 +174,8 @@ export interface ApplicationFormRecord {
   selected?: boolean;
   /** Backend record id for view/detail API */
   apiId?: string;
+  /** Login user id — used for biometrics / attendance matching */
+  userId?: string;
   /** Populated when loaded from view API or saved locally */
   detail?: ApplicationFormDetail;
 }
@@ -863,6 +865,22 @@ export class ApplicationFormService {
     return employeeCode || '—';
   }
 
+  private resolveUserIdFromApiItem(item: Record<string, unknown>): string {
+    const asString = (value: unknown): string =>
+      value === undefined || value === null ? '' : String(value).trim();
+
+    const loginSource =
+      this.pickNestedRecord(item['loginDetail']) ??
+      this.pickNestedRecord(item['loginDetails']) ??
+      this.pickNestedRecord(item['login_detail']);
+
+    const fromLogin = loginSource
+      ? pickFrom(loginSource, 'userId', 'user_id')
+      : '';
+
+    return fromLogin || asString(item['userId']) || asString(item['user_id']) || '';
+  }
+
   private mapApiItemToRecord(item: Record<string, unknown>): ApplicationFormRecord {
     const asString = (value: unknown): string =>
       value === undefined || value === null ? '' : String(value).trim();
@@ -877,6 +895,7 @@ export class ApplicationFormService {
     const employeeName = personName || composedName || loginEmployeeName;
 
     const apiId = asString(item['id']) || (employeeCode !== '—' ? employeeCode : '');
+    const userId = this.resolveUserIdFromApiItem(item);
 
     return {
       EmployeeCode: employeeCode,
@@ -910,6 +929,7 @@ export class ApplicationFormService {
         'Active',
       selected: false,
       apiId: apiId || undefined,
+      userId: userId || undefined,
     };
   }
 
@@ -1162,6 +1182,7 @@ export class ApplicationFormService {
 
     return {
       ...summary,
+      userId: detail.loginDetails.userId?.trim() || summary.userId,
       EmployeeCode:
         detail.loginDetails.employeeCode && detail.loginDetails.employeeCode !== '—'
           ? detail.loginDetails.employeeCode

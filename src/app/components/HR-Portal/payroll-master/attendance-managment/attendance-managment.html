@@ -84,13 +84,13 @@
         </ng-container>
 
         <div class="attendance-query-bar__group attendance-query-bar__group--employee">
-          <label for="attendance-employee-id">Employee ID</label>
+          <label for="attendance-user-id">User ID</label>
           <input
-            id="attendance-employee-id"
+            id="attendance-user-id"
             class="attendance-control"
             type="text"
-            [(ngModel)]="employeeId"
-            placeholder="e.g. 00000012"
+            [(ngModel)]="userId"
+            placeholder="e.g. Emp-00000012"
           />
         </div>
 
@@ -349,7 +349,7 @@
         <div class="attendance-detail-section attendance-detail-section--identity">
           <h3>Summary</h3>
           <div class="js-detail-grid">
-            <div class="js-detail-item"><label>Employee ID:</label> <span class="attendance-employee-chip">{{ record.EmployeeId }}</span></div>
+            <div class="js-detail-item"><label>User ID:</label> <span class="attendance-employee-chip">{{ record.EmployeeId }}</span></div>
             <div class="js-detail-item"><label>Employee Name:</label> <span>{{ record.EmployeeName || '—' }}</span></div>
             <div class="js-detail-item"><label>Date:</label> <span class="attendance-time-value">{{ formatAttendanceDate(record.AttendanceDate) }}</span></div>
             <div class="js-detail-item">

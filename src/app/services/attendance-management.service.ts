@@ -2,13 +2,13 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, forkJoin, map, of, tap } from 'rxjs';
 import { BIOMETRICS_API_BASE_URL } from '../config/api.config';
-import { ApplicationFormService } from './application-form.service';
+import { ApplicationFormRecord, ApplicationFormService } from './application-form.service';
 
 export type AttendanceQueryMode = 'today' | 'date' | 'dateRange';
 
 export interface AttendanceQuery {
   mode: AttendanceQueryMode;
-  employeeId?: string;
+  userId?: string;
   date?: string;
   fromDate?: string;
   toDate?: string;
@@ -89,18 +89,18 @@ export class AttendanceManagementService {
 
   buildQueryUrl(query: AttendanceQuery): string {
     const normalized = this.normalizeQuery(query);
-    const employeeId = normalized.employeeId?.trim();
+    const userId = normalized.userId?.trim();
 
     switch (normalized.mode) {
       case 'today':
-        return employeeId
-          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(employeeId)}`
+        return userId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(userId)}`
           : `${BIOMETRICS_API_BASE_URL}/EmployeeData`;
 
       case 'date': {
         const date = normalized.date ?? formatIsoDate(new Date());
-        return employeeId
-          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}/${encodeURIComponent(employeeId)}`
+        return userId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}/${encodeURIComponent(userId)}`
           : `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}`;
       }
 
@@ -108,8 +108,8 @@ export class AttendanceManagementService {
         const fromDate = normalized.fromDate ?? formatIsoDate(new Date());
         const toDate = normalized.toDate ?? fromDate;
         const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
-        return employeeId
-          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/${encodeURIComponent(employeeId)}`
+        return userId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/${encodeURIComponent(userId)}`
           : `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/`;
       }
     }
@@ -117,28 +117,28 @@ export class AttendanceManagementService {
 
   private buildDailyAttendance(
     punches: AttendancePunchRecord[],
-    employees: Array<{ EmployeeCode: string; EmployeeName: string }>,
+    employees: ApplicationFormRecord[],
     query: AttendanceQuery,
   ): AttendanceDailyRecord[] {
     const dates = resolveQueryDates(query);
-    const employeeNameById = new Map<string, string>();
+    const employeeNameByUserId = new Map<string, string>();
     for (const employee of employees) {
-      const id = normalizeEmployeeId(employee.EmployeeCode);
-      if (id) {
-        employeeNameById.set(id, employee.EmployeeName?.trim() || '');
+      const userId = resolveAttendanceUserId(employee);
+      if (userId) {
+        employeeNameByUserId.set(userId, employee.EmployeeName?.trim() || '');
       }
     }
 
-    const employeeIds = resolveEmployeeIds(query, employees, punches);
+    const userIds = resolveUserIds(query, employees, punches);
     const punchesByDay = new Map<string, AttendancePunchRecord[]>();
 
     for (const punch of punches) {
-      const employeeId = normalizeEmployeeId(punch.EmployeeId);
+      const userId = normalizeEmployeeId(punch.EmployeeId);
       const date = extractIsoDate(punch.PunchDatetime);
-      if (!employeeId || !date) {
+      if (!userId || !date) {
         continue;
       }
-      const key = dayKey(employeeId, date);
+      const key = dayKey(userId, date);
       const bucket = punchesByDay.get(key) ?? [];
       bucket.push(punch);
       punchesByDay.set(key, bucket);
@@ -146,10 +146,10 @@ export class AttendanceManagementService {
 
     const records: AttendanceDailyRecord[] = [];
 
-    for (const employeeId of employeeIds) {
+    for (const userId of userIds) {
       for (const date of dates) {
-        const dayPunches = sortPunchesChronologically(punchesByDay.get(dayKey(employeeId, date)) ?? []);
-        records.push(this.aggregateEmployeeDay(employeeId, date, dayPunches, employeeNameById.get(employeeId) ?? ''));
+        const dayPunches = sortPunchesChronologically(punchesByDay.get(dayKey(userId, date)) ?? []);
+        records.push(this.aggregateEmployeeDay(userId, date, dayPunches, employeeNameByUserId.get(userId) ?? ''));
       }
     }
 
@@ -210,7 +210,7 @@ export class AttendanceManagementService {
   private normalizeQuery(query: AttendanceQuery): AttendanceQuery {
     return {
       mode: query.mode,
-      employeeId: query.employeeId?.trim() || undefined,
+      userId: query.userId?.trim() || undefined,
       date: query.date?.trim() || undefined,
       fromDate: query.fromDate?.trim() || undefined,
       toDate: query.toDate?.trim() || undefined,
@@ -252,6 +252,14 @@ export class AttendanceManagementService {
   }
 }
 
+export function resolveAttendanceUserId(employee: ApplicationFormRecord): string {
+  const userId =
+    employee.detail?.loginDetails.userId?.trim() ||
+    employee.userId?.trim() ||
+    '';
+  return normalizeEmployeeId(userId);
+}
+
 export function normalizeEmployeeId(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -278,21 +286,21 @@ export function resolveQueryDates(query: AttendanceQuery): string[] {
   }
 }
 
-function resolveEmployeeIds(
+function resolveUserIds(
   query: AttendanceQuery,
-  employees: Array<{ EmployeeCode: string }>,
+  employees: ApplicationFormRecord[],
   punches: AttendancePunchRecord[],
 ): string[] {
-  const filteredId = query.employeeId?.trim();
+  const filteredId = query.userId?.trim();
   if (filteredId) {
     return [normalizeEmployeeId(filteredId)];
   }
 
   const seen = new Set<string>();
   for (const employee of employees) {
-    const id = normalizeEmployeeId(employee.EmployeeCode);
-    if (id) {
-      seen.add(id);
+    const userId = resolveAttendanceUserId(employee);
+    if (userId) {
+      seen.add(userId);
     }
   }
 
@@ -301,17 +309,17 @@ function resolveEmployeeIds(
   }
 
   for (const punch of punches) {
-    const id = normalizeEmployeeId(punch.EmployeeId);
-    if (id) {
-      seen.add(id);
+    const userId = normalizeEmployeeId(punch.EmployeeId);
+    if (userId) {
+      seen.add(userId);
     }
   }
 
   return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
-function dayKey(employeeId: string, date: string): string {
-  return `${employeeId}|${date}`;
+function dayKey(userId: string, date: string): string {
+  return `${userId}|${date}`;
 }
 
 function sortPunchesChronologically(punches: AttendancePunchRecord[]): AttendancePunchRecord[] {
