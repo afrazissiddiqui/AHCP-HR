@@ -328,14 +328,15 @@
                 </div>
                 <div class="mad-inspection-col">
                   <label [attr.for]="'mad-check-' + ci + '-' + li">What to check</label>
-                  <input
+                  <textarea
                     [id]="'mad-check-' + ci + '-' + li"
-                    type="text"
+                    class="mad-textarea"
+                    rows="3"
                     [ngModel]="line.whatToCheck"
                     (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
                     [name]="'whatToCheck' + ci + '_' + li"
                     placeholder="Enter what to check"
-                  />
+                  ></textarea>
                 </div>
                 <div class="mad-inspection-col">
                   <label [attr.for]="'mad-instructions-' + ci + '-' + li">Instructions</label>

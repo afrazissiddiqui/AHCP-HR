@@ -510,7 +510,8 @@
 
 @media (max-width: 1100px) {
   .mad-inspection-fields--columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .mad-inspection-col:last-child { grid-column: 1 / -1; }
+  .mad-inspection-col:nth-child(2),
+  .mad-inspection-col:nth-child(3) { grid-column: 1 / -1; }
   .mad-add-page .cjr-row { grid-template-columns: 140px 1fr; }
 }
 
@@ -519,7 +520,8 @@
   .mad-add-page .cjr-header { padding: 14px 12px 8px; }
   .mad-form-panel { padding: 14px; }
   .mad-inspection-fields--columns { grid-template-columns: 1fr; }
-  .mad-inspection-col:last-child { grid-column: auto; }
+  .mad-inspection-col:nth-child(2),
+  .mad-inspection-col:nth-child(3) { grid-column: auto; }
   .mad-section-heading { flex-direction: column; align-items: flex-start; }
   .mad-add-page .cjr-row { grid-template-columns: 1fr; }
 }

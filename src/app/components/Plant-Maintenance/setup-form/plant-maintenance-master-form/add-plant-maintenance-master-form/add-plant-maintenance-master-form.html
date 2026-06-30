@@ -377,16 +377,16 @@
                         </div>
                         <div class="pmm-line-field">
                           <label [attr.for]="'pmm-check-' + ci + '-' + li">What to check</label>
-                          <input
+                          <textarea
                             [id]="'pmm-check-' + ci + '-' + li"
-                            type="text"
-                            class="mad-input-readonly"
+                            class="mad-textarea mad-input-readonly"
+                            rows="3"
                             [ngModel]="line.whatToCheck"
                             (ngModelChange)="updateInspectionLine(ci, li, 'whatToCheck', $event)"
                             [name]="'whatToCheck' + ci + '_' + li"
                             placeholder="Enter what to check"
                             readonly
-                          />
+                          ></textarea>
                         </div>
                         <div class="pmm-line-field pmm-line-field--replacement">
                           <label [attr.for]="'pmm-replacement-' + ci + '-' + li">Replacement</label>

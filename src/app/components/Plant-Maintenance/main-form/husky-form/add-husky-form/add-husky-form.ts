@@ -139,11 +139,11 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly maintenanceFrequencyOptions = [
     'Daily',
     'Weekly',
-    'ForthNight',
+    'Fortnightly',
     'Monthly',
-    'Quatterly',
+    'Quaterly',
     'Semi-annually',
-    'Anual',
+    'Anually',
   ] as const;
 
   readonly sectionNavItems: HuskySectionNavItem[] = [

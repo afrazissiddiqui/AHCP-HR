@@ -10,11 +10,8 @@ import {
 import { GatePassItemSearchInputComponent } from '../../../../gate-pass/item-search-input/item-search-input';
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
-import {
-  MachineSearchOption,
-  toMachineSearchOptions,
-} from '../../plant-maintenance-machine.model';
-import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
+import { MachineSearchOption } from '../../plant-maintenance-machine.model';
+import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
 import {
   MaintenanceActivityDefinitionService,
   MaintenanceActivityMachineRecord,
@@ -102,7 +99,7 @@ function todayDateValue(): string {
 export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   private readonly masterService = inject(PlantMaintenanceMasterFormService);
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
-  private readonly subComponentService = inject(SubComponentDefinitionService);
+  private readonly machineItemService = inject(PlantMaintenanceMachineItemService);
   private readonly itemMasterService = inject(GatePassItemMasterService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
@@ -154,11 +151,11 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly plantMaintenanceFrequencyOptions = [
     'Daily',
     'Weekly',
-    'ForthNight',
+    'Fortnightly',
     'Monthly',
-    'Quatterly',
+    'Quaterly',
     'Semi-annually',
-    'Anual',
+    'Anually',
   ] as const;
   readonly plantMaintenanceTypeOptions = [
     'Preventive',
@@ -169,17 +166,19 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly lineStatusOptions = ['Pass', 'Fail', 'N/A'] as const;
   readonly replacementOptions = ['Yes', 'No'] as const;
 
-  readonly idSuggestions = computed(() => this.filterMachineSuggestions(this.machineId()));
-  readonly nameSuggestions = computed(() => this.filterMachineSuggestions(this.machineName()));
-
-  private get machineOptions(): MachineSearchOption[] {
-    return toMachineSearchOptions(this.subComponentService.records());
-  }
+  readonly idSuggestions = computed(() => {
+    this.machineItemService.records();
+    return this.machineItemService.searchByMachineId(this.machineId());
+  });
+  readonly nameSuggestions = computed(() => {
+    this.machineItemService.records();
+    return this.machineItemService.searchByMachineName(this.machineName());
+  });
 
   private syncingScheduleFields = false;
 
   ngOnInit(): void {
-    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
+    this.machineItemService.ensureLoaded().subscribe({ error: () => {} });
     this.activityService.fetchMaintenanceActivityDefinitions().subscribe({ error: () => {} });
     this.masterService.fetchPlantMaintenanceMasterForms().subscribe({ error: () => {} });
     this.itemMasterService.ensureLoaded().subscribe({ error: () => {} });
@@ -977,24 +976,10 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     return [];
   }
 
-  private filterMachineSuggestions(query: string): MachineSearchOption[] {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      return [];
-    }
-    return this.machineOptions
-      .filter(
-        (m) =>
-          m.machineId.toLowerCase().includes(q) ||
-          m.machineName.toLowerCase().includes(q) ||
-          m.defaultMachineType.toLowerCase().includes(q),
-      )
-      .slice(0, 10);
-  }
-
   private populateFromMachine(machine: MachineSearchOption): void {
     this.machineId.set(machine.machineId);
     this.machineName.set(machine.machineName);
+    this.machineType.set(machine.defaultMachineType);
     this.loadActivityProfilesForMachine(machine.machineId, machine.machineName);
   }
 

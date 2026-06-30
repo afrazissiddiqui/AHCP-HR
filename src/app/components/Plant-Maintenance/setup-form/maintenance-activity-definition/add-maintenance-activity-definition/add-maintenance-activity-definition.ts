@@ -8,11 +8,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
-import {
-  MachineSearchOption,
-  resolveMachineIdentity,
-  toMachineSearchOptions,
-} from '../../plant-maintenance-machine.model';
+import { MachineSearchOption, resolveMachineIdentity } from '../../plant-maintenance-machine.model';
+import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
 import {
   MaintenanceActivityComponent,
@@ -74,6 +71,8 @@ function createEmptyComponent(): MaintenanceActivityComponent {
 export class AddMaintenanceActivityDefinitionComponent implements OnInit {
   private readonly activityService = inject(MaintenanceActivityDefinitionService);
 
+  private readonly machineItemService = inject(PlantMaintenanceMachineItemService);
+
   private readonly subComponentService = inject(SubComponentDefinitionService);
 
   private readonly alertService = inject(AlertService);
@@ -126,15 +125,15 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     'Weekly',
 
-    'ForthNight',
+    'Fortnightly',
 
     'Monthly',
 
-    'Quatterly',
+    'Quaterly',
 
     'Semi-annually',
 
-    'Anual',
+    'Anually',
 
   ] as const;
 
@@ -152,21 +151,21 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
-  readonly idSuggestions = computed(() => this.filterMachineSuggestions(this.machineId()));
+  readonly idSuggestions = computed(() => {
+    this.machineItemService.records();
+    return this.machineItemService.searchByMachineId(this.machineId());
+  });
 
-  readonly nameSuggestions = computed(() => this.filterMachineSuggestions(this.machineName()));
-
-
-
-  private get machineOptions(): MachineSearchOption[] {
-    return toMachineSearchOptions(this.subComponentService.records());
-  }
+  readonly nameSuggestions = computed(() => {
+    this.machineItemService.records();
+    return this.machineItemService.searchByMachineName(this.machineName());
+  });
 
 
 
   ngOnInit(): void {
 
-    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
+    this.machineItemService.ensureLoaded().subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
 
@@ -703,36 +702,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
       this.isSaving.set(false);
 
     }
-
-  }
-
-
-
-  private filterMachineSuggestions(query: string): MachineSearchOption[] {
-
-    const q = query.trim().toLowerCase();
-
-    if (!q) {
-
-      return [];
-
-    }
-
-    return this.machineOptions
-
-      .filter(
-
-        (m) =>
-
-          m.machineId.toLowerCase().includes(q) ||
-
-          m.machineName.toLowerCase().includes(q) ||
-
-          m.defaultMachineType.toLowerCase().includes(q),
-
-      )
-
-      .slice(0, 10);
 
   }
 

@@ -13,6 +13,12 @@ export interface MaintenanceActivityInspectionLine {
   instructions: string;
 }
 
+export interface MaintenanceActivityInspectionLinePayload {
+  itemsToBeInspected: string | null;
+  whatToCheck: string | null;
+  instructions: string | null;
+}
+
 export interface MaintenanceActivityComponent {
   name: string;
   inspectionLines: MaintenanceActivityInspectionLine[];
@@ -57,7 +63,10 @@ export interface MaintenanceActivityDefinitionPayload {
   maintenance_nature: string;
   plant_maintenance_frequency: string;
   plant_maintenance_type: string;
-  components: MaintenanceActivityComponent[];
+  components: Array<{
+    name: string;
+    inspectionLines: MaintenanceActivityInspectionLinePayload[];
+  }>;
 }
 
 export interface MaintenanceActivityApiResponse {
@@ -73,6 +82,11 @@ const MAINTENANCE_ACTIVITY_DEFINITION_DETAIL_URL = apiUrl('maintenance-activity-
 const MAINTENANCE_ACTIVITY_DEFINITION_UPDATE_URL = apiUrl('maintenance-activity-definition-update');
 const MAINTENANCE_ACTIVITY_DEFINITION_DELETE_URL = apiUrl('maintenance-activity-definition-delete');
 
+function toNullableTrimmed(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
 export function buildMaintenanceActivityPayload(
   entry: MaintenanceActivityDefinitionInput,
 ): MaintenanceActivityDefinitionPayload {
@@ -86,9 +100,9 @@ export function buildMaintenanceActivityPayload(
     components: entry.components.map((component) => ({
       name: component.name.trim(),
       inspectionLines: component.inspectionLines.map((line) => ({
-        itemsToBeInspected: line.itemsToBeInspected.trim(),
-        whatToCheck: line.whatToCheck.trim(),
-        instructions: line.instructions.trim(),
+        itemsToBeInspected: toNullableTrimmed(line.itemsToBeInspected),
+        whatToCheck: toNullableTrimmed(line.whatToCheck),
+        instructions: toNullableTrimmed(line.instructions),
       })),
     })),
   };

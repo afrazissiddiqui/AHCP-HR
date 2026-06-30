@@ -18,6 +18,28 @@
   background: #fff;
 }
 
+.btn-default {
+  background: #ffffff;
+  border: 1px solid black;
+  color: #0070f2;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.btn-default:hover {
+  background: #f0f7ff;
+  border-color: #002d7a;
+  color: #002d7a;
+}
+
+.btn-default:active {
+  background: #e1efff;
+}
+
 .scd-table-column {
   display: flex;
   flex-direction: column;
