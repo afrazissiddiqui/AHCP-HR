@@ -181,9 +181,9 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    if (!machineId || !machineName || !machineType) {
+    if (!machineId || !machineName) {
       this.alertService.validation(
-        'Machine ID, Machine Name, and Machine Type are required.',
+        'Machine ID and Machine Name are required.',
       );
       return;
     }
