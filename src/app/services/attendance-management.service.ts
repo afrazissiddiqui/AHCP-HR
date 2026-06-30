@@ -97,10 +97,12 @@ export class AttendanceManagementService {
     const apiEmployeeId = userId ? biometricsPathEmployeeId(userId) : '';
 
     switch (normalized.mode) {
-      case 'today':
+      case 'today': {
+        const date = formatIsoDate(new Date());
         return apiEmployeeId
-          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(apiEmployeeId)}`
-          : `${BIOMETRICS_API_BASE_URL}/EmployeeData`;
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}/${encodeURIComponent(apiEmployeeId)}`
+          : `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}`;
+      }
 
       case 'date': {
         const date = normalized.date ?? formatIsoDate(new Date());
@@ -230,19 +232,21 @@ export class AttendanceManagementService {
         '',
     ).trim();
     const rawEmployeeId = pickFirstNonEmptyString(
-      item['User ID'],
-      item.userId,
-      item.UserId,
       item['Employee ID'],
       item.EmployeeId,
       item.employeeId,
       record['employeeID'],
       record['EmployeeID'],
+      item['User ID'],
+      item.userId,
+      item.UserId,
     );
+    const normalizedEmployeeId =
+      canonicalAttendanceKey(rawEmployeeId) || extractAttendanceUserId(rawEmployeeId) || rawEmployeeId;
 
     return {
       No: Number(item.No ?? record['no'] ?? 0),
-      EmployeeId: rawEmployeeId,
+      EmployeeId: normalizedEmployeeId,
       PunchDatetime: punchDatetime,
       DeviceNo: String(
         item['Device No'] ?? item.DeviceNo ?? item.deviceNo ?? record['DeviceNo'] ?? '',
@@ -383,7 +387,17 @@ export function resolveQueryDates(query: AttendanceQuery): string[] {
 }
 
 function biometricsPathEmployeeId(userId: string): string {
-  return extractAttendanceUserId(userId) || userId.trim();
+  const extracted = extractAttendanceUserId(userId);
+  if (!extracted) {
+    return userId.trim();
+  }
+
+  const canonical = canonicalAttendanceKey(extracted);
+  if (/^\d{8}$/.test(canonical)) {
+    return canonical;
+  }
+
+  return extracted;
 }
 
 function pickFirstNonEmptyString(...values: unknown[]): string {
@@ -478,6 +492,7 @@ function buildEmployeeAttendanceIndex(employees: ApplicationFormRecord[]): Emplo
 
     registerEmployeeAliases(index, canonical, rawUserId, employeeName, [
       rawUserId,
+      canonical,
       employee.userId,
       employee.detail?.loginDetails.userId,
       employeeCode,
@@ -490,15 +505,19 @@ function buildEmployeeAttendanceIndex(employees: ApplicationFormRecord[]): Emplo
 }
 
 function resolvePunchKey(rawEmployeeId: string, aliasToCanonical: Map<string, string>): string {
-  for (const variant of attendanceKeyVariants(rawEmployeeId)) {
-    const canonical = aliasToCanonical.get(variant);
-    if (canonical) {
-      return canonical;
+  const normalized = canonicalAttendanceKey(rawEmployeeId) || rawEmployeeId.trim();
+  const lookupCandidates = normalized ? [normalized, rawEmployeeId] : [rawEmployeeId];
+
+  for (const candidate of lookupCandidates) {
+    for (const variant of attendanceKeyVariants(candidate)) {
+      const canonical = aliasToCanonical.get(variant);
+      if (canonical) {
+        return canonical;
+      }
     }
   }
 
-  const canonical = canonicalAttendanceKey(rawEmployeeId);
-  return canonical || rawEmployeeId.trim().toLowerCase();
+  return normalized || rawEmployeeId.trim().toLowerCase();
 }
 
 function ensurePunchOnlyEmployee(
