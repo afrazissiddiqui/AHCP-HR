@@ -148,7 +148,12 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       return;
     }
 
-    const payload = { machineId, machineName, subComponents };
+    const payload = {
+      machineId,
+      machineName,
+      machineType: this.resolveMachineType(machineId),
+      subComponents,
+    };
     const editingId = this.editingRecordId();
 
     if (editingId) {
@@ -204,5 +209,24 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     if (!this.editingRecordId()) {
       this.subComponents.set(['']);
     }
+  }
+
+  /** Backend requires machine_type; derived from SAP item metadata, not shown in the form. */
+  private resolveMachineType(machineId: string): string {
+    const selected = this.machineOptions().find((item) => item.machineId === machineId);
+    const fromItem = selected?.defaultMachineType.trim();
+    if (fromItem) {
+      return fromItem;
+    }
+
+    if (this.editingRecordId()) {
+      const record = this.subComponentService.getById(this.editingRecordId()!);
+      const fromRecord = record?.machineType.trim();
+      if (fromRecord && fromRecord !== '—') {
+        return fromRecord;
+      }
+    }
+
+    return SUB_COMPONENT_MACHINE_ITEM_TYPE;
   }
 }

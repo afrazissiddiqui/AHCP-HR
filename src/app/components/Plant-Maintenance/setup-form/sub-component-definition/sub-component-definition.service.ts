@@ -15,12 +15,15 @@ export interface MachineSubComponentPayload {
 export interface MachinePayload {
   machine_id: string;
   machine_name: string;
+  machine_type: string;
   sub_components: MachineSubComponentPayload[];
 }
 
 export interface MachineInput {
   machineId: string;
   machineName: string;
+  /** Resolved from SAP item or existing record; required by API, not shown in the form. */
+  machineType?: string;
   subComponents: string[];
 }
 
@@ -41,6 +44,7 @@ export function buildMachinePayload(entry: MachineInput): MachinePayload {
   return {
     machine_id: entry.machineId.trim(),
     machine_name: entry.machineName.trim(),
+    machine_type: (entry.machineType ?? '').trim() || 'F',
     sub_components: entry.subComponents
       .map((name) => name.trim())
       .filter(Boolean)
