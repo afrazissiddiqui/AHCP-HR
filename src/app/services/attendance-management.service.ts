@@ -76,7 +76,7 @@ export class AttendanceManagementService {
         map((response) => this.extractApiItems(response).map((item) => this.mapApiItem(item))),
         catchError(() => of<AttendancePunchRecord[]>([])),
       ),
-      employees: this.applicationFormService.fetchEmployeeProfiles().pipe(
+      employees: this.applicationFormService.fetchEmployeeProfilesForAttendance().pipe(
         catchError(() => of([])),
       ),
     }).pipe(
@@ -315,13 +315,13 @@ export function extractAttendanceUserId(value: string): string {
 
 export function resolveAttendanceUserId(employee: ApplicationFormRecord): string {
   const candidates = [
-    employee.detail?.loginDetails.userId,
     employee.userId,
+    employee.detail?.loginDetails.userId,
   ];
 
   for (const candidate of candidates) {
     const userId = extractAttendanceUserId(String(candidate ?? '').trim());
-    if (userId) {
+    if (/^\d+$/.test(userId)) {
       return userId;
     }
   }
@@ -357,7 +357,11 @@ export function canonicalAttendanceKey(value: string): string {
 }
 
 export function formatAttendanceUserId(value: string): string {
-  return extractAttendanceUserId(value) || value.trim();
+  const extracted = extractAttendanceUserId(value);
+  if (/^\d+$/.test(extracted)) {
+    return extracted.padStart(8, '0');
+  }
+  return extracted || value.trim();
 }
 
 export function normalizeEmployeeId(value: string): string {

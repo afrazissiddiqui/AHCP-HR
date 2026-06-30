@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, concatMap, forkJoin, from, map, of, scan, tap } from 'rxjs';
+import { Observable, catchError, concatMap, forkJoin, from, last, map, of, scan, switchMap, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
 import { formatDateOfBirthFromApi, formatDateForInput } from '../utils/date-format.util';
 
@@ -529,6 +529,65 @@ export class ApplicationFormService {
     );
   }
 
+  /**
+   * Loads list summaries then enriches with profile detail so login userId
+   * (e.g. 00000003) is available for biometrics matching.
+   */
+  fetchEmployeeProfilesForAttendance(): Observable<ApplicationFormRecord[]> {
+    return this.fetchEmployeeProfiles().pipe(
+      switchMap((records) => {
+        if (records.length === 0) {
+          return of<ApplicationFormRecord[]>([]);
+        }
+
+        const enrichable = records.filter((record) => !!record.apiId?.trim());
+        if (enrichable.length === 0) {
+          return of(records);
+        }
+
+        return this.fetchEmployeeProfileDetailsInBatches(enrichable, 8).pipe(
+          last(),
+          map((detailed) => this.mergeEmployeeProfileRecords(records, detailed)),
+          catchError(() => of(records)),
+        );
+      }),
+    );
+  }
+
+  private mergeEmployeeProfileRecords(
+    summaries: ApplicationFormRecord[],
+    detailed: ApplicationFormRecord[],
+  ): ApplicationFormRecord[] {
+    if (detailed.length === 0) {
+      return summaries;
+    }
+
+    const detailByKey = new Map<string, ApplicationFormRecord>();
+    for (const record of detailed) {
+      for (const key of [record.apiId, record.userId, record.EmployeeCode]) {
+        const normalized = key?.trim();
+        if (normalized) {
+          detailByKey.set(normalized, record);
+        }
+      }
+    }
+
+    return summaries.map((summary) => {
+      const candidates = [summary.apiId, summary.userId, summary.EmployeeCode]
+        .map((value) => value?.trim())
+        .filter(Boolean) as string[];
+
+      for (const key of candidates) {
+        const match = detailByKey.get(key);
+        if (match) {
+          return match;
+        }
+      }
+
+      return summary;
+    });
+  }
+
   fetchEmployeeProfileDetail(id: string | number): Observable<ApplicationFormRecord> {
     const identifier = encodeURIComponent(String(id));
     return this.http.get<unknown>(`${EMPLOYEE_PROFILE_VIEW_URL}/${identifier}`).pipe(
@@ -878,7 +937,11 @@ export class ApplicationFormService {
       ? pickFrom(loginSource, 'userId', 'user_id')
       : '';
 
-    const topLevel = asString(item['userId']) || asString(item['user_id']);
+    const topLevel =
+      asString(item['userId']) ||
+      asString(item['user_id']) ||
+      asString(item['loginUserId']) ||
+      asString(item['login_user_id']);
     const resolved = fromLogin || topLevel;
     if (resolved) {
       return this.extractLoginUserId(resolved);
@@ -892,7 +955,13 @@ export class ApplicationFormService {
       return fromLoginCode;
     }
 
-    const employeeCode = asString(item['employeeCode']) || asString(item['employee_code']);
+    const employeeCode =
+      asString(item['employeeCode']) ||
+      asString(item['employee_code']) ||
+      asString(item['EmployeeID']) ||
+      asString(item['employeeID']) ||
+      asString(item['EmployeeId']) ||
+      asString(item['employeeId']);
     return this.extractLoginUserId(employeeCode);
   }
 
@@ -1185,9 +1254,14 @@ export class ApplicationFormService {
         requestStatus: pick('requestStatus', 'request_status'),
       },
       loginDetails: {
-        employeeCode: pickLogin('employeeCode', 'employee_code') || pickLogin('userId', 'user_id'),
-        employeeName: pickLogin('loginEmployeeName', 'login_employee_name'),
-        userId: pickLogin('userId', 'user_id'),
+        employeeCode:
+          pickLogin('employeeCode', 'employee_code') ||
+          (summary.EmployeeCode !== '—' ? summary.EmployeeCode : ''),
+        employeeName:
+          pickLogin('loginEmployeeName', 'login_employee_name') ||
+          pickLogin('employeeName', 'employee_name') ||
+          summary.EmployeeName,
+        userId: pickLogin('userId', 'user_id') || summary.userId || '',
         password: pickLogin('password'),
       },
       attachments: mergedAttachments,
