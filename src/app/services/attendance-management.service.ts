@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, last, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, last, map, of, switchMap, throwError } from 'rxjs';
 import { BIOMETRICS_API_BASE_URL } from '../config/api.config';
 import { ApplicationFormRecord, ApplicationFormService } from './application-form.service';
 
@@ -419,7 +419,15 @@ export class AttendanceManagementService {
       if (typeof response === 'string') {
         const trimmed = response.trim();
         if (trimmed.startsWith('<!') || trimmed.toLowerCase().startsWith('<html')) {
-          return [];
+          throw new Error(
+            'Biometrics proxy is not configured. Deploy with public/web.config (IIS ARR proxy for /biometrics-api) or use ng serve with proxy.conf.json.',
+          );
+        }
+
+        try {
+          response = JSON.parse(trimmed) as unknown;
+        } catch {
+          throw new Error('Biometrics API returned invalid JSON.');
         }
       }
 
@@ -427,9 +435,21 @@ export class AttendanceManagementService {
     };
 
     const loadUrl = (url: string) =>
-      this.http.get<unknown>(url).pipe(
-        map(parse),
-        catchError(() => of<AttendancePunchRecord[]>([])),
+      this.http.get(url, { responseType: 'text' }).pipe(
+        map((text) => parse(text)),
+        catchError((error: unknown) => {
+          const status = (error as { status?: number })?.status;
+          if (status === 0) {
+            return throwError(
+              () =>
+                new Error(
+                  'Biometrics API blocked by browser CORS. Requests must go through /biometrics-api on the same host.',
+                ),
+            );
+          }
+
+          return of<AttendancePunchRecord[]>([]);
+        }),
       );
 
     return loadUrl(primaryUrl).pipe(
