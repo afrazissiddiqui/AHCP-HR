@@ -72,7 +72,7 @@
                     (ngModelChange)="onMachineNameInput($event)"
                     (focus)="openNameSuggestions()"
                     (blur)="onNameInputBlur()"
-                    placeholder="Search by name, ID, or machine type"
+                    placeholder="Auto-populated from Machine ID"
                     autocomplete="off"
                     name="machineName"
                   />
@@ -110,9 +110,9 @@
                   id="scd-machine-type"
                   type="text"
                   [ngModel]="machineType()"
-                  (ngModelChange)="onMachineTypeInput($event)"
                   name="machineType"
-                  placeholder="Enter machine type"
+                  placeholder="Auto-populated from Machine ID"
+                  readonly
                 />
               </div>
             </div>

@@ -5,7 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
-import { MachineSearchOption, toMachineSearchOptions } from '../../plant-maintenance-machine.model';
+import { MachineSearchOption } from '../../plant-maintenance-machine.model';
+import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
 import { SubComponentDefinitionService, SubComponentMachineRecord } from '../sub-component-definition.service';
 
 @Component({
@@ -21,6 +22,7 @@ import { SubComponentDefinitionService, SubComponentMachineRecord } from '../sub
 })
 export class AddSubComponentDefinitionComponent implements OnInit {
   private readonly subComponentService = inject(SubComponentDefinitionService);
+  private readonly machineItemService = inject(PlantMaintenanceMachineItemService);
   private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -38,15 +40,18 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   readonly idSuggestionsOpen = signal(false);
   readonly nameSuggestionsOpen = signal(false);
 
-  readonly idSuggestions = computed(() => this.filterMachineSuggestions(this.machineId()));
-  readonly nameSuggestions = computed(() => this.filterMachineSuggestions(this.machineName()));
+  readonly idSuggestions = computed(() => {
+    this.machineItemService.records();
+    return this.machineItemService.searchByMachineId(this.machineId());
+  });
 
-  private get machineOptions(): MachineSearchOption[] {
-    return toMachineSearchOptions(this.subComponentService.records());
-  }
+  readonly nameSuggestions = computed(() => {
+    this.machineItemService.records();
+    return this.machineItemService.searchByMachineName(this.machineName());
+  });
 
   ngOnInit(): void {
-    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
+    this.machineItemService.ensureLoaded().subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -87,10 +92,6 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.machineName.set(value);
     this.nameSuggestionsOpen.set(value.trim().length > 0);
     this.closeIdSuggestions();
-  }
-
-  onMachineTypeInput(value: string): void {
-    this.machineType.set(value);
   }
 
   updateSubComponent(index: number, value: string): void {
@@ -247,21 +248,6 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.subComponents.set(
       record.subComponents.length ? [...record.subComponents] : [''],
     );
-  }
-
-  private filterMachineSuggestions(query: string): MachineSearchOption[] {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      return [];
-    }
-    return this.machineOptions
-      .filter(
-        (m) =>
-          m.machineId.toLowerCase().includes(q) ||
-          m.machineName.toLowerCase().includes(q) ||
-          m.defaultMachineType.toLowerCase().includes(q),
-      )
-      .slice(0, 10);
   }
 
   private populateFromMachine(machine: MachineSearchOption): void {
