@@ -1,15 +1,64 @@
-<div class="cjr-page">
+<div class="cjr-page mad-add-page">
   <div class="cjr-header">
     <div class="cjr-header-left">
       <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
         <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>Application Form</h1>
+      <div>
+        <h1>Application Form</h1>
+        <p class="mad-page-subtitle">
+          @if (editingApiId()) {
+            Update employee profile, career history, remuneration, and onboarding details.
+          } @else {
+            Capture employee profile, career history, remuneration, and onboarding details for a new hire.
+          }
+        </p>
+      </div>
     </div>
   </div>
 
-  <div class="cjr-card">
-    <nav class="cjr-section-nav" aria-label="Recruitment sections">
+  <div class="cjr-card cjr-form-card">
+    <div class="scd-form-hero" aria-hidden="true">
+      <div class="scd-form-hero__glow"></div>
+      <div class="scd-form-hero__content">
+        <span class="scd-form-hero__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </span>
+        <div class="scd-form-hero__text">
+          <span class="scd-form-hero__label">HR Portal</span>
+          <span class="scd-form-hero__title">Employee Application</span>
+        </div>
+        <div class="scd-form-hero__steps">
+          <span class="scd-step-chip scd-step-chip--active">
+            <span class="scd-step-chip__num">1</span>
+            Personal Info
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="personName().trim() && firstName().trim()"
+            [class.scd-step-chip--ready]="personName().trim() && firstName().trim() && lastName().trim() && departmentInAhcp().trim()"
+          >
+            <span class="scd-step-chip__num">2</span>
+            Career &amp; Docs
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="basicSalary().trim() || paymentMode().trim() || loginEmployeeName().trim()"
+            [class.scd-step-chip--ready]="loginEmployeeName().trim() && basicSalary().trim() && paymentMode().trim()"
+          >
+            <span class="scd-step-chip__num">3</span>
+            Pay &amp; Access
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="cjr-section-nav mad-sticky-nav" aria-label="Recruitment sections">
       <ul class="cjr-section-nav-list">
         <li class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'personal-info-section'"
@@ -32,7 +81,20 @@
       </ul>
     </nav>
 
-    <div class="cjr-job-spec-picker">
+    <div class="cjr-form-body">
+    <section class="cjr-job-spec-picker mad-form-panel mad-form-panel--machine">
+      <div class="mad-form-panel__heading mad-form-panel__heading--compact">
+        <span class="mad-form-panel__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" />
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+          </svg>
+        </span>
+        <div class="mad-form-panel__titles">
+          <span class="mad-form-panel__title">Linked Job Description</span>
+          <span class="mad-form-panel__subtitle">Optional — pre-fill role details from an existing job specification</span>
+        </div>
+      </div>
       <div class="cjr-row">
         <label>Job Description:</label>
         <div class="cjr-field">
@@ -54,10 +116,23 @@
           }
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="cjr-personal" id="personal-info-section">
-      <div class="cjr-section-title">Personal Information</div>
+    <div class="cjr-personal cjr-form-section" id="personal-info-section">
+      <section class="mad-form-panel mad-form-panel--machine">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">01</span>
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Personal Information</h2>
+            <span class="mad-form-panel__subtitle">Identity, contact details, and home address</span>
+          </div>
+        </div>
 
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
@@ -259,7 +334,7 @@
       </div>
 
       <div class="cjr-employment-subsection">
-        <div class="cjr-section-subtitle">Employment details</div>
+        <div class="cjr-section-subtitle mad-subsection-label">Employment details</div>
         <div class="cjr-personal-grid">
           <div class="cjr-personal-col">
             <!-- <div class="cjr-row">
@@ -356,19 +431,42 @@
           </div>
         </div>
       </div>
+      </section>
     </div>
 
-    <div class="cjr-personal cjr-education" id="education-section">
-      <div class="cjr-section-title">Education</div>
+    <div class="cjr-personal cjr-education cjr-form-section" id="education-section">
+      <section class="mad-form-panel mad-form-panel--profile">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">02</span>
+          <span class="mad-form-panel__icon mad-form-panel__icon--profile" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles mad-form-panel__titles--wide">
+            <div class="mad-section-heading mad-section-heading--inline">
+              <div class="mad-section-heading__left">
+                @if (educationSections().length) {
+                <span class="mad-section-heading__badge">{{ educationSections().length }}</span>
+                }
+                <h2 class="cjr-section-title mad-form-panel__title mad-section-heading__title">Education</h2>
+              </div>
+              <span class="mad-section-heading__hint">Academic qualifications and institutions</span>
+            </div>
+          </div>
+        </div>
 
       @for (edu of educationSections(); let i = $index; track i) {
-      <div class="cjr-education-section">
+      <div class="cjr-education-section cjr-dynamic-card" [style.--cjr-card-index]="i">
         @if (educationSections().length > 1) {
         <div class="cjr-education-section-header">
-          <div class="cjr-education-label">Section {{ i + 1 }}</div>
+          <span class="cjr-dynamic-card__index">Edu {{ i + 1 }}</span>
           <button type="button" class="cjr-remove-section" (click)="removeEducationSection(i)"
             aria-label="Remove education section">
-            Remove
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
         }
@@ -443,18 +541,43 @@
       </div>
       }
 
-      <button type="button" class="cjr-add-education-btn" (click)="addEducationSection()">
-        <span class="cjr-add-icon">+</span> Add Education Section
-      </button>
+      <div class="cjr-dynamic-footer">
+        <button type="button" class="cjr-add-education-btn" (click)="addEducationSection()">
+          <span class="cjr-add-icon">+</span> Add another education record
+        </button>
+      </div>
+      </section>
     </div>
 
-    <div class="cjr-personal cjr-experience" id="past-experience-section">
-      <div class="cjr-section-title">Past Experience</div>
+    <div class="cjr-personal cjr-experience cjr-form-section" id="past-experience-section">
+      <section class="mad-form-panel mad-form-panel--components">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">03</span>
+          <span class="mad-form-panel__icon mad-form-panel__icon--components" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" />
+              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles mad-form-panel__titles--wide">
+            <div class="mad-section-heading mad-section-heading--inline">
+              <div class="mad-section-heading__left">
+                @if (pastExperienceSections().length) {
+                <span class="mad-section-heading__badge">{{ pastExperienceSections().length }}</span>
+                }
+                <h2 class="cjr-section-title mad-form-panel__title mad-section-heading__title">Past Experience</h2>
+              </div>
+              <span class="mad-section-heading__hint">Previous roles, employers, and responsibilities</span>
+            </div>
+          </div>
+        </div>
 
       @for (exp of pastExperienceSections(); let i = $index; track i) {
-      <div class="cjr-experience-section">
-        @if (i > 0) {
-        <div class="cjr-experience-label">Section {{ i + 1 }}</div>
+      <div class="cjr-experience-section cjr-dynamic-card" [style.--cjr-card-index]="i">
+        @if (pastExperienceSections().length > 1) {
+        <div class="cjr-experience-section-header">
+          <span class="cjr-dynamic-card__index">Exp {{ i + 1 }}</span>
+        </div>
         }
 
         <div class="cjr-personal-grid">
@@ -523,22 +646,45 @@
       </div>
       }
 
-      <button type="button" class="cjr-add-education-btn" (click)="addPastExperienceSection()">
-        <span class="cjr-add-icon">+</span> Add Experience Section
-      </button>
+      <div class="cjr-dynamic-footer">
+        <button type="button" class="cjr-add-education-btn" (click)="addPastExperienceSection()">
+          <span class="cjr-add-icon">+</span> Add another experience record
+        </button>
+      </div>
+      </section>
     </div>
 
-    <div class="cjr-personal cjr-attachments" id="attachments-section">
-      <div class="cjr-section-title">Attachments</div>
+    <div class="cjr-personal cjr-attachments cjr-form-section" id="attachments-section">
+      <section class="mad-form-panel mad-form-panel--machine">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles mad-form-panel__titles--wide">
+            <div class="mad-section-heading mad-section-heading--inline">
+              <div class="mad-section-heading__left">
+                @if (attachmentRows().length) {
+                <span class="mad-section-heading__badge">{{ attachmentRows().length }}</span>
+                }
+                <h2 class="cjr-section-title mad-form-panel__title mad-section-heading__title">Attachments</h2>
+              </div>
+              <span class="mad-section-heading__hint">Supporting documents and file uploads</span>
+            </div>
+          </div>
+        </div>
 
       @for (row of attachmentRows(); let i = $index; track i) {
-      <div class="cjr-attachment-section">
+      <div class="cjr-attachment-section cjr-dynamic-card" [style.--cjr-card-index]="i">
         @if (attachmentRows().length > 1) {
         <div class="cjr-education-section-header">
-          <div class="cjr-education-label">Attachment {{ i + 1 }}</div>
+          <span class="cjr-dynamic-card__index">Doc {{ i + 1 }}</span>
           <button type="button" class="cjr-remove-section" (click)="removeAttachmentRow(i)"
             aria-label="Remove attachment row">
-            Remove
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
         }
@@ -589,20 +735,35 @@
       </div>
       }
 
-      <button type="button" class="cjr-add-education-btn" (click)="addAttachmentRow()">
-        <span class="cjr-add-icon">+</span> Add Attachment
-      </button>
+      <div class="cjr-dynamic-footer">
+        <button type="button" class="cjr-add-education-btn" (click)="addAttachmentRow()">
+          <span class="cjr-add-icon">+</span> Add another attachment
+        </button>
+      </div>
+      </section>
     </div>
 
-    <div class="cjr-personal cjr-remuneration" id="remunation-section">
-      <div class="cjr-section-title">Remuneration</div>
+    <div class="cjr-personal cjr-remuneration cjr-form-section" id="remunation-section">
+      <section class="mad-form-panel mad-form-panel--profile">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">04</span>
+          <span class="mad-form-panel__icon mad-form-panel__icon--profile" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Remuneration</h2>
+            <span class="mad-form-panel__subtitle">Salary, payment mode, allowances, and leave entitlements</span>
+          </div>
+        </div>
 
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
-            <label class="cjr-label-required">Salary Offer:</label>
+            <label class="cjr-label-required">Gross Salary:</label>
             <input type="text" inputmode="decimal" [ngModel]="basicSalary()"
-              (ngModelChange)="onNumericOnlyChange($event, basicSalary)" (keydown)="onDecimalKeyDown($event)"
+              (ngModelChange)="onGrossSalaryChange($event)" (keydown)="onDecimalKeyDown($event)"
               [class.cjr-invalid]="showFieldError('basicSalary')" (blur)="touch('basicSalary')" />
           </div>
 
@@ -655,9 +816,9 @@
           </div>
 
           <div class="cjr-row">
-            <label>Percentage (For tax arrangement):</label>
+            <label>Percentage Of Salary In Bank:</label>
             <input type="text" inputmode="decimal" [ngModel]="taxPercentage()"
-              (ngModelChange)="onNumericOnlyChange($event, taxPercentage)" (keydown)="onDecimalKeyDown($event)"
+              (ngModelChange)="onBankSalaryPercentageChange($event)" (keydown)="onDecimalKeyDown($event)"
               [disabled]="!isTaxPercentageEnabled()" (blur)="touch('taxPercentage')"
               placeholder="Available when payment mode is Hybrid" />
           </div>
@@ -670,9 +831,8 @@
 
           <div class="cjr-row">
             <label>Percentage of Salary in Cash:</label>
-            <input type="text" inputmode="decimal" [ngModel]="cashSalaryPercentage()"
-              (ngModelChange)="onNumericOnlyChange($event, cashSalaryPercentage)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('cashSalaryPercentage')" placeholder="0.00%" />
+            <input type="text" inputmode="decimal" [ngModel]="cashSalaryPercentage()" readonly
+              placeholder="Auto-calculated (100% − bank %)" tabindex="-1" />
           </div>
         </div>
 
@@ -680,8 +840,8 @@
           <div class="cjr-row">
             <label>Advance % Allowed:</label>
             <input type="text" inputmode="decimal" [ngModel]="advancePercentAllowed()"
-              (ngModelChange)="onNumericOnlyChange($event, advancePercentAllowed)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('advancePercentAllowed')" />
+              (ngModelChange)="onAdvancePercentAllowedChange($event)" (keydown)="onDecimalKeyDown($event)"
+              (blur)="touch('advancePercentAllowed')" placeholder="e.g. 10 for 10% of gross salary" />
           </div>
 
           <div class="cjr-row">
@@ -693,9 +853,8 @@
 
           <div class="cjr-row">
             <label>Maximum Advance Capacity:</label>
-            <input type="text" inputmode="decimal" [ngModel]="maximumAdvanceCapacity()"
-              (ngModelChange)="onNumericOnlyChange($event, maximumAdvanceCapacity)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('maximumAdvanceCapacity')" />
+            <input type="text" inputmode="decimal" [ngModel]="maximumAdvanceCapacity()" readonly
+              placeholder="Auto-calculated from advance % × gross salary" tabindex="-1" />
           </div>
 
           <div class="cjr-row">
@@ -813,10 +972,23 @@
           </div>
         </div>
       </div>
+      </section>
     </div>
 
-    <div class="cjr-personal cjr-login-detail" id="login-detail-section">
-      <div class="cjr-section-title">Login Detail</div>
+    <div class="cjr-personal cjr-login-detail cjr-form-section" id="login-detail-section">
+      <section class="mad-form-panel mad-form-panel--components">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon mad-form-panel__icon--components" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Login Detail</h2>
+            <span class="mad-form-panel__subtitle">Portal credentials and employee access identity</span>
+          </div>
+        </div>
 
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
@@ -848,10 +1020,23 @@
           </div>
         </div>
       </div>
+      </section>
     </div>
 
-    <div class="cjr-personal cjr- ts" id="assets-section">
-      <div class="cjr-section-title">Assets</div>
+    <div class="cjr-personal cjr-assets cjr-form-section" id="assets-section">
+      <section class="mad-form-panel mad-form-panel--machine">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" />
+              <path d="M12 12h.01" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Assets</h2>
+            <span class="mad-form-panel__subtitle">Company asset allocation and assignment status</span>
+          </div>
+        </div>
 
       <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
@@ -895,9 +1080,17 @@
           </div>
         </div>
       </div>
+      </section>
+    </div>
     </div>
 
     <div class="cjr-actions-footer">
+      <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
       <button type="button" class="cjr-submit-btn" (click)="submitApplication()">
         <span class="cjr-submit-icon">✓</span> {{ submitButtonLabel() }}
       </button>

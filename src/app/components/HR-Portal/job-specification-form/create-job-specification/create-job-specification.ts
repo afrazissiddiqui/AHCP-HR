@@ -38,6 +38,16 @@ const GRADE_WORK_LEVEL_OPTIONS = [
   'WL 1B–1C',
 ] as const;
 
+const MANDATORY_FIELDS = [
+  'jobTitle',
+  'department',
+  'vacancyCount',
+  'employmentType',
+  'gradeWorkLevel',
+  'basicSalary',
+  'qualification-0',
+] as const;
+
 @Component({
   selector: 'app-create-job-specification',
   standalone: true,
@@ -73,6 +83,9 @@ export class CreateJobSpecificationComponent implements OnInit {
 
   // Form Fields - Qualification (Dynamic)
   qualifications: string[] = [''];
+
+  private validationSubmitted = false;
+  private touched: Record<string, boolean> = {};
 
   constructor(
     private router: Router,
@@ -134,6 +147,26 @@ export class CreateJobSpecificationComponent implements OnInit {
     return index;
   }
 
+  protected isMandatory(field: string): boolean {
+    return (MANDATORY_FIELDS as readonly string[]).includes(field);
+  }
+
+  protected showFieldError(field: string): boolean {
+    if (!this.shouldShowValidation(field)) {
+      return false;
+    }
+    return this.isFieldEmpty(field);
+  }
+
+  protected touch(field: string): void {
+    this.touched[field] = true;
+    this.cdr.markForCheck();
+  }
+
+  protected qualificationFieldKey(index: number): string {
+    return `qualification-${index}`;
+  }
+
   preventNonNumericExperienceInput(event: KeyboardEvent): void {
     const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
     if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
@@ -170,9 +203,12 @@ export class CreateJobSpecificationComponent implements OnInit {
   }
 
   submitForm(): void {
-    // Validation
-    if (!this.jobTitle.trim() || !this.department.trim()) {
-      this.alertService.validation('Please enter Job Title and Department at minimum.');
+    this.validationSubmitted = true;
+    this.touchAllMandatory();
+    this.cdr.markForCheck();
+
+    if (!this.validateForm()) {
+      this.alertService.validation('Please fill in all required fields marked with *.');
       return;
     }
 
@@ -269,5 +305,44 @@ export class CreateJobSpecificationComponent implements OnInit {
   private parseAmount(value: string): number {
     const parsed = Number.parseFloat(this.sanitizeDecimalValue(value));
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private shouldShowValidation(field: string): boolean {
+    return this.validationSubmitted || !!this.touched[field];
+  }
+
+  private touchAllMandatory(): void {
+    for (const field of MANDATORY_FIELDS) {
+      this.touched[field] = true;
+    }
+  }
+
+  private validateForm(): boolean {
+    return MANDATORY_FIELDS.every((field) => !this.isFieldEmpty(field));
+  }
+
+  private isFieldEmpty(field: string): boolean {
+    const qualificationMatch = field.match(/^qualification-(\d+)$/);
+    if (qualificationMatch) {
+      const index = Number.parseInt(qualificationMatch[1], 10);
+      return !this.qualifications[index]?.trim();
+    }
+
+    switch (field) {
+      case 'jobTitle':
+        return !this.jobTitle.trim();
+      case 'department':
+        return !this.department.trim();
+      case 'vacancyCount':
+        return this.vacancyCount === null || this.vacancyCount === undefined;
+      case 'employmentType':
+        return !this.employmentType.trim();
+      case 'gradeWorkLevel':
+        return !this.gradeWorkLevel.trim();
+      case 'basicSalary':
+        return !this.basicSalary.trim();
+      default:
+        return false;
+    }
   }
 }

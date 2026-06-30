@@ -1,174 +1,373 @@
-<div class="cjs-page">
+<div class="cjs-page mad-add-page">
   <div class="cjs-header">
     <div class="cjs-header-left">
       <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
         <span class="cjs-back-icon">❮</span>
       </button>
-      <h1>{{ pageTitle }}</h1>
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="mad-page-subtitle">
+          @if (editingId) {
+            Update role details, remuneration, and qualification requirements for this position.
+          } @else {
+            Define role details, remuneration, and qualification requirements for a new position.
+          }
+        </p>
+      </div>
     </div>
   </div>
 
   <div class="cjs-card">
+    <div class="scd-form-hero" aria-hidden="true">
+      <div class="scd-form-hero__glow"></div>
+      <div class="scd-form-hero__content">
+        <span class="scd-form-hero__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <rect x="2" y="7" width="20" height="14" rx="2" />
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+            <path d="M12 12v3M12 12h.01" />
+          </svg>
+        </span>
+        <div class="scd-form-hero__text">
+          <span class="scd-form-hero__label">HR Portal</span>
+          <span class="scd-form-hero__title">Job Specification</span>
+        </div>
+        <div class="scd-form-hero__steps">
+          <span class="scd-step-chip scd-step-chip--active">
+            <span class="scd-step-chip__num">1</span>
+            Job Details
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="jobTitle.trim() && department.trim()"
+            [class.scd-step-chip--ready]="jobTitle.trim() && department.trim() && employmentType.trim()"
+          >
+            <span class="scd-step-chip__num">2</span>
+            Remuneration
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="basicSalary.trim() || medicalAllowance.trim() || fuelAllowance.trim()"
+            [class.scd-step-chip--ready]="qualifications.some(q => q.trim())"
+          >
+            <span class="scd-step-chip__num">3</span>
+            Qualifications
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="cjs-form-container">
-      <section class="cjs-section-block">
-        <div class="cjs-section-title">Job Specification Details</div>
+      <section class="cjs-section-block mad-form-panel mad-form-panel--machine">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">01</span>
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" />
+              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjs-section-title mad-form-panel__title">Job Specification Details</h2>
+            <span class="mad-form-panel__subtitle">Role identity, employment classification, and responsibilities</span>
+          </div>
+        </div>
 
         <div class="cjs-grid">
-          <!-- Left Column -->
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Job Title:</label>
-              <input type="text" [(ngModel)]="jobTitle" placeholder="Position title" />
+              <label for="cjs-job-title" class="cjs-label-required">Job Title:</label>
+              <div class="cjs-field-control">
+                <input
+                  id="cjs-job-title"
+                  type="text"
+                  [(ngModel)]="jobTitle"
+                  placeholder="Position title"
+                  [class.cjs-invalid]="showFieldError('jobTitle')"
+                  (blur)="touch('jobTitle')"
+                />
+              </div>
             </div>
 
             <div class="cjs-row">
-              <label>Department:</label>
-              <select [(ngModel)]="department">
-                <option value="">No Selection</option>
-                @for (dept of departmentOptions; track dept) {
-                <option [value]="dept">{{ dept }}</option>
-                }
-              </select>
+              <label for="cjs-department" class="cjs-label-required">Department:</label>
+              <div class="cjs-field-control">
+                <select
+                  id="cjs-department"
+                  class="cjs-select"
+                  [(ngModel)]="department"
+                  [class.cjs-invalid]="showFieldError('department')"
+                  (blur)="touch('department')"
+                >
+                  <option value="">No Selection</option>
+                  @for (dept of departmentOptions; track dept) {
+                    <option [value]="dept">{{ dept }}</option>
+                  }
+                </select>
+              </div>
             </div>
 
             <div class="cjs-row">
-              <label>Vacancy Count:</label>
-              <input type="number" [(ngModel)]="vacancyCount" placeholder="Number of positions" />
+              <label for="cjs-vacancy-count" class="cjs-label-required">Vacancy Count:</label>
+              <div class="cjs-field-control">
+                <input
+                  id="cjs-vacancy-count"
+                  type="number"
+                  [(ngModel)]="vacancyCount"
+                  placeholder="Number of positions"
+                  [class.cjs-invalid]="showFieldError('vacancyCount')"
+                  (blur)="touch('vacancyCount')"
+                />
+              </div>
+            </div>
+
+            <div class="cjs-row cjs-row--textarea">
+              <label for="cjs-job-description">Job Purpose/ Description:</label>
+              <div class="cjs-field-control">
+                <textarea id="cjs-job-description" [(ngModel)]="jobDescription" placeholder="Role description" rows="4"></textarea>
+              </div>
             </div>
 
             <div class="cjs-row">
-              <label>Job Purpose/ Description:</label>
-              <textarea [(ngModel)]="jobDescription" placeholder="Role description"></textarea>
-            </div>
-
-            <div class="cjs-row">
-              <label>Experience Requirement:</label>
-              <input
-                type="number"
-                [(ngModel)]="experienceYears"
-                min="0"
-                step="1"
-                inputmode="numeric"
-                placeholder="Enter number of years"
-                (keydown)="preventNonNumericExperienceInput($event)"
-              />
+              <label for="cjs-experience">Experience Requirement:</label>
+              <div class="cjs-field-control">
+                <input
+                  id="cjs-experience"
+                  type="number"
+                  [(ngModel)]="experienceYears"
+                  min="0"
+                  step="1"
+                  inputmode="numeric"
+                  placeholder="Enter number of years"
+                  (keydown)="preventNonNumericExperienceInput($event)"
+                />
+              </div>
             </div>
           </div>
 
-          <!-- Right Column -->
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Employment Category:</label>
-              <select [(ngModel)]="employmentCategory">
-                <option value="">No Selection</option>
-                <option value="Executive">Executive</option>
-                <option value="Non-Executive">Non-Executive</option>
-              </select>
+              <label for="cjs-employment-category">Employment Category:</label>
+              <div class="cjs-field-control">
+                <select id="cjs-employment-category" class="cjs-select" [(ngModel)]="employmentCategory">
+                  <option value="">Executive</option>
+                  <option value="Executive">Non-Executive</option>
+                  <option value="Non-Executive">Top Managment</option>
+                </select>
+              </div>
             </div>
 
             <div class="cjs-row">
-              <label>Employment Nature:</label>
-              <select [(ngModel)]="employmentNature">
-                <option value="">No Selection</option>
-                <option value="Technical">Technical</option>
-                <option value="Non-Technical">Non-Technical</option>
-              </select>
+              <label for="cjs-employment-nature">Employment Nature:</label>
+              <div class="cjs-field-control">
+                <select id="cjs-employment-nature" class="cjs-select" [(ngModel)]="employmentNature">
+                  <option value="">No Selection</option>
+                  <option value="Technical">Technical</option>
+                  <option value="Non-Technical">Non-Technical</option>
+                </select>
+              </div>
             </div>
 
             <div class="cjs-row">
-              <label>Employment Type:</label>
-              <select [(ngModel)]="employmentType">
-                <option value="">No Selection</option>
-                <option value="Permanent">Permanent</option>
-                <option value="Temporary">Contractual</option>
-              </select>
+              <label for="cjs-employment-type" class="cjs-label-required">Employment Status:</label>
+              <div class="cjs-field-control">
+                <select
+                  id="cjs-employment-type"
+                  class="cjs-select"
+                  [(ngModel)]="employmentType"
+                  [class.cjs-invalid]="showFieldError('employmentType')"
+                  (blur)="touch('employmentType')"
+                >
+                  <option value="">No Selection</option>
+                  <option value="Permanent">Permanent</option>
+                  <option value="Temporary">Contractual</option>
+                </select>
+              </div>
             </div>
 
             <div class="cjs-row">
-              <label>Grade / Work Level:</label>
-              <select [(ngModel)]="gradeWorkLevel">
-                <option value="">No Selection</option>
-                @for (level of gradeWorkLevelOptions; track level) {
-                <option [value]="level">{{ level }}</option>
-                }
-              </select>
+              <label for="cjs-grade" class="cjs-label-required">Grade / Work Level:</label>
+              <div class="cjs-field-control">
+                <select
+                  id="cjs-grade"
+                  class="cjs-select"
+                  [(ngModel)]="gradeWorkLevel"
+                  [class.cjs-invalid]="showFieldError('gradeWorkLevel')"
+                  (blur)="touch('gradeWorkLevel')"
+                >
+                  <option value="">No Selection</option>
+                  @for (level of gradeWorkLevelOptions; track level) {
+                    <option [value]="level">{{ level }}</option>
+                  }
+                </select>
+              </div>
             </div>
 
-            <div class="cjs-row">
-              <label>Key Responsibility:</label>
-              <textarea [(ngModel)]="keyResponsibilities" placeholder="Key responsibilities of the role"></textarea>
+            <div class="cjs-row cjs-row--textarea">
+              <label for="cjs-key-responsibilities">Key Responsibility:</label>
+              <div class="cjs-field-control">
+                <textarea id="cjs-key-responsibilities" [(ngModel)]="keyResponsibilities" placeholder="Key responsibilities of the role" rows="4"></textarea>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="cjs-section-block">
-        <div class="cjs-section-title">Remuneration Details</div>
+      <section class="cjs-section-block mad-form-panel mad-form-panel--profile">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">02</span>
+          <span class="mad-form-panel__icon mad-form-panel__icon--profile" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjs-section-title mad-form-panel__title">Remuneration Details</h2>
+            <span class="mad-form-panel__subtitle">Salary components, allowances, and additional benefits</span>
+          </div>
+        </div>
+
         <div class="cjs-grid">
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Basic Salary:</label>
-              <input
-                type="text"
-                inputmode="decimal"
-                [ngModel]="basicSalary"
-                (ngModelChange)="onSalaryInput($event, 'basicSalary')"
-                (keydown)="onDecimalKeyDown($event)"
-                placeholder="Enter basic salary"
-              />
+              <label for="cjs-basic-salary" class="cjs-label-required">Basic Salary:</label>
+              <div class="cjs-field-control">
+                <input
+                  id="cjs-basic-salary"
+                  type="text"
+                  inputmode="decimal"
+                  class="cjs-input--currency"
+                  [ngModel]="basicSalary"
+                  (ngModelChange)="onSalaryInput($event, 'basicSalary')"
+                  (keydown)="onDecimalKeyDown($event)"
+                  placeholder="Enter basic salary"
+                  [class.cjs-invalid]="showFieldError('basicSalary')"
+                  (blur)="touch('basicSalary')"
+                />
+              </div>
             </div>
             <div class="cjs-row">
-              <label>Medical Allowance:</label>
-              <input
-                type="text"
-                inputmode="decimal"
-                [ngModel]="medicalAllowance"
-                (ngModelChange)="onSalaryInput($event, 'medicalAllowance')"
-                (keydown)="onDecimalKeyDown($event)"
-                placeholder="Enter medical allowance"
-              />
+              <label for="cjs-medical">Medical Allowance:</label>
+              <div class="cjs-field-control">
+                <input
+                  id="cjs-medical"
+                  type="text"
+                  inputmode="decimal"
+                  class="cjs-input--currency"
+                  [ngModel]="medicalAllowance"
+                  (ngModelChange)="onSalaryInput($event, 'medicalAllowance')"
+                  (keydown)="onDecimalKeyDown($event)"
+                  placeholder="Enter medical allowance"
+                />
+              </div>
             </div>
           </div>
           <div class="cjs-col">
             <div class="cjs-row">
-              <label>Fuel Allowance:</label>
-              <input
-                type="text"
-                inputmode="decimal"
-                [ngModel]="fuelAllowance"
-                (ngModelChange)="onSalaryInput($event, 'fuelAllowance')"
-                (keydown)="onDecimalKeyDown($event)"
-                placeholder="Enter fuel allowance"
-              />
+              <label for="cjs-fuel">Fuel Allowance:</label>
+              <div class="cjs-field-control">
+                <input
+                  id="cjs-fuel"
+                  type="text"
+                  inputmode="decimal"
+                  class="cjs-input--currency"
+                  [ngModel]="fuelAllowance"
+                  (ngModelChange)="onSalaryInput($event, 'fuelAllowance')"
+                  (keydown)="onDecimalKeyDown($event)"
+                  placeholder="Enter fuel allowance"
+                />
+              </div>
             </div>
-            <div class="cjs-row">
-              <label>Package / Perks:</label>
-              <textarea [(ngModel)]="packagePerks" placeholder="Enter other perks and benefits"></textarea>
+            <div class="cjs-row cjs-row--textarea">
+              <label for="cjs-perks">Package / Perks:</label>
+              <div class="cjs-field-control">
+                <textarea id="cjs-perks" [(ngModel)]="packagePerks" placeholder="Enter other perks and benefits" rows="4"></textarea>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="cjs-section-block">
-        <div class="cjs-section-title">Qualification Requirements</div>
+      <section class="cjs-section-block mad-form-panel mad-form-panel--components">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">03</span>
+          <span class="mad-form-panel__icon mad-form-panel__icon--components" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles mad-form-panel__titles--wide">
+            <div class="mad-section-heading mad-section-heading--inline">
+              <div class="mad-section-heading__left">
+                <span class="mad-section-heading__badge" *ngIf="qualifications.length">{{ qualifications.length }}</span>
+                <h2 class="cjs-section-title mad-form-panel__title mad-section-heading__title">Qualification Requirements</h2>
+              </div>
+              <span class="mad-section-heading__hint">Minimum education or certification for this role</span>
+            </div>
+          </div>
+        </div>
+
         <div class="cjs-qualification-list">
-          <div class="cjs-row" *ngFor="let qual of qualifications; let i = index; trackBy: trackByIndex">
-            <label>Minimum Education Requirement:</label>
-            <div class="cjs-input-with-actions">
-              <input type="text" [(ngModel)]="qualifications[i]" placeholder="Education degree / certification" />
-              <button type="button" class="cjs-add-btn" (click)="addQualification()"
-                *ngIf="i === qualifications.length - 1">+</button>
-              <button type="button" class="cjs-remove-btn" (click)="removeQualification(i)"
-                *ngIf="qualifications.length > 1">-</button>
+          <article
+            class="cjs-qual-card"
+            *ngFor="let qual of qualifications; let i = index; trackBy: trackByIndex"
+            [style.--cjs-card-index]="i"
+          >
+            <span class="cjs-qual-card__index">Qual {{ i + 1 }}</span>
+            <div class="cjs-qual-card__field">
+              <label
+                class="cjs-qual-card__label"
+                [class.cjs-label-required]="isMandatory(qualificationFieldKey(i))"
+                [attr.for]="'cjs-qual-' + i"
+              >Minimum Education Requirement</label>
+              <div class="cjs-input-with-actions">
+                <input
+                  [id]="'cjs-qual-' + i"
+                  type="text"
+                  [(ngModel)]="qualifications[i]"
+                  placeholder="Education degree / certification"
+                  [class.cjs-invalid]="showFieldError(qualificationFieldKey(i))"
+                  (blur)="touch(qualificationFieldKey(i))"
+                />
+                <button
+                  type="button"
+                  class="cjs-remove-btn"
+                  (click)="removeQualification(i)"
+                  *ngIf="qualifications.length > 1"
+                  title="Remove qualification"
+                  [attr.aria-label]="'Remove qualification ' + (i + 1)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
+          </article>
+        </div>
+
+        <div class="cjs-qual-footer">
+          <button type="button" class="cjs-add-qual-btn" (click)="addQualification()" title="Add qualification" aria-label="Add qualification">
+            <span class="cjs-add-qual-btn__icon" aria-hidden="true">+</span>
+            <span>Add another qualification</span>
+          </button>
         </div>
       </section>
     </div>
 
     <div class="cjs-actions-footer">
+      <button type="button" class="btn-secondary cjs-reset-btn" (click)="back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
       <button type="button" class="cjs-submit-btn" (click)="submitForm()">
-        <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
+        <span class="cjs-submit-icon">✓</span>
+        {{ submitButtonLabel }}
       </button>
     </div>
   </div>

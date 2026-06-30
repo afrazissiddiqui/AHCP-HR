@@ -324,7 +324,23 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.paymentMode.set(value as 'Cash' | 'Bank' | 'Hybrid' | '');
     if (value !== 'Hybrid') {
       this.taxPercentage.set('');
+      this.cashSalaryPercentage.set('');
     }
+  }
+
+  protected onBankSalaryPercentageChange(value: string): void {
+    this.taxPercentage.set(this.sanitizeDecimalValue(value));
+    this.updateCashSalaryPercentageFromBank();
+  }
+
+  protected onGrossSalaryChange(value: string): void {
+    this.basicSalary.set(this.sanitizeDecimalValue(value));
+    this.updateMaximumAdvanceCapacityFromAdvancePercent();
+  }
+
+  protected onAdvancePercentAllowedChange(value: string): void {
+    this.advancePercentAllowed.set(this.sanitizeDecimalValue(value));
+    this.updateMaximumAdvanceCapacityFromAdvancePercent();
   }
 
   protected isMandatory(field: string): boolean {
@@ -386,6 +402,54 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     const remaining = Math.max(0, days - (Number.isFinite(availed) ? availed : 0));
     this.remainingLeaves.set(String(remaining));
+  }
+
+  private updateCashSalaryPercentageFromBank(): void {
+    const bankStr = this.taxPercentage().trim();
+    if (!bankStr) {
+      this.cashSalaryPercentage.set('');
+      return;
+    }
+
+    const bank = Number.parseFloat(bankStr);
+    if (!Number.isFinite(bank)) {
+      this.cashSalaryPercentage.set('');
+      return;
+    }
+
+    const cash = Math.max(0, 100 - bank);
+    this.cashSalaryPercentage.set(this.formatPercentageValue(cash));
+  }
+
+  private formatPercentageValue(value: number): string {
+    const rounded = Math.round(value * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  }
+
+  private updateMaximumAdvanceCapacityFromAdvancePercent(): void {
+    const percentStr = this.advancePercentAllowed().trim();
+    const salaryStr = this.basicSalary().trim();
+
+    if (!percentStr || !salaryStr) {
+      this.maximumAdvanceCapacity.set('');
+      return;
+    }
+
+    const percent = Number.parseFloat(this.sanitizeDecimalValue(percentStr));
+    const salary = Number.parseFloat(this.sanitizeDecimalValue(salaryStr));
+
+    if (!Number.isFinite(percent) || !Number.isFinite(salary)) {
+      this.maximumAdvanceCapacity.set('');
+      return;
+    }
+
+    const capacity = (percent / 100) * salary;
+    this.maximumAdvanceCapacity.set(this.formatCurrencyAmount(capacity));
+  }
+
+  private formatCurrencyAmount(value: number): string {
+    const rounded = Math.round(value * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
   }
 
   protected onNumericOnlyChange(value: string, target: { set: (next: string) => void }): void {
@@ -1254,6 +1318,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     if (record.basicSalary) {
       this.basicSalary.set(String(record.basicSalary));
+      this.updateMaximumAdvanceCapacityFromAdvancePercent();
     }
     if (record.medicalAllowance) {
       this.medicalAllowances.set(String(record.medicalAllowance));
@@ -1593,6 +1658,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.accountType.set(remuneration.accountType ?? '');
     this.effectiveDate.set(remuneration.effectiveDate ?? '');
     this.taxPercentage.set(remuneration.taxPercentage ?? '');
+    this.updateCashSalaryPercentageFromBank();
     this.dateOfJoining.set(remuneration.dateOfJoining ?? '');
     this.advancePercentAllowed.set(remuneration.advancePercentAllowed ?? '');
     this.maximumLoanCapacity.set(
@@ -1601,7 +1667,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         this.remunerationValue(remuneration.loanAmountAllowed),
       ),
     );
-    this.maximumAdvanceCapacity.set(this.remunerationValue(remuneration.maximumAdvanceCapacity));
+    this.updateMaximumAdvanceCapacityFromAdvancePercent();
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.leaveType.set(remuneration.leaveType ?? '');
     this.leaveDays.set(remuneration.leaveDays ?? '');
@@ -1615,7 +1681,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.carAllowances.set(this.remunerationValue(remuneration.carAllowances));
     this.otherAllowances.set(this.remunerationValue(remuneration.otherAllowances));
     this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') ?? 'No');
-    this.cashSalaryPercentage.set(remuneration.cashSalaryPercentage ?? '');
     this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.socialSecurityApplicable.set(
       (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',
