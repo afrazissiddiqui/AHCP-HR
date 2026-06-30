@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
+import { WarehouseService } from '../../../../../services/warehouse.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { ApplicationFormService } from '../../../../../services/application-form.service';
 import { AuthService } from '../../../../../services/auth.service';
@@ -59,6 +60,7 @@ import {
 export class AddItrFormComponent implements OnInit {
   private readonly itrService = inject(ItrFormService);
   private readonly plantMaintenanceMasterFormService = inject(PlantMaintenanceMasterFormService);
+  private readonly warehouseService = inject(WarehouseService);
   private readonly alertService = inject(AlertService);
   private readonly authService = inject(AuthService);
   private readonly applicationFormService = inject(ApplicationFormService);
@@ -89,6 +91,7 @@ export class AddItrFormComponent implements OnInit {
   readonly inspectorUsers = signal<ItrInspectorUser[]>([]);
   readonly eligibleMachines = signal<MachineSearchOption[]>([]);
   readonly replacementLineGroups = signal<ItrReplacementLineGroup[]>([]);
+  readonly warehouseOptions = this.warehouseService.warehouses;
   readonly machineOptions = computed(() => {
     const machines = [...this.eligibleMachines()];
     const currentId = this.machineId().trim();
@@ -139,6 +142,8 @@ export class AddItrFormComponent implements OnInit {
   private pendingReplacementLineGroups: ItrReplacementLineGroup[] | null = null;
 
   ngOnInit(): void {
+    this.warehouseService.fetchWarehouses().subscribe({ error: () => {} });
+
     this.plantMaintenanceMasterFormService.fetchPlantMaintenanceMasterForms().subscribe({
       next: (records) => {
         this.plantMaintenanceMasterRecords.set(records);
@@ -207,6 +212,31 @@ export class AddItrFormComponent implements OnInit {
     itemIndex: number,
     value: string | number | null,
   ): void {
+    this.updateReplacementItemField(groupIndex, itemIndex, 'quantity', value);
+  }
+
+  updateReplacementFromWarehouse(
+    groupIndex: number,
+    itemIndex: number,
+    value: string,
+  ): void {
+    this.updateReplacementItemField(groupIndex, itemIndex, 'fromWarehouseCode', value);
+  }
+
+  updateReplacementToWarehouse(
+    groupIndex: number,
+    itemIndex: number,
+    value: string,
+  ): void {
+    this.updateReplacementItemField(groupIndex, itemIndex, 'toWarehouseCode', value);
+  }
+
+  private updateReplacementItemField(
+    groupIndex: number,
+    itemIndex: number,
+    field: 'quantity' | 'fromWarehouseCode' | 'toWarehouseCode',
+    value: string | number | null,
+  ): void {
     this.replacementLineGroups.update((groups) =>
       groups.map((group, gi) => {
         if (gi !== groupIndex) {
@@ -220,17 +250,21 @@ export class AddItrFormComponent implements OnInit {
               return item;
             }
 
-            if (value === null || value === '') {
-              return { ...item, quantity: null };
+            if (field === 'quantity') {
+              if (value === null || value === '') {
+                return { ...item, quantity: null };
+              }
+
+              const quantity =
+                typeof value === 'number' ? value : Number.parseFloat(String(value));
+              if (!Number.isFinite(quantity) || quantity < 0) {
+                return item;
+              }
+
+              return { ...item, quantity };
             }
 
-            const quantity =
-              typeof value === 'number' ? value : Number.parseFloat(String(value));
-            if (!Number.isFinite(quantity) || quantity < 0) {
-              return item;
-            }
-
-            return { ...item, quantity };
+            return { ...item, [field]: String(value ?? '') };
           }),
         };
       }),
@@ -309,6 +343,20 @@ export class AddItrFormComponent implements OnInit {
     if (invalidReplacementQuantity) {
       this.alertService.validation(
         'Please enter a valid Quantity greater than 0 for each replacement item.',
+      );
+      return;
+    }
+
+    const invalidReplacementWarehouse = this.replacementLineGroups().some((group) =>
+      group.items.some(
+        (item) =>
+          (item.itemCode.trim() || item.itemName.trim()) &&
+          (!item.fromWarehouseCode.trim() || !item.toWarehouseCode.trim()),
+      ),
+    );
+    if (invalidReplacementWarehouse) {
+      this.alertService.validation(
+        'Please select From Warehouse and To Warehouse for each replacement item.',
       );
       return;
     }
@@ -435,7 +483,13 @@ export class AddItrFormComponent implements OnInit {
   ): ItrReplacementLineGroup[] {
     return groups.map((group) => ({
       ...group,
-      items: group.items.map((item) => ({ ...item })),
+      items: group.items.map((item) => ({
+        itemCode: item.itemCode,
+        itemName: item.itemName,
+        quantity: item.quantity,
+        fromWarehouseCode: '',
+        toWarehouseCode: '',
+      })),
     }));
   }
 
@@ -470,6 +524,8 @@ export class AddItrFormComponent implements OnInit {
           return {
             ...item,
             quantity: savedItem.quantity ?? item.quantity,
+            fromWarehouseCode: savedItem.fromWarehouseCode || item.fromWarehouseCode,
+            toWarehouseCode: savedItem.toWarehouseCode || item.toWarehouseCode,
           };
         }),
       };

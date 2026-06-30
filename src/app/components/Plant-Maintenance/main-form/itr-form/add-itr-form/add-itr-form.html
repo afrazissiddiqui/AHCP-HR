@@ -242,6 +242,8 @@
                   <th>Item Code</th>
                   <th>Item Name</th>
                   <th class="pmm-replacement-table__qty-col">Quantity</th>
+                  <th class="itr-replacement-table__warehouse-col">From Warehouse</th>
+                  <th class="itr-replacement-table__warehouse-col">To Warehouse</th>
                 </tr>
               </thead>
               <tbody>
@@ -261,6 +263,38 @@
                       placeholder="Qty"
                       [name]="'itrReplacementQuantity' + gi + '_' + ii"
                     />
+                  </td>
+                  <td class="itr-replacement-table__warehouse-col">
+                    <select
+                      class="mad-select itr-replacement-table__warehouse-select"
+                      [ngModel]="item.fromWarehouseCode"
+                      (ngModelChange)="updateReplacementFromWarehouse(gi, ii, $event)"
+                      [name]="'itrReplacementFromWarehouse' + gi + '_' + ii"
+                    >
+                      <option value="">Select warehouse</option>
+                      <option
+                        *ngFor="let warehouse of warehouseOptions()"
+                        [value]="warehouse.warehouseCode"
+                      >
+                        {{ warehouse.warehouseName }}
+                      </option>
+                    </select>
+                  </td>
+                  <td class="itr-replacement-table__warehouse-col">
+                    <select
+                      class="mad-select itr-replacement-table__warehouse-select"
+                      [ngModel]="item.toWarehouseCode"
+                      (ngModelChange)="updateReplacementToWarehouse(gi, ii, $event)"
+                      [name]="'itrReplacementToWarehouse' + gi + '_' + ii"
+                    >
+                      <option value="">Select warehouse</option>
+                      <option
+                        *ngFor="let warehouse of warehouseOptions()"
+                        [value]="warehouse.warehouseCode"
+                      >
+                        {{ warehouse.warehouseName }}
+                      </option>
+                    </select>
                   </td>
                 </tr>
               </tbody>

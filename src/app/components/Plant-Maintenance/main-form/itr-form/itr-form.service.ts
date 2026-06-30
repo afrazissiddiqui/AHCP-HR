@@ -782,6 +782,8 @@ export interface ItrReplacementItem {
   itemCode: string;
   itemName: string;
   quantity: number | null;
+  fromWarehouseCode: string;
+  toWarehouseCode: string;
 }
 
 export interface ItrReplacementLineGroup {
@@ -1072,6 +1074,8 @@ export function buildItrFormAddPayload(entry: ItrFormAddInput): ItrFormAddPayloa
           item.quantity === null || item.quantity === undefined
             ? ''
             : String(item.quantity),
+        from_warehouse_code: item.fromWarehouseCode.trim(),
+        to_warehouse_code: item.toWarehouseCode.trim(),
       })),
     )
     .filter(
@@ -1079,6 +1083,8 @@ export function buildItrFormAddPayload(entry: ItrFormAddInput): ItrFormAddPayloa
         answer.item_code ||
         answer.item_name ||
         answer.quantity ||
+        answer.from_warehouse_code ||
+        answer.to_warehouse_code ||
         answer.items_to_be_inspected ||
         answer.what_to_check,
     );
@@ -1329,9 +1335,21 @@ function mapReplacementLineGroups(
     const itemCode = pickStringValue([answer], ['item_code', 'itemCode']);
     const itemName = pickStringValue([answer], ['item_name', 'itemName']);
     const quantity = parseNumberOrNull(pickStringValue([answer], ['quantity', 'Quantity']));
+    const fromWarehouseCode = pickStringValue([answer], [
+      'from_warehouse_code',
+      'fromWarehouseCode',
+      'from_warehouse',
+      'fromWarehouse',
+    ]);
+    const toWarehouseCode = pickStringValue([answer], [
+      'to_warehouse_code',
+      'toWarehouseCode',
+      'to_warehouse',
+      'toWarehouse',
+    ]);
 
     const existing = groupMap.get(lineKey);
-    const item = { itemCode, itemName, quantity };
+    const item = { itemCode, itemName, quantity, fromWarehouseCode, toWarehouseCode };
     if (existing) {
       existing.items.push(item);
       continue;

@@ -560,6 +560,17 @@
   vertical-align: middle;
 }
 
+.itr-replacement-table__warehouse-col {
+  min-width: 180px;
+}
+
+.itr-replacement-table__warehouse-select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 @media (max-width: 900px) {
   .itr-replacement-line-block__meta {
     grid-template-columns: 1fr;
