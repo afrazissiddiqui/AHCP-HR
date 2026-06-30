@@ -85,6 +85,12 @@ export class AddItrFormComponent implements OnInit {
   readonly robotSerialNo = signal('');
   readonly inspector = signal('');
   readonly inspectionDate = signal('');
+  readonly postingDate = signal('');
+  readonly dueDate = signal('');
+  readonly docDate = signal('');
+  readonly fromWarehouseCode = signal('');
+  readonly toWarehouseCode = signal('');
+  readonly remarks = signal('');
   readonly submitDate = signal('');
   readonly documentNo = signal('');
   readonly status = signal('');
@@ -173,6 +179,7 @@ export class AddItrFormComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.setPerformedByFromLogin();
+      this.setDefaultDates();
       return;
     }
 
@@ -288,6 +295,28 @@ export class AddItrFormComponent implements OnInit {
     this.inspectionDate.set(value);
   }
 
+  onPostingDateChange(value: string): void {
+    this.postingDate.set(value);
+  }
+
+  onDueDateChange(value: string): void {
+    this.dueDate.set(value);
+  }
+
+  onDocDateChange(value: string): void {
+    this.docDate.set(value);
+  }
+
+  onFromWarehouseChange(value: string): void {
+    this.fromWarehouseCode.set(value);
+    this.propagateWarehousesToReplacementItems();
+  }
+
+  onToWarehouseChange(value: string): void {
+    this.toWarehouseCode.set(value);
+    this.propagateWarehousesToReplacementItems();
+  }
+
   trackByIndex(index: number): number {
     return index;
   }
@@ -334,6 +363,35 @@ export class AddItrFormComponent implements OnInit {
       return;
     }
 
+    const postingDate = this.postingDate().trim();
+    const dueDate = this.dueDate().trim();
+    const docDate = this.docDate().trim();
+    const fromWarehouseCode = this.fromWarehouseCode().trim();
+    const toWarehouseCode = this.toWarehouseCode().trim();
+
+    if (!postingDate) {
+      this.alertService.validation('Please enter a Posting Date.');
+      return;
+    }
+    if (!dueDate) {
+      this.alertService.validation('Please enter a Due Date.');
+      return;
+    }
+    if (!docDate) {
+      this.alertService.validation('Please enter a Doc Date.');
+      return;
+    }
+
+    const hasReplacementItems = this.replacementLineGroups().some((group) =>
+      group.items.some((item) => item.itemCode.trim() || item.itemName.trim()),
+    );
+    if (hasReplacementItems && (!fromWarehouseCode || !toWarehouseCode)) {
+      this.alertService.validation(
+        'Please select From Warehouse and To Warehouse on the ITR Form.',
+      );
+      return;
+    }
+
     const invalidReplacementQuantity = this.replacementLineGroups().some((group) =>
       group.items.some(
         (item) =>
@@ -374,6 +432,12 @@ export class AddItrFormComponent implements OnInit {
       robotSerialNo: this.robotSerialNo().trim(),
       inspector,
       inspectionDate,
+      postingDate,
+      dueDate,
+      docDate,
+      fromWarehouseCode,
+      toWarehouseCode,
+      remarks: this.remarks().trim(),
       submitDate: this.submitDate().trim(),
       documentNo: this.documentNo().trim(),
       status: this.status().trim() || 'Draft',
@@ -426,6 +490,12 @@ export class AddItrFormComponent implements OnInit {
     this.robotSerialNo.set(record.robotSerialNo);
     this.inspector.set(record.inspector);
     this.inspectionDate.set(record.inspectionDate);
+    this.postingDate.set(record.postingDate);
+    this.dueDate.set(record.dueDate);
+    this.docDate.set(record.docDate);
+    this.fromWarehouseCode.set(record.fromWarehouseCode);
+    this.toWarehouseCode.set(record.toWarehouseCode);
+    this.remarks.set(record.remarks);
     this.submitDate.set(record.submitDate);
     this.documentNo.set(record.documentNo);
     this.status.set(record.status);
@@ -477,6 +547,44 @@ export class AddItrFormComponent implements OnInit {
     }
 
     this.replacementLineGroups.set(masterGroups);
+    this.propagateWarehousesToReplacementItems();
+  }
+
+  private propagateWarehousesToReplacementItems(): void {
+    const fromWarehouseCode = this.fromWarehouseCode().trim();
+    const toWarehouseCode = this.toWarehouseCode().trim();
+    if (!fromWarehouseCode && !toWarehouseCode) {
+      return;
+    }
+
+    this.replacementLineGroups.update((groups) =>
+      groups.map((group) => ({
+        ...group,
+        items: group.items.map((item) => ({
+          ...item,
+          fromWarehouseCode: fromWarehouseCode || item.fromWarehouseCode,
+          toWarehouseCode: toWarehouseCode || item.toWarehouseCode,
+        })),
+      })),
+    );
+  }
+
+  private setDefaultDates(): void {
+    const today = this.formatToday();
+    if (!this.postingDate()) {
+      this.postingDate.set(today);
+    }
+    if (!this.docDate()) {
+      this.docDate.set(today);
+    }
+  }
+
+  private formatToday(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private toItrReplacementLineGroups(
@@ -494,12 +602,15 @@ export class AddItrFormComponent implements OnInit {
   private normalizeReplacementItem(
     item: Partial<ItrReplacementItem>,
   ): ItrReplacementItem {
+    const formFrom = this.fromWarehouseCode().trim();
+    const formTo = this.toWarehouseCode().trim();
+
     return {
       itemCode: item.itemCode ?? '',
       itemName: item.itemName ?? '',
       quantity: item.quantity ?? null,
-      fromWarehouseCode: item.fromWarehouseCode ?? '',
-      toWarehouseCode: item.toWarehouseCode ?? '',
+      fromWarehouseCode: item.fromWarehouseCode?.trim() || formFrom,
+      toWarehouseCode: item.toWarehouseCode?.trim() || formTo,
     };
   }
 

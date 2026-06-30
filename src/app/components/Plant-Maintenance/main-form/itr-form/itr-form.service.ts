@@ -808,6 +808,12 @@ export interface ItrFormRecord {
   robotSerialNo: string;
   inspector: string;
   inspectionDate: string;
+  postingDate: string;
+  dueDate: string;
+  docDate: string;
+  fromWarehouseCode: string;
+  toWarehouseCode: string;
+  remarks: string;
   submitDate: string;
   documentNo: string;
   status: ItrFormStatus;
@@ -849,6 +855,12 @@ export interface ItrFormAddInput {
   robotSerialNo: string;
   inspector: string;
   inspectionDate: string;
+  postingDate?: string;
+  dueDate?: string;
+  docDate?: string;
+  fromWarehouseCode?: string;
+  toWarehouseCode?: string;
+  remarks?: string;
   submitDate?: string;
   documentNo?: string;
   status?: string;
@@ -879,6 +891,12 @@ export interface ItrFormAddPayload {
   robot_serial_no: string;
   inspector: string;
   inspection_date: string;
+  posting_date: string;
+  due_date: string;
+  doc_date: string;
+  from_warehouse_code: string;
+  to_warehouse_code: string;
+  remarks: string;
   submit_date: string;
   document_no: string;
   status: string;
@@ -1107,6 +1125,12 @@ export function buildItrFormAddPayload(entry: ItrFormAddInput): ItrFormAddPayloa
     robot_serial_no: entry.robotSerialNo.trim(),
     inspector: entry.inspector.trim(),
     inspection_date: entry.inspectionDate.trim(),
+    posting_date: entry.postingDate?.trim() || '',
+    due_date: entry.dueDate?.trim() || '',
+    doc_date: entry.docDate?.trim() || '',
+    from_warehouse_code: entry.fromWarehouseCode?.trim() || '',
+    to_warehouse_code: entry.toWarehouseCode?.trim() || '',
+    remarks: entry.remarks?.trim() || '',
     submit_date: entry.submitDate?.trim() || formatDateValue(new Date()),
     document_no: entry.documentNo?.trim() || '',
     status: entry.status?.trim() || 'Draft',
@@ -1511,6 +1535,22 @@ function mapApiItemToRecord(item: Record<string, unknown>): ItrFormRecord {
     robotSerialNo: pickStringValue(sources, ['robot_serial_no', 'robotSerialNo', 'RobotSerialNo']),
     inspector: pickStringValue(sources, ['inspector', 'Inspector']),
     inspectionDate: pickStringValue(sources, ['inspection_date', 'inspectionDate', 'InspectionDate']),
+    postingDate: pickStringValue(sources, ['posting_date', 'postingDate', 'PostingDate']),
+    dueDate: pickStringValue(sources, ['due_date', 'dueDate', 'DueDate']),
+    docDate: pickStringValue(sources, ['doc_date', 'docDate', 'DocDate']),
+    fromWarehouseCode: pickStringValue(sources, [
+      'from_warehouse_code',
+      'fromWarehouseCode',
+      'from_warehouse',
+      'fromWarehouse',
+    ]),
+    toWarehouseCode: pickStringValue(sources, [
+      'to_warehouse_code',
+      'toWarehouseCode',
+      'to_warehouse',
+      'toWarehouse',
+    ]),
+    remarks: pickStringValue(sources, ['remarks', 'Remarks']),
     submitDate: pickStringValue(sources, ['submit_date', 'submitDate', 'SubmitDate']),
     documentNo: pickStringValue(sources, ['document_no', 'documentNo', 'DocumentNo']),
     status: (status || 'Draft') as ItrFormStatus,
