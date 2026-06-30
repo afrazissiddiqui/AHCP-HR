@@ -1,22 +1,86 @@
-<div class="husky-add-page cjr-page scd-add-page">
+<div class="husky-add-page cjr-page scd-add-page mad-add-page">
   <div class="husky-add-scroll" #scrollContainer>
     <div class="cjr-header">
       <div class="cjr-header-left">
         <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
           <span class="cjr-back-icon">❮</span>
         </button>
-        <h1>{{ pageTitle() }}</h1>
+        <div>
+          <h1>{{ pageTitle() }}</h1>
+          <p class="mad-page-subtitle">
+            @if (editingRecordId()) {
+              Update Husky machine inspection, KPIs, checkpoints, and calibration measurements.
+            } @else {
+              Record Husky machine inspection, KPIs, checkpoints, and calibration measurements.
+            }
+          </p>
+        </div>
       </div>
     </div>
 
     <div class="cjr-card scd-form-card husky-header-card">
+      <div class="scd-form-hero" aria-hidden="true">
+        <div class="scd-form-hero__glow"></div>
+        <div class="scd-form-hero__content">
+          <span class="scd-form-hero__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+          </span>
+          <div class="scd-form-hero__text">
+            <span class="scd-form-hero__label">Main Form</span>
+            <span class="scd-form-hero__title">Husky Form</span>
+          </div>
+          <div class="scd-form-hero__steps">
+            <span class="scd-step-chip scd-step-chip--active">
+              <span class="scd-step-chip__num">1</span>
+              Profile
+            </span>
+            <span class="scd-step-chip__connector" aria-hidden="true"></span>
+            <span
+              class="scd-step-chip"
+              [class.scd-step-chip--active]="machineId().trim()"
+              [class.scd-step-chip--ready]="machineId().trim() && machineName().trim()"
+            >
+              <span class="scd-step-chip__num">2</span>
+              Inspection
+            </span>
+            <span class="scd-step-chip__connector" aria-hidden="true"></span>
+            <span
+              class="scd-step-chip"
+              [class.scd-step-chip--active]="inspector().trim() && inspectionDate().trim()"
+              [class.scd-step-chip--ready]="recommendations().trim().length > 0"
+            >
+              <span class="scd-step-chip__num">3</span>
+              Summary
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div class="cjr-personal" id="husky-form-header-section">
         <div class="cjr-section-title">Husky Form</div>
 
+        <section class="mad-form-panel mad-form-panel--machine husky-profile-panel">
+          <div class="mad-form-panel__heading">
+            <span class="mad-form-panel__step" aria-hidden="true">01</span>
+            <span class="mad-form-panel__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M7 9h4M7 13h10" />
+              </svg>
+            </span>
+            <div class="mad-form-panel__titles">
+              <span class="mad-form-panel__title">Machine &amp; Inspection Header</span>
+              <span class="mad-form-panel__subtitle">Select machine, maintenance profile, and inspector details</span>
+            </div>
+          </div>
+
         <div class="cjr-personal-grid pmm-profile-grid">
           <div class="cjr-personal-col">
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-machine-id">Machine ID:</label>
+              <div class="scd-field-control">
               <select
                 id="husky-machine-id"
                 class="mad-select husky-form-select husky-header-select"
@@ -30,22 +94,35 @@
                   {{ machine.machineId }} — {{ machine.machineName }}
                 </option>
               </select>
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-machine-name">Machine Name:</label>
-              <input
-                id="husky-machine-name"
-                type="text"
-                [ngModel]="machineName()"
-                name="machineName"
-                placeholder="Auto-populated from Machine ID"
-                readonly
-              />
+              <div
+                class="scd-field-control"
+                [class.scd-field-control--linked]="machineName().trim()"
+              >
+                <input
+                  id="husky-machine-name"
+                  type="text"
+                  [ngModel]="machineName()"
+                  name="machineName"
+                  placeholder="Auto-populated from Machine ID"
+                  readonly
+                />
+                <span class="scd-linked-badge" *ngIf="machineName().trim()" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  Linked
+                </span>
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-maintenance-type">Maintenance Type:</label>
+              <div class="scd-field-control">
               <select
                 id="husky-maintenance-type"
                 class="mad-select husky-form-select husky-header-select"
@@ -59,10 +136,12 @@
                   {{ option }}
                 </option>
               </select>
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-maintenance-frequency">Maintenance Frequency:</label>
+              <div class="scd-field-control">
               <select
                 id="husky-maintenance-frequency"
                 class="mad-select husky-form-select husky-header-select"
@@ -76,12 +155,14 @@
                   {{ option }}
                 </option>
               </select>
+              </div>
             </div>
           </div>
 
           <div class="cjr-personal-col">
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-serial-no">SN# (Machine Serial No.):</label>
+              <div class="scd-field-control">
               <input
                 id="husky-serial-no"
                 type="text"
@@ -90,10 +171,12 @@
                 name="serialNo"
                 placeholder="Enter machine serial number"
               />
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-mold-no">Mold #:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-mold-no"
                 type="text"
@@ -102,10 +185,12 @@
                 name="moldNo"
                 placeholder="Enter mold number"
               />
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-hot-runner-job-no">Hot Runner Job #:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-hot-runner-job-no"
                 type="text"
@@ -114,10 +199,12 @@
                 name="hotRunnerJobNo"
                 placeholder="Enter hot runner job number"
               />
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-hour-meter-reading">Hour Meter Reading:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-hour-meter-reading"
                 type="text"
@@ -126,12 +213,14 @@
                 name="hourMeterReading"
                 placeholder="Enter hour meter reading"
               />
+              </div>
             </div>
           </div>
 
           <div class="cjr-personal-col">
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-robot-serial-no">Robot Serial #:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-robot-serial-no"
                 type="text"
@@ -140,10 +229,12 @@
                 name="robotSerialNo"
                 placeholder="Enter robot serial number"
               />
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-inspector">Inspector:</label>
+              <div class="scd-field-control">
               <select
                 id="husky-inspector"
                 class="mad-select husky-form-select husky-header-select"
@@ -157,10 +248,12 @@
                   {{ user.displayName }}
                 </option>
               </select>
+              </div>
             </div>
 
-            <div class="cjr-row">
+            <div class="cjr-row scd-field-row">
               <label for="husky-inspection-date">Inspection Date:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-inspection-date"
                 type="date"
@@ -169,10 +262,12 @@
                 (ngModelChange)="onInspectionDateChange($event)"
                 name="inspectionDate"
               />
+              </div>
             </div>
 
-            <div class="cjr-row" *ngIf="!isCreateMode()">
+            <div class="cjr-row scd-field-row" *ngIf="!isCreateMode()">
               <label for="husky-submit-date">Submit Date:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-submit-date"
                 type="text"
@@ -181,10 +276,12 @@
                 readonly
                 placeholder="System-generated on submit"
               />
+              </div>
             </div>
 
-            <div class="cjr-row" *ngIf="!isCreateMode()">
+            <div class="cjr-row scd-field-row" *ngIf="!isCreateMode()">
               <label for="husky-document-no">Document No.:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-document-no"
                 type="text"
@@ -193,10 +290,12 @@
                 readonly
                 placeholder="Auto-generated"
               />
+              </div>
             </div>
 
-            <div class="cjr-row" *ngIf="!isCreateMode()">
+            <div class="cjr-row scd-field-row" *ngIf="!isCreateMode()">
               <label for="husky-status">Status:</label>
+              <div class="scd-field-control">
               <input
                 id="husky-status"
                 type="text"
@@ -205,9 +304,11 @@
                 readonly
                 placeholder="System-driven workflow"
               />
+              </div>
             </div>
           </div>
         </div>
+        </section>
       </div>
     </div>
 
@@ -231,7 +332,10 @@
       <div class="husky-form-sections">
         @for (section of sectionNavItems; track section.id) {
           <section [id]="section.id" class="husky-form-section">
-            <div class="cjr-section-title">{{ section.label }}</div>
+            <div class="husky-form-section__heading">
+              <span class="husky-form-section__accent" aria-hidden="true"></span>
+              <h2 class="husky-form-section__title">{{ section.label }}</h2>
+            </div>
 
             @if (isContentLoading()) {
               <div class="husky-skeleton-section" aria-hidden="true">
@@ -961,7 +1065,10 @@
 
     <div class="cjr-card scd-form-card husky-footer-card" id="husky-form-footer-section">
       <div class="husky-footer">
-        <div class="cjr-section-title">Inspection Summary</div>
+        <div class="husky-form-section__heading husky-form-section__heading--footer">
+          <span class="husky-form-section__accent" aria-hidden="true"></span>
+          <h2 class="husky-form-section__title">Inspection Summary</h2>
+        </div>
 
         <div class="husky-footer-field husky-footer-field--full">
           <label for="husky-recommendations">Recommendations</label>
@@ -1028,7 +1135,12 @@
     </div>
 
     <div class="cjr-actions-footer husky-actions-footer">
-      <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
+      <button type="button" class="btn-secondary scd-reset-btn" (click)="back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
       <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="isSaving()">
         <span class="cjr-submit-icon">✓</span>
         {{ isSaving() ? (isCreateMode() ? 'Submitting...' : 'Updating...') : isCreateMode() ? 'Submit' : 'Update' }}
