@@ -370,53 +370,55 @@
             }
           </div>
 
-          <div class="pagination-controls comp-pagination__controls">
-            <button type="button" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+          <div class="comp-pagination__bottom">
+            <div class="pagination-controls comp-pagination__controls">
+              <button type="button" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
 
-            <div class="page-numbers comp-pagination__numbers">
-              @for (item of paginationFooterItems(); track paginationItemTrack($index, item); let last = $last) {
-                @switch (item.kind) {
-                  @case ('page') {
-                    <button
-                      type="button"
-                      [class.active]="item.page === currentPage()"
-                      (click)="setPage(item.page)"
-                    >
-                      {{ item.page }}
-                    </button>
+              <div class="page-numbers comp-pagination__numbers">
+                @for (item of paginationFooterItems(); track paginationItemTrack($index, item); let last = $last) {
+                  @switch (item.kind) {
+                    @case ('page') {
+                      <button
+                        type="button"
+                        [class.active]="item.page === currentPage()"
+                        (click)="setPage(item.page)"
+                      >
+                        {{ item.page }}
+                      </button>
+                    }
+                    @case ('ellipsis') {
+                      <span class="comp-pagination__ellipsis" aria-hidden="true">.........</span>
+                    }
+                    @case ('last') {
+                      <button
+                        type="button"
+                        [class.active]="isLastPageActive()"
+                        (click)="setPage(totalPages())"
+                      >
+                        Last
+                      </button>
+                    }
                   }
-                  @case ('ellipsis') {
-                    <span class="comp-pagination__ellipsis" aria-hidden="true">.........</span>
-                  }
-                  @case ('last') {
-                    <button
-                      type="button"
-                      [class.active]="isLastPageActive()"
-                      (click)="setPage(totalPages())"
-                    >
-                      Last
-                    </button>
+                  @if (!last) {
+                    <span class="comp-pagination__comma" aria-hidden="true">,</span>
                   }
                 }
-                @if (!last) {
-                  <span class="comp-pagination__comma" aria-hidden="true">,</span>
-                }
-              }
+              </div>
+
+              <button type="button" [disabled]="currentPage() >= totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
             </div>
 
-            <button type="button" [disabled]="currentPage() >= totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
-          </div>
-
-          <div class="page-size-selector">
-            <select
-              [ngModel]="pageSize()"
-              (ngModelChange)="pageSize.set(+$event); onPageSizeChange()"
-              aria-label="Rows per page"
-            >
-              @for (size of pageSizeOptions; track size) {
-                <option [value]="size">Show {{ size }}</option>
-              }
-            </select>
+            <div class="page-size-selector">
+              <select
+                [ngModel]="pageSize()"
+                (ngModelChange)="pageSize.set(+$event); onPageSizeChange()"
+                aria-label="Rows per page"
+              >
+                @for (size of pageSizeOptions; track size) {
+                  <option [value]="size">Show {{ size }}</option>
+                }
+              </select>
+            </div>
           </div>
         </div>
       </div>

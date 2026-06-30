@@ -32,9 +32,29 @@ type PayrollProcessingColumnKey = Exclude<keyof PayrollProcessingListRecord, nev
     .payroll-list-row:hover td {
       background: #f8fafc;
     }
-    .payroll-list-pagination__numbers {
-      flex-wrap: wrap;
+    .payroll-list-pagination {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+    .payroll-list-pagination__bottom {
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+    }
+    .payroll-list-pagination .pagination-controls {
+      flex: 1;
+      flex-wrap: nowrap;
+      justify-content: center;
+      min-width: 0;
+    }
+    .payroll-list-pagination__numbers {
+      flex-wrap: nowrap;
+      align-items: center;
+      overflow-x: auto;
+      scrollbar-width: thin;
     }
     .payroll-list-pagination__comma {
       color: #6a6d70;
@@ -138,7 +158,7 @@ export class PayrollProcessingComponent implements OnInit {
   }
 
   get paginationFooterItems(): PaginationFooterItem[] {
-    return buildPaginationFooterItems(this.totalPages);
+    return buildPaginationFooterItems(this.totalPages, this.currentPage);
   }
 
   get visibleColumns(): Array<{ key: PayrollProcessingColumnKey; label: string; visible: boolean }> {

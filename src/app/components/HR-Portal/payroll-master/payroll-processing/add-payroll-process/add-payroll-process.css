@@ -894,16 +894,31 @@
   flex-shrink: 0;
   border-top: 1px solid #e8edf2;
   background: #fff;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.comp-pagination__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
 }
 
 .comp-pagination__controls {
-  flex-wrap: wrap;
+  flex: 1;
+  flex-wrap: nowrap;
   justify-content: center;
+  min-width: 0;
 }
 
 .comp-pagination__numbers {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .comp-pagination__comma {

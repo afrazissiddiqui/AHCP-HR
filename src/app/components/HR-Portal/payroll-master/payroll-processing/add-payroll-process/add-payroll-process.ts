@@ -13,8 +13,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subscription, from, of } from 'rxjs';
-import { catchError, concatMap, finalize, map } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import {
   ApplicationFormRecord,
   ApplicationFormService,
@@ -170,6 +170,7 @@ export class AddPayrollProcessComponent implements OnInit {
   private syncingScroll = false;
   private pageDetailsSub?: Subscription;
   private pageDetailsGeneration = 0;
+  private readonly lastMonthGrossSalaryCache = new Map<string, number>();
 
   readonly minimumWage = this.payrollSetupService.minimumWage;
   readonly currencyCode = 'PKR';
@@ -231,7 +232,7 @@ export class AddPayrollProcessComponent implements OnInit {
   );
 
   readonly paginationFooterItems = computed((): PaginationFooterItem[] =>
-    buildPaginationFooterItems(this.totalPages()),
+    buildPaginationFooterItems(this.totalPages(), this.currentPage()),
   );
 
   readonly paginationItemTrack = paginationItemTrack;
@@ -311,14 +312,12 @@ export class AddPayrollProcessComponent implements OnInit {
     this.currentPage.set(page);
     this.scrollTablesToTop();
     this.loadCurrentPageDetails();
-    this.cdr.markForCheck();
   }
 
   onPageSizeChange(): void {
     this.currentPage.set(1);
     this.scrollTablesToTop();
     this.loadCurrentPageDetails();
-    this.cdr.markForCheck();
   }
 
   isLastPageActive(): boolean {
@@ -754,34 +753,40 @@ export class AddPayrollProcessComponent implements OnInit {
 
     if (missing.length === 0) {
       this.loadingPageDetails.set(false);
-      this.cdr.markForCheck();
       return;
     }
 
     this.loadingPageDetails.set(true);
 
-    this.pageDetailsSub = from(missing)
+    this.pageDetailsSub = this.applicationFormService
+      .fetchEmployeeProfileDetailsInBatches(missing, missing.length)
       .pipe(
-        concatMap((summary) =>
-          this.applicationFormService.fetchEmployeeProfileDetail(summary.apiId!).pipe(
-            map((record) => this.mapRecordToRow(record)),
-            catchError(() => of(this.buildPlaceholderRowFromSummary(summary))),
-          ),
-        ),
         finalize(() => {
           if (generation !== this.pageDetailsGeneration) {
             return;
           }
           this.loadingPageDetails.set(false);
-          this.cdr.markForCheck();
         }),
       )
       .subscribe({
-        next: (row) => {
+        next: (records) => {
           if (generation !== this.pageDetailsGeneration) {
             return;
           }
-          this.patchRowCache(row);
+
+          const rows = records.map((record) =>
+            record.detail
+              ? this.mapRecordToRow(record)
+              : this.buildPlaceholderRowFromSummary(record),
+          );
+
+          this.rowCache.update((cache) => {
+            const next = new Map(cache);
+            for (const row of rows) {
+              next.set(row.apiId, row);
+            }
+            return next;
+          });
         },
         error: (error: unknown) => {
           if (generation !== this.pageDetailsGeneration) {
@@ -793,15 +798,6 @@ export class AddPayrollProcessComponent implements OnInit {
           );
         },
       });
-  }
-
-  private patchRowCache(row: PayrollProcessRow): void {
-    this.rowCache.update((cache) => {
-      const next = new Map(cache);
-      next.set(row.apiId, row);
-      return next;
-    });
-    this.cdr.markForCheck();
   }
 
   private resolveEmployeeKey(record: ApplicationFormRecord): string {
@@ -939,17 +935,23 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   private resolveLastMonthGrossSalary(employeeCode: string, basicSalary: number): number {
+    const cached = this.lastMonthGrossSalaryCache.get(employeeCode);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     const priorRecords = this.payrollSetupService
       .records()
       .filter((record) => record.employeeId === employeeCode)
       .sort((a, b) => b.id - a.id);
 
-    if (priorRecords.length > 0) {
-      const lastRecord = priorRecords[0];
-      return computeGrossSalary(lastRecord.basicSalary, lastRecord.medicalAllowance);
-    }
+    const result =
+      priorRecords.length > 0
+        ? computeGrossSalary(priorRecords[0].basicSalary, priorRecords[0].medicalAllowance)
+        : computeGrossSalary(basicSalary, computeMedicalAllowance(basicSalary));
 
-    return computeGrossSalary(basicSalary, computeMedicalAllowance(basicSalary));
+    this.lastMonthGrossSalaryCache.set(employeeCode, result);
+    return result;
   }
 
   private buildYearOptions(): number[] {

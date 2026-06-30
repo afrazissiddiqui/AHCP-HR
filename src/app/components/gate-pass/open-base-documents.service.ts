@@ -46,6 +46,9 @@ export interface OpenBaseDocument {
   issuedTo?: string;
   articleOutDate?: string;
   articleReturnedDate?: string;
+  driverName?: string;
+  driverCnic?: string;
+  driverPhone?: string;
   transporterName?: string;
   transporterCnic?: string;
   transporterPhone?: string;
@@ -924,6 +927,28 @@ export class OpenBaseDocumentsService {
       location: this.pickString(sources, ['location', 'Location']),
       referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo', 'U_CusPoNo']),
       remarks: this.pickString(sources, ['remarks', 'Remarks']),
+      driverName: this.pickString(sources, [
+        'driverName',
+        'driver_name',
+        'DriverName',
+        'transporterName',
+        'transporter_name',
+        'U_TransporterName',
+      ]),
+      driverCnic: this.pickString(sources, [
+        'driverCnic',
+        'driver_cnic',
+        'DriverCnic',
+        'transporterCnic',
+        'transporter_cnic',
+      ]),
+      driverPhone: this.pickString(sources, [
+        'driverPhone',
+        'driver_phone',
+        'DriverPhone',
+        'transporterPhone',
+        'transporter_phone',
+      ]),
       transporterName: this.pickString(sources, ['transporterName', 'transporter_name', 'U_TransporterName']),
       lines: this.mapDocumentLines(item),
     };
