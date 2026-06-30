@@ -115,7 +115,7 @@ export class AttendanceManagementService {
 
     return slotRefs.map((slot) => {
       const punches = sortPunchesChronologically(
-        session.punchGroups.get(`${slot.employeeKey}|${slot.date}`) ?? [],
+        session.punchGroups.get(attendanceGroupKey(slot.employeeKey, slot.date)) ?? [],
       );
       return this.slotToDailyRecord(slot, punches);
     });
@@ -189,35 +189,32 @@ export class AttendanceManagementService {
     employees: ApplicationFormRecord[],
     query: AttendanceQuery,
   ): AttendanceSession {
-    const dates = resolveQueryDates(query);
-    const dateSet = new Set(dates);
+    const queryDates = resolveQueryDates(query);
     const index = buildEmployeeAttendanceIndex(employees);
     const punchGroups = new Map<string, AttendancePunchRecord[]>();
 
     for (const punch of punches) {
       const punchDate = extractIsoDate(punch.PunchDatetime);
-      if (!punchDate || !dateSet.has(punchDate)) {
+      if (!punchDate) {
         continue;
       }
 
-      const employeeKey =
-        resolvePunchKey(punch.EmployeeId, index.aliasToCanonical) ||
-        canonicalAttendanceKey(punch.EmployeeId) ||
-        punch.EmployeeId.trim();
+      const employeeKey = punchEmployeeKey(punch);
       if (!employeeKey) {
         continue;
       }
 
+      registerPunchEmployeeAliases(index, employeeKey, punch.EmployeeId);
       ensurePunchOnlyEmployee(index, employeeKey, punch.EmployeeId);
       attachEmployeeNameFromAliases(index, employeeKey, punch.EmployeeId);
 
-      const groupKey = `${employeeKey}|${punchDate}`;
+      const groupKey = attendanceGroupKey(employeeKey, punchDate);
       const group = punchGroups.get(groupKey) ?? [];
       group.push(punch);
       punchGroups.set(groupKey, group);
     }
 
-    const slots = this.buildAttendanceSlots(query, dates, index, punchGroups);
+    const slots = this.buildAttendanceSlots(query, queryDates, index, punchGroups);
 
     return {
       query,
@@ -233,21 +230,22 @@ export class AttendanceManagementService {
     employees: ApplicationFormRecord[],
     punchGroups: Map<string, AttendancePunchRecord[]>,
   ): AttendanceSession {
-    const dates = resolveQueryDates(query);
+    const queryDates = resolveQueryDates(query);
     const index = buildEmployeeAttendanceIndex(employees);
 
     for (const groupKey of punchGroups.keys()) {
-      const [employeeKey, date] = groupKey.split('|');
-      if (!employeeKey || !date) {
+      const parsed = parseAttendanceGroupKey(groupKey);
+      if (!parsed) {
         continue;
       }
       const punches = punchGroups.get(groupKey) ?? [];
-      const rawId = punches[0]?.EmployeeId ?? employeeKey;
-      ensurePunchOnlyEmployee(index, employeeKey, rawId);
-      attachEmployeeNameFromAliases(index, employeeKey, rawId);
+      const rawId = punches[0]?.EmployeeId ?? parsed.employeeKey;
+      registerPunchEmployeeAliases(index, parsed.employeeKey, rawId);
+      ensurePunchOnlyEmployee(index, parsed.employeeKey, rawId);
+      attachEmployeeNameFromAliases(index, parsed.employeeKey, rawId);
     }
 
-    const slots = this.buildAttendanceSlots(query, dates, index, punchGroups);
+    const slots = this.buildAttendanceSlots(query, queryDates, index, punchGroups);
 
     return {
       query,
@@ -260,30 +258,43 @@ export class AttendanceManagementService {
 
   private buildAttendanceSlots(
     query: AttendanceQuery,
-    dates: string[],
+    queryDates: string[],
     index: EmployeeAttendanceIndex,
     punchGroups: Map<string, AttendancePunchRecord[]>,
   ): AttendanceSlotRef[] {
-    const employeeKeys = collectAttendanceEmployeeKeys(query, index, punchGroups);
     const slots: AttendanceSlotRef[] = [];
+    const covered = new Set<string>();
 
-    for (const employeeKey of employeeKeys) {
+    for (const [groupKey, dayPunches] of punchGroups) {
+      const parsed = parseAttendanceGroupKey(groupKey);
+      if (!parsed) {
+        continue;
+      }
+
+      const displayId =
+        index.displayIdByKey.get(parsed.employeeKey) ?? formatAttendanceUserId(parsed.employeeKey);
+      const employeeName = index.nameByKey.get(parsed.employeeKey) ?? '';
+      slots.push(
+        this.buildSlotRef(parsed.employeeKey, displayId, employeeName, parsed.date, dayPunches),
+      );
+      covered.add(groupKey);
+    }
+
+    const rosterKeys = collectRosterEmployeeKeys(query, index);
+    for (const employeeKey of rosterKeys) {
       const displayId = index.displayIdByKey.get(employeeKey) ?? formatAttendanceUserId(employeeKey);
       const employeeName = index.nameByKey.get(employeeKey) ?? '';
 
-      for (const date of dates) {
-        const dayPunches = sortPunchesChronologically(punchGroups.get(`${employeeKey}|${date}`) ?? []);
-        slots.push(this.buildSlotRef(employeeKey, displayId, employeeName, date, dayPunches));
+      for (const date of queryDates) {
+        const groupKey = attendanceGroupKey(employeeKey, date);
+        if (covered.has(groupKey)) {
+          continue;
+        }
+        slots.push(this.buildSlotRef(employeeKey, displayId, employeeName, date, []));
       }
     }
 
-    return slots.sort((left, right) => {
-      const dateCompare = right.date.localeCompare(left.date);
-      if (dateCompare !== 0) {
-        return dateCompare;
-      }
-      return left.displayId.localeCompare(right.displayId, undefined, { numeric: true });
-    });
+    return slots.sort(compareAttendanceSlots);
   }
 
   private buildSlotRef(
@@ -401,32 +412,82 @@ export class AttendanceManagementService {
 
   private fetchPunches(query: AttendanceQuery): Observable<AttendancePunchRecord[]> {
     const normalized = this.normalizeQuery(query);
-    const allowedDates = new Set(resolveQueryDates(normalized));
     const primaryUrl = this.buildQueryUrl(normalized);
-    const fallbackUrl = this.buildFallbackPunchUrl(normalized);
+    const fallbackUrls = this.buildFallbackPunchUrls(normalized);
 
-    const parseAndFilter = (response: unknown): AttendancePunchRecord[] =>
-      this.extractApiItems(response)
-        .map((item) => this.mapApiItem(item))
-        .filter((punch) => {
-          const punchDate = extractIsoDate(punch.PunchDatetime);
-          return !!punchDate && allowedDates.has(punchDate);
-        });
+    const parse = (response: unknown): AttendancePunchRecord[] =>
+      this.extractApiItems(response).map((item) => this.mapApiItem(item));
 
     const loadUrl = (url: string) =>
       this.http.get<unknown>(url).pipe(
-        map(parseAndFilter),
+        map(parse),
         catchError(() => of<AttendancePunchRecord[]>([])),
       );
 
     return loadUrl(primaryUrl).pipe(
       switchMap((primaryPunches) => {
-        if (primaryPunches.length > 0 || fallbackUrl === primaryUrl) {
+        if (primaryPunches.length > 0) {
           return of(primaryPunches);
         }
-        return loadUrl(fallbackUrl);
+
+        if (fallbackUrls.length === 0) {
+          return of(primaryPunches);
+        }
+
+        return loadUrl(fallbackUrls[0]).pipe(
+          switchMap((secondPunches) => {
+            if (secondPunches.length > 0 || fallbackUrls.length < 2) {
+              return of(secondPunches);
+            }
+            return loadUrl(fallbackUrls[1]);
+          }),
+        );
       }),
     );
+  }
+
+  private buildFallbackPunchUrls(query: AttendanceQuery): string[] {
+    const normalized = this.normalizeQuery(query);
+    const apiEmployeeId = normalized.userId?.trim()
+      ? biometricsPathEmployeeId(normalized.userId.trim())
+      : '';
+    const urls: string[] = [];
+    const seen = new Set<string>();
+    const add = (url: string) => {
+      if (!seen.has(url)) {
+        seen.add(url);
+        urls.push(url);
+      }
+    };
+
+    add(this.buildFallbackPunchUrl(query));
+
+    if (normalized.mode === 'date') {
+      const date = normalized.date ?? formatIsoDate(new Date());
+      if (apiEmployeeId) {
+        add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${date}/${date}/${encodeURIComponent(apiEmployeeId)}`);
+      } else {
+        add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${date}/${date}/`);
+      }
+    }
+
+    if (normalized.mode === 'dateRange') {
+      const fromDate = normalized.fromDate ?? formatIsoDate(new Date());
+      const toDate = normalized.toDate ?? fromDate;
+      const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
+      if (apiEmployeeId) {
+        add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(apiEmployeeId)}`);
+      }
+      add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/`);
+    }
+
+    if (normalized.mode === 'today' && apiEmployeeId) {
+      const today = formatIsoDate(new Date());
+      add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${today}/${encodeURIComponent(apiEmployeeId)}`);
+      add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${today}/${today}/${encodeURIComponent(apiEmployeeId)}`);
+    }
+
+    return urls.filter((url) => url !== this.buildQueryUrl(query));
   }
 
   private normalizeQuery(query: AttendanceQuery): AttendanceQuery {
@@ -757,11 +818,58 @@ function attachEmployeeNameFromAliases(
   }
 }
 
-function collectAttendanceEmployeeKeys(
-  query: AttendanceQuery,
+function punchEmployeeKey(punch: AttendancePunchRecord): string {
+  return canonicalAttendanceKey(punch.EmployeeId) || punch.EmployeeId.trim();
+}
+
+function attendanceGroupKey(employeeKey: string, date: string): string {
+  return `${employeeKey}|${date}`;
+}
+
+function parseAttendanceGroupKey(
+  groupKey: string,
+): { employeeKey: string; date: string } | null {
+  const separatorIndex = groupKey.indexOf('|');
+  if (separatorIndex <= 0) {
+    return null;
+  }
+
+  const employeeKey = groupKey.slice(0, separatorIndex);
+  const date = groupKey.slice(separatorIndex + 1);
+  if (!employeeKey || !date) {
+    return null;
+  }
+
+  return { employeeKey, date };
+}
+
+function registerPunchEmployeeAliases(
   index: EmployeeAttendanceIndex,
-  punchGroups: Map<string, AttendancePunchRecord[]>,
-): string[] {
+  employeeKey: string,
+  rawPunchId: string,
+): void {
+  for (const variant of attendanceKeyVariants(rawPunchId)) {
+    index.aliasToCanonical.set(variant, employeeKey);
+  }
+  if (!index.displayIdByKey.has(employeeKey)) {
+    index.displayIdByKey.set(employeeKey, formatAttendanceUserId(rawPunchId));
+  }
+}
+
+function compareAttendanceSlots(left: AttendanceSlotRef, right: AttendanceSlotRef): number {
+  if (left.status !== right.status) {
+    return left.status === 'Present' ? -1 : 1;
+  }
+
+  const dateCompare = right.date.localeCompare(left.date);
+  if (dateCompare !== 0) {
+    return dateCompare;
+  }
+
+  return left.displayId.localeCompare(right.displayId, undefined, { numeric: true });
+}
+
+function collectRosterEmployeeKeys(query: AttendanceQuery, index: EmployeeAttendanceIndex): string[] {
   const filteredId = query.userId?.trim();
   if (filteredId) {
     const key =
@@ -769,15 +877,9 @@ function collectAttendanceEmployeeKeys(
     return key ? [key] : [];
   }
 
-  const seen = new Set<string>(index.nameByKey.keys());
-  for (const groupKey of punchGroups.keys()) {
-    const [employeeKey] = groupKey.split('|');
-    if (employeeKey) {
-      seen.add(employeeKey);
-    }
-  }
-
-  return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  return Array.from(index.nameByKey.keys()).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true }),
+  );
 }
 
 function resolvePunchKey(rawEmployeeId: string, aliasToCanonical: Map<string, string>): string {

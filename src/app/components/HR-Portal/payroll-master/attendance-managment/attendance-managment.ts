@@ -73,7 +73,7 @@ export class AttendanceManagmentComponent implements OnInit {
   toDate = formatIsoDate(new Date());
   showDialog = false;
   activeTab: 'filter' = 'filter';
-  sortColumn: AttendanceColumnKey | '' = 'AttendanceDate';
+  sortColumn: AttendanceColumnKey | '' = 'AttendanceStatus';
   sortDirection: 'asc' | 'desc' = 'desc';
   currentPage = 1;
   pageSize = 25;
