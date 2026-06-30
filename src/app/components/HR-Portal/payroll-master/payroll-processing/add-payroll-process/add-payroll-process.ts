@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
   computed,
@@ -12,7 +13,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { catchError, finalize } from 'rxjs/operators';
+import { Subscription, from, of } from 'rxjs';
+import { catchError, concatMap, finalize, map } from 'rxjs/operators';
 import {
   ApplicationFormRecord,
   ApplicationFormService,
@@ -129,9 +131,12 @@ export class AddPayrollProcessComponent implements OnInit {
   private readonly payrollProcessingService = inject(PayrollProcessingService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly rows = signal<PayrollProcessRow[]>([]);
+  readonly employeeSummaries = signal<ApplicationFormRecord[]>([]);
+  readonly rowCache = signal<Map<string, PayrollProcessRow>>(new Map());
   readonly loading = signal(true);
+  readonly loadingPageDetails = signal(false);
   readonly saving = signal(false);
   readonly currentPage = signal(1);
   readonly pageSize = signal(10);
@@ -163,6 +168,8 @@ export class AddPayrollProcessComponent implements OnInit {
   private readonly fixedPane = viewChild<ElementRef<HTMLElement>>('fixedPane');
   private readonly scrollPane = viewChild<ElementRef<HTMLElement>>('scrollPane');
   private syncingScroll = false;
+  private pageDetailsSub?: Subscription;
+  private pageDetailsGeneration = 0;
 
   readonly minimumWage = this.payrollSetupService.minimumWage;
   readonly currencyCode = 'PKR';
@@ -206,13 +213,21 @@ export class AddPayrollProcessComponent implements OnInit {
   );
 
   readonly paginatedRows = computed(() => {
-    const list = this.rows();
+    const cache = this.rowCache();
+    return this.currentPageSummaries().map((summary) => {
+      const id = this.resolveEmployeeKey(summary);
+      return cache.get(id) ?? this.buildPlaceholderRowFromSummary(summary);
+    });
+  });
+
+  readonly currentPageSummaries = computed(() => {
+    const list = this.employeeSummaries();
     const start = (this.currentPage() - 1) * this.pageSize();
     return list.slice(start, start + this.pageSize());
   });
 
   readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.rows().length / this.pageSize())),
+    Math.max(1, Math.ceil(this.employeeSummaries().length / this.pageSize())),
   );
 
   readonly paginationFooterItems = computed((): PaginationFooterItem[] =>
@@ -222,7 +237,9 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly paginationItemTrack = paginationItemTrack;
   Math = Math;
 
-  readonly skeletonRows = Array.from({ length: 8 }, (_, index) => index);
+  readonly skeletonRows = computed(() =>
+    Array.from({ length: this.pageSize() }, (_, index) => index),
+  );
 
   readonly groupTotals = computed(() => {
     const totals = {
@@ -248,7 +265,10 @@ export class AddPayrollProcessComponent implements OnInit {
       finalGrossSalary: 0,
     };
 
-    for (const row of this.rows()) {
+    for (const row of this.paginatedRows()) {
+      if (!this.isRowLoaded(row.apiId)) {
+        continue;
+      }
       totals.basicSalary += row.basicSalary;
       totals.grossSalary += row.grossSalary;
       totals.medicalAllowance += row.medicalAllowance;
@@ -275,7 +295,12 @@ export class AddPayrollProcessComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => this.pageDetailsSub?.unsubscribe());
     this.loadEmployees();
+  }
+
+  isRowLoaded(apiId: string): boolean {
+    return this.rowCache().has(apiId);
   }
 
   setPage(page: number): void {
@@ -285,12 +310,14 @@ export class AddPayrollProcessComponent implements OnInit {
     }
     this.currentPage.set(page);
     this.scrollTablesToTop();
+    this.loadCurrentPageDetails();
     this.cdr.markForCheck();
   }
 
   onPageSizeChange(): void {
     this.currentPage.set(1);
     this.scrollTablesToTop();
+    this.loadCurrentPageDetails();
     this.cdr.markForCheck();
   }
 
@@ -496,15 +523,25 @@ export class AddPayrollProcessComponent implements OnInit {
 
   onMinimumWageChange(value: string | number): void {
     this.payrollSetupService.setMinimumWage(this.parseAmount(value));
-    this.rows.update((list) => list.map((row) => this.recalculateRow(row)));
+    this.rowCache.update((cache) => {
+      const next = new Map(cache);
+      for (const [id, row] of next) {
+        next.set(id, this.recalculateRow(row));
+      }
+      return next;
+    });
   }
 
   setApproval(apiId: string, approved: boolean): void {
-    this.rows.update((list) =>
-      list.map((row) =>
-        row.apiId === apiId ? { ...row, approved } : row,
-      ),
-    );
+    this.rowCache.update((cache) => {
+      const row = cache.get(apiId);
+      if (!row) {
+        return cache;
+      }
+      const next = new Map(cache);
+      next.set(apiId, { ...row, approved });
+      return next;
+    });
   }
 
   updateRowField(
@@ -528,11 +565,15 @@ export class AddPayrollProcessComponent implements OnInit {
       ? this.parseAmount(value)
       : String(value);
 
-    this.rows.update((list) =>
-      list.map((row) =>
-        row.apiId === apiId ? this.recalculateRow({ ...row, [field]: parsed }) : row,
-      ),
-    );
+    this.rowCache.update((cache) => {
+      const row = cache.get(apiId);
+      if (!row) {
+        return cache;
+      }
+      const next = new Map(cache);
+      next.set(apiId, this.recalculateRow({ ...row, [field]: parsed }));
+      return next;
+    });
   }
 
   openEmployeeProfile(apiId: string): void {
@@ -575,8 +616,8 @@ export class AddPayrollProcessComponent implements OnInit {
       return;
     }
 
-    const rows = this.rows();
-    if (rows.length === 0) {
+    const rows = Array.from(this.rowCache().values());
+    if (this.employeeSummaries().length === 0) {
       void this.alertService.validation('No employees available to save.');
       return;
     }
@@ -667,40 +708,30 @@ export class AddPayrollProcessComponent implements OnInit {
 
   private loadEmployees(): void {
     this.loading.set(true);
+    this.rowCache.set(new Map());
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: (records) => {
         this.loadLoggedInUserProfile();
 
-        const withApiId = records.filter((record) => !!record.apiId);
+        const withApiId = records
+          .filter((record) => !!record.apiId)
+          .sort((left, right) =>
+            (left.EmployeeName || '').localeCompare(right.EmployeeName || '', undefined, {
+              sensitivity: 'base',
+            }),
+          );
+
+        this.employeeSummaries.set(withApiId);
+        this.currentPage.set(1);
+        this.loading.set(false);
+
         if (withApiId.length === 0) {
-          this.rows.set([]);
-          this.loading.set(false);
           this.cdr.markForCheck();
           return;
         }
 
-        this.applicationFormService.fetchEmployeeProfileDetailsInBatches(withApiId, 5).subscribe({
-          next: (details) => {
-            this.rows.set(
-              details
-                .map((record) => this.mapRecordToRow(record))
-                .sort((a, b) =>
-                  a.personName.localeCompare(b.personName, undefined, { sensitivity: 'base' }),
-                ),
-            );
-            this.currentPage.set(1);
-            this.loading.set(false);
-            this.cdr.markForCheck();
-          },
-          error: (error: unknown) => {
-            this.loading.set(false);
-            void this.alertService.error(
-              'Load Failed',
-              formatApiErrorMessage(error, 'Failed to load employee payroll details.'),
-            );
-            this.cdr.markForCheck();
-          },
-        });
+        this.loadCurrentPageDetails();
+        this.cdr.markForCheck();
       },
       error: (error: unknown) => {
         this.loading.set(false);
@@ -710,6 +741,111 @@ export class AddPayrollProcessComponent implements OnInit {
         );
         this.cdr.markForCheck();
       },
+    });
+  }
+
+  private loadCurrentPageDetails(): void {
+    this.pageDetailsSub?.unsubscribe();
+    const generation = ++this.pageDetailsGeneration;
+
+    const missing = this.currentPageSummaries().filter(
+      (summary) => !this.rowCache().has(this.resolveEmployeeKey(summary)),
+    );
+
+    if (missing.length === 0) {
+      this.loadingPageDetails.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.loadingPageDetails.set(true);
+
+    this.pageDetailsSub = from(missing)
+      .pipe(
+        concatMap((summary) =>
+          this.applicationFormService.fetchEmployeeProfileDetail(summary.apiId!).pipe(
+            map((record) => this.mapRecordToRow(record)),
+            catchError(() => of(this.buildPlaceholderRowFromSummary(summary))),
+          ),
+        ),
+        finalize(() => {
+          if (generation !== this.pageDetailsGeneration) {
+            return;
+          }
+          this.loadingPageDetails.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (row) => {
+          if (generation !== this.pageDetailsGeneration) {
+            return;
+          }
+          this.patchRowCache(row);
+        },
+        error: (error: unknown) => {
+          if (generation !== this.pageDetailsGeneration) {
+            return;
+          }
+          void this.alertService.error(
+            'Load Failed',
+            formatApiErrorMessage(error, 'Failed to load employee payroll details for this page.'),
+          );
+        },
+      });
+  }
+
+  private patchRowCache(row: PayrollProcessRow): void {
+    this.rowCache.update((cache) => {
+      const next = new Map(cache);
+      next.set(row.apiId, row);
+      return next;
+    });
+    this.cdr.markForCheck();
+  }
+
+  private resolveEmployeeKey(record: ApplicationFormRecord): string {
+    return record.apiId ?? record.EmployeeCode;
+  }
+
+  private buildPlaceholderRowFromSummary(record: ApplicationFormRecord): PayrollProcessRow {
+    return this.recalculateRow({
+      apiId: this.resolveEmployeeKey(record),
+      employeeCode: record.EmployeeCode,
+      personName: record.EmployeeName,
+      username: record.EmployeeCode,
+      designation: record.Designation,
+      department: record.Department,
+      employeeCategory: record.EmploymentCategory,
+      employmentNature: record.EmployeeNature,
+      employmentType: record.EmploymentType,
+      jobTitle: record.Designation,
+      location: '',
+      workGradeLevel: '',
+      dateOfJoining: '',
+      yearsOfService: 0,
+      eobiApplicable: false,
+      basicSalary: 0,
+      grossSalary: 0,
+      medicalAllowance: 0,
+      allowedLiters: 0,
+      monthlyFuelRate: 0,
+      fuelAllowance: 0,
+      mobileAllowance: 0,
+      carAllowance: 0,
+      otherAllowances: 0,
+      bonus: 0,
+      lastMonthGrossSalary: 0,
+      overtimeHours: 0,
+      overtime: 0,
+      providentFund: 0,
+      gratuity: 0,
+      eobiEmployee: 0,
+      eobiEmployer: 0,
+      arrears: 0,
+      loanAdjustment: 0,
+      loanAdvForm: 0,
+      approved: false,
     });
   }
 

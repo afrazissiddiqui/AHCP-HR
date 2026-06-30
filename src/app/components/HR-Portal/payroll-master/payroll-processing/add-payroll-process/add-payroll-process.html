@@ -5,7 +5,7 @@
       <h1 class="comp-topbar__title">Payroll Processing</h1>
     </div>
     <div class="comp-topbar__actions">
-      <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || saving() || rows().length === 0">
+      <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || loadingPageDetails() || saving() || employeeSummaries().length === 0">
         {{ saving() ? 'Saving…' : 'Save' }}
       </button>
     </div>
@@ -17,7 +17,7 @@
       @if (loading()) {
         <span class="comp-skeleton comp-skeleton--title-count" aria-hidden="true"></span>
       } @else {
-        <strong>({{ rows().length }} Employees)</strong>
+        <strong>({{ employeeSummaries().length }} Employees)</strong>
       }
     </h2>
 
@@ -108,7 +108,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (i of skeletonRows; track i; let odd = $odd) {
+                @for (i of skeletonRows(); track i; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                     <td class="comp-emp-cell comp-section-end comp-section-end--employee">
                       <div class="comp-skeleton-emp">
@@ -149,7 +149,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (i of skeletonRows; track i; let odd = $odd) {
+                @for (i of skeletonRows(); track i; let odd = $odd) {
                   <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                     @for (col of payrollColumns; track col.key) {
                       <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
@@ -188,7 +188,7 @@
           </div>
         </div>
       </div>
-    } @else if (rows().length === 0) {
+    } @else if (employeeSummaries().length === 0) {
       <div class="comp-empty-cell">No employees found.</div>
     } @else {
       <div class="comp-table-card">
@@ -236,7 +236,7 @@
               </tbody>
               <tfoot>
                 <tr class="comp-total-row">
-                  <td class="comp-section-end comp-section-end--employee">Group Total</td>
+                  <td class="comp-section-end comp-section-end--employee">Page Total</td>
                 </tr>
               </tfoot>
             </table>
@@ -267,57 +267,74 @@
                       <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
                         @switch (col.type) {
                           @case ('currency') {
-                            <div class="comp-input-wrap">
-                              <span class="comp-input-prefix">{{ currencyCode }}</span>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                class="comp-input"
-                                [ngModel]="getColumnValue(row, col)"
-                                (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
-                              />
-                            </div>
+                            @if (isRowLoaded(row.apiId)) {
+                              <div class="comp-input-wrap">
+                                <span class="comp-input-prefix">{{ currencyCode }}</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  class="comp-input"
+                                  [ngModel]="getColumnValue(row, col)"
+                                  (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
+                                />
+                              </div>
+                            } @else {
+                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                            }
                           }
                           @case ('readonly') {
-                            <div class="comp-input-wrap comp-input-wrap--readonly">
-                              <input
-                                type="text"
-                                class="comp-input comp-input--readonly"
-                                [value]="formatMoney($any(getColumnValue(row, col)))"
-                                readonly
-                              />
-                            </div>
+                            @if (isRowLoaded(row.apiId)) {
+                              <div class="comp-input-wrap comp-input-wrap--readonly">
+                                <input
+                                  type="text"
+                                  class="comp-input comp-input--readonly"
+                                  [value]="formatMoney($any(getColumnValue(row, col)))"
+                                  readonly
+                                />
+                              </div>
+                            } @else {
+                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                            }
                           }
                           @case ('readonly-pill') {
-                            <div class="comp-input-wrap comp-input-wrap--readonly">
-                              <input
-                                type="text"
-                                class="comp-input comp-input--readonly"
-                                [value]="formatMoney($any(getColumnValue(row, col)))"
-                                readonly
-                              />
-                            </div>
-                            <div class="comp-cell-center comp-pill-wrap">
-                              <span
-                                class="comp-pill"
-                                [class.comp-pill--green]="earningsRatioForRow(row) >= 95 && earningsRatioForRow(row) <= 110"
-                                [class.comp-pill--yellow]="earningsRatioForRow(row) > 110"
-                              >
-                                {{ earningsRatioForRow(row) }}%
-                              </span>
-                            </div>
+                            @if (isRowLoaded(row.apiId)) {
+                              <div class="comp-input-wrap comp-input-wrap--readonly">
+                                <input
+                                  type="text"
+                                  class="comp-input comp-input--readonly"
+                                  [value]="formatMoney($any(getColumnValue(row, col)))"
+                                  readonly
+                                />
+                              </div>
+                              <div class="comp-cell-center comp-pill-wrap">
+                                <span
+                                  class="comp-pill"
+                                  [class.comp-pill--green]="earningsRatioForRow(row) >= 95 && earningsRatioForRow(row) <= 110"
+                                  [class.comp-pill--yellow]="earningsRatioForRow(row) > 110"
+                                >
+                                  {{ earningsRatioForRow(row) }}%
+                                </span>
+                              </div>
+                            } @else {
+                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                              <span class="comp-skeleton comp-skeleton--pill comp-skeleton--center" aria-hidden="true"></span>
+                            }
                           }
                           @case ('approval') {
-                            <div class="comp-approval-cell">
-                              <input
-                                type="checkbox"
-                                class="comp-approval-checkbox"
-                                [ngModel]="row.approved"
-                                (ngModelChange)="setApproval(row.apiId, $event)"
-                                [attr.aria-label]="'Approve payroll for ' + row.personName"
-                              />
-                            </div>
+                            @if (isRowLoaded(row.apiId)) {
+                              <div class="comp-approval-cell">
+                                <input
+                                  type="checkbox"
+                                  class="comp-approval-checkbox"
+                                  [ngModel]="row.approved"
+                                  (ngModelChange)="setApproval(row.apiId, $event)"
+                                  [attr.aria-label]="'Approve payroll for ' + row.personName"
+                                />
+                              </div>
+                            } @else {
+                              <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
+                            }
                           }
                         }
                       </td>
@@ -342,9 +359,12 @@
 
         <div class="comp-pagination table-pagination">
           <div class="pagination-info">
-            @if (rows().length > 0) {
+            @if (employeeSummaries().length > 0) {
               Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
-              {{ Math.min(currentPage() * pageSize(), rows().length) }} of {{ rows().length }} employees
+              {{ Math.min(currentPage() * pageSize(), employeeSummaries().length) }} of {{ employeeSummaries().length }} employees
+              @if (loadingPageDetails()) {
+                · Loading page details…
+              }
             } @else {
               No employees to display
             }

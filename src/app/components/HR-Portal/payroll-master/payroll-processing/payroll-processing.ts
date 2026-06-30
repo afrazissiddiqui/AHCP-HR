@@ -10,6 +10,11 @@ import {
   PayrollProcessingService,
 } from '../../../../services/payroll-processing.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import {
+  buildPaginationFooterItems,
+  paginationItemTrack,
+  PaginationFooterItem,
+} from '../../../../utils/pagination.util';
 import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
 
 type PayrollProcessingColumnKey = Exclude<keyof PayrollProcessingListRecord, never>;
@@ -27,6 +32,22 @@ type PayrollProcessingColumnKey = Exclude<keyof PayrollProcessingListRecord, nev
     .payroll-list-row:hover td {
       background: #f8fafc;
     }
+    .payroll-list-pagination__numbers {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .payroll-list-pagination__comma {
+      color: #6a6d70;
+      padding: 0 2px;
+      user-select: none;
+    }
+    .payroll-list-pagination__ellipsis {
+      color: #6a6d70;
+      letter-spacing: 0.08em;
+      padding: 0 6px;
+      user-select: none;
+      font-weight: 600;
+    }
   `],
 })
 export class PayrollProcessingComponent implements OnInit {
@@ -43,6 +64,10 @@ export class PayrollProcessingComponent implements OnInit {
   selectedStatus = '';
   showDialog = false;
   activeTab: 'filter' = 'filter';
+  currentPage = 1;
+  pageSize = 25;
+  readonly pageSizeOptions = [10, 25, 50, 100];
+  Math = Math;
 
   readonly columns: Array<{ key: PayrollProcessingColumnKey; label: string; visible: boolean }> = [
     { key: 'Id', label: 'ID', visible: true },
@@ -55,6 +80,10 @@ export class PayrollProcessingComponent implements OnInit {
     { key: 'ProcessedDate', label: 'Processed Date', visible: true },
     { key: 'EmployeeCount', label: 'Employees', visible: true },
   ];
+
+  trackPaginationItem(index: number, item: PaginationFooterItem): string {
+    return paginationItemTrack(index, item);
+  }
 
   ngOnInit(): void {
     this.loadRecords();
@@ -97,6 +126,19 @@ export class PayrollProcessingComponent implements OnInit {
       row.ProcessedDate.toLowerCase().includes(search) ||
       String(row.EmployeeCount).includes(search),
     );
+  }
+
+  get paginatedPayrollRows(): PayrollProcessingListRecord[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredPayrollRows.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredPayrollRows.length / this.pageSize));
+  }
+
+  get paginationFooterItems(): PaginationFooterItem[] {
+    return buildPaginationFooterItems(this.totalPages);
   }
 
   get visibleColumns(): Array<{ key: PayrollProcessingColumnKey; label: string; visible: boolean }> {
@@ -155,7 +197,26 @@ export class PayrollProcessingComponent implements OnInit {
   }
 
   onSearchChange(): void {
-    // Hook for shellbar search parity.
+    this.currentPage = 1;
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+  }
+
+  setPage(page: number): void {
+    if (page < 1 || page > this.totalPages) {
+      return;
+    }
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
+
+  isLastPageActive(): boolean {
+    return this.currentPage === this.totalPages;
   }
 
   openDialog(): void {

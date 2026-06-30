@@ -17,7 +17,7 @@
       <label for="payroll-status-filter" class="sapMTitle sapMTitleStyleH6" style="white-space: nowrap;">
         Status
       </label>
-      <select id="payroll-status-filter" [(ngModel)]="selectedStatus"
+      <select id="payroll-status-filter" [(ngModel)]="selectedStatus" (ngModelChange)="onFilterChange()"
         style="min-width: 160px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
         <option value="">All statuses</option>
         <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
@@ -78,7 +78,7 @@
               No payroll records to display.
             </td>
           </tr>
-          <tr *ngFor="let row of filteredPayrollRows" class="payroll-list-row" (click)="viewRecord(row)">
+          <tr *ngFor="let row of paginatedPayrollRows" class="payroll-list-row" (click)="viewRecord(row)">
             <td *ngFor="let col of visibleColumns" style="border: 1px solid #e2e8f0; padding: 10px; text-align: left;">
               {{ getCellValue(row, col.key) }}
             </td>
@@ -88,6 +88,52 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="table-pagination payroll-list-pagination">
+      <div class="pagination-info">
+        <ng-container *ngIf="filteredPayrollRows.length > 0; else emptyPagination">
+          Showing {{ (currentPage - 1) * pageSize + 1 }} to
+          {{ Math.min(currentPage * pageSize, filteredPayrollRows.length) }} of
+          {{ filteredPayrollRows.length }} entries
+        </ng-container>
+        <ng-template #emptyPagination>No entries to display</ng-template>
+      </div>
+
+      <div class="pagination-controls">
+        <button type="button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+
+        <div class="page-numbers payroll-list-pagination__numbers">
+          <ng-container *ngFor="let item of paginationFooterItems; let last = last; trackBy: trackPaginationItem">
+            <button
+              *ngIf="item.kind === 'page'"
+              type="button"
+              [class.active]="item.page === currentPage"
+              (click)="setPage(item.page)"
+            >
+              {{ item.page }}
+            </button>
+            <span *ngIf="item.kind === 'ellipsis'" class="payroll-list-pagination__ellipsis" aria-hidden="true">.........</span>
+            <button
+              *ngIf="item.kind === 'last'"
+              type="button"
+              [class.active]="isLastPageActive()"
+              (click)="setPage(totalPages)"
+            >
+              Last
+            </button>
+            <span *ngIf="!last" class="payroll-list-pagination__comma" aria-hidden="true">,</span>
+          </ng-container>
+        </div>
+
+        <button type="button" [disabled]="currentPage >= totalPages" (click)="setPage(currentPage + 1)">Next</button>
+      </div>
+
+      <div class="page-size-selector">
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+        </select>
+      </div>
     </div>
   </div>
 
