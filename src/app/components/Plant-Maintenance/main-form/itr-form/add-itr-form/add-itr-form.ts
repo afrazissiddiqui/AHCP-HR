@@ -31,7 +31,6 @@ import {
   ITR_SAFETY_CHECKPOINT_DEFINITIONS,
   ItrFormRecord,
   ItrFormService,
-  ItrInspectorUser,
   ItrHydraulicCheckpoint,
   ItrKpiRow,
   ItrMechanicalCheckpoint,
@@ -95,7 +94,6 @@ export class AddItrFormComponent implements OnInit {
   readonly documentNo = signal('');
   readonly status = signal('');
   readonly isSaving = signal(false);
-  readonly inspectorUsers = signal<ItrInspectorUser[]>([]);
   readonly eligibleMachines = signal<MachineSearchOption[]>([]);
   readonly replacementLineGroups = signal<ItrReplacementLineGroup[]>([]);
   readonly warehouseOptions = this.warehouseService.warehouses;
@@ -162,23 +160,12 @@ export class AddItrFormComponent implements OnInit {
       },
     });
 
-    this.applicationFormService.fetchEmployeeProfiles().subscribe({
-      next: (profiles) => {
-        this.inspectorUsers.set(
-          profiles
-            .filter((profile) => profile.EmployeeName?.trim())
-            .map((profile) => ({
-              userId: profile.apiId ?? String(profile.EmployeeCode),
-              displayName: profile.EmployeeName.trim(),
-            })),
-        );
-      },
-      error: () => {},
-    });
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.setPerformedByFromLogin();
+      this.setInspectorFromLogin();
       this.setDefaultDates();
       return;
     }
@@ -287,10 +274,6 @@ export class AddItrFormComponent implements OnInit {
     this.maintenanceFrequency.set(value);
   }
 
-  onInspectorChange(value: string): void {
-    this.inspector.set(value);
-  }
-
   onInspectionDateChange(value: string): void {
     this.inspectionDate.set(value);
   }
@@ -330,7 +313,7 @@ export class AddItrFormComponent implements OnInit {
     const machineName = this.machineName().trim();
     const maintenanceType = this.maintenanceType().trim();
     const maintenanceFrequency = this.maintenanceFrequency().trim();
-    const inspector = this.inspector().trim();
+    const inspector = this.inspector().trim() || this.resolveInspectorName();
     const inspectionDate = this.inspectionDate().trim();
 
     if (!machineId) {
@@ -352,10 +335,6 @@ export class AddItrFormComponent implements OnInit {
     }
     if (!maintenanceFrequency) {
       this.alertService.validation('Please select a Maintenance Frequency.');
-      return;
-    }
-    if (!inspector) {
-      this.alertService.validation('Please select an Inspector.');
       return;
     }
     if (!inspectionDate) {
@@ -574,8 +553,14 @@ export class AddItrFormComponent implements OnInit {
     if (!this.postingDate()) {
       this.postingDate.set(today);
     }
+    if (!this.dueDate()) {
+      this.dueDate.set(today);
+    }
     if (!this.docDate()) {
       this.docDate.set(today);
+    }
+    if (!this.inspectionDate()) {
+      this.inspectionDate.set(today);
     }
   }
 
@@ -697,6 +682,25 @@ export class AddItrFormComponent implements OnInit {
   private setPerformedByFromLogin(): void {
     this.performedBy = this.resolvePerformedByLabel();
     this.performedByEmployeeId = this.resolvePerformedByEmployeeId();
+  }
+
+  private setInspectorFromLogin(): void {
+    if (this.inspector().trim()) {
+      return;
+    }
+    this.inspector.set(this.resolveInspectorName());
+  }
+
+  private resolveInspectorName(): string {
+    const employeeRecord = this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId(),
+    );
+    if (employeeRecord?.EmployeeName?.trim()) {
+      return employeeRecord.EmployeeName.trim();
+    }
+
+    const sessionUser = this.authService.getSessionUser();
+    return sessionUser?.name?.trim() ?? '';
   }
 
   private resolvePerformedByLabel(): string {
