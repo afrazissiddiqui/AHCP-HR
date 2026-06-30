@@ -130,12 +130,13 @@
               <div class="js-detail-item"><label>Article returned date:</label> <span>{{ row.articleReturnedDate }}</span></div>
               <div class="js-detail-item"><label>Location:</label> <span>{{ row.location }}</span></div>
               <div class="js-detail-item"><label>Warehouse:</label> <span>{{ warehouseLabel(row.store) }}</span></div>
-              <div class="js-detail-item"><label>Transporter:</label> <span>{{ row.transporterName }}</span></div>
-              <div class="js-detail-item"><label>Transporter CNIC:</label> <span>{{ row.transporterCnic }}</span></div>
-              <div class="js-detail-item"><label>Transporter phone:</label> <span>{{ row.transporterPhone }}</span></div>
+              <div class="js-detail-item"><label>Kanta slip:</label> <span>{{ row.kantaSlip }}</span></div>
+              <div class="js-detail-item"><label>Driver name:</label> <span>{{ row.driverName }}</span></div>
+              <div class="js-detail-item"><label>Driver CNIC:</label> <span>{{ row.driverCnic }}</span></div>
+              <div class="js-detail-item"><label>Driver phone:</label> <span>{{ row.driverPhone }}</span></div>
               <div class="js-detail-item"><label>Bilty no.:</label> <span>{{ row.biltyNo }}</span></div>
+              <div class="js-detail-item"><label>Weight:</label> <span>{{ row.weight }} KG</span></div>
               <div class="js-detail-item"><label>Status:</label> <span>{{ row.status }}</span></div>
-              <div class="js-detail-item"><label>Freight amount:</label> <span>{{ row.freightAmount }} PKR</span></div>
               <div class="js-detail-item"><label>Attachment:</label> <span>{{ row.attachmentFileName || '—' }}</span></div>
               <div class="js-detail-item"><label>HoSC approval:</label> <span>{{ row.headOfSupplyChainApproval ? 'Yes' : 'No' }}</span></div>
               <div class="js-detail-item"><label>Total qty sent:</label> <span>{{ row.totalQtySent }}</span></div>

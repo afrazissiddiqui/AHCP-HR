@@ -50,11 +50,14 @@ export interface AgpAddPayload {
   issuedTo: string;
   articleOutDate: string;
   articleReturnedDate: string;
-  transporterName: string;
-  transporterCnic: string;
-  transporterPhone: string;
+  location: string;
+  store: string;
+  kantaSlip: string;
+  driverName: string;
+  driverCnic: string;
+  driverPhone: string;
   biltyNo: string;
-  freightAmount: number;
+  weight: string;
   attachmentFileName: string;
   headOfSupplyChainApproval: boolean;
   remarks: string;
@@ -98,12 +101,12 @@ export interface AgpRecord {
   articleReturnedDate: string;
   location: string;
   store: string;
-
-  transporterName: string;
-  transporterCnic: string;
-  transporterPhone: string;
+  kantaSlip: string;
+  driverName: string;
+  driverCnic: string;
+  driverPhone: string;
   biltyNo: string;
-  freightAmount: number;
+  weight: string;
 
   attachmentFileName?: string;
   headOfSupplyChainApproval: boolean;
@@ -393,11 +396,33 @@ export class AgpService {
       articleReturnedDate: this.pickString(sources, ['articleReturnedDate', 'article_returned_date']) || '—',
       location: this.pickString(sources, ['location', 'Location']) || '—',
       store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse']) || '—',
-      transporterName: this.pickString(sources, ['transporterName', 'transporter_name']) || '—',
-      transporterCnic: this.pickString(sources, ['transporterCnic', 'transporter_cnic']) || '—',
-      transporterPhone: this.pickString(sources, ['transporterPhone', 'transporter_phone']) || '—',
+      kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',
+      driverName:
+        this.pickString(sources, [
+          'driverName',
+          'driver_name',
+          'DriverName',
+          'transporterName',
+          'transporter_name',
+        ]) || '—',
+      driverCnic:
+        this.pickString(sources, [
+          'driverCnic',
+          'driver_cnic',
+          'DriverCnic',
+          'transporterCnic',
+          'transporter_cnic',
+        ]) || '—',
+      driverPhone:
+        this.pickString(sources, [
+          'driverPhone',
+          'driver_phone',
+          'DriverPhone',
+          'transporterPhone',
+          'transporter_phone',
+        ]) || '—',
       biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']) || '—',
-      freightAmount: this.pickNumber(sources, ['freightAmount', 'freight_amount', 'FreightAmount']),
+      weight: this.pickString(sources, ['weight', 'Weight']) || '—',
       attachmentFileName: this.pickString(sources, ['attachmentFileName', 'attachment_file_name']) || undefined,
       headOfSupplyChainApproval: this.pickBoolean(sources, [
         'headOfSupplyChainApproval',

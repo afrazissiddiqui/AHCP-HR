@@ -29,6 +29,11 @@ function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
 }
 
+function numericFieldFromDoc(value: string | undefined): string {
+  const parsed = parseFloat(String(value ?? '').replace(/[^\d.]/g, ''));
+  return Number.isFinite(parsed) ? String(parsed) : '';
+}
+
 @Component({
   selector: 'app-create-agp',
   standalone: true,
@@ -68,12 +73,13 @@ export class CreateAgpComponent implements OnInit {
   articleReturnedDate = '';
   location = '';
   store = '';
+  kantaSlip = '';
 
-  transporterName = '';
-  transporterCnic = '';
-  transporterPhone = '';
+  driverName = '';
+  driverCnic = '';
+  driverPhone = '';
   biltyNo = '';
-  freightAmount: number | null = null;
+  weight = '';
 
   attachmentFileName = '';
   headOfSupplyChainApproval = false;
@@ -191,12 +197,12 @@ export class CreateAgpComponent implements OnInit {
     this.businessPartnerName = partner.name;
   }
 
-  onTransporterCnicChange(value: string): void {
-    this.transporterCnic = formatGatePassCnic(value);
+  onDriverCnicChange(value: string): void {
+    this.driverCnic = formatGatePassCnic(value);
   }
 
-  onTransporterPhoneChange(value: string): void {
-    this.transporterPhone = formatGatePassPhoneDigits(value);
+  onDriverPhoneChange(value: string): void {
+    this.driverPhone = formatGatePassPhoneDigits(value);
   }
 
   onAttachmentChange(event: Event): void {
@@ -268,11 +274,12 @@ export class CreateAgpComponent implements OnInit {
     this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
     this.location = emptyIfDash(record.location);
     this.store = emptyIfDash(record.store);
-    this.transporterName = emptyIfDash(record.transporterName);
-    this.transporterCnic = emptyIfDash(record.transporterCnic);
-    this.transporterPhone = emptyIfDash(record.transporterPhone);
+    this.kantaSlip = emptyIfDash(record.kantaSlip);
+    this.driverName = emptyIfDash(record.driverName);
+    this.driverCnic = formatGatePassCnic(emptyIfDash(record.driverCnic));
+    this.driverPhone = formatGatePassPhoneDigits(emptyIfDash(record.driverPhone));
     this.biltyNo = emptyIfDash(record.biltyNo);
-    this.freightAmount = record.freightAmount || null;
+    this.weight = numericFieldFromDoc(emptyIfDash(record.weight));
     this.attachmentFileName = emptyIfDash(record.attachmentFileName ?? '');
     this.headOfSupplyChainApproval = record.headOfSupplyChainApproval;
     this.remarks = emptyIfDash(record.remarks ?? '');
@@ -295,11 +302,14 @@ export class CreateAgpComponent implements OnInit {
       issuedTo: this.issuedTo.trim(),
       articleOutDate: this.articleOutDate.trim(),
       articleReturnedDate: this.articleReturnedDate.trim(),
-      transporterName: this.transporterName.trim(),
-      transporterCnic: this.transporterCnic.trim(),
-      transporterPhone: this.transporterPhone.trim(),
+      location: this.location.trim(),
+      store: this.store.trim(),
+      kantaSlip: this.kantaSlip.trim(),
+      driverName: this.driverName.trim(),
+      driverCnic: this.driverCnic.trim(),
+      driverPhone: this.driverPhone.trim(),
       biltyNo: this.biltyNo.trim(),
-      freightAmount: Number(this.freightAmount) || 0,
+      weight: String(this.weight ?? '').trim(),
       attachmentFileName: this.attachmentFileName.trim(),
       headOfSupplyChainApproval: this.headOfSupplyChainApproval,
       remarks: this.remarks.trim(),

@@ -887,6 +887,9 @@ export class ApplicationFormService {
     if (/^Emp-\d+$/i.test(employeeCode)) {
       return employeeCode;
     }
+    if (/^\d+$/.test(employeeCode)) {
+      return employeeCode;
+    }
 
     return '';
   }

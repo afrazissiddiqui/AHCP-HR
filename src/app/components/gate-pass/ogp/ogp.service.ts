@@ -41,9 +41,10 @@ export interface OgpAddPayload {
   kantaSlip: string;
   biltyNo: string;
   store: string;
-  freight: string;
+  driverName: string;
+  driverCnic: string;
+  driverPhone: string;
   department: string;
-  weightMachineName: string;
   weight: string;
   location: string;
   employee: string;
@@ -77,11 +78,9 @@ export interface OgpRecord {
   kantaSlip: string;
   biltyNo: string;
   store: string;
-  freight: string;
-  transporterName: string;
-  transporterCnic: string;
-  transporterPhone: string;
-  weightMachineName: string;
+  driverName: string;
+  driverCnic: string;
+  driverPhone: string;
   weight: string;
   location: string;
   employee: string;
@@ -327,13 +326,30 @@ export class OgpService {
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',
       biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']) || '—',
       store: this.pickString(sources, ['store', 'Store']) || '—',
-      freight:
-        this.pickString(sources, ['freight', 'Freight', 'freightAmount', 'freight_amount']) || '—',
-      transporterName: this.pickString(sources, ['transporterName', 'transporter_name']) || '—',
-      transporterCnic: this.pickString(sources, ['transporterCnic', 'transporter_cnic']) || '—',
-      transporterPhone: this.pickString(sources, ['transporterPhone', 'transporter_phone']) || '—',
-      weightMachineName:
-        this.pickString(sources, ['weightMachineName', 'weight_machine_name', 'WeightMachineName']) || '—',
+      driverName:
+        this.pickString(sources, [
+          'driverName',
+          'driver_name',
+          'DriverName',
+          'transporterName',
+          'transporter_name',
+        ]) || '—',
+      driverCnic:
+        this.pickString(sources, [
+          'driverCnic',
+          'driver_cnic',
+          'DriverCnic',
+          'transporterCnic',
+          'transporter_cnic',
+        ]) || '—',
+      driverPhone:
+        this.pickString(sources, [
+          'driverPhone',
+          'driver_phone',
+          'DriverPhone',
+          'transporterPhone',
+          'transporter_phone',
+        ]) || '—',
       weight: this.pickString(sources, ['weight', 'Weight']) || '—',
       location: this.pickString(sources, ['location', 'Location']) || '—',
       employee: this.pickString(sources, ['employee', 'Employee']) || '—',

@@ -171,19 +171,49 @@
           </div>
         </section>
 
-        <section id="agp-transporter-section" class="husky-form-section">
-          <div class="cjr-section-title">Transporter &amp; freight</div>
+        <section id="agp-shipment-section" class="husky-form-section">
+          <div class="cjr-section-title">Shipment &amp; weighing</div>
           <div class="cjr-personal-grid pmm-profile-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="agp-transporter-name">Transporter name:</label>
+                <label for="agp-kanta-slip">Kanta slip:</label>
+                <input id="agp-kanta-slip" type="text" class="igp-input--ref" [(ngModel)]="kantaSlip" name="kantaSlip" />
+              </div>
+            </div>
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="agp-weight">Weight:</label>
+                <div class="ogp-input-unit-row">
+                  <input
+                    id="agp-weight"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="igp-input--amount"
+                    [(ngModel)]="weight"
+                    name="weight"
+                    placeholder="0.00"
+                  />
+                  <span class="ogp-input-unit">KG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="agp-driver-section" class="husky-form-section">
+          <div class="cjr-section-title">Driver &amp; bilty</div>
+          <div class="cjr-personal-grid pmm-profile-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="agp-driver-name">Driver name:</label>
                 <input
-                  id="agp-transporter-name"
+                  id="agp-driver-name"
                   type="text"
                   class="igp-input--wide"
-                  [(ngModel)]="transporterName"
-                  name="transporterName"
-                  placeholder="Transporter / driver name"
+                  [(ngModel)]="driverName"
+                  name="driverName"
+                  placeholder="Driver name"
                 />
               </div>
               <div class="cjr-row">
@@ -193,47 +223,31 @@
             </div>
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="agp-transporter-cnic">Transporter CNIC:</label>
+                <label for="agp-driver-cnic">Driver CNIC:</label>
                 <input
-                  id="agp-transporter-cnic"
+                  id="agp-driver-cnic"
                   type="text"
                   class="igp-input--cnic"
-                  [ngModel]="transporterCnic"
-                  (ngModelChange)="onTransporterCnicChange($event)"
-                  name="transporterCnic"
+                  [ngModel]="driverCnic"
+                  (ngModelChange)="onDriverCnicChange($event)"
+                  name="driverCnic"
                   placeholder="XXXXX-XXXXXXX-X"
                   maxlength="15"
                   inputmode="numeric"
                   autocomplete="off"
                 />
               </div>
-              <div class="cjr-row">
-                <label for="agp-freight-amount">Freight amount:</label>
-                <div class="ogp-input-unit-row">
-                  <input
-                    id="agp-freight-amount"
-                    type="number"
-                    min="0"
-                    step="1"
-                    class="igp-input--amount"
-                    [(ngModel)]="freightAmount"
-                    name="freightAmount"
-                    placeholder="0.00"
-                  />
-                  <span class="ogp-input-unit">PKR</span>
-                </div>
-              </div>
             </div>
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="agp-transporter-phone">Transporter phone:</label>
+                <label for="agp-driver-phone">Driver phone number:</label>
                 <input
-                  id="agp-transporter-phone"
+                  id="agp-driver-phone"
                   type="tel"
                   class="igp-input--phone"
-                  [ngModel]="transporterPhone"
-                  (ngModelChange)="onTransporterPhoneChange($event)"
-                  name="transporterPhone"
+                  [ngModel]="driverPhone"
+                  (ngModelChange)="onDriverPhoneChange($event)"
+                  name="driverPhone"
                   placeholder="03XXXXXXXXX"
                   maxlength="11"
                   inputmode="numeric"

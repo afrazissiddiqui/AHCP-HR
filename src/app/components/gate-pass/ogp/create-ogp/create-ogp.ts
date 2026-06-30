@@ -72,11 +72,9 @@ export class CreateOgpComponent implements OnInit {
   department = '';
   biltyNo = '';
   store = '';
-  freight = '';
-  transporterName = '';
-  transporterCnic = '';
-  transporterPhone = '';
-  weightMachineName = '';
+  driverName = '';
+  driverCnic = '';
+  driverPhone = '';
   weight = '';
   location = '';
   employee = '';
@@ -182,12 +180,12 @@ export class CreateOgpComponent implements OnInit {
     this.businessPartnerName = partner.name;
   }
 
-  onTransporterCnicChange(value: string): void {
-    this.transporterCnic = formatGatePassCnic(value);
+  onDriverCnicChange(value: string): void {
+    this.driverCnic = formatGatePassCnic(value);
   }
 
-  onTransporterPhoneChange(value: string): void {
-    this.transporterPhone = formatGatePassPhoneDigits(value);
+  onDriverPhoneChange(value: string): void {
+    this.driverPhone = formatGatePassPhoneDigits(value);
   }
 
   back(): void {
@@ -236,11 +234,9 @@ export class CreateOgpComponent implements OnInit {
     this.department = doc.department?.trim() ?? '';
     this.biltyNo = doc.biltyNo?.trim() ?? '';
     this.store = doc.store?.trim() ?? '';
-    this.freight = numericFieldFromDoc(doc.freight);
-    this.transporterName = doc.transporterName?.trim() ?? '';
-    this.transporterCnic = formatGatePassCnic(doc.transporterCnic?.trim() ?? '');
-    this.transporterPhone = formatGatePassPhoneDigits(doc.transporterPhone?.trim() ?? '');
-    this.weightMachineName = doc.weightMachineName?.trim() ?? '';
+    this.driverName = (doc.driverName ?? doc.transporterName)?.trim() ?? '';
+    this.driverCnic = formatGatePassCnic((doc.driverCnic ?? doc.transporterCnic)?.trim() ?? '');
+    this.driverPhone = formatGatePassPhoneDigits((doc.driverPhone ?? doc.transporterPhone)?.trim() ?? '');
     this.weight = numericFieldFromDoc(doc.weight);
     this.location = doc.location?.trim() ?? '';
     this.remarks = doc.remarks?.trim() ?? '';
@@ -311,12 +307,10 @@ export class CreateOgpComponent implements OnInit {
     this.kantaSlip = emptyIfDash(record.kantaSlip);
     this.biltyNo = emptyIfDash(record.biltyNo);
     this.store = emptyIfDash(record.store);
-    this.freight = numericFieldFromDoc(emptyIfDash(record.freight));
-    this.transporterName = emptyIfDash(record.transporterName);
-    this.transporterCnic = formatGatePassCnic(emptyIfDash(record.transporterCnic));
-    this.transporterPhone = formatGatePassPhoneDigits(emptyIfDash(record.transporterPhone));
+    this.driverName = emptyIfDash(record.driverName);
+    this.driverCnic = formatGatePassCnic(emptyIfDash(record.driverCnic));
+    this.driverPhone = formatGatePassPhoneDigits(emptyIfDash(record.driverPhone));
     this.department = emptyIfDash(record.department);
-    this.weightMachineName = emptyIfDash(record.weightMachineName);
     this.weight = numericFieldFromDoc(emptyIfDash(record.weight));
     this.location = emptyIfDash(record.location);
     this.employee = emptyIfDash(record.employee);
@@ -337,10 +331,11 @@ export class CreateOgpComponent implements OnInit {
       kantaSlip: this.kantaSlip.trim(),
       biltyNo: this.biltyNo.trim(),
       store: this.store.trim(),
-      freight: this.freight.trim(),
+      driverName: this.driverName.trim(),
+      driverCnic: this.driverCnic.trim(),
+      driverPhone: this.driverPhone.trim(),
       department: this.department.trim(),
-      weightMachineName: this.weightMachineName.trim(),
-      weight: this.weight.trim(),
+      weight: String(this.weight ?? '').trim(),
       location: this.location,
       employee: this.employee.trim(),
       remarks: this.remarks.trim(),
