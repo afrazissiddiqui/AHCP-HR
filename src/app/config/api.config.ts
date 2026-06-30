@@ -21,10 +21,20 @@ function resolveBiometricsApiBaseUrl(): string {
     return 'http://pioneerbiometrics.com:71/api';
   }
 
-  // Always use same-origin proxy in the browser. Direct calls to pioneerbiometrics.com
-  // are blocked by CORS. Local dev uses proxy.conf.json; production needs a matching
-  // reverse-proxy route for /biometrics-api.
-  return '/biometrics-api';
+  const hostname = window.location.hostname.toLowerCase();
+  const isLocalDev =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.endsWith('.localhost');
+
+  // `ng serve` proxies /biometrics-api → pioneerbiometrics (see proxy.conf.json).
+  if (isLocalDev) {
+    return '/biometrics-api';
+  }
+
+  // Deployed on ahcp.hr / production: no /biometrics-api route exists (SPA returns index.html).
+  // Call the Pioneer API host directly on the internal network.
+  return 'http://pioneerbiometrics.com:71/api';
 }
 
 /** Backend server root — resolved from where the app is accessed. */

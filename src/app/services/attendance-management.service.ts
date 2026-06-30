@@ -415,8 +415,16 @@ export class AttendanceManagementService {
     const primaryUrl = this.buildQueryUrl(normalized);
     const fallbackUrls = this.buildFallbackPunchUrls(normalized);
 
-    const parse = (response: unknown): AttendancePunchRecord[] =>
-      this.extractApiItems(response).map((item) => this.mapApiItem(item));
+    const parse = (response: unknown): AttendancePunchRecord[] => {
+      if (typeof response === 'string') {
+        const trimmed = response.trim();
+        if (trimmed.startsWith('<!') || trimmed.toLowerCase().startsWith('<html')) {
+          return [];
+        }
+      }
+
+      return this.extractApiItems(response).map((item) => this.mapApiItem(item));
+    };
 
     const loadUrl = (url: string) =>
       this.http.get<unknown>(url).pipe(
