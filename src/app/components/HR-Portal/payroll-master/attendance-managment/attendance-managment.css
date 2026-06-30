@@ -718,6 +718,45 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   background: #fff;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.attendance-pagination__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.attendance-pagination .pagination-controls {
+  flex: 1;
+  flex-wrap: nowrap;
+  justify-content: center;
+  min-width: 0;
+}
+
+.attendance-pagination__numbers {
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.attendance-pagination__comma {
+  color: #6a6d70;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.attendance-pagination__ellipsis {
+  color: #6a6d70;
+  letter-spacing: 0.08em;
+  padding: 0 6px;
+  user-select: none;
+  font-weight: 600;
 }
 
 /* Detail modal sections */

@@ -34,6 +34,12 @@ import { ShellbarSearchService } from '../../../../services/shellbar-search.serv
 
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 
+import {
+  buildPaginationFooterItems,
+  paginationItemTrack,
+  PaginationFooterItem,
+} from '../../../../utils/pagination.util';
+
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
 
 import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
@@ -328,9 +334,25 @@ export class AttendanceManagmentComponent implements OnInit {
 
 
 
-  get pages(): number[] {
+  get paginationFooterItems(): PaginationFooterItem[] {
 
-    return Array.from({ length: this.totalPages }, (_, index) => index + 1);
+    return buildPaginationFooterItems(this.totalPages);
+
+  }
+
+
+
+  trackPaginationItem(index: number, item: PaginationFooterItem): string {
+
+    return paginationItemTrack(index, item);
+
+  }
+
+
+
+  isLastPageActive(): boolean {
+
+    return this.currentPage === this.totalPages;
 
   }
 

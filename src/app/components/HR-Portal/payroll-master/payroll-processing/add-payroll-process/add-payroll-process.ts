@@ -232,7 +232,7 @@ export class AddPayrollProcessComponent implements OnInit {
   );
 
   readonly paginationFooterItems = computed((): PaginationFooterItem[] =>
-    buildPaginationFooterItems(this.totalPages(), this.currentPage()),
+    buildPaginationFooterItems(this.totalPages()),
   );
 
   readonly paginationItemTrack = paginationItemTrack;

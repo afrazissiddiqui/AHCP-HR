@@ -879,16 +879,37 @@ export class ApplicationFormService {
       : '';
 
     const topLevel = asString(item['userId']) || asString(item['user_id']);
-    if (fromLogin || topLevel) {
-      return fromLogin || topLevel;
+    const resolved = fromLogin || topLevel;
+    if (resolved) {
+      return this.extractLoginUserId(resolved);
+    }
+
+    const loginEmployeeCode = loginSource
+      ? pickFrom(loginSource, 'employeeCode', 'employee_code')
+      : '';
+    const fromLoginCode = this.extractLoginUserId(loginEmployeeCode);
+    if (fromLoginCode) {
+      return fromLoginCode;
     }
 
     const employeeCode = asString(item['employeeCode']) || asString(item['employee_code']);
-    if (/^Emp-\d+$/i.test(employeeCode)) {
-      return employeeCode;
+    return this.extractLoginUserId(employeeCode);
+  }
+
+  /** Biometric / login user id (e.g. 00002) — not display employee code (e.g. EMP-00002). */
+  private extractLoginUserId(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === '—') {
+      return '';
     }
-    if (/^\d+$/.test(employeeCode)) {
-      return employeeCode;
+
+    const empMatch = trimmed.match(/^Emp-(\d+)$/i);
+    if (empMatch) {
+      return empMatch[1];
+    }
+
+    if (/^\d+$/.test(trimmed)) {
+      return trimmed;
     }
 
     return '';

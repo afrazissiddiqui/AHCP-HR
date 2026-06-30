@@ -229,17 +229,16 @@ export class AttendanceManagementService {
         record['dateTime'] ??
         '',
     ).trim();
-    const rawEmployeeId = String(
-      item['User ID'] ??
-        item.userId ??
-        item.UserId ??
-        item['Employee ID'] ??
-        item.EmployeeId ??
-        item.employeeId ??
-        record['employeeID'] ??
-        record['EmployeeID'] ??
-        '',
-    ).trim();
+    const rawEmployeeId = pickFirstNonEmptyString(
+      item['User ID'],
+      item.userId,
+      item.UserId,
+      item['Employee ID'],
+      item.EmployeeId,
+      item.employeeId,
+      record['employeeID'],
+      record['EmployeeID'],
+    );
 
     return {
       No: Number(item.No ?? record['no'] ?? 0),
@@ -296,22 +295,38 @@ export class AttendanceManagementService {
   }
 }
 
+export function extractAttendanceUserId(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === '—') {
+    return '';
+  }
+
+  const empMatch = trimmed.match(/^Emp-(\d+)$/i);
+  if (empMatch) {
+    return empMatch[1];
+  }
+
+  return trimmed;
+}
+
 export function resolveAttendanceUserId(employee: ApplicationFormRecord): string {
-  const userId =
-    employee.detail?.loginDetails.userId?.trim() ||
-    employee.userId?.trim() ||
-    '';
-  if (userId) {
-    return userId;
+  const candidates = [
+    employee.detail?.loginDetails.userId,
+    employee.userId,
+  ];
+
+  for (const candidate of candidates) {
+    const userId = extractAttendanceUserId(String(candidate ?? '').trim());
+    if (userId) {
+      return userId;
+    }
   }
 
   const employeeCode = employee.EmployeeCode?.trim();
   if (employeeCode && employeeCode !== '—') {
-    if (/^Emp-/i.test(employeeCode)) {
-      return employeeCode;
-    }
-    if (/^\d+$/.test(employeeCode)) {
-      return employeeCode;
+    const fromCode = extractAttendanceUserId(employeeCode);
+    if (/^\d+$/.test(fromCode)) {
+      return fromCode;
     }
   }
 
@@ -338,11 +353,7 @@ export function canonicalAttendanceKey(value: string): string {
 }
 
 export function formatAttendanceUserId(value: string): string {
-  const key = canonicalAttendanceKey(value);
-  if (/^\d{8}$/.test(key)) {
-    return `Emp-${key}`;
-  }
-  return value.trim();
+  return extractAttendanceUserId(value) || value.trim();
 }
 
 export function normalizeEmployeeId(value: string): string {
@@ -372,11 +383,17 @@ export function resolveQueryDates(query: AttendanceQuery): string[] {
 }
 
 function biometricsPathEmployeeId(userId: string): string {
-  const key = canonicalAttendanceKey(userId);
-  if (/^\d{8}$/.test(key)) {
-    return key;
+  return extractAttendanceUserId(userId) || userId.trim();
+}
+
+function pickFirstNonEmptyString(...values: unknown[]): string {
+  for (const value of values) {
+    const text = value === undefined || value === null ? '' : String(value).trim();
+    if (text) {
+      return text;
+    }
   }
-  return userId.trim();
+  return '';
 }
 
 interface EmployeeAttendanceIndex {
@@ -449,24 +466,23 @@ function buildEmployeeAttendanceIndex(employees: ApplicationFormRecord[]): Emplo
 
   for (const employee of employees) {
     const rawUserId = resolveAttendanceUserId(employee);
-    const loginCode = employee.detail?.loginDetails.employeeCode?.trim() || '';
-    const rawCode = employee.EmployeeCode?.trim();
-    const employeeCode = rawCode && rawCode !== '—' ? rawCode : '';
-    const displayId = rawUserId || employeeCode;
-    if (!displayId) {
+    if (!rawUserId) {
       continue;
     }
 
-    const canonical = canonicalAttendanceKey(rawUserId || displayId) || displayId.toLowerCase();
+    const loginCode = employee.detail?.loginDetails.employeeCode?.trim() || '';
+    const rawCode = employee.EmployeeCode?.trim();
+    const employeeCode = rawCode && rawCode !== '—' ? rawCode : '';
+    const canonical = canonicalAttendanceKey(rawUserId);
     const employeeName = employee.EmployeeName?.trim() || '';
 
-    registerEmployeeAliases(index, canonical, rawUserId || displayId, employeeName, [
-      displayId,
+    registerEmployeeAliases(index, canonical, rawUserId, employeeName, [
       rawUserId,
+      employee.userId,
+      employee.detail?.loginDetails.userId,
       employeeCode,
       loginCode,
       employee.apiId,
-      employee.detail?.loginDetails.userId,
     ]);
   }
 

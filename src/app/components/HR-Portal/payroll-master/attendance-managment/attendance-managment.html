@@ -305,24 +305,41 @@
             {{ Math.min(currentPage * pageSize, filteredList.length) }} of {{ filteredList.length }} entries
           </div>
 
-          <div class="pagination-controls">
-            <button [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
-            <div class="page-numbers">
-              <button
-                *ngFor="let page of pages"
-                [class.active]="page === currentPage"
-                (click)="setPage(page)"
-              >
-                {{ page }}
-              </button>
-            </div>
-            <button [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
-          </div>
+          <div class="attendance-pagination__bottom">
+            <div class="pagination-controls">
+              <button type="button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
 
-          <div class="page-size-selector">
-            <select class="attendance-control" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
-              <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
-            </select>
+              <div class="page-numbers attendance-pagination__numbers">
+                <ng-container *ngFor="let item of paginationFooterItems; let last = last; trackBy: trackPaginationItem">
+                  <button
+                    *ngIf="item.kind === 'page'"
+                    type="button"
+                    [class.active]="item.page === currentPage"
+                    (click)="setPage(item.page)"
+                  >
+                    {{ item.page }}
+                  </button>
+                  <span *ngIf="item.kind === 'ellipsis'" class="attendance-pagination__ellipsis" aria-hidden="true">.........</span>
+                  <button
+                    *ngIf="item.kind === 'last'"
+                    type="button"
+                    [class.active]="isLastPageActive()"
+                    (click)="setPage(totalPages)"
+                  >
+                    Last
+                  </button>
+                  <span *ngIf="!last" class="attendance-pagination__comma" aria-hidden="true">,</span>
+                </ng-container>
+              </div>
+
+              <button type="button" [disabled]="currentPage >= totalPages" (click)="setPage(currentPage + 1)">Next</button>
+            </div>
+
+            <div class="page-size-selector">
+              <select class="attendance-control" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+                <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

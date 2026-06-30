@@ -158,7 +158,7 @@ export class PayrollProcessingComponent implements OnInit {
   }
 
   get paginationFooterItems(): PaginationFooterItem[] {
-    return buildPaginationFooterItems(this.totalPages, this.currentPage);
+    return buildPaginationFooterItems(this.totalPages);
   }
 
   get visibleColumns(): Array<{ key: PayrollProcessingColumnKey; label: string; visible: boolean }> {
