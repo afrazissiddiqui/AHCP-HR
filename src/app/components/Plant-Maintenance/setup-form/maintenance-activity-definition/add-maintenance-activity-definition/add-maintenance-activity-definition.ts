@@ -138,6 +138,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     'Semi-annually',
 
+    'Anual',
+
   ] as const;
 
   readonly plantMaintenanceTypeOptions = [

@@ -134,6 +134,7 @@ export class AddItrFormComponent implements OnInit {
     'Monthly',
     'Quatterly',
     'Semi-annually',
+    'Anual',
   ] as const;
 
   private kpiRows = createEmptyItrKpiRows();

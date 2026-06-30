@@ -54,6 +54,7 @@ import {
   mergeHuskyCycleTimeComparison,
   mergeHuskyLevelParallelism,
   mergeHuskyMeasurements,
+  clampPassingPercentage,
   resolveHuskyKpiStatusByPassingThreshold,
 } from '../husky-form.service';
 
@@ -122,6 +123,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly performedByEmployeeId = signal('');
   readonly isSaving = signal(false);
   readonly isContentLoading = signal(false);
+  readonly submitAttempted = signal(false);
 
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
   readonly levelStatusOptions = ['Pass', 'Fail'] as const;
@@ -141,6 +143,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     'Monthly',
     'Quatterly',
     'Semi-annually',
+    'Anual',
   ] as const;
 
   readonly sectionNavItems: HuskySectionNavItem[] = [
@@ -330,12 +333,35 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  updateKpiPassingPercentage(key: string, value: string): void {
-    this.updateKpiRow(key, { passingPercentage: this.parseScoreValue(value) });
+  updateKpiPassingPercentage(key: string, value: string | number | null): void {
+    this.updateKpiRow(key, {
+      passingPercentage: clampPassingPercentage(this.parseScoreValue(value)),
+    });
   }
 
   updateKpiNotes(key: string, value: string): void {
     this.updateKpiRow(key, { notes: value });
+  }
+
+  isHeaderFieldInvalid(
+    field: 'machineId' | 'maintenanceType' | 'maintenanceFrequency' | 'inspector' | 'inspectionDate',
+  ): boolean {
+    if (!this.submitAttempted()) {
+      return false;
+    }
+
+    switch (field) {
+      case 'machineId':
+        return !this.machineId().trim();
+      case 'maintenanceType':
+        return !this.maintenanceType().trim();
+      case 'maintenanceFrequency':
+        return !this.maintenanceFrequency().trim();
+      case 'inspector':
+        return !this.inspector().trim();
+      case 'inspectionDate':
+        return !this.inspectionDate().trim();
+    }
   }
 
   getEvaluationSelectClass(evaluation: HuskyCheckpointEvaluation): string {
@@ -489,6 +515,8 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.submitAttempted.set(true);
+
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
     const maintenanceType = this.maintenanceType().trim();
@@ -514,14 +542,6 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (!inspectionDate) {
       this.alertService.validation('Please enter an Inspection Date.');
-      return;
-    }
-
-    const recommendations = this.recommendations().trim();
-    if (!recommendations) {
-      this.alertService.validation(
-        'Please enter Recommendations before submitting the Husky Form.',
-      );
       return;
     }
 
@@ -627,7 +647,13 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private parseScoreValue(value: string): number | null {
+  private parseScoreValue(value: string | number | null | undefined): number | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : null;
+    }
     const trimmed = value.trim();
     if (!trimmed) {
       return null;

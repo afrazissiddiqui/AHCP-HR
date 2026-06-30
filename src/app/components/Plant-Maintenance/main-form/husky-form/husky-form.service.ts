@@ -61,6 +61,13 @@ export function createEmptyHuskyKpiRows(): HuskyKpiRow[] {
   }));
 }
 
+export function clampPassingPercentage(value: number | null): number | null {
+  if (value === null) {
+    return null;
+  }
+  return Math.min(100, Math.max(0, value));
+}
+
 export function resolveHuskyKpiStatusByPassingThreshold(
   resultPercentage: number | null,
   passingPercentage: number | null,
@@ -69,12 +76,9 @@ export function resolveHuskyKpiStatusByPassingThreshold(
     return '';
   }
   if (resultPercentage > passingPercentage) {
-    return 'Fail';
-  }
-  if (resultPercentage < passingPercentage) {
     return 'Pass';
   }
-  return '';
+  return 'Fail';
 }
 
 export type HuskyCheckpointEvaluation = 'Pass' | 'Fail' | 'N/A' | '';
@@ -1157,7 +1161,7 @@ function applyKpiSection(row: HuskyKpiRow, answers: Array<Record<string, string>
     } else if (question === 'Max Possible Score') {
       maxPossibleScore = parseNumberOrNull(value);
     } else if (question === 'Passing Percentage' || question === 'Passing %') {
-      passingPercentage = parseNumberOrNull(value);
+      passingPercentage = clampPassingPercentage(parseNumberOrNull(value));
     } else if (question === 'Notes') {
       notes = value;
     }

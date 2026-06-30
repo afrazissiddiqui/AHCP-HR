@@ -20,6 +20,7 @@
               <select
                 id="husky-machine-id"
                 class="mad-select husky-form-select husky-header-select"
+                [class.husky-field__control--error]="isHeaderFieldInvalid('machineId')"
                 [ngModel]="machineId()"
                 (ngModelChange)="onMachineIdChange($event)"
                 name="machineId"
@@ -48,6 +49,7 @@
               <select
                 id="husky-maintenance-type"
                 class="mad-select husky-form-select husky-header-select"
+                [class.husky-field__control--error]="isHeaderFieldInvalid('maintenanceType')"
                 [ngModel]="maintenanceType()"
                 (ngModelChange)="onMaintenanceTypeChange($event)"
                 name="maintenanceType"
@@ -64,6 +66,7 @@
               <select
                 id="husky-maintenance-frequency"
                 class="mad-select husky-form-select husky-header-select"
+                [class.husky-field__control--error]="isHeaderFieldInvalid('maintenanceFrequency')"
                 [ngModel]="maintenanceFrequency()"
                 (ngModelChange)="onMaintenanceFrequencyChange($event)"
                 name="maintenanceFrequency"
@@ -144,6 +147,7 @@
               <select
                 id="husky-inspector"
                 class="mad-select husky-form-select husky-header-select"
+                [class.husky-field__control--error]="isHeaderFieldInvalid('inspector')"
                 [ngModel]="inspector()"
                 (ngModelChange)="onInspectorChange($event)"
                 name="inspector"
@@ -160,6 +164,7 @@
               <input
                 id="husky-inspection-date"
                 type="date"
+                [class.husky-field__control--error]="isHeaderFieldInvalid('inspectionDate')"
                 [ngModel]="inspectionDate()"
                 (ngModelChange)="onInspectionDateChange($event)"
                 name="inspectionDate"
@@ -296,7 +301,7 @@
                         <label>Status:</label>
                         <span
                           class="husky-kpi-status"
-                          [class]="getKpiStatusClass(getKpiStatus(row))"
+                          [ngClass]="getKpiStatusClass(getKpiStatus(row))"
                         >
                           {{ getKpiStatusLabel(getKpiStatus(row)) }}
                         </span>
@@ -973,9 +978,7 @@
             (ngModelChange)="recommendations.set($event)"
             name="recommendations"
             placeholder="Enter overall recommendations and remediation actions"
-            required
           ></textarea>
-          <p class="husky-footer-field__required">Mandatory before submission</p>
         </div>
 
         <div class="husky-footer-meta">

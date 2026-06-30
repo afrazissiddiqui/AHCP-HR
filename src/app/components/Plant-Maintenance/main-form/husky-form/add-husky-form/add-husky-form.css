@@ -552,6 +552,16 @@
   box-sizing: border-box;
 }
 
+.husky-field__control--error {
+  border-color: #dc2626 !important;
+  background: #fef2f2 !important;
+}
+
+.husky-field__control--error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.14) !important;
+}
+
 .husky-footer-recommendations {
   width: 100%;
   max-width: 100%;

@@ -158,6 +158,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     'Monthly',
     'Quatterly',
     'Semi-annually',
+    'Anual',
   ] as const;
   readonly plantMaintenanceTypeOptions = [
     'Preventive',
