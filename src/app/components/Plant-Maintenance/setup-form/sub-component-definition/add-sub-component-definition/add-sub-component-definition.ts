@@ -9,7 +9,7 @@ import { MachineSearchOption } from '../../plant-maintenance-machine.model';
 import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
 import { SubComponentDefinitionService, SubComponentMachineRecord } from '../sub-component-definition.service';
 
-const SUB_COMPONENT_MACHINE_ITEM_TYPE = 'I';
+const SUB_COMPONENT_MACHINE_ITEM_TYPE = 'F';
 
 @Component({
   selector: 'app-add-sub-component-definition',
