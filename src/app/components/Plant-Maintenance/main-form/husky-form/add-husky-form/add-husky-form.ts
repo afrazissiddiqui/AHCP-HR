@@ -49,6 +49,7 @@ import {
   HuskyMechanicalCheckpoint,
   HuskyRobotCheckpoint,
   HuskySafetyCheckpoint,
+  HuskySectionCheckpoint,
   mergeHuskyCheckpoints,
   mergeHuskyCycleTimeComparison,
   mergeHuskyLevelParallelism,
@@ -120,6 +121,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly performedBy = signal('');
   readonly performedByEmployeeId = signal('');
   readonly isSaving = signal(false);
+  readonly isContentLoading = signal(false);
 
   readonly evaluationOptions = ['Pass', 'Fail', 'N/A'] as const;
   readonly levelStatusOptions = ['Pass', 'Fail'] as const;
@@ -182,6 +184,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.setPerformedByFromLogin();
+      this.syncCheckpointKpisFromEvaluations();
       return;
     }
 
@@ -193,9 +196,11 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.isContentLoading.set(true);
     this.huskyService.fetchHuskyFormDetail(id).subscribe({
       next: (record) => this.populateFromRecord(record),
       error: (error: unknown) => {
+        this.isContentLoading.set(false);
         void this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load Husky form for edit.'),
@@ -353,6 +358,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateSafetyCheckpoint(key, {
       evaluation: value as HuskyCheckpointEvaluation,
     });
+    this.syncCheckpointKpisFromEvaluations();
   }
 
   updateSafetyRecommendation(key: string, value: string): void {
@@ -363,6 +369,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateHydraulicCheckpoint(key, {
       evaluation: value as HuskyCheckpointEvaluation,
     });
+    this.syncCheckpointKpisFromEvaluations();
   }
 
   updateHydraulicRecommendation(key: string, value: string): void {
@@ -373,6 +380,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateMechanicalCheckpoint(key, {
       evaluation: value as HuskyCheckpointEvaluation,
     });
+    this.syncCheckpointKpisFromEvaluations();
   }
 
   updateMechanicalRecommendation(key: string, value: string): void {
@@ -383,6 +391,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateRobotCheckpoint(key, {
       evaluation: value as HuskyCheckpointEvaluation,
     });
+    this.syncCheckpointKpisFromEvaluations();
   }
 
   updateRobotRecommendation(key: string, value: string): void {
@@ -446,8 +455,16 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateCycleTimeRow('nonProcessTimeDryCycle', key, value);
   }
 
+  updateDryCycleStandard(key: string, value: string): void {
+    this.updateCycleTimeStandardRow('nonProcessTimeDryCycle', key, value);
+  }
+
   updateProcessTimeActual(key: string, value: string): void {
     this.updateCycleTimeRow('processTime', key, value);
+  }
+
+  updateProcessTimeStandard(key: string, value: string): void {
+    this.updateCycleTimeStandardRow('processTime', key, value);
   }
 
   updateProductionDataValue(key: string, value: string): void {
@@ -620,6 +637,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private populateFromRecord(record: HuskyFormRecord): void {
+    this.isContentLoading.set(false);
     this.machineId.set(record.machineId);
     this.machineName.set(record.machineName);
     this.maintenanceType.set(record.maintenanceType);
@@ -649,6 +667,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.performedByEmployeeId.set(
       record.performedByEmployeeId || this.resolvePerformedByEmployeeId(),
     );
+    this.syncCheckpointKpisFromEvaluations();
   }
 
   private cloneKpiRows(rows: HuskyKpiRow[] | undefined): HuskyKpiRow[] {
@@ -663,6 +682,48 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.safetyCheckpoints.update((rows) =>
       rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
     );
+  }
+
+  private syncCheckpointKpisFromEvaluations(): void {
+    const kpiScores: Record<string, { issuesScore: number; maxPossibleScore: number }> = {
+      safety: this.calculateCheckpointKpiScores(this.safetyCheckpoints()),
+      hydraulic: this.calculateCheckpointKpiScores(this.hydraulicCheckpoints()),
+      mechanical: this.calculateCheckpointKpiScores(this.mechanicalCheckpoints()),
+      'robot-conveyor': this.calculateCheckpointKpiScores(this.robotCheckpoints()),
+    };
+
+    this.kpiRows.update((rows) =>
+      rows.map((row) => {
+        const scores = kpiScores[row.key];
+        if (!scores) {
+          return row;
+        }
+        return {
+          ...row,
+          issuesScore: scores.issuesScore,
+          maxPossibleScore: scores.maxPossibleScore,
+        };
+      }),
+    );
+  }
+
+  private calculateCheckpointKpiScores(
+    checkpoints: HuskySectionCheckpoint[],
+  ): { issuesScore: number; maxPossibleScore: number } {
+    const maxPossibleScore = checkpoints.length * 2;
+    const issuesScore = checkpoints.reduce((total, checkpoint) => {
+      switch (checkpoint.evaluation) {
+        case 'Pass':
+          return total + 2;
+        case 'N/A':
+          return total + 1;
+        case 'Fail':
+        default:
+          return total;
+      }
+    }, 0);
+
+    return { issuesScore, maxPossibleScore };
   }
 
   private cloneSafetyCheckpoints(
@@ -771,6 +832,31 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       ...data,
       [group]: data[group].map((row) => (row.key === key ? { ...row, actualValue } : row)),
     }));
+  }
+
+  private updateCycleTimeStandardRow(
+    group: 'nonProcessTimeDryCycle' | 'processTime',
+    key: string,
+    standardValue: string,
+  ): void {
+    this.cycleTimeComparison.update((data) => ({
+      ...data,
+      [group]: data[group].map((row) =>
+        row.key === key
+          ? {
+              ...row,
+              standardValue,
+              standardSeconds: this.parseCycleTimeStandardValue(standardValue),
+            }
+          : row,
+      ),
+    }));
+  }
+
+  private parseCycleTimeStandardValue(value: string): number {
+    const normalized = value.trim().replace(/[^\d.-]/g, '');
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   private setPerformedByFromLogin(): void {

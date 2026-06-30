@@ -68,41 +68,37 @@
               </div>
 
               <div class="itr-field">
-                <label class="itr-field__label" for="husky-from-warehouse">From Warehouse</label>
-                <select
+                <label class="itr-field__label itr-field__label--required" for="husky-from-warehouse">
+                  From Warehouse <span class="itr-field__required">*</span>
+                </label>
+                <input
                   id="husky-from-warehouse"
+                  type="text"
+                  list="itr-warehouse-options"
                   class="itr-field__control itr-field__control--table"
-                  [ngModel]="fromWarehouseCode()"
-                  (ngModelChange)="onFromWarehouseChange($event)"
+                  [class.itr-field__control--error]="isFormWarehouseInvalid('from')"
+                  [ngModel]="getWarehouseInputValue('from')"
+                  (ngModelChange)="onFromWarehouseInputChange($event)"
                   name="fromWarehouseCode"
-                >
-                  <option value="">Select warehouse</option>
-                  <option
-                    *ngFor="let warehouse of warehouseOptions()"
-                    [value]="warehouse.warehouseCode"
-                  >
-                    {{ warehouse.warehouseName }}
-                  </option>
-                </select>
+                  placeholder="Search warehouse"
+                />
               </div>
 
               <div class="itr-field">
-                <label class="itr-field__label" for="husky-to-warehouse">To Warehouse</label>
-                <select
+                <label class="itr-field__label itr-field__label--required" for="husky-to-warehouse">
+                  To Warehouse <span class="itr-field__required">*</span>
+                </label>
+                <input
                   id="husky-to-warehouse"
+                  type="text"
+                  list="itr-warehouse-options"
                   class="itr-field__control itr-field__control--table"
-                  [ngModel]="toWarehouseCode()"
-                  (ngModelChange)="onToWarehouseChange($event)"
+                  [class.itr-field__control--error]="isFormWarehouseInvalid('to')"
+                  [ngModel]="getWarehouseInputValue('to')"
+                  (ngModelChange)="onToWarehouseInputChange($event)"
                   name="toWarehouseCode"
-                >
-                  <option value="">Select warehouse</option>
-                  <option
-                    *ngFor="let warehouse of warehouseOptions()"
-                    [value]="warehouse.warehouseCode"
-                  >
-                    {{ warehouse.warehouseName }}
-                  </option>
-                </select>
+                  placeholder="Search warehouse"
+                />
               </div>
             </div>
           </section>
@@ -190,8 +186,8 @@
                   <th>Item Code</th>
                   <th>Item Name</th>
                   <th class="pmm-replacement-table__qty-col">Quantity</th>
-                  <th class="itr-replacement-table__warehouse-col">From Warehouse</th>
-                  <th class="itr-replacement-table__warehouse-col">To Warehouse</th>
+                  <th class="itr-replacement-table__warehouse-col">From Warehouse *</th>
+                  <th class="itr-replacement-table__warehouse-col">To Warehouse *</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,36 +211,28 @@
                     />
                   </td>
                   <td class="itr-replacement-table__warehouse-col">
-                    <select
+                    <input
+                      type="text"
+                      list="itr-warehouse-options"
                       class="pmm-replacement-table__input pmm-replacement-table__input--select"
-                      [ngModel]="item.fromWarehouseCode"
-                      (ngModelChange)="updateReplacementFromWarehouse(gi, ii, $event)"
+                      [class.itr-field__control--error]="isReplacementWarehouseInvalid(item)"
+                      [ngModel]="getReplacementWarehouseInputValue(gi, ii, 'from', item.fromWarehouseCode)"
+                      (ngModelChange)="updateReplacementFromWarehouseInput(gi, ii, $event)"
                       [name]="'itrReplacementFromWarehouse' + gi + '_' + ii"
-                    >
-                      <option value="">Select warehouse</option>
-                      <option
-                        *ngFor="let warehouse of warehouseOptions()"
-                        [value]="warehouse.warehouseCode"
-                      >
-                        {{ warehouse.warehouseName }}
-                      </option>
-                    </select>
+                      placeholder="Search warehouse"
+                    />
                   </td>
                   <td class="itr-replacement-table__warehouse-col">
-                    <select
+                    <input
+                      type="text"
+                      list="itr-warehouse-options"
                       class="pmm-replacement-table__input pmm-replacement-table__input--select"
-                      [ngModel]="item.toWarehouseCode"
-                      (ngModelChange)="updateReplacementToWarehouse(gi, ii, $event)"
+                      [class.itr-field__control--error]="isReplacementWarehouseInvalid(item)"
+                      [ngModel]="getReplacementWarehouseInputValue(gi, ii, 'to', item.toWarehouseCode)"
+                      (ngModelChange)="updateReplacementToWarehouseInput(gi, ii, $event)"
                       [name]="'itrReplacementToWarehouse' + gi + '_' + ii"
-                    >
-                      <option value="">Select warehouse</option>
-                      <option
-                        *ngFor="let warehouse of warehouseOptions()"
-                        [value]="warehouse.warehouseCode"
-                      >
-                        {{ warehouse.warehouseName }}
-                      </option>
-                    </select>
+                      placeholder="Search warehouse"
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -253,6 +241,13 @@
         </div>
       </div>
     </div>
+
+    <datalist id="itr-warehouse-options">
+      <option
+        *ngFor="let warehouse of warehouseOptions()"
+        [value]="warehouse.warehouseName + ' (' + warehouse.warehouseCode + ')'"
+      ></option>
+    </datalist>
 
     <div class="cjr-actions-footer itr-actions-footer">
       <button type="button" class="btn-secondary" (click)="back()">Cancel</button>

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
-import { WarehouseService } from '../../../../../services/warehouse.service';
+import { WarehouseOption, WarehouseService } from '../../../../../services/warehouse.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { ApplicationFormService } from '../../../../../services/application-form.service';
 import { AuthService } from '../../../../../services/auth.service';
@@ -94,9 +94,13 @@ export class AddItrFormComponent implements OnInit {
   readonly documentNo = signal('');
   readonly status = signal('');
   readonly isSaving = signal(false);
+  readonly submitAttempted = signal(false);
   readonly eligibleMachines = signal<MachineSearchOption[]>([]);
   readonly replacementLineGroups = signal<ItrReplacementLineGroup[]>([]);
   readonly warehouseOptions = this.warehouseService.warehouses;
+  readonly fromWarehouseInput = signal('');
+  readonly toWarehouseInput = signal('');
+  readonly replacementWarehouseInputs = signal<Record<string, string>>({});
   readonly machineOptions = computed(() => {
     const machines = [...this.eligibleMachines()];
     const currentId = this.machineId().trim();
@@ -210,20 +214,20 @@ export class AddItrFormComponent implements OnInit {
     this.updateReplacementItemField(groupIndex, itemIndex, 'quantity', value);
   }
 
-  updateReplacementFromWarehouse(
+  updateReplacementFromWarehouseInput(
     groupIndex: number,
     itemIndex: number,
     value: string,
   ): void {
-    this.updateReplacementItemField(groupIndex, itemIndex, 'fromWarehouseCode', value);
+    this.setReplacementWarehouseInput(groupIndex, itemIndex, 'from', value);
   }
 
-  updateReplacementToWarehouse(
+  updateReplacementToWarehouseInput(
     groupIndex: number,
     itemIndex: number,
     value: string,
   ): void {
-    this.updateReplacementItemField(groupIndex, itemIndex, 'toWarehouseCode', value);
+    this.setReplacementWarehouseInput(groupIndex, itemIndex, 'to', value);
   }
 
   private updateReplacementItemField(
@@ -274,14 +278,55 @@ export class AddItrFormComponent implements OnInit {
     this.docDate.set(value);
   }
 
-  onFromWarehouseChange(value: string): void {
-    this.fromWarehouseCode.set(value);
+  onFromWarehouseInputChange(value: string): void {
+    this.fromWarehouseInput.set(value);
+    this.fromWarehouseCode.set(this.resolveWarehouseCode(value));
     this.propagateWarehousesToReplacementItems();
   }
 
-  onToWarehouseChange(value: string): void {
-    this.toWarehouseCode.set(value);
+  onToWarehouseInputChange(value: string): void {
+    this.toWarehouseInput.set(value);
+    this.toWarehouseCode.set(this.resolveWarehouseCode(value));
     this.propagateWarehousesToReplacementItems();
+  }
+
+  getWarehouseInputValue(type: 'from' | 'to'): string {
+    const draft = type === 'from' ? this.fromWarehouseInput() : this.toWarehouseInput();
+    if (draft.trim()) {
+      return draft;
+    }
+
+    const code = type === 'from' ? this.fromWarehouseCode() : this.toWarehouseCode();
+    return this.getWarehouseDisplayValue(code);
+  }
+
+  getReplacementWarehouseInputValue(
+    groupIndex: number,
+    itemIndex: number,
+    type: 'from' | 'to',
+    warehouseCode: string,
+  ): string {
+    const draft = this.replacementWarehouseInputs()[this.getReplacementWarehouseInputKey(groupIndex, itemIndex, type)];
+    if (draft?.trim()) {
+      return draft;
+    }
+    return this.getWarehouseDisplayValue(warehouseCode);
+  }
+
+  isFormWarehouseInvalid(type: 'from' | 'to'): boolean {
+    if (!this.submitAttempted()) {
+      return false;
+    }
+    const code = type === 'from' ? this.fromWarehouseCode().trim() : this.toWarehouseCode().trim();
+    return !code;
+  }
+
+  isReplacementWarehouseInvalid(item: ItrReplacementItem): boolean {
+    return (
+      this.submitAttempted() &&
+      !!(item.itemCode.trim() || item.itemName.trim()) &&
+      (!item.fromWarehouseCode.trim() || !item.toWarehouseCode.trim())
+    );
   }
 
   trackByIndex(index: number): number {
@@ -292,6 +337,7 @@ export class AddItrFormComponent implements OnInit {
     if (this.isSaving()) {
       return;
     }
+    this.submitAttempted.set(true);
 
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
@@ -437,6 +483,9 @@ export class AddItrFormComponent implements OnInit {
     this.docDate.set(record.docDate);
     this.fromWarehouseCode.set(record.fromWarehouseCode);
     this.toWarehouseCode.set(record.toWarehouseCode);
+    this.fromWarehouseInput.set('');
+    this.toWarehouseInput.set('');
+    this.replacementWarehouseInputs.set({});
     this.remarks.set(record.remarks);
     this.submitDate.set(record.submitDate);
     this.documentNo.set(record.documentNo);
@@ -463,6 +512,7 @@ export class AddItrFormComponent implements OnInit {
     const trimmedMachineId = machineId.trim();
     if (!trimmedMachineId) {
       this.replacementLineGroups.set([]);
+      this.replacementWarehouseInputs.set({});
       return;
     }
 
@@ -484,11 +534,13 @@ export class AddItrFormComponent implements OnInit {
       this.replacementLineGroups.set(
         this.mergeReplacementLineGroups(masterGroups, this.pendingReplacementLineGroups),
       );
+      this.replacementWarehouseInputs.set({});
       this.pendingReplacementLineGroups = null;
       return;
     }
 
     this.replacementLineGroups.set(masterGroups);
+    this.replacementWarehouseInputs.set({});
     this.propagateWarehousesToReplacementItems();
   }
 
@@ -519,6 +571,71 @@ export class AddItrFormComponent implements OnInit {
     if (!this.docDate()) {
       this.docDate.set(today);
     }
+  }
+
+  private setReplacementWarehouseInput(
+    groupIndex: number,
+    itemIndex: number,
+    type: 'from' | 'to',
+    value: string,
+  ): void {
+    const key = this.getReplacementWarehouseInputKey(groupIndex, itemIndex, type);
+    this.replacementWarehouseInputs.update((inputs) => ({ ...inputs, [key]: value }));
+    const code = this.resolveWarehouseCode(value);
+    this.updateReplacementItemField(
+      groupIndex,
+      itemIndex,
+      type === 'from' ? 'fromWarehouseCode' : 'toWarehouseCode',
+      code,
+    );
+  }
+
+  private getReplacementWarehouseInputKey(
+    groupIndex: number,
+    itemIndex: number,
+    type: 'from' | 'to',
+  ): string {
+    return `${groupIndex}:${itemIndex}:${type}`;
+  }
+
+  private getWarehouseDisplayValue(code: string): string {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const warehouse = this.warehouseOptions().find(
+      (option) => option.warehouseCode.trim().toLowerCase() === trimmed.toLowerCase(),
+    );
+    return warehouse
+      ? this.buildWarehouseSearchValue(warehouse)
+      : trimmed;
+  }
+
+  private buildWarehouseSearchValue(warehouse: WarehouseOption): string {
+    const name = warehouse.warehouseName.trim();
+    const code = warehouse.warehouseCode.trim();
+    return name ? `${name} (${code})` : code;
+  }
+
+  private resolveWarehouseCode(value: string): string {
+    const normalizedValue = value.trim().toLowerCase();
+    if (!normalizedValue) {
+      return '';
+    }
+
+    const warehouse = this.warehouseOptions().find((option) => {
+      const code = option.warehouseCode.trim().toLowerCase();
+      const name = option.warehouseName.trim().toLowerCase();
+      const display = this.buildWarehouseSearchValue(option).trim().toLowerCase();
+      return (
+        normalizedValue === code ||
+        normalizedValue === name ||
+        normalizedValue === display
+      );
+    });
+
+    return warehouse?.warehouseCode.trim() ?? '';
   }
 
   private formatToday(): string {

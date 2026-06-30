@@ -135,6 +135,14 @@
   line-height: 1.35;
 }
 
+.itr-field__label--required {
+  color: #334155;
+}
+
+.itr-field__required {
+  color: #dc2626;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -177,6 +185,16 @@
   color: #475569;
   border-color: #e2e8f0;
   cursor: default;
+}
+
+.itr-field__control--error {
+  border-color: #dc2626 !important;
+  background: #fef2f2 !important;
+}
+
+.itr-field__control--error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.14) !important;
 }
 
 .itr-field__control--textarea {

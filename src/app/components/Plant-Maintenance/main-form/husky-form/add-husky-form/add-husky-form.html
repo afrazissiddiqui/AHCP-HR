@@ -19,7 +19,7 @@
               <label for="husky-machine-id">Machine ID:</label>
               <select
                 id="husky-machine-id"
-                class="mad-select"
+                class="mad-select husky-form-select husky-header-select"
                 [ngModel]="machineId()"
                 (ngModelChange)="onMachineIdChange($event)"
                 name="machineId"
@@ -47,7 +47,7 @@
               <label for="husky-maintenance-type">Maintenance Type:</label>
               <select
                 id="husky-maintenance-type"
-                class="mad-select"
+                class="mad-select husky-form-select husky-header-select"
                 [ngModel]="maintenanceType()"
                 (ngModelChange)="onMaintenanceTypeChange($event)"
                 name="maintenanceType"
@@ -63,7 +63,7 @@
               <label for="husky-maintenance-frequency">Maintenance Frequency:</label>
               <select
                 id="husky-maintenance-frequency"
-                class="mad-select"
+                class="mad-select husky-form-select husky-header-select"
                 [ngModel]="maintenanceFrequency()"
                 (ngModelChange)="onMaintenanceFrequencyChange($event)"
                 name="maintenanceFrequency"
@@ -143,7 +143,7 @@
               <label for="husky-inspector">Inspector:</label>
               <select
                 id="husky-inspector"
-                class="mad-select"
+                class="mad-select husky-form-select husky-header-select"
                 [ngModel]="inspector()"
                 (ngModelChange)="onInspectorChange($event)"
                 name="inspector"
@@ -228,7 +228,20 @@
           <section [id]="section.id" class="husky-form-section">
             <div class="cjr-section-title">{{ section.label }}</div>
 
-            @if (section.id === 'husky-kpi-section') {
+            @if (isContentLoading()) {
+              <div class="husky-skeleton-section" aria-hidden="true">
+                <div class="husky-skeleton husky-skeleton--title"></div>
+                <div class="husky-skeleton-grid">
+                  <div class="husky-skeleton husky-skeleton--cell"></div>
+                  <div class="husky-skeleton husky-skeleton--cell"></div>
+                  <div class="husky-skeleton husky-skeleton--cell"></div>
+                  <div class="husky-skeleton husky-skeleton--cell"></div>
+                  <div class="husky-skeleton husky-skeleton--row"></div>
+                  <div class="husky-skeleton husky-skeleton--row"></div>
+                  <div class="husky-skeleton husky-skeleton--row"></div>
+                </div>
+              </div>
+            } @else if (section.id === 'husky-kpi-section') {
               <div class="husky-kpi-list">
                 @for (row of kpiRows(); track row.key) {
                   <article class="husky-kpi-row">
@@ -321,7 +334,7 @@
                         <td class="husky-checkpoint-table__checkpoint">{{ row.checkpoint }}</td>
                         <td class="husky-checkpoint-table__evaluation">
                           <select
-                            class="mad-select husky-checkpoint-select"
+                            class="mad-select husky-form-select husky-checkpoint-select"
                             [class]="getEvaluationSelectClass(row.evaluation)"
                             [ngModel]="row.evaluation"
                             (ngModelChange)="updateSafetyEvaluation(row.key, $event)"
@@ -364,7 +377,7 @@
                         <td class="husky-checkpoint-table__checkpoint">{{ row.checkpoint }}</td>
                         <td class="husky-checkpoint-table__evaluation">
                           <select
-                            class="mad-select husky-checkpoint-select"
+                            class="mad-select husky-form-select husky-checkpoint-select"
                             [class]="getEvaluationSelectClass(row.evaluation)"
                             [ngModel]="row.evaluation"
                             (ngModelChange)="updateHydraulicEvaluation(row.key, $event)"
@@ -407,7 +420,7 @@
                         <td class="husky-checkpoint-table__checkpoint">{{ row.checkpoint }}</td>
                         <td class="husky-checkpoint-table__evaluation">
                           <select
-                            class="mad-select husky-checkpoint-select"
+                            class="mad-select husky-form-select husky-checkpoint-select"
                             [class]="getEvaluationSelectClass(row.evaluation)"
                             [ngModel]="row.evaluation"
                             (ngModelChange)="updateMechanicalEvaluation(row.key, $event)"
@@ -744,7 +757,7 @@
                             <td>{{ row.tolerance }}</td>
                             <td>
                               <select
-                                class="mad-select husky-checkpoint-select"
+                                class="mad-select husky-form-select husky-checkpoint-select"
                                 [class]="getLevelStatusSelectClass(row.status)"
                                 [ngModel]="row.status"
                                 (ngModelChange)="updateRobotLevelStatus(row.key, $event)"
@@ -779,7 +792,7 @@
                         <td class="husky-checkpoint-table__checkpoint">{{ row.checkpoint }}</td>
                         <td class="husky-checkpoint-table__evaluation">
                           <select
-                            class="mad-select husky-checkpoint-select"
+                            class="mad-select husky-form-select husky-checkpoint-select"
                             [class]="getEvaluationSelectClass(row.evaluation)"
                             [ngModel]="row.evaluation"
                             (ngModelChange)="updateRobotEvaluation(row.key, $event)"
@@ -824,7 +837,16 @@
                         @for (row of cycleTimeComparison().nonProcessTimeDryCycle; track row.key) {
                           <tr>
                             <td class="husky-measurement-table__label">{{ row.parameter }}</td>
-                            <td class="husky-measurement-table__reference">{{ row.standardValue }}</td>
+                            <td class="husky-measurement-table__entry">
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.standardValue"
+                                (ngModelChange)="updateDryCycleStandard(row.key, $event)"
+                                [name]="'dryCycleStandard-' + row.key"
+                                placeholder="User entry"
+                              />
+                            </td>
                             <td class="husky-measurement-table__entry">
                               <input
                                 type="text"
@@ -861,7 +883,16 @@
                         @for (row of cycleTimeComparison().processTime; track row.key) {
                           <tr>
                             <td class="husky-measurement-table__label">{{ row.parameter }}</td>
-                            <td class="husky-measurement-table__reference">{{ row.standardValue }}</td>
+                            <td class="husky-measurement-table__entry">
+                              <input
+                                type="text"
+                                class="husky-measurement-input"
+                                [ngModel]="row.standardValue"
+                                (ngModelChange)="updateProcessTimeStandard(row.key, $event)"
+                                [name]="'processTimeStandard-' + row.key"
+                                placeholder="User entry"
+                              />
+                            </td>
                             <td class="husky-measurement-table__entry">
                               <input
                                 type="text"
