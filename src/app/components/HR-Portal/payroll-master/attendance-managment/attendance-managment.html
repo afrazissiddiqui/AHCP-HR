@@ -197,8 +197,8 @@
           <table class="attendance-table">
             <thead>
               <tr class="attendance-table__group-row">
-                <th class="attendance-table__group attendance-table__group--select" rowspan="2">
-                  <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
+                <th class="attendance-table__group attendance-table__group--select" scope="colgroup">
+                  Select
                 </th>
                 <th
                   class="attendance-table__group attendance-table__group--identity"
@@ -221,21 +221,28 @@
                 >
                   Status
                 </th>
-                <th class="attendance-table__group attendance-table__group--actions" rowspan="2">Actions</th>
+                <th class="attendance-table__group attendance-table__group--actions" scope="colgroup">
+                  Actions
+                </th>
               </tr>
-              <tr>
+              <tr class="attendance-table__column-row">
+                <th class="attendance-table__select-header" scope="col">
+                  <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" aria-label="Select all rows" />
+                </th>
                 <th
                   *ngFor="let col of visibleColumns"
                   appColumnResize
                   (click)="sortData(col.key)"
                   class="sortable-header"
                   [ngClass]="getColumnGroupClass(col.key)"
+                  scope="col"
                 >
                   {{ col.label }}
                   <span *ngIf="sortColumn === col.key" class="sort-indicator">
                     {{ sortDirection === 'asc' ? '↑' : '↓' }}
                   </span>
                 </th>
+                <th class="attendance-table__actions-header" scope="col">View</th>
               </tr>
             </thead>
             <tbody>

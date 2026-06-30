@@ -27,21 +27,8 @@ type RowActionKey = 'view' | 'update' | 'delete';
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent, ColumnResizeDirective],
   templateUrl: './maintenance-activity-definition.html',
-  styleUrls: [
-    '../../../HR-Portal/Application-Form/Application-Form.css',
-    '../plant-maintenance-setup-form.css',
-  ],
-  styles: [
-    `
-      :host {
-        display: flex;
-        flex-direction: column;
-        flex: 1 1 auto;
-        min-height: 0;
-        width: 100%;
-      }
-    `,
-  ],
+  styleUrls: ['./maintenance-activity-definition-list.css'],
+  styles: [],
 })
 export class MaintenanceActivityDefinitionComponent implements OnInit {
   private readonly layout = inject(PlantMaintenanceSetupLayoutService);

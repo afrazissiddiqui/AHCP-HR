@@ -67,11 +67,7 @@ function createEmptyComponent(): MaintenanceActivityComponent {
 
   templateUrl: './add-maintenance-activity-definition.html',
 
-  styleUrls: [
-    '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
-    '../../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../plant-maintenance-setup-form.css',
-  ],
+  styleUrls: ['./add-maintenance-activity-definition.css'],
 
 })
 
@@ -564,23 +560,15 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
         name: component.name.trim(),
 
-        inspectionLines: component.inspectionLines
+        inspectionLines: component.inspectionLines.map((line) => ({
 
-          .map((line) => ({
+          itemsToBeInspected: line.itemsToBeInspected.trim(),
 
-            itemsToBeInspected: line.itemsToBeInspected.trim(),
+          whatToCheck: line.whatToCheck.trim(),
 
-            whatToCheck: line.whatToCheck.trim(),
+          instructions: line.instructions.trim(),
 
-            instructions: line.instructions.trim(),
-
-          }))
-
-          .filter(
-
-            (line) => line.itemsToBeInspected || line.whatToCheck || line.instructions,
-
-          ),
+        })),
 
       }))
 

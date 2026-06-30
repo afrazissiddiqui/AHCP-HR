@@ -478,20 +478,38 @@
 .attendance-table__group-row th {
   position: sticky;
   top: 0;
-  z-index: 3;
-  padding: 10px 12px;
+  z-index: 4;
+  height: 40px;
+  padding: 0 12px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: center;
+  vertical-align: middle;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .attendance-table__group--select,
 .attendance-table__group--actions {
-  background: #f8fafc;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
   color: #475467;
+}
+
+.attendance-table__group--select,
+.attendance-table__select,
+.attendance-table__select-header {
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+}
+
+.attendance-table__group--actions,
+.attendance-table__actions,
+.attendance-table__actions-header {
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
 }
 
 .attendance-table__group--identity {
@@ -509,25 +527,53 @@
   color: #115e59;
 }
 
-.attendance-table thead tr:last-child th {
+.attendance-table__column-row th {
   position: sticky;
-  top: 41px;
-  z-index: 2;
+  top: 40px;
+  z-index: 3;
   padding: 11px 12px;
   font-size: 12px;
   font-weight: 700;
   color: #334155;
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
+  vertical-align: middle;
 }
 
-.attendance-table thead tr:last-child th.sortable-header {
+.attendance-table__column-row th.sortable-header {
   cursor: pointer;
   user-select: none;
 }
 
-.attendance-table thead tr:last-child th.sortable-header:hover {
+.attendance-table__column-row th.sortable-header:hover {
   background: #f1f5f9;
+}
+
+.attendance-table__select-header,
+.attendance-table__actions-header {
+  text-align: center;
+  background: #f8fafc;
+}
+
+.attendance-table__group--actions,
+.attendance-table__actions-header,
+.attendance-table__actions {
+  position: sticky;
+  right: 0;
+}
+
+.attendance-table__group--actions,
+.attendance-table__actions-header {
+  z-index: 5;
+  box-shadow: -4px 0 12px rgba(15, 23, 42, 0.06);
+}
+
+.attendance-table__actions-header {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .attendance-col--identity {
@@ -554,12 +600,11 @@
 .attendance-table__actions {
   background: #fff !important;
   text-align: center;
+  vertical-align: middle;
 }
 
 .attendance-table__actions {
-  position: sticky;
-  right: 0;
-  z-index: 1;
+  z-index: 2;
   box-shadow: -4px 0 12px rgba(15, 23, 42, 0.04);
 }
 
