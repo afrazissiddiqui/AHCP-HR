@@ -14,11 +14,11 @@ export interface MaintenanceActivityInspectionLine {
 }
 
 export interface MaintenanceActivityInspectionLinePayload {
-  itemsToBeInspected: string | null;
-  whatToCheck: string | null;
-  instructions: string | null;
-  items_to_be_inspected: string | null;
-  what_to_check: string | null;
+  itemsToBeInspected: string;
+  whatToCheck: string;
+  instructions: string;
+  items_to_be_inspected: string;
+  what_to_check: string;
 }
 
 export interface MaintenanceActivityComponent {
@@ -88,17 +88,16 @@ const MAINTENANCE_ACTIVITY_DEFINITION_DELETE_URL = apiUrl('maintenance-activity-
 
 const DEFAULT_MACHINE_ITEM_TYPE = 'F';
 
-function toNullableTrimmed(value: string): string | null {
-  const trimmed = value.trim();
-  return trimmed === '' ? null : trimmed;
+function toOptionalTrimmed(value: string): string {
+  return value.trim();
 }
 
 function mapInspectionLineForPayload(
   line: MaintenanceActivityInspectionLine,
 ): MaintenanceActivityInspectionLinePayload {
-  const itemsToBeInspected = toNullableTrimmed(line.itemsToBeInspected);
-  const whatToCheck = toNullableTrimmed(line.whatToCheck);
-  const instructions = toNullableTrimmed(line.instructions);
+  const itemsToBeInspected = toOptionalTrimmed(line.itemsToBeInspected);
+  const whatToCheck = toOptionalTrimmed(line.whatToCheck);
+  const instructions = toOptionalTrimmed(line.instructions);
 
   return {
     itemsToBeInspected,
