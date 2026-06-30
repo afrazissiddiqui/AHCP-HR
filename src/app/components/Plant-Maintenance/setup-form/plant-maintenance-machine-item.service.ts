@@ -5,73 +5,101 @@ import { apiUrl } from '../../../config/api.config';
 import { MachineSearchOption } from './plant-maintenance-machine.model';
 
 const ITEMS_URL = apiUrl('items');
-const MACHINE_ITEM_TYPE = 'F';
+const DEFAULT_MACHINE_ITEM_TYPE = 'F';
+
+interface ItemTypeCache {
+  machines: ReturnType<typeof signal<MachineSearchOption[]>>;
+  loaded: boolean;
+  loading: boolean;
+  load$?: Observable<MachineSearchOption[]>;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PlantMaintenanceMachineItemService {
   private readonly http = inject(HttpClient);
-  private readonly machines = signal<MachineSearchOption[]>([]);
-  private loaded = false;
-  private loading = false;
-  private load$?: Observable<MachineSearchOption[]>;
+  private readonly caches = new Map<string, ItemTypeCache>();
 
-  readonly records = this.machines.asReadonly();
+  records(itemType = DEFAULT_MACHINE_ITEM_TYPE) {
+    return this.getCache(itemType).machines.asReadonly();
+  }
 
-  ensureLoaded(): Observable<MachineSearchOption[]> {
-    if (this.loaded) {
-      return of(this.machines());
+  ensureLoaded(itemType = DEFAULT_MACHINE_ITEM_TYPE): Observable<MachineSearchOption[]> {
+    const cache = this.getCache(itemType);
+
+    if (cache.loaded) {
+      return of(cache.machines());
     }
 
-    if (!this.load$) {
-      this.loading = true;
-      this.load$ = this.http.get<unknown>(ITEMS_URL).pipe(
-        map((response) => this.extractMachineItems(response)),
+    if (!cache.load$) {
+      cache.loading = true;
+      cache.load$ = this.http.get<unknown>(ITEMS_URL).pipe(
+        map((response) => this.extractMachineItems(response, itemType)),
         tap((records) => {
-          this.machines.set(records);
-          this.loaded = true;
-          this.loading = false;
+          cache.machines.set(records);
+          cache.loaded = true;
+          cache.loading = false;
         }),
         catchError(() => {
-          this.machines.set([]);
-          this.loaded = true;
-          this.loading = false;
+          cache.machines.set([]);
+          cache.loaded = true;
+          cache.loading = false;
           return of([]);
         }),
       );
     }
 
-    return this.load$;
+    return cache.load$;
   }
 
-  isLoading(): boolean {
-    return this.loading;
+  isLoading(itemType = DEFAULT_MACHINE_ITEM_TYPE): boolean {
+    return this.getCache(itemType).loading;
   }
 
-  searchByMachineId(query: string, limit = 10): MachineSearchOption[] {
+  getAll(itemType = DEFAULT_MACHINE_ITEM_TYPE): MachineSearchOption[] {
+    return this.getCache(itemType).machines();
+  }
+
+  searchByMachineId(query: string, itemType = DEFAULT_MACHINE_ITEM_TYPE, limit = 10): MachineSearchOption[] {
     const q = query.trim().toLowerCase();
     if (!q) {
       return [];
     }
 
-    return this.machines()
+    return this.getCache(itemType)
+      .machines()
       .filter((machine) => machine.machineId.toLowerCase().includes(q))
       .slice(0, limit);
   }
 
-  searchByMachineName(query: string, limit = 10): MachineSearchOption[] {
+  searchByMachineName(query: string, itemType = DEFAULT_MACHINE_ITEM_TYPE, limit = 10): MachineSearchOption[] {
     const q = query.trim().toLowerCase();
     if (!q) {
       return [];
     }
 
-    return this.machines()
+    return this.getCache(itemType)
+      .machines()
       .filter((machine) => machine.machineName.toLowerCase().includes(q))
       .slice(0, limit);
   }
 
-  private extractMachineItems(response: unknown): MachineSearchOption[] {
+  private getCache(itemType: string): ItemTypeCache {
+    const key = itemType.toUpperCase();
+    let cache = this.caches.get(key);
+    if (!cache) {
+      cache = {
+        machines: signal<MachineSearchOption[]>([]),
+        loaded: false,
+        loading: false,
+      };
+      this.caches.set(key, cache);
+    }
+    return cache;
+  }
+
+  private extractMachineItems(response: unknown, itemType: string): MachineSearchOption[] {
     return this.extractApiItems(response)
-      .map((item) => this.mapMachineItem(item))
+      .map((item) => this.mapMachineItem(item, itemType))
       .filter((machine): machine is MachineSearchOption => !!machine);
   }
 
@@ -119,9 +147,9 @@ export class PlantMaintenanceMachineItemService {
     return [];
   }
 
-  private mapMachineItem(item: Record<string, unknown>): MachineSearchOption | null {
-    const itemType = this.pickString([item], ['ItemType', 'itemType', 'item_type']);
-    if (itemType.toUpperCase() !== MACHINE_ITEM_TYPE) {
+  private mapMachineItem(item: Record<string, unknown>, itemType: string): MachineSearchOption | null {
+    const resolvedItemType = this.pickString([item], ['ItemType', 'itemType', 'item_type']);
+    if (resolvedItemType.toUpperCase() !== itemType.toUpperCase()) {
       return null;
     }
 

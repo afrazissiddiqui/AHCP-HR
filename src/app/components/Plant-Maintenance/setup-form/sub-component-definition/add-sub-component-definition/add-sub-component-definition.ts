@@ -9,16 +9,14 @@ import { MachineSearchOption } from '../../plant-maintenance-machine.model';
 import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
 import { SubComponentDefinitionService, SubComponentMachineRecord } from '../sub-component-definition.service';
 
+const SUB_COMPONENT_MACHINE_ITEM_TYPE = 'I';
+
 @Component({
   selector: 'app-add-sub-component-definition',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-sub-component-definition.html',
-  styleUrls: [
-    '../../../../HR-Portal/payroll-master/tax-computation/tax-computation.css',
-    '../../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../plant-maintenance-setup-form.css',
-  ],
+  styleUrls: ['./add-sub-component-definition.css'],
 })
 export class AddSubComponentDefinitionComponent implements OnInit {
   private readonly subComponentService = inject(SubComponentDefinitionService);
@@ -28,6 +26,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   readonly editingRecordId = signal<string | null>(null);
+  readonly isCreateMode = computed(() => !this.editingRecordId());
   readonly pageTitle = computed(() =>
     this.editingRecordId() ? 'Update Machine' : 'Add Machine',
   );
@@ -37,21 +36,14 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   readonly machineType = signal('');
   readonly subComponents = signal<string[]>(['']);
   readonly isSaving = signal(false);
-  readonly idSuggestionsOpen = signal(false);
-  readonly nameSuggestionsOpen = signal(false);
 
-  readonly idSuggestions = computed(() => {
-    this.machineItemService.records();
-    return this.machineItemService.searchByMachineId(this.machineId());
-  });
-
-  readonly nameSuggestions = computed(() => {
-    this.machineItemService.records();
-    return this.machineItemService.searchByMachineName(this.machineName());
+  readonly machineOptions = computed(() => {
+    this.machineItemService.records(SUB_COMPONENT_MACHINE_ITEM_TYPE)();
+    return this.machineItemService.getAll(SUB_COMPONENT_MACHINE_ITEM_TYPE);
   });
 
   ngOnInit(): void {
-    this.machineItemService.ensureLoaded().subscribe({ error: () => {} });
+    this.machineItemService.ensureLoaded(SUB_COMPONENT_MACHINE_ITEM_TYPE).subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -82,16 +74,16 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     void this.router.navigate(['/plant-maintenance/setup-form/sub-component-definition']);
   }
 
-  onMachineIdInput(value: string): void {
+  onMachineIdChange(value: string): void {
     this.machineId.set(value);
-    this.idSuggestionsOpen.set(value.trim().length > 0);
-    this.closeNameSuggestions();
-  }
+    const machine = this.machineOptions().find((item) => item.machineId === value);
+    if (machine) {
+      this.populateFromMachine(machine);
+      return;
+    }
 
-  onMachineNameInput(value: string): void {
-    this.machineName.set(value);
-    this.nameSuggestionsOpen.set(value.trim().length > 0);
-    this.closeIdSuggestions();
+    this.machineName.set('');
+    this.machineType.set('');
   }
 
   updateSubComponent(index: number, value: string): void {
@@ -116,42 +108,6 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     return index;
   }
 
-  openIdSuggestions(): void {
-    if (this.machineId().trim()) {
-      this.idSuggestionsOpen.set(true);
-      this.closeNameSuggestions();
-    }
-  }
-
-  openNameSuggestions(): void {
-    if (this.machineName().trim()) {
-      this.nameSuggestionsOpen.set(true);
-      this.closeIdSuggestions();
-    }
-  }
-
-  closeIdSuggestions(): void {
-    this.idSuggestionsOpen.set(false);
-  }
-
-  closeNameSuggestions(): void {
-    this.nameSuggestionsOpen.set(false);
-  }
-
-  onIdInputBlur(): void {
-    setTimeout(() => this.closeIdSuggestions(), 150);
-  }
-
-  onNameInputBlur(): void {
-    setTimeout(() => this.closeNameSuggestions(), 150);
-  }
-
-  selectMachineFromSuggestion(machine: MachineSearchOption): void {
-    this.closeIdSuggestions();
-    this.closeNameSuggestions();
-    this.populateFromMachine(machine);
-  }
-
   resetForm(): void {
     if (this.editingRecordId()) {
       const record = this.subComponentService.getById(this.editingRecordId()!);
@@ -169,8 +125,6 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.machineName.set('');
     this.machineType.set('');
     this.subComponents.set(['']);
-    this.closeIdSuggestions();
-    this.closeNameSuggestions();
   }
 
   async saveForm(): Promise<void> {
