@@ -99,8 +99,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
   readonly machineName = signal('');
 
-  readonly machineType = signal('');
-
   readonly maintenanceNature = signal('');
 
   readonly plantMaintenanceFrequency = signal('');
@@ -246,14 +244,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     this.nameSuggestionsOpen.set(value.trim().length > 0);
 
     this.closeIdSuggestions();
-
-  }
-
-
-
-  onMachineTypeInput(value: string): void {
-
-    this.machineType.set(value);
 
   }
 
@@ -513,8 +503,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.machineName.set('');
 
-    this.machineType.set('');
-
     this.maintenanceNature.set('');
 
     this.plantMaintenanceFrequency.set('');
@@ -542,8 +530,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     const machineId = this.machineId().trim();
 
     const machineName = this.machineName().trim();
-
-    const machineType = this.machineType().trim();
 
     const maintenanceNature = this.maintenanceNature().trim();
 
@@ -575,11 +561,11 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
-    if (!machineId || !machineName || !machineType) {
+    if (!machineId || !machineName) {
 
       this.alertService.validation(
 
-        'Machine ID, Machine Name, and Machine Type are required.',
+        'Machine ID and Machine Name are required.',
 
       );
 
@@ -642,8 +628,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
       machineId: resolved.machineId,
 
       machineName: resolved.machineName,
-
-      machineType,
 
       maintenanceNature,
 
@@ -745,8 +729,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.machineName.set(machine.machineName);
 
-    this.machineType.set(machine.defaultMachineType);
-
     this.applyComponentsFromSubComponentDefinition(machine.machineId);
 
   }
@@ -832,8 +814,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     this.machineId.set(record.machineId === '—' ? '' : record.machineId);
 
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
-
-    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
 
     this.maintenanceNature.set(record.maintenanceNature === '—' ? '' : record.maintenanceNature);
 
