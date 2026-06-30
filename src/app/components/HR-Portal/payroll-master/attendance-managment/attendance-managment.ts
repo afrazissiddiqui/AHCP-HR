@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
@@ -26,6 +26,7 @@ type AttendanceColumnKey = 'No' | 'EmployeeId' | 'PunchDate' | 'PunchTime' | 'Pu
   imports: [CommonModule, FormsModule, ColumnResizeDirective, PageToolbarComponent],
   templateUrl: './attendance-managment.html',
   styleUrls: ['../../Application-Form/Application-Form.css', './attendance-managment.css'],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AttendanceManagmentComponent implements OnInit {
   private readonly layout = inject(PayrollMasterLayoutService);

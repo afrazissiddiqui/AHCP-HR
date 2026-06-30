@@ -4,28 +4,36 @@
   <div class="attendance-page__body">
     <section class="attendance-kpi-strip" aria-label="Attendance summary">
       <article class="attendance-kpi attendance-kpi--blue">
-        <div class="attendance-kpi__icon" aria-hidden="true">📋</div>
+        <div class="attendance-kpi__icon" aria-hidden="true">
+          <ui5-icon name="time-entry-request"></ui5-icon>
+        </div>
         <div class="attendance-kpi__content">
           <span class="attendance-kpi__label">Total Punches</span>
           <strong class="attendance-kpi__value">{{ filteredList.length }}</strong>
         </div>
       </article>
       <article class="attendance-kpi attendance-kpi--violet">
-        <div class="attendance-kpi__icon" aria-hidden="true">👤</div>
+        <div class="attendance-kpi__icon" aria-hidden="true">
+          <ui5-icon name="employee"></ui5-icon>
+        </div>
         <div class="attendance-kpi__content">
           <span class="attendance-kpi__label">Employees</span>
           <strong class="attendance-kpi__value">{{ uniqueEmployeeCount }}</strong>
         </div>
       </article>
       <article class="attendance-kpi attendance-kpi--teal">
-        <div class="attendance-kpi__icon" aria-hidden="true">🖥️</div>
+        <div class="attendance-kpi__icon" aria-hidden="true">
+          <ui5-icon name="factory"></ui5-icon>
+        </div>
         <div class="attendance-kpi__content">
           <span class="attendance-kpi__label">Devices</span>
           <strong class="attendance-kpi__value">{{ uniqueDeviceCount }}</strong>
         </div>
       </article>
       <article class="attendance-kpi attendance-kpi--amber">
-        <div class="attendance-kpi__icon" aria-hidden="true">✓</div>
+        <div class="attendance-kpi__icon" aria-hidden="true">
+          <ui5-icon name="accept"></ui5-icon>
+        </div>
         <div class="attendance-kpi__content">
           <span class="attendance-kpi__label">Selected</span>
           <strong class="attendance-kpi__value">{{ selectedCount }}</strong>
@@ -37,7 +45,10 @@
       <header class="attendance-module__header">
         <div class="attendance-module__accent" aria-hidden="true"></div>
         <div class="attendance-module__heading">
-          <h2 class="attendance-module__title">Attendance Query</h2>
+          <h2 class="attendance-module__title">
+            <ui5-icon name="calendar" class="attendance-module__title-icon" aria-hidden="true"></ui5-icon>
+            Attendance Query
+          </h2>
           <p class="attendance-module__subtitle">Load punch data from Pioneer Biometrics by date or employee</p>
         </div>
         <span class="attendance-module__badge attendance-module__badge--query">{{ currentQueryLabel }}</span>
@@ -89,6 +100,7 @@
           (click)="applyQuery()"
           [disabled]="loading()"
         >
+          <ui5-icon name="refresh" class="attendance-btn-icon" aria-hidden="true"></ui5-icon>
           {{ loading() ? 'Loading…' : 'Load Attendance' }}
         </button>
       </div>
@@ -98,7 +110,10 @@
       <header class="attendance-module__header">
         <div class="attendance-module__accent" aria-hidden="true"></div>
         <div class="attendance-module__heading">
-          <h2 class="attendance-module__title">Filters &amp; Search</h2>
+          <h2 class="attendance-module__title">
+            <ui5-icon name="filter" class="attendance-module__title-icon" aria-hidden="true"></ui5-icon>
+            Filters &amp; Search
+          </h2>
           <p class="attendance-module__subtitle">Refine the loaded punch list before export or review</p>
         </div>
       </header>
@@ -138,10 +153,14 @@
             (ngModelChange)="onSearchChange()"
             placeholder="Search employee, punch, device..."
           />
-          <span class="attendance-search-field__icon" aria-hidden="true">🔍</span>
+          <span class="attendance-search-field__icon" aria-hidden="true">
+            <ui5-icon name="search"></ui5-icon>
+          </span>
         </div>
 
-        <button class="attendance-settings-btn" type="button" (click)="openDialog()" title="Column settings">⚙</button>
+        <button class="attendance-settings-btn" type="button" (click)="openDialog()" title="Column settings" aria-label="Column settings">
+          <ui5-icon name="settings"></ui5-icon>
+        </button>
       </div>
 
       <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
@@ -169,7 +188,10 @@
       <header class="attendance-module__header">
         <div class="attendance-module__accent" aria-hidden="true"></div>
         <div class="attendance-module__heading">
-          <h2 class="attendance-module__title">Attendance Punches</h2>
+          <h2 class="attendance-module__title">
+            <ui5-icon name="table-view" class="attendance-module__title-icon" aria-hidden="true"></ui5-icon>
+            Attendance Punches
+          </h2>
           <p class="attendance-module__subtitle">
             {{ filteredList.length }} record(s)
             <ng-container *ngIf="hasActiveListFilters()"> · filtered from {{ attendanceList.length }}</ng-container>
@@ -276,6 +298,7 @@
                 </td>
                 <td class="attendance-table__actions" (click)="$event.stopPropagation()">
                   <button type="button" class="attendance-view-btn" (click)="viewRecord(row)" title="View punch record">
+                    <ui5-icon name="detail-view" class="attendance-btn-icon" aria-hidden="true"></ui5-icon>
                     View
                   </button>
                 </td>
@@ -323,7 +346,9 @@
           — {{ record.EmployeeId }} ({{ formatAttendanceDate(record.PunchDatetime) }})
         </ng-container>
       </h2>
-      <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
+      <button type="button" class="js-close-modal attendance-close-btn" (click)="closeViewDialog()" aria-label="Close">
+        <ui5-icon name="decline"></ui5-icon>
+      </button>
     </div>
     <div class="js-modal-body">
       <ng-container *ngIf="selectedRecord() as record">

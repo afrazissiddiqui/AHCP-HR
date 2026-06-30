@@ -65,9 +65,97 @@
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  font-size: 18px;
   background: rgba(255, 255, 255, 0.85);
   box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.attendance-kpi__icon ui5-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  color: #0070f2;
+}
+
+.attendance-kpi--violet .attendance-kpi__icon ui5-icon {
+  color: #7c3aed;
+}
+
+.attendance-kpi--teal .attendance-kpi__icon ui5-icon {
+  color: #0d9488;
+}
+
+.attendance-kpi--amber .attendance-kpi__icon ui5-icon {
+  color: #d97706;
+}
+
+.attendance-module__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attendance-module__title-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #0070f2;
+}
+
+.attendance-module--filters .attendance-module__title-icon {
+  color: #7c3aed;
+}
+
+.attendance-module--table .attendance-module__title-icon {
+  color: #0f766e;
+}
+
+.attendance-btn-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.attendance-load-btn,
+.attendance-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.attendance-load-btn ui5-icon {
+  color: #fff;
+}
+
+.attendance-view-btn ui5-icon {
+  color: #1d4ed8;
+}
+
+.attendance-search-field__icon ui5-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: #94a3b8;
+}
+
+.attendance-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attendance-settings-btn ui5-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #475467;
+}
+
+.attendance-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attendance-close-btn ui5-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #475467;
 }
 
 .attendance-kpi__content {

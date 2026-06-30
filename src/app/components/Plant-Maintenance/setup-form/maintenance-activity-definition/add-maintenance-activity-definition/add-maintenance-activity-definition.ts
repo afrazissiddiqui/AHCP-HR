@@ -632,34 +632,6 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
-    const incompleteInspection = components.some(
-
-      (component) =>
-
-        component.inspectionLines.length === 0 ||
-
-        component.inspectionLines.some(
-
-          (line) => !line.itemsToBeInspected || !line.whatToCheck || !line.instructions,
-
-        ),
-
-    );
-
-    if (incompleteInspection) {
-
-      this.alertService.validation(
-
-        'Each inspection line must have Items to be inspected, What to check, and Instructions.',
-
-      );
-
-      return;
-
-    }
-
-
-
     const duplicateComponentNames = this.findDuplicateComponentNames(components);
 
     if (duplicateComponentNames.length > 0) {
