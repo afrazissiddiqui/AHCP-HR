@@ -2,7 +2,10 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../../../../config/api.config';
-import { PlantMaintenanceMachineRecordBase } from '../plant-maintenance-machine.model';
+import {
+  MachineSearchOption,
+  PlantMaintenanceMachineRecordBase,
+} from '../plant-maintenance-machine.model';
 
 export interface PlantMaintenanceMasterLineAttachment {
   fileName: string;
@@ -97,6 +100,102 @@ const PLANT_MAINTENANCE_MAIN_FORM_ADD_URL = apiUrl('plant-maintenance-main-form-
 const PLANT_MAINTENANCE_MAIN_FORM_DETAIL_URL = apiUrl('plant-maintenance-main-form-detail');
 const PLANT_MAINTENANCE_MAIN_FORM_UPDATE_URL = apiUrl('plant-maintenance-main-form-update');
 const PLANT_MAINTENANCE_MAIN_FORM_DELETE_URL = apiUrl('plant-maintenance-main-form-delete');
+
+export function plantMaintenanceMasterHasReplacementYes(
+  record: PlantMaintenanceMasterRecord,
+): boolean {
+  return (record.components ?? []).some((component) =>
+    (component.inspectionLines ?? []).some(
+      (line) => line.replacement.trim().toLowerCase() === 'yes',
+    ),
+  );
+}
+
+export function extractItrEligibleMachines(
+  records: PlantMaintenanceMasterRecord[],
+): MachineSearchOption[] {
+  const seen = new Set<string>();
+  const machines: MachineSearchOption[] = [];
+
+  for (const record of records) {
+    if (!plantMaintenanceMasterHasReplacementYes(record)) {
+      continue;
+    }
+
+    const machineId = record.machineId.trim();
+    const machineName = record.machineName.trim();
+    if (!machineId || machineId === '—') {
+      continue;
+    }
+
+    const key = machineId.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    machines.push({
+      machineId,
+      machineName: machineName || machineId,
+      defaultMachineType: record.machineType?.trim() ?? '',
+    });
+  }
+
+  return machines.sort((a, b) => a.machineId.localeCompare(b.machineId));
+}
+
+export interface PlantMaintenanceMasterReplacementLineGroup {
+  lineKey: string;
+  componentName: string;
+  itemsToBeInspected: string;
+  whatToCheck: string;
+  items: PlantMaintenanceMasterReplacementLine[];
+}
+
+export function extractReplacementLineGroupsForMachine(
+  records: PlantMaintenanceMasterRecord[],
+  machineId: string,
+): PlantMaintenanceMasterReplacementLineGroup[] {
+  const normalizedId = machineId.trim().toLowerCase();
+  const record = records.find(
+    (entry) => entry.machineId.trim().toLowerCase() === normalizedId,
+  );
+  if (!record) {
+    return [];
+  }
+
+  const groups: PlantMaintenanceMasterReplacementLineGroup[] = [];
+  let lineIndex = 0;
+
+  for (const component of record.components ?? []) {
+    for (const inspectionLine of component.inspectionLines ?? []) {
+      if (inspectionLine.replacement.trim().toLowerCase() !== 'yes') {
+        continue;
+      }
+
+      const items = (inspectionLine.replacementItems ?? []).map((item) => ({
+        itemCode: item.itemCode,
+        itemName: item.itemName,
+        quantity: item.quantity ?? 1,
+      }));
+
+      if (items.length === 0) {
+        items.push({ itemCode: '', itemName: '', quantity: 1 });
+      }
+
+      groups.push({
+        lineKey: `${component.name}-${lineIndex}`,
+        componentName: component.name,
+        itemsToBeInspected: inspectionLine.itemsToBeInspected,
+        whatToCheck: inspectionLine.whatToCheck,
+        items,
+      });
+      lineIndex += 1;
+    }
+  }
+
+  return groups;
+}
 
 export function buildPlantMaintenanceMasterFormPayload(
   entry: PlantMaintenanceMasterFormInput,

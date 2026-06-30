@@ -34,7 +34,7 @@ function createEmptyReplacementLine(): PlantMaintenanceMasterReplacementLine {
   return {
     itemCode: '',
     itemName: '',
-    quantity: null,
+    quantity: 1,
   };
 }
 

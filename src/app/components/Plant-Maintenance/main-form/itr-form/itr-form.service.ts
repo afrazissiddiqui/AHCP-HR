@@ -778,6 +778,20 @@ export function calculateItrKpiPercentage(
   return Math.round((issuesScore / maxPossibleScore) * 10000) / 100;
 }
 
+export interface ItrReplacementItem {
+  itemCode: string;
+  itemName: string;
+  quantity: number | null;
+}
+
+export interface ItrReplacementLineGroup {
+  lineKey: string;
+  componentName: string;
+  itemsToBeInspected: string;
+  whatToCheck: string;
+  items: ItrReplacementItem[];
+}
+
 export interface ItrFormRecord {
   id: string;
   selected: boolean;
@@ -806,6 +820,7 @@ export interface ItrFormRecord {
   recommendations: string;
   performedBy: string;
   performedByEmployeeId: string;
+  replacementLineGroups: ItrReplacementLineGroup[];
 }
 
 export interface ItrInspectorUser {
@@ -842,6 +857,7 @@ export interface ItrFormAddInput {
   robotCheckpoints: ItrSectionCheckpoint[];
   measurements: ItrMeasurementsData;
   levelParallelism: ItrLevelParallelismData;
+  replacementLineGroups?: ItrReplacementLineGroup[];
 }
 
 export interface ItrFormSectionPayload {
@@ -1041,6 +1057,36 @@ export function buildItrFormAddPayload(entry: ItrFormAddInput): ItrFormAddPayloa
     if (section) {
       sections.push(section);
     }
+  }
+
+  const replacementAnswers = (entry.replacementLineGroups ?? [])
+    .flatMap((group) =>
+      group.items.map((item) => ({
+        line_key: group.lineKey,
+        component_name: group.componentName,
+        items_to_be_inspected: group.itemsToBeInspected,
+        what_to_check: group.whatToCheck,
+        item_code: item.itemCode.trim(),
+        item_name: item.itemName.trim(),
+        quantity:
+          item.quantity === null || item.quantity === undefined
+            ? ''
+            : String(item.quantity),
+      })),
+    )
+    .filter(
+      (answer) =>
+        answer.item_code ||
+        answer.item_name ||
+        answer.quantity ||
+        answer.items_to_be_inspected ||
+        answer.what_to_check,
+    );
+  if (replacementAnswers.length > 0) {
+    sections.push({
+      sectionName: 'Replacement Items',
+      answers: replacementAnswers,
+    });
   }
 
   return {
@@ -1260,6 +1306,49 @@ function applyLevelRows(
   });
 }
 
+function mapReplacementLineGroups(
+  sections: ItrFormSectionPayload[],
+): ItrReplacementLineGroup[] {
+  const replacementSection = findSection(sections, 'Replacement Items');
+  if (!replacementSection) {
+    return [];
+  }
+
+  const groupMap = new Map<string, ItrReplacementLineGroup>();
+
+  for (const answer of replacementSection.answers) {
+    const lineKey =
+      pickStringValue([answer], ['line_key', 'lineKey']) ||
+      `${pickStringValue([answer], ['component_name', 'componentName'])}-${groupMap.size}`;
+    const componentName = pickStringValue([answer], ['component_name', 'componentName']);
+    const itemsToBeInspected = pickStringValue([answer], [
+      'items_to_be_inspected',
+      'itemsToBeInspected',
+    ]);
+    const whatToCheck = pickStringValue([answer], ['what_to_check', 'whatToCheck']);
+    const itemCode = pickStringValue([answer], ['item_code', 'itemCode']);
+    const itemName = pickStringValue([answer], ['item_name', 'itemName']);
+    const quantity = parseNumberOrNull(pickStringValue([answer], ['quantity', 'Quantity']));
+
+    const existing = groupMap.get(lineKey);
+    const item = { itemCode, itemName, quantity };
+    if (existing) {
+      existing.items.push(item);
+      continue;
+    }
+
+    groupMap.set(lineKey, {
+      lineKey,
+      componentName,
+      itemsToBeInspected,
+      whatToCheck,
+      items: [item],
+    });
+  }
+
+  return Array.from(groupMap.values());
+}
+
 function mapSectionsToFormParts(sections: ItrFormSectionPayload[]): {
   kpiRows: ItrKpiRow[];
   safetyCheckpoints: ItrSectionCheckpoint[];
@@ -1268,6 +1357,7 @@ function mapSectionsToFormParts(sections: ItrFormSectionPayload[]): {
   robotCheckpoints: ItrSectionCheckpoint[];
   measurements: ItrMeasurementsData;
   levelParallelism: ItrLevelParallelismData;
+  replacementLineGroups: ItrReplacementLineGroup[];
 } {
   let kpiRows = createEmptyItrKpiRows().map((row) => {
     const section = findSection(sections, getKpiSectionName(row));
@@ -1367,6 +1457,7 @@ function mapSectionsToFormParts(sections: ItrFormSectionPayload[]): {
     robotCheckpoints,
     measurements,
     levelParallelism,
+    replacementLineGroups: mapReplacementLineGroups(sections),
   };
 }
 
@@ -1420,6 +1511,7 @@ function mapApiItemToRecord(item: Record<string, unknown>): ItrFormRecord {
       'performedByEmployeeId',
       'PerformedByEmployeeId',
     ]),
+    replacementLineGroups: sectionParts.replacementLineGroups,
   };
 }
 
