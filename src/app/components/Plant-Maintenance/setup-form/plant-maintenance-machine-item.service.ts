@@ -158,6 +158,24 @@ export class PlantMaintenanceMachineItemService {
       return null;
     }
 
+    let defaultMachineType = this.pickString([item], [
+      'machineType',
+      'machine_type',
+      'MachineType',
+      'itemsGroupName',
+      'ItemsGroupName',
+      'items_group_name',
+      'itemsGroupCode',
+      'ItemsGroupCode',
+      'items_group_code',
+      'category',
+      'Category',
+    ]);
+
+    if (!defaultMachineType) {
+      defaultMachineType = resolvedItemType;
+    }
+
     return {
       machineId,
       machineName: this.pickString([item], [
@@ -169,16 +187,7 @@ export class PlantMaintenanceMachineItemService {
         'description',
         'Description',
       ]),
-      defaultMachineType: this.pickString([item], [
-        'machineType',
-        'machine_type',
-        'MachineType',
-        'itemsGroupName',
-        'ItemsGroupName',
-        'items_group_name',
-        'category',
-        'Category',
-      ]),
+      defaultMachineType,
     };
   }
 
