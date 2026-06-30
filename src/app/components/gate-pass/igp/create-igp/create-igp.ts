@@ -332,7 +332,7 @@ export class CreateIgpComponent implements OnInit {
       driverCnic: this.driverCnic.trim(),
       driverPhone: this.driverPhone.trim(),
       department: this.department.trim(),
-      weight: this.weight.trim(),
+      weight: String(this.weight ?? '').trim(),
       location: this.location.trim(),
       employee: this.employee.trim(),
       remarks: this.remarks.trim(),

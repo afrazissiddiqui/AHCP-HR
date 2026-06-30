@@ -41,10 +41,14 @@ export interface AttendanceDailyRecord {
 interface BiometricsPunchApiRecord {
   No?: number;
   'Employee ID'?: string;
+  'User ID'?: string;
   EmployeeId?: string;
   employeeId?: string;
+  UserId?: string;
+  userId?: string;
   PunchDatetime?: string;
   punchDatetime?: string;
+  'Punch Datetime'?: string;
   'Device No'?: string;
   DeviceNo?: string;
   deviceNo?: string;
@@ -90,17 +94,18 @@ export class AttendanceManagementService {
   buildQueryUrl(query: AttendanceQuery): string {
     const normalized = this.normalizeQuery(query);
     const userId = normalized.userId?.trim();
+    const apiEmployeeId = userId ? biometricsPathEmployeeId(userId) : '';
 
     switch (normalized.mode) {
       case 'today':
-        return userId
-          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(userId)}`
+        return apiEmployeeId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(apiEmployeeId)}`
           : `${BIOMETRICS_API_BASE_URL}/EmployeeData`;
 
       case 'date': {
         const date = normalized.date ?? formatIsoDate(new Date());
-        return userId
-          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}/${encodeURIComponent(userId)}`
+        return apiEmployeeId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}/${encodeURIComponent(apiEmployeeId)}`
           : `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}`;
       }
 
@@ -108,8 +113,8 @@ export class AttendanceManagementService {
         const fromDate = normalized.fromDate ?? formatIsoDate(new Date());
         const toDate = normalized.toDate ?? fromDate;
         const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
-        return userId
-          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/${encodeURIComponent(userId)}`
+        return apiEmployeeId
+          ? `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/${encodeURIComponent(apiEmployeeId)}`
           : `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/`;
       }
     }
@@ -121,35 +126,30 @@ export class AttendanceManagementService {
     query: AttendanceQuery,
   ): AttendanceDailyRecord[] {
     const dates = resolveQueryDates(query);
-    const employeeNameByUserId = new Map<string, string>();
-    for (const employee of employees) {
-      const userId = resolveAttendanceUserId(employee);
-      if (userId) {
-        employeeNameByUserId.set(userId, employee.EmployeeName?.trim() || '');
-      }
-    }
-
-    const userIds = resolveUserIds(query, employees, punches);
+    const { nameByKey, displayIdByKey } = buildEmployeeAttendanceIndex(employees);
+    const rosterKeys = resolveAttendanceKeys(query, employees, punches, nameByKey);
     const punchesByDay = new Map<string, AttendancePunchRecord[]>();
 
     for (const punch of punches) {
-      const userId = normalizeEmployeeId(punch.EmployeeId);
+      const key = canonicalAttendanceKey(punch.EmployeeId);
       const date = extractIsoDate(punch.PunchDatetime);
-      if (!userId || !date) {
+      if (!key || !date) {
         continue;
       }
-      const key = dayKey(userId, date);
-      const bucket = punchesByDay.get(key) ?? [];
+      const bucketKey = dayKey(key, date);
+      const bucket = punchesByDay.get(bucketKey) ?? [];
       bucket.push(punch);
-      punchesByDay.set(key, bucket);
+      punchesByDay.set(bucketKey, bucket);
     }
 
     const records: AttendanceDailyRecord[] = [];
 
-    for (const userId of userIds) {
+    for (const key of rosterKeys) {
+      const displayId = displayIdByKey.get(key) ?? formatAttendanceUserId(key);
+      const employeeName = nameByKey.get(key) ?? '';
       for (const date of dates) {
-        const dayPunches = sortPunchesChronologically(punchesByDay.get(dayKey(userId, date)) ?? []);
-        records.push(this.aggregateEmployeeDay(userId, date, dayPunches, employeeNameByUserId.get(userId) ?? ''));
+        const dayPunches = sortPunchesChronologically(punchesByDay.get(dayKey(key, date)) ?? []);
+        records.push(this.aggregateEmployeeDay(displayId, date, dayPunches, employeeName));
       }
     }
 
@@ -218,11 +218,22 @@ export class AttendanceManagementService {
   }
 
   private mapApiItem(item: BiometricsPunchApiRecord): AttendancePunchRecord {
-    const punchDatetime = String(item.PunchDatetime ?? item.punchDatetime ?? '').trim();
+    const punchDatetime = String(
+      item.PunchDatetime ?? item.punchDatetime ?? item['Punch Datetime'] ?? '',
+    ).trim();
+    const rawEmployeeId = String(
+      item['User ID'] ??
+        item.userId ??
+        item.UserId ??
+        item['Employee ID'] ??
+        item.EmployeeId ??
+        item.employeeId ??
+        '',
+    ).trim();
 
     return {
       No: Number(item.No ?? 0),
-      EmployeeId: normalizeEmployeeId(String(item['Employee ID'] ?? item.EmployeeId ?? item.employeeId ?? '')),
+      EmployeeId: rawEmployeeId,
       PunchDatetime: punchDatetime,
       DeviceNo: String(item['Device No'] ?? item.DeviceNo ?? item.deviceNo ?? '').trim(),
       Status: String(item.Status ?? item.status ?? '').trim(),
@@ -257,7 +268,43 @@ export function resolveAttendanceUserId(employee: ApplicationFormRecord): string
     employee.detail?.loginDetails.userId?.trim() ||
     employee.userId?.trim() ||
     '';
-  return normalizeEmployeeId(userId);
+  if (userId) {
+    return userId;
+  }
+
+  const employeeCode = employee.EmployeeCode?.trim();
+  if (employeeCode && employeeCode !== '—' && /^Emp-/i.test(employeeCode)) {
+    return employeeCode;
+  }
+
+  return '';
+}
+
+/** Normalizes biometric / login ids to a shared comparable key (8-digit numeric when possible). */
+export function canonicalAttendanceKey(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const empMatch = trimmed.match(/^Emp-(\d+)$/i);
+  if (empMatch) {
+    return empMatch[1].padStart(8, '0');
+  }
+
+  if (/^\d+$/.test(trimmed)) {
+    return trimmed.padStart(8, '0');
+  }
+
+  return trimmed.toLowerCase();
+}
+
+export function formatAttendanceUserId(value: string): string {
+  const key = canonicalAttendanceKey(value);
+  if (/^\d{8}$/.test(key)) {
+    return `Emp-${key}`;
+  }
+  return value.trim();
 }
 
 export function normalizeEmployeeId(value: string): string {
@@ -286,40 +333,80 @@ export function resolveQueryDates(query: AttendanceQuery): string[] {
   }
 }
 
-function resolveUserIds(
-  query: AttendanceQuery,
-  employees: ApplicationFormRecord[],
-  punches: AttendancePunchRecord[],
-): string[] {
-  const filteredId = query.userId?.trim();
-  if (filteredId) {
-    return [normalizeEmployeeId(filteredId)];
+function biometricsPathEmployeeId(userId: string): string {
+  const key = canonicalAttendanceKey(userId);
+  if (/^\d{8}$/.test(key)) {
+    return key;
   }
+  return userId.trim();
+}
 
-  const seen = new Set<string>();
+function buildEmployeeAttendanceIndex(employees: ApplicationFormRecord[]): {
+  nameByKey: Map<string, string>;
+  displayIdByKey: Map<string, string>;
+} {
+  const nameByKey = new Map<string, string>();
+  const displayIdByKey = new Map<string, string>();
+
   for (const employee of employees) {
-    const userId = resolveAttendanceUserId(employee);
-    if (userId) {
-      seen.add(userId);
+    const rawUserId = resolveAttendanceUserId(employee);
+    const rawCode = employee.EmployeeCode?.trim();
+    const employeeCode = rawCode && rawCode !== '—' ? rawCode : '';
+    const displayId = rawUserId || employeeCode;
+    if (!displayId) {
+      continue;
+    }
+
+    const employeeName = employee.EmployeeName?.trim() || '';
+    const keys = new Set<string>();
+    for (const candidate of [displayId, rawUserId, employeeCode]) {
+      const key = canonicalAttendanceKey(candidate);
+      if (key) {
+        keys.add(key);
+      }
+    }
+
+    for (const key of keys) {
+      if (!nameByKey.has(key)) {
+        nameByKey.set(key, employeeName);
+      }
+      if (!displayIdByKey.has(key)) {
+        displayIdByKey.set(key, formatAttendanceUserId(rawUserId || displayId));
+      }
     }
   }
 
-  if (seen.size > 0) {
-    return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  return { nameByKey, displayIdByKey };
+}
+
+function resolveAttendanceKeys(
+  query: AttendanceQuery,
+  employees: ApplicationFormRecord[],
+  punches: AttendancePunchRecord[],
+  nameByKey: Map<string, string>,
+): string[] {
+  const filteredId = query.userId?.trim();
+  if (filteredId) {
+    return [canonicalAttendanceKey(filteredId)];
   }
 
+  if (nameByKey.size > 0) {
+    return Array.from(nameByKey.keys()).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }
+
+  const seen = new Set<string>();
   for (const punch of punches) {
-    const userId = normalizeEmployeeId(punch.EmployeeId);
-    if (userId) {
-      seen.add(userId);
+    const key = canonicalAttendanceKey(punch.EmployeeId);
+    if (key) {
+      seen.add(key);
     }
   }
 
   return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
-function dayKey(userId: string, date: string): string {
-  return `${userId}|${date}`;
+function dayKey(attendanceKey: string, date: string): string {
+  return `${attendanceKey}|${date}`;
 }
 
 function sortPunchesChronologically(punches: AttendancePunchRecord[]): AttendancePunchRecord[] {
@@ -335,8 +422,28 @@ function sortPunchesChronologically(punches: AttendancePunchRecord[]): Attendanc
 
 function extractIsoDate(value: string): string {
   const trimmed = value.trim();
-  const match = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match?.[1] ?? '';
+  if (!trimmed) {
+    return '';
+  }
+
+  const isoPrefix = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoPrefix) {
+    return isoPrefix[1];
+  }
+
+  const dmyMatch = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    return `${dmyMatch[3]}-${month}-${day}`;
+  }
+
+  const parsed = Date.parse(trimmed);
+  if (Number.isFinite(parsed)) {
+    return formatIsoDate(new Date(parsed));
+  }
+
+  return '';
 }
 
 export function calcWorkingMinutes(punchIn: string, punchOut: string): number {

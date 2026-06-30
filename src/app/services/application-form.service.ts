@@ -878,7 +878,17 @@ export class ApplicationFormService {
       ? pickFrom(loginSource, 'userId', 'user_id')
       : '';
 
-    return fromLogin || asString(item['userId']) || asString(item['user_id']) || '';
+    const topLevel = asString(item['userId']) || asString(item['user_id']);
+    if (fromLogin || topLevel) {
+      return fromLogin || topLevel;
+    }
+
+    const employeeCode = asString(item['employeeCode']) || asString(item['employee_code']);
+    if (/^Emp-\d+$/i.test(employeeCode)) {
+      return employeeCode;
+    }
+
+    return '';
   }
 
   private mapApiItemToRecord(item: Record<string, unknown>): ApplicationFormRecord {
