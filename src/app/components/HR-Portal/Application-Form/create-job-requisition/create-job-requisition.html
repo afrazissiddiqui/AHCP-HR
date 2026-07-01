@@ -1069,6 +1069,14 @@
               [class.cjr-invalid]="showFieldError('password')" (blur)="touch('password')"
               placeholder="Enter password..." />
           </div>
+
+          <div class="cjr-row">
+            <label>Status:</label>
+            <select [ngModel]="loginStatus()" (ngModelChange)="loginStatus.set($event)" (blur)="touch('loginStatus')">
+              <option value="1">Active</option>
+              <option value="3">Inactive</option>
+            </select>
+          </div>
         </div>
       </div>
       </section>

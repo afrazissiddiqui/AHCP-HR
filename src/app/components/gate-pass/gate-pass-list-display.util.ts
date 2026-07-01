@@ -32,3 +32,50 @@ export function formatGatePassListCell(
 
   return String(value);
 }
+
+function gatePassSubmittedTimestamp(raw: string | number | null | undefined): number {
+  const formatted = formatGatePassListDate(raw);
+  if (!formatted || formatted === '—') {
+    return 0;
+  }
+
+  const parsed = Date.parse(formatted);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+export function compareGatePassListRecords<T extends { Id: number; submittedDate: string }>(
+  a: T,
+  b: T,
+  column: string,
+  direction: 'asc' | 'desc',
+): number {
+  const factor = direction === 'asc' ? 1 : -1;
+
+  if (column === 'submittedDate') {
+    const dateDiff =
+      gatePassSubmittedTimestamp(a.submittedDate) - gatePassSubmittedTimestamp(b.submittedDate);
+    if (dateDiff !== 0) {
+      return dateDiff * factor;
+    }
+    return (a.Id - b.Id) * factor;
+  }
+
+  const valA = a[column as keyof T];
+  const valB = b[column as keyof T];
+  if (valA === undefined || valB === undefined) {
+    return 0;
+  }
+  if (typeof valA === 'number' && typeof valB === 'number') {
+    return (valA - valB) * factor;
+  }
+
+  const sa = String(valA);
+  const sb = String(valB);
+  if (sa > sb) {
+    return factor;
+  }
+  if (sa < sb) {
+    return -factor;
+  }
+  return 0;
+}

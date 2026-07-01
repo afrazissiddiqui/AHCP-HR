@@ -8,7 +8,7 @@ import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { GatePassLayoutService } from '../gate-pass-layout.service';
 import { gatePassWarehouseLabel } from '../gate-pass-warehouse.options';
-import { formatGatePassListCell } from '../gate-pass-list-display.util';
+import { compareGatePassListRecords, formatGatePassListCell } from '../gate-pass-list-display.util';
 import { IgpService, IgpRecord } from './igp.service';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
@@ -96,8 +96,8 @@ export class IgpComponent implements OnInit {
   }
 
   searchText = '';
-  sortColumn: IgpSortableKey = 'Id';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: IgpSortableKey = 'submittedDate';
+  sortDirection: 'asc' | 'desc' = 'desc';
   currentPage = 1;
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
@@ -228,20 +228,7 @@ export class IgpComponent implements OnInit {
       });
     }
 
-    list.sort((a, b) => {
-      const valA = a[this.sortColumn];
-      const valB = b[this.sortColumn];
-      if (valA === undefined || valB === undefined) return 0;
-      if (typeof valA === 'number' && typeof valB === 'number') {
-        return this.sortDirection === 'asc' ? valA - valB : valB - valA;
-      }
-      const sa = String(valA);
-      const sb = String(valB);
-      let comparison = 0;
-      if (sa > sb) comparison = 1;
-      else if (sa < sb) comparison = -1;
-      return this.sortDirection === 'asc' ? comparison : -comparison;
-    });
+    list.sort((a, b) => compareGatePassListRecords(a, b, this.sortColumn, this.sortDirection));
 
     return list;
   }

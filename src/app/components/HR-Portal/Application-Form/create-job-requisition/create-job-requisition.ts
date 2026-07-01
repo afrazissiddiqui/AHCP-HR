@@ -282,6 +282,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly loginEmployeeName = signal(''); // Employee name
   protected readonly userId = signal(''); // User ID
   protected readonly password = signal(''); // Password
+  protected readonly loginStatus = signal<'1' | '3'>('1');
 
   // Assets fields
   protected readonly assetAllocated = signal('');
@@ -743,6 +744,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         userId: this.userId().trim() || this.employeeCode().trim(),
         loginEmployeeName: this.loginEmployeeName().trim(),
         password: this.password(),
+        status: this.loginStatus() === '3' ? 3 : 1,
       },
       assets: {
         assetAllocated: this.assetAllocated().trim(),
@@ -1298,9 +1300,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   private populateFromJobSpecification(record: JobSpecificationRecord): void {
     const jobTitle = this.cleanJobSpecValue(record.jobTitle);
     const department = this.cleanJobSpecValue(record.department);
-    const jobDescription = this.cleanJobSpecValue(record.jobDescription);
-    const keyResponsibilities = this.cleanJobSpecValue(record.keyResponsibilities);
-    const experienceRequirement = this.cleanJobSpecValue(record.experienceRequirement);
     const employmentCategory = this.cleanJobSpecValue(record.employmentCategory);
     const employmentNature = this.cleanJobSpecValue(record.employmentNature);
     const employmentType = this.cleanJobSpecValue(record.employmentType);
@@ -1320,13 +1319,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     if (employmentType) {
       this.division.set(employmentType);
     }
-
-    const descriptionParts = [
-      jobDescription,
-      keyResponsibilities ? `Key Responsibilities:\n${keyResponsibilities}` : '',
-      experienceRequirement ? `Experience Requirement: ${experienceRequirement}` : '',
-    ].filter(Boolean);
-    this.jobDescription.set(descriptionParts.join('\n\n'));
 
     const resolvedGrade = this.resolveWorkGradeLevel(gradeWorkLevel);
     if (resolvedGrade) {
@@ -1475,7 +1467,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         employeeCode: this.employeeCode(),
         employeeName: this.loginEmployeeName(),
         userId: this.userId(),
-        password: this.password()
+        password: this.password(),
+        status: this.loginStatus(),
       },
       attachments: this.buildAttachmentsPayload().map((row) => ({
         type: row.type,
@@ -1562,6 +1555,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         this.alertService.error(editId ? 'Update Failed' : 'Submission Failed', errorMessage);
       },
     });
+  }
+
+  private normalizeLoginStatus(value: string | number | null | undefined): '1' | '3' {
+    const raw = String(value ?? '').trim().toLowerCase();
+    if (raw === '3' || raw === 'inactive') {
+      return '3';
+    }
+    return '1';
   }
 
   private populateFromRecord(record: ApplicationFormRecord): void {
@@ -1736,6 +1737,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.userId.set(detail.loginDetails.userId);
     this.loginEmployeeName.set(detail.loginDetails.employeeName);
     this.password.set(detail.loginDetails.password);
+    this.loginStatus.set(this.normalizeLoginStatus(detail.loginDetails.status));
 
     const assets = detail.assets;
     if (assets) {

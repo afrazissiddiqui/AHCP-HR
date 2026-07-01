@@ -122,6 +122,7 @@ export interface ApplicationFormLoginDetails {
   employeeName: string;
   userId: string;
   password: string;
+  status: string;
 }
 
 export interface ApplicationFormAttachmentMeta {
@@ -273,6 +274,7 @@ export interface EmployeeProfileLoginDetailPayload {
   userId: string;
   loginEmployeeName: string;
   password: string;
+  status: number;
 }
 
 export interface EmployeeProfileAssetsPayload {
@@ -1300,6 +1302,7 @@ export class ApplicationFormService {
           summary.EmployeeName,
         userId: pickLogin('userId', 'user_id') || summary.userId || '',
         password: pickLogin('password'),
+        status: pickLogin('status') || asString(item['status']),
       },
       attachments: mergedAttachments,
       requisition: {
