@@ -30,6 +30,25 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
   { label: 'Miscellaneous', value: 'miscellaneous', icon: 'grid', route: '/miscellaneous' },
   {
+    label: 'Plant maintenance',
+    value: 'plant-maintenance',
+    icon: 'factory',
+    children: [
+      {
+        label: 'Main Form',
+        value: 'plant-maintenance/main-form',
+        icon: 'form',
+        route: '/plant-maintenance/main-form',
+      },
+      {
+        label: 'Setup Form',
+        value: 'plant-maintenance/setup-form',
+        icon: 'settings',
+        route: '/plant-maintenance/setup-form',
+      },
+    ],
+  },
+  {
     label: 'Setup',
     value: 'setup',
     icon: 'settings',
@@ -51,25 +70,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
   { label: 'Development', value: 'development', icon: 'learning-assistant' },
   { label: 'Goals', value: 'goals', icon: 'goal' },
-  {
-    label: 'Plant maintenance',
-    value: 'plant-maintenance',
-    icon: 'factory',
-    children: [
-      {
-        label: 'Main Form',
-        value: 'plant-maintenance/main-form',
-        icon: 'form',
-        route: '/plant-maintenance/main-form',
-      },
-      {
-        label: 'Setup Form',
-        value: 'plant-maintenance/setup-form',
-        icon: 'settings',
-        route: '/plant-maintenance/setup-form',
-      },
-    ],
-  },
+  
   { label: 'Learning', value: 'learning', icon: 'learning-assistant' },
   { label: 'Org Chart', value: 'org-chart', icon: 'org-chart' },
   { label: 'Performance', value: 'performance', icon: 'performance' },

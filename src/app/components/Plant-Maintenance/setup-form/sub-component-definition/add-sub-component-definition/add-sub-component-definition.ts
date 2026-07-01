@@ -11,6 +11,8 @@ import { SubComponentDefinitionService, SubComponentMachineRecord, MachineInput 
 
 const SUB_COMPONENT_MACHINE_ITEM_TYPE = 'F';
 
+const MACHINE_TYPE_OPTIONS = ['Blowing', 'Injection', 'Other'] as const;
+
 @Component({
   selector: 'app-add-sub-component-definition',
   standalone: true,
@@ -36,6 +38,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   readonly machineType = signal('');
   readonly subComponents = signal<string[]>(['']);
   readonly isSaving = signal(false);
+  readonly machineTypeOptions = MACHINE_TYPE_OPTIONS;
 
   readonly machineOptions = computed(() => {
     this.machineItemService.records(SUB_COMPONENT_MACHINE_ITEM_TYPE)();
@@ -86,6 +89,10 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.machineType.set('');
   }
 
+  onMachineTypeChange(value: string): void {
+    this.machineType.set(value);
+  }
+
   updateSubComponent(index: number, value: string): void {
     this.subComponents.update((list) => {
       const next = [...list];
@@ -114,7 +121,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       if (record) {
         this.machineId.set(record.machineId);
         this.machineName.set(record.machineName);
-        this.machineType.set(record.machineType === '—' ? '' : record.machineType);
+        this.machineType.set(this.normalizeMachineType(record.machineType));
         this.subComponents.set(
           record.subComponents.length ? [...record.subComponents] : [''],
         );
@@ -143,7 +150,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     }
 
     if (!machineType) {
-      this.alertService.validation('Machine type could not be resolved for the selected machine.');
+      this.alertService.validation('Select Machine Type.');
       return;
     }
 
@@ -208,7 +215,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   private populateFromRecord(record: SubComponentMachineRecord): void {
     this.machineId.set(record.machineId === '—' ? '' : record.machineId);
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
-    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
+    this.machineType.set(this.normalizeMachineType(record.machineType));
     this.subComponents.set(
       record.subComponents.length ? [...record.subComponents] : [''],
     );
@@ -217,9 +224,16 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   private populateFromMachine(machine: MachineSearchOption): void {
     this.machineId.set(machine.machineId);
     this.machineName.set(machine.machineName);
-    this.machineType.set(machine.defaultMachineType.trim());
     if (!this.editingRecordId()) {
       this.subComponents.set(['']);
     }
+  }
+
+  private normalizeMachineType(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === '—') {
+      return '';
+    }
+    return (MACHINE_TYPE_OPTIONS as readonly string[]).includes(trimmed) ? trimmed : '';
   }
 }
