@@ -255,8 +255,8 @@
       </div>
       <div class="js-detail-section">
         <h3>Components</h3>
-        <div *ngIf="selectedRecord.components.length; else noComponents">
-          <div class="mad-view-component" *ngFor="let component of selectedRecord.components">
+        <div *ngIf="viewableComponents.length; else noComponents">
+          <div class="mad-view-component" *ngFor="let component of viewableComponents">
             <h4 class="mad-view-component__name">{{ component.name }}</h4>
             <div
               class="mad-view-component__line"

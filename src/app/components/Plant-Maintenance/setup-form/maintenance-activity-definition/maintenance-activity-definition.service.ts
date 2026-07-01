@@ -17,8 +17,6 @@ export interface MaintenanceActivityInspectionLinePayload {
   itemsToBeInspected: string;
   whatToCheck: string;
   instructions: string;
-  items_to_be_inspected: string;
-  what_to_check: string;
 }
 
 export interface MaintenanceActivityComponent {
@@ -69,7 +67,6 @@ export interface MaintenanceActivityDefinitionPayload {
   components: Array<{
     name: string;
     inspectionLines: MaintenanceActivityInspectionLinePayload[];
-    inspection_lines?: MaintenanceActivityInspectionLinePayload[];
   }>;
 }
 
@@ -86,46 +83,22 @@ const MAINTENANCE_ACTIVITY_DEFINITION_DETAIL_URL = apiUrl('maintenance-activity-
 const MAINTENANCE_ACTIVITY_DEFINITION_UPDATE_URL = apiUrl('maintenance-activity-definition-update');
 const MAINTENANCE_ACTIVITY_DEFINITION_DELETE_URL = apiUrl('maintenance-activity-definition-delete');
 
-const DEFAULT_MACHINE_ITEM_TYPE = 'F';
-
-/** Satisfies Laravel `required` for blank fields; PHP trim does not remove ZWSP. */
-const EMPTY_INSPECTION_FIELD = '\u200B';
-
-function toApiInspectionField(value: string): string {
-  const trimmed = value.trim();
-  return trimmed === '' ? EMPTY_INSPECTION_FIELD : trimmed;
-}
-
 function mapInspectionLineForPayload(
   line: MaintenanceActivityInspectionLine,
 ): MaintenanceActivityInspectionLinePayload {
-  const itemsToBeInspected = toApiInspectionField(line.itemsToBeInspected);
-  const whatToCheck = toApiInspectionField(line.whatToCheck);
-  const instructions = toApiInspectionField(line.instructions);
-
   return {
-    itemsToBeInspected,
-    whatToCheck,
-    instructions,
-    items_to_be_inspected: itemsToBeInspected,
-    what_to_check: whatToCheck,
+    itemsToBeInspected: line.itemsToBeInspected.trim(),
+    whatToCheck: line.whatToCheck.trim(),
+    instructions: line.instructions.trim(),
   };
 }
 
 function mapInspectionLinesForPayload(
   lines: MaintenanceActivityInspectionLine[],
 ): MaintenanceActivityInspectionLinePayload[] {
-  const mapped = lines.map((line) => mapInspectionLineForPayload(line));
-
-  if (mapped.length === 0) {
-    return [mapInspectionLineForPayload({
-      itemsToBeInspected: '',
-      whatToCheck: '',
-      instructions: '',
-    })];
-  }
-
-  return mapped;
+  return lines
+    .map((line) => mapInspectionLineForPayload(line))
+    .filter((line) => line.itemsToBeInspected || line.whatToCheck || line.instructions);
 }
 
 export function buildMaintenanceActivityPayload(
@@ -134,18 +107,16 @@ export function buildMaintenanceActivityPayload(
   return {
     machine_id: entry.machineId.trim(),
     machine_name: entry.machineName.trim(),
-    machine_type: (entry.machineType ?? '').trim() || DEFAULT_MACHINE_ITEM_TYPE,
+    machine_type: (entry.machineType ?? '').trim(),
     maintenance_nature: entry.maintenanceNature.trim(),
     plant_maintenance_frequency: entry.plantMaintenanceFrequency.trim(),
     plant_maintenance_type: entry.plantMaintenanceType.trim(),
-    components: entry.components.map((component) => {
-      const inspectionLines = mapInspectionLinesForPayload(component.inspectionLines);
-      return {
+    components: entry.components
+      .filter((component) => component.name.trim())
+      .map((component) => ({
         name: component.name.trim(),
-        inspectionLines,
-        inspection_lines: inspectionLines,
-      };
-    }),
+        inspectionLines: mapInspectionLinesForPayload(component.inspectionLines),
+      })),
   };
 }
 

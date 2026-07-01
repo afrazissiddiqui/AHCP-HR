@@ -44,7 +44,7 @@ export function buildMachinePayload(entry: MachineInput): MachinePayload {
   return {
     machine_id: entry.machineId.trim(),
     machine_name: entry.machineName.trim(),
-    machine_type: (entry.machineType ?? '').trim() || 'F',
+    machine_type: (entry.machineType ?? '').trim(),
     sub_components: entry.subComponents
       .map((name) => name.trim())
       .filter(Boolean)

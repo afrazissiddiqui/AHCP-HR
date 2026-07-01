@@ -8,6 +8,7 @@ import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PlantMaintenanceMainLayoutService } from '../../main-form/plant-maintenance-main-layout.service';
 import {
+  filterPlantMaintenanceViewableComponents,
   PlantMaintenanceMasterFormService,
   PlantMaintenanceMasterRecord,
 } from './plant-maintenance-master-form.service';
@@ -193,6 +194,10 @@ export class PlantMaintenanceMasterFormComponent implements OnInit {
     this.showViewDialog = false;
     this.selectedRecord = null;
     this.detailLoading = false;
+  }
+
+  get viewableComponents() {
+    return filterPlantMaintenanceViewableComponents(this.selectedRecord?.components);
   }
 
   updateRecord(item: PlantMaintenanceMasterRecord): void {

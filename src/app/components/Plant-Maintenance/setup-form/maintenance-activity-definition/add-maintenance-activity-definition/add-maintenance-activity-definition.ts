@@ -13,6 +13,7 @@ import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-mach
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
 import {
   MaintenanceActivityComponent,
+  MaintenanceActivityDefinitionInput,
   MaintenanceActivityDefinitionService,
   MaintenanceActivityInspectionLine,
   MaintenanceActivityMachineRecord,
@@ -98,6 +99,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
   readonly machineId = signal('');
 
   readonly machineName = signal('');
+
+  readonly machineType = signal('');
 
   readonly maintenanceNature = signal('');
 
@@ -503,6 +506,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.machineName.set('');
 
+    this.machineType.set('');
+
     this.maintenanceNature.set('');
 
     this.plantMaintenanceFrequency.set('');
@@ -530,6 +535,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     const machineId = this.machineId().trim();
 
     const machineName = this.machineName().trim();
+
+    const machineType = this.machineType().trim();
 
     const maintenanceNature = this.maintenanceNature().trim();
 
@@ -573,7 +580,10 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     }
 
-
+    if (!machineType) {
+      this.alertService.validation('Machine type could not be resolved for the selected machine.');
+      return;
+    }
 
     if (!maintenanceNature || !plantMaintenanceFrequency || !plantMaintenanceType) {
 
@@ -623,13 +633,13 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     const resolved = resolveMachineIdentity(machineId, machineName);
 
-    const payload = {
+    const payload: MaintenanceActivityDefinitionInput = {
 
       machineId: resolved.machineId,
 
       machineName: resolved.machineName,
 
-      machineType: this.resolveMachineType(resolved.machineId),
+      machineType,
 
       maintenanceNature,
 
@@ -731,31 +741,10 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.machineName.set(machine.machineName);
 
+    this.machineType.set(machine.defaultMachineType.trim());
+
     this.applyComponentsFromSubComponentDefinition(machine.machineId);
 
-  }
-
-
-
-  /** Backend requires machine_type; derived from SAP item metadata, not shown in the form. */
-  private resolveMachineType(machineId: string): string {
-    const selected = this.machineItemService
-      .getAll()
-      .find((item) => item.machineId === machineId);
-    const fromItem = selected?.defaultMachineType.trim();
-    if (fromItem) {
-      return fromItem;
-    }
-
-    if (this.editingRecordId()) {
-      const record = this.activityService.getById(this.editingRecordId()!);
-      const fromRecord = record?.machineType.trim();
-      if (fromRecord && fromRecord !== '—') {
-        return fromRecord;
-      }
-    }
-
-    return 'F';
   }
 
 
@@ -839,6 +828,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     this.machineId.set(record.machineId === '—' ? '' : record.machineId);
 
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
+
+    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
 
     this.maintenanceNature.set(record.maintenanceNature === '—' ? '' : record.maintenanceNature);
 

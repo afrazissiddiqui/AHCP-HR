@@ -17,6 +17,7 @@ import {
   MaintenanceActivityMachineRecord,
 } from '../../maintenance-activity-definition/maintenance-activity-definition.service';
 import {
+  filterPlantMaintenanceViewableComponents,
   PlantMaintenanceMasterComponent,
   PlantMaintenanceMasterFormService,
   PlantMaintenanceMasterInspectionLine,
@@ -670,40 +671,36 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     const plantMaintenanceFrequency = this.plantMaintenanceFrequency().trim();
     const plantMaintenanceType = this.plantMaintenanceType().trim();
 
-    const components = this.components()
-      .map((component) => ({
+    const components = filterPlantMaintenanceViewableComponents(
+      this.components().map((component) => ({
         name: component.name.trim(),
-        inspectionLines: component.inspectionLines
-          .map((line) => ({
-            itemsToBeInspected: line.itemsToBeInspected.trim(),
-            whatToCheck: line.whatToCheck.trim(),
-            replacement: line.replacement.trim() || 'No',
-            replacementItems:
-              line.replacement.trim() === 'Yes'
-                ? line.replacementItems
-                    .map((item) => ({
-                      itemCode: item.itemCode.trim(),
-                      itemName: item.itemName.trim(),
-                      quantity: item.quantity,
-                    }))
-                    .filter(
-                      (item) =>
-                        item.itemCode || item.itemName || item.quantity !== null,
-                    )
-                : [],
-            instructions: line.instructions.trim(),
-            status: line.status.trim(),
-            recommendation: line.recommendation.trim(),
-            attachments: line.attachments.map((attachment) => ({
-              fileName: attachment.fileName.trim(),
-              dataUrl: attachment.dataUrl,
-            })),
-          }))
-          .filter(
-            (line) => line.itemsToBeInspected || line.whatToCheck || line.instructions,
-          ),
-      }))
-      .filter((component) => component.name);
+        inspectionLines: component.inspectionLines.map((line) => ({
+          itemsToBeInspected: line.itemsToBeInspected.trim(),
+          whatToCheck: line.whatToCheck.trim(),
+          replacement: line.replacement.trim() || 'No',
+          replacementItems:
+            line.replacement.trim() === 'Yes'
+              ? line.replacementItems
+                  .map((item) => ({
+                    itemCode: item.itemCode.trim(),
+                    itemName: item.itemName.trim(),
+                    quantity: item.quantity,
+                  }))
+                  .filter(
+                    (item) =>
+                      item.itemCode || item.itemName || item.quantity !== null,
+                  )
+              : [],
+          instructions: line.instructions.trim(),
+          status: line.status.trim(),
+          recommendation: line.recommendation.trim(),
+          attachments: line.attachments.map((attachment) => ({
+            fileName: attachment.fileName.trim(),
+            dataUrl: attachment.dataUrl,
+          })),
+        })),
+      })),
+    );
 
     if (!machineId || !machineName || !machineType) {
       this.alertService.validation(

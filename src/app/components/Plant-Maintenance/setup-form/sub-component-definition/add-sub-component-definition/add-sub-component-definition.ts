@@ -7,7 +7,7 @@ import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { MachineSearchOption } from '../../plant-maintenance-machine.model';
 import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
-import { SubComponentDefinitionService, SubComponentMachineRecord } from '../sub-component-definition.service';
+import { SubComponentDefinitionService, SubComponentMachineRecord, MachineInput } from '../sub-component-definition.service';
 
 const SUB_COMPONENT_MACHINE_ITEM_TYPE = 'F';
 
@@ -33,6 +33,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
 
   readonly machineId = signal('');
   readonly machineName = signal('');
+  readonly machineType = signal('');
   readonly subComponents = signal<string[]>(['']);
   readonly isSaving = signal(false);
 
@@ -82,6 +83,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     }
 
     this.machineName.set('');
+    this.machineType.set('');
   }
 
   updateSubComponent(index: number, value: string): void {
@@ -112,6 +114,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       if (record) {
         this.machineId.set(record.machineId);
         this.machineName.set(record.machineName);
+        this.machineType.set(record.machineType === '—' ? '' : record.machineType);
         this.subComponents.set(
           record.subComponents.length ? [...record.subComponents] : [''],
         );
@@ -120,12 +123,14 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     }
     this.machineId.set('');
     this.machineName.set('');
+    this.machineType.set('');
     this.subComponents.set(['']);
   }
 
   async saveForm(): Promise<void> {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
+    const machineType = this.machineType().trim();
     const subComponents = this.subComponents()
       .map((s) => s.trim())
       .filter(Boolean);
@@ -134,6 +139,11 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       this.alertService.validation(
         'Machine ID and Machine Name are required.',
       );
+      return;
+    }
+
+    if (!machineType) {
+      this.alertService.validation('Machine type could not be resolved for the selected machine.');
       return;
     }
 
@@ -148,10 +158,10 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       return;
     }
 
-    const payload = {
+    const payload: MachineInput = {
       machineId,
       machineName,
-      machineType: this.resolveMachineType(machineId),
+      machineType,
       subComponents,
     };
     const editingId = this.editingRecordId();
@@ -198,6 +208,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   private populateFromRecord(record: SubComponentMachineRecord): void {
     this.machineId.set(record.machineId === '—' ? '' : record.machineId);
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
+    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
     this.subComponents.set(
       record.subComponents.length ? [...record.subComponents] : [''],
     );
@@ -206,27 +217,9 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   private populateFromMachine(machine: MachineSearchOption): void {
     this.machineId.set(machine.machineId);
     this.machineName.set(machine.machineName);
+    this.machineType.set(machine.defaultMachineType.trim());
     if (!this.editingRecordId()) {
       this.subComponents.set(['']);
     }
-  }
-
-  /** Backend requires machine_type; derived from SAP item metadata, not shown in the form. */
-  private resolveMachineType(machineId: string): string {
-    const selected = this.machineOptions().find((item) => item.machineId === machineId);
-    const fromItem = selected?.defaultMachineType.trim();
-    if (fromItem) {
-      return fromItem;
-    }
-
-    if (this.editingRecordId()) {
-      const record = this.subComponentService.getById(this.editingRecordId()!);
-      const fromRecord = record?.machineType.trim();
-      if (fromRecord && fromRecord !== '—') {
-        return fromRecord;
-      }
-    }
-
-    return SUB_COMPONENT_MACHINE_ITEM_TYPE;
   }
 }

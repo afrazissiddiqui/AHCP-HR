@@ -111,6 +111,29 @@ export function plantMaintenanceMasterHasReplacementYes(
   );
 }
 
+export function hasPlantMaintenanceInspectionLineDetails(
+  line: PlantMaintenanceMasterInspectionLine,
+): boolean {
+  return Boolean(
+    line.itemsToBeInspected.trim() ||
+      line.whatToCheck.trim() ||
+      line.instructions.trim(),
+  );
+}
+
+export function filterPlantMaintenanceViewableComponents(
+  components: PlantMaintenanceMasterComponent[] | undefined,
+): PlantMaintenanceMasterComponent[] {
+  return (components ?? [])
+    .map((component) => ({
+      ...component,
+      inspectionLines: (component.inspectionLines ?? []).filter(
+        hasPlantMaintenanceInspectionLineDetails,
+      ),
+    }))
+    .filter((component) => component.name.trim() && component.inspectionLines.length > 0);
+}
+
 export function extractItrEligibleMachines(
   records: PlantMaintenanceMasterRecord[],
 ): MachineSearchOption[] {
