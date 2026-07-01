@@ -12,6 +12,7 @@ import { MachineSearchOption, resolveMachineIdentity } from '../../plant-mainten
 import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
 import {
+  buildMaintenanceActivityPayload,
   MaintenanceActivityComponent,
   MaintenanceActivityDefinitionInput,
   MaintenanceActivityDefinitionService,
@@ -22,6 +23,8 @@ import {
 
 
 type InspectionLineField = keyof MaintenanceActivityInspectionLine;
+
+const MACHINE_TYPE_OPTIONS = ['Blowing', 'Injection', 'Other'] as const;
 
 
 
@@ -109,6 +112,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
   readonly plantMaintenanceType = signal('');
 
   readonly components = signal<MaintenanceActivityComponent[]>([]);
+  readonly machineTypeOptions = MACHINE_TYPE_OPTIONS;
 
   readonly idSuggestionsOpen = signal(false);
 
@@ -118,7 +122,14 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
 
-  readonly maintenanceNatureOptions = ['Electrical', 'Mechanical'] as const;
+  readonly maintenanceNatureOptions = [
+    'Preventive',
+    'Electrical',
+    'Mechanical',
+    'Corrective',
+    'Breakdown',
+    'Pre-Cautionary',
+  ] as const;
 
   readonly plantMaintenanceFrequencyOptions = [
 
@@ -139,15 +150,11 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
   ] as const;
 
   readonly plantMaintenanceTypeOptions = [
-
+    'Routine',
     'Preventive',
-
     'Corrective',
-
     'Breakdown',
-
     'Pre-Cautionary',
-
   ] as const;
 
 
@@ -167,6 +174,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
   ngOnInit(): void {
 
     this.machineItemService.ensureLoaded().subscribe({ error: () => {} });
+    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
 
@@ -274,7 +282,9 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
   }
 
-
+  onMachineTypeChange(value: string): void {
+    this.machineType.set(value);
+  }
 
   updateComponentName(componentIndex: number, value: string): void {
 
@@ -581,7 +591,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     }
 
     if (!machineType) {
-      this.alertService.validation('Machine type could not be resolved for the selected machine.');
+      this.alertService.validation('Select Machine Type.');
       return;
     }
 
@@ -633,7 +643,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     const resolved = resolveMachineIdentity(machineId, machineName);
 
-    const payload: MaintenanceActivityDefinitionInput = {
+    const entry: MaintenanceActivityDefinitionInput = {
 
       machineId: resolved.machineId,
 
@@ -650,6 +660,25 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
       components,
 
     };
+
+    const apiPayload = buildMaintenanceActivityPayload(entry);
+
+    if (apiPayload.components.length === 0) {
+      this.alertService.validation('Enter at least one component with inspection details.');
+      return;
+    }
+
+    const incompleteInspection = apiPayload.components.some(
+      (component) => component.inspectionLines.length === 0,
+    );
+    if (incompleteInspection) {
+      this.alertService.validation(
+        'Each component must have at least one inspection line with items to inspect, what to check, or instructions.',
+      );
+      return;
+    }
+
+    const payload = entry;
 
 
 
@@ -741,7 +770,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.machineName.set(machine.machineName);
 
-    this.machineType.set(machine.defaultMachineType.trim());
+    const subComponentRecord = this.subComponentService.getByMachineId(machine.machineId);
+    this.machineType.set(this.normalizeMachineType(subComponentRecord?.machineType ?? ''));
 
     this.applyComponentsFromSubComponentDefinition(machine.machineId);
 
@@ -829,7 +859,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
 
-    this.machineType.set(record.machineType === '—' ? '' : record.machineType);
+    this.machineType.set(this.normalizeMachineType(record.machineType));
 
     this.maintenanceNature.set(record.maintenanceNature === '—' ? '' : record.maintenanceNature);
 
@@ -943,6 +973,14 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     };
 
+  }
+
+  private normalizeMachineType(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === '—') {
+      return '';
+    }
+    return (MACHINE_TYPE_OPTIONS as readonly string[]).includes(trimmed) ? trimmed : '';
   }
 
 }

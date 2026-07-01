@@ -61,7 +61,11 @@ export class SubComponentDefinitionService {
 
   fetchMachines(): Observable<SubComponentMachineRecord[]> {
     return this.http.get<unknown>(MACHINE_LIST_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((response) =>
+        this.extractApiItems(response)
+          .filter((item) => !this.isSoftDeletedRecord(item))
+          .map((item) => this.mapApiItemToRecord(item)),
+      ),
       tap((records) => this._records.set(records)),
     );
   }
@@ -124,8 +128,14 @@ export class SubComponentDefinitionService {
 
   hasDuplicateMachineId(machineId: string, excludeId?: string): boolean {
     const key = machineId.trim().toLowerCase();
+    if (!key) {
+      return false;
+    }
+
     return this._records().some(
-      (r) => r.machineId.trim().toLowerCase() === key && r.id !== excludeId,
+      (record) =>
+        record.machineId.trim().toLowerCase() === key &&
+        record.id !== excludeId,
     );
   }
 
@@ -196,6 +206,35 @@ export class SubComponentDefinitionService {
     }
 
     return [];
+  }
+
+  private isSoftDeletedRecord(item: Record<string, unknown>): boolean {
+    const deletedAt = item['deleted_at'] ?? item['deletedAt'] ?? item['DeletedAt'];
+    if (deletedAt !== undefined && deletedAt !== null && String(deletedAt).trim() !== '') {
+      return true;
+    }
+
+    const isDeleted = item['is_deleted'] ?? item['isDeleted'] ?? item['IsDeleted'];
+    if (isDeleted === true || isDeleted === 1 || isDeleted === '1') {
+      return true;
+    }
+
+    const deleted = item['deleted'] ?? item['Deleted'];
+    if (deleted === true || deleted === 1 || deleted === '1') {
+      return true;
+    }
+
+    const status = item['status'] ?? item['Status'];
+    if (status === 0 || status === '0' || status === 'deleted' || status === 'Deleted') {
+      return true;
+    }
+
+    const isActive = item['is_active'] ?? item['isActive'] ?? item['IsActive'];
+    if (isActive === false || isActive === 0 || isActive === '0') {
+      return true;
+    }
+
+    return false;
   }
 
   private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {

@@ -47,6 +47,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
 
   ngOnInit(): void {
     this.machineItemService.ensureLoaded(SUB_COMPONENT_MACHINE_ITEM_TYPE).subscribe({ error: () => {} });
+    this.subComponentService.fetchMachines().subscribe({ error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -160,8 +161,17 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     }
 
     const excludeId = this.editingRecordId() ?? undefined;
+
+    try {
+      await firstValueFrom(this.subComponentService.fetchMachines());
+    } catch {
+      // Continue with the last known active list if refresh fails.
+    }
+
     if (this.subComponentService.hasDuplicateMachineId(machineId, excludeId)) {
-      this.alertService.validation('This Machine ID is already in the list.');
+      this.alertService.validation(
+        'This Machine ID already exists in Sub Component Definition.',
+      );
       return;
     }
 

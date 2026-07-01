@@ -191,6 +191,7 @@ export class SubComponentDefinitionComponent implements OnInit {
     this.subComponentService.deleteMachine(item.id).subscribe({
       next: () => {
         this.subComponentService.removeMachineRecord(item);
+        this.subComponentService.fetchMachines().subscribe({ error: () => {} });
         if (this.paginatedList.length === 0 && this.currentPage > 1) {
           this.currentPage -= 1;
         }

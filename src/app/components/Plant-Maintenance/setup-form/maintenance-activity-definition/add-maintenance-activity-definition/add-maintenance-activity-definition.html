@@ -41,7 +41,7 @@
           <span
             class="scd-step-chip"
             [class.scd-step-chip--active]="machineId().trim()"
-            [class.scd-step-chip--ready]="machineId().trim() && machineName().trim()"
+            [class.scd-step-chip--ready]="machineId().trim() && machineName().trim() && machineType().trim()"
           >
             <span class="scd-step-chip__num">2</span>
             Profile
@@ -164,6 +164,22 @@
                     No matching machines
                   </li>
                 </ul>
+              </div>
+            </div>
+
+            <div class="cjr-row scd-field-row">
+              <label for="mad-machine-type">Machine Type:</label>
+              <div class="scd-field-control">
+                <select
+                  id="mad-machine-type"
+                  class="mad-select"
+                  [ngModel]="machineType()"
+                  (ngModelChange)="onMachineTypeChange($event)"
+                  name="machineType"
+                >
+                  <option value="">Select machine type</option>
+                  <option *ngFor="let type of machineTypeOptions" [value]="type">{{ type }}</option>
+                </select>
               </div>
             </div>
           </div>
