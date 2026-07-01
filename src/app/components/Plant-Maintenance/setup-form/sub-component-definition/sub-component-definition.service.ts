@@ -225,12 +225,7 @@ export class SubComponentDefinitionService {
     }
 
     const status = item['status'] ?? item['Status'];
-    if (status === 0 || status === '0' || status === 'deleted' || status === 'Deleted') {
-      return true;
-    }
-
-    const isActive = item['is_active'] ?? item['isActive'] ?? item['IsActive'];
-    if (isActive === false || isActive === 0 || isActive === '0') {
+    if (typeof status === 'string' && (status === 'deleted' || status === 'Deleted')) {
       return true;
     }
 

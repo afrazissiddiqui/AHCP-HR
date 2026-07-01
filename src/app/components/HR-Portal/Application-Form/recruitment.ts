@@ -21,6 +21,7 @@ import {
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
+import { glAccountBranchLabel } from '../../setup/gl-account-determination/gl-account-branch.options';
 
 type ApplicationFormColumnKey = Exclude<keyof ApplicationFormRecord, 'detail' | 'selected'>;
 
@@ -285,6 +286,11 @@ export class RecruitmentComponent implements OnInit {
     }
     const s = String(value).trim();
     return s === '' ? '—' : s;
+  }
+
+  branchLabel(code: string | undefined | null): string {
+    const label = glAccountBranchLabel(code ?? '');
+    return label ? this.displayDash(label) : this.displayDash(code);
   }
 
   resolveAttachmentFor(attachment: ApplicationFormAttachmentMeta): string {

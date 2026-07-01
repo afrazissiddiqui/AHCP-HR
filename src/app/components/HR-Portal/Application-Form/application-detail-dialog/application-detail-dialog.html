@@ -75,7 +75,7 @@
             <dt>Department</dt>
             <dd>{{ displayDash(d.personalInfo.departmentInAhcp) }}</dd>
             <dt>Branch</dt>
-            <dd>{{ displayDash(d.personalInfo.branchLocation) }}</dd>
+            <dd>{{ branchLabel(d.personalInfo.branchLocation) }}</dd>
             <dt>Employee category</dt>
             <dd>{{ displayDash(d.personalInfo.employmentCategory) }}</dd>
             <dt>Work / grade level</dt>
@@ -242,16 +242,6 @@
             <dd>{{ displayDash(d.remuneration.socialSecurityApplicable) }}</dd>
             <dt>Fuel limit</dt>
             <dd>{{ displayDash(d.remuneration.fuelLimit) }}</dd>
-            <dt>Leave eligibility criteria</dt>
-            <dd>{{ displayDash(d.remuneration.leaveEligibilityCriteria) }}</dd>
-            <dt>Leave type</dt>
-            <dd>{{ displayDash(d.remuneration.leaveType) }}</dd>
-            <dt>Leave days</dt>
-            <dd>{{ displayDash(d.remuneration.leaveDays) }}</dd>
-            <dt>Leaves availed</dt>
-            <dd>{{ displayDash(d.remuneration.leavesAvailed) }}</dd>
-            <dt>Remaining leaves</dt>
-            <dd>{{ displayDash(d.remuneration.remainingLeaves) }}</dd>
             <dt>Medical allowances</dt>
             <dd>{{ displayDash(d.remuneration.medicalAllowances) }}</dd>
             <dt>Fuel allowances</dt>
@@ -264,6 +254,34 @@
             <dd>{{ displayDash(d.remuneration.otherAllowances) }}</dd>
           </dl>
         </section>
+
+        @if (d.leaveManagement.length) {
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Leave Management</h4>
+            <div class="application-detail-table-wrap">
+              <table class="application-detail-table">
+                <thead>
+                  <tr>
+                    <th>Leave Type</th>
+                    <th>Leaves Allocated</th>
+                    <th>Leaves Availed</th>
+                    <th>Remaining Leave</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of d.leaveManagement; track $index) {
+                    <tr>
+                      <td>{{ displayDash(row.leaveType) }}</td>
+                      <td>{{ displayDash(row.leavesAllocated) }}</td>
+                      <td>{{ displayDash(row.leavesAvailed) }}</td>
+                      <td>{{ displayDash(row.remainingLeave) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
 
         <section class="application-detail-section">
           <h4 class="application-detail-section-title">Login detail</h4>

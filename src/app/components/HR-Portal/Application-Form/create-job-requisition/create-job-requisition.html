@@ -74,6 +74,9 @@
         <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'remunation-section'"
           (click)="scrollToSection('remunation-section')">Remuneration</li>
         <li class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'leave-management-section'"
+          (click)="scrollToSection('leave-management-section')">Leave Management</li>
+        <li class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'login-detail-section'"
           (click)="scrollToSection('login-detail-section')">Login detail</li>
         <li class="cjr-section-nav-item" [class.cjr-section-nav-item--active]="activeSection() === 'assets-section'"
@@ -358,8 +361,8 @@
               <select [ngModel]="branchLocation()" (ngModelChange)="branchLocation.set($event)"
                 [class.cjr-invalid]="showFieldError('branchLocation')" (blur)="touch('branchLocation')">
                 <option value="">No Selection</option>
-                @for (branch of branchLocationOptions; track branch) {
-                <option [value]="branch">{{ branch }}</option>
+                @for (branch of branchLocationOptions; track branch.code) {
+                <option [value]="branch.code">{{ branch.name }}</option>
                 }
               </select>
             </div>
@@ -754,7 +757,7 @@
           </span>
           <div class="mad-form-panel__titles">
             <h2 class="cjr-section-title mad-form-panel__title">Remuneration</h2>
-            <span class="mad-form-panel__subtitle">Salary, payment mode, allowances, and leave entitlements</span>
+            <span class="mad-form-panel__subtitle">Salary, payment mode, and allowances</span>
           </div>
         </div>
 
@@ -905,38 +908,6 @@
           </div>
 
           <div class="cjr-row">
-            <label>Leave Eligibility Criteria:</label>
-            <input type="text" [ngModel]="leaveEligibilityCriteria()"
-              (ngModelChange)="leaveEligibilityCriteria.set($event)" (blur)="touch('leaveEligibilityCriteria')" />
-          </div>
-
-          <div class="cjr-row">
-            <label class="cjr-label-required">Leave Type:</label>
-            <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)"
-              [class.cjr-invalid]="showFieldError('leaveType')" (blur)="touch('leaveType')" placeholder="e.g. Annual" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Leave Days:</label>
-            <input type="text" inputmode="numeric" [ngModel]="leaveDays()"
-              (ngModelChange)="onLeaveDaysChange($event)" (keydown)="onIntegerKeyDown($event)"
-              (blur)="touch('leaveDays')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Leaves Availed:</label>
-            <input type="text" inputmode="numeric" [ngModel]="leavesAvailed()"
-              (ngModelChange)="onLeavesAvailedChange($event)" (keydown)="onIntegerKeyDown($event)"
-              (blur)="touch('leavesAvailed')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Remaining Leaves:</label>
-            <input type="text" inputmode="numeric" [ngModel]="remainingLeaves()" readonly
-              placeholder="Auto-calculated" />
-          </div>
-
-          <div class="cjr-row">
             <label>Medical Allowances:</label>
             <input type="text" inputmode="decimal" [ngModel]="medicalAllowances()"
               (ngModelChange)="onNumericOnlyChange($event, medicalAllowances)" (keydown)="onDecimalKeyDown($event)"
@@ -972,6 +943,86 @@
           </div>
         </div>
       </div>
+      </section>
+    </div>
+
+    <div class="cjr-personal cjr-leave-management cjr-form-section" id="leave-management-section">
+      <section class="mad-form-panel mad-form-panel--components">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__step" aria-hidden="true">05</span>
+          <span class="mad-form-panel__icon mad-form-panel__icon--components" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles mad-form-panel__titles--wide">
+            <div class="mad-section-heading mad-section-heading--inline">
+              <div class="mad-section-heading__left">
+                @if (leaveManagementRows().length) {
+                <span class="mad-section-heading__badge">{{ leaveManagementRows().length }}</span>
+                }
+                <h2 class="cjr-section-title mad-form-panel__title mad-section-heading__title">Leave Management</h2>
+              </div>
+              <span class="mad-section-heading__hint">Track leave types, allocations, and usage</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cjr-leave-table-wrap">
+          <table class="cjr-leave-table">
+            <thead>
+              <tr>
+                <th scope="col">Leave Type</th>
+                <th scope="col">Leaves Allocated</th>
+                <th scope="col">Leaves Availed</th>
+                <th scope="col">Remaining Leave</th>
+                <th scope="col" class="cjr-leave-table__actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of leaveManagementRows(); let i = $index; track i) {
+              <tr>
+                <td>
+                  <input type="text" class="cjr-leave-table__input" [ngModel]="row.leaveType"
+                    (ngModelChange)="updateLeaveManagementRow(i, 'leaveType', $event)"
+                    placeholder="e.g. Annual" />
+                </td>
+                <td>
+                  <input type="text" class="cjr-leave-table__input" inputmode="numeric" [ngModel]="row.leavesAllocated"
+                    (ngModelChange)="updateLeaveManagementRow(i, 'leavesAllocated', $event)"
+                    (keydown)="onIntegerKeyDown($event)" placeholder="0" />
+                </td>
+                <td>
+                  <input type="text" class="cjr-leave-table__input" inputmode="numeric" [ngModel]="row.leavesAvailed"
+                    (ngModelChange)="updateLeaveManagementRow(i, 'leavesAvailed', $event)"
+                    (keydown)="onIntegerKeyDown($event)" placeholder="0" />
+                </td>
+                <td>
+                  <input type="text" class="cjr-leave-table__input cjr-leave-table__input--readonly"
+                    [ngModel]="computeRemainingLeave(row)" readonly tabindex="-1" placeholder="Auto-calculated" />
+                </td>
+                <td class="cjr-leave-table__actions-col">
+                  @if (leaveManagementRows().length > 1) {
+                  <button type="button" class="cjr-remove-section cjr-leave-table__remove"
+                    (click)="removeLeaveManagementRow(i)" aria-label="Remove leave row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                  }
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cjr-dynamic-footer">
+          <button type="button" class="cjr-add-education-btn" (click)="addLeaveManagementRow()">
+            <span class="cjr-add-icon">+</span> Add leave row
+          </button>
+        </div>
       </section>
     </div>
 

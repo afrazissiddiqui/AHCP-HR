@@ -67,6 +67,13 @@ export interface ApplicationFormPastExperienceRow {
   lastSalary: string;
 }
 
+export interface ApplicationFormLeaveRow {
+  leaveType: string;
+  leavesAllocated: string;
+  leavesAvailed: string;
+  remainingLeave: string;
+}
+
 export interface ApplicationFormRemuneration {
   basicSalary: string;
   paymentMode: string;
@@ -154,6 +161,7 @@ export interface ApplicationFormDetail {
   education: ApplicationFormEducationRow[];
   pastExperience: ApplicationFormPastExperienceRow[];
   remuneration: ApplicationFormRemuneration;
+  leaveManagement: ApplicationFormLeaveRow[];
   hrSettings: ApplicationFormHrSettings;
   loginDetails: ApplicationFormLoginDetails;
   attachments: ApplicationFormAttachmentMeta[];
@@ -227,6 +235,13 @@ export interface EmployeeProfileAttachmentPayload {
   fileUrl: string;
 }
 
+export interface EmployeeProfileLeaveRowPayload {
+  leaveType: string;
+  leavesAllocated: string;
+  leavesAvailed: string;
+  remainingLeave: string;
+}
+
 export interface EmployeeProfileRemunerationPayload {
   basicSalary: string;
   paymentMode: string;
@@ -246,11 +261,6 @@ export interface EmployeeProfileRemunerationPayload {
   eobiApplicable: string;
   socialSecurityApplicable: string;
   fuelLimit: string;
-  leaveEligibilityCriteria: string;
-  leaveType: string;
-  leaveDays: string;
-  leavesAvailed: string;
-  remainingLeaves: string;
   medicalAllowances: string;
   fuelAllowances: string;
   mobileAllowances: string;
@@ -309,6 +319,7 @@ export interface EmployeeProfileAddPayload {
   pastExperience: EmployeeProfilePastExperiencePayload[];
   attachments: EmployeeProfileAttachmentPayload[];
   remuneration: EmployeeProfileRemunerationPayload;
+  leaveManagement: EmployeeProfileLeaveRowPayload[];
   loginDetail: EmployeeProfileLoginDetailPayload;
   assets: EmployeeProfileAssetsPayload;
 }
@@ -1265,6 +1276,12 @@ export class ApplicationFormService {
         fuelLimit: pickRem('fuelLimit', 'fuel_limit'),
         leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },
+      leaveManagement: this.mapLeaveManagementRows(item, {
+        leaveType: pickRem('leaveType', 'leave_type'),
+        leaveDays: asNumberString(pickRem('leaveDays', 'leave_days')),
+        leavesAvailed: asNumberString(pickRem('leavesAvailed', 'leaves_availed')),
+        remainingLeaves: asNumberString(pickRem('remainingLeaves', 'remaining_leaves')),
+      }),
       hrSettings: {
         employeeMaster: asNumberString(item['employeeMaster'] ?? item['employee_master']),
         salaryStructure,
@@ -1389,6 +1406,90 @@ export class ApplicationFormService {
     return value && typeof value === 'object' && !Array.isArray(value)
       ? (value as Record<string, unknown>)
       : null;
+  }
+
+  private mapLeaveManagementRows(
+    item: Record<string, unknown>,
+    legacyRemuneration?: {
+      leaveType: string;
+      leaveDays: string;
+      leavesAvailed: string;
+      remainingLeaves: string;
+    },
+  ): ApplicationFormLeaveRow[] {
+    const raw = item['leaveManagement'] ?? item['leave_management'];
+    if (Array.isArray(raw) && raw.length) {
+      return raw
+        .filter((entry) => entry && typeof entry === 'object')
+        .map((entry) => {
+          const row = entry as Record<string, unknown>;
+          const leavesAllocated = this.pickLeaveField(row, [
+            'leavesAllocated',
+            'leaves_allocated',
+            'leaveDays',
+            'leave_days',
+          ]);
+          const leavesAvailed = this.pickLeaveField(row, ['leavesAvailed', 'leaves_availed']);
+          const remainingLeave = this.pickLeaveField(row, [
+            'remainingLeave',
+            'remaining_leave',
+            'remainingLeaves',
+            'remaining_leaves',
+          ]);
+          return {
+            leaveType: this.pickLeaveField(row, ['leaveType', 'leave_type']),
+            leavesAllocated,
+            leavesAvailed,
+            remainingLeave:
+              remainingLeave || this.computeRemainingLeaveString(leavesAllocated, leavesAvailed),
+          };
+        })
+        .filter((row) => row.leaveType || row.leavesAllocated || row.leavesAvailed);
+    }
+
+    if (legacyRemuneration?.leaveType?.trim() || legacyRemuneration?.leaveDays?.trim()) {
+      const leavesAllocated = legacyRemuneration.leaveDays ?? '';
+      const leavesAvailed = legacyRemuneration.leavesAvailed ?? '';
+      return [
+        {
+          leaveType: legacyRemuneration.leaveType,
+          leavesAllocated,
+          leavesAvailed,
+          remainingLeave:
+            legacyRemuneration.remainingLeaves ||
+            this.computeRemainingLeaveString(leavesAllocated, leavesAvailed),
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  private pickLeaveField(row: Record<string, unknown>, keys: string[]): string {
+    for (const key of keys) {
+      const value = row[key];
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        return String(value).trim();
+      }
+    }
+    return '';
+  }
+
+  private computeRemainingLeaveString(allocated: string, availed: string): string {
+    const allocatedStr = allocated.trim();
+    if (!allocatedStr) {
+      return '';
+    }
+    const allocatedNum = Number.parseInt(allocatedStr, 10);
+    if (!Number.isFinite(allocatedNum)) {
+      return '';
+    }
+    const availedStr = availed.trim();
+    const availedNum = availedStr ? Number.parseInt(availedStr, 10) : 0;
+    if (!Number.isFinite(availedNum)) {
+      return '';
+    }
+    return String(allocatedNum - availedNum);
   }
 
   private mapApiAssets(item: Record<string, unknown>): ApplicationFormAssets {

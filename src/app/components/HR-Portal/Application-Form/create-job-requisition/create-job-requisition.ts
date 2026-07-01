@@ -24,6 +24,11 @@ import {
   GatePassItemMaster,
   GatePassItemMasterService,
 } from '../../../gate-pass/gate-pass-item-master.service';
+import {
+  GL_ACCOUNT_BRANCH_OPTIONS,
+  glAccountBranchLabel,
+  resolveBranchCode,
+} from '../../../setup/gl-account-determination/gl-account-branch.options';
 
 interface AttachmentRow {
   type: string;
@@ -106,15 +111,14 @@ const BASE_MANDATORY_FIELDS = [
   'paymentMode',
   'effectiveDate',
   'dateOfJoining',
-  'leaveType',
   'loginEmployeeName',
 ] as const;
 
-const BRANCH_LOCATION_OPTIONS = [
-  'AHCP_ Peshawar',
-  'AHCP_ HO',
-  'AHCP_ Faisalabad',
-] as const;
+interface LeaveManagementRow {
+  leaveType: string;
+  leavesAllocated: string;
+  leavesAvailed: string;
+}
 
 @Component({
   selector: 'app-create-job-requisition',
@@ -177,8 +181,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly jobDescription = signal('');
   protected readonly roleSalary = signal('');
   protected readonly workGradeLevel = signal('');
-  protected readonly branchLocation = signal<(typeof BRANCH_LOCATION_OPTIONS)[number] | ''>('');
-  protected readonly branchLocationOptions = BRANCH_LOCATION_OPTIONS;
+  protected readonly branchLocation = signal('');
+  protected readonly branchLocationOptions = GL_ACCOUNT_BRANCH_OPTIONS;
   protected readonly remarks = signal('');
   protected readonly workGradeLevelOptions = WORK_GRADE_LEVEL_OPTIONS;
 
@@ -251,11 +255,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly dateOfJoining = signal('');
   protected readonly advancePercentAllowed = signal('');
   protected readonly overTimeApplicable = signal<'Yes' | 'No' | ''>('No');
-  protected readonly leaveType = signal('');
-  protected readonly leaveDays = signal('');
-  protected readonly leavesAvailed = signal('');
-  protected readonly remainingLeaves = signal('');
-  protected readonly totalLeaves = signal('');
   protected readonly medicalAllowances = signal('');
   protected readonly fuelAllowances = signal('');
   protected readonly mobileAllowances = signal('');
@@ -268,13 +267,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly fuelLimit = signal('');
-  protected readonly leaveEligibilityCriteria = signal('');
+  protected readonly leaveManagementRows = signal<LeaveManagementRow[]>([
+    { leaveType: '', leavesAllocated: '', leavesAvailed: '' },
+  ]);
 
   // HR / payroll settings
   protected readonly employeeMaster = signal('');
   protected readonly salaryStructure = signal('');
   protected readonly attendanceShiftManagement = signal('');
-  protected readonly leaveManagement = signal('');
   protected readonly loanAdvancesForm = signal('');
 
   // Login Detail fields
@@ -373,35 +373,67 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     target.set(this.sanitizeIntegerValue(value));
   }
 
-  protected onLeaveDaysChange(value: string): void {
-    this.leaveDays.set(this.sanitizeIntegerValue(value));
-    this.updateRemainingLeaves();
+  protected addLeaveManagementRow(): void {
+    this.leaveManagementRows.update((rows) => [
+      ...rows,
+      { leaveType: '', leavesAllocated: '', leavesAvailed: '' },
+    ]);
   }
 
-  protected onLeavesAvailedChange(value: string): void {
-    this.leavesAvailed.set(this.sanitizeIntegerValue(value));
-    this.updateRemainingLeaves();
+  protected removeLeaveManagementRow(index: number): void {
+    this.leaveManagementRows.update((rows) => {
+      if (rows.length <= 1) {
+        return [{ leaveType: '', leavesAllocated: '', leavesAvailed: '' }];
+      }
+      return rows.filter((_, rowIndex) => rowIndex !== index);
+    });
   }
 
-  private updateRemainingLeaves(): void {
-    const daysStr = this.leaveDays().trim();
-    const availedStr = this.leavesAvailed().trim();
+  protected updateLeaveManagementRow(
+    index: number,
+    field: keyof LeaveManagementRow,
+    value: string,
+  ): void {
+    const sanitized =
+      field === 'leavesAllocated' || field === 'leavesAvailed'
+        ? this.sanitizeIntegerValue(value)
+        : value;
+    this.leaveManagementRows.update((rows) => {
+      const next = [...rows];
+      next[index] = { ...next[index], [field]: sanitized };
+      return next;
+    });
+  }
 
-    if (!daysStr) {
-      this.remainingLeaves.set('');
-      return;
+  protected computeRemainingLeave(row: LeaveManagementRow): string {
+    const allocatedStr = row.leavesAllocated.trim();
+    if (!allocatedStr) {
+      return '';
     }
-
-    const days = Number.parseInt(daysStr, 10);
+    const allocated = Number.parseInt(allocatedStr, 10);
+    if (!Number.isFinite(allocated)) {
+      return '';
+    }
+    const availedStr = row.leavesAvailed.trim();
     const availed = availedStr ? Number.parseInt(availedStr, 10) : 0;
-
-    if (!Number.isFinite(days)) {
-      this.remainingLeaves.set('');
-      return;
+    if (!Number.isFinite(availed)) {
+      return '';
     }
+    return String(allocated - availed);
+  }
 
-    const remaining = Math.max(0, days - (Number.isFinite(availed) ? availed : 0));
-    this.remainingLeaves.set(String(remaining));
+  private buildLeaveManagementPayload(): ApplicationFormDetail['leaveManagement'] {
+    return this.leaveManagementRows()
+      .filter(
+        (row) =>
+          row.leaveType.trim() || row.leavesAllocated.trim() || row.leavesAvailed.trim(),
+      )
+      .map((row) => ({
+        leaveType: row.leaveType.trim(),
+        leavesAllocated: row.leavesAllocated.trim(),
+        leavesAvailed: row.leavesAvailed.trim(),
+        remainingLeave: this.computeRemainingLeave(row),
+      }));
   }
 
   private updateCashSalaryPercentageFromBank(): void {
@@ -533,11 +565,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       advancePercentAllowed: this.advancePercentAllowed(),
       loanAmountAllowed: this.maximumLoanCapacity(),
       overTimeApplicable: this.overTimeApplicable(),
-      leaveType: this.leaveType(),
-      leaveDays: this.leaveDays(),
-      leavesAvailed: this.leavesAvailed(),
-      remainingLeaves: this.remainingLeaves(),
-      totalLeaves: this.totalLeaves(),
+      leaveType: '',
+      leaveDays: '',
+      leavesAvailed: '',
+      remainingLeaves: '',
+      totalLeaves: '',
       medicalAllowances: this.medicalAllowances(),
       fuelAllowances: this.fuelAllowances(),
       mobileAllowances: this.mobileAllowances(),
@@ -550,7 +582,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       eobiApplicable: this.eobiApplicable(),
       socialSecurityApplicable: this.socialSecurityApplicable(),
       fuelLimit: this.fuelLimit(),
-      leaveEligibilityCriteria: this.leaveEligibilityCriteria(),
+      leaveEligibilityCriteria: '',
     };
   }
 
@@ -559,7 +591,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       employeeMaster: this.employeeMaster(),
       salaryStructure: this.salaryStructure(),
       attendanceShiftManagement: this.attendanceShiftManagement(),
-      leaveManagement: this.leaveManagement(),
+      leaveManagement: '',
       loanAdvancesForm: this.loanAdvancesForm(),
       requestStatus: '',
     };
@@ -699,17 +731,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         eobiApplicable: this.yesNoToBinaryFlag(this.eobiApplicable()),
         socialSecurityApplicable: this.yesNoToBinaryFlag(this.socialSecurityApplicable()),
         fuelLimit: this.fuelLimit().trim(),
-        leaveEligibilityCriteria: this.leaveEligibilityCriteria().trim(),
-        leaveType: this.leaveType().trim(),
-        leaveDays: this.leaveDays().trim(),
-        leavesAvailed: this.leavesAvailed().trim(),
-        remainingLeaves: this.remainingLeaves().trim(),
         medicalAllowances: this.medicalAllowances().trim(),
         fuelAllowances: this.fuelAllowances().trim(),
         mobileAllowances: this.mobileAllowances().trim(),
         carAllowances: this.carAllowances().trim(),
         otherAllowances: this.otherAllowances().trim(),
       },
+      leaveManagement: this.buildLeaveManagementPayload(),
       loginDetail: {
         employeeCode: this.employeeCode().trim(),
         userId: this.userId().trim() || this.employeeCode().trim(),
@@ -842,7 +870,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       case 'accountType': return this.accountType();
       case 'effectiveDate': return this.effectiveDate();
       case 'dateOfJoining': return this.dateOfJoining();
-      case 'leaveType': return this.leaveType();
       case 'loginEmployeeName': return this.loginEmployeeName();
       case 'password': return this.password();
       default: return '';
@@ -1264,14 +1291,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  private resolveBranchLocation(
-    branchLocation: string | null | undefined,
-  ): (typeof BRANCH_LOCATION_OPTIONS)[number] | '' {
-    const normalized = (branchLocation ?? '').trim();
-    if ((BRANCH_LOCATION_OPTIONS as readonly string[]).includes(normalized)) {
-      return normalized as (typeof BRANCH_LOCATION_OPTIONS)[number];
-    }
-    return '';
+  private resolveBranchCode(branchLocation: string | null | undefined): string {
+    return resolveBranchCode(branchLocation ?? '');
   }
 
   private populateFromJobSpecification(record: JobSpecificationRecord): void {
@@ -1353,7 +1374,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
           notes: '',
         })),
       );
-      this.leaveEligibilityCriteria.set(qualifications.join(', '));
     }
 
     if (department && department !== 'No Selection') {
@@ -1449,6 +1469,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       education: this.educationSections().map((row) => ({ ...row })),
       pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
       remuneration: this.buildRemunerationPayload(),
+      leaveManagement: this.buildLeaveManagementPayload(),
       hrSettings: this.buildHrSettingsPayload(),
       loginDetails: {
         employeeCode: this.employeeCode(),
@@ -1475,7 +1496,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         company: this.company(),
         department: this.department(),
         division: this.division(),
-        location: this.branchLocation() || this.location(),
+        location: glAccountBranchLabel(this.branchLocation()) || this.location(),
         costCenter: ''
       },
       assets: {
@@ -1601,7 +1622,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       '',
     );
     this.branchLocation.set(
-      this.resolveBranchLocation(
+      this.resolveBranchCode(
         detail.personalInfo.branchLocation || detail.requisition.location || '',
       ),
     );
@@ -1669,12 +1690,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     );
     this.updateMaximumAdvanceCapacityFromAdvancePercent();
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? 'No');
-    this.leaveType.set(remuneration.leaveType ?? '');
-    this.leaveDays.set(remuneration.leaveDays ?? '');
-    this.leavesAvailed.set(remuneration.leavesAvailed ?? '');
-    this.remainingLeaves.set(remuneration.remainingLeaves ?? '');
-    this.totalLeaves.set(remuneration.totalLeaves ?? '');
-    this.updateRemainingLeaves();
     this.medicalAllowances.set(this.remunerationValue(remuneration.medicalAllowances));
     this.fuelAllowances.set(this.remunerationValue(remuneration.fuelAllowances));
     this.mobileAllowances.set(this.remunerationValue(remuneration.mobileAllowances));
@@ -1686,14 +1701,34 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',
     );
     this.fuelLimit.set(remuneration.fuelLimit ?? '');
-    this.leaveEligibilityCriteria.set(remuneration.leaveEligibilityCriteria ?? '');
+
+    const leaveRows = detail.leaveManagement?.length
+      ? detail.leaveManagement
+      : remuneration.leaveType?.trim() || remuneration.leaveDays?.trim()
+        ? [
+            {
+              leaveType: remuneration.leaveType ?? '',
+              leavesAllocated: remuneration.leaveDays ?? '',
+              leavesAvailed: remuneration.leavesAvailed ?? '',
+              remainingLeave: remuneration.remainingLeaves ?? '',
+            },
+          ]
+        : [];
+    this.leaveManagementRows.set(
+      leaveRows.length
+        ? leaveRows.map((row) => ({
+            leaveType: row.leaveType ?? '',
+            leavesAllocated: row.leavesAllocated ?? '',
+            leavesAvailed: row.leavesAvailed ?? '',
+          }))
+        : [{ leaveType: '', leavesAllocated: '', leavesAvailed: '' }],
+    );
 
     const hrSettings = detail.hrSettings;
     if (hrSettings) {
       this.employeeMaster.set(hrSettings.employeeMaster ?? '');
       this.salaryStructure.set(hrSettings.salaryStructure ?? '');
       this.attendanceShiftManagement.set(hrSettings.attendanceShiftManagement ?? '');
-      this.leaveManagement.set(hrSettings.leaveManagement ?? '');
       this.loanAdvancesForm.set(hrSettings.loanAdvancesForm ?? '');
     }
 

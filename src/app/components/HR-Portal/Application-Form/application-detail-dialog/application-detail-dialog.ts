@@ -7,6 +7,7 @@ import {
   ApplicationFormService,
 } from '../../../../services/application-form.service';
 import { displayDateOnly } from '../../../../utils/date-format.util';
+import { glAccountBranchLabel } from '../../../setup/gl-account-determination/gl-account-branch.options';
 
 @Component({
   selector: 'app-application-detail-dialog',
@@ -34,6 +35,11 @@ export class ApplicationDetailDialogComponent {
     }
     const s = String(value).trim();
     return s === '' ? '—' : s;
+  }
+
+  branchLabel(code: string | undefined | null): string {
+    const label = glAccountBranchLabel(code ?? '');
+    return label ? this.displayDash(label) : this.displayDash(code);
   }
 
   resolveAttachmentFor(attachment: ApplicationFormAttachmentMeta): string {
