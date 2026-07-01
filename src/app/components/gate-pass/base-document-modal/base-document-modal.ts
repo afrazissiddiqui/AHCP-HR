@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { GatePassModule, OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documents.service';
 
 @Component({
   selector: 'app-base-document-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './base-document-modal.html',
   styleUrl: './base-document-modal.css',
 })
@@ -23,7 +24,46 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
 
   readonly documents = signal<OpenBaseDocument[]>([]);
   readonly loading = signal(false);
+  readonly searchText = signal('');
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+  readonly pageSizeOptions = [5, 10, 25, 50];
   readonly skeletonRows = Array.from({ length: 5 }, (_, index) => index);
+
+  readonly filteredDocuments = computed(() => {
+    const search = this.searchText().trim().toLowerCase();
+    const docs = this.documents();
+    if (!search) {
+      return docs;
+    }
+    return docs.filter((doc) => {
+      const hay = [
+        doc.number,
+        doc.title,
+        doc.businessPartnerName,
+        doc.partner,
+        doc.businessPartnerCode,
+        doc.date,
+      ]
+        .filter((value) => value != null && value !== '')
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(search);
+    });
+  });
+
+  readonly paginatedDocuments = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredDocuments().slice(start, start + this.pageSize());
+  });
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredDocuments().length / this.pageSize())),
+  );
+
+  readonly pages = computed(() => Array.from({ length: this.totalPages() }, (_, index) => index + 1));
+
+  Math = Math;
   private loadSubscription?: Subscription;
 
   ngOnDestroy(): void {
@@ -40,11 +80,26 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
       this.cancelLoad();
       this.documents.set([]);
       this.loading.set(false);
+      this.resetListState();
     }
   }
 
   close(): void {
     this.openChange.emit(false);
+  }
+
+  onSearchChange(): void {
+    this.currentPage.set(1);
+  }
+
+  setPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage.set(1);
   }
 
   onBackdropClick(): void {
@@ -65,8 +120,14 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     this.loadSubscription = undefined;
   }
 
+  private resetListState(): void {
+    this.searchText.set('');
+    this.currentPage.set(1);
+  }
+
   private loadDocuments(): void {
     this.cancelLoad();
+    this.resetListState();
 
     const fetch$ = this.getApiFetch$();
     if (fetch$) {

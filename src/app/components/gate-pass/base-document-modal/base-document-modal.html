@@ -12,6 +12,17 @@
     <button type="button" class="gp-bdm-close" (click)="close()" aria-label="Close">×</button>
   </div>
   <p class="gp-bdm-type-line">Type: <strong>{{ documentType }}</strong></p>
+  <div class="gp-bdm-search" *ngIf="!loading() && documents().length > 0">
+    <input
+      type="text"
+      class="gp-bdm-search-input"
+      [ngModel]="searchText()"
+      (ngModelChange)="searchText.set($event); onSearchChange()"
+      placeholder="Search by document no., title, partner, or date..."
+      aria-label="Search base documents"
+    />
+    <span class="gp-bdm-search-icon" aria-hidden="true">🔍</span>
+  </div>
   <div class="gp-bdm-body">
     <div *ngIf="loading()" class="gp-bdm-skeleton" aria-busy="true" aria-label="Loading base documents">
       <div class="gp-bdm-table-wrap">
@@ -41,7 +52,10 @@
     </div>
 
     <p class="gp-bdm-empty" *ngIf="!loading() && documents().length === 0">No open documents for this type.</p>
-    <div class="gp-bdm-table-wrap" *ngIf="!loading() && documents().length > 0">
+    <p class="gp-bdm-empty" *ngIf="!loading() && documents().length > 0 && filteredDocuments().length === 0">
+      No documents match your search.
+    </p>
+    <div class="gp-bdm-table-wrap" *ngIf="!loading() && filteredDocuments().length > 0">
       <table class="gp-bdm-table">
         <thead>
           <tr>
@@ -53,7 +67,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let doc of documents()">
+          <tr *ngFor="let doc of paginatedDocuments()">
             <td>{{ doc.number }}</td>
             <td>{{ doc.title }}</td>
             <td>{{ doc.businessPartnerName || doc.partner || '—' }}</td>
@@ -64,6 +78,33 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+  <div class="gp-bdm-pagination" *ngIf="!loading() && filteredDocuments().length > 0">
+    <div class="gp-bdm-pagination-info">
+      Showing {{ filteredDocuments().length === 0 ? 0 : (currentPage() - 1) * pageSize() + 1 }} to
+      {{ Math.min(currentPage() * pageSize(), filteredDocuments().length) }} of {{ filteredDocuments().length }} entries
+    </div>
+    <div class="gp-bdm-pagination-controls">
+      <button type="button" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+      <div class="gp-bdm-page-numbers">
+        <button
+          type="button"
+          *ngFor="let page of pages()"
+          [class.active]="page === currentPage()"
+          (click)="setPage(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+      <button type="button" [disabled]="currentPage() === totalPages()" (click)="setPage(currentPage() + 1)">
+        Next
+      </button>
+    </div>
+    <div class="gp-bdm-page-size">
+      <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set(+$event); onPageSizeChange()">
+        <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
+      </select>
     </div>
   </div>
 </div>
