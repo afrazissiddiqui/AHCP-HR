@@ -285,8 +285,9 @@ export interface EmployeeProfileAssetsPayload {
   allocationDate: string;
 }
 
+/** Flat employee profile body expected by employee-profile-add / update APIs. */
 export interface EmployeeProfileAddPayload {
-  jobSpecificationId: string;
+  jobSpecificationId?: string;
   personName: string;
   firstName: string;
   middleName: string;
@@ -300,31 +301,73 @@ export interface EmployeeProfileAddPayload {
   bloodGroup: string;
   nationalIdCardNo: string;
   incomeTaxNo: string;
+  employmentNature: string;
+  employeeCategory: string;
+  employmentStatus: string;
+  department: string;
+  designation: string;
+  jobDescription: string;
+  roleSalary: string;
+  basicSalary: number | string;
+  paymentMode: string;
+  accountTitle: string;
+  bankName: string;
+  branchName: string;
+  accountNo: string;
+  accountType: string;
+  effectiveDate: string;
+  taxPercentage: number | string;
+  dateOfJoining: string;
+  advancePercentAllowed: number | string;
+  loanAmountAllowed: number | string;
+  overTimeApplicable: boolean | string;
+  leaveType: string;
+  leaveDays: number | string;
+  leavesAvailed: number | string;
+  remainingLeaves: number | string;
+  totalLeaves: number | string;
+  requestStatus: string;
   contactNumber: string;
   emergencyContactNumber: string;
   street: string;
   streetNo: string;
+  buildingFloorRoom: string;
   city: string;
   state: string;
   country: string;
   zipCode: string;
-  departmentInAhcp: string;
-  branchLocation: string;
-  employmentCategory: string;
-  workGradeLevel: string;
-  designation: string;
-  hiringManager: string;
-  reportingManager: string;
-  employmentStatus: string;
-  remarks: string;
-  jobDescription: string;
-  education: EmployeeProfileEducationPayload[];
-  pastExperience: EmployeeProfilePastExperiencePayload[];
-  attachments: EmployeeProfileAttachmentPayload[];
-  remuneration: EmployeeProfileRemunerationPayload;
-  leaveManagement: EmployeeProfileLeaveRowPayload[];
-  loginDetail: EmployeeProfileLoginDetailPayload;
-  assets: EmployeeProfileAssetsPayload;
+  educationSections: Array<{
+    qualification: string;
+    institution: string;
+    passingYear: string;
+    institute?: string;
+    fromDate?: string;
+    toDate?: string;
+    subject?: string;
+    marksGrades?: string;
+    notes?: string;
+  }>;
+  pastExperienceSections: Array<{
+    company: string;
+    designation: string;
+    duration: string;
+    position?: string;
+    duties?: string;
+    fromDate?: string;
+    toDate?: string;
+    lastSalary?: string;
+    remarks?: string;
+  }>;
+  attachments: Array<{ fileName: string; fileUrl: string; type?: string }>;
+  employeeMaster: number | string;
+  salaryStructure: string;
+  attendanceShiftManagement: string;
+  leaveManagement: string;
+  loanAdvancesForm: string;
+  employeeCode: string;
+  userId: number | string;
+  loginEmployeeName: string;
+  password: string;
 }
 
 const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
@@ -537,11 +580,151 @@ export class ApplicationFormService {
 
   fetchEmployeeProfiles(): Observable<ApplicationFormRecord[]> {
     return this.http.get<unknown>(EMPLOYEE_PROFILE_LIST_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((response) =>
+        this.extractApiItems(response).map((item) => this.mapApiItemToFullRecord(item)),
+      ),
       tap((records) => {
         this.applicationRecords.set(records);
       }),
     );
+  }
+
+  /** Serializes application form detail into the flat API payload shape. */
+  buildFlatEmployeeProfilePayload(
+    detail: ApplicationFormDetail,
+    options: { jobSpecificationId?: string } = {},
+  ): EmployeeProfileAddPayload {
+    const personal = detail.personalInfo;
+    const remuneration = detail.remuneration;
+    const login = detail.loginDetails;
+    const hr = detail.hrSettings;
+    const primaryLeave = detail.leaveManagement[0] ?? {
+      leaveType: '',
+      leavesAllocated: '',
+      leavesAvailed: '',
+      remainingLeave: '',
+    };
+
+    const toApiNumber = (value: string): number | string => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      const numeric = Number.parseFloat(trimmed.replace(/,/g, ''));
+      return Number.isFinite(numeric) ? numeric : trimmed;
+    };
+
+    const toApiBoolean = (value: string): boolean | string => {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'yes' || normalized === 'true' || normalized === '1') {
+        return true;
+      }
+      if (normalized === 'no' || normalized === 'false' || normalized === '0') {
+        return false;
+      }
+      return value;
+    };
+
+    const paymentModeForApi = (mode: string): string => {
+      if (mode === 'Bank') {
+        return 'Bank Transfer';
+      }
+      return mode;
+    };
+
+    const leaveDays = primaryLeave.leavesAllocated || remuneration.leaveDays;
+    const leavesAvailed = primaryLeave.leavesAvailed || remuneration.leavesAvailed;
+    const remainingLeaves = primaryLeave.remainingLeave || remuneration.remainingLeaves;
+
+    return {
+      jobSpecificationId: options.jobSpecificationId?.trim() || detail.requisition.reqId || undefined,
+      personName: personal.personName,
+      firstName: personal.firstName,
+      middleName: personal.middleName,
+      lastName: personal.lastName,
+      fatherOrHusbandName: personal.fatherOrHusbandName,
+      gender: personal.gender,
+      maritalStatus: personal.maritalStatus,
+      dateOfBirth: personal.dateOfBirth,
+      nationality: personal.nationality,
+      religion: personal.religion,
+      bloodGroup: personal.bloodGroup,
+      nationalIdCardNo: personal.nationalIdCardNo,
+      incomeTaxNo: personal.incomeTaxNo,
+      employmentNature: personal.employmentNature,
+      employeeCategory: personal.employmentCategory,
+      employmentStatus: personal.employmentStatus,
+      department: personal.departmentInAhcp,
+      designation: personal.designation,
+      jobDescription: personal.jobDescription,
+      roleSalary: personal.roleSalary || personal.workGradeLevel,
+      basicSalary: toApiNumber(remuneration.basicSalary),
+      paymentMode: paymentModeForApi(remuneration.paymentMode),
+      accountTitle: remuneration.accountTitle,
+      bankName: remuneration.bankName,
+      branchName: remuneration.branchName,
+      accountNo: remuneration.accountNo,
+      accountType: remuneration.accountType,
+      effectiveDate: remuneration.effectiveDate,
+      taxPercentage: toApiNumber(remuneration.taxPercentage),
+      dateOfJoining: remuneration.dateOfJoining,
+      advancePercentAllowed: toApiNumber(remuneration.advancePercentAllowed),
+      loanAmountAllowed: toApiNumber(
+        remuneration.loanAmountAllowed || remuneration.maximumLoanCapacity,
+      ),
+      overTimeApplicable: toApiBoolean(remuneration.overTimeApplicable),
+      leaveType: primaryLeave.leaveType || remuneration.leaveType,
+      leaveDays: toApiNumber(leaveDays),
+      leavesAvailed: toApiNumber(leavesAvailed),
+      remainingLeaves: toApiNumber(remainingLeaves),
+      totalLeaves: toApiNumber(leaveDays || remuneration.totalLeaves),
+      requestStatus: hr.requestStatus || 'Pending',
+      contactNumber: personal.contactNumber,
+      emergencyContactNumber: personal.emergencyContactNumber,
+      street: personal.street,
+      streetNo: personal.streetNo,
+      buildingFloorRoom: personal.buildingFloorRoom,
+      city: personal.city,
+      state: personal.state,
+      country: personal.country,
+      zipCode: personal.zipCode,
+      educationSections: detail.education.map((row) => ({
+        qualification: row.qualification,
+        institution: row.institution || row.institute,
+        institute: row.institute || row.institution,
+        passingYear: row.passingYear,
+        fromDate: row.fromDate,
+        toDate: row.toDate,
+        subject: row.subject,
+        marksGrades: row.marksGrades,
+        notes: row.notes,
+      })),
+      pastExperienceSections: detail.pastExperience.map((row) => ({
+        company: row.company,
+        designation: row.designation || row.position,
+        position: row.position || row.designation,
+        duration: row.duration,
+        duties: row.duties,
+        fromDate: row.fromDate,
+        toDate: row.toDate,
+        lastSalary: row.lastSalary,
+        remarks: row.remarks,
+      })),
+      attachments: detail.attachments.map((row) => ({
+        fileName: row.fileName,
+        fileUrl: row.fileUrl,
+        type: row.type || row.attachmentFor,
+      })),
+      employeeMaster: toApiNumber(hr.employeeMaster),
+      salaryStructure: hr.salaryStructure || personal.workGradeLevel || personal.roleSalary,
+      attendanceShiftManagement: hr.attendanceShiftManagement,
+      leaveManagement: hr.leaveManagement || 'Enabled',
+      loanAdvancesForm: hr.loanAdvancesForm,
+      employeeCode: login.employeeCode,
+      userId: toApiNumber(login.userId) || login.userId,
+      loginEmployeeName: login.employeeName,
+      password: login.password,
+    };
   }
 
   /**

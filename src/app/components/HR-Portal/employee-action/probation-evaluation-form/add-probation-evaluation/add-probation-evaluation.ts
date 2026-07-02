@@ -376,7 +376,12 @@ export class AddProbationEvaluationComponent implements OnInit {
         emptyIfDash(record.Department),
         emptyIfDash(requisition?.department),
       ),
-      location: this.firstNonEmpty(branchLabel, branchCode, emptyIfDash(personal?.city)),
+      location: this.firstNonEmpty(
+        branchLabel,
+        branchCode,
+        emptyIfDash(personal?.city),
+        emptyIfDash(requisition?.location),
+      ),
       designation,
       reportingManager: this.firstNonEmpty(
         emptyIfDash(personal?.reportingManager),
@@ -396,7 +401,8 @@ export class AddProbationEvaluationComponent implements OnInit {
       ),
       gradeWorkLevel: this.firstNonEmpty(
         emptyIfDash(personal?.workGradeLevel),
-        emptyIfDash(personal?.costCenter),
+        emptyIfDash(personal?.roleSalary),
+        emptyIfDash(record.detail?.hrSettings?.salaryStructure),
         emptyIfDash(requisition?.costCenter),
       ),
       employmentCategory: this.firstNonEmpty(
@@ -404,8 +410,12 @@ export class AddProbationEvaluationComponent implements OnInit {
         emptyIfDash(record.EmploymentCategory),
       ),
       remarks: emptyIfDash(personal?.remarks),
-      dateOfJoining: emptyIfDash(remuneration?.dateOfJoining),
-      basicSalary: this.formatGrossSalary(emptyIfDash(remuneration?.basicSalary)),
+      dateOfJoining: this.firstNonEmpty(
+        emptyIfDash(remuneration?.dateOfJoining),
+      ),
+      basicSalary: this.formatGrossSalary(
+        this.firstNonEmpty(emptyIfDash(remuneration?.basicSalary)),
+      ),
     };
   }
 

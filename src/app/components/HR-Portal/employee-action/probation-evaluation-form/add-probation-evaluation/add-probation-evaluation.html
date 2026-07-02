@@ -235,6 +235,13 @@
                 <option value="">No Selection</option>
                 <option value="Technical">Technical</option>
                 <option value="Non-Technical">Non-Technical</option>
+                @if (
+                  employeeNature() &&
+                  employeeNature() !== 'Technical' &&
+                  employeeNature() !== 'Non-Technical'
+                ) {
+                  <option [value]="employeeNature()">{{ employeeNature() }}</option>
+                }
               </select>
             </div>
 

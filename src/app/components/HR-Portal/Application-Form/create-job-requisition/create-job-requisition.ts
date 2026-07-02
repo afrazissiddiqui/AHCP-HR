@@ -9,7 +9,6 @@ import {
   ApplicationFormDetail,
   ApplicationFormRecord,
   ApplicationFormService,
-  EmployeeProfileAddPayload,
 } from '../../../../services/application-form.service';
 import {
   formatDateForInput,
@@ -629,7 +628,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     if (normalized === 'cash') {
       return 'Cash';
     }
-    if (normalized === 'bank') {
+    if (normalized === 'bank' || normalized === 'bank transfer' || normalized === 'banktransfer') {
       return 'Bank';
     }
     if (normalized === 'hybrid') {
@@ -688,110 +687,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       return '0';
     }
     return '';
-  }
-
-  private buildEmployeeProfilePayload(): EmployeeProfileAddPayload {
-    return {
-      jobSpecificationId: this.selectedJobSpecId().trim(),
-      personName: this.personName().trim(),
-      firstName: this.firstName().trim(),
-      middleName: this.middleName().trim(),
-      lastName: this.lastName().trim(),
-      fatherOrHusbandName: this.fatherOrHusbandName().trim(),
-      gender: this.gender(),
-      maritalStatus: this.maritalStatus(),
-      dateOfBirth: this.dateOfBirth().trim()
-        ? formatDateToApiIso(formatDateOfBirthToApi(this.dateOfBirth()))
-        : '',
-      nationality: this.nationality().trim(),
-      religion: this.religion().trim(),
-      bloodGroup: this.bloodGroup().trim(),
-      nationalIdCardNo: this.nationalIdCardNo().trim(),
-      incomeTaxNo: this.incomeTaxNo().trim(),
-      contactNumber: this.contactNumber().trim(),
-      emergencyContactNumber: this.emergencyContactNumber().trim(),
-      street: this.street().trim(),
-      streetNo: this.streetNo().trim(),
-      city: this.city().trim(),
-      state: this.state(),
-      country: this.country().trim(),
-      zipCode: this.zipCode().trim(),
-      departmentInAhcp: this.departmentInAhcp().trim(),
-      branchLocation: this.branchLocation().trim() || this.location().trim(),
-      employmentCategory: this.employmentCategory(),
-      workGradeLevel: this.workGradeLevel().trim(),
-      designation: this.designation().trim(),
-      hiringManager: this.reportingManagerValue(),
-      reportingManager: this.reportingManagerValue(),
-      employmentStatus: this.employmentStatus(),
-      remarks: this.remarks().trim(),
-      jobDescription: this.jobDescription().trim(),
-      education: this.educationSections().map((row) => ({
-        institute: (row.institute || row.institution).trim(),
-        qualification: row.qualification.trim(),
-        passingYear: row.passingYear.trim(),
-        fromDate: this.apiDateOrEmpty(row.fromDate),
-        toDate: this.apiDateOrEmpty(row.toDate),
-        subject: row.subject.trim(),
-        marksGrades: row.marksGrades.trim(),
-        notes: row.notes.trim(),
-      })),
-      pastExperience: this.pastExperienceSections().map((row) => ({
-        company: row.company.trim(),
-        designation: (row.designation || row.position).trim(),
-        position: (row.position || row.designation).trim(),
-        duties: row.duties.trim(),
-        duration: row.duration.trim(),
-        fromDate: this.apiDateOrEmpty(row.fromDate),
-        toDate: this.apiDateOrEmpty(row.toDate),
-        lastSalary: row.lastSalary.trim(),
-        remarks: row.remarks.trim(),
-      })),
-      attachments: this.buildAttachmentsPayload().map((row) => ({
-        type: row.type.trim(),
-        fileName: row.fileName.trim(),
-        fileUrl: row.fileUrl.trim(),
-      })),
-      remuneration: {
-        basicSalary: this.basicSalary().trim(),
-        paymentMode: this.paymentMode(),
-        accountTitle: this.accountTitle().trim(),
-        bankName: this.bankName().trim(),
-        accountNo: this.accountNo().trim(),
-        accountType: this.accountType().trim(),
-        effectiveDate: this.apiDateOrEmpty(this.effectiveDate()),
-        taxPercentage: this.isTaxPercentageEnabled() ? this.taxPercentage().trim() : '',
-        dateOfJoining: this.apiDateOrEmpty(this.dateOfJoining()),
-        cashSalaryPercentage: this.cashSalaryPercentage().trim(),
-        advancePercentAllowed: this.advancePercentAllowed().trim(),
-        maximumLoanCapacity: this.maximumLoanCapacity().trim(),
-        maximumAdvanceCapacity: this.maximumAdvanceCapacity().trim(),
-        overTimeApplicable: this.yesNoToBinaryFlag(this.overTimeApplicable()),
-        allowancesApplicable: this.yesNoToBinaryFlag(this.allowancesApplicable()),
-        eobiApplicable: this.yesNoToBinaryFlag(this.eobiApplicable()),
-        socialSecurityApplicable: this.yesNoToBinaryFlag(this.socialSecurityApplicable()),
-        fuelLimit: this.fuelLimit().trim(),
-        medicalAllowances: this.medicalAllowances().trim(),
-        fuelAllowances: this.fuelAllowances().trim(),
-        mobileAllowances: this.mobileAllowances().trim(),
-        carAllowances: this.carAllowances().trim(),
-        otherAllowances: this.otherAllowances().trim(),
-      },
-      leaveManagement: this.buildLeaveManagementPayload(),
-      loginDetail: {
-        employeeCode: this.employeeCode().trim(),
-        userId: this.userId().trim() || this.employeeCode().trim(),
-        loginEmployeeName: this.loginEmployeeName().trim(),
-        password: this.password(),
-        status: this.loginStatus() === '3' ? 3 : 1,
-      },
-      assets: {
-        assetAllocated: this.assetAllocated().trim(),
-        allocationStatus: this.allocationStatus(),
-        allocationDateType: this.allocationDateType(),
-        allocationDate: this.apiDateOrEmpty(this.allocationDate()),
-      },
-    };
   }
 
   protected onAssetAllocatedChange(value: string): void {
@@ -1544,7 +1439,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         departmentInAhcp: this.departmentInAhcp(),
         designation: this.designation(),
         jobDescription: this.jobDescription(),
-        roleSalary: this.roleSalary(),
+        roleSalary: this.firstNonEmpty(this.roleSalary(), this.workGradeLevel()),
         workGradeLevel: this.workGradeLevel(),
         branchLocation: this.branchLocation(),
         costCenter: '',
@@ -1608,7 +1503,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       detail
     };
 
-    const payload = this.buildEmployeeProfilePayload();
+    const payload = this.applicationFormService.buildFlatEmployeeProfilePayload(detail, {
+      jobSpecificationId: this.selectedJobSpecId().trim(),
+    });
 
     const editId = this.editingApiId();
     const request$ = editId
