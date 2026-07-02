@@ -20,6 +20,7 @@ import {
   JobSpecificationRecord,
   JobSpecificationService,
 } from '../../../../services/job-specification.service';
+import { LeaveTypeRecord, LeaveTypeService } from '../../../../services/leave-type.service';
 import {
   GatePassItemMaster,
   GatePassItemMasterService,
@@ -279,6 +280,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly leaveManagementRows = signal<LeaveManagementRow[]>([
     { leaveType: '', leavesAllocated: '', leavesAvailed: '' },
   ]);
+  protected readonly leaveTypeOptions = signal<LeaveTypeRecord[]>([]);
 
   // HR / payroll settings
   protected readonly employeeMaster = signal('');
@@ -1199,6 +1201,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setupIntersectionObserver();
     this.loadJobSpecificationOptions();
+    this.loadLeaveTypeOptions();
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       const nextCode = this.applicationFormService.getNextEmployeeCode();
@@ -1235,6 +1238,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     private readonly viewportScroller: ViewportScroller,
     private readonly applicationFormService: ApplicationFormService,
     private readonly jobSpecificationService: JobSpecificationService,
+    private readonly leaveTypeService: LeaveTypeService,
     private readonly itemMasterService: GatePassItemMasterService,
     private readonly alertService: AlertService,
     private readonly cdr: ChangeDetectorRef,
@@ -1297,6 +1301,29 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||
           'Failed to load job descriptions.';
+        this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+  }
+
+  private loadLeaveTypeOptions(): void {
+    this.leaveTypeService.fetchLeaveTypes().subscribe({
+      next: (records) => {
+        this.leaveTypeOptions.set(
+          records.filter((record) => {
+            const status = String(record.status ?? '').trim().toLowerCase();
+            return !status || status === '1' || status === 'active';
+          }),
+        );
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.leaveTypeOptions.set([]);
+        this.cdr.markForCheck();
+        const errorMessage =
+          (error as { error?: { message?: string } })?.error?.message ||
+          (error as { message?: string })?.message ||
+          'Failed to load leave types.';
         this.alertService.error('Load Failed', errorMessage);
       },
     });

@@ -998,9 +998,13 @@
               @for (row of leaveManagementRows(); let i = $index; track i) {
               <tr>
                 <td>
-                  <input type="text" class="cjr-leave-table__input" [ngModel]="row.leaveType"
-                    (ngModelChange)="updateLeaveManagementRow(i, 'leaveType', $event)"
-                    placeholder="e.g. Annual" />
+                  <select class="cjr-leave-table__input" [ngModel]="row.leaveType"
+                    (ngModelChange)="updateLeaveManagementRow(i, 'leaveType', $event)">
+                    <option value="">Select leave type</option>
+                    @for (option of leaveTypeOptions(); track option.id) {
+                    <option [value]="option.name">{{ option.name }}</option>
+                    }
+                  </select>
                 </td>
                 <td>
                   <input type="text" class="cjr-leave-table__input" inputmode="numeric" [ngModel]="row.leavesAllocated"
