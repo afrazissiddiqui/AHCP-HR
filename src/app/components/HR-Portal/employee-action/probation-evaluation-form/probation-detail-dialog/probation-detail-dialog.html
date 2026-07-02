@@ -1,0 +1,176 @@
+@if (open()) {
+  <div class="dialog-backdrop application-detail-backdrop" (click)="close()"></div>
+  <div class="application-detail-dialog" (click)="$event.stopPropagation()">
+    <div class="application-detail-header dialog-header">
+      <h3>
+        Probation evaluation details ·
+        {{ record()?.EmployeeName || 'Employee' }}
+        ({{ record()?.EmployeeCode ?? '—' }})
+      </h3>
+      <button type="button" class="sapMBtnBase sapMBtn application-detail-close" (click)="close()" title="Close">✕</button>
+    </div>
+
+    <div class="application-detail-body dialog-body">
+      @if (loading()) {
+        <p class="application-detail-empty">Loading probation evaluation details...</p>
+      } @else if (record(); as r) {
+        <section class="application-detail-section">
+          <h4 class="application-detail-section-title">Probation information</h4>
+          <dl class="application-detail-dl">
+            <dt>Employee code</dt>
+            <dd>{{ displayDash(r.EmployeeCode) }}</dd>
+            <dt>Employee name</dt>
+            <dd>{{ displayDash(r.EmployeeName) }}</dd>
+            <dt>Department</dt>
+            <dd>{{ displayDash(r.Department) }}</dd>
+            <dt>Location</dt>
+            <dd>{{ displayDash(r.Location) }}</dd>
+            <dt>Designation</dt>
+            <dd>{{ displayDash(r.Designation) }}</dd>
+            <dt>Reporting manager</dt>
+            <dd>{{ displayDash(r.ReportingManager) }}</dd>
+            <dt>Employment nature</dt>
+            <dd>{{ displayDash(r.EmployeeNature) }}</dd>
+            <dt>Employment status</dt>
+            <dd>{{ displayDash(r.EmployeeType) }}</dd>
+            <dt>Grade work level</dt>
+            <dd>{{ displayDash(r.GradeWorkLevel) }}</dd>
+            <dt>Employment category</dt>
+            <dd>{{ displayDash(r.EmploymentCategory) }}</dd>
+            <dt>Probation start date</dt>
+            <dd>{{ displayDate(r.ProbationStartDate) }}</dd>
+            <dt>Probation end date</dt>
+            <dd>{{ displayDate(r.ProbationEndDate) }}</dd>
+            <dt>Remarks</dt>
+            <dd>{{ displayDash(r.Remarks) }}</dd>
+          </dl>
+        </section>
+
+        <section class="application-detail-section">
+          <h4 class="application-detail-section-title">Probation rating</h4>
+          <div class="application-detail-table-wrap">
+            <table class="application-detail-table">
+              <thead>
+                <tr>
+                  <th>Evaluation parameter</th>
+                  <th>Rating benchmark</th>
+                  <th>Employee rating</th>
+                  <th>Rating remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of ratingParameters; track row.key) {
+                  <tr>
+                    <td>{{ row.label }}</td>
+                    <td>0–100%</td>
+                    <td>{{ displayRating(r.ProbationRating[row.key]) }}</td>
+                    <td>{{ displayDash(r.ProbationRating[row.key].remarks) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <dl class="application-detail-dl" style="margin-top: 12px;">
+            <dt>Supervision remark</dt>
+            <dd>{{ displayDash(r.SupervisionRemark) }}</dd>
+          </dl>
+        </section>
+
+        @if (hasExtension(r)) {
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Extension of probation</h4>
+            <dl class="application-detail-dl">
+              <dt>Probation start date</dt>
+              <dd>{{ displayDate(r.ExtensionOfProbation.probation_start_date) }}</dd>
+              <dt>Probation end date</dt>
+              <dd>{{ displayDate(r.ExtensionOfProbation.probation_end_date) }}</dd>
+              <dt>Extension period</dt>
+              <dd>{{ displayDash(r.ExtensionOfProbation.extension_period_in_probation) }}</dd>
+              <dt>New probation end date</dt>
+              <dd>{{ displayDate(r.ExtensionOfProbation.new_probation_end_date) }}</dd>
+            </dl>
+          </section>
+        }
+
+        <section class="application-detail-section">
+          <h4 class="application-detail-section-title">Probation completion</h4>
+          <dl class="application-detail-dl">
+            <dt>Probation completion</dt>
+            <dd>{{ displayDash(r.ProbationCompletion) }}</dd>
+          </dl>
+        </section>
+
+        <section class="application-detail-section">
+          <h4 class="application-detail-section-title">Termination after probation</h4>
+          <dl class="application-detail-dl">
+            <dt>Termination</dt>
+            <dd>{{ displayDash(r.TerminationOfProbation.termination) }}</dd>
+            <dt>Termination effective date</dt>
+            <dd>{{ displayDate(r.TerminationOfProbation.termination_effective_date) }}</dd>
+          </dl>
+        </section>
+
+        @if (hasSalaryAdjustment(r) || hasAllowances(r) || r.TotalSalary) {
+          <section class="application-detail-section">
+            <h4 class="application-detail-section-title">Salary adjustment</h4>
+            <div class="application-detail-table-wrap">
+              <table class="application-detail-table">
+                <thead>
+                  <tr>
+                    <th>Current salary</th>
+                    <th>Adjustment % in salary</th>
+                    <th>Adjustment amount in salary</th>
+                    <th>Revised salary</th>
+                    <th>Effective date of revision</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{{ displayMoney(r.SalaryAdjustment.currentSalary) }}</td>
+                    <td>{{ displayDash(r.SalaryAdjustment.adjustmentInSalary) }}</td>
+                    <td>{{ displayMoney(r.SalaryAdjustment.adjustmentAmountInSalary) }}</td>
+                    <td>{{ displayMoney(r.SalaryAdjustment.revisedSalary) }}</td>
+                    <td>{{ displayDate(r.SalaryAdjustment.effectiveDateOfRevision) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            @if (hasAllowances(r)) {
+              <h4 class="application-detail-section-title" style="margin-top: 16px;">Allowances</h4>
+              <div class="application-detail-table-wrap">
+                <table class="application-detail-table">
+                  <thead>
+                    <tr>
+                      <th>Allowance</th>
+                      <th>Amount in PKR</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (allowance of r.Allowances; track $index) {
+                      @if (allowance.allowance.trim()) {
+                        <tr>
+                          <td>{{ displayDash(allowance.allowance) }}</td>
+                          <td>{{ displayMoney(allowance.amount) }}</td>
+                          <td>{{ displayDash(allowance.notes) }}</td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <dl class="application-detail-dl" style="margin-top: 12px;">
+              <dt>Total salary</dt>
+              <dd>{{ displayMoney(r.TotalSalary) }}</dd>
+            </dl>
+          </section>
+        }
+      } @else {
+        <p class="application-detail-empty">No probation evaluation data available.</p>
+      }
+    </div>
+  </div>
+}

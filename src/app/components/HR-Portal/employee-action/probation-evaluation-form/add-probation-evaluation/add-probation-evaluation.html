@@ -184,8 +184,11 @@
                 <td>0-100%</td>
                 <td>
                   <div class="rating-cell">
-                    <input type="number" min="0" max="100" placeholder="Rating (%)" [ngModel]="ratings()[row.key].rating"
-                      (keydown)="onRatingKeyDown($event)" (ngModelChange)="onPercentageChange(row.key, $event)"
+                    <input type="text" inputmode="numeric" maxlength="3" placeholder="Rating (%)"
+                      [ngModel]="ratings()[row.key].rating"
+                      (keydown)="onRatingKeyDown($event)"
+                      (ngModelChange)="onPercentageChange(row.key, $event)"
+                      (blur)="onRatingBlur(row.key)"
                       [class.cjs-invalid]="isRatingInvalid(row.key)" />
                     <input type="text" placeholder="Rating Remarks" [ngModel]="ratings()[row.key].remarks"
                       (ngModelChange)="onRatingRemarkChange(row.key, $event)" />

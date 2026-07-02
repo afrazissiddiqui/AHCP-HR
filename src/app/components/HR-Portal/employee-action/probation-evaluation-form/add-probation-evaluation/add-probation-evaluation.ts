@@ -22,6 +22,7 @@ import {
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { formatDateForInput } from '../../../../../utils/date-format.util';
+import { glAccountBranchLabel } from '../../../../setup/gl-account-determination/gl-account-branch.options';
 
 type RatingKey =
   | 'communication_skills'
@@ -153,6 +154,9 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => {
         this.employeeOptions.set(this.buildEmployeeOptions());
+        if (this.editingId && this.employeeCode().trim()) {
+          this.enrichEmployeeFieldsFromApplication(this.employeeCode());
+        }
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
@@ -173,6 +177,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     const existing = this.probationService.findProbationById(editId);
     if (existing) {
       this.populateFromRecord(existing);
+      this.enrichEmployeeFieldsFromApplication(this.employeeCode());
       this.cdr.markForCheck();
       return;
     }
@@ -182,6 +187,7 @@ export class AddProbationEvaluationComponent implements OnInit {
         const record = records.find((item) => String(item.Id) === editId);
         if (record) {
           this.populateFromRecord(record);
+          this.enrichEmployeeFieldsFromApplication(this.employeeCode());
         } else {
           this.alertService.warning('Edit', 'Probation evaluation not found.');
         }
@@ -253,8 +259,10 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.closeNameSuggestions();
 
     const applyRecord = (record: ApplicationFormRecord): void => {
+      const profileFields = this.mapApplicationRecordToEmployeeFields(record);
+      const employeeCode = this.resolveEmployeeCode(record);
       this.populateFromApplicationRecord(record);
-      this.applyExistingProbationForEmployee(this.resolveEmployeeCode(record));
+      this.applyExistingProbationForEmployee(employeeCode, profileFields);
       this.cdr.markForCheck();
     };
 
@@ -269,7 +277,7 @@ export class AddProbationEvaluationComponent implements OnInit {
             applyRecord(localRecord);
           } else {
             this.populateFromEmployeeOption(employee);
-            this.applyExistingProbationForEmployee(employee.code);
+            this.applyExistingProbationForEmployee(employee.code, employee);
             this.cdr.markForCheck();
           }
         },
@@ -283,12 +291,15 @@ export class AddProbationEvaluationComponent implements OnInit {
     }
 
     this.populateFromEmployeeOption(employee);
-    this.applyExistingProbationForEmployee(employee.code);
+    this.applyExistingProbationForEmployee(employee.code, employee);
     this.cdr.markForCheck();
   }
 
   /** If this employee already has a probation evaluation, load it for update (avoids duplicate API error). */
-  private applyExistingProbationForEmployee(employeeCode: string): void {
+  private applyExistingProbationForEmployee(
+    employeeCode: string,
+    profileFields?: Omit<ProbationEmployeeOption, 'code' | 'apiId'>,
+  ): void {
     if (this.route.snapshot.paramMap.get('id')) {
       return;
     }
@@ -299,6 +310,9 @@ export class AddProbationEvaluationComponent implements OnInit {
       this.pageTitle = 'Update Probation Evaluation';
       this.submitButtonLabel = 'Update Probation Evaluation';
       this.populateFromRecord(existing);
+      if (profileFields) {
+        this.applyEmployeeProfileFields(profileFields, employeeCode, { overwrite: true });
+      }
       return;
     }
 
@@ -318,46 +332,176 @@ export class AddProbationEvaluationComponent implements OnInit {
   private mapApplicationRecordToEmployeeFields(
     record: ApplicationFormRecord,
   ): Omit<ProbationEmployeeOption, 'code' | 'apiId'> {
-    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const emptyIfDash = (value: string | undefined | null): string => {
+      const trimmed = (value ?? '').trim();
+      return trimmed === '—' ? '' : trimmed;
+    };
     const personal = record.detail?.personalInfo;
     const requisition = record.detail?.requisition;
     const remuneration = record.detail?.remuneration;
-    const designation =
-      emptyIfDash(personal?.designation ?? '') ||
-      emptyIfDash(record.Designation) ||
-      emptyIfDash(requisition?.internalJobTitle ?? '');
-
-    const dateOfJoining = emptyIfDash(remuneration?.dateOfJoining ?? '');
-    const basicSalary =
-      emptyIfDash(remuneration?.basicSalary ?? '') || emptyIfDash(personal?.roleSalary ?? '');
+    const login = record.detail?.loginDetails;
+    const composedName = [
+      emptyIfDash(personal?.firstName),
+      emptyIfDash(personal?.middleName),
+      emptyIfDash(personal?.lastName),
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const branchCode = this.firstNonEmpty(
+      emptyIfDash(personal?.branchLocation),
+      emptyIfDash(requisition?.location),
+    );
+    const branchLabel = glAccountBranchLabel(branchCode);
+    const designation = this.firstNonEmpty(
+      emptyIfDash(personal?.designation),
+      emptyIfDash(record.Designation),
+      emptyIfDash(requisition?.internalJobTitle),
+    );
 
     return {
-      name: emptyIfDash(record.EmployeeName) || emptyIfDash(personal?.personName ?? ''),
-      department:
-        emptyIfDash(personal?.departmentInAhcp ?? '') || emptyIfDash(record.Department),
-      location:
-        emptyIfDash(personal?.branchLocation ?? '') ||
-        emptyIfDash(requisition?.location ?? '') ||
-        emptyIfDash(personal?.city ?? ''),
+      name: this.firstNonEmpty(
+        emptyIfDash(record.EmployeeName),
+        emptyIfDash(personal?.personName),
+        composedName,
+        emptyIfDash(login?.employeeName),
+      ),
+      department: this.firstNonEmpty(
+        emptyIfDash(personal?.departmentInAhcp),
+        emptyIfDash(record.Department),
+        emptyIfDash(requisition?.department),
+      ),
+      location: this.firstNonEmpty(branchLabel, branchCode, emptyIfDash(personal?.city)),
       designation,
-      reportingManager:
-        emptyIfDash(personal?.reportingManager ?? '') ||
-        emptyIfDash(record.ReportingManager) ||
-        emptyIfDash(requisition?.hiringManager ?? ''),
-      employeeNature:
-        emptyIfDash(personal?.employmentNature ?? '') || emptyIfDash(record.EmployeeNature),
-      employeeType:
-        emptyIfDash(requisition?.division ?? '') || emptyIfDash(record.EmploymentType),
-      gradeWorkLevel:
-        emptyIfDash(personal?.workGradeLevel ?? '') ||
-        emptyIfDash(requisition?.costCenter ?? ''),
-      employmentCategory:
-        emptyIfDash(personal?.employmentCategory ?? '') ||
+      reportingManager: this.firstNonEmpty(
+        emptyIfDash(personal?.reportingManager),
+        emptyIfDash(record.ReportingManager),
+        emptyIfDash(requisition?.hiringManager),
+      ),
+      employeeNature: this.firstNonEmpty(
+        emptyIfDash(personal?.employmentNature),
+        emptyIfDash(record.EmployeeNature),
+        emptyIfDash(requisition?.company),
+      ),
+      employeeType: this.firstNonEmpty(
+        emptyIfDash(personal?.employmentStatus),
+        emptyIfDash(record.status),
+      ),
+      gradeWorkLevel: this.firstNonEmpty(
+        emptyIfDash(personal?.workGradeLevel),
+        emptyIfDash(personal?.costCenter),
+        emptyIfDash(requisition?.costCenter),
+      ),
+      employmentCategory: this.firstNonEmpty(
+        emptyIfDash(personal?.employmentCategory),
         emptyIfDash(record.EmploymentCategory),
-      remarks: emptyIfDash(personal?.remarks ?? ''),
-      dateOfJoining,
-      basicSalary,
+      ),
+      remarks: emptyIfDash(personal?.remarks),
+      dateOfJoining: emptyIfDash(remuneration?.dateOfJoining),
+      basicSalary: emptyIfDash(remuneration?.basicSalary),
     };
+  }
+
+  private firstNonEmpty(...values: string[]): string {
+    for (const value of values) {
+      const trimmed = value.trim();
+      if (trimmed && trimmed !== '—') {
+        return trimmed;
+      }
+    }
+    return '';
+  }
+
+  private normalizeProfileValue(value: string | undefined | null): string {
+    const trimmed = (value ?? '').trim();
+    return trimmed === '—' ? '' : trimmed;
+  }
+
+  private applyEmployeeProfileFields(
+    profile: Omit<ProbationEmployeeOption, 'code' | 'apiId'>,
+    employeeCode: string,
+    options: { overwrite?: boolean } = {},
+  ): void {
+    const overwrite = options.overwrite ?? false;
+    const setField = (target: ReturnType<typeof signal<string>>, value: string): void => {
+      const next = this.normalizeProfileValue(value);
+      if (!next) {
+        return;
+      }
+      if (overwrite || !this.normalizeProfileValue(target())) {
+        target.set(next);
+      }
+    };
+
+    setField(this.employeeCode, employeeCode);
+    setField(this.employeeName, profile.name);
+    setField(this.department, profile.department);
+    setField(this.location, profile.location);
+    setField(this.designation, profile.designation);
+    setField(this.reportingManager, profile.reportingManager);
+    setField(this.employeeNature, profile.employeeNature);
+    setField(this.employeeType, profile.employeeType);
+    setField(this.gradeWorkLevel, profile.gradeWorkLevel);
+    setField(this.employmentCategory, profile.employmentCategory);
+    setField(this.remarks, profile.remarks);
+
+    const joiningDate = this.normalizeProfileValue(profile.dateOfJoining);
+    if (joiningDate && (overwrite || !this.probationStartDate().trim())) {
+      this.applyProbationDatesFromJoining(joiningDate);
+    }
+
+    const grossSalary = this.normalizeProfileValue(profile.basicSalary);
+    if (grossSalary && (overwrite || !this.currentSalary().trim())) {
+      this.applyGrossSalaryAsCurrentSalary(grossSalary);
+    }
+  }
+
+  private applyGrossSalaryAsCurrentSalary(grossSalary: string): void {
+    const salary = grossSalary.trim();
+    if (!salary) {
+      return;
+    }
+    this.currentSalary.set(salary);
+    this.recalculateAdjustmentAmountFromPercent();
+  }
+
+  private enrichEmployeeFieldsFromApplication(employeeCode: string): void {
+    const code = employeeCode.trim();
+    if (!code) {
+      return;
+    }
+
+    const applyFromRecord = (record: ApplicationFormRecord): void => {
+      const profile = this.mapApplicationRecordToEmployeeFields(record);
+      this.applyEmployeeProfileFields(profile, this.resolveEmployeeCode(record), { overwrite: false });
+      this.cdr.markForCheck();
+    };
+
+    const localRecord = this.findApplicationRecordByCode(code);
+    if (!localRecord) {
+      return;
+    }
+
+    const detailId = localRecord.apiId?.trim();
+    if (!detailId) {
+      applyFromRecord(localRecord);
+      return;
+    }
+
+    this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
+      next: applyFromRecord,
+      error: () => applyFromRecord(localRecord),
+    });
+  }
+
+  private findApplicationRecordByCode(employeeCode: string): ApplicationFormRecord | undefined {
+    const code = employeeCode.trim().toLowerCase();
+    if (!code) {
+      return undefined;
+    }
+
+    return this.applicationFormService.getApplicationRecords().find(
+      (record) => this.resolveEmployeeCode(record).trim().toLowerCase() === code,
+    );
   }
 
   private toEmployeeOption(record: ApplicationFormRecord): ProbationEmployeeOption {
@@ -383,26 +527,8 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   private populateFromApplicationRecord(record: ApplicationFormRecord): void {
-    const mapped = this.mapApplicationRecordToEmployeeFields(record);
-
-    this.employeeCode.set(this.resolveEmployeeCode(record));
-    this.employeeName.set(mapped.name);
-    this.department.set(mapped.department);
-    this.location.set(mapped.location);
-    this.designation.set(mapped.designation);
-    this.reportingManager.set(mapped.reportingManager);
-    this.employeeNature.set(mapped.employeeNature);
-    this.employeeType.set(mapped.employeeType);
-    this.gradeWorkLevel.set(mapped.gradeWorkLevel);
-    this.employmentCategory.set(mapped.employmentCategory);
-    this.remarks.set(mapped.remarks);
-
-    if (mapped.basicSalary && this.isPostSubmitSectionsAvailable()) {
-      this.currentSalary.set(mapped.basicSalary);
-      this.recalculateAdjustmentAmountFromPercent();
-    }
-
-    this.applyProbationDatesFromJoining(mapped.dateOfJoining);
+    const profile = this.mapApplicationRecordToEmployeeFields(record);
+    this.applyEmployeeProfileFields(profile, this.resolveEmployeeCode(record), { overwrite: true });
   }
 
   private applyProbationDatesFromJoining(dateOfJoining: string): void {
@@ -454,24 +580,8 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   private populateFromEmployeeOption(employee: ProbationEmployeeOption): void {
-    this.employeeCode.set(employee.code);
-    this.employeeName.set(employee.name);
-    this.department.set(employee.department);
-    this.location.set(employee.location);
-    this.designation.set(employee.designation);
-    this.reportingManager.set(employee.reportingManager);
-    this.employeeNature.set(employee.employeeNature);
-    this.employeeType.set(employee.employeeType);
-    this.gradeWorkLevel.set(employee.gradeWorkLevel);
-    this.employmentCategory.set(employee.employmentCategory);
-    this.remarks.set(employee.remarks);
-
-    if (employee.basicSalary && this.isPostSubmitSectionsAvailable()) {
-      this.currentSalary.set(employee.basicSalary);
-      this.recalculateAdjustmentAmountFromPercent();
-    }
-
-    this.applyProbationDatesFromJoining(employee.dateOfJoining);
+    const { code, apiId, ...profile } = employee;
+    this.applyEmployeeProfileFields(profile, code, { overwrite: true });
   }
 
   private buildAllowancesForPayload(): ProbationEvaluationAddPayload['allowances'] {
@@ -637,10 +747,7 @@ export class AddProbationEvaluationComponent implements OnInit {
   protected readonly ratingValidationTouched = signal(false);
 
   protected onPercentageChange(key: RatingKey, value: string | number | null): void {
-    const rawValue = value === null ? '' : String(value);
-    const digitsOnly = rawValue.replace(/\D/g, '');
-    const numericValue = Math.min(100, Math.max(0, Number(digitsOnly || '0')));
-    const normalized = digitsOnly === '' ? '' : numericValue.toString();
+    const normalized = this.clampRatingValue(value);
 
     this.ratings.update((current) => ({
       ...current,
@@ -648,10 +755,61 @@ export class AddProbationEvaluationComponent implements OnInit {
     }));
   }
 
+  protected onRatingBlur(key: RatingKey): void {
+    const current = this.ratings()[key].rating;
+    const normalized = this.clampRatingValue(current);
+    if (normalized !== current) {
+      this.ratings.update((state) => ({
+        ...state,
+        [key]: { ...state[key], rating: normalized },
+      }));
+    }
+  }
+
   protected onRatingKeyDown(event: KeyboardEvent): void {
     if (['-', '+', 'e', 'E', '.'].includes(event.key)) {
       event.preventDefault();
+      return;
     }
+
+    if (!/^\d$/.test(event.key)) {
+      return;
+    }
+
+    const input = event.target as HTMLInputElement | null;
+    if (!input) {
+      return;
+    }
+
+    const current = input.value ?? '';
+    const selectionStart = input.selectionStart ?? current.length;
+    const selectionEnd = input.selectionEnd ?? current.length;
+    const nextValue = `${current.slice(0, selectionStart)}${event.key}${current.slice(selectionEnd)}`;
+    const digitsOnly = nextValue.replace(/\D/g, '');
+
+    if (digitsOnly && Number(digitsOnly) > 100) {
+      event.preventDefault();
+    }
+  }
+
+  private clampRatingValue(value: string | number | null | undefined): string {
+    const rawValue = value === null || value === undefined ? '' : String(value).trim();
+    if (!rawValue) {
+      return '';
+    }
+
+    const digitsOnly = rawValue.replace(/\D/g, '');
+    if (!digitsOnly) {
+      return '';
+    }
+
+    const numericValue = Math.min(100, Math.max(0, Number(digitsOnly)));
+    return String(numericValue);
+  }
+
+  private toRatingNumber(value: string): number {
+    const clamped = this.clampRatingValue(value);
+    return clamped === '' ? 0 : Number(clamped);
   }
 
   private isRatingValidValue(value: string): boolean {
@@ -677,7 +835,6 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.extensionEntries.set([]);
     this.termination.set('');
     this.terminationEffectiveDate.set('');
-    this.currentSalary.set('');
     this.adjustmentInSalary.set('');
     this.adjustmentAmountInSalary.set('');
     this.effectiveDateOfRevision.set('');
@@ -828,27 +985,27 @@ export class AddProbationEvaluationComponent implements OnInit {
       remarks: this.remarks().trim(),
       probation_rating: {
         communication_skills: {
-          rating: Number(ratingValues.communication_skills.rating),
+          rating: this.toRatingNumber(ratingValues.communication_skills.rating),
           remarks: ratingValues.communication_skills.remarks.trim(),
         },
         technical_skills: {
-          rating: Number(ratingValues.technical_skills.rating),
+          rating: this.toRatingNumber(ratingValues.technical_skills.rating),
           remarks: ratingValues.technical_skills.remarks.trim(),
         },
         attendance: {
-          rating: Number(ratingValues.attendance.rating),
+          rating: this.toRatingNumber(ratingValues.attendance.rating),
           remarks: ratingValues.attendance.remarks.trim(),
         },
         discipline: {
-          rating: Number(ratingValues.discipline.rating),
+          rating: this.toRatingNumber(ratingValues.discipline.rating),
           remarks: ratingValues.discipline.remarks.trim(),
         },
         teamwork: {
-          rating: Number(ratingValues.teamwork.rating),
+          rating: this.toRatingNumber(ratingValues.teamwork.rating),
           remarks: ratingValues.teamwork.remarks.trim(),
         },
         productivity: {
-          rating: Number(ratingValues.productivity.rating),
+          rating: this.toRatingNumber(ratingValues.productivity.rating),
           remarks: ratingValues.productivity.remarks.trim(),
         },
       },
@@ -965,31 +1122,27 @@ export class AddProbationEvaluationComponent implements OnInit {
 
     this.ratings.set({
       communication_skills: {
-        rating: record.ProbationRating.communication_skills.rating
-          ? String(record.ProbationRating.communication_skills.rating)
-          : '',
+        rating: this.clampRatingValue(record.ProbationRating.communication_skills.rating),
         remarks: record.ProbationRating.communication_skills.remarks,
       },
       technical_skills: {
-        rating: record.ProbationRating.technical_skills.rating
-          ? String(record.ProbationRating.technical_skills.rating)
-          : '',
+        rating: this.clampRatingValue(record.ProbationRating.technical_skills.rating),
         remarks: record.ProbationRating.technical_skills.remarks,
       },
       attendance: {
-        rating: record.ProbationRating.attendance.rating ? String(record.ProbationRating.attendance.rating) : '',
+        rating: this.clampRatingValue(record.ProbationRating.attendance.rating),
         remarks: record.ProbationRating.attendance.remarks,
       },
       discipline: {
-        rating: record.ProbationRating.discipline.rating ? String(record.ProbationRating.discipline.rating) : '',
+        rating: this.clampRatingValue(record.ProbationRating.discipline.rating),
         remarks: record.ProbationRating.discipline.remarks,
       },
       teamwork: {
-        rating: record.ProbationRating.teamwork.rating ? String(record.ProbationRating.teamwork.rating) : '',
+        rating: this.clampRatingValue(record.ProbationRating.teamwork.rating),
         remarks: record.ProbationRating.teamwork.remarks,
       },
       productivity: {
-        rating: record.ProbationRating.productivity.rating ? String(record.ProbationRating.productivity.rating) : '',
+        rating: this.clampRatingValue(record.ProbationRating.productivity.rating),
         remarks: record.ProbationRating.productivity.remarks,
       },
     });

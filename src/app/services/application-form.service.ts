@@ -361,6 +361,7 @@ const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
 ];
 
 const REMUNERATION_EXTRA_KEYS: Readonly<Record<string, readonly string[]>> = {
+  basicSalary: ['grossSalary', 'gross_salary', 'GrossSalary', 'salaryOffer', 'salary_offer'],
   medicalAllowances: ['medicalAllowance', 'medical_allowance', 'MedicalAllowances', 'MedicalAllowance'],
   fuelAllowances: ['fuelAllowance', 'fuel_allowance', 'FuelAllowances', 'FuelAllowance'],
   mobileAllowances: ['mobileAllowance', 'mobile_allowance', 'MobileAllowances', 'MobileAllowance'],
@@ -1105,8 +1106,19 @@ export class ApplicationFormService {
     const summary = this.mapApiItemToRecord(item);
     const asString = (value: unknown): string =>
       value === undefined || value === null ? '' : String(value).trim();
+    const personalInfoSource =
+      this.pickNestedRecord(item['personalInfo']) ??
+      this.pickNestedRecord(item['personal_info']) ??
+      item;
+    const requisitionSource =
+      this.pickNestedRecord(item['requisition']) ??
+      this.pickNestedRecord(item['requisition_detail']) ??
+      item;
     const pick = (camel: string, snake?: string): string =>
-      asString(item[camel]) || (snake ? asString(item[snake]) : '');
+      pickFrom(personalInfoSource, camel, snake) ||
+      pickFrom(requisitionSource, camel, snake) ||
+      asString(item[camel]) ||
+      (snake ? asString(item[snake]) : '');
 
     const educationRaw =
       item['educationSections'] ??

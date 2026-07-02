@@ -796,13 +796,13 @@
           </div>
 
           <div class="cjr-row">
-            <label [class.cjr-label-required]="isMandatory('accountTitle')">Account Title:</label>
+            <label class="cjr-label-required">Account Title:</label>
             <input type="text" [ngModel]="accountTitle()" (ngModelChange)="accountTitle.set($event)"
               [class.cjr-invalid]="showFieldError('accountTitle')" (blur)="touch('accountTitle')" />
           </div>
 
           <div class="cjr-row">
-            <label [class.cjr-label-required]="isMandatory('bankName')">Bank Name:</label>
+            <label class="cjr-label-required">Bank Name:</label>
             <input type="text" [ngModel]="bankName()" (ngModelChange)="bankName.set($event)"
               [class.cjr-invalid]="showFieldError('bankName')" (blur)="touch('bankName')" />
           </div>
@@ -814,14 +814,14 @@
           </div>
 
           <div class="cjr-row">
-            <label [class.cjr-label-required]="isMandatory('accountNo')">Bank Account Number:</label>
+            <label class="cjr-label-required">Bank Account Number:</label>
             <input type="text" inputmode="numeric" [ngModel]="accountNo()" (ngModelChange)="onAccountNoChange($event)"
               [class.cjr-invalid]="showFieldError('accountNo')" (keydown)="onIntegerKeyDown($event)"
               (blur)="touch('accountNo')" />
           </div>
 
           <div class="cjr-row">
-            <label [class.cjr-label-required]="isMandatory('accountType')">Account Type:</label>
+            <label class="cjr-label-required">Account Type:</label>
             <input type="text" [ngModel]="accountType()" (ngModelChange)="accountType.set($event)"
               [class.cjr-invalid]="showFieldError('accountType')" (blur)="touch('accountType')" />
           </div>

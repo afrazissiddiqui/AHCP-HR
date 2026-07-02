@@ -20,13 +20,14 @@ import {
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
 import { displayDateOnly } from '../../../../utils/date-format.util';
+import { ProbationDetailDialogComponent } from './probation-detail-dialog/probation-detail-dialog';
 
 type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 'Location' | 'ReportingManager' | 'EmployeeType' | 'GradeWorkLevel' | 'EmploymentCategory' | 'Remarks' | 'ProbationRating' | 'SupervisionRemark' | 'ExtensionOfProbation' | 'TerminationOfProbation' | 'SalaryAdjustment' | 'Allowances' | 'TotalSalary'>;
 
 @Component({
   selector: 'app-probation-evaluation-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent, ProbationDetailDialogComponent],
   templateUrl: './probation-evaluation-form.html',
   styleUrls: [
     '../../Application-Form/Application-Form.css',
@@ -296,9 +297,5 @@ export class ProbationEvaluationFormComponent implements OnInit {
       return displayDateOnly(typeof value === 'string' ? value : String(value ?? ''));
     }
     return String(value ?? '');
-  }
-
-  displayDate(value: string | number | undefined | null): string {
-    return displayDateOnly(value);
   }
 }
