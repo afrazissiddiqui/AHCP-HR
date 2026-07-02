@@ -1021,9 +1021,35 @@
   transform: translateY(0);
 }
 
+.cjr-submit-btn:disabled,
+.cjr-cancel-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .cjr-submit-icon {
   font-size: 16px;
   font-weight: bold;
+}
+
+.cjr-submit-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cjr-submit-spin 0.8s linear infinite;
+}
+
+@keyframes cjr-submit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 1100px) {

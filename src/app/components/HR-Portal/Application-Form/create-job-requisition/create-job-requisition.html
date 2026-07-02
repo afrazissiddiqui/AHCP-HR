@@ -915,7 +915,7 @@
           </div>
 
           <div class="cjr-row">
-            <label>Fuel Limit:</label>
+            <label>Fuel Limit (Liters:):</label>
             <input type="text" inputmode="decimal" [ngModel]="fuelLimit()"
               (ngModelChange)="onNumericOnlyChange($event, fuelLimit)" (keydown)="onDecimalKeyDown($event)"
               (blur)="touch('fuelLimit')" />
@@ -923,16 +923,8 @@
 
           <div class="cjr-row">
             <label>Medical Allowances:</label>
-            <input type="text" inputmode="decimal" [ngModel]="medicalAllowances()"
-              (ngModelChange)="onNumericOnlyChange($event, medicalAllowances)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('medicalAllowances')" />
-          </div>
-
-          <div class="cjr-row">
-            <label>Fuel Allowances:</label>
-            <input type="text" inputmode="decimal" [ngModel]="fuelAllowances()"
-              (ngModelChange)="onNumericOnlyChange($event, fuelAllowances)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('fuelAllowances')" />
+            <input type="text" inputmode="decimal" [ngModel]="medicalAllowances()" readonly
+              placeholder="Auto-calculated: (Gross Salary / 110) × 10%" tabindex="-1" />
           </div>
 
           <div class="cjr-row">
@@ -1162,14 +1154,20 @@
     </div>
 
     <div class="cjr-actions-footer">
-      <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()">
+      <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()" [disabled]="submitting()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
         Cancel
       </button>
-      <button type="button" class="cjr-submit-btn" (click)="submitApplication()">
-        <span class="cjr-submit-icon">✓</span> {{ submitButtonLabel() }}
+      <button type="button" class="cjr-submit-btn" (click)="submitApplication()" [disabled]="submitting()">
+        @if (submitting()) {
+        <span class="cjr-submit-spinner" aria-hidden="true"></span>
+        <span>Submitting...</span>
+        } @else {
+        <span class="cjr-submit-icon">✓</span>
+        <span>{{ submitButtonLabel() }}</span>
+        }
       </button>
     </div>
   </div>

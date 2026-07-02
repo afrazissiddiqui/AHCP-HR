@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, CUSTOM_ELEMENTS_
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ViewportScroller } from '@angular/common';
+import { finalize } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import {
   ApplicationFormDetail,
@@ -142,6 +143,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly submitButtonLabel = computed(() =>
     this.editingApiId() ? 'Update Application' : 'Submit Application',
   );
+  protected readonly submitting = signal(false);
   protected readonly copyExisting = signal(true);
   protected readonly activeSection = signal('personal-info-section');
   protected readonly selectedJobSpecId = signal('');
@@ -347,6 +349,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   protected onGrossSalaryChange(value: string): void {
     this.basicSalary.set(this.sanitizeDecimalValue(value));
+    this.updateMedicalAllowanceFromGrossSalary();
     this.updateMaximumAdvanceCapacityFromAdvancePercent();
   }
 
@@ -649,6 +652,31 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       return '';
     }
     return String(value).trim();
+  }
+
+  private updateMedicalAllowanceFromGrossSalary(): void {
+    const salaryStr = this.basicSalary().trim();
+    if (!salaryStr) {
+      this.medicalAllowances.set('');
+      return;
+    }
+
+    const grossSalary = Number.parseFloat(salaryStr);
+    if (!Number.isFinite(grossSalary) || grossSalary <= 0) {
+      this.medicalAllowances.set('');
+      return;
+    }
+
+    const medicalAllowance = (grossSalary / 110) * 0.1;
+    this.medicalAllowances.set(this.formatCalculatedAmount(medicalAllowance));
+  }
+
+  private formatCalculatedAmount(value: number): string {
+    if (!Number.isFinite(value)) {
+      return '';
+    }
+
+    return value.toFixed(2).replace(/\.00$/, '');
   }
 
   private yesNoToBinaryFlag(value: string): string {
@@ -1394,10 +1422,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     if (record.basicSalary) {
       this.basicSalary.set(String(record.basicSalary));
+      this.updateMedicalAllowanceFromGrossSalary();
       this.updateMaximumAdvanceCapacityFromAdvancePercent();
-    }
-    if (record.medicalAllowance) {
-      this.medicalAllowances.set(String(record.medicalAllowance));
     }
     if (record.fuelAllowance) {
       this.fuelAllowances.set(String(record.fuelAllowance));
@@ -1461,6 +1487,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   protected submitApplication(): void {
+    if (this.submitting()) {
+      return;
+    }
+
     this.validationSubmitted.set(true);
     this.touchAllMandatory();
     if (!this.validateForm()) {
@@ -1585,7 +1615,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       ? this.applicationFormService.updateEmployeeProfile(editId, payload)
       : this.applicationFormService.addEmployeeProfile(payload);
 
-    request$.subscribe({
+    this.submitting.set(true);
+    request$.pipe(finalize(() => {
+      this.submitting.set(false);
+      this.cdr.markForCheck();
+    })).subscribe({
       next: (response) => {
         const responseId = this.applicationFormService.extractApiIdFromResponse(response);
         const cacheKeys = new Set(
@@ -1753,9 +1787,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         this.remunerationValue(remuneration.loanAmountAllowed),
       ),
     );
+    this.updateMedicalAllowanceFromGrossSalary();
     this.updateMaximumAdvanceCapacityFromAdvancePercent();
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? 'No');
-    this.medicalAllowances.set(this.remunerationValue(remuneration.medicalAllowances));
     this.fuelAllowances.set(this.remunerationValue(remuneration.fuelAllowances));
     this.mobileAllowances.set(this.remunerationValue(remuneration.mobileAllowances));
     this.carAllowances.set(this.remunerationValue(remuneration.carAllowances));
