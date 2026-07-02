@@ -46,6 +46,7 @@ const EXACT_TITLES: Record<string, string> = {
   'gate-pass/agp': 'AGP',
   'gate-pass/igp': 'IGP',
   'setup/gl-account-determination': 'GL Account Determination',
+  'setup/leave-types': 'Leave Types',
   'setup/user-setup': 'User Setup',
   'plant-maintenance/main-form': 'Main Form',
   'plant-maintenance/main-form/plant-maintenance-master-form': 'Plant Maintenance Master Form',
@@ -89,6 +90,7 @@ const NON_SEARCH_ROUTE_KEYS = new Set([
   'forms-hub',
   'employee-action/approval-authority-setup',
   'setup/gl-account-determination',
+  'setup/leave-types',
   'setup/user-setup',
 ]);
 

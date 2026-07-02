@@ -1,0 +1,118 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div class="setup-body">
+      <div class="setup-intro">
+        <h2>Leave Types</h2>
+        <p>Manage leave type records and descriptions.</p>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">{{ formTitle() }}</h3>
+            <p class="panel-subtitle">
+              @if (formMode() === 'edit') {
+                Update the selected leave type.
+              } @else {
+                Enter leave type details to create a new record.
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field-block">
+            <span class="field-label">Name</span>
+            <input
+              type="text"
+              class="field-input"
+              [ngModel]="formName()"
+              (ngModelChange)="formName.set($event)"
+              name="leave-type-name"
+              placeholder="Name"
+            />
+          </label>
+
+          <label class="field-block field-block--wide">
+            <span class="field-label">Description</span>
+            <input
+              type="text"
+              class="field-input"
+              [ngModel]="formDescription()"
+              (ngModelChange)="formDescription.set($event)"
+              name="leave-type-description"
+              placeholder="Description"
+            />
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitLeaveType()">
+            {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update Leave Type' : 'Add Leave Type' }}
+          </button>
+          @if (formMode() === 'edit') {
+            <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
+          }
+        </div>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">Leave Types</h3>
+            <p class="panel-subtitle">Total leave types: {{ totalLeaveTypes() }}</p>
+          </div>
+          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadLeaveTypes()">
+            {{ loading() ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+
+        @if (loading()) {
+          <div class="panel-message">Loading leave types…</div>
+        } @else if (!leaveTypes().length) {
+          <div class="panel-message">No leave types found.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="entry-table">
+              <thead>
+                <tr>
+                  <th class="col-sr">SR No.</th>
+                  <th>Name</th>
+                  <th>Code</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th class="col-action">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (record of leaveTypes(); track record.id; let index = $index) {
+                  <tr>
+                    <td class="col-sr">{{ index + 1 }}</td>
+                    <td>{{ cellValue(record, 'name') }}</td>
+                    <td>{{ cellValue(record, 'code') }}</td>
+                    <td>{{ cellValue(record, 'description') }}</td>
+                    <td>{{ cellValue(record, 'status') }}</td>
+                    <td class="col-action">
+                      <div class="action-buttons">
+                        <button type="button" class="btn-edit" [disabled]="saving() || deleting()" (click)="startEdit(record)">
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-delete"
+                          [disabled]="saving() || deleting()"
+                          (click)="deleteLeaveType(record)">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

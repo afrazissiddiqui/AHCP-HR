@@ -87,11 +87,16 @@
   overflow: hidden;
 }
 
+.cjr-form-card {
+  overflow: visible;
+}
+
 /* Hero banner */
 .scd-form-hero {
   position: relative;
   overflow: hidden;
   padding: 20px 24px;
+  border-radius: var(--mad-radius-lg) var(--mad-radius-lg) 0 0;
   background: linear-gradient(135deg, #0052cc 0%, #0066ff 52%, #0043a3 100%);
   color: #fff;
 }

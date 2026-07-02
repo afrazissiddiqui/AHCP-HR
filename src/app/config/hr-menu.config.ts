@@ -65,6 +65,12 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         icon: 'employee',
         route: '/setup/user-setup',
       },
+      {
+        label: 'Leave Types',
+        value: 'setup/leave-types',
+        icon: 'calendar',
+        route: '/setup/leave-types',
+      },
     ],
   },
   { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
