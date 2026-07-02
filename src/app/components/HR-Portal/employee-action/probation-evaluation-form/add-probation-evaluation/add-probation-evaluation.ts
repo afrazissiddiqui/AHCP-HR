@@ -22,6 +22,7 @@ import {
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { formatDateForInput } from '../../../../../utils/date-format.util';
+import { sanitizeApiText } from '../../../../../utils/api-text.util';
 import { glAccountBranchLabel } from '../../../../setup/gl-account-determination/gl-account-branch.options';
 
 type RatingKey =
@@ -68,7 +69,7 @@ interface ProbationExtensionEntry {
   imports: [CommonModule, FormsModule],
   templateUrl: './add-probation-evaluation.html',
   styleUrls: [
-    '../../../job-specification-form/create-job-specification/create-job-specification.css',
+    '../../../Application-Form/create-job-requisition/create-job-requisition.css',
     './add-probation-evaluation.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +78,13 @@ export class AddProbationEvaluationComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add Probation Evaluation';
   submitButtonLabel = 'Save Probation Evaluation';
+  protected readonly activeSection = signal('probation-info-section');
+
+  get pageSubtitle(): string {
+    return this.editingId
+      ? 'Update probation evaluation, performance ratings, and post-probation decisions.'
+      : 'Capture probation details, performance ratings, and completion outcomes for an employee.';
+  }
 
   constructor(
     private readonly router: Router,
@@ -332,10 +340,8 @@ export class AddProbationEvaluationComponent implements OnInit {
   private mapApplicationRecordToEmployeeFields(
     record: ApplicationFormRecord,
   ): Omit<ProbationEmployeeOption, 'code' | 'apiId'> {
-    const emptyIfDash = (value: string | undefined | null): string => {
-      const trimmed = (value ?? '').trim();
-      return trimmed === '—' ? '' : trimmed;
-    };
+    const emptyIfDash = (value: string | undefined | null): string =>
+      sanitizeApiText(value);
     const personal = record.detail?.personalInfo;
     const requisition = record.detail?.requisition;
     const remuneration = record.detail?.remuneration;
@@ -377,11 +383,7 @@ export class AddProbationEvaluationComponent implements OnInit {
         emptyIfDash(record.ReportingManager),
         emptyIfDash(requisition?.hiringManager),
       ),
-      employeeNature: this.firstNonEmpty(
-        emptyIfDash(personal?.employmentNature),
-        emptyIfDash(record.EmployeeNature),
-        emptyIfDash(requisition?.company),
-      ),
+      employeeNature: emptyIfDash(personal?.employmentNature),
       employeeType: this.firstNonEmpty(
         emptyIfDash(personal?.employmentStatus),
         emptyIfDash(record.status),
@@ -397,7 +399,7 @@ export class AddProbationEvaluationComponent implements OnInit {
       ),
       remarks: emptyIfDash(personal?.remarks),
       dateOfJoining: emptyIfDash(remuneration?.dateOfJoining),
-      basicSalary: emptyIfDash(remuneration?.basicSalary),
+      basicSalary: this.formatGrossSalary(emptyIfDash(remuneration?.basicSalary)),
     };
   }
 
@@ -412,8 +414,21 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   private normalizeProfileValue(value: string | undefined | null): string {
-    const trimmed = (value ?? '').trim();
-    return trimmed === '—' ? '' : trimmed;
+    return sanitizeApiText(value);
+  }
+
+  private formatGrossSalary(value: string | undefined | null): string {
+    const sanitized = sanitizeApiText(value);
+    if (!sanitized) {
+      return '';
+    }
+
+    const numeric = Number.parseFloat(sanitized.replace(/,/g, ''));
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return String(numeric);
+    }
+
+    return sanitized;
   }
 
   private applyEmployeeProfileFields(
@@ -425,6 +440,9 @@ export class AddProbationEvaluationComponent implements OnInit {
     const setField = (target: ReturnType<typeof signal<string>>, value: string): void => {
       const next = this.normalizeProfileValue(value);
       if (!next) {
+        if (overwrite) {
+          target.set('');
+        }
         return;
       }
       if (overwrite || !this.normalizeProfileValue(target())) {
@@ -449,8 +467,18 @@ export class AddProbationEvaluationComponent implements OnInit {
       this.applyProbationDatesFromJoining(joiningDate);
     }
 
-    const grossSalary = this.normalizeProfileValue(profile.basicSalary);
-    if (grossSalary && (overwrite || !this.currentSalary().trim())) {
+    const grossSalary = this.formatGrossSalary(profile.basicSalary);
+    if (overwrite) {
+      if (grossSalary) {
+        this.applyGrossSalaryAsCurrentSalary(grossSalary);
+      } else {
+        this.currentSalary.set('');
+        this.recalculateAdjustmentAmountFromPercent();
+      }
+      return;
+    }
+
+    if (grossSalary && !this.normalizeProfileValue(this.currentSalary())) {
       this.applyGrossSalaryAsCurrentSalary(grossSalary);
     }
   }
@@ -473,6 +501,10 @@ export class AddProbationEvaluationComponent implements OnInit {
     const applyFromRecord = (record: ApplicationFormRecord): void => {
       const profile = this.mapApplicationRecordToEmployeeFields(record);
       this.applyEmployeeProfileFields(profile, this.resolveEmployeeCode(record), { overwrite: false });
+      const grossSalary = this.formatGrossSalary(profile.basicSalary);
+      if (grossSalary && !this.normalizeProfileValue(this.currentSalary())) {
+        this.applyGrossSalaryAsCurrentSalary(grossSalary);
+      }
       this.cdr.markForCheck();
     };
 
@@ -941,12 +973,29 @@ export class AddProbationEvaluationComponent implements OnInit {
     }
   }
 
-  protected cancel(): void {
-    void this.router.navigateByUrl('/employee-action/probation-evaluation-form');
-  }
-
   protected back(): void {
     this.cancel();
+  }
+
+  protected scrollToSection(sectionId: string): void {
+    let targetId = sectionId;
+    if (
+      (sectionId === 'extension-of-probation-section' ||
+        sectionId === 'termination-of-probation-section' ||
+        sectionId === 'salary-adjustment-section') &&
+      !this.isPostSubmitSectionsAvailable()
+    ) {
+      targetId = 'post-submit-locked-section';
+    }
+
+    this.activeSection.set(sectionId);
+    setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  }
+
+  protected cancel(): void {
+    void this.router.navigateByUrl('/employee-action/probation-evaluation-form');
   }
 
   protected save(): void {
@@ -1105,7 +1154,7 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   private populateFromRecord(record: ProbationEvaluationRecord): void {
-    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const emptyIfDash = (value: string): string => sanitizeApiText(value);
 
     this.employeeCode.set(emptyIfDash(record.EmployeeCode));
     this.employeeName.set(emptyIfDash(record.EmployeeName));
@@ -1180,7 +1229,11 @@ export class AddProbationEvaluationComponent implements OnInit {
     );
     this.terminationEffectiveDate.set(record.TerminationOfProbation.termination_effective_date ?? '');
 
-    this.currentSalary.set(record.SalaryAdjustment.currentSalary ? String(record.SalaryAdjustment.currentSalary) : '');
+    this.currentSalary.set(
+      record.SalaryAdjustment.currentSalary
+        ? this.formatGrossSalary(String(record.SalaryAdjustment.currentSalary))
+        : '',
+    );
     this.adjustmentInSalary.set(
       record.SalaryAdjustment.adjustmentInSalary ? String(record.SalaryAdjustment.adjustmentInSalary) : '',
     );

@@ -1,22 +1,124 @@
-<div class="cjs-page">
-  <div class="cjs-header">
-    <div class="cjs-header-left">
-      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
-        <span class="cjs-back-icon">❮</span>
+<div class="cjr-page mad-add-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>{{ pageTitle }}</h1>
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="mad-page-subtitle">{{ pageSubtitle }}</p>
+      </div>
     </div>
   </div>
 
-  <div class="cjs-card">
-    <div class="cjs-form-container">
-      <section class="cjs-section-block" id="probation-info-section">
-        <div class="cjs-section-title">Probation Information</div>
+  <div class="cjr-card cjr-form-card">
+    <div class="scd-form-hero" aria-hidden="true">
+      <div class="scd-form-hero__glow"></div>
+      <div class="scd-form-hero__content">
+        <span class="scd-form-hero__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </span>
+        <div class="scd-form-hero__text">
+          <span class="scd-form-hero__label">HR Portal</span>
+          <span class="scd-form-hero__title">Probation Evaluation</span>
+        </div>
+        <div class="scd-form-hero__steps">
+          <span class="scd-step-chip scd-step-chip--active">
+            <span class="scd-step-chip__num">1</span>
+            Employee Info
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="employeeCode().trim() && employeeName().trim()"
+            [class.scd-step-chip--ready]="employeeCode().trim() && employeeName().trim() && department().trim()"
+          >
+            <span class="scd-step-chip__num">2</span>
+            Ratings
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="isPostSubmitSectionsAvailable()"
+          >
+            <span class="scd-step-chip__num">3</span>
+            Post-Probation
+          </span>
+        </div>
+      </div>
+    </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
-              <label class="cjs-label-required">Employee Code:</label>
+    <nav class="cjr-section-nav mad-sticky-nav" aria-label="Probation evaluation sections">
+      <ul class="cjr-section-nav-list">
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'probation-info-section'"
+          (click)="scrollToSection('probation-info-section')"
+        >
+          Probation information
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'probation-rating-section'"
+          (click)="scrollToSection('probation-rating-section')"
+        >
+          Probation rating
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'probation-completion-section'"
+          (click)="scrollToSection('probation-completion-section')"
+        >
+          Probation completion
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'extension-of-probation-section'"
+          (click)="scrollToSection('extension-of-probation-section')"
+        >
+          Extension of probation
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'termination-of-probation-section'"
+          (click)="scrollToSection('termination-of-probation-section')"
+        >
+          Termination
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'salary-adjustment-section'"
+          (click)="scrollToSection('salary-adjustment-section')"
+        >
+          Salary adjustment
+        </li>
+      </ul>
+    </nav>
+
+    <div class="cjr-form-body">
+      <section class="mad-form-panel" id="probation-info-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Probation Information</h2>
+            <span class="mad-form-panel__subtitle">Employee details and probation period</span>
+          </div>
+        </div>
+
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee Code:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -31,7 +133,7 @@
                   placeholder="Search by code, name, or department"
                   autocomplete="off"
                   [readonly]="!!editingId"
-                  [class.cjs-invalid]="isFieldInvalid('employeeCode')"
+                  [class.cjr-invalid]="isFieldInvalid('employeeCode')"
                 />
                 <ul
                   id="pe-employee-code-listbox"
@@ -59,8 +161,8 @@
               </div>
             </div>
 
-            <div class="cjs-row">
-              <label class="cjs-label-required">Employee Name:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee Name:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -75,7 +177,7 @@
                   placeholder="Search by name, code, or department"
                   autocomplete="off"
                   [readonly]="!!editingId"
-                  [class.cjs-invalid]="isFieldInvalid('employeeName')"
+                  [class.cjr-invalid]="isFieldInvalid('employeeName')"
                 />
                 <ul
                   id="pe-employee-name-listbox"
@@ -103,70 +205,82 @@
               </div>
             </div>
 
-            <div class="cjs-row">
-              <label class="cjs-label-required">Department:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Department:</label>
               <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)"
-                [class.cjs-invalid]="isFieldInvalid('department')" />
+                [class.cjr-invalid]="isFieldInvalid('department')" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Location:</label>
               <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
             </div>
 
-            <div class="cjs-row">
-              <label class="cjs-label-required">Designation:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Designation:</label>
               <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)"
-                [class.cjs-invalid]="isFieldInvalid('designation')" />
+                [class.cjr-invalid]="isFieldInvalid('designation')" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Reporting Manager:</label>
               <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Employment Nature:</label>
               <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employment Status:</label>
               <input type="text" [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Grade Work Level:</label>
               <input type="text" [ngModel]="gradeWorkLevel()" (ngModelChange)="gradeWorkLevel.set($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employment Category:</label>
               <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Probation Start Date:</label>
               <input type="date" [ngModel]="probationStartDate()" (ngModelChange)="probationStartDate.set($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Probation End Date:</label>
               <input type="date" [ngModel]="baseProbationEndDate()" (ngModelChange)="onProbationEndDateChange($event)" />
             </div>
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--remarks">
+        <div class="cjr-row cjr-row--remarks">
           <label>Remarks:</label>
           <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="probation-rating-section">
-        <div class="cjs-section-title">Probation Rating</div>
+      <section class="mad-form-panel" id="probation-rating-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Probation Rating</h2>
+            <span class="mad-form-panel__subtitle">Performance evaluation parameters and supervision remarks</span>
+          </div>
+        </div>
 
         <div class="probation-rating-table-wrapper">
           <table class="probation-rating-table">
@@ -174,7 +288,7 @@
               <tr>
                 <th>Evaluation parameter</th>
                 <th>Rating benchmark</th>
-                <th><span class="cjs-label-required">Employee rating and remarks</span></th>
+                <th><span class="cjr-label-required">Employee rating and remarks</span></th>
               </tr>
             </thead>
             <tbody>
@@ -189,7 +303,7 @@
                       (keydown)="onRatingKeyDown($event)"
                       (ngModelChange)="onPercentageChange(row.key, $event)"
                       (blur)="onRatingBlur(row.key)"
-                      [class.cjs-invalid]="isRatingInvalid(row.key)" />
+                      [class.cjr-invalid]="isRatingInvalid(row.key)" />
                     <input type="text" placeholder="Rating Remarks" [ngModel]="ratings()[row.key].remarks"
                       (ngModelChange)="onRatingRemarkChange(row.key, $event)" />
                   </div>
@@ -203,15 +317,44 @@
           </table>
         </div>
 
-        <div class="cjs-row cjs-row--remarks supervision-remark-gap">
+        <div class="cjr-row cjr-row--remarks supervision-remark-gap">
           <label>Supervision Remark:</label>
           <textarea rows="4" [ngModel]="supervisionRemark()" (ngModelChange)="supervisionRemark.set($event)"></textarea>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="extension-of-probation-section" *ngIf="isPostSubmitSectionsAvailable()">
+      <section class="mad-form-panel post-submit-locked-section" id="post-submit-locked-section" *ngIf="!isPostSubmitSectionsAvailable()">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Post-Probation Actions</h2>
+            <span class="mad-form-panel__subtitle">Available after the initial evaluation is saved</span>
+          </div>
+        </div>
+        <p class="post-submit-locked-hint">
+          Extension of Probation, Termination After Probation, Salary Adjustment, and Allowances will be available after the initial probation evaluation is saved.
+        </p>
+      </section>
+
+      <section class="mad-form-panel" id="extension-of-probation-section" *ngIf="isPostSubmitSectionsAvailable()">
         <div class="extension-section-header">
-          <div class="cjs-section-title">Extension of Probation</div>
+          <div class="mad-form-panel__heading">
+            <span class="mad-form-panel__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+            </span>
+            <div class="mad-form-panel__titles">
+              <h2 class="cjr-section-title mad-form-panel__title">Extension of Probation</h2>
+              <span class="mad-form-panel__subtitle">Record probation extension periods</span>
+            </div>
+          </div>
           <button type="button" class="add-extension-btn" (click)="addExtensionEntry()">+ Add</button>
         </div>
 
@@ -222,10 +365,10 @@
         <div class="extension-entries-list">
           @for (entry of extensionEntries(); track $index; let i = $index) {
           <div class="extension-entry">
-            <div class="cjs-row">
-              <label class="cjs-label-required">Extension Period:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Extension Period:</label>
               <select [ngModel]="entry.period" (ngModelChange)="onExtensionPeriodChange(i, $event)"
-                [class.cjs-invalid]="isExtensionPeriodInvalid(i)">
+                [class.cjr-invalid]="isExtensionPeriodInvalid(i)">
                 <option value="">Select period</option>
                 @for (period of extensionPeriodOptions; track period) {
                 <option [value]="period">{{ period }}</option>
@@ -233,7 +376,7 @@
               </select>
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>New Probation End Date:</label>
               <input type="date" [ngModel]="entry.newProbationEndDate" readonly
                 title="Calculated from probation end date and extension period" />
@@ -245,18 +388,23 @@
         </div>
       </section>
 
-      <section class="cjs-section-block post-submit-locked-section" *ngIf="!isPostSubmitSectionsAvailable()">
-        <p class="post-submit-locked-hint">
-          Extension of Probation, Termination After Probation, Salary Adjustment, and Allowances will be available after the initial probation evaluation is saved.
-        </p>
-      </section>
+      <section class="mad-form-panel" id="probation-completion-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <path d="M22 4 12 14.01l-3-3" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Probation Completion</h2>
+            <span class="mad-form-panel__subtitle">Confirm whether probation is complete</span>
+          </div>
+        </div>
 
-      <section class="cjs-section-block" id="probation-completion-section">
-        <div class="cjs-section-title">Probation Completion</div>
-
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Probation Completion:</label>
               <select [ngModel]="probationCompletion()" (ngModelChange)="probationCompletion.set($event)">
                 <option value="">Select option</option>
@@ -268,12 +416,24 @@
         </div>
       </section>
 
-      <section class="cjs-section-block" id="termination-of-probation-section" *ngIf="isPostSubmitSectionsAvailable()">
-        <div class="cjs-section-title">Termination After Probation</div>
+      <section class="mad-form-panel" id="termination-of-probation-section" *ngIf="isPostSubmitSectionsAvailable()">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="m15 9-6 6" />
+              <path d="m9 9 6 6" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Termination After Probation</h2>
+            <span class="mad-form-panel__subtitle">Termination decision and effective date</span>
+          </div>
+        </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Termination:</label>
               <select [ngModel]="termination()" (ngModelChange)="onTerminationChange($event)">
                 <option value="">Select option</option>
@@ -283,24 +443,35 @@
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row" [class.disabled-row]="!isTerminationYes()">
-              <label [class.cjs-label-required]="isTerminationYes()">Termination Effective Date:</label>
+          <div class="cjr-personal-col">
+            <div class="cjr-row" [class.disabled-row]="!isTerminationYes()">
+              <label [class.cjr-label-required]="isTerminationYes()">Termination Effective Date:</label>
               <input
                 type="date"
                 [ngModel]="terminationEffectiveDate()"
                 (ngModelChange)="terminationEffectiveDate.set($event)"
                 [disabled]="!isTerminationYes()"
                 [class.field-disabled]="!isTerminationYes()"
-                [class.cjs-invalid]="isFieldInvalid('terminationEffectiveDate')"
+                [class.cjr-invalid]="isFieldInvalid('terminationEffectiveDate')"
               />
             </div>
           </div>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="salary-adjustment-section" *ngIf="isPostSubmitSectionsAvailable()">
-        <div class="cjs-section-title">Salary Adjustment</div>
+      <section class="mad-form-panel" id="salary-adjustment-section" *ngIf="isPostSubmitSectionsAvailable()">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Salary Adjustment</h2>
+            <span class="mad-form-panel__subtitle">Salary revision, allowances, and total compensation</span>
+          </div>
+        </div>
 
         <div class="salary-adjustment-table-wrapper">
           <table class="salary-adjustment-table">
@@ -310,7 +481,7 @@
                 <th>Adjustment % in salary</th>
                 <th>Adjustment amount in salary</th>
                 <th>Revised salary</th>
-                <th><span [class.cjs-label-required]="isEffectiveDateRequired()">Effective date of revision</span></th>
+                <th><span [class.cjr-label-required]="isEffectiveDateRequired()">Effective date of revision</span></th>
               </tr>
             </thead>
             <tbody>
@@ -331,7 +502,7 @@
                 </td>
                 <td>
                   <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)"
-                    [class.cjs-invalid]="isFieldInvalid('effectiveDateOfRevision')" />
+                    [class.cjr-invalid]="isFieldInvalid('effectiveDateOfRevision')" />
                 </td>
               </tr>
             </tbody>
@@ -360,16 +531,23 @@
           </div>
         </div>
 
-        <div class="cjs-row total-salary-row">
+        <div class="cjr-row total-salary-row">
           <label>Total Salary:</label>
           <input type="text" [value]="totalSalary() | number:'1.0-0'" readonly />
         </div>
       </section>
     </div>
 
-    <div class="cjs-actions-footer">
-      <button type="button" class="cjs-submit-btn" (click)="save()">
-        <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
+    <div class="cjr-actions-footer">
+      <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
+      <button type="button" class="cjr-submit-btn" (click)="save()">
+        <span class="cjr-submit-icon">✓</span>
+        <span>{{ submitButtonLabel }}</span>
       </button>
     </div>
   </div>

@@ -3,17 +3,23 @@
   height: 100%;
 }
 
+.cjr-label-required::after,
 .cjs-label-required::after {
   content: ' *';
   color: #b42318;
 }
 
+.cjr-row input.cjr-invalid,
+.cjr-row select.cjr-invalid,
+.cjr-row textarea.cjr-invalid,
 .cjs-row input.cjs-invalid,
 .cjs-row select.cjs-invalid,
 .cjs-row textarea.cjs-invalid,
+.rating-cell input.cjr-invalid,
 .rating-cell input.cjs-invalid,
-.salary-adjustment-table td input.cjs-invalid,
-.extension-entry select.cjs-invalid,
+.salary-adjustment-table td input.cjr-invalid,
+.extension-entry select.cjr-invalid,
+.employee-search-wrap input.cjr-invalid,
 .employee-search-wrap input.cjs-invalid {
   border-color: #b42318 !important;
   box-shadow: 0 0 0 1px rgba(180, 35, 24, 0.15);
@@ -299,13 +305,14 @@
 .extension-section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 12px;
 }
 
-.extension-section-header .cjs-section-title {
+.extension-section-header .mad-form-panel__heading {
   margin-bottom: 0;
+  flex: 1;
 }
 
 .add-extension-btn {

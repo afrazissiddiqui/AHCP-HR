@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, concatMap, forkJoin, from, last, map, of, scan, switchMap, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
 import { formatDateOfBirthFromApi, formatDateForInput } from '../utils/date-format.util';
+import { sanitizeApiText } from '../utils/api-text.util';
 
 /** Extended payload captured from Create Application Form — shown in Application Form view modal only. */
 export interface ApplicationFormPersonalInfo {
@@ -878,9 +879,9 @@ export class ApplicationFormService {
     );
 
     for (const key of keys) {
-      const value = source[key];
-      if (value !== undefined && value !== null && String(value).trim() !== '') {
-        return String(value).trim();
+      const value = sanitizeApiText(source[key]);
+      if (value) {
+        return value;
       }
     }
 
@@ -1061,9 +1062,8 @@ export class ApplicationFormService {
         '—',
       EmployeeNature:
         pickFrom(personalInfoSource, 'employmentNature', 'employment_nature') ||
-        pickFrom(requisitionSource, 'company') ||
-        asString(item['employmentNature']) ||
-        asString(item['employment_nature']) ||
+        sanitizeApiText(item['employmentNature']) ||
+        sanitizeApiText(item['employment_nature']) ||
         '—',
       Designation:
         pickFrom(personalInfoSource, 'designation') ||
@@ -1582,15 +1582,17 @@ export class ApplicationFormService {
 }
 
 function pickFrom(row: Record<string, unknown>, camel: string, snake?: string): string {
-  const camelValue = row[camel];
-  if (camelValue !== undefined && camelValue !== null && String(camelValue).trim() !== '') {
-    return String(camelValue).trim();
+  const camelValue = sanitizeApiText(row[camel]);
+  if (camelValue) {
+    return camelValue;
   }
+
   if (snake) {
-    const snakeValue = row[snake];
-    if (snakeValue !== undefined && snakeValue !== null) {
-      return String(snakeValue).trim();
+    const snakeValue = sanitizeApiText(row[snake]);
+    if (snakeValue) {
+      return snakeValue;
     }
   }
+
   return '';
 }
