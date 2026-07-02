@@ -193,7 +193,10 @@ export class LeaveTypesComponent implements OnInit {
     };
 
     if (this.formMode() === 'edit' && this.editingId() !== null) {
-      payload.id = this.editingId() as string | number;
+      const editId = this.editingId() as string | number;
+      payload.id = editId;
+      payload.Id = editId;
+      payload.leave_type_id = editId;
     }
 
     return payload;

@@ -14,6 +14,8 @@ export interface LeaveTypeRecord {
 
 export interface LeaveTypePayload {
   id?: string | number;
+  Id?: string | number;
+  leave_type_id?: string | number;
   name: string;
   code: string;
   description: string;
@@ -23,7 +25,7 @@ export interface LeaveTypePayload {
 const LEAVE_TYPE_LIST_URL = apiUrl('leave-type-list');
 const LEAVE_TYPE_ADD_URL = apiUrl('leave-type-add');
 const LEAVE_TYPE_DETAIL_URL = apiUrl('leave-type-detail');
-const LEAVE_TYPE_DELETE_URL = apiUrl('user-delete');
+const LEAVE_TYPE_DELETE_URL = apiUrl('leave-type-delete');
 
 @Injectable({
   providedIn: 'root',
