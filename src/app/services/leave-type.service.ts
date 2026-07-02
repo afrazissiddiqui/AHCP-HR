@@ -24,6 +24,7 @@ export interface LeaveTypePayload {
 
 const LEAVE_TYPE_LIST_URL = apiUrl('leave-type-list');
 const LEAVE_TYPE_ADD_URL = apiUrl('leave-type-add');
+const LEAVE_TYPE_UPDATE_URL = apiUrl('leave-type-update');
 const LEAVE_TYPE_DETAIL_URL = apiUrl('leave-type-detail');
 const LEAVE_TYPE_DELETE_URL = apiUrl('leave-type-delete');
 
@@ -64,7 +65,14 @@ export class LeaveTypeService {
   }
 
   updateLeaveType(payload: LeaveTypePayload): Observable<unknown> {
-    return this.http.post(LEAVE_TYPE_ADD_URL, payload);
+    const identifier =
+      payload.id ?? payload.Id ?? payload.leave_type_id;
+    return this.http.post(`${LEAVE_TYPE_UPDATE_URL}/${encodeURIComponent(String(identifier))}`, {
+      name: payload.name,
+      code: payload.code,
+      description: payload.description,
+      status: payload.status,
+    });
   }
 
   deleteLeaveType(id: string | number): Observable<unknown> {

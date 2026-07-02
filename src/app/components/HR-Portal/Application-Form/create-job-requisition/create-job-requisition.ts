@@ -1835,9 +1835,18 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.requisitionAdministrator.set(req.requisitionAdministrator);
     this.recruitmentCoordinator.set(req.recruitmentCoordinator);
     this.hrAdministrator.set(req.hrAdministrator);
-    this.company.set(req.company || 'No Selection');
+    this.company.set(
+      req.company ||
+      detail.personalInfo.employmentNature ||
+      (record.EmployeeNature !== '—' ? record.EmployeeNature : '') ||
+      'No Selection',
+    );
     this.department.set(req.department || 'No Selection');
-    this.division.set(req.division || 'No Selection');
+    this.division.set(
+      req.division ||
+      (record.EmploymentType !== '—' ? record.EmploymentType : '') ||
+      'No Selection',
+    );
     this.location.set(req.location || detail.personalInfo.branchLocation || '');
     this.hiringManager.set(
       detail.personalInfo.reportingManager ||

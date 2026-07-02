@@ -1020,10 +1020,25 @@ export class ApplicationFormService {
   private mapApiItemToRecord(item: Record<string, unknown>): ApplicationFormRecord {
     const asString = (value: unknown): string =>
       value === undefined || value === null ? '' : String(value).trim();
+    const personalInfoSource =
+      this.pickNestedRecord(item['personalInfo']) ??
+      this.pickNestedRecord(item['personal_info']) ??
+      item;
+    const requisitionSource =
+      this.pickNestedRecord(item['requisition']) ??
+      this.pickNestedRecord(item['requisition_detail']) ??
+      item;
 
     const employeeCode = this.resolveEmployeeCodeFromApiItem(item);
-    const personName = asString(item['personName']) || asString(item['person_name']);
-    const composedName = [asString(item['firstName']), asString(item['middleName']), asString(item['lastName'])]
+    const personName =
+      pickFrom(personalInfoSource, 'personName', 'person_name') ||
+      asString(item['personName']) ||
+      asString(item['person_name']);
+    const composedName = [
+      pickFrom(personalInfoSource, 'firstName', 'first_name') || asString(item['firstName']),
+      pickFrom(personalInfoSource, 'middleName', 'middle_name') || asString(item['middleName']),
+      pickFrom(personalInfoSource, 'lastName', 'last_name') || asString(item['lastName']),
+    ]
       .filter(Boolean)
       .join(' ');
     const loginEmployeeName =
@@ -1037,29 +1052,46 @@ export class ApplicationFormService {
       EmployeeCode: employeeCode,
       EmployeeName: employeeName || '—',
       Department:
+        pickFrom(personalInfoSource, 'departmentInAhcp', 'department_in_ahcp') ||
+        pickFrom(requisitionSource, 'department') ||
         asString(item['departmentInAhcp']) ||
         asString(item['department_in_ahcp']) ||
         asString(item['department']) ||
         '—',
       EmployeeNature:
+        pickFrom(personalInfoSource, 'employmentNature', 'employment_nature') ||
+        pickFrom(requisitionSource, 'company') ||
         asString(item['employmentNature']) ||
         asString(item['employment_nature']) ||
         '—',
-      Designation: asString(item['designation']) || '—',
+      Designation:
+        pickFrom(personalInfoSource, 'designation') ||
+        pickFrom(requisitionSource, 'internalJobTitle', 'internal_job_title') ||
+        asString(item['designation']) ||
+        '—',
       ReportingManager:
+        pickFrom(personalInfoSource, 'reportingManager', 'reporting_manager') ||
+        pickFrom(requisitionSource, 'hiringManager', 'hiring_manager') ||
         asString(item['reportingManager']) ||
         asString(item['reporting_manager']) ||
         asString(item['hiringManager']) ||
         asString(item['hiring_manager']) ||
         '—',
-      EmploymentType: asString(item['employmentType']) || asString(item['employment_type']) || '—',
+      EmploymentType:
+        pickFrom(personalInfoSource, 'employmentType', 'employment_type') ||
+        pickFrom(requisitionSource, 'division') ||
+        asString(item['employmentType']) ||
+        asString(item['employment_type']) ||
+        '—',
       EmploymentCategory:
+        pickFrom(personalInfoSource, 'employmentCategory', 'employment_category') ||
         asString(item['employeeCategory']) ||
         asString(item['employee_category']) ||
         asString(item['employmentCategory']) ||
         asString(item['employment_category']) ||
         '—',
       status:
+        pickFrom(personalInfoSource, 'employmentStatus', 'employment_status') ||
         asString(item['employmentStatus']) ||
         asString(item['employment_status']) ||
         'Active',
