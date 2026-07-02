@@ -231,7 +231,11 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Employment Nature:</label>
-              <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" />
+              <select [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)">
+                <option value="">No Selection</option>
+                <option value="Technical">Technical</option>
+                <option value="Non-Technical">Non-Technical</option>
+              </select>
             </div>
 
             <div class="cjr-row">

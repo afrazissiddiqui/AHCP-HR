@@ -424,6 +424,16 @@
             </div>
 
             <div class="cjr-row">
+              <label>Employee Nature:</label>
+              <select [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)"
+                (blur)="touch('employmentNature')">
+                <option value="">No Selection</option>
+                <option value="Technical">Technical</option>
+                <option value="Non-Technical">Non-Technical</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
               <label class="cjr-label-required">Employee Status:</label>
               <select [ngModel]="employmentStatus()" (ngModelChange)="employmentStatus.set($event)"
                 [class.cjr-invalid]="showFieldError('employmentStatus')" (blur)="touch('employmentStatus')">

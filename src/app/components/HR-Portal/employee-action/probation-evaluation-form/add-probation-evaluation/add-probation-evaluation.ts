@@ -383,7 +383,13 @@ export class AddProbationEvaluationComponent implements OnInit {
         emptyIfDash(record.ReportingManager),
         emptyIfDash(requisition?.hiringManager),
       ),
-      employeeNature: emptyIfDash(personal?.employmentNature),
+      employeeNature: this.normalizeEmployeeNature(
+        this.firstNonEmpty(
+          emptyIfDash(personal?.employmentNature),
+          emptyIfDash(record.EmployeeNature),
+          emptyIfDash(requisition?.company),
+        ),
+      ),
       employeeType: this.firstNonEmpty(
         emptyIfDash(personal?.employmentStatus),
         emptyIfDash(record.status),
@@ -415,6 +421,23 @@ export class AddProbationEvaluationComponent implements OnInit {
 
   private normalizeProfileValue(value: string | undefined | null): string {
     return sanitizeApiText(value);
+  }
+
+  private normalizeEmployeeNature(value: string | undefined | null): string {
+    const sanitized = sanitizeApiText(value);
+    if (!sanitized) {
+      return '';
+    }
+
+    const compact = sanitized.toLowerCase().replace(/[\s_-]+/g, '');
+    if (compact === 'technical') {
+      return 'Technical';
+    }
+    if (compact === 'nontechnical') {
+      return 'Non-Technical';
+    }
+
+    return sanitized;
   }
 
   private formatGrossSalary(value: string | undefined | null): string {
@@ -1162,7 +1185,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.location.set(emptyIfDash(record.Location));
     this.designation.set(emptyIfDash(record.Designation));
     this.reportingManager.set(emptyIfDash(record.ReportingManager));
-    this.employeeNature.set(emptyIfDash(record.EmployeeNature));
+    this.employeeNature.set(this.normalizeEmployeeNature(record.EmployeeNature));
     this.employeeType.set(emptyIfDash(record.EmployeeType));
     this.gradeWorkLevel.set(emptyIfDash(record.GradeWorkLevel));
     this.employmentCategory.set(emptyIfDash(record.EmploymentCategory));
