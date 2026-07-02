@@ -213,13 +213,16 @@
 /* Sticky section nav */
 .mad-sticky-nav,
 .cjr-section-nav {
+  margin-top: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--mad-border-light);
+  border: 1px solid var(--mad-border-light);
+  border-radius: var(--mad-radius-lg);
   background: linear-gradient(180deg, #fff 0%, #fafbfc 100%);
   position: -webkit-sticky;
   position: sticky;
-  top: var(--cjr-sticky-offset);
-  z-index: 20;
+  top: 0;
+  z-index: 40;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
 }
 
 .cjr-section-nav-list {
@@ -239,6 +242,8 @@
   border-radius: 999px;
   border: 1px solid transparent;
   background: #f1f5f9;
+  white-space: nowrap;
+  flex-shrink: 0;
   user-select: none;
   cursor: pointer;
   transition: all 0.2s ease;

@@ -29,6 +29,13 @@ import {
   glAccountBranchLabel,
   resolveBranchCode,
 } from '../../../setup/gl-account-determination/gl-account-branch.options';
+import {
+  COUNTRY_OPTIONS,
+  CountryOption,
+  findCountryOption,
+  formatCountryDisplay,
+  matchCountryOption,
+} from '../../country-options.util';
 
 interface AttachmentRow {
   type: string;
@@ -171,6 +178,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly city = signal(''); // OHEM.workCity
   protected readonly state = signal<'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | ''>('');
   protected readonly country = signal(''); // OHEM.workCountr
+  protected readonly countrySearchText = signal('');
+  protected readonly countryOptions = COUNTRY_OPTIONS;
   protected readonly zipCode = signal(''); // XXXXX
   protected readonly employmentNature = signal('');
   protected readonly employmentCategory = signal('');
@@ -772,6 +781,25 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.dateOfBirth.set(formatDateOfBirthFromApi(value));
   }
 
+  protected onCountryInputChange(value: string): void {
+    this.countrySearchText.set(value);
+    const matched = matchCountryOption(value);
+    this.country.set(matched?.code ?? value.trim());
+  }
+
+  protected onCountryBlur(): void {
+    const matched = matchCountryOption(this.countrySearchText());
+    if (matched) {
+      this.country.set(matched.code);
+      this.countrySearchText.set(this.formatCountryDisplay(matched.code));
+      return;
+    }
+
+    const trimmed = this.countrySearchText().trim();
+    this.country.set(trimmed);
+    this.countrySearchText.set(trimmed);
+  }
+
   protected touch(field: string): void {
     this.touched.update(t => ({ ...t, [field]: true }));
   }
@@ -936,6 +964,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   protected onZipCodeChange(value: string): void {
     this.zipCode.set(value.replace(/\D/g, '').slice(0, 5));
+  }
+
+  protected countryOptionValue(option: CountryOption): string {
+    return formatCountryDisplay(option.code);
   }
 
   protected readonly nationalIdCardNoInvalid = computed(() => {
@@ -1274,6 +1306,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return value === '—' ? '' : value.trim();
   }
 
+  private formatCountryDisplay(value: string): string {
+    return formatCountryDisplay(value);
+  }
+
   private mapEmploymentTypeToStatus(employmentType: string): string {
     switch (employmentType) {
       case 'Permanent':
@@ -1591,6 +1627,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.city.set(detail.personalInfo.city);
     this.state.set((detail.personalInfo.state as 'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | '') ?? '');
     this.country.set(detail.personalInfo.country);
+    this.countrySearchText.set(this.formatCountryDisplay(detail.personalInfo.country));
     this.zipCode.set(detail.personalInfo.zipCode);
     this.employmentNature.set(
       detail.personalInfo.employmentNature ||

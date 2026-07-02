@@ -316,8 +316,22 @@
 
           <div class="cjr-row">
             <label class="cjr-label-required">Country:</label>
-            <input type="text" [ngModel]="country()" (ngModelChange)="country.set($event)"
-              [class.cjr-invalid]="showFieldError('country')" (blur)="touch('country')" />
+            <div class="cjr-field">
+              <input
+                type="text"
+                list="cjr-country-options"
+                [ngModel]="countrySearchText()"
+                (ngModelChange)="onCountryInputChange($event)"
+                [class.cjr-invalid]="showFieldError('country')"
+                (blur)="onCountryBlur(); touch('country')"
+                placeholder="Type code or country name"
+              />
+              <datalist id="cjr-country-options">
+                @for (option of countryOptions; track option.code) {
+                  <option [value]="countryOptionValue(option)"></option>
+                }
+              </datalist>
+            </div>
           </div>
 
           <div class="cjr-row">
