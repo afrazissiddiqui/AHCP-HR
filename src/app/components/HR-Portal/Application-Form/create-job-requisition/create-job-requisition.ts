@@ -667,7 +667,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const medicalAllowance = (grossSalary / 110) * 0.1;
+    const medicalAllowance = (grossSalary / 1.1) * 0.1;
     this.medicalAllowances.set(this.formatCalculatedAmount(medicalAllowance));
   }
 
