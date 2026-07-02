@@ -320,7 +320,19 @@ export interface EmployeeProfileAddPayload {
   dateOfJoining: string;
   advancePercentAllowed: number | string;
   loanAmountAllowed: number | string;
-  overTimeApplicable: boolean | string;
+  overTimeApplicable: 0 | 1;
+  allowancesApplicable: 0 | 1;
+  eobiApplicable: 0 | 1;
+  socialSecurityApplicable: 0 | 1;
+  medicalAllowances: number | string;
+  fuelAllowances: number | string;
+  mobileAllowances: number | string;
+  carAllowances: number | string;
+  otherAllowances: number | string;
+  cashSalaryPercentage: number | string;
+  maximumAdvanceCapacity: number | string;
+  fuelLimit: number | string;
+  remarks: string;
   leaveType: string;
   leaveDays: number | string;
   leavesAvailed: number | string;
@@ -614,15 +626,18 @@ export class ApplicationFormService {
       return Number.isFinite(numeric) ? numeric : trimmed;
     };
 
-    const toApiBoolean = (value: string): boolean | string => {
+    const toApiFlag = (value: string, defaultValue: 0 | 1 = 0): 0 | 1 => {
       const normalized = value.trim().toLowerCase();
+      if (!normalized) {
+        return defaultValue;
+      }
       if (normalized === 'yes' || normalized === 'true' || normalized === '1') {
-        return true;
+        return 1;
       }
       if (normalized === 'no' || normalized === 'false' || normalized === '0') {
-        return false;
+        return 0;
       }
-      return value;
+      return defaultValue;
     };
 
     const paymentModeForApi = (mode: string): string => {
@@ -672,7 +687,19 @@ export class ApplicationFormService {
       loanAmountAllowed: toApiNumber(
         remuneration.loanAmountAllowed || remuneration.maximumLoanCapacity,
       ),
-      overTimeApplicable: toApiBoolean(remuneration.overTimeApplicable),
+      overTimeApplicable: toApiFlag(remuneration.overTimeApplicable, 0),
+      allowancesApplicable: toApiFlag(remuneration.allowancesApplicable, 0),
+      eobiApplicable: toApiFlag(remuneration.eobiApplicable, 0),
+      socialSecurityApplicable: toApiFlag(remuneration.socialSecurityApplicable, 0),
+      medicalAllowances: toApiNumber(remuneration.medicalAllowances),
+      fuelAllowances: toApiNumber(remuneration.fuelAllowances),
+      mobileAllowances: toApiNumber(remuneration.mobileAllowances),
+      carAllowances: toApiNumber(remuneration.carAllowances),
+      otherAllowances: toApiNumber(remuneration.otherAllowances),
+      cashSalaryPercentage: toApiNumber(remuneration.cashSalaryPercentage),
+      maximumAdvanceCapacity: toApiNumber(remuneration.maximumAdvanceCapacity),
+      fuelLimit: toApiNumber(remuneration.fuelLimit),
+      remarks: personal.remarks,
       leaveType: primaryLeave.leaveType || remuneration.leaveType,
       leaveDays: toApiNumber(leaveDays),
       leavesAvailed: toApiNumber(leavesAvailed),
