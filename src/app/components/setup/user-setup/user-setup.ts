@@ -85,6 +85,8 @@ export class UserSetupComponent implements OnInit {
   readonly authorizationDialogSummary = signal<UserAuthorizationSummary | null>(null);
   readonly authorizationModuleFilter = signal('');
   readonly formModuleFilter = signal('');
+  readonly expandedFormModules = signal<Record<string, boolean>>({});
+  readonly expandedDialogModules = signal<Record<string, boolean>>({});
 
   readonly crudBuckets: CrudBucket[] = ['create', 'read', 'update', 'delete', 'other'];
 
@@ -222,6 +224,7 @@ export class UserSetupComponent implements OnInit {
     this.authorizationDialogUser.set(user);
     this.authorizationDialogSummary.set(summary);
     this.authorizationModuleFilter.set('');
+    this.expandedDialogModules.set({});
     this.authorizationDialogOpen.set(true);
     afterNextRender(() => this.attachAuthorizationOverlay());
   }
@@ -346,6 +349,63 @@ export class UserSetupComponent implements OnInit {
       return 0;
     }
     return Math.round((this.formGrantedCount() / total) * 100);
+  }
+
+  moduleInitials(name: string): string {
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (!parts.length) {
+      return '?';
+    }
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+  }
+
+  isFormModuleExpanded(moduleSlug: string): boolean {
+    return this.expandedFormModules()[moduleSlug] === true;
+  }
+
+  isDialogModuleExpanded(moduleSlug: string): boolean {
+    return this.expandedDialogModules()[moduleSlug] === true;
+  }
+
+  toggleFormModuleExpanded(moduleSlug: string): void {
+    this.expandedFormModules.update((state) => ({
+      ...state,
+      [moduleSlug]: !state[moduleSlug],
+    }));
+  }
+
+  toggleDialogModuleExpanded(moduleSlug: string): void {
+    this.expandedDialogModules.update((state) => ({
+      ...state,
+      [moduleSlug]: !state[moduleSlug],
+    }));
+  }
+
+  expandAllFormModules(): void {
+    const expanded: Record<string, boolean> = {};
+    for (const module of this.filteredFormModules()) {
+      expanded[module.moduleSlug] = true;
+    }
+    this.expandedFormModules.set(expanded);
+  }
+
+  collapseAllFormModules(): void {
+    this.expandedFormModules.set({});
+  }
+
+  expandAllDialogModules(): void {
+    const expanded: Record<string, boolean> = {};
+    for (const module of this.filteredAuthorizationModules()) {
+      expanded[module.moduleSlug] = true;
+    }
+    this.expandedDialogModules.set(expanded);
+  }
+
+  collapseAllDialogModules(): void {
+    this.expandedDialogModules.set({});
   }
 
   private scrollToFormPanel(): void {
@@ -505,6 +565,7 @@ export class UserSetupComponent implements OnInit {
     this.formEmail.set('');
     this.formPassword.set('');
     this.formModuleFilter.set('');
+    this.expandedFormModules.set({});
     this.authorizationDraft.set(cloneAuthorization(this.authorizationTemplate()));
   }
 
