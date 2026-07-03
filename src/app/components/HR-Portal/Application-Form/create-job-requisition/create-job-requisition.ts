@@ -10,6 +10,7 @@ import {
   ApplicationFormRecord,
   ApplicationFormService,
 } from '../../../../services/application-form.service';
+import { normalizeEmploymentStatus } from '../../../../utils/employment-status.util';
 import {
   formatDateForInput,
   formatDateOfBirthFromApi,
@@ -1261,14 +1262,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   private mapEmploymentTypeToStatus(employmentType: string): string {
-    switch (employmentType) {
-      case 'Permanent':
-        return 'Active';
-      case 'Temporary':
-        return 'Inactive';
-      default:
-        return employmentType;
-    }
+    return normalizeEmploymentStatus(employmentType) || employmentType;
   }
 
   private resolveWorkGradeLevel(gradeWorkLevel: string): string {
@@ -1497,8 +1491,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       Designation: this.designation().trim() || '—',
       ReportingManager: this.reportingManagerValue() || '—',
       EmploymentType: noSelection(this.division()) || '—',
+      EmploymentStatus: normalizeEmploymentStatus(this.employmentStatus()) || 'Permanent',
       EmploymentCategory: noSelection(this.employmentCategory()) || '—',
-      status: noSelection(this.employmentStatus()) || 'Submitted',
+      status: normalizeEmploymentStatus(this.employmentStatus()) || 'Permanent',
       selected: false,
       detail
     };
@@ -1596,7 +1591,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         (record.EmploymentCategory !== '—' ? record.EmploymentCategory : ''),
     );
     this.employmentStatus.set(
-      detail.personalInfo.employmentStatus || (record.status !== '—' ? record.status : ''),
+      normalizeEmploymentStatus(
+        detail.personalInfo.employmentStatus ||
+          (record.EmploymentStatus !== '—' ? record.EmploymentStatus : '') ||
+          (record.status !== '—' ? record.status : ''),
+      ),
     );
     this.departmentInAhcp.set(
       detail.personalInfo.departmentInAhcp || (record.Department !== '—' ? record.Department : ''),

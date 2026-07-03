@@ -438,8 +438,8 @@
               <select [ngModel]="employmentStatus()" (ngModelChange)="employmentStatus.set($event)"
                 [class.cjr-invalid]="showFieldError('employmentStatus')" (blur)="touch('employmentStatus')">
                 <option value="">No Selection</option>
-                <option value="Active">Permanent</option>
-                <option value="Inactive">Contractual</option>
+                <option value="Permanent">Permanent</option>
+                <option value="Contractual">Contractual</option>
               </select>
             </div>
 

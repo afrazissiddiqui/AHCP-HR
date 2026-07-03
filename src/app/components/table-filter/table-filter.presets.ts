@@ -7,7 +7,7 @@ export const APPLICATION_FORM_TABLE_FILTER: TableFilterConfig = {
   fields: [
     { type: 'select', key: 'employeeNature', label: 'Employee nature', fieldKey: 'EmployeeNature' },
     { type: 'select', key: 'reportingManager', label: 'Reporting manager', fieldKey: 'ReportingManager' },
-    { type: 'select', key: 'employmentType', label: 'Employment type', fieldKey: 'EmploymentType' },
+    { type: 'select', key: 'employmentStatus', label: 'Employment status', fieldKey: 'EmploymentStatus' },
     { type: 'status', key: 'status', label: 'Status', fieldKey: 'status' },
     {
       type: 'numberRange',

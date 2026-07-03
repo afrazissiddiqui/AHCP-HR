@@ -247,7 +247,18 @@
 
             <div class="cjr-row">
               <label>Employment Status:</label>
-              <input type="text" [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)" />
+              <select [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)">
+                <option value="">No Selection</option>
+                <option value="Permanent">Permanent</option>
+                <option value="Contractual">Contractual</option>
+                @if (
+                  employeeType() &&
+                  employeeType() !== 'Permanent' &&
+                  employeeType() !== 'Contractual'
+                ) {
+                  <option [value]="employeeType()">{{ employeeType() }}</option>
+                }
+              </select>
             </div>
 
             <div class="cjr-row">

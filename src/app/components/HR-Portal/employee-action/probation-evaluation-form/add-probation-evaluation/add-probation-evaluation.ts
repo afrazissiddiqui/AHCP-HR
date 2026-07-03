@@ -23,6 +23,7 @@ import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { formatDateForInput } from '../../../../../utils/date-format.util';
 import { sanitizeApiText } from '../../../../../utils/api-text.util';
+import { normalizeEmploymentStatus } from '../../../../../utils/employment-status.util';
 import { glAccountBranchLabel } from '../../../../setup/gl-account-determination/gl-account-branch.options';
 
 type RatingKey =
@@ -395,9 +396,12 @@ export class AddProbationEvaluationComponent implements OnInit {
           emptyIfDash(requisition?.company),
         ),
       ),
-      employeeType: this.firstNonEmpty(
-        emptyIfDash(personal?.employmentStatus),
-        emptyIfDash(record.status),
+      employeeType: normalizeEmploymentStatus(
+        this.firstNonEmpty(
+          emptyIfDash(personal?.employmentStatus),
+          emptyIfDash(record.EmploymentStatus),
+          emptyIfDash(record.status),
+        ),
       ),
       gradeWorkLevel: this.firstNonEmpty(
         emptyIfDash(personal?.workGradeLevel),
@@ -1196,7 +1200,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     this.designation.set(emptyIfDash(record.Designation));
     this.reportingManager.set(emptyIfDash(record.ReportingManager));
     this.employeeNature.set(this.normalizeEmployeeNature(record.EmployeeNature));
-    this.employeeType.set(emptyIfDash(record.EmployeeType));
+    this.employeeType.set(normalizeEmploymentStatus(record.EmployeeType));
     this.gradeWorkLevel.set(emptyIfDash(record.GradeWorkLevel));
     this.employmentCategory.set(emptyIfDash(record.EmploymentCategory));
     this.remarks.set(emptyIfDash(record.Remarks));

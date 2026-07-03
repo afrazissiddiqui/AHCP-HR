@@ -115,7 +115,7 @@ export class RecruitmentComponent implements OnInit {
     { key: 'EmployeeNature', label: 'Employee Nature', visible: true },
     { key: 'Designation', label: 'Designation', visible: true },
     { key: 'ReportingManager', label: 'Reporting Manager', visible: true },
-    { key: 'EmploymentType', label: 'Employment Type', visible: true },
+    { key: 'EmploymentStatus', label: 'Employment Status', visible: true },
     { key: 'EmploymentCategory', label: 'Employment Category', visible: true },
     { key: 'status', label: 'Status', visible: true },
 
@@ -189,7 +189,7 @@ export class RecruitmentComponent implements OnInit {
         String(item.EmployeeNature ?? '').toLowerCase().includes(search) ||
         String(item.Designation ?? '').toLowerCase().includes(search) ||
         String(item.ReportingManager ?? '').toLowerCase().includes(search) ||
-        String(item.EmploymentType ?? '').toLowerCase().includes(search) ||
+        String(item.EmploymentStatus ?? '').toLowerCase().includes(search) ||
         String(item.EmploymentCategory ?? '').toLowerCase().includes(search)
       );
     }
