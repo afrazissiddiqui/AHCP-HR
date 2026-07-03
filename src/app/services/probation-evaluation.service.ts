@@ -52,6 +52,7 @@ export interface ProbationEvaluationAddPayload {
   };
   allowances?: Array<{ allowance: string; amount: number; notes: string }> | null;
   total_salary: number;
+  status: string;
 }
 
 /** Body sent to add/update API (allowances omitted when none). */
@@ -80,6 +81,7 @@ export interface ProbationEvaluationRecord {
   SalaryAdjustment: ProbationEvaluationAddPayload['salary_adjustment'];
   Allowances: Array<{ allowance: string; amount: number; notes: string }>;
   TotalSalary: number;
+  Status: string;
   selected?: boolean;
 }
 
@@ -117,15 +119,34 @@ export function buildProbationEvaluationSubmitPayload(
 
   const termination = draft.termination_of_probation.termination === 'Yes' ? 'Yes' : 'No';
   const probationCompletion = draft.probation_completion === 'Yes' ? 'Yes' : 'No';
+  const status = termination === 'Yes' ? 'Closed' : draft.status?.trim() || 'Open';
   let terminationEffectiveDate: string | null = draft.termination_of_probation.termination_effective_date?.trim() || null;
   if (termination === 'No') {
     terminationEffectiveDate = null;
   }
 
   let effectiveDateOfRevision = draft.salary_adjustment.effectiveDateOfRevision.trim();
-  if (!effectiveDateOfRevision) {
+  if (probationCompletion === 'Yes' && !effectiveDateOfRevision) {
     effectiveDateOfRevision = probationEnd || extensionEnd || newProbationEnd;
   }
+
+  const currentSalary = Math.round(draft.salary_adjustment.currentSalary);
+  const salaryAdjustment =
+    probationCompletion === 'Yes'
+      ? {
+          currentSalary,
+          adjustmentInSalary: Math.round(draft.salary_adjustment.adjustmentInSalary),
+          adjustmentAmountInSalary: Math.round(draft.salary_adjustment.adjustmentAmountInSalary),
+          revisedSalary: Math.round(draft.salary_adjustment.revisedSalary),
+          effectiveDateOfRevision,
+        }
+      : {
+          currentSalary,
+          adjustmentInSalary: 0,
+          adjustmentAmountInSalary: 0,
+          revisedSalary: currentSalary,
+          effectiveDateOfRevision: '',
+        };
 
   const allowances = draft.allowances
     ?.filter((item) => item.allowance.trim() !== '')
@@ -172,17 +193,12 @@ export function buildProbationEvaluationSubmitPayload(
       termination,
       termination_effective_date: terminationEffectiveDate,
     },
-    salary_adjustment: {
-      currentSalary: Math.round(draft.salary_adjustment.currentSalary),
-      adjustmentInSalary: Math.round(draft.salary_adjustment.adjustmentInSalary),
-      adjustmentAmountInSalary: Math.round(draft.salary_adjustment.adjustmentAmountInSalary),
-      revisedSalary: Math.round(draft.salary_adjustment.revisedSalary),
-      effectiveDateOfRevision: effectiveDateOfRevision,
-    },
-    total_salary: Math.round(draft.total_salary),
+    salary_adjustment: salaryAdjustment,
+    total_salary: probationCompletion === 'Yes' ? Math.round(draft.total_salary) : currentSalary,
+    status,
   };
 
-  body.allowances = allowances.length > 0 ? allowances : null;
+  body.allowances = probationCompletion === 'Yes' && allowances.length > 0 ? allowances : null;
 
   return body;
 }
@@ -417,6 +433,9 @@ export class ProbationEvaluationService {
       },
       Allowances: allowances,
       TotalSalary: asNumber(item['total_salary'] ?? item['totalSalary']),
+      Status:
+        asString(item['status']) ||
+        (asString(terminationSource['termination']) === 'Yes' ? 'Closed' : 'Open'),
       selected: false,
     };
   }

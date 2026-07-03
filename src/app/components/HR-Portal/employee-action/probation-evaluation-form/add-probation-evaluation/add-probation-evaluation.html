@@ -92,6 +92,7 @@
         </li>
         <li
           class="cjr-section-nav-item"
+          *ngIf="isSalaryAdjustmentVisible()"
           [class.cjr-section-nav-item--active]="activeSection() === 'salary-adjustment-section'"
           (click)="scrollToSection('salary-adjustment-section')"
         >
@@ -428,7 +429,7 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Probation Completion:</label>
-              <select [ngModel]="probationCompletion()" (ngModelChange)="probationCompletion.set($event)">
+              <select [ngModel]="probationCompletion()" (ngModelChange)="onProbationCompletionChange($event)">
                 <option value="">Select option</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
@@ -481,7 +482,7 @@
         </div>
       </section>
 
-      <section class="mad-form-panel" id="salary-adjustment-section" *ngIf="isPostSubmitSectionsAvailable()">
+      <section class="mad-form-panel" id="salary-adjustment-section" *ngIf="isSalaryAdjustmentVisible()">
         <div class="mad-form-panel__heading">
           <span class="mad-form-panel__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -3,115 +3,225 @@
     <div class="setup-body">
       <div class="setup-intro">
         <h2>User Setup</h2>
-        <p>View all users returned by the user list API.</p>
+        <p>Manage application users, roles, and module permissions.</p>
       </div>
 
-      <div class="form-panel">
-        <div class="form-panel-head">
-          <div>
-            <h3 class="form-panel-title">{{ formTitle() }}</h3>
-            <p class="panel-subtitle">
-              @if (formMode() === 'edit') {
-                Update the selected user record.
-              } @else {
-                Enter user details to create a new user.
-              }
-            </p>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          @for (field of formFields(); track trackByColumn($index, field)) {
-            <label class="field-block">
-              <span class="field-label">{{ columnLabel(field) }}</span>
-              @if (field === 'is_admin' || field === 'isAdmin') {
-                <select
-                  class="field-input"
-                  [ngModel]="fieldValue(field)"
-                  (ngModelChange)="updateField(field, $event)"
-                  [name]="'user-field-' + field">
-                  <option value="0">No</option>
-                  <option value="1">Yes</option>
-                </select>
-              } @else {
-                <input
-                  [type]="field.toLowerCase() === 'password' ? 'password' : 'text'"
-                  class="field-input"
-                  [ngModel]="fieldValue(field)"
-                  (ngModelChange)="updateField(field, $event)"
-                  [name]="'user-field-' + field"
-                  [placeholder]="columnLabel(field)"
-                />
-              }
-            </label>
-          }
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitUser()">
-            {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}
-          </button>
-          @if (formMode() === 'edit') {
-            <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
-          }
-        </div>
-      </div>
-
-      <div class="form-panel">
-        <div class="form-panel-head">
-          <div>
-            <h3 class="form-panel-title">Users</h3>
-            <p class="panel-subtitle">Total users: {{ totalUsers() }}</p>
-          </div>
-          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">
-            {{ loading() ? 'Loading…' : 'Refresh' }}
-          </button>
-        </div>
-
-        @if (loading()) {
-          <div class="panel-message">Loading users…</div>
-        } @else if (!users().length) {
-          <div class="panel-message">No users found.</div>
-        } @else {
-          <div class="table-wrap">
-            <table class="entry-table">
-              <thead>
-                <tr>
-                  <th class="col-sr">SR No.</th>
-                  @for (column of columns(); track trackByColumn($index, column)) {
-                    <th>{{ columnLabel(column) }}</th>
-                  }
-                  <th class="col-action">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (user of users(); track $index; let index = $index) {
-                  <tr>
-                    <td class="col-sr">{{ index + 1 }}</td>
-                    @for (column of columns(); track trackByColumn($index, column)) {
-                      <td>{{ cellValue(user, column) }}</td>
-                    }
-                    <td class="col-action">
-                      <div class="action-buttons">
-                        <button type="button" class="btn-edit" [disabled]="saving() || deleting()" (click)="startEdit(user)">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-delete"
-                          [disabled]="saving() || deleting()"
-                          (click)="deleteUser(user)">
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+      <div class="user-setup-grid">
+        <div class="form-panel user-form-panel">
+          <div class="form-panel-head">
+            <div>
+              <h3 class="form-panel-title">{{ formTitle() }}</h3>
+              <p class="panel-subtitle">
+                @if (formMode() === 'edit') {
+                  Update the selected user record.
+                } @else {
+                  Enter user details to create a new user.
                 }
-              </tbody>
-            </table>
+              </p>
+            </div>
           </div>
-        }
+
+          <div class="form-grid">
+            @for (field of formFields(); track trackByColumn($index, field)) {
+              <label class="field-block" [class.field-block--wide]="field.toLowerCase() === 'email'">
+                <span class="field-label">
+                  {{ columnLabel(field) }}
+                  @if (field.toLowerCase() === 'password' && formMode() === 'edit') {
+                    <span class="field-hint">Leave blank to keep current password</span>
+                  }
+                </span>
+                @if (field === 'is_admin' || field === 'isAdmin') {
+                  <select
+                    class="field-input"
+                    [ngModel]="fieldValue(field)"
+                    (ngModelChange)="updateField(field, $event)"
+                    [name]="'user-field-' + field">
+                    <option value="0">Standard user</option>
+                    <option value="1">Administrator</option>
+                  </select>
+                } @else {
+                  <input
+                    [type]="field.toLowerCase() === 'password' ? 'password' : 'text'"
+                    class="field-input"
+                    [ngModel]="fieldValue(field)"
+                    (ngModelChange)="updateField(field, $event)"
+                    [name]="'user-field-' + field"
+                    [placeholder]="columnLabel(field)"
+                  />
+                }
+              </label>
+            }
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitUser()">
+              {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}
+            </button>
+            @if (formMode() === 'edit') {
+              <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
+            }
+          </div>
+        </div>
+
+        <div class="form-panel users-panel">
+          <div class="form-panel-head users-panel-head">
+            <div>
+              <h3 class="form-panel-title">Users</h3>
+              <p class="panel-subtitle">
+                {{ filteredUsers().length }} of {{ totalUsers() }} users shown
+              </p>
+            </div>
+            <div class="users-panel-actions">
+              <div class="search-wrap">
+                <input
+                  type="search"
+                  class="search-input"
+                  [ngModel]="searchText()"
+                  (ngModelChange)="searchText.set($event)"
+                  name="user-search"
+                  placeholder="Search by name, email, or ID"
+                />
+              </div>
+              <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">
+                {{ loading() ? 'Loading…' : 'Refresh' }}
+              </button>
+            </div>
+          </div>
+
+          @if (loading()) {
+            <div class="panel-message">Loading users…</div>
+          } @else if (!users().length) {
+            <div class="panel-message">No users found.</div>
+          } @else if (!filteredUsers().length) {
+            <div class="panel-message">No users match your search.</div>
+          } @else {
+            <div class="table-wrap">
+              <table class="entry-table users-table">
+                <thead>
+                  <tr>
+                    <th class="col-sr">#</th>
+                    @for (column of displayTableColumns; track column.key) {
+                      <th [class.col-auth]="column.key === 'authorization'">{{ tableColumnLabel(column) }}</th>
+                    }
+                    <th class="col-action">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (user of filteredUsers(); track resolveUserId(user) ?? $index; let index = $index) {
+                    <tr>
+                      <td class="col-sr">{{ index + 1 }}</td>
+
+                      @for (column of displayTableColumns; track column.key) {
+                        @if (column.key === 'name') {
+                          <td>
+                            <div class="user-name-cell">
+                              <span class="user-avatar" aria-hidden="true">{{ userInitials(user) }}</span>
+                              <div class="user-name-meta">
+                                <span class="user-name">{{ resolveField(user, column.aliases) || '—' }}</span>
+                                <span class="user-id">ID {{ resolveUserId(user) ?? '—' }}</span>
+                              </div>
+                            </div>
+                          </td>
+                        } @else if (column.key === 'email') {
+                          <td class="col-email">{{ resolveField(user, column.aliases) || '—' }}</td>
+                        } @else if (column.key === 'is_admin') {
+                          <td>
+                            @if (isAdminUser(user)) {
+                              <span class="role-badge role-badge--admin">Admin</span>
+                            } @else {
+                              <span class="role-badge role-badge--user">User</span>
+                            }
+                          </td>
+                        } @else if (column.key === 'created_at') {
+                          <td class="col-date">{{ displayCreatedAt(user) }}</td>
+                        } @else if (column.key === 'authorization') {
+                          <td class="col-auth">
+                            @if (authorizationSummary(user); as summary) {
+                              <div class="auth-cell">
+                                <div class="auth-summary">
+                                  <span class="auth-count">{{ summary.granted }}/{{ summary.total }}</span>
+                                  <span class="auth-label">permissions granted</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  class="btn-view-auth"
+                                  (click)="openAuthorizationDialog(user)">
+                                  View
+                                </button>
+                              </div>
+                            } @else {
+                              <span class="empty-value">—</span>
+                            }
+                          </td>
+                        }
+                      }
+
+                      <td class="col-action">
+                        <div class="action-buttons">
+                          <button
+                            type="button"
+                            class="btn-edit"
+                            [disabled]="saving() || deleting()"
+                            (click)="startEdit(user)">
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-delete"
+                            [disabled]="saving() || deleting()"
+                            (click)="deleteUser(user)">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+@if (authorizationDialogOpen()) {
+  <div class="auth-dialog-backdrop" (click)="closeAuthorizationDialog()"></div>
+  <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" (click)="$event.stopPropagation()">
+    <div class="auth-dialog-header">
+      <div>
+        <h3 id="auth-dialog-title">{{ authorizationDialogTitle() }}</h3>
+        @if (authorizationDialogSummary(); as summary) {
+          <p>{{ summary.granted }} of {{ summary.total }} permissions granted across {{ summary.modules.length }} modules</p>
+        }
+      </div>
+      <button type="button" class="auth-dialog-close" (click)="closeAuthorizationDialog()" title="Close">✕</button>
+    </div>
+
+    <div class="auth-dialog-body">
+      @if (authorizationDialogSummary(); as summary) {
+        @for (module of summary.modules; track module.moduleName) {
+          <section class="auth-module-card">
+            <div class="auth-module-head">
+              <h4>{{ module.moduleName }}</h4>
+              <span class="auth-module-count">
+                {{ moduleGrantedCount(module) }}/{{ module.permissions.length }}
+              </span>
+            </div>
+            <div class="auth-permission-grid">
+              @for (permission of module.permissions; track permission.key) {
+                <span
+                  class="auth-permission-chip"
+                  [class.auth-permission-chip--granted]="permission.granted"
+                  [class.auth-permission-chip--denied]="!permission.granted">
+                  {{ permission.actionLabel }}
+                </span>
+              }
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </div>
+}

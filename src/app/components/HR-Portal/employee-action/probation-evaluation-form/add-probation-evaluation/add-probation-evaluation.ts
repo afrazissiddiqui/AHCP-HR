@@ -123,6 +123,7 @@ export class AddProbationEvaluationComponent implements OnInit {
   protected readonly probationCompletion = signal<'Yes' | 'No' | ''>('');
   protected readonly termination = signal<'Yes' | 'No' | ''>('');
   protected readonly terminationEffectiveDate = signal('');
+  protected readonly probationStatus = signal('Open');
   protected readonly currentSalary = signal('');
   protected readonly adjustmentInSalary = signal('');
   protected readonly adjustmentAmountInSalary = signal('');
@@ -802,11 +803,32 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   protected readonly isTerminationYes = computed(() => this.termination() === 'Yes');
+  protected readonly isProbationCompletionYes = computed(() => this.probationCompletion() === 'Yes');
+
+  protected isSalaryAdjustmentVisible(): boolean {
+    return this.isPostSubmitSectionsAvailable() && this.probationCompletion() === 'Yes';
+  }
+
+  protected onProbationCompletionChange(value: 'Yes' | 'No' | ''): void {
+    this.probationCompletion.set(value);
+    if (value !== 'Yes') {
+      this.adjustmentInSalary.set('');
+      this.adjustmentAmountInSalary.set('');
+      this.effectiveDateOfRevision.set('');
+      this.allowances.set([]);
+    }
+  }
 
   protected onTerminationChange(value: 'Yes' | 'No' | ''): void {
     this.termination.set(value);
-    if (value !== 'Yes') {
-      this.terminationEffectiveDate.set('');
+    if (value === 'Yes') {
+      this.probationStatus.set('Closed');
+      return;
+    }
+
+    this.terminationEffectiveDate.set('');
+    if (value === 'No') {
+      this.probationStatus.set('Open');
     }
   }
 
@@ -902,8 +924,10 @@ export class AddProbationEvaluationComponent implements OnInit {
 
   private resetPostSubmitFields(): void {
     this.extensionEntries.set([]);
+    this.probationCompletion.set('');
     this.termination.set('');
     this.terminationEffectiveDate.set('');
+    this.probationStatus.set('Open');
     this.adjustmentInSalary.set('');
     this.adjustmentAmountInSalary.set('');
     this.effectiveDateOfRevision.set('');
@@ -932,7 +956,7 @@ export class AddProbationEvaluationComponent implements OnInit {
         );
       case 'effectiveDateOfRevision':
         return (
-          this.isPostSubmitSectionsAvailable() &&
+          this.isSalaryAdjustmentVisible() &&
           this.isEffectiveDateRequired() &&
           !this.effectiveDateOfRevision().trim()
         );
@@ -955,7 +979,7 @@ export class AddProbationEvaluationComponent implements OnInit {
   }
 
   protected isEffectiveDateRequired(): boolean {
-    if (!this.isPostSubmitSectionsAvailable()) {
+    if (!this.isSalaryAdjustmentVisible()) {
       return false;
     }
 
@@ -1005,7 +1029,7 @@ export class AddProbationEvaluationComponent implements OnInit {
       return;
     }
 
-    if (this.isPostSubmitSectionsAvailable() && this.isFieldInvalid('effectiveDateOfRevision')) {
+    if (this.isSalaryAdjustmentVisible() && this.isFieldInvalid('effectiveDateOfRevision')) {
       this.scrollToSectionById('salary-adjustment-section');
     }
   }
@@ -1018,11 +1042,15 @@ export class AddProbationEvaluationComponent implements OnInit {
     let targetId = sectionId;
     if (
       (sectionId === 'extension-of-probation-section' ||
-        sectionId === 'termination-of-probation-section' ||
-        sectionId === 'salary-adjustment-section') &&
+        sectionId === 'termination-of-probation-section') &&
       !this.isPostSubmitSectionsAvailable()
     ) {
       targetId = 'post-submit-locked-section';
+    }
+    if (sectionId === 'salary-adjustment-section' && !this.isSalaryAdjustmentVisible()) {
+      targetId = !this.isPostSubmitSectionsAvailable()
+        ? 'post-submit-locked-section'
+        : 'probation-completion-section';
     }
 
     this.activeSection.set(sectionId);
@@ -1117,6 +1145,7 @@ export class AddProbationEvaluationComponent implements OnInit {
       },
       allowances: this.buildAllowancesForPayload(),
       total_salary: this.totalSalary(),
+      status: this.probationStatus(),
     };
 
     const payload = buildProbationEvaluationSubmitPayload(draft);
@@ -1179,7 +1208,7 @@ export class AddProbationEvaluationComponent implements OnInit {
     }
     const latestExtensionEndDate = this.getLatestExtensionEntry()?.newProbationEndDate ?? '';
     if (
-      this.isPostSubmitSectionsAvailable() &&
+      this.isSalaryAdjustmentVisible() &&
       this.toAmount(this.currentSalary()) > 0 &&
       !this.effectiveDateOfRevision().trim() &&
       !this.probationEndDate().trim() &&
@@ -1265,6 +1294,10 @@ export class AddProbationEvaluationComponent implements OnInit {
         : '',
     );
     this.terminationEffectiveDate.set(record.TerminationOfProbation.termination_effective_date ?? '');
+    this.probationStatus.set(
+      sanitizeApiText(record.Status) ||
+        (record.TerminationOfProbation.termination === 'Yes' ? 'Closed' : 'Open'),
+    );
 
     this.currentSalary.set(
       record.SalaryAdjustment.currentSalary

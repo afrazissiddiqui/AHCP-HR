@@ -6,8 +6,19 @@ import { AlertService } from '../../../services/alert.service';
 import { UserListItem, UserSetupPayload, UserSetupService } from '../../../services/user-setup.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
+import {
+  UserAuthorizationModule,
+  UserAuthorizationSummary,
+  parseUserAuthorization,
+} from '../../../utils/user-authorization.util';
 
 type UserFormMode = 'add' | 'edit';
+
+interface UserTableColumn {
+  key: string;
+  label: string;
+  aliases: string[];
+}
 
 @Component({
   selector: 'app-user-setup',
@@ -20,19 +31,54 @@ export class UserSetupComponent implements OnInit {
   private readonly userSetupService = inject(UserSetupService);
   private readonly alertService = inject(AlertService);
   private readonly editableFallbackColumns = ['name', 'email', 'password', 'is_admin'];
+  private readonly hiddenFormFields = new Set([
+    'authorization',
+    'id',
+    'created_at',
+    'updated_at',
+    'deleted_at',
+    'email_verified_at',
+  ]);
+
+  private readonly tableColumns: UserTableColumn[] = [
+    { key: 'name', label: 'Name', aliases: ['name', 'Name'] },
+    { key: 'email', label: 'Email', aliases: ['email', 'Email'] },
+    { key: 'is_admin', label: 'Role', aliases: ['is_admin', 'isAdmin'] },
+    { key: 'created_at', label: 'Created', aliases: ['created_at', 'createdAt', 'Created At'] },
+    { key: 'authorization', label: 'Authorization', aliases: ['authorization', 'Authorization'] },
+  ];
 
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deleting = signal(false);
   readonly users = signal<UserListItem[]>([]);
-  readonly columns = signal<string[]>([]);
   readonly formMode = signal<UserFormMode>('add');
   readonly editingUserId = signal<string | number | null>(null);
   readonly formFields = signal<string[]>([]);
   readonly formModel = signal<Record<string, string>>({});
+  readonly searchText = signal('');
+  readonly authorizationDialogOpen = signal(false);
+  readonly authorizationDialogUser = signal<UserListItem | null>(null);
+  readonly authorizationDialogSummary = signal<UserAuthorizationSummary | null>(null);
+
   readonly totalUsers = computed(() => this.users().length);
+  readonly filteredUsers = computed(() => {
+    const query = this.searchText().trim().toLowerCase();
+    if (!query) {
+      return this.users();
+    }
+
+    return this.users().filter((user) => {
+      const name = this.resolveField(user, ['name', 'Name']).toLowerCase();
+      const email = this.resolveField(user, ['email', 'Email']).toLowerCase();
+      const id = this.resolveUserId(user);
+      return name.includes(query) || email.includes(query) || String(id ?? '').includes(query);
+    });
+  });
 
   ngOnInit(): void {
+    this.formFields.set(this.deriveEditableFields([]));
+    this.resetForm();
     this.loadUsers();
   }
 
@@ -44,13 +90,11 @@ export class UserSetupComponent implements OnInit {
       .subscribe({
         next: (users) => {
           this.users.set(users);
-          this.columns.set(this.deriveColumns(users));
           this.formFields.set(this.deriveEditableFields(users));
           this.resetForm();
         },
         error: (error: unknown) => {
           this.users.set([]);
-          this.columns.set([]);
           this.formFields.set(this.deriveEditableFields([]));
           this.resetForm();
           void this.alertService.error(
@@ -61,6 +105,81 @@ export class UserSetupComponent implements OnInit {
       });
   }
 
+  tableColumnLabel(column: UserTableColumn): string {
+    return column.label;
+  }
+
+  resolveField(user: UserListItem, aliases: string[]): string {
+    for (const alias of aliases) {
+      const value = user[alias];
+      if (value !== null && value !== undefined && String(value).trim() !== '') {
+        return String(value).trim();
+      }
+    }
+    return '';
+  }
+
+  userInitials(user: UserListItem): string {
+    const name = this.resolveField(user, ['name', 'Name']);
+    if (!name) {
+      return '?';
+    }
+
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+  }
+
+  isAdminUser(user: UserListItem): boolean {
+    const value = this.resolveField(user, ['is_admin', 'isAdmin']);
+    return value === '1' || value.toLowerCase() === 'yes' || value.toLowerCase() === 'true';
+  }
+
+  displayCreatedAt(user: UserListItem): string {
+    const value = this.resolveField(user, ['created_at', 'createdAt']);
+    if (!value) {
+      return '—';
+    }
+    const formatted = displayDateOnly(value);
+    return formatted === '—' ? '—' : formatted.replace(/-/g, '/');
+  }
+
+  authorizationSummary(user: UserListItem): UserAuthorizationSummary | null {
+    const rawValue = user['authorization'] ?? user['Authorization'];
+    return parseUserAuthorization(rawValue);
+  }
+
+  openAuthorizationDialog(user: UserListItem): void {
+    const summary = this.authorizationSummary(user);
+    if (!summary) {
+      return;
+    }
+
+    this.authorizationDialogUser.set(user);
+    this.authorizationDialogSummary.set(summary);
+    this.authorizationDialogOpen.set(true);
+  }
+
+  closeAuthorizationDialog(): void {
+    this.authorizationDialogOpen.set(false);
+    this.authorizationDialogUser.set(null);
+    this.authorizationDialogSummary.set(null);
+  }
+
+  authorizationDialogTitle(): string {
+    const user = this.authorizationDialogUser();
+    if (!user) {
+      return 'User permissions';
+    }
+
+    const name = this.resolveField(user, ['name', 'Name']);
+    const email = this.resolveField(user, ['email', 'Email']);
+    return name || email || 'User permissions';
+  }
+
   columnLabel(column: string): string {
     return column
       .replace(/_/g, ' ')
@@ -68,36 +187,6 @@ export class UserSetupComponent implements OnInit {
       .replace(/\s+/g, ' ')
       .trim()
       .replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
-  cellValue(user: UserListItem, column: string): string {
-    const value = user[column];
-    if (value === null || value === undefined || value === '') {
-      return '—';
-    }
-    if (this.isDateColumn(column)) {
-      return this.formatDateColumn(value);
-    }
-    if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
-    }
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
-    return String(value);
-  }
-
-  private isDateColumn(column: string): boolean {
-    const normalized = column.toLowerCase();
-    return normalized.endsWith('_at') || normalized === 'createdat' || normalized === 'updatedat';
-  }
-
-  private formatDateColumn(value: unknown): string {
-    const formatted = displayDateOnly(value as string | number);
-    if (formatted === '—') {
-      return '—';
-    }
-    return formatted.replace(/-/g, '/');
   }
 
   trackByColumn(_index: number, column: string): string {
@@ -187,7 +276,9 @@ export class UserSetupComponent implements OnInit {
     }
 
     const label =
-      this.valueToInput(user['name']) || this.valueToInput(user['Name']) || this.valueToInput(user['email']) || `ID ${userId}`;
+      this.resolveField(user, ['name', 'Name']) ||
+      this.resolveField(user, ['email', 'Email']) ||
+      `ID ${userId}`;
     const result = await this.alertService.confirm('Delete user?', `Remove ${label} from the list?`);
     if (!result.isConfirmed) {
       return;
@@ -214,40 +305,11 @@ export class UserSetupComponent implements OnInit {
       });
   }
 
-  private deriveColumns(users: UserListItem[]): string[] {
-    const priority = [
-      'id',
-      'Id',
-      'ID',
-      'name',
-      'Name',
-      'username',
-      'Username',
-      'email',
-      'Email',
-      'is_admin',
-      'isAdmin',
-      'role',
-      'Role',
-      'created_at',
-      'createdAt',
-    ];
-    const discovered = new Set<string>();
-
-    for (const user of users) {
-      Object.keys(user).forEach((key) => discovered.add(key));
-    }
-
-    const ordered = priority.filter((key) => discovered.has(key));
-    const remaining = [...discovered].filter((key) => !priority.includes(key)).sort((a, b) => a.localeCompare(b));
-    return [...ordered, ...remaining];
-  }
-
   private deriveEditableFields(users: UserListItem[]): string[] {
     const discovered = new Set<string>();
     for (const user of users) {
       Object.keys(user).forEach((key) => {
-        if (!this.isReadOnlyField(key)) {
+        if (!this.isHiddenFormField(key)) {
           discovered.add(key);
         }
       });
@@ -263,9 +325,12 @@ export class UserSetupComponent implements OnInit {
     return [...ordered, ...remaining];
   }
 
-  private isReadOnlyField(field: string): boolean {
+  private isHiddenFormField(field: string): boolean {
     const normalized = field.toLowerCase();
-    return ['id', 'created_at', 'updated_at', 'deleted_at', 'email_verified_at'].includes(normalized);
+    return (
+      this.hiddenFormFields.has(normalized) ||
+      ['id', 'created_at', 'updated_at', 'deleted_at', 'email_verified_at'].includes(normalized)
+    );
   }
 
   private resetForm(): void {
@@ -313,7 +378,7 @@ export class UserSetupComponent implements OnInit {
     return null;
   }
 
-  private resolveUserId(user: UserListItem): string | number | null {
+  resolveUserId(user: UserListItem): string | number | null {
     const keys = ['id', 'Id', 'ID'];
     for (const key of keys) {
       const value = user[key];
@@ -332,5 +397,13 @@ export class UserSetupComponent implements OnInit {
       return value ? '1' : '0';
     }
     return String(value);
+  }
+
+  moduleGrantedCount(module: UserAuthorizationModule): number {
+    return module.permissions.filter((permission) => permission.granted).length;
+  }
+
+  get displayTableColumns(): UserTableColumn[] {
+    return this.tableColumns;
   }
 }
