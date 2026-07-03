@@ -1,22 +1,115 @@
-<div class="cjs-page">
-  <div class="cjs-header">
-    <div class="cjs-header-left">
-      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
-        <span class="cjs-back-icon">❮</span>
+<div class="cjr-page mad-add-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>{{ pageTitle }}</h1>
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="mad-page-subtitle">{{ pageSubtitle }}</p>
+      </div>
     </div>
   </div>
 
-  <div class="cjs-card">
-    <div class="cjs-form-container">
-      <section class="cjs-section-block" id="training-info-section">
-        <div class="cjs-section-title">Employee Information</div>
+  <div class="cjr-card cjr-form-card">
+    <div class="scd-form-hero" aria-hidden="true">
+      <div class="scd-form-hero__glow"></div>
+      <div class="scd-form-hero__content">
+        <span class="scd-form-hero__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+            <path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
+          </svg>
+        </span>
+        <div class="scd-form-hero__text">
+          <span class="scd-form-hero__label">HR Portal</span>
+          <span class="scd-form-hero__title">Training &amp; Development</span>
+        </div>
+        <div class="scd-form-hero__steps">
+          <span class="scd-step-chip scd-step-chip--active">
+            <span class="scd-step-chip__num">1</span>
+            Employee Info
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="employeeCode().trim() && employeeName().trim()"
+            [class.scd-step-chip--ready]="trainingTitle().trim()"
+          >
+            <span class="scd-step-chip__num">2</span>
+            Training
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="trainingTitle().trim()"
+          >
+            <span class="scd-step-chip__num">3</span>
+            Evaluation &amp; Outcomes
+          </span>
+        </div>
+      </div>
+    </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
-              <label>Employee Code:</label>
+    <nav class="cjr-section-nav mad-sticky-nav" aria-label="Training and development sections">
+      <ul class="cjr-section-nav-list">
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'training-info-section'"
+          (click)="scrollToSection('training-info-section')"
+        >
+          Employee information
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'training-detail-section'"
+          (click)="scrollToSection('training-detail-section')"
+        >
+          Training detail
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'training-evaluation-section'"
+          (click)="scrollToSection('training-evaluation-section')"
+        >
+          Training evaluation
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'training-salary-section'"
+          (click)="scrollToSection('training-salary-section')"
+        >
+          Salary
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'training-promotion-section'"
+          (click)="scrollToSection('training-promotion-section')"
+        >
+          Promotion
+        </li>
+      </ul>
+    </nav>
+
+    <div class="cjr-form-body">
+      <section class="mad-form-panel" id="training-info-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Employee Information</h2>
+            <span class="mad-form-panel__subtitle">Employee details and organizational context</span>
+          </div>
+        </div>
+
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee Code:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -28,9 +121,10 @@
                   (ngModelChange)="onEmployeeCodeInput($event)"
                   (focus)="openCodeSuggestions()"
                   (blur)="onCodeInputBlur()"
-                  placeholder="e.g. EMP-001"
+                  placeholder="Search by code, name, or department"
                   autocomplete="off"
                   [readonly]="!!editingId"
+                  [class.cjr-invalid]="isFieldInvalid('employeeCode')"
                 />
                 <ul
                   id="td-employee-code-listbox"
@@ -58,8 +152,8 @@
               </div>
             </div>
 
-            <div class="cjs-row">
-              <label>Employee Name:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee Name:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -71,9 +165,10 @@
                   (ngModelChange)="onEmployeeNameInput($event)"
                   (focus)="openNameSuggestions()"
                   (blur)="onNameInputBlur()"
-                  placeholder="Employee full name"
+                  placeholder="Search by name, code, or department"
                   autocomplete="off"
                   [readonly]="!!editingId"
+                  [class.cjr-invalid]="isFieldInvalid('employeeName')"
                 />
                 <ul
                   id="td-employee-name-listbox"
@@ -101,68 +196,84 @@
               </div>
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Department:</label>
               <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Location:</label>
               <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Designation:</label>
               <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Job Title:</label>
               <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Reporting Manager:</label>
               <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employee Nature:</label>
               <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" placeholder="e.g. Permanent" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employment Status:</label>
               <input type="text" [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)" placeholder="e.g. Full Time" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Grade Work Level:</label>
               <input type="text" [ngModel]="gradeWorkLevel()" (ngModelChange)="gradeWorkLevel.set($event)" placeholder="e.g. GWL-5" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employment Category:</label>
               <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Date of Joining:</label>
               <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)" />
             </div>
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--remarks">
+        <div class="cjr-row cjr-row--remarks">
           <label>Remarks:</label>
-          <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
+          <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="training-detail-section">
-        <div class="cjs-section-title">Training Detail</div>
+      <section class="mad-form-panel" id="training-detail-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Training Detail</h2>
+            <span class="mad-form-panel__subtitle">Program information, schedule, and learning objectives</span>
+          </div>
+        </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
-              <label>Training Title:</label>
-              <input type="text" [ngModel]="trainingTitle()" (ngModelChange)="trainingTitle.set($event)" />
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label class="cjr-label-required">Training Title:</label>
+              <input
+                type="text"
+                [ngModel]="trainingTitle()"
+                (ngModelChange)="trainingTitle.set($event)"
+                [class.cjr-invalid]="isFieldInvalid('trainingTitle')"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Training Category:</label>
               <select [ngModel]="trainingCategory()" (ngModelChange)="trainingCategory.set($event)">
                 <option value="">Select category</option>
@@ -171,7 +282,7 @@
                 }
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Training Type:</label>
               <select [ngModel]="trainingType()" (ngModelChange)="trainingType.set($event)">
                 <option value="">Select type</option>
@@ -180,7 +291,7 @@
                 }
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Training Stage:</label>
               <select [ngModel]="trainingStage()" (ngModelChange)="trainingStage.set($event)">
                 <option value="">Select stage</option>
@@ -189,7 +300,7 @@
                 }
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Department Applicability:</label>
               <select [ngModel]="departmentApplicability()" (ngModelChange)="departmentApplicability.set($event)">
                 <option value="">Select department</option>
@@ -198,50 +309,62 @@
                 }
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Training Start Date:</label>
               <input type="date" [ngModel]="trainingStartDate()" (ngModelChange)="trainingStartDate.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Training End Date:</label>
               <input type="date" [ngModel]="trainingEndDate()" (ngModelChange)="trainingEndDate.set($event)" />
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Training Duration:</label>
               <input type="text" [value]="trainingDuration()" readonly placeholder="Auto-calculated from dates" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Trainer:</label>
               <input type="text" [ngModel]="trainer()" (ngModelChange)="trainer.set($event)" />
             </div>
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--remarks">
+        <div class="cjr-row cjr-row--remarks">
           <label>Training Objectives:</label>
-          <textarea rows="3" [ngModel]="trainingObjectives()" (ngModelChange)="trainingObjectives.set($event)"></textarea>
+          <textarea rows="4" [ngModel]="trainingObjectives()" (ngModelChange)="trainingObjectives.set($event)"></textarea>
         </div>
 
-        <div class="cjs-row cjs-row--remarks">
+        <div class="cjr-row cjr-row--remarks">
           <label>Skills Covered:</label>
-          <textarea rows="3" [ngModel]="skillsCovered()" (ngModelChange)="skillsCovered.set($event)"></textarea>
+          <textarea rows="4" [ngModel]="skillsCovered()" (ngModelChange)="skillsCovered.set($event)"></textarea>
         </div>
 
-        <div class="cjs-row cjs-row--remarks">
+        <div class="cjr-row cjr-row--remarks">
           <label>Remarks (training detail):</label>
-          <textarea rows="3" [ngModel]="trainingDetailRemarks()" (ngModelChange)="trainingDetailRemarks.set($event)"></textarea>
+          <textarea rows="4" [ngModel]="trainingDetailRemarks()" (ngModelChange)="trainingDetailRemarks.set($event)"></textarea>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="training-evaluation-section">
-        <div class="cjs-section-title">Training Evaluation</div>
+      <section class="mad-form-panel" id="training-evaluation-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Training Evaluation</h2>
+            <span class="mad-form-panel__subtitle">Evaluation cycle, scoring parameters, and performance remarks</span>
+          </div>
+        </div>
 
-        <div class="cjs-grid training-evaluation-meta">
-          <div class="cjs-col">
-            <div class="cjs-row">
+        <div class="cjr-personal-grid training-evaluation-meta">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Evaluation Cycle Number:</label>
               <select [ngModel]="evaluationCycleNumber()" (ngModelChange)="evaluationCycleNumber.set($event)">
                 <option value="">Select cycle</option>
@@ -250,18 +373,18 @@
                 }
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Evaluation Date:</label>
               <input type="date" [ngModel]="evaluationDate()" (ngModelChange)="evaluationDate.set($event)" />
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Ratings Obtained:</label>
               <input type="text" [ngModel]="evaluationPeriod()" (ngModelChange)="evaluationPeriod.set($event)" placeholder="e.g. May 2026" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Evaluator Name:</label>
               <input type="text" [ngModel]="evaluatorName()" (ngModelChange)="evaluatorName.set($event)" />
             </div>
@@ -346,44 +469,55 @@
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--remarks">
+        <div class="cjr-row cjr-row--remarks supervision-remark-gap">
           <label>Performance Remarks:</label>
-          <textarea rows="3" [ngModel]="performanceRemarks()" (ngModelChange)="performanceRemarks.set($event)"></textarea>
+          <textarea rows="4" [ngModel]="performanceRemarks()" (ngModelChange)="performanceRemarks.set($event)"></textarea>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="training-salary-section">
-        <div class="cjs-section-title">Salary</div>
+      <section class="mad-form-panel" id="training-salary-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Salary</h2>
+            <span class="mad-form-panel__subtitle">Increment details and revision effective date</span>
+          </div>
+        </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Current Salary:</label>
               <input type="number" min="0" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Increment Amount:</label>
               <input type="number" min="0" [ngModel]="incrementAmount()" (ngModelChange)="onIncrementAmountChange($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Increment Percentage:</label>
               <input type="number" min="0" step="0.1" [ngModel]="incrementPercentage()" (ngModelChange)="onIncrementPercentageChange($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Revised Salary:</label>
               <input type="text" [value]="revisedSalary()" readonly />
             </div>
           </div>
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Effective Date of Revision:</label>
               <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Reason for Increment:</label>
               <input type="text" [ngModel]="reasonForIncrement()" (ngModelChange)="reasonForIncrement.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Approval Authority:</label>
               <input type="text" [ngModel]="approvalAuthority()" (ngModelChange)="approvalAuthority.set($event)" />
             </div>
@@ -391,12 +525,23 @@
         </div>
       </section>
 
-      <section class="cjs-section-block" id="training-promotion-section">
-        <div class="cjs-section-title">Promotion</div>
+      <section class="mad-form-panel" id="training-promotion-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <path d="M22 4 12 14.01l-3-3" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Promotion</h2>
+            <span class="mad-form-panel__subtitle">Promotion recommendation and eligibility verification</span>
+          </div>
+        </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Promotion Recommended:</label>
               <select [ngModel]="promotionRecommended()" (ngModelChange)="promotionRecommended.set($event)">
                 <option value="">Select</option>
@@ -404,18 +549,18 @@
                 <option value="No">No</option>
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>New Designation:</label>
               <input type="text" [ngModel]="newDesignation()" (ngModelChange)="newDesignation.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Promotion Effective Date:</label>
               <input type="date" [ngModel]="promotionEffectiveDate()" (ngModelChange)="promotionEffectiveDate.set($event)" />
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Performance Eligibility Check:</label>
               <select [ngModel]="performanceEligibilityCheck()" (ngModelChange)="performanceEligibilityCheck.set($event)">
                 <option value="">Select</option>
@@ -424,7 +569,7 @@
                 }
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Training Completion Verification:</label>
               <select [ngModel]="trainingCompletionVerification()" (ngModelChange)="trainingCompletionVerification.set($event)">
                 <option value="">Select</option>
@@ -435,16 +580,28 @@
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--remarks">
+        <div class="cjr-row cjr-row--remarks">
           <label>Remarks (promotion):</label>
-          <textarea rows="3" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)"></textarea>
+          <textarea rows="4" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)"></textarea>
         </div>
       </section>
     </div>
 
-    <div class="cjs-actions-footer">
-      <button type="button" class="cjs-submit-btn" (click)="save()">
-        <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
+    <div class="cjr-actions-footer">
+      <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()" [disabled]="saving()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
+      <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="saving()">
+        @if (saving()) {
+          <span class="cjr-submit-spinner" aria-hidden="true"></span>
+          <span>Saving…</span>
+        } @else {
+          <span class="cjr-submit-icon">✓</span>
+          <span>{{ submitButtonLabel }}</span>
+        }
       </button>
     </div>
   </div>

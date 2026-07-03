@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import {
   ApplicationFormRecord,
   ApplicationFormService,
@@ -22,6 +23,12 @@ import {
   buildTrainingDevelopmentSubmitPayload,
 } from '../../../../../services/training-development.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import { sanitizeApiText } from '../../../../../utils/api-text.util';
+import { formatDateForInput } from '../../../../../utils/date-format.util';
+import { normalizeEmploymentStatus } from '../../../../../utils/employment-status.util';
+import { glAccountBranchLabel } from '../../../../setup/gl-account-determination/gl-account-branch.options';
+
+type TrainingValidationField = 'employeeCode' | 'employeeName' | 'trainingTitle';
 
 interface TrainingEmployeeOption {
   code: string;
@@ -38,6 +45,7 @@ interface TrainingEmployeeOption {
   employmentCategory: string;
   dateOfJoining: string;
   basicSalary: string;
+  remarks: string;
 }
 
 @Component({
@@ -46,7 +54,7 @@ interface TrainingEmployeeOption {
   imports: [CommonModule, FormsModule],
   templateUrl: './add-training-development.html',
   styleUrls: [
-    '../../../job-specification-form/create-job-specification/create-job-specification.css',
+    '../../../Application-Form/create-job-requisition/create-job-requisition.css',
     '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
     './add-training-development.css',
   ],
@@ -56,6 +64,15 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add Training & Development';
   submitButtonLabel = 'Save Training & Development';
+  protected readonly activeSection = signal('training-info-section');
+  protected readonly saving = signal(false);
+  protected readonly validationTouched = signal(false);
+
+  get pageSubtitle(): string {
+    return this.editingId
+      ? 'Update training program details, evaluation scores, and post-training outcomes.'
+      : 'Capture employee training details, evaluation results, and salary or promotion outcomes.';
+  }
 
   protected readonly trainingCategoryOptions = [
     'Technical',
@@ -186,6 +203,9 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => {
         this.employeeOptions.set(this.buildEmployeeOptions());
+        if (this.editingId && this.employeeCode().trim()) {
+          this.enrichEmployeeFieldsFromApplication(this.employeeCode());
+        }
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
@@ -198,6 +218,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
 
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
+      this.trainingService.fetchTrainingDevelopments().subscribe();
       return;
     }
 
@@ -205,9 +226,18 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.pageTitle = 'Update Training & Development';
     this.submitButtonLabel = 'Update Training & Development';
 
+    const existing = this.trainingService.findTrainingById(editId);
+    if (existing) {
+      this.populateFromRecord(existing);
+      this.enrichEmployeeFieldsFromApplication(this.employeeCode());
+      this.cdr.markForCheck();
+      return;
+    }
+
     this.trainingService.fetchTrainingDevelopmentDetail(editId).subscribe({
       next: (record) => {
         this.populateFromRecord(record);
+        this.enrichEmployeeFieldsFromApplication(this.employeeCode());
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
@@ -275,7 +305,10 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.closeNameSuggestions();
 
     const applyRecord = (record: ApplicationFormRecord): void => {
+      const profileFields = this.mapApplicationRecordToEmployeeFields(record);
+      const employeeCode = this.resolveEmployeeCode(record);
       this.populateFromApplicationRecord(record);
+      this.applyExistingTrainingForEmployee(employeeCode, profileFields);
       this.cdr.markForCheck();
     };
 
@@ -290,6 +323,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
             applyRecord(localRecord);
           } else {
             this.populateFromEmployeeOption(employee);
+            this.applyExistingTrainingForEmployee(employee.code, employee);
             this.cdr.markForCheck();
           }
         },
@@ -303,7 +337,56 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     }
 
     this.populateFromEmployeeOption(employee);
+    this.applyExistingTrainingForEmployee(employee.code, employee);
     this.cdr.markForCheck();
+  }
+
+  /** If this employee already has a training record, load it for update. */
+  private applyExistingTrainingForEmployee(
+    employeeCode: string,
+    profileFields?: Omit<TrainingEmployeeOption, 'code' | 'apiId'>,
+  ): void {
+    if (this.route.snapshot.paramMap.get('id')) {
+      return;
+    }
+
+    const existing = this.trainingService.findTrainingByEmployeeCode(employeeCode);
+    if (existing?.Id) {
+      this.editingId = String(existing.Id);
+      this.pageTitle = 'Update Training & Development';
+      this.submitButtonLabel = 'Update Training & Development';
+
+      this.trainingService.fetchTrainingDevelopmentDetail(existing.Id).subscribe({
+        next: (record) => {
+          this.populateFromRecord(record);
+          if (profileFields) {
+            const savedSalary = this.currentSalary();
+            this.applyEmployeeFields(profileFields, employeeCode, { overwrite: true });
+            if (savedSalary) {
+              this.currentSalary.set(savedSalary);
+            }
+          }
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.populateFromRecord(existing);
+          if (profileFields) {
+            const savedSalary = this.currentSalary();
+            this.applyEmployeeFields(profileFields, employeeCode, { overwrite: true });
+            if (savedSalary) {
+              this.currentSalary.set(savedSalary);
+            }
+          }
+          this.cdr.markForCheck();
+        },
+      });
+      return;
+    }
+
+    this.editingId = null;
+    this.pageTitle = 'Add Training & Development';
+    this.submitButtonLabel = 'Save Training & Development';
+    this.resetTrainingSpecificFields();
   }
 
   protected onRatingKeyDown(event: KeyboardEvent): void {
@@ -391,14 +474,31 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     void this.router.navigateByUrl('/employee-action/training-development-form');
   }
 
+  protected scrollToSection(sectionId: string): void {
+    this.activeSection.set(sectionId);
+    setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  }
+
   protected save(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.validationTouched.set(true);
+
     if (!this.employeeCode().trim() || !this.employeeName().trim()) {
       void this.alertService.warning('Validation', 'Employee Code and Employee Name are required.');
+      this.scrollToFirstInvalidSection();
+      this.cdr.markForCheck();
       return;
     }
 
     if (!this.trainingTitle().trim()) {
       void this.alertService.warning('Validation', 'Training Title is required.');
+      this.scrollToFirstInvalidSection();
+      this.cdr.markForCheck();
       return;
     }
 
@@ -454,7 +554,15 @@ export class AddTrainingDevelopmentComponent implements OnInit {
       ? this.trainingService.updateTrainingDevelopment(this.editingId, payload)
       : this.trainingService.addTrainingDevelopment(payload);
 
-    request$.subscribe({
+    this.saving.set(true);
+    request$
+      .pipe(
+        finalize(() => {
+          this.saving.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
       next: async () => {
         const message = this.editingId
           ? 'Training & development record updated successfully.'
@@ -496,51 +604,214 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     TrainingEmployeeOption,
     'code' | 'apiId'
   > {
-    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const emptyIfDash = (value: string | undefined | null): string => sanitizeApiText(value);
     const personal = record.detail?.personalInfo;
     const requisition = record.detail?.requisition;
     const remuneration = record.detail?.remuneration;
-    const designation =
-      emptyIfDash(personal?.designation ?? '') ||
-      emptyIfDash(record.Designation) ||
-      emptyIfDash(requisition?.internalJobTitle ?? '');
-    const jobTitle =
-      emptyIfDash(requisition?.internalJobTitle ?? '') ||
-      emptyIfDash(personal?.designation ?? '') ||
-      emptyIfDash(record.Designation);
+    const login = record.detail?.loginDetails;
+    const composedName = [
+      emptyIfDash(personal?.firstName),
+      emptyIfDash(personal?.middleName),
+      emptyIfDash(personal?.lastName),
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const branchCode = this.firstNonEmpty(
+      emptyIfDash(personal?.branchLocation),
+      emptyIfDash(requisition?.location),
+    );
+    const branchLabel = glAccountBranchLabel(branchCode);
+    const designation = this.firstNonEmpty(
+      emptyIfDash(personal?.designation),
+      emptyIfDash(record.Designation),
+      emptyIfDash(requisition?.internalJobTitle),
+    );
+    const jobTitle = this.firstNonEmpty(
+      emptyIfDash(requisition?.internalJobTitle),
+      emptyIfDash(personal?.designation),
+      emptyIfDash(record.Designation),
+    );
 
     return {
-      name: emptyIfDash(record.EmployeeName) || emptyIfDash(personal?.personName ?? ''),
-      department:
-        emptyIfDash(personal?.departmentInAhcp ?? '') ||
+      name: this.firstNonEmpty(
+        emptyIfDash(record.EmployeeName),
+        emptyIfDash(personal?.personName),
+        composedName,
+        emptyIfDash(login?.employeeName),
+      ),
+      department: this.firstNonEmpty(
+        emptyIfDash(personal?.departmentInAhcp),
         emptyIfDash(record.Department),
-      location:
-        emptyIfDash(personal?.branchLocation ?? '') ||
-        emptyIfDash(requisition?.location ?? '') ||
-        emptyIfDash(personal?.city ?? ''),
+        emptyIfDash(requisition?.department),
+      ),
+      location: this.firstNonEmpty(
+        branchLabel,
+        branchCode,
+        emptyIfDash(personal?.city),
+        emptyIfDash(requisition?.location),
+      ),
       designation,
       jobTitle,
-      reportingManager:
-        emptyIfDash(personal?.reportingManager ?? '') ||
-        emptyIfDash(record.ReportingManager) ||
-        emptyIfDash(requisition?.hiringManager ?? ''),
-      employeeNature:
-        emptyIfDash(personal?.employmentNature ?? '') ||
-        emptyIfDash(record.EmployeeNature),
-      employeeType:
-        emptyIfDash(requisition?.division ?? '') ||
-        emptyIfDash(record.EmploymentType),
-      gradeWorkLevel:
-        emptyIfDash(personal?.workGradeLevel ?? '') ||
-        emptyIfDash(requisition?.costCenter ?? ''),
-      employmentCategory:
-        emptyIfDash(personal?.employmentCategory ?? '') ||
+      reportingManager: this.firstNonEmpty(
+        emptyIfDash(personal?.reportingManager),
+        emptyIfDash(record.ReportingManager),
+        emptyIfDash(requisition?.hiringManager),
+      ),
+      employeeNature: this.normalizeEmployeeNature(
+        this.firstNonEmpty(
+          emptyIfDash(personal?.employmentNature),
+          emptyIfDash(record.EmployeeNature),
+          emptyIfDash(requisition?.company),
+        ),
+      ),
+      employeeType: normalizeEmploymentStatus(
+        this.firstNonEmpty(
+          emptyIfDash(personal?.employmentStatus),
+          emptyIfDash(record.EmploymentStatus),
+          emptyIfDash(record.status),
+        ),
+      ),
+      gradeWorkLevel: this.firstNonEmpty(
+        emptyIfDash(personal?.workGradeLevel),
+        emptyIfDash(personal?.roleSalary),
+        emptyIfDash(record.detail?.hrSettings?.salaryStructure),
+        emptyIfDash(requisition?.costCenter),
+      ),
+      employmentCategory: this.firstNonEmpty(
+        emptyIfDash(personal?.employmentCategory),
         emptyIfDash(record.EmploymentCategory),
-      dateOfJoining: emptyIfDash(remuneration?.dateOfJoining ?? ''),
-      basicSalary:
-        emptyIfDash(remuneration?.basicSalary ?? '') ||
-        emptyIfDash(personal?.roleSalary ?? ''),
+      ),
+      remarks: emptyIfDash(personal?.remarks),
+      dateOfJoining: this.firstNonEmpty(emptyIfDash(remuneration?.dateOfJoining)),
+      basicSalary: this.formatGrossSalary(
+        this.firstNonEmpty(
+          emptyIfDash(remuneration?.basicSalary),
+          emptyIfDash(personal?.roleSalary),
+        ),
+      ),
     };
+  }
+
+  private firstNonEmpty(...values: string[]): string {
+    for (const value of values) {
+      const trimmed = value.trim();
+      if (trimmed && trimmed !== '—') {
+        return trimmed;
+      }
+    }
+    return '';
+  }
+
+  private normalizeProfileValue(value: string | undefined | null): string {
+    return sanitizeApiText(value);
+  }
+
+  private normalizeEmployeeNature(value: string | undefined | null): string {
+    const sanitized = sanitizeApiText(value);
+    if (!sanitized) {
+      return '';
+    }
+
+    const compact = sanitized.toLowerCase().replace(/[\s_-]+/g, '');
+    if (compact === 'technical') {
+      return 'Technical';
+    }
+    if (compact === 'nontechnical') {
+      return 'Non-Technical';
+    }
+
+    return sanitized;
+  }
+
+  private formatGrossSalary(value: string | undefined | null): string {
+    const sanitized = sanitizeApiText(value);
+    if (!sanitized) {
+      return '';
+    }
+
+    const numeric = Number.parseFloat(sanitized.replace(/,/g, ''));
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return String(numeric);
+    }
+
+    return sanitized;
+  }
+
+  private enrichEmployeeFieldsFromApplication(employeeCode: string): void {
+    const code = employeeCode.trim();
+    if (!code) {
+      return;
+    }
+
+    const applyFromRecord = (record: ApplicationFormRecord): void => {
+      const profile = this.mapApplicationRecordToEmployeeFields(record);
+      this.applyEmployeeFields(profile, this.resolveEmployeeCode(record), { overwrite: false });
+      const grossSalary = this.formatGrossSalary(profile.basicSalary);
+      if (grossSalary && !this.normalizeProfileValue(this.currentSalary())) {
+        this.currentSalary.set(grossSalary);
+      }
+      this.cdr.markForCheck();
+    };
+
+    const localRecord = this.findApplicationRecordByCode(code);
+    if (!localRecord) {
+      return;
+    }
+
+    const detailId = localRecord.apiId?.trim();
+    if (!detailId) {
+      applyFromRecord(localRecord);
+      return;
+    }
+
+    this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
+      next: applyFromRecord,
+      error: () => applyFromRecord(localRecord),
+    });
+  }
+
+  private findApplicationRecordByCode(employeeCode: string): ApplicationFormRecord | undefined {
+    const code = employeeCode.trim().toLowerCase();
+    if (!code) {
+      return undefined;
+    }
+
+    return this.applicationFormService
+      .getApplicationRecords()
+      .find((record) => this.resolveEmployeeCode(record).trim().toLowerCase() === code);
+  }
+
+  private resetTrainingSpecificFields(): void {
+    this.trainingTitle.set('');
+    this.trainingCategory.set('');
+    this.trainingType.set('');
+    this.trainingStage.set('');
+    this.departmentApplicability.set('');
+    this.trainingStartDate.set('');
+    this.trainingEndDate.set('');
+    this.trainer.set('');
+    this.trainingObjectives.set('');
+    this.skillsCovered.set('');
+    this.trainingDetailRemarks.set('');
+    this.evaluationCycleNumber.set('');
+    this.evaluationDate.set('');
+    this.evaluationPeriod.set('');
+    this.evaluatorName.set('');
+    this.evaluationRows.set([
+      { evaluationParameter: '', scoring: '', actualScore: '', overallScore: '' },
+    ]);
+    this.performanceRemarks.set('');
+    this.incrementAmount.set('');
+    this.incrementPercentage.set('');
+    this.effectiveDateOfRevision.set('');
+    this.reasonForIncrement.set('');
+    this.approvalAuthority.set('');
+    this.promotionRecommended.set('');
+    this.newDesignation.set('');
+    this.promotionEffectiveDate.set('');
+    this.performanceEligibilityCheck.set('');
+    this.trainingCompletionVerification.set('');
+    this.promotionRemarks.set('');
   }
 
   private findApplicationRecord(employee: TrainingEmployeeOption): ApplicationFormRecord | undefined {
@@ -597,24 +868,57 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   private applyEmployeeFields(
     fields: Omit<TrainingEmployeeOption, 'code' | 'apiId'>,
     employeeCode: string,
+    options: { overwrite?: boolean } = {},
   ): void {
-    this.employeeCode.set(employeeCode);
-    this.employeeName.set(fields.name);
-    this.department.set(fields.department);
-    this.location.set(fields.location);
-    this.designation.set(fields.designation);
-    this.jobTitle.set(fields.jobTitle);
-    this.reportingManager.set(fields.reportingManager);
-    this.employeeNature.set(fields.employeeNature);
-    this.employeeType.set(fields.employeeType);
-    this.gradeWorkLevel.set(fields.gradeWorkLevel);
-    this.employmentCategory.set(fields.employmentCategory);
-    this.dateOfJoining.set(fields.dateOfJoining);
-    this.currentSalary.set(fields.basicSalary);
+    const overwrite = options.overwrite ?? true;
+    const setField = (target: ReturnType<typeof signal<string>>, value: string): void => {
+      const next = this.normalizeProfileValue(value);
+      if (!next) {
+        if (overwrite) {
+          target.set('');
+        }
+        return;
+      }
+      if (overwrite || !this.normalizeProfileValue(target())) {
+        target.set(next);
+      }
+    };
+
+    setField(this.employeeCode, employeeCode);
+    setField(this.employeeName, fields.name);
+    setField(this.department, fields.department);
+    setField(this.location, fields.location);
+    setField(this.designation, fields.designation);
+    setField(this.jobTitle, fields.jobTitle);
+    setField(this.reportingManager, fields.reportingManager);
+    setField(this.employeeNature, fields.employeeNature);
+    setField(this.employeeType, fields.employeeType);
+    setField(this.gradeWorkLevel, fields.gradeWorkLevel);
+    setField(this.employmentCategory, fields.employmentCategory);
+    setField(this.remarks, fields.remarks);
+
+    const joiningDate = formatDateForInput(fields.dateOfJoining);
+    if (joiningDate && (overwrite || !this.dateOfJoining().trim())) {
+      this.dateOfJoining.set(joiningDate);
+    }
+
+    const grossSalary = this.formatGrossSalary(fields.basicSalary);
+    if (overwrite) {
+      if (grossSalary) {
+        this.currentSalary.set(grossSalary);
+      }
+      return;
+    }
+
+    if (grossSalary && !this.normalizeProfileValue(this.currentSalary())) {
+      this.currentSalary.set(grossSalary);
+    }
   }
 
   private populateFromRecord(record: TrainingDevelopmentRecord): void {
-    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const emptyIfDash = (value: string | undefined | null): string => sanitizeApiText(value);
+    const emptyDate = (value: string | undefined | null): string =>
+      formatDateForInput(emptyIfDash(value));
     const yesNo = (value: string): 'Yes' | 'No' | '' =>
       value === 'Yes' || value === 'No' ? value : '';
 
@@ -629,7 +933,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.employeeType.set(emptyIfDash(record.EmployeeType));
     this.gradeWorkLevel.set(emptyIfDash(record.GradeWorkLevel));
     this.employmentCategory.set(emptyIfDash(record.EmploymentCategory));
-    this.dateOfJoining.set(emptyIfDash(record.DateOfJoining));
+    this.dateOfJoining.set(emptyDate(record.DateOfJoining));
     this.remarks.set(emptyIfDash(record.Remarks));
 
     const detail = record.TrainingDetail;
@@ -638,8 +942,8 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.trainingType.set(emptyIfDash(detail.training_type));
     this.trainingStage.set(emptyIfDash(detail.training_stage));
     this.departmentApplicability.set(emptyIfDash(detail.department_applicability));
-    this.trainingStartDate.set(emptyIfDash(detail.training_start_date));
-    this.trainingEndDate.set(emptyIfDash(detail.training_end_date));
+    this.trainingStartDate.set(emptyDate(detail.training_start_date));
+    this.trainingEndDate.set(emptyDate(detail.training_end_date));
     this.trainer.set(emptyIfDash(detail.trainer));
     this.trainingObjectives.set(emptyIfDash(detail.training_objectives));
     this.skillsCovered.set(emptyIfDash(detail.skills_covered));
@@ -647,7 +951,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
 
     const evaluation = record.TrainingEvaluation;
     this.evaluationCycleNumber.set(emptyIfDash(evaluation.evaluation_cycle_number));
-    this.evaluationDate.set(emptyIfDash(evaluation.evaluation_date));
+    this.evaluationDate.set(emptyDate(evaluation.evaluation_date));
     this.evaluationPeriod.set(emptyIfDash(evaluation.evaluation_period));
     this.evaluatorName.set(emptyIfDash(evaluation.evaluator_name));
     this.evaluationRows.set(
@@ -663,19 +967,22 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.performanceRemarks.set(emptyIfDash(evaluation.performance_remarks));
 
     const salary = record.Salary;
-    this.currentSalary.set(salary.current_salary ? String(salary.current_salary) : '');
+    const currentSalary = salary.current_salary ? String(salary.current_salary) : '';
+    if (currentSalary) {
+      this.currentSalary.set(currentSalary);
+    }
     this.incrementAmount.set(salary.increment_amount ? String(salary.increment_amount) : '');
     this.incrementPercentage.set(
       salary.increment_percentage ? String(salary.increment_percentage) : '',
     );
-    this.effectiveDateOfRevision.set(emptyIfDash(salary.effective_date_of_revision));
+    this.effectiveDateOfRevision.set(emptyDate(salary.effective_date_of_revision));
     this.reasonForIncrement.set(emptyIfDash(salary.reason_for_increment));
     this.approvalAuthority.set(emptyIfDash(salary.approval_authority));
 
     const promotion = record.Promotion;
     this.promotionRecommended.set(yesNo(promotion.promotion_recommended));
     this.newDesignation.set(emptyIfDash(promotion.new_designation));
-    this.promotionEffectiveDate.set(emptyIfDash(promotion.promotion_effective_date));
+    this.promotionEffectiveDate.set(emptyDate(promotion.promotion_effective_date));
     this.performanceEligibilityCheck.set(emptyIfDash(promotion.performance_eligibility_check));
     this.trainingCompletionVerification.set(yesNo(promotion.training_completion_verification));
     this.promotionRemarks.set(emptyIfDash(promotion.remarks));
@@ -684,5 +991,33 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   private toAmount(value: string): number {
     const numeric = Number((value ?? '').toString().replace(/,/g, '').trim());
     return Number.isFinite(numeric) ? numeric : 0;
+  }
+
+  protected isFieldInvalid(field: TrainingValidationField): boolean {
+    if (!this.validationTouched()) {
+      return false;
+    }
+
+    switch (field) {
+      case 'employeeCode':
+        return !this.employeeCode().trim();
+      case 'employeeName':
+        return !this.employeeName().trim();
+      case 'trainingTitle':
+        return !this.trainingTitle().trim();
+      default:
+        return false;
+    }
+  }
+
+  private scrollToFirstInvalidSection(): void {
+    if (this.isFieldInvalid('employeeCode') || this.isFieldInvalid('employeeName')) {
+      this.scrollToSection('training-info-section');
+      return;
+    }
+
+    if (this.isFieldInvalid('trainingTitle')) {
+      this.scrollToSection('training-detail-section');
+    }
   }
 }

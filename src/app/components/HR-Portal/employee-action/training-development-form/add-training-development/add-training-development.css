@@ -3,47 +3,19 @@
   height: 100%;
 }
 
-.cjs-grid,
-.cjs-col,
-.cjs-row,
-.employee-search-wrap {
-  min-width: 0;
+.cjr-label-required::after {
+  content: ' *';
+  color: #b42318;
 }
 
-.cjs-section-block {
-  margin-bottom: 28px;
-}
-
-.cjs-section-block:last-of-type {
-  margin-bottom: 0;
-}
-
-.cjs-grid + .cjs-row--remarks {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #eef2f6;
-}
-
-.cjs-row--remarks + .cjs-row--remarks {
-  margin-top: 16px;
-}
-
-.cjs-row--remarks {
-  align-items: start;
-}
-
-.cjs-row--remarks label {
-  padding-top: 8px;
-}
-
-.cjs-row--remarks textarea {
-  min-height: 80px;
-  height: auto;
-  resize: vertical;
-}
-
-.cjs-form-container {
-  padding-bottom: 8px;
+.cjr-row input.cjr-invalid,
+.cjr-row select.cjr-invalid,
+.cjr-row textarea.cjr-invalid,
+.employee-search-wrap input.cjr-invalid,
+.training-evaluation-table td input.cjr-invalid,
+.training-evaluation-table td select.cjr-invalid {
+  border-color: #b42318 !important;
+  box-shadow: 0 0 0 1px rgba(180, 35, 24, 0.15);
 }
 
 .training-evaluation-meta {
@@ -51,33 +23,37 @@
 }
 
 .training-evaluation-table-section {
-  margin-top: 8px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
+  margin-top: 8px;
   padding: 12px;
 }
 
 .training-evaluation-table-header {
+  align-items: center;
   display: flex;
   justify-content: space-between;
-  align-items: center;
   margin-bottom: 10px;
 }
 
 .training-evaluation-table-header h4 {
-  margin: 0;
+  color: #1d2d3e;
   font-size: 14px;
   font-weight: 600;
-  color: #1d2d3e;
+  margin: 0;
 }
 
 .add-evaluation-row-btn {
-  border: 1px solid #cbd5e1;
   background: #f8fafc;
+  border: 1px solid #cbd5e1;
   border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 12px;
   cursor: pointer;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.add-evaluation-row-btn:hover {
+  background: #eff6ff;
 }
 
 .training-evaluation-table-wrapper {
@@ -85,54 +61,65 @@
 }
 
 .training-evaluation-table {
-  width: 100%;
-  border-collapse: collapse;
   border: 1px solid #e2e8f0;
+  border-collapse: collapse;
+  width: 100%;
 }
 
 .training-evaluation-table th,
 .training-evaluation-table td {
   border: 1px solid #e2e8f0;
-  padding: 10px;
   font-size: 13px;
+  padding: 10px;
   vertical-align: top;
 }
 
 .training-evaluation-table th {
   background: #f8fafc;
-  text-align: left;
   font-weight: 600;
+  text-align: left;
 }
 
 .training-evaluation-table td input,
 .training-evaluation-table td select {
-  width: 100%;
-  min-width: 0;
-  height: 30px;
   border: 1px solid #d0d0d0;
   border-radius: 2px;
-  padding: 4px 8px;
-  font-size: 13px;
   box-sizing: border-box;
+  font-size: 13px;
+  height: 30px;
+  min-width: 0;
+  padding: 4px 8px;
+  width: 100%;
 }
 
 .training-evaluation-table__actions {
-  width: 90px;
   text-align: center;
   white-space: nowrap;
+  width: 90px;
 }
 
 .remove-evaluation-row-btn {
+  background: #fef2f2;
   border: 1px solid #fecaca;
-  background: #fff5f5;
-  color: #b42318;
   border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
+  color: #b91c1c;
   cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
 }
 
 .remove-evaluation-row-btn:disabled {
-  opacity: 0.45;
   cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.cjr-row input[readonly] {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+@media (max-width: 1120px) {
+  .training-evaluation-table-wrapper {
+    overflow-x: auto;
+  }
 }

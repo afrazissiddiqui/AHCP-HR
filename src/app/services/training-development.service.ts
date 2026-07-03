@@ -421,6 +421,15 @@ export class TrainingDevelopmentService {
     return this.trainingList().find((item) => item.Id === numericId);
   }
 
+  findTrainingByEmployeeCode(employeeCode: string): TrainingDevelopmentRecord | undefined {
+    const code = employeeCode.trim().toLowerCase();
+    if (!code) {
+      return undefined;
+    }
+
+    return this.trainingList().find((item) => item.EmployeeCode.trim().toLowerCase() === code);
+  }
+
   private extractEvaluationRows(
     source: Record<string, unknown>,
   ): TrainingEvaluationRowPayload[] {
@@ -545,39 +554,85 @@ export class TrainingDevelopmentService {
 
     const trainingDetail: TrainingDetailPayload = {
       training_title:
-        asString(detailSource['training_title']) || asString(detailSource['trainingTitle']),
+        asString(detailSource['training_title']) ||
+        asString(detailSource['trainingTitle']) ||
+        asString(item['training_title']) ||
+        asString(item['trainingTitle']),
       training_category:
-        asString(detailSource['training_category']) || asString(detailSource['trainingCategory']),
+        asString(detailSource['training_category']) ||
+        asString(detailSource['trainingCategory']) ||
+        asString(item['training_category']) ||
+        asString(item['trainingCategory']),
       training_type:
-        asString(detailSource['training_type']) || asString(detailSource['trainingType']),
+        asString(detailSource['training_type']) ||
+        asString(detailSource['trainingType']) ||
+        asString(item['training_type']) ||
+        asString(item['trainingType']),
       training_stage:
-        asString(detailSource['training_stage']) || asString(detailSource['trainingStage']),
+        asString(detailSource['training_stage']) ||
+        asString(detailSource['trainingStage']) ||
+        asString(item['training_stage']) ||
+        asString(item['trainingStage']),
       department_applicability:
         asString(detailSource['department_applicability']) ||
-        asString(detailSource['departmentApplicability']),
+        asString(detailSource['departmentApplicability']) ||
+        asString(item['department_applicability']) ||
+        asString(item['departmentApplicability']),
       training_start_date:
-        asString(detailSource['training_start_date']) || asString(detailSource['trainingStartDate']),
+        asString(detailSource['training_start_date']) ||
+        asString(detailSource['trainingStartDate']) ||
+        asString(item['training_start_date']) ||
+        asString(item['trainingStartDate']),
       training_end_date:
-        asString(detailSource['training_end_date']) || asString(detailSource['trainingEndDate']),
+        asString(detailSource['training_end_date']) ||
+        asString(detailSource['trainingEndDate']) ||
+        asString(item['training_end_date']) ||
+        asString(item['trainingEndDate']),
       training_duration:
-        asString(detailSource['training_duration']) || asString(detailSource['trainingDuration']),
-      trainer: asString(detailSource['trainer']),
+        asString(detailSource['training_duration']) ||
+        asString(detailSource['trainingDuration']) ||
+        asString(item['training_duration']) ||
+        asString(item['trainingDuration']),
+      trainer:
+        asString(detailSource['trainer']) || asString(item['trainer']),
       training_objectives:
-        asString(detailSource['training_objectives']) || asString(detailSource['trainingObjectives']),
+        asString(detailSource['training_objectives']) ||
+        asString(detailSource['trainingObjectives']) ||
+        asString(item['training_objectives']) ||
+        asString(item['trainingObjectives']),
       skills_covered:
-        asString(detailSource['skills_covered']) || asString(detailSource['skillsCovered']),
-      remarks: asString(detailSource['remarks']),
+        asString(detailSource['skills_covered']) ||
+        asString(detailSource['skillsCovered']) ||
+        asString(item['skills_covered']) ||
+        asString(item['skillsCovered']),
+      remarks:
+        asString(detailSource['remarks']) || asString(item['training_detail_remarks']),
     };
 
-    const evaluationRows = this.extractEvaluationRows(evaluationSource);
+    const evaluationRows = this.extractEvaluationRows({
+      ...evaluationSource,
+      evaluation_rows:
+        evaluationSource['evaluation_rows'] ??
+        evaluationSource['evaluationRows'] ??
+        item['evaluation_rows'] ??
+        item['evaluationRows'],
+    });
     const legacyEvaluationParameter =
       asString(evaluationSource['evaluation_parameter']) ||
-      asString(evaluationSource['evaluationParameter']);
+      asString(evaluationSource['evaluationParameter']) ||
+      asString(item['evaluation_parameter']) ||
+      asString(item['evaluationParameter']);
     const legacyParameterRating = asNumber(
-      evaluationSource['parameter_rating'] ?? evaluationSource['parameterRating'],
+      evaluationSource['parameter_rating'] ??
+        evaluationSource['parameterRating'] ??
+        item['parameter_rating'] ??
+        item['parameterRating'],
     );
     const legacyOverallScore =
-      asString(evaluationSource['overall_score']) || asString(evaluationSource['overallScore']);
+      asString(evaluationSource['overall_score']) ||
+      asString(evaluationSource['overallScore']) ||
+      asString(item['overall_score']) ||
+      asString(item['overallScore']);
     const resolvedEvaluationRows =
       evaluationRows.length > 0
         ? evaluationRows
@@ -595,56 +650,109 @@ export class TrainingDevelopmentService {
     const trainingEvaluation: TrainingEvaluationPayload = {
       evaluation_cycle_number:
         asString(evaluationSource['evaluation_cycle_number']) ||
-        asString(evaluationSource['evaluationCycleNumber']),
+        asString(evaluationSource['evaluationCycleNumber']) ||
+        asString(item['evaluation_cycle_number']) ||
+        asString(item['evaluationCycleNumber']),
       evaluation_date:
-        asString(evaluationSource['evaluation_date']) || asString(evaluationSource['evaluationDate']),
+        asString(evaluationSource['evaluation_date']) ||
+        asString(evaluationSource['evaluationDate']) ||
+        asString(item['evaluation_date']) ||
+        asString(item['evaluationDate']),
       evaluation_period:
-        asString(evaluationSource['evaluation_period']) || asString(evaluationSource['evaluationPeriod']),
+        asString(evaluationSource['evaluation_period']) ||
+        asString(evaluationSource['evaluationPeriod']) ||
+        asString(item['evaluation_period']) ||
+        asString(item['evaluationPeriod']),
       evaluator_name:
-        asString(evaluationSource['evaluator_name']) || asString(evaluationSource['evaluatorName']),
+        asString(evaluationSource['evaluator_name']) ||
+        asString(evaluationSource['evaluatorName']) ||
+        asString(item['evaluator_name']) ||
+        asString(item['evaluatorName']),
       evaluation_parameter: legacyEvaluationParameter,
       parameter_rating: legacyParameterRating,
       overall_score: legacyOverallScore,
       performance_remarks:
         asString(evaluationSource['performance_remarks']) ||
-        asString(evaluationSource['performanceRemarks']),
+        asString(evaluationSource['performanceRemarks']) ||
+        asString(item['performance_remarks']) ||
+        asString(item['performanceRemarks']),
       evaluation_rows: resolvedEvaluationRows,
     };
 
     const salary: TrainingSalaryPayload = {
-      current_salary: asNumber(salarySource['current_salary'] ?? salarySource['currentSalary']),
-      increment_amount: asNumber(salarySource['increment_amount'] ?? salarySource['incrementAmount']),
-      increment_percentage: asNumber(
-        salarySource['increment_percentage'] ?? salarySource['incrementPercentage'],
+      current_salary: asNumber(
+        salarySource['current_salary'] ??
+          salarySource['currentSalary'] ??
+          item['current_salary'] ??
+          item['currentSalary'],
       ),
-      revised_salary: asNumber(salarySource['revised_salary'] ?? salarySource['revisedSalary']),
+      increment_amount: asNumber(
+        salarySource['increment_amount'] ??
+          salarySource['incrementAmount'] ??
+          item['increment_amount'] ??
+          item['incrementAmount'],
+      ),
+      increment_percentage: asNumber(
+        salarySource['increment_percentage'] ??
+          salarySource['incrementPercentage'] ??
+          item['increment_percentage'] ??
+          item['incrementPercentage'],
+      ),
+      revised_salary: asNumber(
+        salarySource['revised_salary'] ??
+          salarySource['revisedSalary'] ??
+          item['revised_salary'] ??
+          item['revisedSalary'],
+      ),
       effective_date_of_revision:
         asString(salarySource['effective_date_of_revision']) ||
-        asString(salarySource['effectiveDateOfRevision']),
+        asString(salarySource['effectiveDateOfRevision']) ||
+        asString(item['effective_date_of_revision']) ||
+        asString(item['effectiveDateOfRevision']),
       reason_for_increment:
-        asString(salarySource['reason_for_increment']) || asString(salarySource['reasonForIncrement']),
+        asString(salarySource['reason_for_increment']) ||
+        asString(salarySource['reasonForIncrement']) ||
+        asString(item['reason_for_increment']) ||
+        asString(item['reasonForIncrement']),
       approval_authority:
-        asString(salarySource['approval_authority']) || asString(salarySource['approvalAuthority']),
+        asString(salarySource['approval_authority']) ||
+        asString(salarySource['approvalAuthority']) ||
+        asString(item['approval_authority']) ||
+        asString(item['approvalAuthority']),
     };
 
     const promotion: TrainingPromotionPayload = {
       promotion_recommended:
         asString(promotionSource['promotion_recommended']) ||
         asString(promotionSource['promotionRecommended']) ||
+        asString(item['promotion_recommended']) ||
+        asString(item['promotionRecommended']) ||
         'No',
       new_designation:
-        asString(promotionSource['new_designation']) || asString(promotionSource['newDesignation']),
+        asString(promotionSource['new_designation']) ||
+        asString(promotionSource['newDesignation']) ||
+        asString(item['new_designation']) ||
+        asString(item['newDesignation']),
       promotion_effective_date:
         asString(promotionSource['promotion_effective_date']) ||
-        asString(promotionSource['promotionEffectiveDate']),
+        asString(promotionSource['promotionEffectiveDate']) ||
+        asString(item['promotion_effective_date']) ||
+        asString(item['promotionEffectiveDate']),
       performance_eligibility_check:
         asString(promotionSource['performance_eligibility_check']) ||
-        asString(promotionSource['performanceEligibilityCheck']),
+        asString(promotionSource['performanceEligibilityCheck']) ||
+        asString(item['performance_eligibility_check']) ||
+        asString(item['performanceEligibilityCheck']),
       training_completion_verification:
         asString(promotionSource['training_completion_verification']) ||
         asString(promotionSource['trainingCompletionVerification']) ||
+        asString(item['training_completion_verification']) ||
+        asString(item['trainingCompletionVerification']) ||
         'No',
-      remarks: asString(promotionSource['remarks']),
+      remarks:
+        asString(promotionSource['remarks']) ||
+        asString(item['promotion_remarks']) ||
+        asString(item['promotionRemarks']),
     };
 
     const employeeNature =
