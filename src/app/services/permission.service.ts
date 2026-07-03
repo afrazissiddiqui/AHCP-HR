@@ -10,7 +10,7 @@ import {
   isPermissionGranted,
 } from '../utils/user-authorization.util';
 
-const SESSION_AUTHORIZATION_KEY = 'sapqc_session_authorization';
+const SESSION_AUTHORIZATION_KEY = 'sapqc_session_authorization_v2';
 
 @Injectable({
   providedIn: 'root',
@@ -20,8 +20,8 @@ export class PermissionService {
   private readonly userSetupService = inject(UserSetupService);
   private readonly alertService = inject(AlertService);
 
-  private readonly authorization = signal<UserAuthorizationModule[] | null>(this.readStoredAuthorization());
-  private readonly loaded = signal(!!this.readStoredAuthorization());
+  private readonly authorization = signal<UserAuthorizationModule[] | null>(null);
+  private readonly loaded = signal(false);
   private loadRequest: Observable<void> | null = null;
 
   readonly permissions = this.authorization.asReadonly();
@@ -88,21 +88,51 @@ export class PermissionService {
 
     return this.userSetupService.fetchUserDetail(sessionUser.id).pipe(
       map((detail) => {
-        const rawAuthorization = detail['authorization'] ?? detail['Authorization'];
-        const modules = buildAuthorizationTemplate(rawAuthorization);
-        this.authorization.set(modules);
-        this.persistAuthorization(modules);
+        this.applyAuthorizationFromUserRecord(detail);
       }),
-      catchError(() => {
-        const cached = this.readStoredAuthorization();
-        if (cached) {
-          this.authorization.set(cached);
-        } else {
-          this.authorization.set(buildAuthorizationTemplate());
-        }
-        return of(void 0);
-      }),
+      catchError(() =>
+        this.userSetupService.fetchUsers().pipe(
+          map((users) => {
+            const email = sessionUser.email.trim().toLowerCase();
+            const match = users.find((user) => {
+              const userEmail = String(user['email'] ?? user['Email'] ?? '')
+                .trim()
+                .toLowerCase();
+              return userEmail === email;
+            });
+
+            if (match) {
+              this.applyAuthorizationFromUserRecord(match);
+              return;
+            }
+
+            const cached = this.readStoredAuthorization();
+            if (cached) {
+              this.authorization.set(cached);
+              return;
+            }
+
+            this.authorization.set(buildAuthorizationTemplate());
+          }),
+          catchError(() => {
+            const cached = this.readStoredAuthorization();
+            if (cached) {
+              this.authorization.set(cached);
+            } else {
+              this.authorization.set(buildAuthorizationTemplate());
+            }
+            return of(void 0);
+          }),
+        ),
+      ),
     );
+  }
+
+  private applyAuthorizationFromUserRecord(record: Record<string, unknown>): void {
+    const rawAuthorization = record['authorization'] ?? record['Authorization'];
+    const modules = buildAuthorizationTemplate(rawAuthorization);
+    this.authorization.set(modules);
+    this.persistAuthorization(modules);
   }
 
   clear(): void {

@@ -224,8 +224,8 @@ export function buildAuthorizationTemplate(...sources: unknown[]): UserAuthoriza
       continue;
     }
     moduleMap.set(slug, {
-      ...(moduleMap.get(slug) ?? {}),
       ...fallbackModule,
+      ...(moduleMap.get(slug) ?? {}),
     });
   }
 
