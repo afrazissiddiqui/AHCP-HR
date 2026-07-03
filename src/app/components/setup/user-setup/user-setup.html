@@ -5,7 +5,7 @@
         <div class="setup-hero-copy">
           <span class="setup-hero-eyebrow">Administration</span>
           <h2>User Setup</h2>
-          <p>Manage users, roles, and form-level authorization in one place.</p>
+          <p>Add users, assign form permissions, and update access anytime.</p>
         </div>
         <div class="setup-hero-stats">
           <div class="setup-stat-card">
@@ -15,19 +15,18 @@
         </div>
       </div>
 
-      <div class="user-setup-grid">
-        <div class="form-panel">
+      <div class="user-setup-workspace">
+        <aside #userFormPanel class="form-panel form-panel--editor">
           <div class="form-panel-head">
             <div>
               <h3 class="form-panel-title">{{ formTitle() }}</h3>
-              <p class="panel-subtitle">
-                @if (formMode() === 'edit') {
-                  Update the selected user record.
-                } @else {
-                  Enter user details to create a new user.
-                }
-              </p>
+              <p class="panel-subtitle">{{ formSubtitle() }}</p>
             </div>
+            @if (formMode() === 'edit') {
+              <span class="form-mode-badge form-mode-badge--edit">Editing</span>
+            } @else {
+              <span class="form-mode-badge">New user</span>
+            }
           </div>
 
           <div class="form-grid">
@@ -39,7 +38,7 @@
                 [ngModel]="formName()"
                 (ngModelChange)="formName.set($event)"
                 name="user-name"
-                placeholder="Name"
+                placeholder="Full name"
               />
             </label>
 
@@ -51,7 +50,7 @@
                 [ngModel]="formEmail()"
                 (ngModelChange)="formEmail.set($event)"
                 name="user-email"
-                placeholder="Email"
+                placeholder="name@company.com"
               />
             </label>
 
@@ -76,69 +75,111 @@
           <section class="form-auth-section">
             <div class="form-auth-head">
               <div>
-                <h4 class="form-auth-title">Authorization</h4>
-                <p class="form-auth-subtitle">Set CRUD permissions for each form module (0 = denied, 1 = granted).</p>
+                <h4 class="form-auth-title">Form permissions</h4>
+                <p class="form-auth-subtitle">
+                  Toggle each action as <strong>Allowed</strong> or <strong>Denied</strong> per form module.
+                </p>
+              </div>
+              @if (formAuthorizationSummary(); as formAuth) {
+                <div class="form-auth-summary-chip">
+                  <span class="form-auth-summary-count">{{ formGrantedCount() }}/{{ formTotalCount() }}</span>
+                  <span class="form-auth-summary-label">allowed</span>
+                  <div class="form-auth-summary-bar">
+                    <span class="form-auth-summary-fill" [style.width.%]="formProgressPercent()"></span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="form-auth-toolbar">
+              <input
+                type="search"
+                class="form-module-search"
+                [ngModel]="formModuleFilter()"
+                (ngModelChange)="formModuleFilter.set($event)"
+                name="form-module-search"
+                placeholder="Search form modules"
+              />
+              <div class="form-auth-bulk">
+                <button type="button" class="btn-bulk btn-bulk--allow" (click)="grantAllFormPermissions()">
+                  Allow all
+                </button>
+                <button type="button" class="btn-bulk btn-bulk--deny" (click)="denyAllFormPermissions()">
+                  Deny all
+                </button>
               </div>
             </div>
 
             @if (loadingDetail()) {
               <p class="panel-message">Loading user permissions…</p>
-            } @else if (formAuthorizationSummary(); as formAuth) {
-              <div class="form-auth-matrix-wrap">
-                <table class="form-auth-matrix">
-                  <thead>
-                    <tr>
-                      <th>Form / Module</th>
-                      @for (bucket of crudBuckets; track bucket) {
-                        <th>{{ crudLabel(bucket) }}</th>
+            } @else if (!filteredFormModules().length) {
+              <p class="panel-message">No form modules match your search.</p>
+            } @else {
+              <div class="form-module-list">
+                @for (module of filteredFormModules(); track module.moduleSlug) {
+                  <article class="form-module-card">
+                    <header class="form-module-card-head">
+                      <div class="form-module-card-title">
+                        <h5>{{ module.moduleName }}</h5>
+                        <span class="form-module-card-meta">
+                          {{ moduleGrantedCount(module) }}/{{ module.totalCount }} allowed
+                        </span>
+                      </div>
+                      <div class="form-module-card-actions">
+                        <button
+                          type="button"
+                          class="btn-module-bulk"
+                          (click)="setModulePermissions(module.moduleSlug, true)">
+                          Allow all
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-module-bulk btn-module-bulk--deny"
+                          (click)="setModulePermissions(module.moduleSlug, false)">
+                          Deny all
+                        </button>
+                      </div>
+                    </header>
+
+                    <div class="permission-toggle-grid">
+                      @for (entry of moduleEntries(module); track entry.key) {
+                        <label
+                          class="permission-toggle"
+                          [class.permission-toggle--allowed]="entry.granted"
+                          [class.permission-toggle--denied]="!entry.granted">
+                          <span class="permission-toggle-label">{{ entry.actionLabel }}</span>
+                          <span class="permission-toggle-switch">
+                            <input
+                              type="checkbox"
+                              class="permission-toggle-input"
+                              [checked]="entry.granted"
+                              (change)="setFormPermission(entry.key, $any($event.target).checked)"
+                            />
+                            <span class="permission-toggle-track" aria-hidden="true"></span>
+                            <span class="permission-toggle-status">
+                              {{ permissionStatusLabel(entry.value) }}
+                            </span>
+                          </span>
+                        </label>
                       }
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (module of formAuth.modules; track module.moduleSlug) {
-                      <tr>
-                        <td class="form-auth-module">{{ module.moduleName }}</td>
-                        @for (bucket of crudBuckets; track bucket) {
-                          <td>
-                            @if (crudEntries(module, bucket).length) {
-                              <div class="auth-crud-stack">
-                                @for (entry of crudEntries(module, bucket); track entry.key) {
-                                  <button
-                                    type="button"
-                                    class="auth-crud-pill auth-crud-pill--button"
-                                    [class.auth-crud-pill--granted]="entry.granted"
-                                    [class.auth-crud-pill--denied]="!entry.granted"
-                                    (click)="toggleFormPermission(entry.key)"
-                                    [title]="entry.key">
-                                    <span class="auth-crud-action">{{ entry.actionLabel }}</span>
-                                    <span class="auth-crud-value">{{ permissionValueLabel(entry.value) }}</span>
-                                  </button>
-                                }
-                              </div>
-                            } @else {
-                              <span class="auth-crud-empty">—</span>
-                            }
-                          </td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
+                    </div>
+                  </article>
+                }
               </div>
             }
           </section>
 
           <div class="form-actions">
             <button type="button" class="btn-submit-form" [disabled]="saving() || loadingDetail()" (click)="submitUser()">
-              {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}
+              {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Save changes' : 'Add user' }}
             </button>
             @if (formMode() === 'edit') {
               <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
             }
           </div>
-        </div>
+        </aside>
 
-        <div class="form-panel">
+        <section class="form-panel form-panel--list">
           <div class="form-panel-head users-panel-head">
             <div>
               <h3 class="form-panel-title">Users</h3>
@@ -157,6 +198,7 @@
                   placeholder="Search by name, email, or ID"
                 />
               </div>
+              <button type="button" class="btn-add-user" (click)="startAddUser()">Add user</button>
               <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">
                 {{ loading() ? 'Loading…' : 'Refresh' }}
               </button>
@@ -183,7 +225,7 @@
                 </thead>
                 <tbody>
                   @for (user of filteredUsers(); track resolveUserId(user) ?? $index; let index = $index) {
-                    <tr>
+                    <tr [class.entry-row--active]="isUserRowActive(user)">
                       <td class="col-sr">{{ index + 1 }}</td>
 
                       @for (column of displayTableColumns; track column.key) {
@@ -206,14 +248,19 @@
                             @if (authorizationSummary(user); as summary) {
                               <div class="auth-cell">
                                 <div class="auth-summary">
+                                  <div class="auth-progress-mini">
+                                    <span
+                                      class="auth-progress-mini-fill"
+                                      [style.width.%]="authorizationProgressPercent(summary)"></span>
+                                  </div>
                                   <span class="auth-count">{{ summary.granted }}/{{ summary.total }}</span>
-                                  <span class="auth-label">permissions granted</span>
+                                  <span class="auth-label">permissions allowed</span>
                                 </div>
                                 <button
                                   type="button"
                                   class="btn-view-auth"
                                   (click)="openAuthorizationDialog(user)">
-                                  View permissions
+                                  Inspect
                                 </button>
                               </div>
                             } @else {
@@ -228,9 +275,10 @@
                           <button
                             type="button"
                             class="btn-edit"
+                            [class.btn-edit--active]="isUserRowActive(user)"
                             [disabled]="saving() || deleting()"
                             (click)="startEdit(user)">
-                            Edit
+                            {{ isUserRowActive(user) ? 'Editing' : 'Edit' }}
                           </button>
                           <button
                             type="button"
@@ -247,7 +295,7 @@
               </table>
             </div>
           }
-        </div>
+        </section>
       </div>
     </div>
   </div>
@@ -264,32 +312,33 @@
       (click)="$event.stopPropagation()">
     @if (authorizationDialogSummary(); as summary) {
       <div class="auth-dialog-hero">
-        <div class="auth-dialog-hero-main">
-          @if (authorizationDialogUser(); as dialogUser) {
-            <span class="auth-dialog-avatar" aria-hidden="true">{{ userInitials(dialogUser) }}</span>
-          }
-          <div class="auth-dialog-hero-text">
-            <span class="auth-dialog-eyebrow">Authorization overview</span>
-            <h3 id="auth-dialog-title">{{ authorizationDialogTitle() }}</h3>
-            <p>{{ authorizationDialogEmail() || 'No email on record' }}</p>
-            <div class="auth-dialog-meta">
-              <span class="auth-dialog-meta-item">{{ summary.modules.length }} forms</span>
-              <span class="auth-dialog-meta-item">{{ summary.granted }}/{{ summary.total }} permissions</span>
+        <button type="button" class="auth-dialog-close" (click)="closeAuthorizationDialog()" title="Close">✕</button>
+        <div class="auth-dialog-hero-grid">
+          <div class="auth-dialog-hero-main">
+            @if (authorizationDialogUser(); as dialogUser) {
+              <span class="auth-dialog-avatar" aria-hidden="true">{{ userInitials(dialogUser) }}</span>
+            }
+            <div class="auth-dialog-hero-text">
+              <span class="auth-dialog-eyebrow">Permission inspector</span>
+              <h3 id="auth-dialog-title">{{ authorizationDialogTitle() }}</h3>
+              <p>{{ authorizationDialogEmail() || 'No email on record' }}</p>
+              <div class="auth-dialog-meta">
+                <span class="auth-dialog-meta-item">{{ summary.modules.length }} forms</span>
+                <span class="auth-dialog-meta-item">{{ summary.granted }}/{{ summary.total }} allowed</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="auth-dialog-progress-card">
+            <div class="auth-progress-ring" [style.--progress]="authorizationProgressPercent(summary) + '%'">
+              <span class="auth-progress-value">{{ authorizationProgressPercent(summary) }}%</span>
+            </div>
+            <div class="auth-progress-copy">
+              <strong>Access coverage</strong>
+              <span>{{ summary.granted }} allowed · {{ summary.total - summary.granted }} denied</span>
             </div>
           </div>
         </div>
-
-        <div class="auth-dialog-progress-card">
-          <div class="auth-progress-ring" [style.--progress]="authorizationProgressPercent(summary) + '%'">
-            <span class="auth-progress-value">{{ authorizationProgressPercent(summary) }}%</span>
-          </div>
-          <div class="auth-progress-copy">
-            <strong>Access coverage</strong>
-            <span>{{ summary.granted }} granted · {{ summary.total - summary.granted }} denied</span>
-          </div>
-        </div>
-
-        <button type="button" class="auth-dialog-close" (click)="closeAuthorizationDialog()" title="Close">✕</button>
       </div>
 
       <div class="auth-dialog-toolbar">
@@ -302,8 +351,8 @@
           placeholder="Search form or module"
         />
         <div class="auth-crud-legend">
-          <span class="auth-legend-item"><span class="auth-legend-dot auth-legend-dot--granted"></span> Granted (1)</span>
-          <span class="auth-legend-item"><span class="auth-legend-dot auth-legend-dot--denied"></span> Denied (0)</span>
+          <span class="auth-legend-item"><span class="auth-legend-dot auth-legend-dot--granted"></span> Allowed</span>
+          <span class="auth-legend-item"><span class="auth-legend-dot auth-legend-dot--denied"></span> Denied</span>
         </div>
       </div>
 
@@ -311,70 +360,49 @@
         @if (!filteredAuthorizationModules().length) {
           <div class="auth-empty-state">No forms match your search.</div>
         } @else {
-          <div class="auth-matrix-wrap">
-            <table class="auth-matrix-table">
-              <thead>
-                <tr>
-                  <th class="auth-col-form">Form / Module</th>
-                  @for (bucket of crudBuckets; track bucket) {
-                    <th class="auth-col-crud">{{ crudLabel(bucket) }}</th>
+          <div class="auth-inspect-list">
+            @for (module of filteredAuthorizationModules(); track module.moduleSlug) {
+              <article class="auth-inspect-card">
+                <header class="auth-inspect-card-head">
+                  <div>
+                    <h4 class="auth-inspect-card-title">{{ module.moduleName }}</h4>
+                    <span class="auth-inspect-card-meta">
+                      {{ moduleGrantedCount(module) }}/{{ module.totalCount }} allowed
+                    </span>
+                  </div>
+                  <div class="auth-module-progress">
+                    <div class="auth-module-progress-bar">
+                      <span
+                        class="auth-module-progress-fill"
+                        [style.width.%]="moduleProgressPercent(module)"></span>
+                    </div>
+                    <span class="auth-module-progress-label">{{ moduleProgressPercent(module) }}%</span>
+                  </div>
+                </header>
+
+                <div class="auth-inspect-permissions">
+                  @for (entry of moduleEntries(module); track entry.key) {
+                    <div
+                      class="auth-inspect-pill"
+                      [class.auth-inspect-pill--allowed]="entry.granted"
+                      [class.auth-inspect-pill--denied]="!entry.granted"
+                      [title]="entry.key">
+                      <span class="auth-inspect-action">{{ entry.actionLabel }}</span>
+                      <span class="auth-inspect-status">{{ permissionStatusLabel(entry.value) }}</span>
+                    </div>
                   }
-                  <th class="auth-col-progress">Coverage</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (module of filteredAuthorizationModules(); track module.moduleSlug) {
-                  <tr>
-                    <td class="auth-col-form">
-                      <div class="auth-form-cell">
-                        <span class="auth-form-name">{{ module.moduleName }}</span>
-                        <span class="auth-form-subtitle">
-                          {{ moduleGrantedCount(module) }}/{{ module.totalCount }} permissions active
-                        </span>
-                      </div>
-                    </td>
-
-                    @for (bucket of crudBuckets; track bucket) {
-                      <td class="auth-col-crud">
-                        @if (crudEntries(module, bucket).length) {
-                          <div class="auth-crud-stack">
-                            @for (entry of crudEntries(module, bucket); track entry.key) {
-                              <div
-                                class="auth-crud-pill"
-                                [class.auth-crud-pill--granted]="entry.granted"
-                                [class.auth-crud-pill--denied]="!entry.granted"
-                                [title]="entry.key">
-                                <span class="auth-crud-action">{{ entry.actionLabel }}</span>
-                                <span class="auth-crud-value">{{ permissionValueLabel(entry.value) }}</span>
-                              </div>
-                            }
-                          </div>
-                        } @else {
-                          <span class="auth-crud-empty">—</span>
-                        }
-                      </td>
-                    }
-
-                    <td class="auth-col-progress">
-                      <div class="auth-module-progress">
-                        <div class="auth-module-progress-bar">
-                          <span
-                            class="auth-module-progress-fill"
-                            [style.width.%]="moduleProgressPercent(module)"></span>
-                        </div>
-                        <span class="auth-module-progress-label">{{ moduleProgressPercent(module) }}%</span>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+                </div>
+              </article>
+            }
           </div>
         }
       </div>
 
       <div class="auth-dialog-footer">
         <button type="button" class="btn-secondary" (click)="closeAuthorizationDialog()">Close</button>
+        <button type="button" class="btn-edit-permissions" (click)="editPermissionsFromDialog()">
+          Edit permissions
+        </button>
       </div>
     }
     </div>

@@ -30,7 +30,11 @@ import {
   cloneAuthorization,
   crudBucketEntries,
   crudBucketLabel,
+  moduleAllEntries,
   parseUserAuthorization,
+  updateAllPermissionsInDraft,
+  updateModulePermissionsInDraft,
+  updatePermissionInDraft,
 } from '../../../utils/user-authorization.util';
 
 type UserFormMode = 'add' | 'edit';
@@ -54,6 +58,7 @@ export class UserSetupComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   @ViewChild('authDialogOverlay') private authDialogOverlay?: ElementRef<HTMLElement>;
+  @ViewChild('userFormPanel') private userFormPanel?: ElementRef<HTMLElement>;
 
   private readonly tableColumns: UserTableColumn[] = [
     { key: 'name', label: 'Name', aliases: ['name', 'Name'] },
@@ -79,12 +84,30 @@ export class UserSetupComponent implements OnInit {
   readonly authorizationDialogUser = signal<UserListItem | null>(null);
   readonly authorizationDialogSummary = signal<UserAuthorizationSummary | null>(null);
   readonly authorizationModuleFilter = signal('');
+  readonly formModuleFilter = signal('');
 
   readonly crudBuckets: CrudBucket[] = ['create', 'read', 'update', 'delete', 'other'];
 
   readonly formAuthorizationSummary = computed(
     () => parseUserAuthorization(this.authorizationDraft()) ?? parseUserAuthorization(this.authorizationTemplate()),
   );
+
+  readonly filteredFormModules = computed(() => {
+    const summary = this.formAuthorizationSummary();
+    if (!summary) {
+      return [];
+    }
+
+    const query = this.formModuleFilter().trim().toLowerCase();
+    if (!query) {
+      return summary.modules;
+    }
+
+    return summary.modules.filter((module) => module.moduleName.toLowerCase().includes(query));
+  });
+
+  readonly formGrantedCount = computed(() => this.formAuthorizationSummary()?.granted ?? 0);
+  readonly formTotalCount = computed(() => this.formAuthorizationSummary()?.total ?? 0);
 
   readonly filteredAuthorizationModules = computed(() => {
     const summary = this.authorizationDialogSummary();
@@ -203,6 +226,14 @@ export class UserSetupComponent implements OnInit {
     afterNextRender(() => this.attachAuthorizationOverlay());
   }
 
+  editPermissionsFromDialog(): void {
+    const user = this.authorizationDialogUser();
+    this.closeAuthorizationDialog();
+    if (user) {
+      this.startEdit(user);
+    }
+  }
+
   closeAuthorizationDialog(): void {
     this.authorizationDialogOpen.set(false);
     this.authorizationDialogUser.set(null);
@@ -248,8 +279,12 @@ export class UserSetupComponent implements OnInit {
     return crudBucketLabel(bucket);
   }
 
+  permissionStatusLabel(value: number): string {
+    return Number(value) === 1 ? 'Allowed' : 'Denied';
+  }
+
   permissionValueLabel(value: number): string {
-    return String(value);
+    return this.permissionStatusLabel(value);
   }
 
   authorizationDialogTitle(): string {
@@ -266,19 +301,57 @@ export class UserSetupComponent implements OnInit {
   }
 
   formTitle(): string {
-    return this.formMode() === 'edit' ? 'Update User' : 'Add User';
+    return this.formMode() === 'edit' ? 'Update user & permissions' : 'Add new user';
   }
 
-  toggleFormPermission(key: string): void {
-    this.authorizationDraft.update((draft) =>
-      draft.map((module) => {
-        if (!(key in module)) {
-          return module;
-        }
-        const current = Number(module[key]) === 1 ? 1 : 0;
-        return { ...module, [key]: current === 1 ? 0 : 1 };
-      }),
-    );
+  formSubtitle(): string {
+    return this.formMode() === 'edit'
+      ? 'Change account details and toggle which form actions this user may perform.'
+      : 'Create an account and choose allowed CRUD actions for each form module.';
+  }
+
+  startAddUser(): void {
+    this.resetForm();
+    this.scrollToFormPanel();
+  }
+
+  isUserRowActive(user: UserListItem): boolean {
+    const userId = this.resolveUserId(user);
+    return userId !== null && this.formMode() === 'edit' && this.editingUserId() === userId;
+  }
+
+  setFormPermission(key: string, allowed: boolean): void {
+    this.authorizationDraft.update((draft) => updatePermissionInDraft(draft, key, allowed ? 1 : 0));
+  }
+
+  setModulePermissions(moduleSlug: string, allowed: boolean): void {
+    this.authorizationDraft.update((draft) => updateModulePermissionsInDraft(draft, moduleSlug, allowed));
+  }
+
+  grantAllFormPermissions(): void {
+    this.authorizationDraft.update((draft) => updateAllPermissionsInDraft(draft, true));
+  }
+
+  denyAllFormPermissions(): void {
+    this.authorizationDraft.update((draft) => updateAllPermissionsInDraft(draft, false));
+  }
+
+  moduleEntries(module: UserAuthorizationModuleRow) {
+    return moduleAllEntries(module);
+  }
+
+  formProgressPercent(): number {
+    const total = this.formTotalCount();
+    if (!total) {
+      return 0;
+    }
+    return Math.round((this.formGrantedCount() / total) * 100);
+  }
+
+  private scrollToFormPanel(): void {
+    afterNextRender(() => {
+      this.userFormPanel?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   submitUser(): void {
@@ -343,6 +416,7 @@ export class UserSetupComponent implements OnInit {
           );
           this.authorizationTemplate.set(template);
           this.authorizationDraft.set(cloneAuthorization(template));
+          this.scrollToFormPanel();
         },
         error: (error: unknown) => {
           void this.alertService.error(
@@ -430,6 +504,7 @@ export class UserSetupComponent implements OnInit {
     this.formName.set('');
     this.formEmail.set('');
     this.formPassword.set('');
+    this.formModuleFilter.set('');
     this.authorizationDraft.set(cloneAuthorization(this.authorizationTemplate()));
   }
 

@@ -307,3 +307,53 @@ export function crudBucketEntries(
 ): CrudPermissionEntry[] {
   return module[bucket];
 }
+
+export function moduleAllEntries(module: UserAuthorizationModuleRow): CrudPermissionEntry[] {
+  return [...module.create, ...module.read, ...module.update, ...module.delete, ...module.other];
+}
+
+export function updatePermissionInDraft(
+  draft: UserAuthorizationModule[],
+  key: string,
+  value: number,
+): UserAuthorizationModule[] {
+  const normalized = value === 1 ? 1 : 0;
+  return draft.map((module) => (key in module ? { ...module, [key]: normalized } : module));
+}
+
+export function updateModulePermissionsInDraft(
+  draft: UserAuthorizationModule[],
+  moduleSlug: string,
+  granted: boolean,
+): UserAuthorizationModule[] {
+  const value = granted ? 1 : 0;
+  return draft.map((module) => {
+    const keys = Object.keys(module);
+    const belongsToModule = keys.some((key) => splitPermissionKey(key).moduleSlug === moduleSlug);
+    if (!belongsToModule) {
+      return module;
+    }
+
+    const next = { ...module };
+    for (const key of keys) {
+      if (splitPermissionKey(key).moduleSlug === moduleSlug) {
+        next[key] = value;
+      }
+    }
+    return next;
+  });
+}
+
+export function updateAllPermissionsInDraft(
+  draft: UserAuthorizationModule[],
+  granted: boolean,
+): UserAuthorizationModule[] {
+  const value = granted ? 1 : 0;
+  return draft.map((module) => {
+    const next = { ...module };
+    for (const key of Object.keys(module)) {
+      next[key] = value;
+    }
+    return next;
+  });
+}
