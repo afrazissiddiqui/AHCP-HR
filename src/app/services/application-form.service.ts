@@ -304,6 +304,7 @@ export interface EmployeeProfileAddPayload {
   employmentNature: string;
   employeeCategory: string;
   employmentStatus: string;
+  hiringManager: string | null;
   department: string;
   designation: string;
   jobDescription: string;
@@ -651,6 +652,13 @@ export class ApplicationFormService {
     const leavesAvailed = primaryLeave.leavesAvailed || remuneration.leavesAvailed;
     const remainingLeaves = primaryLeave.remainingLeave || remuneration.remainingLeaves;
 
+    const toNullableString = (value: string | undefined | null): string | null => {
+      const trimmed = sanitizeApiText(value);
+      return trimmed || null;
+    };
+
+    const reportingManager = personal.reportingManager || detail.requisition.hiringManager;
+
     return {
       jobSpecificationId: options.jobSpecificationId?.trim() || detail.requisition.reqId || undefined,
       personName: personal.personName,
@@ -668,7 +676,8 @@ export class ApplicationFormService {
       incomeTaxNo: personal.incomeTaxNo,
       employmentNature: personal.employmentNature,
       employeeCategory: personal.employmentCategory,
-      employmentStatus: personal.employmentStatus,
+      employmentStatus: personal.employmentStatus?.trim() || 'Active',
+      hiringManager: toNullableString(reportingManager),
       department: personal.departmentInAhcp,
       designation: personal.designation,
       jobDescription: personal.jobDescription,
