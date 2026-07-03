@@ -8,6 +8,7 @@ const AUTH_SESSION_KEY = 'sapqc_session_auth';
 const SESSION_USER_ID_KEY = 'sapqc_session_user_id';
 const SESSION_TOKEN_KEY = 'sapqc_session_token';
 const SESSION_USER_KEY = 'sapqc_session_user';
+const SESSION_AUTHORIZATION_KEY = 'sapqc_session_authorization';
 const LOGIN_API_URL = apiUrl('login');
 
 export interface LoginApiUser {
@@ -105,6 +106,7 @@ export class AuthService {
     sessionStorage.removeItem(SESSION_USER_ID_KEY);
     sessionStorage.removeItem(SESSION_TOKEN_KEY);
     sessionStorage.removeItem(SESSION_USER_KEY);
+    sessionStorage.removeItem(SESSION_AUTHORIZATION_KEY);
     this.isLoggedIn.set(false);
     this.sessionUserId.set(null);
     void this.router.navigateByUrl('/login');

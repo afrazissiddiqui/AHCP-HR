@@ -357,3 +357,44 @@ export function updateAllPermissionsInDraft(
     return next;
   });
 }
+
+export function permissionKey(moduleSlug: string, action: string): string {
+  const normalizedAction = action.trim().toLowerCase();
+  return `${moduleSlug.trim().toLowerCase()}_${normalizedAction}`;
+}
+
+function resolvePermissionAction(action: string): string[] {
+  const normalized = action.trim().toLowerCase();
+  if (normalized === 'update' || normalized === 'edit') {
+    return ['update', 'edit', 'add'];
+  }
+  return [normalized];
+}
+
+export function isPermissionGranted(
+  authorization: UserAuthorizationModule[] | null | undefined,
+  moduleSlug: string,
+  action: string,
+): boolean {
+  if (!authorization?.length) {
+    return false;
+  }
+
+  const slug = moduleSlug.trim().toLowerCase();
+  const actionCandidates = resolvePermissionAction(action);
+
+  for (const candidate of actionCandidates) {
+    const key = permissionKey(slug, candidate);
+    for (const module of authorization) {
+      if (key in module) {
+        return normalizePermissionValue(module[key]) === 1;
+      }
+    }
+  }
+
+  return false;
+}
+
+export function humanizeModuleSlug(moduleSlug: string): string {
+  return humanizeSlug(moduleSlug);
+}

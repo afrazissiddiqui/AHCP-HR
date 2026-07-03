@@ -27,6 +27,7 @@ import { TerminationFormComponent } from './components/HR-Portal/termination/ter
 import { AddTerminationComponent } from './components/HR-Portal/termination/add-termination/add-termination';
 import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-maintenance.routes';
 import { authGuard } from './guards/auth.guard';
+import { requirePermission } from './guards/permission.guard';
 import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.routes';
 import { GlAccountDeterminationComponent } from './components/setup/gl-account-determination/gl-account-determination';
 import { LeaveTypesComponent } from './components/setup/leave-types/leave-types';
@@ -57,32 +58,32 @@ export const routes: Routes = [
   {
     path: 'recruitment',
     component: RecruitmentComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('application_form', 'list')],
   },
   {
     path: 'recruitment/create',
     component: CreateJobRequisitionComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('application_form', 'add')],
   },
   {
     path: 'recruitment/edit/:id',
     component: CreateJobRequisitionComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('application_form', 'update')],
   },
   {
     path: 'job-specification-form',
     component: JobSpecificationFormComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('job_specification', 'list')],
   },
   {
     path: 'job-specification-form/create',
     component: CreateJobSpecificationComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('job_specification', 'add')],
   },
   {
     path: 'job-specification-form/edit/:id',
     component: CreateJobSpecificationComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('job_specification', 'update')],
   },
   ...gatePassRoutes.map((route) =>
     route.redirectTo ? route : { ...route, canActivate: [authGuard] }

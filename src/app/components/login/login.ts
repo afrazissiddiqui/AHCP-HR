@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService } from '../../services/alert.service';
 import { AuthService } from '../../services/auth.service';
+import { PermissionService } from '../../services/permission.service';
 import { formatApiErrorMessage } from '../../utils/api-error.util';
 
 @Component({
@@ -23,6 +24,7 @@ export class LoginComponent implements OnInit {
     private readonly router: Router,
     private readonly alertService: AlertService,
     private readonly authService: AuthService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -40,9 +42,18 @@ export class LoginComponent implements OnInit {
     this.isSubmitting = true;
     this.authService.loginWithApi(email, this.password).subscribe({
       next: (response) => {
-        this.isSubmitting = false;
-        void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
-        void this.router.navigateByUrl('/dashboard');
+        this.permissionService.reloadForCurrentUser().subscribe({
+          next: () => {
+            this.isSubmitting = false;
+            void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
+            void this.router.navigateByUrl('/dashboard');
+          },
+          error: () => {
+            this.isSubmitting = false;
+            void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
+            void this.router.navigateByUrl('/dashboard');
+          },
+        });
       },
       error: (error: unknown) => {
         this.isSubmitting = false;

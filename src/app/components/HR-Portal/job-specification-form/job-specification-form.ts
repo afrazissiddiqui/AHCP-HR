@@ -7,11 +7,14 @@ import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { JobSpecificationService, JobSpecificationRecord } from '../../../services/job-specification.service';
 import { AlertService } from '../../../services/alert.service';
+import { PermissionService } from '../../../services/permission.service';
 import {
   JOB_SPECIFICATION_TABLE_FILTER,
   TableFilterComponent,
   TableFilterService,
 } from '../../table-filter';
+
+const JOB_SPECIFICATION_MODULE = 'job_specification';
 
 type JobSpecificationColumnKey = Exclude<keyof JobSpecificationRecord, 'selected'>;
 
@@ -42,8 +45,29 @@ export class JobSpecificationFormComponent implements OnInit {
     private router: Router,
     private jobSpecService: JobSpecificationService,
     private readonly alertService: AlertService,
+    private readonly permissionService: PermissionService,
     readonly tableFilter: TableFilterService
   ) { }
+
+  get canAddJobSpec(): boolean {
+    return this.permissionService.can(JOB_SPECIFICATION_MODULE, 'add');
+  }
+
+  get canViewJobSpec(): boolean {
+    return this.permissionService.can(JOB_SPECIFICATION_MODULE, 'view');
+  }
+
+  get canUpdateJobSpec(): boolean {
+    return this.permissionService.can(JOB_SPECIFICATION_MODULE, 'update');
+  }
+
+  get canDeleteJobSpec(): boolean {
+    return this.permissionService.can(JOB_SPECIFICATION_MODULE, 'delete');
+  }
+
+  get showJobSpecActions(): boolean {
+    return this.canViewJobSpec || this.canUpdateJobSpec || this.canDeleteJobSpec;
+  }
 
   ngOnInit(): void {
     this.jobSpecService.fetchPostedJobSpecifications().subscribe({
@@ -128,11 +152,19 @@ export class JobSpecificationFormComponent implements OnInit {
   }
 
   viewDetails(record: JobSpecificationRecord): void {
+    if (!this.permissionService.assertCan(JOB_SPECIFICATION_MODULE, 'view')) {
+      return;
+    }
+
     this.selectedJobSpec = record;
     this.showDetailDialog = true;
   }
 
   onUpdate(record: JobSpecificationRecord): void {
+    if (!this.permissionService.assertCan(JOB_SPECIFICATION_MODULE, 'update')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('Update', 'Unable to update this row: missing job specification id.');
       return;
@@ -141,6 +173,10 @@ export class JobSpecificationFormComponent implements OnInit {
   }
 
   async onDelete(record: JobSpecificationRecord): Promise<void> {
+    if (!this.permissionService.assertCan(JOB_SPECIFICATION_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete job specification?',
       `Remove ${record.jobTitle} (${record.Id}) from the list?`,
@@ -276,6 +312,10 @@ export class JobSpecificationFormComponent implements OnInit {
   }
 
   createNewJobSpec(): void {
+    if (!this.permissionService.assertCan(JOB_SPECIFICATION_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/job-specification-form/create');
   }
 

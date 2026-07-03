@@ -22,6 +22,9 @@ import { ShellbarSearchService } from '../../../services/shellbar-search.service
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
 import { glAccountBranchLabel } from '../../setup/gl-account-determination/gl-account-branch.options';
+import { PermissionService } from '../../../services/permission.service';
+
+const APPLICATION_FORM_MODULE = 'application_form';
 
 type ApplicationFormColumnKey = Exclude<keyof ApplicationFormRecord, 'detail' | 'selected'>;
 
@@ -66,6 +69,7 @@ export class RecruitmentComponent implements OnInit {
     private router: Router,
     private applicationFormService: ApplicationFormService,
     private readonly alertService: AlertService,
+    private readonly permissionService: PermissionService,
     readonly tableFilter: TableFilterService
   ) {
     connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
@@ -73,6 +77,26 @@ export class RecruitmentComponent implements OnInit {
       setSearchText: (value) => { this.searchText = value; },
       onSearchChange: () => this.onSearchChange(),
     });
+  }
+
+  get canAddApplication(): boolean {
+    return this.permissionService.can(APPLICATION_FORM_MODULE, 'add');
+  }
+
+  get canViewApplication(): boolean {
+    return this.permissionService.can(APPLICATION_FORM_MODULE, 'view');
+  }
+
+  get canUpdateApplication(): boolean {
+    return this.permissionService.can(APPLICATION_FORM_MODULE, 'update');
+  }
+
+  get canDeleteApplication(): boolean {
+    return this.permissionService.can(APPLICATION_FORM_MODULE, 'delete');
+  }
+
+  get showApplicationActions(): boolean {
+    return this.canViewApplication || this.canUpdateApplication || this.canDeleteApplication;
   }
 
   ngOnInit(): void {
@@ -251,6 +275,10 @@ export class RecruitmentComponent implements OnInit {
   }
 
   openApplicationDetail(record: ApplicationFormRecord) {
+    if (!this.permissionService.assertCan(APPLICATION_FORM_MODULE, 'view')) {
+      return;
+    }
+
     const viewId = record.apiId ?? record.EmployeeCode;
     this.detailViewState$.next({ open: true, loading: true, record });
 
@@ -325,13 +353,18 @@ export class RecruitmentComponent implements OnInit {
 
 
   createNewSIR(): void {
-    console.log("New SIR clicked");
+    if (!this.permissionService.assertCan(APPLICATION_FORM_MODULE, 'add')) {
+      return;
+    }
 
-    // Navigate to Create Job Requisition page
-    this.router.navigate(["/recruitment/create"]);
+    void this.router.navigate(['/recruitment/create']);
   }
 
   onUpdate(record: ApplicationFormRecord): void {
+    if (!this.permissionService.assertCan(APPLICATION_FORM_MODULE, 'update')) {
+      return;
+    }
+
     const id = record.apiId;
     if (!id) {
       this.alertService.warning('Update', 'Unable to update this row: missing employee id.');
@@ -341,6 +374,10 @@ export class RecruitmentComponent implements OnInit {
   }
 
   async onDelete(record: ApplicationFormRecord): Promise<void> {
+    if (!this.permissionService.assertCan(APPLICATION_FORM_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete employee?',
       `Remove ${record.EmployeeName} (${record.EmployeeCode}) from the list?`,
