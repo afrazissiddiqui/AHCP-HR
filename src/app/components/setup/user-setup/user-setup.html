@@ -127,30 +127,34 @@
             </div>
 
             <div class="form-auth-toolbar">
-              <div class="search-field">
-                <span class="search-field-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                  </svg>
-                </span>
-                <input
-                  type="search"
-                  class="form-module-search"
-                  [ngModel]="formModuleFilter()"
-                  (ngModelChange)="formModuleFilter.set($event)"
-                  name="form-module-search"
-                  placeholder="Filter modules…"
-                />
+              <div class="form-auth-toolbar-row">
+                <div class="search-field search-field--modules">
+                  <span class="search-field-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                  </span>
+                  <input
+                    type="search"
+                    class="form-module-search"
+                    [ngModel]="formModuleFilter()"
+                    (ngModelChange)="formModuleFilter.set($event)"
+                    name="form-module-search"
+                    placeholder="Filter modules…"
+                  />
+                </div>
               </div>
-              <div class="form-auth-bulk">
-                <button type="button" class="btn-bulk" (click)="expandAllFormModules()">Expand all</button>
-                <button type="button" class="btn-bulk" (click)="collapseAllFormModules()">Collapse all</button>
-                <button type="button" class="btn-bulk btn-bulk--allow" (click)="grantAllFormPermissions()">
-                  Allow all
-                </button>
-                <button type="button" class="btn-bulk btn-bulk--deny" (click)="denyAllFormPermissions()">
-                  Deny all
-                </button>
+              <div class="form-auth-toolbar-row form-auth-toolbar-row--actions">
+                <div class="form-auth-bulk">
+                  <button type="button" class="btn-bulk" (click)="expandAllFormModules()">Expand all</button>
+                  <button type="button" class="btn-bulk" (click)="collapseAllFormModules()">Collapse all</button>
+                  <button type="button" class="btn-bulk btn-bulk--allow" (click)="grantAllFormPermissions()">
+                    Allow all
+                  </button>
+                  <button type="button" class="btn-bulk btn-bulk--deny" (click)="denyAllFormPermissions()">
+                    Deny all
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -182,28 +186,30 @@
                           <path d="M9 18l6-6-6-6"/>
                         </svg>
                       </button>
-                      <div class="form-module-card-brand">
-                        <span class="form-module-icon" aria-hidden="true">{{ moduleInitials(module.moduleName) }}</span>
-                        <div class="form-module-card-title">
-                          <h5>{{ module.moduleName }}</h5>
-                          <span class="form-module-card-meta">
-                            {{ moduleGrantedCount(module) }} of {{ module.totalCount }} allowed
-                          </span>
+                      <div class="form-module-card-main">
+                        <div class="form-module-card-brand">
+                          <span class="form-module-icon" aria-hidden="true">{{ moduleInitials(module.moduleName) }}</span>
+                          <div class="form-module-card-title">
+                            <h5>{{ module.moduleName }}</h5>
+                            <span class="form-module-card-meta">
+                              {{ moduleGrantedCount(module) }} of {{ module.totalCount }} allowed
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div class="form-module-card-actions">
-                        <button
-                          type="button"
-                          class="btn-module-bulk"
-                          (click)="setModulePermissions(module.moduleSlug, true); $event.stopPropagation()">
-                          All on
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-module-bulk btn-module-bulk--deny"
-                          (click)="setModulePermissions(module.moduleSlug, false); $event.stopPropagation()">
-                          All off
-                        </button>
+                        <div class="form-module-card-actions">
+                          <button
+                            type="button"
+                            class="btn-module-bulk"
+                            (click)="setModulePermissions(module.moduleSlug, true); $event.stopPropagation()">
+                            All on
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-module-bulk btn-module-bulk--deny"
+                            (click)="setModulePermissions(module.moduleSlug, false); $event.stopPropagation()">
+                            All off
+                          </button>
+                        </div>
                       </div>
                     </header>
 
