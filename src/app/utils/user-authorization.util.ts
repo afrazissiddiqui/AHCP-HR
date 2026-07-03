@@ -1,34 +1,46 @@
-export interface UserPermissionItem {
+export type CrudBucket = 'create' | 'read' | 'update' | 'delete' | 'other';
+
+export interface CrudPermissionEntry {
   key: string;
+  actionKey: string;
   actionLabel: string;
+  value: number;
   granted: boolean;
+  bucket: CrudBucket;
 }
 
-export interface UserAuthorizationModule {
+export interface UserAuthorizationModuleRow {
   moduleName: string;
-  permissions: UserPermissionItem[];
+  moduleSlug: string;
+  create: CrudPermissionEntry[];
+  read: CrudPermissionEntry[];
+  update: CrudPermissionEntry[];
+  delete: CrudPermissionEntry[];
+  other: CrudPermissionEntry[];
+  grantedCount: number;
+  totalCount: number;
 }
 
 export interface UserAuthorizationSummary {
   total: number;
   granted: number;
-  modules: UserAuthorizationModule[];
+  modules: UserAuthorizationModuleRow[];
 }
 
-const PERMISSION_ACTIONS = new Set([
-  'add',
-  'list',
-  'view',
-  'delete',
-  'update',
-  'edit',
-  'detail',
-  'create',
-  'export',
-  'import',
-  'approve',
-  'reject',
-]);
+const CRUD_ACTION_MAP: Record<string, CrudBucket> = {
+  add: 'create',
+  create: 'create',
+  list: 'read',
+  view: 'read',
+  detail: 'read',
+  read: 'read',
+  update: 'update',
+  edit: 'update',
+  delete: 'delete',
+  remove: 'delete',
+};
+
+const EXTRA_ACTIONS = new Set(['export', 'import', 'approve', 'reject', 'print', 'download', 'upload']);
 
 function humanizeSlug(value: string): string {
   return value
@@ -46,35 +58,59 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 }
 
-function splitPermissionKey(key: string): { moduleName: string; actionLabel: string } {
+function splitPermissionKey(key: string): { moduleSlug: string; moduleName: string; actionKey: string; actionLabel: string } {
   const parts = key.split('_').filter(Boolean);
   if (parts.length < 2) {
-    return { moduleName: humanizeSlug(key), actionLabel: 'Access' };
-  }
-
-  const action = parts[parts.length - 1].toLowerCase();
-  if (PERMISSION_ACTIONS.has(action)) {
     return {
-      moduleName: humanizeSlug(parts.slice(0, -1).join('_')),
-      actionLabel: capitalize(action),
+      moduleSlug: key,
+      moduleName: humanizeSlug(key),
+      actionKey: key,
+      actionLabel: 'Access',
     };
   }
 
-  return { moduleName: humanizeSlug(key), actionLabel: 'Access' };
+  const actionKey = parts[parts.length - 1].toLowerCase();
+  const moduleSlug = parts.slice(0, -1).join('_');
+  return {
+    moduleSlug,
+    moduleName: humanizeSlug(moduleSlug),
+    actionKey,
+    actionLabel: capitalize(actionKey),
+  };
 }
 
-function isGranted(value: unknown): boolean {
-  if (value === true) {
-    return true;
+function resolveCrudBucket(actionKey: string): CrudBucket {
+  if (CRUD_ACTION_MAP[actionKey]) {
+    return CRUD_ACTION_MAP[actionKey];
   }
-  if (typeof value === 'number') {
-    return value === 1;
+  if (EXTRA_ACTIONS.has(actionKey)) {
+    return 'other';
+  }
+  return 'other';
+}
+
+function normalizePermissionValue(value: unknown): number {
+  if (value === true) {
+    return 1;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.round(value);
   }
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
-    return normalized === '1' || normalized === 'true' || normalized === 'yes';
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes') {
+      return 1;
+    }
+    const parsed = Number.parseInt(normalized, 10);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
   }
-  return false;
+  return 0;
+}
+
+function isGranted(value: number): boolean {
+  return value === 1;
 }
 
 function normalizeAuthorizationObjects(value: unknown): Record<string, unknown>[] {
@@ -105,40 +141,90 @@ function normalizeAuthorizationObjects(value: unknown): Record<string, unknown>[
   return [];
 }
 
+function emptyModuleRow(moduleSlug: string, moduleName: string): UserAuthorizationModuleRow {
+  return {
+    moduleSlug,
+    moduleName,
+    create: [],
+    read: [],
+    update: [],
+    delete: [],
+    other: [],
+    grantedCount: 0,
+    totalCount: 0,
+  };
+}
+
+function pushToBucket(row: UserAuthorizationModuleRow, bucket: CrudBucket, entry: CrudPermissionEntry): void {
+  row[bucket].push(entry);
+  row.totalCount += 1;
+  if (entry.granted) {
+    row.grantedCount += 1;
+  }
+}
+
 export function parseUserAuthorization(value: unknown): UserAuthorizationSummary | null {
   const objects = normalizeAuthorizationObjects(value);
   if (!objects.length) {
     return null;
   }
 
-  const moduleMap = new Map<string, UserPermissionItem[]>();
+  const moduleMap = new Map<string, UserAuthorizationModuleRow>();
 
   for (const object of objects) {
     for (const [key, permissionValue] of Object.entries(object)) {
-      const { moduleName, actionLabel } = splitPermissionKey(key);
-      const permissions = moduleMap.get(moduleName) ?? [];
-      permissions.push({
+      const { moduleSlug, moduleName, actionKey, actionLabel } = splitPermissionKey(key);
+      const numericValue = normalizePermissionValue(permissionValue);
+      const bucket = resolveCrudBucket(actionKey);
+      const row = moduleMap.get(moduleSlug) ?? emptyModuleRow(moduleSlug, moduleName);
+
+      pushToBucket(row, bucket, {
         key,
+        actionKey,
         actionLabel,
-        granted: isGranted(permissionValue),
+        value: numericValue,
+        granted: isGranted(numericValue),
+        bucket,
       });
-      moduleMap.set(moduleName, permissions);
+
+      moduleMap.set(moduleSlug, row);
     }
   }
 
-  const modules = [...moduleMap.entries()]
-    .map(([moduleName, permissions]) => ({
-      moduleName,
-      permissions: permissions.sort((a, b) => a.actionLabel.localeCompare(b.actionLabel)),
-    }))
-    .sort((a, b) => a.moduleName.localeCompare(b.moduleName));
-
-  const allPermissions = modules.flatMap((module) => module.permissions);
-  const granted = allPermissions.filter((permission) => permission.granted).length;
+  const modules = [...moduleMap.values()].sort((a, b) => a.moduleName.localeCompare(b.moduleName));
+  const allPermissions = modules.flatMap((module) => [
+    ...module.create,
+    ...module.read,
+    ...module.update,
+    ...module.delete,
+    ...module.other,
+  ]);
 
   return {
     total: allPermissions.length,
-    granted,
+    granted: allPermissions.filter((permission) => permission.granted).length,
     modules,
   };
+}
+
+export function crudBucketLabel(bucket: CrudBucket): string {
+  switch (bucket) {
+    case 'create':
+      return 'Create';
+    case 'read':
+      return 'Read';
+    case 'update':
+      return 'Update';
+    case 'delete':
+      return 'Delete';
+    default:
+      return 'Other';
+  }
+}
+
+export function crudBucketEntries(
+  module: UserAuthorizationModuleRow,
+  bucket: CrudBucket,
+): CrudPermissionEntry[] {
+  return module[bucket];
 }

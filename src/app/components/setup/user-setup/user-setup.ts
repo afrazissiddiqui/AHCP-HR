@@ -7,8 +7,11 @@ import { UserListItem, UserSetupPayload, UserSetupService } from '../../../servi
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
 import {
-  UserAuthorizationModule,
+  CrudBucket,
+  UserAuthorizationModuleRow,
   UserAuthorizationSummary,
+  crudBucketEntries,
+  crudBucketLabel,
   parseUserAuthorization,
 } from '../../../utils/user-authorization.util';
 
@@ -60,6 +63,23 @@ export class UserSetupComponent implements OnInit {
   readonly authorizationDialogOpen = signal(false);
   readonly authorizationDialogUser = signal<UserListItem | null>(null);
   readonly authorizationDialogSummary = signal<UserAuthorizationSummary | null>(null);
+  readonly authorizationModuleFilter = signal('');
+
+  readonly crudBuckets: CrudBucket[] = ['create', 'read', 'update', 'delete', 'other'];
+
+  readonly filteredAuthorizationModules = computed(() => {
+    const summary = this.authorizationDialogSummary();
+    if (!summary) {
+      return [];
+    }
+
+    const query = this.authorizationModuleFilter().trim().toLowerCase();
+    if (!query) {
+      return summary.modules;
+    }
+
+    return summary.modules.filter((module) => module.moduleName.toLowerCase().includes(query));
+  });
 
   readonly totalUsers = computed(() => this.users().length);
   readonly filteredUsers = computed(() => {
@@ -160,6 +180,7 @@ export class UserSetupComponent implements OnInit {
 
     this.authorizationDialogUser.set(user);
     this.authorizationDialogSummary.set(summary);
+    this.authorizationModuleFilter.set('');
     this.authorizationDialogOpen.set(true);
   }
 
@@ -167,17 +188,57 @@ export class UserSetupComponent implements OnInit {
     this.authorizationDialogOpen.set(false);
     this.authorizationDialogUser.set(null);
     this.authorizationDialogSummary.set(null);
+    this.authorizationModuleFilter.set('');
+  }
+
+  authorizationDialogEmail(): string {
+    const user = this.authorizationDialogUser();
+    if (!user) {
+      return '';
+    }
+    return this.resolveField(user, ['email', 'Email']);
+  }
+
+  authorizationDialogIsAdmin(): boolean {
+    const user = this.authorizationDialogUser();
+    return user ? this.isAdminUser(user) : false;
+  }
+
+  authorizationProgressPercent(summary: UserAuthorizationSummary): number {
+    if (!summary.total) {
+      return 0;
+    }
+    return Math.round((summary.granted / summary.total) * 100);
+  }
+
+  moduleProgressPercent(module: UserAuthorizationModuleRow): number {
+    if (!module.totalCount) {
+      return 0;
+    }
+    return Math.round((module.grantedCount / module.totalCount) * 100);
+  }
+
+  crudEntries(module: UserAuthorizationModuleRow, bucket: CrudBucket) {
+    return crudBucketEntries(module, bucket);
+  }
+
+  crudLabel(bucket: CrudBucket): string {
+    return crudBucketLabel(bucket);
+  }
+
+  permissionValueLabel(value: number): string {
+    return String(value);
   }
 
   authorizationDialogTitle(): string {
     const user = this.authorizationDialogUser();
     if (!user) {
-      return 'User permissions';
+      return 'Authorization overview';
     }
 
     const name = this.resolveField(user, ['name', 'Name']);
     const email = this.resolveField(user, ['email', 'Email']);
-    return name || email || 'User permissions';
+    return name || email || 'Authorization overview';
   }
 
   columnLabel(column: string): string {
@@ -399,8 +460,8 @@ export class UserSetupComponent implements OnInit {
     return String(value);
   }
 
-  moduleGrantedCount(module: UserAuthorizationModule): number {
-    return module.permissions.filter((permission) => permission.granted).length;
+  moduleGrantedCount(module: UserAuthorizationModuleRow): number {
+    return module.grantedCount;
   }
 
   get displayTableColumns(): UserTableColumn[] {
