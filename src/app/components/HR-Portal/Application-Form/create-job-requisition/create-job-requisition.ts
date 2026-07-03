@@ -1529,6 +1529,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
             apiId: responseId || record.apiId,
             detail,
           });
+        } else {
+          this.applicationFormService.upsertApplicationRecord({
+            ...record,
+            apiId: String(editId),
+            detail,
+          });
         }
         this.alertService.success(
           'Success',
@@ -1618,7 +1624,10 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     );
     this.branchLocation.set(
       this.resolveBranchCode(
-        detail.personalInfo.branchLocation || detail.requisition.location || '',
+        this.firstNonEmpty(
+          detail.personalInfo.branchLocation,
+          detail.requisition.location,
+        ),
       ),
     );
     this.remarks.set(detail.personalInfo.remarks ?? '');

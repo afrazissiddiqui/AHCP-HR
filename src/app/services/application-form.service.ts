@@ -5,6 +5,7 @@ import { apiUrl } from '../config/api.config';
 import { formatDateOfBirthFromApi, formatDateForInput } from '../utils/date-format.util';
 import { sanitizeApiText } from '../utils/api-text.util';
 import { normalizeEmploymentStatus } from '../utils/employment-status.util';
+import { glAccountBranchLabel } from '../components/setup/gl-account-determination/gl-account-branch.options';
 
 /** Extended payload captured from Create Application Form — shown in Application Form view modal only. */
 export interface ApplicationFormPersonalInfo {
@@ -308,6 +309,9 @@ export interface EmployeeProfileAddPayload {
   employmentStatus: string;
   hiringManager: string | null;
   department: string;
+  branchLocation: string;
+  branch?: string;
+  location?: string;
   designation: string;
   jobDescription: string;
   roleSalary: string;
@@ -569,6 +573,27 @@ export class ApplicationFormService {
     this.applicationRecords.update((list) => [...list, record]);
   }
 
+  upsertApplicationRecord(record: ApplicationFormRecord): void {
+    this.applicationRecords.update((list) => {
+      const index = list.findIndex((item) =>
+        record.apiId
+          ? item.apiId === record.apiId
+          : item.EmployeeCode === record.EmployeeCode,
+      );
+      if (index === -1) {
+        return [...list, record];
+      }
+
+      const next = [...list];
+      next[index] = {
+        ...next[index],
+        ...record,
+        detail: record.detail ?? next[index].detail,
+      };
+      return next;
+    });
+  }
+
   removeApplicationRecord(record: ApplicationFormRecord): void {
     this.applicationRecords.update((list) =>
       list.filter((item) =>
@@ -660,6 +685,35 @@ export class ApplicationFormService {
     };
 
     const reportingManager = personal.reportingManager || detail.requisition.hiringManager;
+    const branchCode = personal.branchLocation || detail.requisition.location || '';
+    const branchLabel = glAccountBranchLabel(branchCode) || branchCode;
+    const educationRows = detail.education.filter((row) =>
+      [
+        row.qualification,
+        row.institute,
+        row.institution,
+        row.passingYear,
+        row.fromDate,
+        row.toDate,
+        row.subject,
+        row.awardedQualification,
+        row.marksGrades,
+        row.notes,
+      ].some((value) => String(value ?? '').trim()),
+    );
+    const experienceRows = detail.pastExperience.filter((row) =>
+      [
+        row.company,
+        row.position,
+        row.designation,
+        row.duration,
+        row.fromDate,
+        row.toDate,
+        row.duties,
+        row.remarks,
+        row.lastSalary,
+      ].some((value) => String(value ?? '').trim()),
+    );
 
     return {
       jobSpecificationId: options.jobSpecificationId?.trim() || detail.requisition.reqId || undefined,
@@ -682,6 +736,9 @@ export class ApplicationFormService {
         normalizeEmploymentStatus(personal.employmentStatus) || 'Permanent',
       hiringManager: toNullableString(reportingManager),
       department: personal.departmentInAhcp,
+      branchLocation: branchCode,
+      branch: branchLabel,
+      location: branchLabel,
       designation: personal.designation,
       jobDescription: personal.jobDescription,
       roleSalary: personal.roleSalary || personal.workGradeLevel,
@@ -727,7 +784,7 @@ export class ApplicationFormService {
       state: personal.state,
       country: personal.country,
       zipCode: personal.zipCode,
-      educationSections: detail.education.map((row) => ({
+      educationSections: educationRows.map((row) => ({
         qualification: row.qualification,
         institution: row.institution || row.institute,
         institute: row.institute || row.institution,
@@ -738,7 +795,7 @@ export class ApplicationFormService {
         marksGrades: row.marksGrades,
         notes: row.notes,
       })),
-      pastExperienceSections: detail.pastExperience.map((row) => ({
+      pastExperienceSections: experienceRows.map((row) => ({
         company: row.company,
         designation: row.designation || row.position,
         position: row.position || row.designation,
@@ -952,8 +1009,11 @@ export class ApplicationFormService {
       let result = { ...obj };
       for (let index = ancestors.length - 1; index >= 0; index -= 1) {
         result = this.mergeFlatRemunerationFields(ancestors[index], result);
+        result = this.mergeProfileCollections(ancestors[index], result);
       }
-      return this.mergeFlatRemunerationFields(obj, result);
+      result = this.mergeFlatRemunerationFields(obj, result);
+      result = this.mergeProfileCollections(obj, result);
+      return result;
     }
 
     const nestedKeys = [
@@ -981,7 +1041,9 @@ export class ApplicationFormService {
           nextAncestors,
         );
         if (unwrapped) {
-          return this.mergeFlatRemunerationFields(obj, unwrapped);
+          let merged = this.mergeFlatRemunerationFields(obj, unwrapped);
+          merged = this.mergeProfileCollections(obj, merged);
+          return merged;
         }
       }
     }
@@ -1363,18 +1425,41 @@ export class ApplicationFormService {
       asString(item[camel]) ||
       (snake ? asString(item[snake]) : '');
 
-    const educationRaw = this.collectProfileSectionArray(item, personalInfoSource, [
-      'educationSections',
-      'education_sections',
+    const educationRaw = this.collectProfileSectionArray(
+      [
+        'educationSections',
+        'education_sections',
+        'education',
+        'educations',
+        'employeeEducation',
+        'employee_education',
+      ],
+      item,
+      personalInfoSource,
+      requisitionSource,
       'education',
-    ]);
-    const experienceRaw = this.collectProfileSectionArray(item, personalInfoSource, [
-      'pastExperienceSections',
-      'past_experience_sections',
-      'pastExperience',
-      'past_experience',
-    ]);
-    const attachmentsRaw = this.collectProfileSectionArray(item, personalInfoSource, ['attachments']);
+    );
+    const experienceRaw = this.collectProfileSectionArray(
+      [
+        'pastExperienceSections',
+        'past_experience_sections',
+        'pastExperience',
+        'past_experience',
+        'pastExperiences',
+        'employeePastExperience',
+        'employee_past_experience',
+      ],
+      item,
+      personalInfoSource,
+      requisitionSource,
+      'experience',
+    );
+    const attachmentsRaw = this.collectProfileSectionArray(
+      ['attachments', 'employeeAttachments', 'employee_attachments'],
+      item,
+      personalInfoSource,
+      requisitionSource,
+    );
 
     const asNumberString = (value: unknown): string => {
       if (value === undefined || value === null || value === '') {
@@ -1698,9 +1783,45 @@ export class ApplicationFormService {
       : null;
   }
 
-  private parseJsonArray(value: unknown): unknown[] {
+  private parseJsonArray(
+    value: unknown,
+    sectionHint?: 'education' | 'experience',
+  ): unknown[] {
     if (Array.isArray(value)) {
-      return value;
+      return value.filter((entry) => entry !== null && entry !== undefined);
+    }
+
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      const nestedValues = Object.values(record).filter(
+        (entry) => entry !== null && entry !== undefined && typeof entry === 'object' && !Array.isArray(entry),
+      );
+      if (nestedValues.length) {
+        return nestedValues;
+      }
+
+      if (sectionHint === 'education') {
+        if (
+          record['qualification'] ||
+          record['institution'] ||
+          record['institute'] ||
+          record['passingYear'] ||
+          record['passing_year']
+        ) {
+          return [record];
+        }
+      }
+
+      if (sectionHint === 'experience') {
+        if (
+          record['company'] ||
+          record['designation'] ||
+          record['position'] ||
+          record['duration']
+        ) {
+          return [record];
+        }
+      }
     }
 
     if (typeof value === 'string') {
@@ -1709,10 +1830,9 @@ export class ApplicationFormService {
         return [];
       }
 
-      if (trimmed.startsWith('[')) {
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
         try {
-          const parsed = JSON.parse(trimmed) as unknown;
-          return Array.isArray(parsed) ? parsed : [];
+          return this.parseJsonArray(JSON.parse(trimmed) as unknown, sectionHint);
         } catch {
           return [];
         }
@@ -1723,13 +1843,24 @@ export class ApplicationFormService {
   }
 
   private collectProfileSectionArray(
-    item: Record<string, unknown>,
-    personal: Record<string, unknown>,
     keys: string[],
+    ...sourcesAndHint: Array<Record<string, unknown> | 'education' | 'experience' | undefined>
   ): unknown[] {
-    for (const source of [item, personal]) {
+    const sectionHint = sourcesAndHint.find(
+      (value): value is 'education' | 'experience' => value === 'education' || value === 'experience',
+    );
+    const sources = sourcesAndHint.filter(
+      (value): value is Record<string, unknown> =>
+        value !== 'education' &&
+        value !== 'experience' &&
+        typeof value === 'object' &&
+        value !== null &&
+        value !== undefined,
+    );
+
+    for (const source of sources) {
       for (const key of keys) {
-        const parsed = this.parseJsonArray(source[key]);
+        const parsed = this.parseJsonArray(source[key], sectionHint);
         if (parsed.length) {
           return parsed;
         }
@@ -1744,20 +1875,41 @@ export class ApplicationFormService {
     target: Record<string, unknown>,
   ): Record<string, unknown> {
     const merged = { ...target };
-    const collectionKeys: Array<[primary: string, ...aliases: string[]]> = [
-      ['educationSections', 'education_sections', 'education'],
-      ['pastExperienceSections', 'past_experience_sections', 'pastExperience', 'past_experience'],
-      ['attachments'],
+    const collectionKeys: Array<{
+      primary: string;
+      aliases: string[];
+      hint?: 'education' | 'experience';
+    }> = [
+      {
+        primary: 'educationSections',
+        aliases: ['education_sections', 'education', 'educations', 'employeeEducation', 'employee_education'],
+        hint: 'education',
+      },
+      {
+        primary: 'pastExperienceSections',
+        aliases: [
+          'past_experience_sections',
+          'pastExperience',
+          'past_experience',
+          'pastExperiences',
+          'employeePastExperience',
+          'employee_past_experience',
+        ],
+        hint: 'experience',
+      },
+      {
+        primary: 'attachments',
+        aliases: ['employeeAttachments', 'employee_attachments'],
+      },
     ];
 
-    for (const keys of collectionKeys) {
-      const [primary, ...aliases] = keys;
-      if (this.parseJsonArray(merged[primary]).length) {
+    for (const { primary, aliases, hint } of collectionKeys) {
+      if (this.parseJsonArray(merged[primary], hint).length) {
         continue;
       }
 
       for (const key of [primary, ...aliases]) {
-        const parsed = this.parseJsonArray(source[key]);
+        const parsed = this.parseJsonArray(source[key], hint);
         if (parsed.length) {
           merged[primary] = parsed;
           break;
