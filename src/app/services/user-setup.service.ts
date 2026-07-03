@@ -2,14 +2,24 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { UserAuthorizationModule } from '../utils/user-authorization.util';
+
+export type { UserAuthorizationModule };
+
+export interface UserSetupPayload {
+  name: string;
+  email: string;
+  password?: string;
+  authorization: UserAuthorizationModule[];
+}
 
 export type UserListItem = Record<string, unknown>;
-export type UserSetupPayload = Record<string, unknown>;
 
 const USER_LIST_URL = apiUrl('user-list');
 const USER_ADD_URL = apiUrl('user-add');
 const USER_UPDATE_URL = apiUrl('user-update');
 const USER_DELETE_URL = apiUrl('user-delete');
+const USER_DETAIL_URL = apiUrl('user-detail');
 
 @Injectable({
   providedIn: 'root',
@@ -27,6 +37,13 @@ export class UserSetupService {
     );
   }
 
+  fetchUserDetail(id: string | number): Observable<UserListItem> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.get<unknown>(`${USER_DETAIL_URL}/${identifier}`).pipe(
+      map((response) => this.extractSingleRecord(response)),
+    );
+  }
+
   addUser(payload: UserSetupPayload): Observable<unknown> {
     return this.http.post(USER_ADD_URL, payload);
   }
@@ -39,6 +56,25 @@ export class UserSetupService {
   deleteUser(id: string | number): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
     return this.http.delete(`${USER_DELETE_URL}/${identifier}`);
+  }
+
+  private extractSingleRecord(response: unknown): UserListItem {
+    if (!response || typeof response !== 'object') {
+      return {};
+    }
+
+    const obj = response as Record<string, unknown>;
+    const nestedData = obj['data'];
+    if (nestedData && typeof nestedData === 'object' && !Array.isArray(nestedData)) {
+      return nestedData as UserListItem;
+    }
+
+    if (this.looksLikeUserRecord(obj)) {
+      return obj;
+    }
+
+    const items = this.extractApiItems(response);
+    return items[0] ?? {};
   }
 
   private extractApiItems(response: unknown): UserListItem[] {

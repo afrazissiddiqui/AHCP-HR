@@ -1,5 +1,7 @@
 export type CrudBucket = 'create' | 'read' | 'update' | 'delete' | 'other';
 
+export type UserAuthorizationModule = Record<string, number>;
+
 export interface CrudPermissionEntry {
   key: string;
   actionKey: string;
@@ -113,6 +115,21 @@ function isGranted(value: number): boolean {
   return value === 1;
 }
 
+export const DEFAULT_USER_AUTHORIZATION: UserAuthorizationModule[] = [
+  {
+    job_specification_add: 0,
+    job_specification_view: 0,
+    job_specification_list: 0,
+    job_specification_delete: 0,
+  },
+  {
+    application_form_add: 0,
+    application_form_view: 0,
+    application_form_list: 0,
+    application_form_delete: 0,
+  },
+];
+
 function normalizeAuthorizationObjects(value: unknown): Record<string, unknown>[] {
   if (!value) {
     return [];
@@ -161,6 +178,68 @@ function pushToBucket(row: UserAuthorizationModuleRow, bucket: CrudBucket, entry
   if (entry.granted) {
     row.grantedCount += 1;
   }
+}
+
+export function cloneAuthorization(modules: UserAuthorizationModule[]): UserAuthorizationModule[] {
+  return modules.map((module) => ({ ...module }));
+}
+
+function moduleSlugFromObject(obj: Record<string, unknown>): string {
+  const firstKey = Object.keys(obj)[0];
+  if (!firstKey) {
+    return '';
+  }
+  return splitPermissionKey(firstKey).moduleSlug;
+}
+
+export function buildAuthorizationTemplate(...sources: unknown[]): UserAuthorizationModule[] {
+  const moduleMap = new Map<string, UserAuthorizationModule>();
+
+  const ingest = (value: unknown): void => {
+    for (const object of normalizeAuthorizationObjects(value)) {
+      const slug = moduleSlugFromObject(object);
+      if (!slug) {
+        continue;
+      }
+
+      const normalized: UserAuthorizationModule = {};
+      for (const [key, permissionValue] of Object.entries(object)) {
+        normalized[key] = normalizePermissionValue(permissionValue);
+      }
+
+      moduleMap.set(slug, {
+        ...(moduleMap.get(slug) ?? {}),
+        ...normalized,
+      });
+    }
+  };
+
+  for (const source of sources) {
+    ingest(source);
+  }
+
+  for (const fallbackModule of DEFAULT_USER_AUTHORIZATION) {
+    const slug = moduleSlugFromObject(fallbackModule);
+    if (!slug) {
+      continue;
+    }
+    moduleMap.set(slug, {
+      ...(moduleMap.get(slug) ?? {}),
+      ...fallbackModule,
+    });
+  }
+
+  return [...moduleMap.values()];
+}
+
+export function authorizationToApiPayload(modules: UserAuthorizationModule[]): UserAuthorizationModule[] {
+  return cloneAuthorization(modules).map((module) => {
+    const payload: UserAuthorizationModule = {};
+    for (const [key, value] of Object.entries(module)) {
+      payload[key] = normalizePermissionValue(value);
+    }
+    return payload;
+  });
 }
 
 export function parseUserAuthorization(value: unknown): UserAuthorizationSummary | null {

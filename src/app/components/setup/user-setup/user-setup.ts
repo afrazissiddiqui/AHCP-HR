@@ -1,15 +1,33 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
-import { UserListItem, UserSetupPayload, UserSetupService } from '../../../services/user-setup.service';
+import {
+  UserListItem,
+  UserSetupPayload,
+  UserSetupService,
+} from '../../../services/user-setup.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
 import {
   CrudBucket,
+  UserAuthorizationModule,
   UserAuthorizationModuleRow,
   UserAuthorizationSummary,
+  authorizationToApiPayload,
+  buildAuthorizationTemplate,
+  cloneAuthorization,
   crudBucketEntries,
   crudBucketLabel,
   parseUserAuthorization,
@@ -33,32 +51,29 @@ interface UserTableColumn {
 export class UserSetupComponent implements OnInit {
   private readonly userSetupService = inject(UserSetupService);
   private readonly alertService = inject(AlertService);
-  private readonly editableFallbackColumns = ['name', 'email', 'password', 'is_admin'];
-  private readonly hiddenFormFields = new Set([
-    'authorization',
-    'id',
-    'created_at',
-    'updated_at',
-    'deleted_at',
-    'email_verified_at',
-  ]);
+  private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
+  @ViewChild('authDialogOverlay') private authDialogOverlay?: ElementRef<HTMLElement>;
 
   private readonly tableColumns: UserTableColumn[] = [
     { key: 'name', label: 'Name', aliases: ['name', 'Name'] },
     { key: 'email', label: 'Email', aliases: ['email', 'Email'] },
-    { key: 'is_admin', label: 'Role', aliases: ['is_admin', 'isAdmin'] },
     { key: 'created_at', label: 'Created', aliases: ['created_at', 'createdAt', 'Created At'] },
     { key: 'authorization', label: 'Authorization', aliases: ['authorization', 'Authorization'] },
   ];
 
   readonly loading = signal(false);
+  readonly loadingDetail = signal(false);
   readonly saving = signal(false);
   readonly deleting = signal(false);
   readonly users = signal<UserListItem[]>([]);
   readonly formMode = signal<UserFormMode>('add');
   readonly editingUserId = signal<string | number | null>(null);
-  readonly formFields = signal<string[]>([]);
-  readonly formModel = signal<Record<string, string>>({});
+  readonly formName = signal('');
+  readonly formEmail = signal('');
+  readonly formPassword = signal('');
+  readonly authorizationTemplate = signal<UserAuthorizationModule[]>(buildAuthorizationTemplate());
+  readonly authorizationDraft = signal<UserAuthorizationModule[]>(cloneAuthorization(buildAuthorizationTemplate()));
   readonly searchText = signal('');
   readonly authorizationDialogOpen = signal(false);
   readonly authorizationDialogUser = signal<UserListItem | null>(null);
@@ -66,6 +81,10 @@ export class UserSetupComponent implements OnInit {
   readonly authorizationModuleFilter = signal('');
 
   readonly crudBuckets: CrudBucket[] = ['create', 'read', 'update', 'delete', 'other'];
+
+  readonly formAuthorizationSummary = computed(
+    () => parseUserAuthorization(this.authorizationDraft()) ?? parseUserAuthorization(this.authorizationTemplate()),
+  );
 
   readonly filteredAuthorizationModules = computed(() => {
     const summary = this.authorizationDialogSummary();
@@ -97,9 +116,13 @@ export class UserSetupComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.formFields.set(this.deriveEditableFields([]));
     this.resetForm();
     this.loadUsers();
+
+    this.destroyRef.onDestroy(() => {
+      this.document.body.style.overflow = '';
+      this.authDialogOverlay?.nativeElement?.remove();
+    });
   }
 
   loadUsers(): void {
@@ -110,13 +133,13 @@ export class UserSetupComponent implements OnInit {
       .subscribe({
         next: (users) => {
           this.users.set(users);
-          this.formFields.set(this.deriveEditableFields(users));
-          this.resetForm();
+          this.refreshAuthorizationTemplate(users);
+          if (this.formMode() === 'add') {
+            this.authorizationDraft.set(cloneAuthorization(this.authorizationTemplate()));
+          }
         },
         error: (error: unknown) => {
           this.users.set([]);
-          this.formFields.set(this.deriveEditableFields([]));
-          this.resetForm();
           void this.alertService.error(
             'Load Failed',
             formatApiErrorMessage(error, 'Failed to load user list.'),
@@ -153,11 +176,6 @@ export class UserSetupComponent implements OnInit {
     return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
   }
 
-  isAdminUser(user: UserListItem): boolean {
-    const value = this.resolveField(user, ['is_admin', 'isAdmin']);
-    return value === '1' || value.toLowerCase() === 'yes' || value.toLowerCase() === 'true';
-  }
-
   displayCreatedAt(user: UserListItem): string {
     const value = this.resolveField(user, ['created_at', 'createdAt']);
     if (!value) {
@@ -182,6 +200,7 @@ export class UserSetupComponent implements OnInit {
     this.authorizationDialogSummary.set(summary);
     this.authorizationModuleFilter.set('');
     this.authorizationDialogOpen.set(true);
+    afterNextRender(() => this.attachAuthorizationOverlay());
   }
 
   closeAuthorizationDialog(): void {
@@ -189,19 +208,22 @@ export class UserSetupComponent implements OnInit {
     this.authorizationDialogUser.set(null);
     this.authorizationDialogSummary.set(null);
     this.authorizationModuleFilter.set('');
+    this.document.body.style.overflow = '';
+  }
+
+  private attachAuthorizationOverlay(): void {
+    const overlay = this.authDialogOverlay?.nativeElement;
+    if (!overlay || overlay.parentElement === this.document.body) {
+      return;
+    }
+
+    this.document.body.appendChild(overlay);
+    this.document.body.style.overflow = 'hidden';
   }
 
   authorizationDialogEmail(): string {
     const user = this.authorizationDialogUser();
-    if (!user) {
-      return '';
-    }
-    return this.resolveField(user, ['email', 'Email']);
-  }
-
-  authorizationDialogIsAdmin(): boolean {
-    const user = this.authorizationDialogUser();
-    return user ? this.isAdminUser(user) : false;
+    return user ? this.resolveField(user, ['email', 'Email']) : '';
   }
 
   authorizationProgressPercent(summary: UserAuthorizationSummary): number {
@@ -236,37 +258,27 @@ export class UserSetupComponent implements OnInit {
       return 'Authorization overview';
     }
 
-    const name = this.resolveField(user, ['name', 'Name']);
-    const email = this.resolveField(user, ['email', 'Email']);
-    return name || email || 'Authorization overview';
-  }
-
-  columnLabel(column: string): string {
-    return column
-      .replace(/_/g, ' ')
-      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
-  trackByColumn(_index: number, column: string): string {
-    return column;
-  }
-
-  fieldValue(field: string): string {
-    return this.formModel()[field] ?? '';
-  }
-
-  updateField(field: string, value: string): void {
-    this.formModel.update((model) => ({
-      ...model,
-      [field]: value,
-    }));
+    return (
+      this.resolveField(user, ['name', 'Name']) ||
+      this.resolveField(user, ['email', 'Email']) ||
+      'Authorization overview'
+    );
   }
 
   formTitle(): string {
     return this.formMode() === 'edit' ? 'Update User' : 'Add User';
+  }
+
+  toggleFormPermission(key: string): void {
+    this.authorizationDraft.update((draft) =>
+      draft.map((module) => {
+        if (!(key in module)) {
+          return module;
+        }
+        const current = Number(module[key]) === 1 ? 1 : 0;
+        return { ...module, [key]: current === 1 ? 0 : 1 };
+      }),
+    );
   }
 
   submitUser(): void {
@@ -274,13 +286,13 @@ export class UserSetupComponent implements OnInit {
       return;
     }
 
-    const payload = this.buildSubmitPayload();
-    const requiredField = this.firstMissingRequiredField(payload);
-    if (requiredField) {
-      this.alertService.validation(`${this.columnLabel(requiredField)} is required.`);
+    const validationMessage = this.validateBeforeSubmit();
+    if (validationMessage) {
+      this.alertService.validation(validationMessage);
       return;
     }
 
+    const payload = this.buildSubmitPayload();
     this.saving.set(true);
     const request =
       this.formMode() === 'edit' && this.editingUserId() !== null
@@ -294,6 +306,7 @@ export class UserSetupComponent implements OnInit {
           this.formMode() === 'edit' ? 'User updated successfully.' : 'User added successfully.',
         );
         this.loadUsers();
+        this.resetForm();
       },
       error: (error: unknown) => {
         void this.alertService.error(
@@ -311,14 +324,33 @@ export class UserSetupComponent implements OnInit {
       return;
     }
 
-    const nextModel: Record<string, string> = {};
-    for (const field of this.formFields()) {
-      nextModel[field] = this.valueToInput(user[field]);
-    }
+    this.loadingDetail.set(true);
+    this.userSetupService
+      .fetchUserDetail(userId)
+      .pipe(finalize(() => this.loadingDetail.set(false)))
+      .subscribe({
+        next: (detail) => {
+          this.formMode.set('edit');
+          this.editingUserId.set(userId);
+          this.formName.set(this.resolveField(detail, ['name', 'Name']));
+          this.formEmail.set(this.resolveField(detail, ['email', 'Email']));
+          this.formPassword.set('');
 
-    this.formMode.set('edit');
-    this.editingUserId.set(userId);
-    this.formModel.set(nextModel);
+          const authorization = detail['authorization'] ?? detail['Authorization'];
+          const template = buildAuthorizationTemplate(
+            ...this.users().map((item) => item['authorization'] ?? item['Authorization']),
+            authorization,
+          );
+          this.authorizationTemplate.set(template);
+          this.authorizationDraft.set(cloneAuthorization(template));
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Load Failed',
+            formatApiErrorMessage(error, 'Failed to load user details.'),
+          );
+        },
+      });
   }
 
   cancelEdit(): void {
@@ -366,79 +398,6 @@ export class UserSetupComponent implements OnInit {
       });
   }
 
-  private deriveEditableFields(users: UserListItem[]): string[] {
-    const discovered = new Set<string>();
-    for (const user of users) {
-      Object.keys(user).forEach((key) => {
-        if (!this.isHiddenFormField(key)) {
-          discovered.add(key);
-        }
-      });
-    }
-
-    for (const key of this.editableFallbackColumns) {
-      discovered.add(key);
-    }
-
-    const priority = ['name', 'Name', 'username', 'Username', 'email', 'Email', 'password', 'is_admin', 'isAdmin'];
-    const ordered = priority.filter((key) => discovered.has(key));
-    const remaining = [...discovered].filter((key) => !priority.includes(key)).sort((a, b) => a.localeCompare(b));
-    return [...ordered, ...remaining];
-  }
-
-  private isHiddenFormField(field: string): boolean {
-    const normalized = field.toLowerCase();
-    return (
-      this.hiddenFormFields.has(normalized) ||
-      ['id', 'created_at', 'updated_at', 'deleted_at', 'email_verified_at'].includes(normalized)
-    );
-  }
-
-  private resetForm(): void {
-    const nextModel: Record<string, string> = {};
-    for (const field of this.formFields()) {
-      nextModel[field] = field === 'is_admin' || field === 'isAdmin' ? '0' : '';
-    }
-    this.formMode.set('add');
-    this.editingUserId.set(null);
-    this.formModel.set(nextModel);
-  }
-
-  private buildSubmitPayload(): UserSetupPayload {
-    const payload: UserSetupPayload = {};
-    for (const field of this.formFields()) {
-      const rawValue = this.formModel()[field] ?? '';
-      const trimmed = rawValue.trim();
-      if (!trimmed && field === 'password' && this.formMode() === 'edit') {
-        continue;
-      }
-      payload[field] = this.normalizeFieldValue(field, trimmed);
-    }
-    return payload;
-  }
-
-  private normalizeFieldValue(field: string, value: string): unknown {
-    if (field === 'is_admin' || field === 'isAdmin') {
-      return value === '1' || value.toLowerCase() === 'yes' ? 1 : 0;
-    }
-    return value;
-  }
-
-  private firstMissingRequiredField(payload: UserSetupPayload): string | null {
-    const requiredFields = this.formMode() === 'edit' ? ['name', 'email'] : ['name', 'email', 'password'];
-    for (const requiredField of requiredFields) {
-      const actualField = this.formFields().find((field) => field.toLowerCase() === requiredField);
-      if (!actualField) {
-        continue;
-      }
-      const value = payload[actualField];
-      if (value === null || value === undefined || String(value).trim() === '') {
-        return actualField;
-      }
-    }
-    return null;
-  }
-
   resolveUserId(user: UserListItem): string | number | null {
     const keys = ['id', 'Id', 'ID'];
     for (const key of keys) {
@@ -450,21 +409,57 @@ export class UserSetupComponent implements OnInit {
     return null;
   }
 
-  private valueToInput(value: unknown): string {
-    if (value === null || value === undefined) {
-      return '';
-    }
-    if (typeof value === 'boolean') {
-      return value ? '1' : '0';
-    }
-    return String(value);
-  }
-
   moduleGrantedCount(module: UserAuthorizationModuleRow): number {
     return module.grantedCount;
   }
 
   get displayTableColumns(): UserTableColumn[] {
     return this.tableColumns;
+  }
+
+  private refreshAuthorizationTemplate(users: UserListItem[]): void {
+    const template = buildAuthorizationTemplate(
+      ...users.map((user) => user['authorization'] ?? user['Authorization']),
+    );
+    this.authorizationTemplate.set(template);
+  }
+
+  private resetForm(): void {
+    this.formMode.set('add');
+    this.editingUserId.set(null);
+    this.formName.set('');
+    this.formEmail.set('');
+    this.formPassword.set('');
+    this.authorizationDraft.set(cloneAuthorization(this.authorizationTemplate()));
+  }
+
+  private validateBeforeSubmit(): string | null {
+    if (!this.formName().trim()) {
+      return 'Name is required.';
+    }
+    if (!this.formEmail().trim()) {
+      return 'Email is required.';
+    }
+    if (this.formMode() === 'add' && !this.formPassword().trim()) {
+      return 'Password is required.';
+    }
+    return null;
+  }
+
+  private buildSubmitPayload(): UserSetupPayload {
+    const payload: UserSetupPayload = {
+      name: this.formName().trim(),
+      email: this.formEmail().trim(),
+      authorization: authorizationToApiPayload(this.authorizationDraft()),
+    };
+
+    const password = this.formPassword().trim();
+    if (this.formMode() === 'add') {
+      payload.password = password;
+    } else if (password) {
+      payload.password = password;
+    }
+
+    return payload;
   }
 }
