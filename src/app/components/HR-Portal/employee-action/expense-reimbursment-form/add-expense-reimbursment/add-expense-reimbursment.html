@@ -1,22 +1,103 @@
-<div class="cjs-page">
-  <div class="cjs-header">
-    <div class="cjs-header-left">
-      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
-        <span class="cjs-back-icon">❮</span>
+<div class="cjr-page mad-add-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>{{ pageTitle }}</h1>
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="mad-page-subtitle">{{ pageSubtitle }}</p>
+      </div>
     </div>
   </div>
 
-  <div class="cjs-card">
-    <div class="cjs-form-container">
-      <section class="cjs-section-block" id="er-header-section">
-        <div class="cjs-section-title">Header Information</div>
+  <div class="cjr-card cjr-form-card">
+    <div class="scd-form-hero" aria-hidden="true">
+      <div class="scd-form-hero__glow"></div>
+      <div class="scd-form-hero__content">
+        <span class="scd-form-hero__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <rect x="2" y="5" width="20" height="14" rx="2" />
+            <path d="M2 10h20" />
+            <path d="M6 15h2" />
+            <path d="M10 15h4" />
+          </svg>
+        </span>
+        <div class="scd-form-hero__text">
+          <span class="scd-form-hero__label">HR Portal</span>
+          <span class="scd-form-hero__title">Expense Reimbursement</span>
+        </div>
+        <div class="scd-form-hero__steps">
+          <span class="scd-step-chip scd-step-chip--active">
+            <span class="scd-step-chip__num">1</span>
+            Header Info
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="employeeCode().trim() && headerEmployeeName().trim()"
+            [class.scd-step-chip--ready]="formNumber().trim()"
+          >
+            <span class="scd-step-chip__num">2</span>
+            Expense Detail
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="expenseType().trim() || claimAmount().trim()"
+          >
+            <span class="scd-step-chip__num">3</span>
+            Travel
+          </span>
+        </div>
+      </div>
+    </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
-              <label>Employee Code:</label>
+    <nav class="cjr-section-nav mad-sticky-nav" aria-label="Expense reimbursement sections">
+      <ul class="cjr-section-nav-list">
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'er-header-section'"
+          (click)="scrollToSection('er-header-section')"
+        >
+          Header information
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'er-expense-detail-section'"
+          (click)="scrollToSection('er-expense-detail-section')"
+        >
+          Expense detail
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'er-travel-section'"
+          (click)="scrollToSection('er-travel-section')"
+        >
+          Travel
+        </li>
+      </ul>
+    </nav>
+
+    <div class="cjr-form-body">
+      <section class="mad-form-panel" id="er-header-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Header Information</h2>
+            <span class="mad-form-panel__subtitle">Employee identity, claim period, and submission details</span>
+          </div>
+        </div>
+
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee Code:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -31,6 +112,7 @@
                   placeholder="e.g. EMP-001"
                   autocomplete="off"
                   [readonly]="!!editingId"
+                  [class.cjr-invalid]="isFieldInvalid('employeeCode')"
                 />
                 <ul
                   id="er-employee-code-listbox"
@@ -54,8 +136,8 @@
               </div>
             </div>
 
-            <div class="cjs-row">
-              <label>Employee Name:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee Name:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -70,6 +152,7 @@
                   placeholder="Employee full name"
                   autocomplete="off"
                   [readonly]="!!editingId"
+                  [class.cjr-invalid]="isFieldInvalid('employeeName')"
                 />
                 <ul
                   id="er-employee-name-listbox"
@@ -93,29 +176,35 @@
               </div>
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Department:</label>
               <input type="text" [ngModel]="headerDepartment()" (ngModelChange)="onHeaderDepartmentInput($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Designation:</label>
               <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Claim Month:</label>
               <input type="date" [ngModel]="claimMonth()" (ngModelChange)="claimMonth.set($event)" />
             </div>
 
-            <div class="cjs-row">
-              <label>Form Number:</label>
-              <input type="text" [ngModel]="formNumber()" (ngModelChange)="onFormNumberChange($event)" placeholder="e.g. FRM-1001" />
+            <div class="cjr-row">
+              <label class="cjr-label-required">Form Number:</label>
+              <input
+                type="text"
+                [ngModel]="formNumber()"
+                (ngModelChange)="onFormNumberChange($event)"
+                placeholder="e.g. FRM-1001"
+                [class.cjr-invalid]="isFieldInvalid('formNumber')"
+              />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Submission Date:</label>
               <input type="date" [ngModel]="submissionDate()" (ngModelChange)="submissionDate.set($event)" />
             </div>
@@ -123,34 +212,51 @@
         </div>
       </section>
 
-      <section class="cjs-section-block" id="er-expense-detail-section">
-        <div class="cjs-section-title">Expense Detail</div>
+      <section class="mad-form-panel" id="er-expense-detail-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Expense Detail</h2>
+            <span class="mad-form-panel__subtitle">Claim type, amount, date, and supporting remarks</span>
+          </div>
+        </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Form Number:</label>
               <input type="text" [value]="formNumber()" readonly />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employee ID:</label>
               <input type="text" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)" placeholder="e.g. EMP-001" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employee Name:</label>
               <input type="text" [ngModel]="detailEmployeeName()" (ngModelChange)="onDetailEmployeeNameInput($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Department:</label>
               <input type="text" [ngModel]="detailDepartment()" (ngModelChange)="detailDepartment.set($event)" />
             </div>
 
-            <div class="cjs-row">
-              <label>Expense Type:</label>
-              <select [ngModel]="expenseType()" (ngModelChange)="expenseType.set($event)">
+            <div class="cjr-row">
+              <label class="cjr-label-required">Expense Type:</label>
+              <select
+                [ngModel]="expenseType()"
+                (ngModelChange)="expenseType.set($event)"
+                [class.cjr-invalid]="isFieldInvalid('expenseType')"
+              >
                 <option value="">Select expense type</option>
                 @for (type of expenseTypeOptions; track type) {
                   <option [value]="type">{{ type }}</option>
@@ -159,13 +265,13 @@
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Claim Amount:</label>
               <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" placeholder="e.g. 5000" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Claim Date:</label>
               <input
                 type="text"
@@ -176,32 +282,42 @@
                 maxlength="10"
               />
             </div>
-
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--full">
+        <div class="cjr-row cjr-row--remarks">
           <label>Remarks:</label>
           <textarea rows="3" [ngModel]="expenseRemarks()" (ngModelChange)="expenseRemarks.set($event)" placeholder="Expense remarks"></textarea>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="er-travel-section">
-        <div class="cjs-section-title">Travel</div>
+      <section class="mad-form-panel" id="er-travel-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Travel</h2>
+            <span class="mad-form-panel__subtitle">Travel dates, daily allowance, and related notes</span>
+          </div>
+        </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Travel From Date:</label>
               <input type="date" [ngModel]="travelFromDate()" (ngModelChange)="travelFromDate.set($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Travel To Date:</label>
               <input type="date" [ngModel]="travelToDate()" (ngModelChange)="travelToDate.set($event)" />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Daily Allowance Applicable:</label>
               <select [ngModel]="dailyAllowanceApplicable()" (ngModelChange)="dailyAllowanceApplicable.set($event)">
                 <option value="">Select</option>
@@ -211,8 +327,8 @@
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Daily Allowance Rate:</label>
               <input
                 type="text"
@@ -223,29 +339,41 @@
               />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Number of Days:</label>
               <input type="text" [value]="numberOfDays()" readonly />
             </div>
 
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Daily Allowance Amount:</label>
               <input type="text" [value]="dailyAllowanceAmount()" readonly />
             </div>
           </div>
         </div>
 
-        <div class="cjs-row cjs-row--full">
+        <div class="cjr-row cjr-row--remarks">
           <label>Remarks:</label>
           <textarea rows="3" [ngModel]="travelRemarks()" (ngModelChange)="travelRemarks.set($event)" placeholder="Travel remarks"></textarea>
         </div>
       </section>
+    </div>
 
-      <div class="cjs-actions-footer">
-        <button type="button" class="cjs-submit-btn" (click)="save()">
-          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
-        </button>
-      </div>
+    <div class="cjr-actions-footer">
+      <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()" [disabled]="saving()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
+      <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="saving()">
+        @if (saving()) {
+          <span class="cjr-submit-spinner" aria-hidden="true"></span>
+          <span>Saving…</span>
+        } @else {
+          <span class="cjr-submit-icon">✓</span>
+          <span>{{ submitButtonLabel }}</span>
+        }
+      </button>
     </div>
   </div>
 </div>

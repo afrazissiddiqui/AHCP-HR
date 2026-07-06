@@ -14,6 +14,7 @@ import {
   ApplicationFormService,
 } from '../../../../../services/application-form.service';
 import { AlertService } from '../../../../../services/alert.service';
+import { finalize } from 'rxjs';
 import {
   ExpenseReimbursementRecord,
   ExpenseReimbursementService,
@@ -34,14 +35,17 @@ interface ExpenseEmployeeOption {
   designation: string;
 }
 
+type ExpenseValidationField = 'formNumber' | 'employeeCode' | 'employeeName' | 'expenseType';
+
 @Component({
   selector: 'app-add-expense-reimbursment',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-expense-reimbursment.html',
   styleUrls: [
-    '../../../job-specification-form/create-job-specification/create-job-specification.css',
+    '../../../Application-Form/create-job-requisition/create-job-requisition.css',
     '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
+    './add-expense-reimbursment.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -49,6 +53,15 @@ export class AddExpenseReimbursmentComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add Expense Reimbursement';
   submitButtonLabel = 'Save Expense Reimbursement';
+  protected readonly activeSection = signal('er-header-section');
+  protected readonly saving = signal(false);
+  protected readonly validationTouched = signal(false);
+
+  get pageSubtitle(): string {
+    return this.editingId
+      ? 'Update expense claim details, reimbursement amounts, and travel allowance.'
+      : 'Submit employee expense claims with header, expense detail, and travel information.';
+  }
 
   protected readonly expenseTypeOptions = ['Fuel', 'Travel', 'Medical', 'Meals', 'Utilities', 'Lodging', 'Other'] as const;
 
@@ -239,21 +252,61 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     void this.router.navigateByUrl('/employee-action/expense-reimbursement-form');
   }
 
+  protected scrollToSection(sectionId: string): void {
+    this.activeSection.set(sectionId);
+    setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  }
+
+  protected isFieldInvalid(field: ExpenseValidationField): boolean {
+    if (!this.validationTouched()) {
+      return false;
+    }
+
+    switch (field) {
+      case 'formNumber':
+        return !this.formNumber().trim();
+      case 'employeeCode':
+        return !this.employeeCode().trim();
+      case 'employeeName':
+        return !this.headerEmployeeName().trim();
+      case 'expenseType':
+        return !this.expenseType().trim();
+      default:
+        return false;
+    }
+  }
+
   protected save(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.validationTouched.set(true);
+
     if (!this.formNumber().trim()) {
       void this.alertService.warning('Validation', 'Form Number is required.');
+      this.scrollToSection('er-header-section');
+      this.cdr.markForCheck();
       return;
     }
 
     if (!this.employeeCode().trim() || !this.headerEmployeeName().trim()) {
       void this.alertService.warning('Validation', 'Employee Code and Employee Name are required.');
+      this.scrollToSection('er-header-section');
+      this.cdr.markForCheck();
       return;
     }
 
     if (!this.expenseType().trim()) {
       void this.alertService.warning('Validation', 'Expense Type is required.');
+      this.scrollToSection('er-expense-detail-section');
+      this.cdr.markForCheck();
       return;
     }
+
+    this.saving.set(true);
 
     const draft = buildExpenseReimbursementDraftFromForm({
       employeeCode: this.employeeCode(),
@@ -286,7 +339,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
       ? this.expenseService.updateExpenseReimbursement(this.editingId, payload)
       : this.expenseService.addExpenseReimbursement(payload);
 
-    request$.subscribe({
+    request$.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: async () => {
         const message = this.editingId
           ? 'Expense reimbursement updated successfully.'

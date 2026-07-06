@@ -428,6 +428,108 @@ export class PerformanceAppraisalService {
     throw new Error('Performance appraisal record not found');
   }
 
+  private pickRecord(value: unknown): Record<string, unknown> | undefined {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    return value as Record<string, unknown>;
+  }
+
+  private resolveIncrementSource(item: Record<string, unknown>): Record<string, unknown> {
+    const nested = this.pickRecord(item['increment']) ?? {};
+    const flat: Record<string, unknown> = {};
+
+    const copyIfPresent = (targetKey: string, ...sourceKeys: string[]): void => {
+      for (const key of sourceKeys) {
+        const value = item[key];
+        if (value !== undefined && value !== null) {
+          flat[targetKey] = value;
+          return;
+        }
+      }
+    };
+
+    copyIfPresent('current_salary', 'increment_current_salary', 'incrementCurrentSalary');
+    copyIfPresent('increment_percentage', 'increment_percentage', 'incrementPercentage');
+    copyIfPresent(
+      'increment_effective_date',
+      'increment_effective_date',
+      'incrementEffectiveDate',
+    );
+    copyIfPresent('reason_for_increment', 'reason_for_increment', 'reasonForIncrement');
+    copyIfPresent('increment_amount', 'increment_amount', 'incrementAmount');
+    copyIfPresent('revised_salary', 'revised_salary', 'revisedSalary');
+
+    return { ...flat, ...nested };
+  }
+
+  private resolvePromotionSource(item: Record<string, unknown>): Record<string, unknown> {
+    const nested = this.pickRecord(item['promotion']) ?? {};
+    const flat: Record<string, unknown> = {};
+
+    const copyIfPresent = (targetKey: string, ...sourceKeys: string[]): void => {
+      for (const key of sourceKeys) {
+        const value = item[key];
+        if (value !== undefined && value !== null) {
+          flat[targetKey] = value;
+          return;
+        }
+      }
+    };
+
+    copyIfPresent('promotion_recommended', 'promotion_recommended', 'promotionRecommended');
+    copyIfPresent('new_designation', 'new_designation', 'newDesignation');
+    copyIfPresent(
+      'promotion_effective_date',
+      'promotion_effective_date',
+      'promotionEffectiveDate',
+    );
+    copyIfPresent('remarks', 'promotion_remarks', 'promotionRemarks', 'remarks');
+
+    return { ...flat, ...nested };
+  }
+
+  private resolveBenefitsPayload(item: Record<string, unknown>): Record<string, unknown> {
+    const merged: Record<string, unknown> = {};
+
+    const otherBenefits =
+      this.pickRecord(item['other_benefits']) ?? this.pickRecord(item['otherBenefits']);
+    if (otherBenefits) {
+      Object.assign(merged, otherBenefits);
+    }
+
+    const existingBenefitsRaw =
+      item['existing_benefits_details'] ?? item['existingBenefitsDetails'];
+    const existingBenefitsObject = this.pickRecord(existingBenefitsRaw);
+    if (existingBenefitsObject) {
+      Object.assign(merged, existingBenefitsObject);
+    } else if (typeof existingBenefitsRaw === 'string') {
+      merged['existing_benefits_details'] = existingBenefitsRaw;
+    }
+
+    return merged;
+  }
+
+  private resolveBenefitsDetailsText(
+    item: Record<string, unknown>,
+    benefitsSource: Record<string, unknown>,
+  ): string {
+    const asString = (value: unknown): string =>
+      value === undefined || value === null ? '' : String(value).trim();
+
+    const nestedText = benefitsSource['existing_benefits_details'] ?? benefitsSource['existingBenefitsDetails'];
+    if (typeof nestedText === 'string' && nestedText.trim()) {
+      return nestedText.trim();
+    }
+
+    const rootRaw = item['existing_benefits_details'] ?? item['existingBenefitsDetails'];
+    if (typeof rootRaw === 'string' && rootRaw.trim()) {
+      return rootRaw.trim();
+    }
+
+    return '';
+  }
+
   private mapApiItemToRecord(item: Record<string, unknown>): PerformanceAppraisalRecord {
     const asString = (value: unknown): string =>
       value === undefined || value === null ? '' : String(value).trim();
@@ -441,16 +543,9 @@ export class PerformanceAppraisalService {
       asString(item['Id']) ||
       asString(item['performance_appraisal_id']);
 
-    const incrementSource =
-      (item['increment'] as Record<string, unknown> | undefined) ?? {};
-
-    const promotionSource =
-      (item['promotion'] as Record<string, unknown> | undefined) ?? {};
-
-    const benefitsSource =
-      (item['other_benefits'] as Record<string, unknown> | undefined) ??
-      (item['otherBenefits'] as Record<string, unknown> | undefined) ??
-      {};
+    const incrementSource = this.resolveIncrementSource(item);
+    const promotionSource = this.resolvePromotionSource(item);
+    const benefitsSource = this.resolveBenefitsPayload(item);
 
     const currentSalary = asNumber(item['current_salary'] ?? item['currentSalary']);
 
@@ -489,11 +584,12 @@ export class PerformanceAppraisalService {
 
     const otherBenefits: PerformanceOtherBenefitsPayload = {
       allowances: this.mapAllAllowancesFromApi(item, benefitsSource),
-      existing_benefits_details:
-        asString(benefitsSource['existing_benefits_details']) ||
-        asString(benefitsSource['existingBenefitsDetails']),
+      existing_benefits_details: this.resolveBenefitsDetailsText(item, benefitsSource),
       new_benefits:
-        asString(benefitsSource['new_benefits']) || asString(benefitsSource['newBenefits']),
+        asString(benefitsSource['new_benefits']) ||
+        asString(benefitsSource['newBenefits']) ||
+        asString(item['new_benefits']) ||
+        asString(item['newBenefits']),
     };
 
     return {
