@@ -26,10 +26,20 @@ export interface PerformanceAllowanceRowPayload {
   revised: number;
 }
 
+export const PERFORMANCE_ALLOWANCE_API_KEYS = [
+  'fuelLimit',
+  'mobileAllowances',
+  'carAllowances',
+  'otherAllowances',
+] as const;
+
+export type PerformanceAllowanceApiKey = (typeof PERFORMANCE_ALLOWANCE_API_KEYS)[number];
+
 export const PERFORMANCE_ALLOWANCE_FIELD_LABELS: Readonly<Record<string, string>> = {
-  fuelLimit: 'Fuel Limit (liter)',
-  fuel_limit: 'Fuel Limit (liter)',
-  'Fuel Limit (liter)': 'Fuel Limit (liter)',
+  fuelLimit: 'Fuel Limit (Liters)',
+  fuel_limit: 'Fuel Limit (Liters)',
+  'Fuel Limit (liter)': 'Fuel Limit (Liters)',
+  'Fuel Limit (Liters)': 'Fuel Limit (Liters)',
   mobileAllowances: 'Mobile Allowances',
   mobile_allowances: 'Mobile Allowances',
   'Mobile Allowances': 'Mobile Allowances',
@@ -41,6 +51,25 @@ export const PERFORMANCE_ALLOWANCE_FIELD_LABELS: Readonly<Record<string, string>
   'Other Allowances': 'Other Allowances',
 };
 
+export function normalizePerformanceAllowanceKey(value: string): PerformanceAllowanceApiKey | '' {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) {
+    return '';
+  }
+
+  for (const key of PERFORMANCE_ALLOWANCE_API_KEYS) {
+    if (
+      normalized === key.toLowerCase() ||
+      normalized === key.replace(/([A-Z])/g, '_$1').toLowerCase() ||
+      normalized === (PERFORMANCE_ALLOWANCE_FIELD_LABELS[key] ?? '').toLowerCase()
+    ) {
+      return key;
+    }
+  }
+
+  return '';
+}
+
 export function getPerformanceAllowanceLabel(key: string): string {
   const trimmed = key.trim();
   return PERFORMANCE_ALLOWANCE_FIELD_LABELS[trimmed] ?? trimmed;
@@ -50,6 +79,7 @@ export interface PerformanceOtherBenefitsPayload {
   allowances: PerformanceAllowanceRowPayload[];
   existing_benefits_details: string;
   new_benefits: string;
+  [key: string]: string | number | null | PerformanceAllowanceRowPayload[] | undefined;
 }
 
 export interface PerformanceAppraisalAddPayload {
@@ -106,6 +136,28 @@ const PERFORMANCE_APPRAISAL_UPDATE_URL = apiUrl('performance-appraisal-update');
 const PERFORMANCE_APPRAISAL_DETAIL_URL = apiUrl('performance-appraisal-detail');
 const PERFORMANCE_APPRAISAL_DELETE_URL = apiUrl('performance-appraisal-delete');
 
+function appendFlatAllowanceFields(
+  target: Record<string, string | number | null | PerformanceAllowanceRowPayload[] | undefined>,
+  allowances: PerformanceAllowanceRowPayload[],
+): void {
+  for (const row of allowances) {
+    const key = normalizePerformanceAllowanceKey(row.allowance);
+    if (!key) {
+      continue;
+    }
+
+    const existing = Math.round(row.existing);
+    const incrementPercentage = Number(row.increment_percentage.toFixed(2));
+    const revised = Math.round(row.revised);
+
+    target[key] = existing > 0 || key !== 'fuelLimit' ? existing : null;
+    target[`${key}_increment_percentage`] = incrementPercentage;
+    target[`${key}_revised`] = revised;
+    target[`${key}IncrementPercentage`] = incrementPercentage;
+    target[`${key}Revised`] = revised;
+  }
+}
+
 function toAmount(value: string | number | null | undefined): number {
   const numeric = Number(String(value ?? '').replace(/,/g, '').trim());
   return Number.isFinite(numeric) ? numeric : 0;
@@ -155,13 +207,19 @@ export function buildPerformanceAppraisalSubmitPayload(
     },
     other_benefits: {
       allowances: draft.other_benefits.allowances.map((row) => ({
-        allowance: row.allowance.trim(),
+        allowance: normalizePerformanceAllowanceKey(row.allowance) || row.allowance.trim(),
         existing: Math.round(row.existing),
         increment_percentage: Number(row.increment_percentage.toFixed(2)),
         revised: Math.round(row.revised),
       })),
       existing_benefits_details: draft.other_benefits.existing_benefits_details.trim(),
       new_benefits: draft.other_benefits.new_benefits.trim(),
+      ...(() => {
+        const flat: Record<string, string | number | null | PerformanceAllowanceRowPayload[] | undefined> =
+          {};
+        appendFlatAllowanceFields(flat, draft.other_benefits.allowances);
+        return flat;
+      })(),
     },
   };
 }
@@ -430,7 +488,7 @@ export class PerformanceAppraisalService {
     };
 
     const otherBenefits: PerformanceOtherBenefitsPayload = {
-      allowances: this.mapAllowancesFromApi(benefitsSource),
+      allowances: this.mapAllAllowancesFromApi(item, benefitsSource),
       existing_benefits_details:
         asString(benefitsSource['existing_benefits_details']) ||
         asString(benefitsSource['existingBenefitsDetails']),
@@ -469,6 +527,85 @@ export class PerformanceAppraisalService {
     };
   }
 
+  private mapAllAllowancesFromApi(
+    item: Record<string, unknown>,
+    benefitsSource: Record<string, unknown>,
+  ): PerformanceAllowanceRowPayload[] {
+    const merged = new Map<string, PerformanceAllowanceRowPayload>();
+
+    const addRow = (row: PerformanceAllowanceRowPayload): void => {
+      const key = normalizePerformanceAllowanceKey(row.allowance);
+      if (!key) {
+        return;
+      }
+      merged.set(key, {
+        allowance: key,
+        existing: row.existing,
+        increment_percentage: row.increment_percentage,
+        revised: row.revised,
+      });
+    };
+
+    for (const row of this.mapAllowancesFromApi(benefitsSource)) {
+      addRow(row);
+    }
+    for (const row of this.mapAllowancesFromApi(item)) {
+      addRow(row);
+    }
+    for (const row of this.mapFlatAllowancesFromApi(benefitsSource)) {
+      addRow(row);
+    }
+    for (const row of this.mapFlatAllowancesFromApi(item)) {
+      addRow(row);
+    }
+
+    return PERFORMANCE_ALLOWANCE_API_KEYS.map((key) => merged.get(key)).filter(
+      (row): row is PerformanceAllowanceRowPayload => !!row,
+    );
+  }
+
+  private mapFlatAllowancesFromApi(
+    source: Record<string, unknown>,
+  ): PerformanceAllowanceRowPayload[] {
+    const rows: PerformanceAllowanceRowPayload[] = [];
+
+    for (const key of PERFORMANCE_ALLOWANCE_API_KEYS) {
+      const snake = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const existingRaw =
+        source[key] ??
+        source[snake] ??
+        source[`${snake}_existing`] ??
+        source[`${key}Existing`];
+      const incrementRaw =
+        source[`${snake}_increment_percentage`] ??
+        source[`${key}IncrementPercentage`] ??
+        source[`${key}_increment_percentage`];
+      const revisedRaw =
+        source[`${snake}_revised`] ?? source[`${key}Revised`] ?? source[`${key}_revised`];
+
+      const existing = toAmount(this.asAmountInput(existingRaw));
+      const incrementPercentage = toAmount(this.asAmountInput(incrementRaw));
+      const revised = toAmount(this.asAmountInput(revisedRaw));
+
+      if (
+        existingRaw === undefined &&
+        incrementRaw === undefined &&
+        revisedRaw === undefined
+      ) {
+        continue;
+      }
+
+      rows.push({
+        allowance: key,
+        existing,
+        increment_percentage: incrementPercentage,
+        revised: revised > 0 || existing > 0 ? revised : existing,
+      });
+    }
+
+    return rows;
+  }
+
   private mapAllowancesFromApi(
     source: Record<string, unknown>,
   ): PerformanceAllowanceRowPayload[] {
@@ -486,6 +623,16 @@ export class PerformanceAppraisalService {
       .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
       .map((row) => ({
         allowance:
+          normalizePerformanceAllowanceKey(
+            String(
+              row['allowance'] ??
+                row['allowance_key'] ??
+                row['allowanceKey'] ??
+                row['name'] ??
+                row['label'] ??
+                '',
+            ),
+          ) ||
           String(
             row['allowance'] ??
               row['allowance_key'] ??

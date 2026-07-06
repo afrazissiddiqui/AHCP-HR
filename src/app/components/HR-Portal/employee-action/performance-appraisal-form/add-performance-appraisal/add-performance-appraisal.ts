@@ -54,14 +54,14 @@ interface AllowanceRowState {
 }
 
 const ALLOWANCE_KEY_ALIASES: Record<AllowanceKey, readonly string[]> = {
-  fuelLimit: ['fuelLimit', 'fuel_limit', 'Fuel Limit (liter)'],
+  fuelLimit: ['fuelLimit', 'fuel_limit', 'Fuel Limit (Liters)', 'Fuel Limit (liter)'],
   mobileAllowances: ['mobileAllowances', 'mobile_allowances', 'Mobile Allowances'],
   carAllowances: ['carAllowances', 'car_allowances', 'Car Allowances'],
   otherAllowances: ['otherAllowances', 'other_allowances', 'Other Allowances'],
 };
 
 const DEFAULT_ALLOWANCE_ROWS: AllowanceRowState[] = [
-  { key: 'fuelLimit', label: 'Fuel Limit (liter)', existing: '', incrementPercentage: '' },
+  { key: 'fuelLimit', label: 'Fuel Limit (Liters)', existing: '', incrementPercentage: '' },
   { key: 'mobileAllowances', label: 'Mobile Allowances', existing: '', incrementPercentage: '' },
   { key: 'carAllowances', label: 'Car Allowances', existing: '', incrementPercentage: '' },
   { key: 'otherAllowances', label: 'Other Allowances', existing: '', incrementPercentage: '' },
@@ -188,6 +188,9 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   protected allowanceRevised(row: AllowanceRowState): string {
     const existing = this.toAmount(row.existing);
     const percentage = this.toAmount(row.incrementPercentage);
+    if (existing === 0 && percentage === 0) {
+      return row.existing.trim() === '0' ? '0' : '';
+    }
     if (existing <= 0) {
       return '';
     }
@@ -648,7 +651,12 @@ export class AddPerformanceAppraisalComponent implements OnInit {
         allowance: row.key,
         existing,
         increment_percentage: incrementPercentage,
-        revised: revised > 0 ? revised : existing,
+        revised:
+          revised > 0 || existing > 0
+            ? revised > 0
+              ? revised
+              : existing
+            : existing,
       };
     });
   }
@@ -692,10 +700,14 @@ export class AddPerformanceAppraisalComponent implements OnInit {
         }
         return {
           ...defaultRow,
-          existing: match.existing ? String(match.existing) : '',
-          incrementPercentage: match.increment_percentage
-            ? String(match.increment_percentage)
-            : '',
+          existing:
+            match.existing !== undefined && match.existing !== null
+              ? String(match.existing)
+              : '',
+          incrementPercentage:
+            match.increment_percentage !== undefined && match.increment_percentage !== null
+              ? String(match.increment_percentage)
+              : '',
         };
       }),
     );
@@ -718,6 +730,57 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   private populateFromApplicationRecord(record: ApplicationFormRecord): void {
     this.applyEmployeeFields(this.mapApplicationRecordToEmployeeFields(record), this.resolveEmployeeCode(record));
     this.applyAllowancesFromRemuneration(record.detail?.remuneration);
+  }
+
+  private loadAllowancesForEdit(savedAllowances: PerformanceAllowanceRowPayload[]): void {
+    this.applyAllowancesFromRecord(savedAllowances);
+    this.refreshAllowanceExistingFromEmployeeProfile(true);
+  }
+
+  private refreshAllowanceExistingFromEmployeeProfile(preserveIncrement = false): void {
+    const employeeCode = this.employeeId().trim();
+    if (!employeeCode) {
+      return;
+    }
+
+    const savedIncrements = new Map(
+      this.allowanceRows().map((row) => [row.key, row.incrementPercentage] as const),
+    );
+
+    const applyRemuneration = (remuneration: ApplicationFormRemuneration | undefined): void => {
+      if (!remuneration) {
+        return;
+      }
+
+      this.allowanceRows.set(
+        DEFAULT_ALLOWANCE_ROWS.map((row) => ({
+          ...row,
+          existing: this.formatAllowanceValue(remuneration[row.key]),
+          incrementPercentage: preserveIncrement ? savedIncrements.get(row.key) ?? '' : '',
+        })),
+      );
+      this.cdr.markForCheck();
+    };
+
+    const cachedRecord = this.applicationFormService
+      .getApplicationRecords()
+      .find((record) => this.resolveEmployeeCode(record).toLowerCase() === employeeCode.toLowerCase());
+
+    if (cachedRecord?.detail?.remuneration) {
+      applyRemuneration(cachedRecord.detail.remuneration);
+    }
+
+    const detailId = cachedRecord?.apiId?.trim();
+    if (!detailId) {
+      return;
+    }
+
+    this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
+      next: (record) => applyRemuneration(record.detail?.remuneration),
+      error: () => {
+        // Keep allowances from the saved appraisal when profile refresh fails.
+      },
+    });
   }
 
   private applyEmployeeFields(
@@ -814,7 +877,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.promotionEffectiveDate.set(emptyDate(promotion.promotion_effective_date));
     this.promotionRemarks.set(emptyIfDash(promotion.remarks));
 
-    this.applyAllowancesFromRecord(record.OtherBenefits.allowances ?? []);
+    this.loadAllowancesForEdit(record.OtherBenefits.allowances ?? []);
   }
 
   private toAmount(value: string): number {
