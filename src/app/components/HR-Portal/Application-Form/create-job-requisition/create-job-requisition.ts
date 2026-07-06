@@ -996,6 +996,15 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     });
   }
 
+  protected removePastExperienceSection(sectionIndex: number): void {
+    this.pastExperienceSections.update((sections) => {
+      if (sections.length <= 1) {
+        return sections;
+      }
+      return sections.filter((_, index) => index !== sectionIndex);
+    });
+  }
+
   protected addAttachmentRow(): void {
     this.attachmentRows.update((rows) => [...rows, this.createEmptyAttachmentRow()]);
   }
@@ -1316,7 +1325,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     }
     if (record.fuelAllowance) {
       this.fuelAllowances.set(String(record.fuelAllowance));
-      this.fuelLimit.set(String(record.fuelAllowance));
     }
     if (packagePerks) {
       this.otherAllowances.set(packagePerks);
@@ -1521,6 +1529,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         );
         for (const key of cacheKeys) {
           this.applicationFormService.cacheEmployeeAttachments(String(key), detail.attachments);
+          this.applicationFormService.cacheEmployeeProfileSections(
+            String(key),
+            detail.education,
+            detail.pastExperience,
+          );
         }
 
         if (!editId) {

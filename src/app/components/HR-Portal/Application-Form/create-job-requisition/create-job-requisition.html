@@ -544,12 +544,12 @@
                 (blur)="touch(educationFieldKey('Qualification', i))" />
             </div>
 
-            <!-- <div class="cjr-row">
+            <div class="cjr-row">
               <label>Awarded Qualification:</label>
               <input type="text" [ngModel]="edu.awardedQualification"
                 (ngModelChange)="updateEducationField(i, 'awardedQualification', $event)"
                 (blur)="touch('educationAwardedQualification')" />
-            </div> -->
+            </div>
 
             <div class="cjr-row">
               <label>Marks / Grades:</label>
@@ -604,6 +604,12 @@
         @if (pastExperienceSections().length > 1) {
         <div class="cjr-experience-section-header">
           <span class="cjr-dynamic-card__index">Exp {{ i + 1 }}</span>
+          <button type="button" class="cjr-remove-section" (click)="removePastExperienceSection(i)"
+            aria-label="Remove experience section">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         }
 
@@ -925,10 +931,10 @@
           </div>
 
           <div class="cjr-row">
-            <label>Fuel Limit (Liters:):</label>
+            <label>Fuel Limit (Liters:)</label>
             <input type="text" inputmode="decimal" [ngModel]="fuelLimit()"
               (ngModelChange)="onNumericOnlyChange($event, fuelLimit)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('fuelLimit')" />
+              placeholder="e.g. 50" (blur)="touch('fuelLimit')" />
           </div>
 
           <div class="cjr-row">

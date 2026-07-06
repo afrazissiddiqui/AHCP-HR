@@ -2,10 +2,13 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, concatMap, forkJoin, from, last, map, of, scan, switchMap, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
-import { formatDateOfBirthFromApi, formatDateForInput } from '../utils/date-format.util';
+import { formatDateOfBirthFromApi, formatDateForInput, formatDateToApiIso } from '../utils/date-format.util';
 import { sanitizeApiText } from '../utils/api-text.util';
 import { normalizeEmploymentStatus } from '../utils/employment-status.util';
-import { glAccountBranchLabel } from '../components/setup/gl-account-determination/gl-account-branch.options';
+import {
+  glAccountBranchLabel,
+  resolveBranchCode,
+} from '../components/setup/gl-account-determination/gl-account-branch.options';
 
 /** Extended payload captured from Create Application Form — shown in Application Form view modal only. */
 export interface ApplicationFormPersonalInfo {
@@ -306,6 +309,8 @@ export interface EmployeeProfileAddPayload {
   incomeTaxNo: string;
   employmentNature: string;
   employeeCategory: string;
+  employmentCategory?: string | null;
+  workGradeLevel?: string | null;
   employmentStatus: string;
   hiringManager: string | null;
   department: string;
@@ -338,7 +343,7 @@ export interface EmployeeProfileAddPayload {
   otherAllowances: number | string;
   cashSalaryPercentage: number | string;
   maximumAdvanceCapacity: number | string;
-  fuelLimit: number | string;
+  fuelLimit: number | string | null;
   remarks: string;
   leaveType: string;
   leaveDays: number | string;
@@ -363,6 +368,7 @@ export interface EmployeeProfileAddPayload {
     fromDate?: string;
     toDate?: string;
     subject?: string;
+    awardedQualification?: string;
     marksGrades?: string;
     notes?: string;
   }>;
@@ -448,6 +454,13 @@ export class ApplicationFormService {
   private readonly http = inject(HttpClient);
   private readonly applicationRecords = signal<ApplicationFormRecord[]>([]);
   private readonly attachmentMetaCache = new Map<string, ApplicationFormAttachmentMeta[]>();
+  private readonly profileSectionCache = new Map<
+    string,
+    {
+      education: ApplicationFormEducationRow[];
+      pastExperience: ApplicationFormPastExperienceRow[];
+    }
+  >();
 
   getApplicationRecords(): ApplicationFormRecord[] {
     return this.applicationRecords();
@@ -462,6 +475,22 @@ export class ApplicationFormService {
       key,
       attachments.map((attachment) => ({ ...attachment })),
     );
+  }
+
+  cacheEmployeeProfileSections(
+    identifier: string,
+    education: ApplicationFormEducationRow[],
+    pastExperience: ApplicationFormPastExperienceRow[],
+  ): void {
+    const key = identifier.trim();
+    if (!key || (!education.length && !pastExperience.length)) {
+      return;
+    }
+
+    this.profileSectionCache.set(key, {
+      education: education.map((row) => ({ ...row })),
+      pastExperience: pastExperience.map((row) => ({ ...row })),
+    });
   }
 
   extractApiIdFromResponse(response: unknown): string {
@@ -527,6 +556,36 @@ export class ApplicationFormService {
         attachmentFor: label,
       };
     });
+  }
+
+  private mergeProfileSectionsWithCache(
+    identifiers: Array<string | number | undefined | null>,
+    education: ApplicationFormEducationRow[],
+    pastExperience: ApplicationFormPastExperienceRow[],
+  ): {
+    education: ApplicationFormEducationRow[];
+    pastExperience: ApplicationFormPastExperienceRow[];
+  } {
+    if (education.length || pastExperience.length) {
+      return { education, pastExperience };
+    }
+
+    for (const identifier of identifiers) {
+      if (identifier === undefined || identifier === null) {
+        continue;
+      }
+
+      const key = String(identifier).trim();
+      const cached = key ? this.profileSectionCache.get(key) : undefined;
+      if (cached && (cached.education.length || cached.pastExperience.length)) {
+        return {
+          education: cached.education.map((row) => ({ ...row })),
+          pastExperience: cached.pastExperience.map((row) => ({ ...row })),
+        };
+      }
+    }
+
+    return { education, pastExperience };
   }
 
   getNextEmployeeCode(): number {
@@ -654,6 +713,23 @@ export class ApplicationFormService {
       return Number.isFinite(numeric) ? numeric : trimmed;
     };
 
+    const toNullableApiNumber = (value: string): number | string | null => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return null;
+      }
+      const numeric = Number.parseFloat(trimmed.replace(/,/g, ''));
+      return Number.isFinite(numeric) ? numeric : trimmed;
+    };
+
+    const toApiDate = (value: string): string => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      return formatDateToApiIso(trimmed);
+    };
+
     const toApiFlag = (value: string, defaultValue: 0 | 1 = 0): 0 | 1 => {
       const normalized = value.trim().toLowerCase();
       if (!normalized) {
@@ -685,7 +761,9 @@ export class ApplicationFormService {
     };
 
     const reportingManager = personal.reportingManager || detail.requisition.hiringManager;
-    const branchCode = personal.branchLocation || detail.requisition.location || '';
+    const branchCode = resolveBranchCode(
+      personal.branchLocation || detail.requisition.location || '',
+    );
     const branchLabel = glAccountBranchLabel(branchCode) || branchCode;
     const educationRows = detail.education.filter((row) =>
       [
@@ -732,6 +810,8 @@ export class ApplicationFormService {
       incomeTaxNo: personal.incomeTaxNo,
       employmentNature: personal.employmentNature,
       employeeCategory: personal.employmentCategory,
+      employmentCategory: personal.employmentCategory || null,
+      workGradeLevel: personal.workGradeLevel || personal.roleSalary || null,
       employmentStatus:
         normalizeEmploymentStatus(personal.employmentStatus) || 'Permanent',
       hiringManager: toNullableString(reportingManager),
@@ -767,7 +847,7 @@ export class ApplicationFormService {
       otherAllowances: toApiNumber(remuneration.otherAllowances),
       cashSalaryPercentage: toApiNumber(remuneration.cashSalaryPercentage),
       maximumAdvanceCapacity: toApiNumber(remuneration.maximumAdvanceCapacity),
-      fuelLimit: toApiNumber(remuneration.fuelLimit),
+      fuelLimit: toNullableApiNumber(remuneration.fuelLimit),
       remarks: personal.remarks,
       leaveType: primaryLeave.leaveType || remuneration.leaveType,
       leaveDays: toApiNumber(leaveDays),
@@ -789,9 +869,10 @@ export class ApplicationFormService {
         institution: row.institution || row.institute,
         institute: row.institute || row.institution,
         passingYear: row.passingYear,
-        fromDate: row.fromDate,
-        toDate: row.toDate,
+        fromDate: toApiDate(row.fromDate),
+        toDate: toApiDate(row.toDate),
         subject: row.subject,
+        awardedQualification: row.awardedQualification,
         marksGrades: row.marksGrades,
         notes: row.notes,
       })),
@@ -801,8 +882,8 @@ export class ApplicationFormService {
         position: row.position || row.designation,
         duration: row.duration,
         duties: row.duties,
-        fromDate: row.fromDate,
-        toDate: row.toDate,
+        fromDate: toApiDate(row.fromDate),
+        toDate: toApiDate(row.toDate),
         lastSalary: row.lastSalary,
         remarks: row.remarks,
       })),
@@ -1507,6 +1588,20 @@ export class ApplicationFormService {
           })
       : [];
 
+    const mergedSections = this.mergeProfileSectionsWithCache(
+      [
+        summary.apiId,
+        asString(item['id']),
+        asString(item['employeeCode']),
+        asString(item['employee_code']),
+        asString(item['userId']),
+        asString(item['user_id']),
+        summary.EmployeeCode,
+      ],
+      education,
+      pastExperience,
+    );
+
     const attachments = Array.isArray(attachmentsRaw)
       ? attachmentsRaw
           .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
@@ -1592,16 +1687,19 @@ export class ApplicationFormService {
         roleSalary,
         workGradeLevel:
           pick('workGradeLevel', 'work_grade_level') || roleSalary || salaryStructure,
-        branchLocation:
-          pick('branchLocation', 'branch_location') || pick('branch', 'branch') || pick('location', 'location'),
+        branchLocation: resolveBranchCode(
+          pick('branchLocation', 'branch_location') ||
+            pick('branch', 'branch') ||
+            pick('location', 'location'),
+        ),
         costCenter: pick('costCenter', 'cost_center'),
         reportingManager:
           pick('reportingManager', 'reporting_manager') ||
           pick('hiringManager', 'hiring_manager'),
         remarks: pick('remarks'),
       },
-      education,
-      pastExperience,
+      education: mergedSections.education,
+      pastExperience: mergedSections.pastExperience,
       remuneration: {
         basicSalary: pickRem('basicSalary', 'basic_salary'),
         paymentMode: pickRem('paymentMode', 'payment_mode'),
@@ -1647,7 +1745,7 @@ export class ApplicationFormService {
         socialSecurityApplicable: this.yesNoFromApi(
           pickRem('socialSecurityApplicable', 'social_security_applicable'),
         ),
-        fuelLimit: pickRem('fuelLimit', 'fuel_limit'),
+        fuelLimit: asNumberString(pickRem('fuelLimit', 'fuel_limit')),
         leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },
       leaveManagement: this.mapLeaveManagementRows(item, {
