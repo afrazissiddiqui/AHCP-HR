@@ -20,12 +20,6 @@
         <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
         <span class="sapUiIcon search-icon">🔍</span>
       </div>
-      <div class="sapMTBActions">
-        <app-table-filter [config]="loanTableFilter" [data]="loanList" (applied)="onTableFilterApplied()" />
-        <button class="sapMBtnBase sapMBtn" title="Download">⬇</button>
-        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">⛶</button>
-        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">⚙</button>
-      </div>
     </div>
 
     <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
@@ -100,7 +94,7 @@
                 <div class="js-detail-item"><label>Status:</label> <span>{{ formatDetail(record.HeaderInfo.status) }}</span></div>
                 <div class="js-detail-item"><label>Employee Category:</label> <span>{{ formatDetail(record.HeaderInfo.employeeCategory) }}</span></div>
                 <div class="js-detail-item"><label>Reporting Manager:</label> <span>{{ formatDetail(record.HeaderInfo.reportingManager) }}</span></div>
-                <div class="js-detail-item"><label>Location:</label> <span>{{ formatDetail(record.HeaderInfo.location) }}</span></div>
+                <div class="js-detail-item"><label>Branch:</label> <span>{{ formatDetail(record.HeaderInfo.location) }}</span></div>
                 <div class="js-detail-item"><label>Joining Date:</label> <span>{{ formatDetail(record.HeaderInfo.joiningDate) }}</span></div>
                 <div class="js-detail-item"><label>Years of Service:</label> <span>{{ formatDetail(record.HeaderInfo.yearsOfService) }}</span></div>
                 <div class="js-detail-item"><label>Payroll Month:</label> <span>{{ formatDetail(record.HeaderInfo.payrollMonth) }}</span></div>

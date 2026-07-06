@@ -105,7 +105,7 @@ export class LoanAdvanceFormComponent implements OnInit {
     { key: 'JobTitle', label: 'Job Title', visible: false },
     { key: 'EmployeeCategory', label: 'Employee Category', visible: false },
     { key: 'ReportingManager', label: 'Reporting Manager', visible: false },
-    { key: 'Location', label: 'Location', visible: false },
+    { key: 'Location', label: 'Branch', visible: false },
     { key: 'JoiningDate', label: 'Joining Date', visible: false },
     { key: 'YearsOfService', label: 'Years of Service', visible: false },
     { key: 'PayrollMonth', label: 'Payroll Month', visible: false },

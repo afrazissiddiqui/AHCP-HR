@@ -14,14 +14,19 @@ import { AlertService } from '../../../../../services/alert.service';
 import { LoanAdvanceService } from '../../../../../services/loan-advance.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
-import { formatApiToDateSlash, formatDateSlashToApi } from '../../../../../utils/date-format.util';
+import { formatApiToDateSlash, formatDateForInput, formatDateSlashToApi } from '../../../../../utils/date-format.util';
+import {
+  GL_ACCOUNT_BRANCH_OPTIONS,
+  glAccountBranchLabel,
+} from '../../../../setup/gl-account-determination/gl-account-branch.options';
 
 interface LoanEmployeeOption {
   code: string;
   name: string;
   department: string;
   designation: string;
-  location: string;
+  branch: string;
+  dateOfJoining: string;
   employeeNature: string;
   employmentType: string;
   workGradeLevel: string;
@@ -73,7 +78,8 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.filterEmployeeSuggestions(this.headerEmployeeName()),
   );
   protected readonly designation = signal('');
-  protected readonly location = signal('');
+  protected readonly branchOptions = GL_ACCOUNT_BRANCH_OPTIONS;
+  protected readonly branch = signal('');
   protected readonly employeeNature = signal('');
   protected readonly employmentType = signal('');
   protected readonly workGradeLevel = signal('');
@@ -86,23 +92,9 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly joiningDate = signal('');
   protected readonly department = signal('');
   protected readonly payrollMonth = signal(this.getCurrentPayrollMonth());
-  protected readonly yearsOfService = computed(() => {
-    const joining = this.joiningDate();
-    if (!joining) {
-      return '';
-    }
-    const joiningDate = new Date(joining);
-    if (Number.isNaN(joiningDate.getTime())) {
-      return '';
-    }
-    const now = new Date();
-    let years = now.getFullYear() - joiningDate.getFullYear();
-    const monthDiff = now.getMonth() - joiningDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < joiningDate.getDate())) {
-      years--;
-    }
-    return years < 0 ? '' : `${years}`;
-  });
+  protected readonly yearsOfService = computed(() =>
+    this.calculateYearsOfService(this.joiningDate()),
+  );
   protected readonly existingLoan = signal<'Yes' | 'No' | ''>('');
   protected readonly loanAcquiredDate = signal('');
   protected readonly installmentNumber = signal('');
@@ -226,9 +218,13 @@ export class AddLoanAdvanceComponent implements OnInit {
       name: emptyIfDash(record.EmployeeName),
       department: emptyIfDash(record.Department),
       designation: emptyIfDash(record.Designation),
-      location:
-        emptyIfDash(record.detail?.requisition.location ?? '') ||
-        emptyIfDash(record.detail?.personalInfo.city ?? ''),
+      branch: glAccountBranchLabel(
+        emptyIfDash(record.detail?.personalInfo.branchLocation ?? '') ||
+          emptyIfDash(record.detail?.requisition.location ?? ''),
+      ),
+      dateOfJoining: formatDateForInput(
+        emptyIfDash(record.detail?.remuneration?.dateOfJoining ?? ''),
+      ),
       employeeNature: emptyIfDash(record.EmployeeNature),
       employmentType: emptyIfDash(record.EmploymentType),
       workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
@@ -276,7 +272,8 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.headerEmployeeName.set(employee.name);
     this.department.set(employee.department);
     this.designation.set(employee.designation);
-    this.location.set(employee.location);
+    this.branch.set(employee.branch);
+    this.joiningDate.set(employee.dateOfJoining);
     this.employeeNature.set(employee.employeeNature);
     this.employmentType.set(employee.employmentType);
     this.workGradeLevel.set(employee.workGradeLevel);
@@ -296,6 +293,41 @@ export class AddLoanAdvanceComponent implements OnInit {
   private getCurrentPayrollMonth(): string {
     const today = new Date();
     return today.toISOString().slice(0, 7);
+  }
+
+  private calculateYearsOfService(joiningDateValue: string): string {
+    const joining = joiningDateValue.trim();
+    if (!joining) {
+      return '';
+    }
+
+    const joiningDate = new Date(joining);
+    if (Number.isNaN(joiningDate.getTime())) {
+      return '';
+    }
+
+    const now = new Date();
+    if (now.getTime() < joiningDate.getTime()) {
+      return '';
+    }
+
+    let completedMonths =
+      (now.getFullYear() - joiningDate.getFullYear()) * 12 +
+      (now.getMonth() - joiningDate.getMonth());
+    if (now.getDate() < joiningDate.getDate()) {
+      completedMonths--;
+    }
+
+    if (completedMonths < 0) {
+      return '';
+    }
+
+    if (completedMonths < 12) {
+      const serviceMonths = completedMonths > 0 ? completedMonths : 1;
+      return (serviceMonths / 10).toFixed(1);
+    }
+
+    return `${Math.floor(completedMonths / 12)}`;
   }
 
   protected scrollToSection(sectionId: string): void {
@@ -318,7 +350,7 @@ export class AddLoanAdvanceComponent implements OnInit {
         employeeName: this.headerEmployeeName(),
         department: this.department(),
         designation: this.designation(),
-        location: this.location(),
+        location: this.branch(),
         joiningDate: this.joiningDate(),
         yearsOfService: this.yearsOfService(),
         requestDate: formatDateSlashToApi(this.requestDate()),

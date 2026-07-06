@@ -225,12 +225,17 @@
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Location:</label>
-              <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
+              <label>Branch:</label>
+              <select [ngModel]="branch()" (ngModelChange)="branch.set($event)">
+                <option value="">No Selection</option>
+                @for (branchOption of branchOptions; track branchOption.code) {
+                  <option [value]="branchOption.name">{{ branchOption.name }}</option>
+                }
+              </select>
             </div>
             <div class="cjr-row">
               <label>Joining Date:</label>
-              <input type="date" [ngModel]="joiningDate()" (ngModelChange)="joiningDate.set($event)" />
+              <input type="date" [ngModel]="joiningDate()" readonly />
             </div>
             <div class="cjr-row">
               <label>Years of Service:</label>
