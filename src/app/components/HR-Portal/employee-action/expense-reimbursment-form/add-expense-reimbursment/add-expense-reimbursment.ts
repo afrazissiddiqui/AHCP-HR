@@ -24,9 +24,7 @@ import {
 } from '../../../../../services/expense-reimbursement.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
-  formatDateDdMmYyyyInput,
   formatDateForInput,
-  formatDateOfBirthFromApi,
   formatDateOfBirthToApi,
 } from '../../../../../utils/date-format.util';
 
@@ -295,7 +293,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
       claimAmount: this.claimAmount(),
       expenseFromDate: this.expenseFromDate(),
       expenseToDate: this.expenseToDate(),
-      claimDate: formatDateOfBirthToApi(this.claimDate().replace(/\//g, '-')),
+      claimDate: formatDateOfBirthToApi(this.claimDate()),
       approvalStatus: this.approvalStatus(),
       expenseRemarks: this.expenseRemarks(),
       travel: this.editingId ? this.preservedTravel() : createEmptyExpenseTravelPayload(),
@@ -385,10 +383,6 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.designation.set(employee.designation);
   }
 
-  onClaimDateChange(value: string): void {
-    this.claimDate.set(formatDateDdMmYyyyInput(value).replace(/-/g, '/'));
-  }
-
   protected onClaimMonthChange(value: string): void {
     this.claimMonth.set(value);
   }
@@ -448,7 +442,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.claimAmount.set(emptyIfDash(detail.claimAmount).replace(/\D/g, ''));
     this.expenseFromDate.set(formatDateForInput(emptyIfDash(detail.fromDate)));
     this.expenseToDate.set(formatDateForInput(emptyIfDash(detail.toDate)));
-    this.claimDate.set(formatDateOfBirthFromApi(emptyIfDash(detail.claimDate)).replace(/-/g, '/'));
+    this.claimDate.set(formatDateForInput(emptyIfDash(detail.claimDate)));
     this.approvalStatus.set(emptyIfDash(detail.approvalStatus) || 'Pending');
     this.expenseRemarks.set(emptyIfDash(detail.remarks));
     this.preservedTravel.set({ ...record.Travel });

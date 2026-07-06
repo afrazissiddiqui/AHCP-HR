@@ -30,7 +30,7 @@
         <div class="scd-form-hero__steps">
           <span class="scd-step-chip scd-step-chip--active" [class.scd-step-chip--ready]="formNumber().trim()">
             <span class="scd-step-chip__num">1</span>
-            Header Info
+            Employee Information
           </span>
           <span class="scd-step-chip__connector" aria-hidden="true"></span>
           <span
@@ -260,14 +260,7 @@
 
             <div class="cjr-row">
               <label>Claim Date:</label>
-              <input
-                type="text"
-                [ngModel]="claimDate()"
-                (ngModelChange)="onClaimDateChange($event)"
-                placeholder="DD/MM/YYYY"
-                inputmode="numeric"
-                maxlength="10"
-              />
+              <input type="date" [ngModel]="claimDate()" (ngModelChange)="claimDate.set($event)" />
             </div>
           </div>
         </div>

@@ -1,10 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  OnDestroy,
   OnInit,
   computed,
   signal,
@@ -44,14 +42,13 @@ interface LoanEmployeeOption {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly sectionIds = [
-    'header-info-section',
-    'loan-detail-section',
-    'advance-detail-section',
-    'repayment-schedule-section'
-  ] as const;
-  private sectionObserver: IntersectionObserver | null = null;
+export class AddLoanAdvanceComponent implements OnInit {
+  pageTitle = 'Add Loan/Advance';
+  submitButtonLabel = 'Save Loan/Advance';
+
+  get pageSubtitle(): string {
+    return 'Submit employee loan or salary advance requests with repayment details.';
+  }
 
   constructor(
     private readonly router: Router,
@@ -142,7 +139,7 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
 
   protected readonly isLoanRequest = computed(() => this.requestType() === 'Loan');
   protected readonly isAdvanceRequest = computed(() => this.requestType() === 'Salary Advance');
-  protected readonly isSaving = signal(false);
+  protected readonly saving = signal(false);
 
   ngOnInit(): void {
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
@@ -157,15 +154,6 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
         );
       },
     });
-  }
-
-  ngAfterViewInit(): void {
-    this.initializeSectionObserver();
-  }
-
-  ngOnDestroy(): void {
-    this.sectionObserver?.disconnect();
-    this.sectionObserver = null;
   }
 
   protected back(): void {
@@ -313,60 +301,12 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
   protected scrollToSection(sectionId: string): void {
     this.activeSection.set(sectionId);
     setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 0);
   }
 
-  private initializeSectionObserver(): void {
-    const sections = this.sectionIds
-      .map((sectionId) => document.getElementById(sectionId))
-      .filter((section): section is HTMLElement => section !== null);
-
-    if (!sections.length) {
-      return;
-    }
-
-    const visibleSections = new Map<string, number>();
-    this.sectionObserver = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const sectionId = (entry.target as HTMLElement).id;
-          if (entry.isIntersecting) {
-            visibleSections.set(sectionId, entry.intersectionRatio);
-          } else {
-            visibleSections.delete(sectionId);
-          }
-        }
-
-        if (!visibleSections.size) {
-          return;
-        }
-
-        const nextActiveSection = [...visibleSections.entries()].sort((left, right) => {
-          return right[1] - left[1];
-        })[0]?.[0];
-
-        if (nextActiveSection) {
-          this.activeSection.set(nextActiveSection);
-        }
-      },
-      {
-        root: null,
-        rootMargin: '-120px 0px -55% 0px',
-        threshold: [0.2, 0.35, 0.5, 0.7]
-      }
-    );
-
-    for (const section of sections) {
-      this.sectionObserver.observe(section);
-    }
-  }
-
   protected save(): void {
-    if (this.isSaving()) {
+    if (this.saving()) {
       return;
     }
 
@@ -436,14 +376,14 @@ export class AddLoanAdvanceComponent implements OnInit, AfterViewInit, OnDestroy
       }
     };
 
-    this.isSaving.set(true);
+    this.saving.set(true);
     this.cdr.markForCheck();
 
     this.loanAdvanceService
       .submitLoanAdvance(payload)
       .pipe(
         finalize(() => {
-          this.isSaving.set(false);
+          this.saving.set(false);
           this.cdr.markForCheck();
         }),
       )
