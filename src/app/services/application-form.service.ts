@@ -470,6 +470,7 @@ export class ApplicationFormService {
       pastExperience: ApplicationFormPastExperienceRow[];
     }
   >();
+  private readonly profileRemunerationCache = new Map<string, Pick<ApplicationFormRemuneration, 'fuelLimit'>>();
 
   getApplicationRecords(): ApplicationFormRecord[] {
     return this.applicationRecords();
@@ -500,6 +501,19 @@ export class ApplicationFormService {
       education: education.map((row) => ({ ...row })),
       pastExperience: pastExperience.map((row) => ({ ...row })),
     });
+  }
+
+  cacheEmployeeRemunerationFields(
+    identifier: string,
+    remuneration: ApplicationFormRemuneration,
+  ): void {
+    const key = identifier.trim();
+    const fuelLimit = sanitizeApiText(remuneration.fuelLimit);
+    if (!key || !fuelLimit) {
+      return;
+    }
+
+    this.profileRemunerationCache.set(key, { fuelLimit: remuneration.fuelLimit });
   }
 
   extractApiIdFromResponse(response: unknown): string {
@@ -595,6 +609,32 @@ export class ApplicationFormService {
     }
 
     return { education, pastExperience };
+  }
+
+  private mergeRemunerationWithCache(
+    identifiers: Array<string | number | undefined | null>,
+    remuneration: ApplicationFormRemuneration,
+  ): ApplicationFormRemuneration {
+    if (sanitizeApiText(remuneration.fuelLimit)) {
+      return remuneration;
+    }
+
+    for (const identifier of identifiers) {
+      if (identifier === undefined || identifier === null) {
+        continue;
+      }
+
+      const key = String(identifier).trim();
+      const cached = key ? this.profileRemunerationCache.get(key) : undefined;
+      if (cached?.fuelLimit && sanitizeApiText(cached.fuelLimit)) {
+        return {
+          ...remuneration,
+          fuelLimit: cached.fuelLimit,
+        };
+      }
+    }
+
+    return remuneration;
   }
 
   getNextEmployeeCode(): number {
@@ -1014,14 +1054,14 @@ export class ApplicationFormService {
     }));
   }
 
-  /** Ensures section arrays are sent in every shape the backend may accept. */
+  /** Ensures section arrays and remuneration aliases are sent in every shape the backend may accept. */
   private serializeEmployeeProfilePayload(
     payload: EmployeeProfileAddPayload,
   ): Record<string, unknown> {
     const educationSections = payload.educationSections ?? [];
     const pastExperienceSections = payload.pastExperienceSections ?? [];
 
-    return {
+    const serialized: Record<string, unknown> = {
       ...payload,
       educationSections,
       education_sections: this.mapEducationSectionsSnakeCase(educationSections),
@@ -1030,6 +1070,15 @@ export class ApplicationFormService {
       past_experience_sections: this.mapPastExperienceSectionsSnakeCase(pastExperienceSections),
       pastExperience: pastExperienceSections,
     };
+
+    for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
+      const value = serialized[camel];
+      if (value !== undefined && serialized[snake] === undefined) {
+        serialized[snake] = value;
+      }
+    }
+
+    return serialized;
   }
 
   /**
@@ -1384,7 +1433,7 @@ export class ApplicationFormService {
 
     for (const key of keys) {
       const value = sanitizeApiText(source[key]);
-      if (value) {
+      if (value !== '') {
         return value;
       }
     }
@@ -1779,6 +1828,64 @@ export class ApplicationFormService {
       pick('roleSalary', 'role_salary') || pick('roleAndSalary', 'role_and_salary');
     const salaryStructure = pick('salaryStructure', 'salary_structure') || roleSalary;
     const jobSpecificationId = pick('jobSpecificationId', 'job_specification_id');
+    const profileCacheKeys = [
+      summary.apiId,
+      asString(item['id']),
+      asString(item['employeeCode']),
+      asString(item['employee_code']),
+      asString(item['userId']),
+      asString(item['user_id']),
+      summary.EmployeeCode,
+    ];
+
+    const remuneration = this.mergeRemunerationWithCache(profileCacheKeys, {
+      basicSalary: pickRem('basicSalary', 'basic_salary'),
+      paymentMode: pickRem('paymentMode', 'payment_mode'),
+      accountTitle: pickRem('accountTitle', 'account_title'),
+      bankName: pickRem('bankName', 'bank_name'),
+      branchName: pickRem('branchName', 'branch_name'),
+      accountNo: pickRem('accountNo', 'account_no'),
+      accountType: pickRem('accountType', 'account_type'),
+      effectiveDate: formatDateForInput(pickRem('effectiveDate', 'effective_date')),
+      taxPercentage:
+        pickRem('taxPercentage', 'tax_percentage') ||
+        pickRem('taxArrangementPercentage', 'tax_arrangement_percentage'),
+      dateOfJoining: formatDateForInput(pickRem('dateOfJoining', 'date_of_joining')),
+      advancePercentAllowed: pickRem('advancePercentAllowed', 'advance_percent_allowed'),
+      loanAmountAllowed:
+        pickRem('loanAmountAllowed', 'loan_amount_allowed') ||
+        pickRem('maximumLoanCapacity', 'maximum_loan_capacity'),
+      overTimeApplicable,
+      leaveType: pickRem('leaveType', 'leave_type'),
+      leaveDays: asNumberString(pickRem('leaveDays', 'leave_days')),
+      leavesAvailed: asNumberString(pickRem('leavesAvailed', 'leaves_availed')),
+      remainingLeaves: asNumberString(pickRem('remainingLeaves', 'remaining_leaves')),
+      totalLeaves: asNumberString(pickRem('totalLeaves', 'total_leaves')),
+      medicalAllowances: asNumberString(pickRem('medicalAllowances', 'medical_allowances')),
+      fuelAllowances: asNumberString(pickRem('fuelAllowances', 'fuel_allowances')),
+      mobileAllowances: asNumberString(pickRem('mobileAllowances', 'mobile_allowances')),
+      carAllowances: asNumberString(pickRem('carAllowances', 'car_allowances')),
+      maximumLoanCapacity: asNumberString(
+        pickRem('maximumLoanCapacity', 'maximum_loan_capacity') ||
+        pickRem('loanAmountAllowed', 'loan_amount_allowed'),
+      ),
+      maximumAdvanceCapacity: asNumberString(
+        pickRem('maximumAdvanceCapacity', 'maximum_advance_capacity'),
+      ),
+      otherAllowances: asNumberString(pickRem('otherAllowances', 'other_allowances')),
+      allowancesApplicable: this.yesNoFromApi(
+        pickRem('allowancesApplicable', 'allowances_applicable'),
+      ),
+      cashSalaryPercentage:
+        pickRem('cashSalaryPercentage', 'cash_salary_percentage') ||
+        pickRem('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
+      eobiApplicable: this.yesNoFromApi(pickRem('eobiApplicable', 'eobi_applicable')),
+      socialSecurityApplicable: this.yesNoFromApi(
+        pickRem('socialSecurityApplicable', 'social_security_applicable'),
+      ),
+      fuelLimit: asNumberString(pickRem('fuelLimit', 'fuel_limit')),
+      leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
+    });
 
     const detail: ApplicationFormDetail = {
       personalInfo: {
@@ -1828,54 +1935,7 @@ export class ApplicationFormService {
       },
       education: mergedSections.education,
       pastExperience: mergedSections.pastExperience,
-      remuneration: {
-        basicSalary: pickRem('basicSalary', 'basic_salary'),
-        paymentMode: pickRem('paymentMode', 'payment_mode'),
-        accountTitle: pickRem('accountTitle', 'account_title'),
-        bankName: pickRem('bankName', 'bank_name'),
-        branchName: pickRem('branchName', 'branch_name'),
-        accountNo: pickRem('accountNo', 'account_no'),
-        accountType: pickRem('accountType', 'account_type'),
-        effectiveDate: formatDateForInput(pickRem('effectiveDate', 'effective_date')),
-        taxPercentage:
-          pickRem('taxPercentage', 'tax_percentage') ||
-          pickRem('taxArrangementPercentage', 'tax_arrangement_percentage'),
-        dateOfJoining: formatDateForInput(pickRem('dateOfJoining', 'date_of_joining')),
-        advancePercentAllowed: pickRem('advancePercentAllowed', 'advance_percent_allowed'),
-        loanAmountAllowed:
-          pickRem('loanAmountAllowed', 'loan_amount_allowed') ||
-          pickRem('maximumLoanCapacity', 'maximum_loan_capacity'),
-        overTimeApplicable,
-        leaveType: pickRem('leaveType', 'leave_type'),
-        leaveDays: asNumberString(pickRem('leaveDays', 'leave_days')),
-        leavesAvailed: asNumberString(pickRem('leavesAvailed', 'leaves_availed')),
-        remainingLeaves: asNumberString(pickRem('remainingLeaves', 'remaining_leaves')),
-        totalLeaves: asNumberString(pickRem('totalLeaves', 'total_leaves')),
-        medicalAllowances: asNumberString(pickRem('medicalAllowances', 'medical_allowances')),
-        fuelAllowances: asNumberString(pickRem('fuelAllowances', 'fuel_allowances')),
-        mobileAllowances: asNumberString(pickRem('mobileAllowances', 'mobile_allowances')),
-        carAllowances: asNumberString(pickRem('carAllowances', 'car_allowances')),
-        maximumLoanCapacity: asNumberString(
-          pickRem('maximumLoanCapacity', 'maximum_loan_capacity') ||
-          pickRem('loanAmountAllowed', 'loan_amount_allowed'),
-        ),
-        maximumAdvanceCapacity: asNumberString(
-          pickRem('maximumAdvanceCapacity', 'maximum_advance_capacity'),
-        ),
-        otherAllowances: asNumberString(pickRem('otherAllowances', 'other_allowances')),
-        allowancesApplicable: this.yesNoFromApi(
-          pickRem('allowancesApplicable', 'allowances_applicable'),
-        ),
-        cashSalaryPercentage:
-          pickRem('cashSalaryPercentage', 'cash_salary_percentage') ||
-          pickRem('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
-        eobiApplicable: this.yesNoFromApi(pickRem('eobiApplicable', 'eobi_applicable')),
-        socialSecurityApplicable: this.yesNoFromApi(
-          pickRem('socialSecurityApplicable', 'social_security_applicable'),
-        ),
-        fuelLimit: asNumberString(pickRem('fuelLimit', 'fuel_limit')),
-        leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
-      },
+      remuneration,
       leaveManagement: this.mapLeaveManagementRows(item, {
         leaveType: pickRem('leaveType', 'leave_type'),
         leaveDays: asNumberString(pickRem('leaveDays', 'leave_days')),
