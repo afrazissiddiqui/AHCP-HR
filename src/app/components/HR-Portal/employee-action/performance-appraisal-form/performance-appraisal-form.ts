@@ -67,6 +67,23 @@ type AppraisalColumnKey = Exclude<
       z-index: 12;
       background: #f5f5f5;
     }
+    :host .pa-allowances-detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    :host .pa-allowances-detail-table th,
+    :host .pa-allowances-detail-table td {
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    :host .pa-allowances-detail-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #334155;
+    }
   `],
 })
 export class PerformanceAppraisalFormComponent implements OnInit {

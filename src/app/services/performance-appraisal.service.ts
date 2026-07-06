@@ -19,7 +19,15 @@ export interface PerformancePromotionPayload {
   remarks: string;
 }
 
+export interface PerformanceAllowanceRowPayload {
+  allowance: string;
+  existing: number;
+  increment_percentage: number;
+  revised: number;
+}
+
 export interface PerformanceOtherBenefitsPayload {
+  allowances: PerformanceAllowanceRowPayload[];
   existing_benefits_details: string;
   new_benefits: string;
 }
@@ -126,6 +134,12 @@ export function buildPerformanceAppraisalSubmitPayload(
       remarks: draft.promotion.remarks.trim(),
     },
     other_benefits: {
+      allowances: draft.other_benefits.allowances.map((row) => ({
+        allowance: row.allowance.trim(),
+        existing: Math.round(row.existing),
+        increment_percentage: Number(row.increment_percentage.toFixed(2)),
+        revised: Math.round(row.revised),
+      })),
       existing_benefits_details: draft.other_benefits.existing_benefits_details.trim(),
       new_benefits: draft.other_benefits.new_benefits.trim(),
     },
@@ -158,8 +172,7 @@ export function buildPerformanceAppraisalDraftFromForm(input: {
   newDesignation: string;
   promotionEffectiveDate: string;
   promotionRemarks: string;
-  existingBenefitsDetails: string;
-  newBenefits: string;
+  allowances: PerformanceAllowanceRowPayload[];
 }): PerformanceAppraisalAddPayload {
   const current = toAmount(input.currentSalary);
   const incrementAmount = toAmount(input.incrementAmount);
@@ -202,8 +215,14 @@ export function buildPerformanceAppraisalDraftFromForm(input: {
       remarks: input.promotionRemarks,
     },
     other_benefits: {
-      existing_benefits_details: input.existingBenefitsDetails,
-      new_benefits: input.newBenefits,
+      allowances: input.allowances,
+      existing_benefits_details: input.allowances
+        .map(
+          (row) =>
+            `${row.allowance}: ${row.existing} (+${row.increment_percentage}% = ${row.revised})`,
+        )
+        .join('; '),
+      new_benefits: '',
     },
   };
 }
@@ -391,6 +410,7 @@ export class PerformanceAppraisalService {
     };
 
     const otherBenefits: PerformanceOtherBenefitsPayload = {
+      allowances: this.mapAllowancesFromApi(benefitsSource),
       existing_benefits_details:
         asString(benefitsSource['existing_benefits_details']) ||
         asString(benefitsSource['existingBenefitsDetails']),
@@ -427,5 +447,42 @@ export class PerformanceAppraisalService {
       OtherBenefits: otherBenefits,
       selected: false,
     };
+  }
+
+  private mapAllowancesFromApi(
+    source: Record<string, unknown>,
+  ): PerformanceAllowanceRowPayload[] {
+    const raw =
+      source['allowances'] ??
+      source['Allowances'] ??
+      source['allowance_rows'] ??
+      source['allowanceRows'];
+
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
+      .map((row) => ({
+        allowance:
+          String(row['allowance'] ?? row['name'] ?? row['label'] ?? '').trim(),
+        existing: toAmount(this.asAmountInput(row['existing'] ?? row['existing_amount'])),
+        increment_percentage: toAmount(
+          this.asAmountInput(row['increment_percentage'] ?? row['incrementPercentage']),
+        ),
+        revised: toAmount(this.asAmountInput(row['revised'] ?? row['revised_amount'])),
+      }))
+      .filter((row) => row.allowance);
+  }
+
+  private asAmountInput(value: unknown): string | number | null | undefined {
+    if (value === null || value === undefined) {
+      return value;
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      return value;
+    }
+    return String(value);
   }
 }

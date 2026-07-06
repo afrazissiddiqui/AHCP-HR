@@ -150,14 +150,29 @@
             </div>
 
             <div class="js-detail-section">
-              <h3>Other Benefits</h3>
-              <div class="js-detail-full" *ngIf="record.OtherBenefits.existing_benefits_details">
-                <label>Existing Benefits:</label>
-                <p>{{ record.OtherBenefits.existing_benefits_details }}</p>
+              <h3>Allowances</h3>
+              <div class="js-detail-full" *ngIf="record.OtherBenefits.allowances.length">
+                <table class="pa-allowances-detail-table">
+                  <thead>
+                    <tr>
+                      <th>Allowances</th>
+                      <th>Existing</th>
+                      <th>Increment Percentage</th>
+                      <th>Revised</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of record.OtherBenefits.allowances">
+                      <td>{{ row.allowance || '—' }}</td>
+                      <td>{{ row.existing }}</td>
+                      <td>{{ row.increment_percentage }}</td>
+                      <td>{{ row.revised }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="js-detail-full" *ngIf="record.OtherBenefits.new_benefits">
-                <label>New Benefits:</label>
-                <p>{{ record.OtherBenefits.new_benefits }}</p>
+              <div class="js-detail-full" *ngIf="!record.OtherBenefits.allowances.length">
+                <p>—</p>
               </div>
             </div>
             </ng-container>

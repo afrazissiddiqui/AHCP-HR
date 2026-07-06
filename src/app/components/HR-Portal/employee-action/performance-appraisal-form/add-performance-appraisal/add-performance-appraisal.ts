@@ -12,12 +12,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   ApplicationFormRecord,
+  ApplicationFormRemuneration,
   ApplicationFormService,
 } from '../../../../../services/application-form.service';
 import { AlertService } from '../../../../../services/alert.service';
 import {
   PerformanceAppraisalRecord,
   PerformanceAppraisalService,
+  PerformanceAllowanceRowPayload,
   buildPerformanceAppraisalDraftFromForm,
   buildPerformanceAppraisalSubmitPayload,
 } from '../../../../../services/performance-appraisal.service';
@@ -41,6 +43,22 @@ interface AppraisalEmployeeOption {
   dateOfJoining: string;
   basicSalary: string;
 }
+
+type AllowanceKey = 'fuelLimit' | 'mobileAllowances' | 'carAllowances' | 'otherAllowances';
+
+interface AllowanceRowState {
+  key: AllowanceKey;
+  label: string;
+  existing: string;
+  incrementPercentage: string;
+}
+
+const DEFAULT_ALLOWANCE_ROWS: AllowanceRowState[] = [
+  { key: 'fuelLimit', label: 'Fuel Limit (liter)', existing: '', incrementPercentage: '' },
+  { key: 'mobileAllowances', label: 'Mobile Allowances', existing: '', incrementPercentage: '' },
+  { key: 'carAllowances', label: 'Car Allowances', existing: '', incrementPercentage: '' },
+  { key: 'otherAllowances', label: 'Other Allowances', existing: '', incrementPercentage: '' },
+];
 
 type AppraisalValidationField = 'formNumber' | 'employeeId' | 'employeeName';
 
@@ -98,9 +116,12 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   protected readonly promotionEffectiveDate = signal('');
   protected readonly promotionRemarks = signal('');
 
-  protected readonly existingBenefitsDetails = signal('');
-  protected readonly newBenefits = signal('');
+  protected readonly allowanceRows = signal<AllowanceRowState[]>(
+    DEFAULT_ALLOWANCE_ROWS.map((row) => ({ ...row })),
+  );
+  protected readonly employeeDetailLoading = signal(false);
 
+  private employeeListLoadRequested = false;
   private readonly employeeOptions = signal<AppraisalEmployeeOption[]>([]);
   protected readonly codeSuggestionsOpen = signal(false);
   protected readonly nameSuggestionsOpen = signal(false);
@@ -134,19 +155,6 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.applicationFormService.fetchEmployeeProfiles().subscribe({
-      next: () => {
-        this.employeeOptions.set(this.buildEmployeeOptions());
-        this.cdr.markForCheck();
-      },
-      error: (error: unknown) => {
-        void this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load employees for search.'),
-        );
-      },
-    });
-
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       return;
@@ -170,11 +178,53 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     });
   }
 
+  protected allowanceRevised(row: AllowanceRowState): string {
+    const existing = this.toAmount(row.existing);
+    const percentage = this.toAmount(row.incrementPercentage);
+    if (existing <= 0) {
+      return '';
+    }
+    if (percentage <= 0) {
+      return String(Math.round(existing));
+    }
+    return String(Math.round(existing + (existing * percentage) / 100));
+  }
+
+  protected updateAllowanceIncrementPercentage(key: AllowanceKey, value: string | number | null): void {
+    const next = value === null ? '' : String(value);
+    this.allowanceRows.update((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, incrementPercentage: next } : row)),
+    );
+    this.cdr.markForCheck();
+  }
+
+  private ensureEmployeeOptionsLoaded(): void {
+    if (this.employeeListLoadRequested) {
+      return;
+    }
+
+    this.employeeListLoadRequested = true;
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => {
+        this.employeeOptions.set(this.buildEmployeeOptions());
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.employeeListLoadRequested = false;
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load employees for search.'),
+        );
+      },
+    });
+  }
+
   protected onEmployeeIdInput(code: string): void {
     this.employeeId.set(code);
     if (this.editingId) {
       return;
     }
+    this.ensureEmployeeOptionsLoaded();
     this.employeeProfileLoaded.set(false);
     this.codeSuggestionsOpen.set(code.trim().length > 0);
     this.closeNameSuggestions();
@@ -185,6 +235,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     if (this.editingId) {
       return;
     }
+    this.ensureEmployeeOptionsLoaded();
     this.employeeProfileLoaded.set(false);
     this.nameSuggestionsOpen.set(name.trim().length > 0);
     this.closeCodeSuggestions();
@@ -194,6 +245,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     if (this.editingId || !this.employeeId().trim()) {
       return;
     }
+    this.ensureEmployeeOptionsLoaded();
     this.codeSuggestionsOpen.set(true);
     this.closeNameSuggestions();
   }
@@ -202,6 +254,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     if (this.editingId || !this.employeeName().trim()) {
       return;
     }
+    this.ensureEmployeeOptionsLoaded();
     this.nameSuggestionsOpen.set(true);
     this.closeCodeSuggestions();
   }
@@ -237,38 +290,35 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
     this.resetEmployeeProfileFields();
-    this.populateFromEmployeeOption(employee);
-    this.employeeProfileLoaded.set(true);
+    this.employeeId.set(employee.code);
+    this.employeeName.set(employee.name);
 
-    const applyRecord = (record: ApplicationFormRecord): void => {
-      this.populateFromApplicationRecord(record);
-      this.employeeProfileLoaded.set(true);
-      this.cdr.markForCheck();
-    };
-
-    const localRecord = this.findApplicationRecord(employee);
-    const detailId = localRecord?.apiId ?? employee.apiId;
-
-    if (detailId) {
-      this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
-        next: applyRecord,
-        error: () => {
-          if (localRecord) {
-            applyRecord(localRecord);
-          } else {
-            this.cdr.markForCheck();
-          }
-        },
-      });
+    const detailId = employee.apiId?.trim();
+    if (!detailId) {
+      void this.alertService.warning(
+        'Employee Profile',
+        'No profile id found for this employee. Select another employee from the list.',
+      );
       return;
     }
 
-    if (localRecord) {
-      applyRecord(localRecord);
-      return;
-    }
-
-    this.cdr.markForCheck();
+    this.employeeDetailLoading.set(true);
+    this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
+      next: (record) => {
+        this.populateFromApplicationRecord(record);
+        this.employeeProfileLoaded.set(true);
+        this.employeeDetailLoading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.employeeDetailLoading.set(false);
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load employee profile details.'),
+        );
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   protected onIncrementAmountChange(value: string | number | null): void {
@@ -360,8 +410,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
       newDesignation: this.newDesignation(),
       promotionEffectiveDate: this.promotionEffectiveDate(),
       promotionRemarks: this.promotionRemarks(),
-      existingBenefitsDetails: this.existingBenefitsDetails(),
-      newBenefits: this.newBenefits(),
+      allowances: this.buildAllowancesPayload(),
     });
 
     const payload = buildPerformanceAppraisalSubmitPayload(draft);
@@ -575,11 +624,88 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.jobTitle.set('');
     this.reportingManager.set('');
     this.currentSalary.set('');
+    this.resetAllowanceRows();
     this.employeeProfileLoaded.set(false);
+  }
+
+  private resetAllowanceRows(): void {
+    this.allowanceRows.set(DEFAULT_ALLOWANCE_ROWS.map((row) => ({ ...row })));
+  }
+
+  private buildAllowancesPayload(): PerformanceAllowanceRowPayload[] {
+    return this.allowanceRows().map((row) => {
+      const existing = this.toAmount(row.existing);
+      const incrementPercentage = this.toAmount(row.incrementPercentage);
+      const revised = this.toAmount(this.allowanceRevised(row));
+      return {
+        allowance: row.label,
+        existing,
+        increment_percentage: incrementPercentage,
+        revised: revised > 0 ? revised : existing,
+      };
+    });
+  }
+
+  private applyAllowancesFromRemuneration(remuneration: ApplicationFormRemuneration | undefined): void {
+    if (!remuneration) {
+      return;
+    }
+
+    const values: Record<AllowanceKey, string> = {
+      fuelLimit: remuneration.fuelLimit ?? '',
+      mobileAllowances: remuneration.mobileAllowances ?? '',
+      carAllowances: remuneration.carAllowances ?? '',
+      otherAllowances: remuneration.otherAllowances ?? '',
+    };
+
+    this.allowanceRows.set(
+      DEFAULT_ALLOWANCE_ROWS.map((row) => ({
+        ...row,
+        existing: this.formatAllowanceValue(values[row.key]),
+        incrementPercentage: '',
+      })),
+    );
+  }
+
+  private formatAllowanceValue(value: string | undefined | null): string {
+    const sanitized = sanitizeApiText(value);
+    if (!sanitized) {
+      return '';
+    }
+    const numeric = Number.parseFloat(sanitized.replace(/,/g, ''));
+    if (Number.isFinite(numeric)) {
+      return String(numeric);
+    }
+    return sanitized;
+  }
+
+  private applyAllowancesFromRecord(allowances: PerformanceAllowanceRowPayload[]): void {
+    if (!allowances.length) {
+      return;
+    }
+
+    this.allowanceRows.set(
+      DEFAULT_ALLOWANCE_ROWS.map((defaultRow) => {
+        const match = allowances.find(
+          (row) => row.allowance.trim().toLowerCase() === defaultRow.label.trim().toLowerCase(),
+        );
+        if (!match) {
+          return { ...defaultRow };
+        }
+        return {
+          ...defaultRow,
+          existing: match.existing ? String(match.existing) : '',
+          incrementPercentage: match.increment_percentage
+            ? String(match.increment_percentage)
+            : '',
+        };
+      }),
+    );
   }
 
   private populateFromApplicationRecord(record: ApplicationFormRecord): void {
     this.applyEmployeeFields(this.mapApplicationRecordToEmployeeFields(record), this.resolveEmployeeCode(record));
+    this.applyAllowancesFromRemuneration(record.detail?.remuneration);
   }
 
   private applyEmployeeFields(
@@ -676,8 +802,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.promotionEffectiveDate.set(emptyDate(promotion.promotion_effective_date));
     this.promotionRemarks.set(emptyIfDash(promotion.remarks));
 
-    this.existingBenefitsDetails.set(emptyIfDash(record.OtherBenefits.existing_benefits_details));
-    this.newBenefits.set(emptyIfDash(record.OtherBenefits.new_benefits));
+    this.applyAllowancesFromRecord(record.OtherBenefits.allowances ?? []);
   }
 
   private toAmount(value: string): number {

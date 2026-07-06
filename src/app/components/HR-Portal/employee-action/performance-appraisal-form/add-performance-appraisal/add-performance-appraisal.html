@@ -46,7 +46,7 @@
             [class.scd-step-chip--active]="incrementAmount().trim() || incrementPercentage().trim()"
           >
             <span class="scd-step-chip__num">3</span>
-            Promotion &amp; Benefits
+            Promotion &amp; Allowances
           </span>
         </div>
       </div>
@@ -77,10 +77,10 @@
         </li>
         <li
           class="cjr-section-nav-item"
-          [class.cjr-section-nav-item--active]="activeSection() === 'pa-other-benefits-section'"
-          (click)="scrollToSection('pa-other-benefits-section')"
+          [class.cjr-section-nav-item--active]="activeSection() === 'pa-allowances-section'"
+          (click)="scrollToSection('pa-allowances-section')"
         >
-          Other benefits
+          Allowances
         </li>
       </ul>
     </nav>
@@ -395,7 +395,7 @@
         </div>
       </section>
 
-      <section class="mad-form-panel" id="pa-other-benefits-section">
+      <section class="mad-form-panel" id="pa-allowances-section">
         <div class="mad-form-panel__heading">
           <span class="mad-form-panel__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -407,19 +407,58 @@
             </svg>
           </span>
           <div class="mad-form-panel__titles">
-            <h2 class="cjr-section-title mad-form-panel__title">Other Benefits</h2>
-            <span class="mad-form-panel__subtitle">Existing and newly recommended employee benefits</span>
+            <h2 class="cjr-section-title mad-form-panel__title">Allowances</h2>
+            <span class="mad-form-panel__subtitle">
+              Existing allowances from the application form with increment and revised values
+            </span>
           </div>
         </div>
 
-        <div class="cjr-row cjr-row--remarks">
-          <label>Existing Benefits Details:</label>
-          <textarea rows="4" [ngModel]="existingBenefitsDetails()" (ngModelChange)="existingBenefitsDetails.set($event)"></textarea>
-        </div>
+        @if (employeeDetailLoading()) {
+          <p class="pa-allowances-hint">Loading employee allowances…</p>
+        } @else if (!employeeProfileLoaded() && !editingId) {
+          <p class="pa-allowances-hint">Select an employee to load allowances from their application profile.</p>
+        }
 
-        <div class="cjr-row cjr-row--remarks">
-          <label>New Benefits:</label>
-          <textarea rows="4" [ngModel]="newBenefits()" (ngModelChange)="newBenefits.set($event)"></textarea>
+        <div class="pa-allowances-table-wrap">
+          <table class="pa-allowances-table">
+            <thead>
+              <tr>
+                <th>Allowances</th>
+                <th>Existing</th>
+                <th>Increment Percentage</th>
+                <th>Revised</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of allowanceRows(); track row.key) {
+                <tr>
+                  <td class="pa-allowances-table__label">{{ row.label }}</td>
+                  <td>
+                    <span class="pa-allowances-table__value pa-allowances-table__value--readonly">
+                      {{ row.existing || '—' }}
+                    </span>
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      class="pa-allowances-table__input"
+                      min="0"
+                      step="0.1"
+                      [ngModel]="row.incrementPercentage"
+                      (ngModelChange)="updateAllowanceIncrementPercentage(row.key, $event)"
+                      placeholder="0"
+                    />
+                  </td>
+                  <td>
+                    <span class="pa-allowances-table__value pa-allowances-table__value--readonly">
+                      {{ allowanceRevised(row) || '—' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       </section>
     </div>

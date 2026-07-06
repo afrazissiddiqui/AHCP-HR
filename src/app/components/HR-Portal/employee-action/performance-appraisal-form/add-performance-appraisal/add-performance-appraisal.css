@@ -58,3 +58,73 @@
     grid-template-columns: 1fr;
   }
 }
+
+.pa-allowances-hint {
+  margin: 0 0 16px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.pa-allowances-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.pa-allowances-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.pa-allowances-table th,
+.pa-allowances-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef2f6;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.pa-allowances-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.pa-allowances-table__label {
+  font-weight: 500;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.pa-allowances-table__input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.pa-allowances-table__value {
+  display: block;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+.pa-allowances-table__value--readonly {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: default;
+  user-select: text;
+}
