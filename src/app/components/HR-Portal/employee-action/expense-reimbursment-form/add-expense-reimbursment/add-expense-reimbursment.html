@@ -186,7 +186,11 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Claim Month:</label>
-              <input type="date" [ngModel]="claimMonth()" (ngModelChange)="claimMonth.set($event)" />
+              <input
+                type="month"
+                [ngModel]="claimMonth()"
+                (ngModelChange)="onClaimMonthChange($event)"
+              />
             </div>
 
             <div class="cjr-row">
@@ -236,7 +240,15 @@
 
             <div class="cjr-row">
               <label>Claim Amount:</label>
-              <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" placeholder="e.g. 5000" />
+              <input
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                [ngModel]="claimAmount()"
+                (ngModelChange)="onClaimAmountChange($event)"
+                (keydown)="onClaimAmountKeyDown($event)"
+                placeholder="e.g. 5000"
+              />
             </div>
           </div>
 

@@ -389,6 +389,44 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.claimDate.set(formatDateDdMmYyyyInput(value).replace(/-/g, '/'));
   }
 
+  protected onClaimMonthChange(value: string): void {
+    this.claimMonth.set(value);
+  }
+
+  protected onClaimAmountChange(value: string): void {
+    this.claimAmount.set(value.replace(/\D/g, ''));
+  }
+
+  protected onClaimAmountKeyDown(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  private formatClaimMonthForInput(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})/);
+    if (isoMatch) {
+      return `${isoMatch[1]}-${isoMatch[2]}`;
+    }
+
+    const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{4})$/);
+    if (slashMatch) {
+      return `${slashMatch[2]}-${slashMatch[1].padStart(2, '0')}`;
+    }
+
+    return trimmed;
+  }
+
   private populateFromRecord(record: ExpenseReimbursementRecord): void {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
 
@@ -398,7 +436,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.headerDepartment.set(emptyIfDash(header.department));
     this.designation.set(emptyIfDash(header.designation));
     this.preservedCostCenter.set(emptyIfDash(header.costCenter));
-    this.claimMonth.set(emptyIfDash(header.claimMonth));
+    this.claimMonth.set(this.formatClaimMonthForInput(emptyIfDash(header.claimMonth)));
     this.formNumber.set(emptyIfDash(header.formNumber));
     this.submissionDate.set(emptyIfDash(header.submissionDate) || new Date().toISOString().slice(0, 10));
 
@@ -407,7 +445,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.detailEmployeeName.set(emptyIfDash(detail.employeeName));
     this.detailDepartment.set(emptyIfDash(detail.department));
     this.expenseType.set(emptyIfDash(detail.expenseType));
-    this.claimAmount.set(emptyIfDash(detail.claimAmount));
+    this.claimAmount.set(emptyIfDash(detail.claimAmount).replace(/\D/g, ''));
     this.expenseFromDate.set(formatDateForInput(emptyIfDash(detail.fromDate)));
     this.expenseToDate.set(formatDateForInput(emptyIfDash(detail.toDate)));
     this.claimDate.set(formatDateOfBirthFromApi(emptyIfDash(detail.claimDate)).replace(/-/g, '/'));
