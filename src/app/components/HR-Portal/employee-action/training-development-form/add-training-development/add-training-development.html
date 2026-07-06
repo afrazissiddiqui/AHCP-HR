@@ -533,7 +533,64 @@
         </div>
       </section>
 
-  
+      <section class="mad-form-panel" id="training-salary-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Salary</h2>
+            <span class="mad-form-panel__subtitle">Increment details and revision effective date</span>
+          </div>
+        </div>
+
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>Current Salary:</label>
+              <input type="number" min="0" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
+            </div>
+            <div class="cjr-row">
+              <label>Increment Amount:</label>
+              <input type="number" min="0" [ngModel]="incrementAmount()" (ngModelChange)="onIncrementAmountChange($event)" />
+            </div>
+            <div class="cjr-row">
+              <label>Increment Percentage:</label>
+              <input type="number" min="0" step="0.1" [ngModel]="incrementPercentage()" (ngModelChange)="onIncrementPercentageChange($event)" />
+            </div>
+            <div class="cjr-row">
+              <label>Revised Salary:</label>
+              <input type="text" [value]="revisedSalary()" readonly />
+            </div>
+          </div>
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label>Effective Date of Revision:</label>
+              <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />
+            </div>
+            <div class="cjr-row">
+              <label>Reason for Increment:</label>
+              <input type="text" [ngModel]="reasonForIncrement()" (ngModelChange)="reasonForIncrement.set($event)" />
+            </div>
+            <div class="cjr-row">
+              <label>Approval Authority:</label>
+              <input type="text" [ngModel]="approvalAuthority()" (ngModelChange)="approvalAuthority.set($event)" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mad-form-panel" id="training-promotion-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <path d="M22 4 12 14.01l-3-3" />
+            </svg>
+          </span>
           <div class="mad-form-panel__titles">
             <h2 class="cjr-section-title mad-form-panel__title">Promotion</h2>
             <span class="mad-form-panel__subtitle">Promotion recommendation and eligibility verification</span>
@@ -603,64 +660,6 @@
           <span class="cjr-submit-icon">✓</span>
           <span>{{ submitButtonLabel }}</span>
         }
-        <section class="mad-form-panel" id="training-salary-section">
-          <div class="mad-form-panel__heading">
-            <span class="mad-form-panel__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="1" x2="12" y2="23" />
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            </span>
-            <div class="mad-form-panel__titles">
-              <h2 class="cjr-section-title mad-form-panel__title">Salary</h2>
-              <span class="mad-form-panel__subtitle">Increment details and revision effective date</span>
-            </div>
-          </div>
-  
-          <div class="cjr-personal-grid">
-            <div class="cjr-personal-col">
-              <div class="cjr-row">
-                <label>Current Salary:</label>
-                <input type="number" min="0" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
-              </div>
-              <div class="cjr-row">
-                <label>Increment Amount:</label>
-                <input type="number" min="0" [ngModel]="incrementAmount()" (ngModelChange)="onIncrementAmountChange($event)" />
-              </div>
-              <div class="cjr-row">
-                <label>Increment Percentage:</label>
-                <input type="number" min="0" step="0.1" [ngModel]="incrementPercentage()" (ngModelChange)="onIncrementPercentageChange($event)" />
-              </div>
-              <div class="cjr-row">
-                <label>Revised Salary:</label>
-                <input type="text" [value]="revisedSalary()" readonly />
-              </div>
-            </div>
-            <div class="cjr-personal-col">
-              <div class="cjr-row">
-                <label>Effective Date of Revision:</label>
-                <input type="date" [ngModel]="effectiveDateOfRevision()" (ngModelChange)="effectiveDateOfRevision.set($event)" />
-              </div>
-              <div class="cjr-row">
-                <label>Reason for Increment:</label>
-                <input type="text" [ngModel]="reasonForIncrement()" (ngModelChange)="reasonForIncrement.set($event)" />
-              </div>
-              <div class="cjr-row">
-                <label>Approval Authority:</label>
-                <input type="text" [ngModel]="approvalAuthority()" (ngModelChange)="approvalAuthority.set($event)" />
-              </div>
-            </div>
-          </div>
-        </section>
-  
-        <section class="mad-form-panel" id="training-promotion-section">
-          <div class="mad-form-panel__heading">
-            <span class="mad-form-panel__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <path d="M22 4 12 14.01l-3-3" />
-              </svg>
-            </span>
       </button>
     </div>
   </div>
