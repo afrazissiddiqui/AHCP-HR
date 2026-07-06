@@ -395,6 +395,12 @@ export interface EmployeeProfileAddPayload {
   salaryStructure: string;
   attendanceShiftManagement: string | null;
   leaveManagement: string;
+  leaveManagementRows?: Array<{
+    leaveType: string;
+    leavesAllocated: string;
+    leavesAvailed: string;
+    remainingLeave?: string;
+  }>;
   loanAdvancesForm: string | null;
   employeeCode: string;
   userId: number | string;
@@ -895,6 +901,12 @@ export class ApplicationFormService {
       salaryStructure: hr.salaryStructure || personal.workGradeLevel || personal.roleSalary,
       attendanceShiftManagement: toNullableString(hr.attendanceShiftManagement),
       leaveManagement: hr.leaveManagement?.trim() || 'Enabled',
+      leaveManagementRows: detail.leaveManagement.map((row) => ({
+        leaveType: row.leaveType,
+        leavesAllocated: row.leavesAllocated,
+        leavesAvailed: row.leavesAvailed,
+        remainingLeave: row.remainingLeave,
+      })),
       loanAdvancesForm: toNullableString(hr.loanAdvancesForm),
       employeeCode: login.employeeCode,
       userId: toApiNumber(login.userId) || login.userId,
@@ -1017,16 +1029,92 @@ export class ApplicationFormService {
     }));
   }
 
+  /** Builds nested remuneration object expected by employee-profile add/update APIs. */
+  private buildApiRemunerationObject(
+    payload: EmployeeProfileAddPayload,
+  ): Record<string, unknown> {
+    return {
+      basicSalary: payload.basicSalary,
+      paymentMode: payload.paymentMode,
+      accountTitle: payload.accountTitle,
+      bankName: payload.bankName,
+      accountNo: payload.accountNo,
+      accountType: payload.accountType,
+      effectiveDate: payload.effectiveDate,
+      taxPercentage: payload.taxPercentage,
+      dateOfJoining: payload.dateOfJoining,
+      cashSalaryPercentage: payload.cashSalaryPercentage,
+      advancePercentAllowed: payload.advancePercentAllowed,
+      maximumLoanCapacity: payload.maximumLoanCapacity,
+      maximumAdvanceCapacity: payload.maximumAdvanceCapacity,
+      overTimeApplicable: payload.overTimeApplicable,
+      allowancesApplicable: payload.allowancesApplicable,
+      eobiApplicable: payload.eobiApplicable,
+      socialSecurityApplicable: payload.socialSecurityApplicable,
+      fuelLimit: payload.fuelLimit,
+      leaveEligibilityCriteria: payload.leaveEligibilityCriteria,
+      leaveType: payload.leaveType,
+      leaveDays: payload.leaveDays,
+      leavesAvailed: payload.leavesAvailed,
+      remainingLeaves: payload.remainingLeaves,
+      medicalAllowances: payload.medicalAllowances,
+      fuelAllowances: payload.fuelAllowances,
+      mobileAllowances: payload.mobileAllowances,
+      carAllowances: payload.carAllowances,
+      otherAllowances: payload.otherAllowances,
+    };
+  }
+
+  private buildApiAssetsObject(payload: EmployeeProfileAddPayload): Record<string, unknown> {
+    return {
+      assetAllocated: payload.assetAllocated,
+      allocationStatus: payload.allocationStatus,
+      allocationDateType: payload.allocationDateType,
+      allocationDate: payload.allocationDate,
+    };
+  }
+
+  private buildApiLoginDetailObject(payload: EmployeeProfileAddPayload): Record<string, unknown> {
+    return {
+      employeeCode: payload.employeeCode,
+      loginEmployeeName: payload.loginEmployeeName,
+      employeeName: payload.loginEmployeeName,
+      userId: payload.userId,
+      password: payload.password,
+      status: payload.status,
+    };
+  }
+
+  private mapLeaveManagementRowsForApi(
+    rows: NonNullable<EmployeeProfileAddPayload['leaveManagementRows']>,
+  ): Array<Record<string, unknown>> {
+    return rows.map((row) => ({
+      leaveType: row.leaveType,
+      leave_type: row.leaveType,
+      leavesAllocated: row.leavesAllocated,
+      leaves_allocated: row.leavesAllocated,
+      leavesAvailed: row.leavesAvailed,
+      leaves_availed: row.leavesAvailed,
+      remainingLeave: row.remainingLeave ?? '',
+      remaining_leave: row.remainingLeave ?? '',
+    }));
+  }
+
   /** Ensures section arrays are sent in every shape the backend may accept. */
   private serializeEmployeeProfilePayload(
     payload: EmployeeProfileAddPayload,
   ): Record<string, unknown> {
     const educationSections = payload.educationSections ?? [];
     const pastExperienceSections = payload.pastExperienceSections ?? [];
+    const leaveManagementRows = payload.leaveManagementRows ?? [];
 
     return {
       ...payload,
       fuel_limit: payload.fuelLimit,
+      remuneration: this.buildApiRemunerationObject(payload),
+      assets: this.buildApiAssetsObject(payload),
+      loginDetail: this.buildApiLoginDetailObject(payload),
+      leaveManagement: this.mapLeaveManagementRowsForApi(leaveManagementRows),
       educationSections,
       education_sections: this.mapEducationSectionsSnakeCase(educationSections),
       education: educationSections,
