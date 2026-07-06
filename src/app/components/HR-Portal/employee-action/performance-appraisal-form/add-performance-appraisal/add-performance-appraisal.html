@@ -1,26 +1,119 @@
-<div class="cjs-page">
-  <div class="cjs-header">
-    <div class="cjs-header-left">
-      <button type="button" class="cjs-back" (click)="back()" aria-label="Back">
-        <span class="cjs-back-icon">❮</span>
+<div class="cjr-page mad-add-page">
+  <div class="cjr-header">
+    <div class="cjr-header-left">
+      <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
+        <span class="cjr-back-icon">❮</span>
       </button>
-      <h1>{{ pageTitle }}</h1>
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="mad-page-subtitle">{{ pageSubtitle }}</p>
+      </div>
     </div>
   </div>
 
-  <div class="cjs-card">
-    <div class="cjs-form-container">
-      <section class="cjs-section-block" id="pa-info-section">
-        <div class="cjs-section-title">Performance Appraisal Information</div>
+  <div class="cjr-card cjr-form-card">
+    <div class="scd-form-hero" aria-hidden="true">
+      <div class="scd-form-hero__glow"></div>
+      <div class="scd-form-hero__content">
+        <span class="scd-form-hero__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M12 20V10" />
+            <path d="M18 20V4" />
+            <path d="M6 20v-4" />
+          </svg>
+        </span>
+        <div class="scd-form-hero__text">
+          <span class="scd-form-hero__label">HR Portal</span>
+          <span class="scd-form-hero__title">Performance Appraisal</span>
+        </div>
+        <div class="scd-form-hero__steps">
+          <span class="scd-step-chip scd-step-chip--active">
+            <span class="scd-step-chip__num">1</span>
+            Appraisal Info
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="employeeId().trim() && employeeName().trim()"
+            [class.scd-step-chip--ready]="formNumber().trim()"
+          >
+            <span class="scd-step-chip__num">2</span>
+            Increment
+          </span>
+          <span class="scd-step-chip__connector" aria-hidden="true"></span>
+          <span
+            class="scd-step-chip"
+            [class.scd-step-chip--active]="incrementAmount().trim() || incrementPercentage().trim()"
+          >
+            <span class="scd-step-chip__num">3</span>
+            Promotion &amp; Benefits
+          </span>
+        </div>
+      </div>
+    </div>
 
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
-              <label>Form Number:</label>
-              <input type="text" [ngModel]="formNumber()" (ngModelChange)="formNumber.set($event)" placeholder="e.g. PA-2026-001" />
+    <nav class="cjr-section-nav mad-sticky-nav" aria-label="Performance appraisal sections">
+      <ul class="cjr-section-nav-list">
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'pa-info-section'"
+          (click)="scrollToSection('pa-info-section')"
+        >
+          Appraisal information
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'pa-increment-section'"
+          (click)="scrollToSection('pa-increment-section')"
+        >
+          Increment
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'pa-promotion-section'"
+          (click)="scrollToSection('pa-promotion-section')"
+        >
+          Promotion
+        </li>
+        <li
+          class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'pa-other-benefits-section'"
+          (click)="scrollToSection('pa-other-benefits-section')"
+        >
+          Other benefits
+        </li>
+      </ul>
+    </nav>
+
+    <div class="cjr-form-body">
+      <section class="mad-form-panel" id="pa-info-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Performance Appraisal Information</h2>
+            <span class="mad-form-panel__subtitle">Employee details, appraisal period, and evaluation context</span>
+          </div>
+        </div>
+
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label class="cjr-label-required">Form Number:</label>
+              <input
+                type="text"
+                [ngModel]="formNumber()"
+                (ngModelChange)="formNumber.set($event)"
+                placeholder="e.g. PA-2026-001"
+                [class.cjr-invalid]="isFieldInvalid('formNumber')"
+              />
             </div>
-            <div class="cjs-row">
-              <label>Employee ID:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee ID:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -32,9 +125,10 @@
                   (ngModelChange)="onEmployeeIdInput($event)"
                   (focus)="openCodeSuggestions()"
                   (blur)="onCodeInputBlur()"
-                  placeholder="e.g. EMP-001"
+                  placeholder="Search by code, name, or department"
                   autocomplete="off"
                   [readonly]="!!editingId"
+                  [class.cjr-invalid]="isFieldInvalid('employeeId')"
                 />
                 <ul
                   id="pa-employee-id-listbox"
@@ -46,19 +140,23 @@
                     *ngFor="let emp of codeSuggestions()"
                     role="option"
                     class="employee-search-suggestion-item"
-                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                    (mousedown)="selectEmployeeFromSuggestion(emp, $event)"
                   >
                     <span class="employee-search-suggestion-primary">{{ emp.code }} — {{ emp.name }}</span>
                     <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
                   </li>
-                  <li *ngIf="codeSuggestions().length === 0" class="employee-search-suggestion-empty" role="presentation">
+                  <li
+                    *ngIf="codeSuggestions().length === 0"
+                    class="employee-search-suggestion-empty"
+                    role="presentation"
+                  >
                     No matching employees
                   </li>
                 </ul>
               </div>
             </div>
-            <div class="cjs-row">
-              <label>Employee Name:</label>
+            <div class="cjr-row">
+              <label class="cjr-label-required">Employee Name:</label>
               <div class="employee-search-wrap">
                 <input
                   type="search"
@@ -70,9 +168,10 @@
                   (ngModelChange)="onEmployeeNameInput($event)"
                   (focus)="openNameSuggestions()"
                   (blur)="onNameInputBlur()"
-                  placeholder="Employee full name"
+                  placeholder="Search by name, code, or department"
                   autocomplete="off"
                   [readonly]="!!editingId"
+                  [class.cjr-invalid]="isFieldInvalid('employeeName')"
                 />
                 <ul
                   id="pa-employee-name-listbox"
@@ -84,69 +183,122 @@
                     *ngFor="let emp of nameSuggestions()"
                     role="option"
                     class="employee-search-suggestion-item"
-                    (mousedown)="selectEmployeeFromSuggestion(emp)"
+                    (mousedown)="selectEmployeeFromSuggestion(emp, $event)"
                   >
                     <span class="employee-search-suggestion-primary">{{ emp.name }} — {{ emp.code }}</span>
                     <span class="employee-search-suggestion-meta">{{ emp.department }} · {{ emp.designation }}</span>
                   </li>
-                  <li *ngIf="nameSuggestions().length === 0" class="employee-search-suggestion-empty" role="presentation">
+                  <li
+                    *ngIf="nameSuggestions().length === 0"
+                    class="employee-search-suggestion-empty"
+                    role="presentation"
+                  >
                     No matching employees
                   </li>
                 </ul>
               </div>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employee Category:</label>
-              <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
+              <input
+                type="text"
+                [ngModel]="employeeCategory()"
+                (ngModelChange)="employeeCategory.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Work / Grade Level:</label>
-              <input type="text" [ngModel]="workGradeLevel()" (ngModelChange)="workGradeLevel.set($event)" placeholder="e.g. GWL-5" />
+              <input
+                type="text"
+                [ngModel]="workGradeLevel()"
+                (ngModelChange)="workGradeLevel.set($event)"
+                placeholder="e.g. GWL-5"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
-              <label>Employment Nature:</label>
-              <input type="text" [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)" placeholder="e.g. Permanent" />
-            </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Department:</label>
-              <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+              <input
+                type="text"
+                [ngModel]="department()"
+                (ngModelChange)="department.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Designation:</label>
-              <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+              <input
+                type="text"
+                [ngModel]="designation()"
+                (ngModelChange)="designation.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
           </div>
 
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Date of Joining:</label>
-              <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)" />
+              <input
+                type="date"
+                [ngModel]="dateOfJoining()"
+                (ngModelChange)="dateOfJoining.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Employment Type:</label>
-              <input type="text" [ngModel]="employmentType()" (ngModelChange)="employmentType.set($event)" placeholder="e.g. Full Time" />
+              <input
+                type="text"
+                [ngModel]="employmentType()"
+                (ngModelChange)="employmentType.set($event)"
+                placeholder="e.g. Full Time"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Job Title:</label>
-              <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
+              <input
+                type="text"
+                [ngModel]="jobTitle()"
+                (ngModelChange)="jobTitle.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Reporting Manager:</label>
-              <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
+              <input
+                type="text"
+                [ngModel]="reportingManager()"
+                (ngModelChange)="reportingManager.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Appraisal Authority:</label>
               <input type="text" [ngModel]="appraisalAuthority()" (ngModelChange)="appraisalAuthority.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Appraisal Period:</label>
-              <input type="text" [ngModel]="appraisalPeriod()" (ngModelChange)="appraisalPeriod.set($event)" placeholder="e.g. Jan 2025 - Dec 2025" />
+              <input
+                type="text"
+                [ngModel]="appraisalPeriod()"
+                (ngModelChange)="appraisalPeriod.set($event)"
+                placeholder="e.g. Jan 2025 - Dec 2025"
+              />
             </div>
-            <div class="cjs-row">
-              <label>Current Salary:</label>
-              <input type="number" min="0" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
+            <div class="cjr-row">
+              <label>Employee Status:</label>
+              <input
+                type="text"
+                [ngModel]="employmentNature()"
+                (ngModelChange)="employmentNature.set($event)"
+                placeholder="e.g. Permanent"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Evaluation Date:</label>
               <input type="date" [ngModel]="evaluationDate()" (ngModelChange)="evaluationDate.set($event)" />
             </div>
@@ -154,33 +306,45 @@
         </div>
       </section>
 
-      <section class="cjs-section-block" id="pa-increment-section">
-        <div class="cjs-section-title">Increment</div>
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+      <section class="mad-form-panel" id="pa-increment-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Increment</h2>
+            <span class="mad-form-panel__subtitle">Salary revision, increment amount, and effective date</span>
+          </div>
+        </div>
+
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Current Salary:</label>
               <input type="number" min="0" [ngModel]="currentSalary()" (ngModelChange)="currentSalary.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Increment Percentage:</label>
               <input type="number" min="0" step="0.1" [ngModel]="incrementPercentage()" (ngModelChange)="onIncrementPercentageChange($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Increment Effective Date:</label>
               <input type="date" [ngModel]="incrementEffectiveDate()" (ngModelChange)="incrementEffectiveDate.set($event)" />
             </div>
           </div>
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Reason for Increment:</label>
               <input type="text" [ngModel]="reasonForIncrement()" (ngModelChange)="reasonForIncrement.set($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Increment Amount:</label>
               <input type="number" min="0" [ngModel]="incrementAmount()" (ngModelChange)="onIncrementAmountChange($event)" />
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>Revised Salary:</label>
               <input type="text" [value]="revisedSalary()" readonly />
             </div>
@@ -188,11 +352,23 @@
         </div>
       </section>
 
-      <section class="cjs-section-block" id="pa-promotion-section">
-        <div class="cjs-section-title">Promotion</div>
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row">
+      <section class="mad-form-panel" id="pa-promotion-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <path d="M22 4 12 14.01l-3-3" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Promotion</h2>
+            <span class="mad-form-panel__subtitle">Promotion recommendation and effective date</span>
+          </div>
+        </div>
+
+        <div class="cjr-personal-grid">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Promotion Recommended:</label>
               <select [ngModel]="promotionRecommended()" (ngModelChange)="promotionRecommended.set($event)">
                 <option value="">Select</option>
@@ -200,47 +376,70 @@
                 <option value="No">No</option>
               </select>
             </div>
-            <div class="cjs-row">
+            <div class="cjr-row">
               <label>New Designation:</label>
               <input type="text" [ngModel]="newDesignation()" (ngModelChange)="newDesignation.set($event)" />
             </div>
           </div>
-          <div class="cjs-col">
-            <div class="cjs-row">
+          <div class="cjr-personal-col">
+            <div class="cjr-row">
               <label>Promotion Effective Date:</label>
               <input type="date" [ngModel]="promotionEffectiveDate()" (ngModelChange)="promotionEffectiveDate.set($event)" />
             </div>
-            <div class="cjs-row">
-              <label>Remarks:</label>
-              <input type="text" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)" />
-            </div>
           </div>
+        </div>
+
+        <div class="cjr-row cjr-row--remarks">
+          <label>Remarks:</label>
+          <textarea rows="4" [ngModel]="promotionRemarks()" (ngModelChange)="promotionRemarks.set($event)"></textarea>
         </div>
       </section>
 
-      <section class="cjs-section-block" id="pa-other-benefits-section">
-        <div class="cjs-section-title">Other Benefits</div>
-        <div class="cjs-grid">
-          <div class="cjs-col">
-            <div class="cjs-row cjs-row--full">
-              <label>Existing Benefits Details:</label>
-              <textarea rows="4" [ngModel]="existingBenefitsDetails()" (ngModelChange)="existingBenefitsDetails.set($event)"></textarea>
-            </div>
-          </div>
-          <div class="cjs-col">
-            <div class="cjs-row cjs-row--full">
-              <label>New Benefits:</label>
-              <textarea rows="4" [ngModel]="newBenefits()" (ngModelChange)="newBenefits.set($event)"></textarea>
-            </div>
+      <section class="mad-form-panel" id="pa-other-benefits-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 12v8H4v-8" />
+              <path d="M22 7H2v5h20V7z" />
+              <path d="M12 22V7" />
+              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Other Benefits</h2>
+            <span class="mad-form-panel__subtitle">Existing and newly recommended employee benefits</span>
           </div>
         </div>
-      </section>
 
-      <div class="cjs-actions-footer">
-        <button type="button" class="cjs-submit-btn" (click)="save()">
-          <span class="cjs-submit-icon">✓</span> {{ submitButtonLabel }}
-        </button>
-      </div>
+        <div class="cjr-row cjr-row--remarks">
+          <label>Existing Benefits Details:</label>
+          <textarea rows="4" [ngModel]="existingBenefitsDetails()" (ngModelChange)="existingBenefitsDetails.set($event)"></textarea>
+        </div>
+
+        <div class="cjr-row cjr-row--remarks">
+          <label>New Benefits:</label>
+          <textarea rows="4" [ngModel]="newBenefits()" (ngModelChange)="newBenefits.set($event)"></textarea>
+        </div>
+      </section>
+    </div>
+
+    <div class="cjr-actions-footer">
+      <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()" [disabled]="saving()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
+      <button type="button" class="cjr-submit-btn" (click)="save()" [disabled]="saving()">
+        @if (saving()) {
+          <span class="cjr-submit-spinner" aria-hidden="true"></span>
+          <span>Saving…</span>
+        } @else {
+          <span class="cjr-submit-icon">✓</span>
+          <span>{{ submitButtonLabel }}</span>
+        }
+      </button>
     </div>
   </div>
 </div>

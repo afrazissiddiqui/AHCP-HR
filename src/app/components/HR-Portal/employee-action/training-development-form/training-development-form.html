@@ -27,18 +27,6 @@
           [data]="trainingList"
           (applied)="onTableFilterApplied()"
         />
-
-        <button class="sapMBtnBase sapMBtn" title="Download">
-          ⬇
-        </button>
-
-        <button class="sapMBtnBase sapMBtn" title="Toggle Full Screen">
-          ⛶
-        </button>
-
-        <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings">
-          ⚙
-        </button>
       </div>
 
       <div class="dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>

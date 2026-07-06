@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import {
   ApplicationFormRecord,
   ApplicationFormService,
@@ -21,10 +22,14 @@ import {
   buildPerformanceAppraisalSubmitPayload,
 } from '../../../../../services/performance-appraisal.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import { sanitizeApiText } from '../../../../../utils/api-text.util';
+import { formatDateForInput } from '../../../../../utils/date-format.util';
+import { normalizeEmploymentStatus } from '../../../../../utils/employment-status.util';
 
 interface AppraisalEmployeeOption {
   code: string;
   name: string;
+  apiId?: string;
   department: string;
   designation: string;
   jobTitle: string;
@@ -33,7 +38,11 @@ interface AppraisalEmployeeOption {
   workGradeLevel: string;
   employmentNature: string;
   employmentType: string;
+  dateOfJoining: string;
+  basicSalary: string;
 }
+
+type AppraisalValidationField = 'formNumber' | 'employeeId' | 'employeeName';
 
 @Component({
   selector: 'app-add-performance-appraisal',
@@ -41,8 +50,9 @@ interface AppraisalEmployeeOption {
   imports: [CommonModule, FormsModule],
   templateUrl: './add-performance-appraisal.html',
   styleUrls: [
-    '../../../job-specification-form/create-job-specification/create-job-specification.css',
+    '../../../Application-Form/create-job-requisition/create-job-requisition.css',
     '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
+    './add-performance-appraisal.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -50,6 +60,16 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add Performance Appraisal';
   submitButtonLabel = 'Save Performance Appraisal';
+  protected readonly activeSection = signal('pa-info-section');
+  protected readonly saving = signal(false);
+  protected readonly validationTouched = signal(false);
+  protected readonly employeeProfileLoaded = signal(false);
+
+  get pageSubtitle(): string {
+    return this.editingId
+      ? 'Update appraisal details, increment outcomes, and promotion recommendations.'
+      : 'Capture employee appraisal information, salary increment, and promotion outcomes.';
+  }
 
   protected readonly formNumber = signal('');
   protected readonly employeeId = signal('');
@@ -155,6 +175,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     if (this.editingId) {
       return;
     }
+    this.employeeProfileLoaded.set(false);
     this.codeSuggestionsOpen.set(code.trim().length > 0);
     this.closeNameSuggestions();
   }
@@ -164,6 +185,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     if (this.editingId) {
       return;
     }
+    this.employeeProfileLoaded.set(false);
     this.nameSuggestionsOpen.set(name.trim().length > 0);
     this.closeCodeSuggestions();
   }
@@ -193,17 +215,59 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   }
 
   protected onCodeInputBlur(): void {
-    setTimeout(() => this.closeCodeSuggestions(), 150);
+    setTimeout(() => {
+      this.closeCodeSuggestions();
+      if (!this.editingId) {
+        this.trySelectEmployeeFromTypedValue('code');
+      }
+    }, 150);
   }
 
   protected onNameInputBlur(): void {
-    setTimeout(() => this.closeNameSuggestions(), 150);
+    setTimeout(() => {
+      this.closeNameSuggestions();
+      if (!this.editingId) {
+        this.trySelectEmployeeFromTypedValue('name');
+      }
+    }, 150);
   }
 
-  protected selectEmployeeFromSuggestion(employee: AppraisalEmployeeOption): void {
+  protected selectEmployeeFromSuggestion(employee: AppraisalEmployeeOption, event?: MouseEvent): void {
+    event?.preventDefault();
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
+    this.resetEmployeeProfileFields();
     this.populateFromEmployeeOption(employee);
+    this.employeeProfileLoaded.set(true);
+
+    const applyRecord = (record: ApplicationFormRecord): void => {
+      this.populateFromApplicationRecord(record);
+      this.employeeProfileLoaded.set(true);
+      this.cdr.markForCheck();
+    };
+
+    const localRecord = this.findApplicationRecord(employee);
+    const detailId = localRecord?.apiId ?? employee.apiId;
+
+    if (detailId) {
+      this.applicationFormService.fetchEmployeeProfileDetail(detailId).subscribe({
+        next: applyRecord,
+        error: () => {
+          if (localRecord) {
+            applyRecord(localRecord);
+          } else {
+            this.cdr.markForCheck();
+          }
+        },
+      });
+      return;
+    }
+
+    if (localRecord) {
+      applyRecord(localRecord);
+      return;
+    }
+
     this.cdr.markForCheck();
   }
 
@@ -225,14 +289,48 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     void this.router.navigateByUrl('/employee-action/performance-appraisal-form');
   }
 
+  protected scrollToSection(sectionId: string): void {
+    this.activeSection.set(sectionId);
+    setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  }
+
+  protected isFieldInvalid(field: AppraisalValidationField): boolean {
+    if (!this.validationTouched()) {
+      return false;
+    }
+
+    switch (field) {
+      case 'formNumber':
+        return !this.formNumber().trim();
+      case 'employeeId':
+        return !this.employeeId().trim();
+      case 'employeeName':
+        return !this.employeeName().trim();
+      default:
+        return false;
+    }
+  }
+
   protected save(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.validationTouched.set(true);
+
     if (!this.formNumber().trim()) {
       void this.alertService.warning('Validation', 'Form Number is required.');
+      this.scrollToSection('pa-info-section');
+      this.cdr.markForCheck();
       return;
     }
 
     if (!this.employeeId().trim() || !this.employeeName().trim()) {
       void this.alertService.warning('Validation', 'Employee ID and Employee Name are required.');
+      this.scrollToSection('pa-info-section');
+      this.cdr.markForCheck();
       return;
     }
 
@@ -271,7 +369,15 @@ export class AddPerformanceAppraisalComponent implements OnInit {
       ? this.appraisalService.updatePerformanceAppraisal(this.editingId, payload)
       : this.appraisalService.addPerformanceAppraisal(payload);
 
-    request$.subscribe({
+    this.saving.set(true);
+    request$
+      .pipe(
+        finalize(() => {
+          this.saving.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
       next: async () => {
         const message = this.editingId
           ? 'Performance appraisal updated successfully.'
@@ -300,25 +406,118 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   }
 
   private toEmployeeOption(record: ApplicationFormRecord): AppraisalEmployeeOption {
-    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
-    const designation = emptyIfDash(record.Designation);
+    const mapped = this.mapApplicationRecordToEmployeeFields(record);
 
     return {
       code: this.resolveEmployeeCode(record),
-      name: emptyIfDash(record.EmployeeName),
-      department: emptyIfDash(record.Department),
-      designation,
-      jobTitle: designation,
-      reportingManager: emptyIfDash(record.ReportingManager),
-      employeeCategory: emptyIfDash(record.EmploymentCategory),
-      workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
-      employmentNature: emptyIfDash(record.EmployeeNature),
-      employmentType: emptyIfDash(record.EmploymentType),
+      apiId: record.apiId,
+      ...mapped,
     };
   }
 
+  private mapApplicationRecordToEmployeeFields(
+    record: ApplicationFormRecord,
+  ): Omit<AppraisalEmployeeOption, 'code' | 'apiId'> {
+    const emptyIfDash = (value: string | undefined | null): string => sanitizeApiText(value);
+    const personal = record.detail?.personalInfo;
+    const requisition = record.detail?.requisition;
+    const remuneration = record.detail?.remuneration;
+    const login = record.detail?.loginDetails;
+    const composedName = [
+      emptyIfDash(personal?.firstName),
+      emptyIfDash(personal?.middleName),
+      emptyIfDash(personal?.lastName),
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const designation = this.firstNonEmpty(
+      emptyIfDash(personal?.designation),
+      emptyIfDash(record.Designation),
+      emptyIfDash(requisition?.internalJobTitle),
+    );
+    const jobTitle = this.firstNonEmpty(
+      emptyIfDash(requisition?.internalJobTitle),
+      emptyIfDash(personal?.designation),
+      emptyIfDash(record.Designation),
+    );
+
+    return {
+      name: this.firstNonEmpty(
+        emptyIfDash(record.EmployeeName),
+        emptyIfDash(personal?.personName),
+        composedName,
+        emptyIfDash(login?.employeeName),
+      ),
+      department: this.firstNonEmpty(
+        emptyIfDash(personal?.departmentInAhcp),
+        emptyIfDash(record.Department),
+        emptyIfDash(requisition?.department),
+      ),
+      designation,
+      jobTitle,
+      reportingManager: this.firstNonEmpty(
+        emptyIfDash(personal?.reportingManager),
+        emptyIfDash(record.ReportingManager),
+        emptyIfDash(requisition?.hiringManager),
+      ),
+      employeeCategory: this.firstNonEmpty(
+        emptyIfDash(personal?.employmentCategory),
+        emptyIfDash(record.EmploymentCategory),
+      ),
+      workGradeLevel: this.firstNonEmpty(
+        emptyIfDash(personal?.workGradeLevel),
+        emptyIfDash(personal?.roleSalary),
+        emptyIfDash(record.detail?.hrSettings?.salaryStructure),
+        emptyIfDash(requisition?.costCenter),
+      ),
+      employmentNature: this.firstNonEmpty(
+        emptyIfDash(personal?.employmentNature),
+        emptyIfDash(record.EmployeeNature),
+        emptyIfDash(requisition?.company),
+      ),
+      employmentType: normalizeEmploymentStatus(
+        this.firstNonEmpty(
+          emptyIfDash(personal?.employmentStatus),
+          emptyIfDash(record.EmploymentStatus),
+          emptyIfDash(record.status),
+        ),
+      ),
+      dateOfJoining: this.firstNonEmpty(emptyIfDash(remuneration?.dateOfJoining)),
+      basicSalary: this.formatGrossSalary(
+        this.firstNonEmpty(
+          emptyIfDash(remuneration?.basicSalary),
+          emptyIfDash(personal?.roleSalary),
+        ),
+      ),
+    };
+  }
+
+  private firstNonEmpty(...values: string[]): string {
+    for (const value of values) {
+      const trimmed = value.trim();
+      if (trimmed && trimmed !== '—') {
+        return trimmed;
+      }
+    }
+    return '';
+  }
+
+  private formatGrossSalary(value: string | undefined | null): string {
+    const sanitized = sanitizeApiText(value);
+    if (!sanitized) {
+      return '';
+    }
+
+    const numeric = Number.parseFloat(sanitized.replace(/,/g, ''));
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return String(numeric);
+    }
+
+    return sanitized;
+  }
+
   private resolveEmployeeCode(record: ApplicationFormRecord): string {
-    const fromLogin = record.detail?.loginDetails.employeeCode?.trim();
+    const fromLogin = record.detail?.loginDetails?.employeeCode?.trim();
     if (fromLogin) {
       return fromLogin;
     }
@@ -329,6 +528,91 @@ export class AddPerformanceAppraisalComponent implements OnInit {
       return String(record.EmployeeCode);
     }
     return '';
+  }
+
+  private findApplicationRecord(employee: AppraisalEmployeeOption): ApplicationFormRecord | undefined {
+    const code = employee.code.trim().toLowerCase();
+    const apiId = employee.apiId?.trim();
+
+    return this.applicationFormService.getApplicationRecords().find((record) => {
+      if (apiId && record.apiId === apiId) {
+        return true;
+      }
+      return code && this.resolveEmployeeCode(record).trim().toLowerCase() === code;
+    });
+  }
+
+  private trySelectEmployeeFromTypedValue(field: 'code' | 'name'): void {
+    if (this.employeeProfileLoaded()) {
+      return;
+    }
+
+    const query = (field === 'code' ? this.employeeId() : this.employeeName()).trim().toLowerCase();
+    if (!query) {
+      return;
+    }
+
+    const match = this.employeeOptions().find((employee) => {
+      const value = (field === 'code' ? employee.code : employee.name).trim().toLowerCase();
+      return value === query;
+    });
+
+    if (match) {
+      this.selectEmployeeFromSuggestion(match);
+    }
+  }
+
+  private resetEmployeeProfileFields(): void {
+    this.employeeId.set('');
+    this.employeeName.set('');
+    this.employeeCategory.set('');
+    this.workGradeLevel.set('');
+    this.employmentNature.set('');
+    this.department.set('');
+    this.designation.set('');
+    this.dateOfJoining.set('');
+    this.employmentType.set('');
+    this.jobTitle.set('');
+    this.reportingManager.set('');
+    this.currentSalary.set('');
+    this.employeeProfileLoaded.set(false);
+  }
+
+  private populateFromApplicationRecord(record: ApplicationFormRecord): void {
+    this.applyEmployeeFields(this.mapApplicationRecordToEmployeeFields(record), this.resolveEmployeeCode(record));
+  }
+
+  private applyEmployeeFields(
+    fields: Omit<AppraisalEmployeeOption, 'code' | 'apiId'>,
+    employeeCode: string,
+  ): void {
+    const setField = (target: ReturnType<typeof signal<string>>, value: string): void => {
+      const next = sanitizeApiText(value);
+      if (next) {
+        target.set(next);
+      }
+    };
+
+    setField(this.employeeId, employeeCode);
+    setField(this.employeeName, fields.name);
+    setField(this.employeeCategory, fields.employeeCategory);
+    setField(this.workGradeLevel, fields.workGradeLevel);
+    setField(this.employmentNature, fields.employmentNature);
+    setField(this.department, fields.department);
+    setField(this.designation, fields.designation);
+    setField(this.employmentType, fields.employmentType);
+    setField(this.jobTitle, fields.jobTitle);
+    setField(this.reportingManager, fields.reportingManager);
+
+    const joiningDate = formatDateForInput(fields.dateOfJoining);
+    if (joiningDate) {
+      this.dateOfJoining.set(joiningDate);
+    }
+
+    const grossSalary = this.formatGrossSalary(fields.basicSalary);
+    if (grossSalary) {
+      this.currentSalary.set(grossSalary);
+    }
   }
 
   private filterEmployeeSuggestions(query: string): AppraisalEmployeeOption[] {
@@ -349,20 +633,12 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   }
 
   private populateFromEmployeeOption(employee: AppraisalEmployeeOption): void {
-    this.employeeId.set(employee.code);
-    this.employeeName.set(employee.name);
-    this.department.set(employee.department);
-    this.designation.set(employee.designation);
-    this.jobTitle.set(employee.jobTitle);
-    this.reportingManager.set(employee.reportingManager);
-    this.employeeCategory.set(employee.employeeCategory);
-    this.workGradeLevel.set(employee.workGradeLevel);
-    this.employmentNature.set(employee.employmentNature);
-    this.employmentType.set(employee.employmentType);
+    this.applyEmployeeFields(employee, employee.code);
   }
 
   private populateFromRecord(record: PerformanceAppraisalRecord): void {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const emptyDate = (value: string): string => formatDateForInput(emptyIfDash(value));
     const yesNo = (value: string): 'Yes' | 'No' | '' =>
       value === 'Yes' || value === 'No' ? value : '';
 
@@ -374,27 +650,30 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.employmentNature.set(emptyIfDash(record.EmploymentNature));
     this.department.set(emptyIfDash(record.Department));
     this.designation.set(emptyIfDash(record.Designation));
-    this.dateOfJoining.set(emptyIfDash(record.DateOfJoining));
+    this.dateOfJoining.set(emptyDate(record.DateOfJoining));
     this.employmentType.set(emptyIfDash(record.EmploymentType));
     this.jobTitle.set(emptyIfDash(record.JobTitle));
     this.reportingManager.set(emptyIfDash(record.ReportingManager));
     this.appraisalAuthority.set(emptyIfDash(record.AppraisalAuthority));
     this.appraisalPeriod.set(emptyIfDash(record.AppraisalPeriod));
     this.currentSalary.set(record.CurrentSalary ? String(record.CurrentSalary) : '');
-    this.evaluationDate.set(emptyIfDash(record.EvaluationDate));
+    this.evaluationDate.set(emptyDate(record.EvaluationDate));
+    if (this.employeeId().trim() && this.employeeName().trim()) {
+      this.employeeProfileLoaded.set(true);
+    }
 
     const increment = record.Increment;
     this.incrementPercentage.set(
       increment.increment_percentage ? String(increment.increment_percentage) : '',
     );
-    this.incrementEffectiveDate.set(emptyIfDash(increment.increment_effective_date));
+    this.incrementEffectiveDate.set(emptyDate(increment.increment_effective_date));
     this.reasonForIncrement.set(emptyIfDash(increment.reason_for_increment));
     this.incrementAmount.set(increment.increment_amount ? String(increment.increment_amount) : '');
 
     const promotion = record.Promotion;
     this.promotionRecommended.set(yesNo(promotion.promotion_recommended));
     this.newDesignation.set(emptyIfDash(promotion.new_designation));
-    this.promotionEffectiveDate.set(emptyIfDash(promotion.promotion_effective_date));
+    this.promotionEffectiveDate.set(emptyDate(promotion.promotion_effective_date));
     this.promotionRemarks.set(emptyIfDash(promotion.remarks));
 
     this.existingBenefitsDetails.set(emptyIfDash(record.OtherBenefits.existing_benefits_details));
