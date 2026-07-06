@@ -502,7 +502,7 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label class="cjr-label-required">Institution:</label>
-              <input type="text" [ngModel]="edu.institute"
+              <input type="text" [ngModel]="educationSections()[i].institute"
                 (ngModelChange)="updateEducationField(i, 'institute', $event)"
                 [class.cjr-invalid]="showFieldError(educationFieldKey('Institute', i))"
                 (blur)="touch(educationFieldKey('Institute', i))" />
@@ -510,7 +510,7 @@
 
             <div class="cjr-row">
               <label class="cjr-label-required">Passing Year:</label>
-              <input type="text" inputmode="numeric" maxlength="4" [ngModel]="edu.passingYear"
+              <input type="text" inputmode="numeric" maxlength="4" [ngModel]="educationSections()[i].passingYear"
                 (ngModelChange)="updateEducationField(i, 'passingYear', $event)" (keydown)="onIntegerKeyDown($event)"
                 [class.cjr-invalid]="showFieldError(educationFieldKey('PassingYear', i))"
                 (blur)="touch(educationFieldKey('PassingYear', i))" />
@@ -518,19 +518,19 @@
 
             <div class="cjr-row">
               <label>From Date:</label>
-              <input type="date" [ngModel]="edu.fromDate" (ngModelChange)="updateEducationField(i, 'fromDate', $event)"
+              <input type="date" [ngModel]="educationSections()[i].fromDate" (ngModelChange)="updateEducationField(i, 'fromDate', $event)"
                 (blur)="touch('educationFromDate')" />
             </div>
 
             <div class="cjr-row">
               <label>To Date:</label>
-              <input type="date" [ngModel]="edu.toDate" (ngModelChange)="updateEducationField(i, 'toDate', $event)"
+              <input type="date" [ngModel]="educationSections()[i].toDate" (ngModelChange)="updateEducationField(i, 'toDate', $event)"
                 (blur)="touch('educationToDate')" />
             </div>
 
             <div class="cjr-row">
               <label>Subject:</label>
-              <input type="text" [ngModel]="edu.subject" (ngModelChange)="updateEducationField(i, 'subject', $event)"
+              <input type="text" [ngModel]="educationSections()[i].subject" (ngModelChange)="updateEducationField(i, 'subject', $event)"
                 (blur)="touch('educationSubject')" />
             </div>
           </div>
@@ -538,7 +538,7 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label class="cjr-label-required">Qualification:</label>
-              <input type="text" [ngModel]="edu.qualification"
+              <input type="text" [ngModel]="educationSections()[i].qualification"
                 (ngModelChange)="updateEducationField(i, 'qualification', $event)"
                 [class.cjr-invalid]="showFieldError(educationFieldKey('Qualification', i))"
                 (blur)="touch(educationFieldKey('Qualification', i))" />
@@ -546,21 +546,21 @@
 
             <div class="cjr-row">
               <label>Awarded Qualification:</label>
-              <input type="text" [ngModel]="edu.awardedQualification"
+              <input type="text" [ngModel]="educationSections()[i].awardedQualification"
                 (ngModelChange)="updateEducationField(i, 'awardedQualification', $event)"
                 (blur)="touch('educationAwardedQualification')" />
             </div>
 
             <div class="cjr-row">
               <label>Marks / Grades:</label>
-              <input type="text" [ngModel]="edu.marksGrades"
+              <input type="text" [ngModel]="educationSections()[i].marksGrades"
                 (ngModelChange)="updateEducationField(i, 'marksGrades', $event)"
                 (blur)="touch('educationMarksGrades')" />
             </div>
 
             <div class="cjr-row">
               <label>Notes:</label>
-              <input type="text" [ngModel]="edu.notes" (ngModelChange)="updateEducationField(i, 'notes', $event)"
+              <input type="text" [ngModel]="educationSections()[i].notes" (ngModelChange)="updateEducationField(i, 'notes', $event)"
                 (blur)="touch('educationNotes')" />
             </div>
           </div>

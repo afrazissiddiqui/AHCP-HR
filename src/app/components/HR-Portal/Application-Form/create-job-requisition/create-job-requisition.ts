@@ -178,6 +178,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly emergencyContactNumber = signal(''); // (XXXX-XXXXXXX)
   protected readonly street = signal(''); // OHEM.workStreet
   protected readonly streetNo = signal(''); // OHEM.StreetNoW
+  protected readonly buildingFloorRoom = signal('');
   protected readonly city = signal(''); // OHEM.workCity
   protected readonly state = signal<'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | ''>('');
   protected readonly country = signal(''); // OHEM.workCountr
@@ -289,6 +290,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly salaryStructure = signal('');
   protected readonly attendanceShiftManagement = signal('');
   protected readonly loanAdvancesForm = signal('');
+  protected readonly requestStatus = signal('Pending');
+  protected readonly hrLeaveManagementSetting = signal('Enabled');
 
   // Login Detail fields
   protected readonly employeeCode = signal(''); // Employee code
@@ -606,9 +609,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       employeeMaster: this.employeeMaster(),
       salaryStructure: this.salaryStructure(),
       attendanceShiftManagement: this.attendanceShiftManagement(),
-      leaveManagement: '',
+      leaveManagement: this.hrLeaveManagementSetting(),
       loanAdvancesForm: this.loanAdvancesForm(),
-      requestStatus: '',
+      requestStatus: this.requestStatus(),
     };
   }
 
@@ -953,6 +956,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       updated[sectionIndex] = row;
       return updated;
     });
+    this.cdr.markForCheck();
   }
 
   protected removeEducationSection(sectionIndex: number): void {
@@ -1430,7 +1434,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         emergencyContactNumber: this.emergencyContactNumber(),
         street: this.street(),
         streetNo: this.streetNo(),
-        buildingFloorRoom: '',
+        buildingFloorRoom: this.buildingFloorRoom(),
         city: this.city(),
         state: this.state(),
         country: this.country(),
@@ -1508,6 +1512,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
     const payload = this.applicationFormService.buildFlatEmployeeProfilePayload(detail, {
       jobSpecificationId: this.selectedJobSpecId().trim(),
+      education: this.educationSections().map((row) => ({ ...row })),
+      pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
     });
 
     const editId = this.editingApiId();
@@ -1567,7 +1573,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   private normalizeLoginStatus(value: string | number | null | undefined): '1' | '3' {
     const raw = String(value ?? '').trim().toLowerCase();
-    if (raw === '3' || raw === 'inactive') {
+    if (raw === '3' || raw === 'inactive' || raw === '0') {
       return '3';
     }
     return '1';
@@ -1596,6 +1602,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.emergencyContactNumber.set(detail.personalInfo.emergencyContactNumber);
     this.street.set(detail.personalInfo.street);
     this.streetNo.set(detail.personalInfo.streetNo);
+    this.buildingFloorRoom.set(detail.personalInfo.buildingFloorRoom ?? '');
     this.city.set(detail.personalInfo.city);
     this.state.set((detail.personalInfo.state as 'Punjab' | 'Sindh' | 'Khyber Pakhtunkhwa' | 'Balochistan' | '') ?? '');
     this.country.set(detail.personalInfo.country);
@@ -1747,6 +1754,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       this.salaryStructure.set(hrSettings.salaryStructure ?? '');
       this.attendanceShiftManagement.set(hrSettings.attendanceShiftManagement ?? '');
       this.loanAdvancesForm.set(hrSettings.loanAdvancesForm ?? '');
+      this.requestStatus.set(hrSettings.requestStatus?.trim() || 'Pending');
+      this.hrLeaveManagementSetting.set(hrSettings.leaveManagement?.trim() || 'Enabled');
     }
 
     this.employeeCode.set(detail.loginDetails.employeeCode || detail.loginDetails.userId);

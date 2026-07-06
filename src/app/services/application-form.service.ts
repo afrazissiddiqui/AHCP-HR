@@ -296,7 +296,7 @@ export interface EmployeeProfileAddPayload {
   jobSpecificationId?: string;
   personName: string;
   firstName: string;
-  middleName: string;
+  middleName: string | null;
   lastName: string;
   fatherOrHusbandName: string;
   gender: string;
@@ -313,43 +313,50 @@ export interface EmployeeProfileAddPayload {
   workGradeLevel?: string | null;
   employmentStatus: string;
   hiringManager: string | null;
+  remarks: string | null;
   department: string;
+  departmentInAhcp?: string | null;
   branchLocation: string;
-  branch?: string;
-  location?: string;
   designation: string;
   jobDescription: string;
   roleSalary: string;
+  email?: string | null;
+  cashSalaryPercentage: number | string | null;
   basicSalary: number | string;
   paymentMode: string;
   accountTitle: string;
   bankName: string;
-  branchName: string;
+  branchName: string | null;
   accountNo: string;
   accountType: string;
   effectiveDate: string;
-  taxPercentage: number | string;
+  taxPercentage: number | string | null;
   dateOfJoining: string;
   advancePercentAllowed: number | string;
-  loanAmountAllowed: number | string;
-  overTimeApplicable: 0 | 1;
-  allowancesApplicable: 0 | 1;
-  eobiApplicable: 0 | 1;
-  socialSecurityApplicable: 0 | 1;
+  loanAmountAllowed: number | string | null;
+  maximumLoanCapacity: number | string | null;
+  maximumAdvanceCapacity: number | string | null;
+  overTimeApplicable: boolean;
+  allowancesApplicable: boolean;
+  eobiApplicable: boolean;
+  socialSecurityApplicable: boolean;
   medicalAllowances: number | string;
-  fuelAllowances: number | string;
+  fuelAllowances: number | string | null;
   mobileAllowances: number | string;
   carAllowances: number | string;
   otherAllowances: number | string;
-  cashSalaryPercentage: number | string;
-  maximumAdvanceCapacity: number | string;
   fuelLimit: number | string | null;
-  remarks: string;
+  leaveEligibilityCriteria: string | null;
   leaveType: string;
   leaveDays: number | string;
   leavesAvailed: number | string;
   remainingLeaves: number | string;
   totalLeaves: number | string;
+  assetAllocated: string | null;
+  allocationStatus: string | null;
+  allocationDateType: string | null;
+  allocationDate: string | null;
+  assetRecovered: string | null;
   requestStatus: string;
   contactNumber: string;
   emergencyContactNumber: string;
@@ -365,8 +372,8 @@ export interface EmployeeProfileAddPayload {
     institution: string;
     passingYear: string;
     institute?: string;
-    fromDate?: string;
-    toDate?: string;
+    fromDate?: string | null;
+    toDate?: string | null;
     subject?: string;
     awardedQualification?: string;
     marksGrades?: string;
@@ -378,21 +385,22 @@ export interface EmployeeProfileAddPayload {
     duration: string;
     position?: string;
     duties?: string;
-    fromDate?: string;
-    toDate?: string;
+    fromDate?: string | null;
+    toDate?: string | null;
     lastSalary?: string;
     remarks?: string;
   }>;
-  attachments: Array<{ fileName: string; fileUrl: string; type?: string }>;
-  employeeMaster: number | string;
+  attachments: Array<{ fileName: string; fileUrl: string | null; type?: string }>;
+  employeeMaster: number | string | null;
   salaryStructure: string;
-  attendanceShiftManagement: string;
+  attendanceShiftManagement: string | null;
   leaveManagement: string;
-  loanAdvancesForm: string;
+  loanAdvancesForm: string | null;
   employeeCode: string;
   userId: number | string;
   loginEmployeeName: string;
   password: string;
+  status: number;
 }
 
 const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
@@ -664,12 +672,15 @@ export class ApplicationFormService {
   }
 
   addEmployeeProfile(payload: EmployeeProfileAddPayload): Observable<unknown> {
-    return this.http.post(EMPLOYEE_PROFILE_ADD_URL, payload);
+    return this.http.post(EMPLOYEE_PROFILE_ADD_URL, this.serializeEmployeeProfilePayload(payload));
   }
 
   updateEmployeeProfile(id: string | number, payload: EmployeeProfileAddPayload): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.post(`${EMPLOYEE_PROFILE_UPDATE_URL}/${identifier}`, payload);
+    return this.http.post(
+      `${EMPLOYEE_PROFILE_UPDATE_URL}/${identifier}`,
+      this.serializeEmployeeProfilePayload(payload),
+    );
   }
 
   deleteEmployeeProfile(id: string | number): Observable<unknown> {
@@ -691,12 +702,17 @@ export class ApplicationFormService {
   /** Serializes application form detail into the flat API payload shape. */
   buildFlatEmployeeProfilePayload(
     detail: ApplicationFormDetail,
-    options: { jobSpecificationId?: string } = {},
+    options: {
+      jobSpecificationId?: string;
+      education?: ApplicationFormEducationRow[];
+      pastExperience?: ApplicationFormPastExperienceRow[];
+    } = {},
   ): EmployeeProfileAddPayload {
     const personal = detail.personalInfo;
     const remuneration = detail.remuneration;
     const login = detail.loginDetails;
     const hr = detail.hrSettings;
+    const assets = detail.assets;
     const primaryLeave = detail.leaveManagement[0] ?? {
       leaveType: '',
       leavesAllocated: '',
@@ -730,18 +746,24 @@ export class ApplicationFormService {
       return formatDateToApiIso(trimmed);
     };
 
-    const toApiFlag = (value: string, defaultValue: 0 | 1 = 0): 0 | 1 => {
+    const toApiFlag = (value: string, defaultValue = false): boolean => {
       const normalized = value.trim().toLowerCase();
       if (!normalized) {
         return defaultValue;
       }
       if (normalized === 'yes' || normalized === 'true' || normalized === '1') {
-        return 1;
+        return true;
       }
       if (normalized === 'no' || normalized === 'false' || normalized === '0') {
-        return 0;
+        return false;
       }
       return defaultValue;
+    };
+
+    const toLoginStatusNumber = (): number => {
+      const raw = String(login.status ?? '').trim();
+      const parsed = Number.parseInt(raw, 10);
+      return Number.isFinite(parsed) ? parsed : 1;
     };
 
     const paymentModeForApi = (mode: string): string => {
@@ -764,8 +786,122 @@ export class ApplicationFormService {
     const branchCode = resolveBranchCode(
       personal.branchLocation || detail.requisition.location || '',
     );
-    const branchLabel = glAccountBranchLabel(branchCode) || branchCode;
-    const educationRows = detail.education.filter((row) =>
+    const educationSource = options.education ?? detail.education ?? [];
+    const experienceSource = options.pastExperience ?? detail.pastExperience ?? [];
+    const educationRows = this.filterEducationRows(educationSource);
+    const experienceRows = this.filterPastExperienceRows(experienceSource);
+    const mappedEducation = educationRows.map((row) =>
+      this.mapEducationRowForApi(row, toApiDate, toNullableString),
+    );
+    const mappedExperience = experienceRows.map((row) =>
+      this.mapPastExperienceRowForApi(row, toApiDate, toNullableString),
+    );
+
+    return {
+      jobSpecificationId: options.jobSpecificationId?.trim() || detail.requisition.reqId || undefined,
+      personName: personal.personName,
+      firstName: personal.firstName,
+      middleName: toNullableString(personal.middleName),
+      lastName: personal.lastName,
+      fatherOrHusbandName: personal.fatherOrHusbandName,
+      email: null,
+      gender: personal.gender,
+      maritalStatus: personal.maritalStatus,
+      dateOfBirth: toApiDate(personal.dateOfBirth) || personal.dateOfBirth,
+      nationality: personal.nationality,
+      religion: personal.religion,
+      bloodGroup: personal.bloodGroup,
+      nationalIdCardNo: personal.nationalIdCardNo,
+      incomeTaxNo: personal.incomeTaxNo,
+      employmentNature: personal.employmentNature,
+      employeeCategory: personal.employmentCategory,
+      employmentCategory: toNullableString(personal.employmentCategory),
+      workGradeLevel: toNullableString(personal.workGradeLevel || personal.roleSalary),
+      hiringManager: toNullableString(reportingManager),
+      remarks: toNullableString(personal.remarks),
+      employmentStatus:
+        normalizeEmploymentStatus(personal.employmentStatus) || 'Permanent',
+      department: personal.departmentInAhcp,
+      departmentInAhcp: null,
+      designation: personal.designation,
+      jobDescription: personal.jobDescription,
+      roleSalary: personal.roleSalary || personal.workGradeLevel,
+      cashSalaryPercentage: toNullableApiNumber(remuneration.cashSalaryPercentage),
+      basicSalary: toApiNumber(remuneration.basicSalary),
+      paymentMode: paymentModeForApi(remuneration.paymentMode),
+      accountTitle: remuneration.accountTitle,
+      bankName: remuneration.bankName,
+      branchName: toNullableString(remuneration.branchName),
+      branchLocation: branchCode,
+      accountNo: remuneration.accountNo,
+      accountType: remuneration.accountType,
+      effectiveDate: toApiDate(remuneration.effectiveDate),
+      taxPercentage: toNullableApiNumber(remuneration.taxPercentage),
+      dateOfJoining: toApiDate(remuneration.dateOfJoining),
+      advancePercentAllowed: toApiNumber(remuneration.advancePercentAllowed),
+      loanAmountAllowed: toNullableApiNumber(
+        remuneration.loanAmountAllowed || remuneration.maximumLoanCapacity,
+      ),
+      maximumLoanCapacity: toNullableApiNumber(remuneration.maximumLoanCapacity),
+      maximumAdvanceCapacity: toNullableApiNumber(remuneration.maximumAdvanceCapacity),
+      overTimeApplicable: toApiFlag(remuneration.overTimeApplicable),
+      allowancesApplicable: toApiFlag(remuneration.allowancesApplicable),
+      eobiApplicable: toApiFlag(remuneration.eobiApplicable),
+      socialSecurityApplicable: toApiFlag(remuneration.socialSecurityApplicable),
+      fuelLimit: toNullableApiNumber(remuneration.fuelLimit),
+      leaveType: primaryLeave.leaveType || remuneration.leaveType,
+      leaveDays: toApiNumber(leaveDays),
+      leavesAvailed: toApiNumber(leavesAvailed),
+      remainingLeaves: toApiNumber(remainingLeaves),
+      totalLeaves: toApiNumber(leaveDays || remuneration.totalLeaves),
+      leaveEligibilityCriteria: toNullableString(remuneration.leaveEligibilityCriteria),
+      medicalAllowances: toApiNumber(remuneration.medicalAllowances),
+      fuelAllowances: toNullableApiNumber(remuneration.fuelAllowances),
+      mobileAllowances: toApiNumber(remuneration.mobileAllowances),
+      carAllowances: toApiNumber(remuneration.carAllowances),
+      otherAllowances: toApiNumber(remuneration.otherAllowances),
+      assetAllocated: toNullableString(assets?.assetAllocated),
+      allocationStatus: toNullableString(assets?.allocationStatus),
+      allocationDateType: toNullableString(assets?.allocationDateType),
+      allocationDate: assets?.allocationDate?.trim()
+        ? toApiDate(assets.allocationDate)
+        : null,
+      assetRecovered:
+        assets?.allocationStatus?.trim().toLowerCase() === 'recovered'
+          ? 'Yes'
+          : null,
+      requestStatus: hr.requestStatus?.trim() || 'Pending',
+      contactNumber: personal.contactNumber,
+      emergencyContactNumber: personal.emergencyContactNumber,
+      street: personal.street,
+      streetNo: personal.streetNo,
+      buildingFloorRoom: toNullableString(personal.buildingFloorRoom) ?? '',
+      city: personal.city,
+      state: personal.state,
+      country: personal.country,
+      zipCode: personal.zipCode,
+      educationSections: mappedEducation,
+      pastExperienceSections: mappedExperience,
+      attachments: detail.attachments.map((row) => ({
+        fileName: row.fileName,
+        fileUrl: row.fileUrl || null,
+        type: row.type || row.attachmentFor,
+      })),
+      employeeMaster: toNullableApiNumber(hr.employeeMaster),
+      salaryStructure: hr.salaryStructure || personal.workGradeLevel || personal.roleSalary,
+      attendanceShiftManagement: toNullableString(hr.attendanceShiftManagement),
+      leaveManagement: hr.leaveManagement?.trim() || 'Enabled',
+      loanAdvancesForm: toNullableString(hr.loanAdvancesForm),
+      employeeCode: login.employeeCode,
+      userId: toApiNumber(login.userId) || login.userId,
+      loginEmployeeName: login.employeeName,
+      password: login.password,
+      status: toLoginStatusNumber(),
+    };
+  }
+
+  private filterEducationRows(rows: ApplicationFormEducationRow[]): ApplicationFormEducationRow[] {
+    return rows.filter((row) =>
       [
         row.qualification,
         row.institute,
@@ -779,7 +915,12 @@ export class ApplicationFormService {
         row.notes,
       ].some((value) => String(value ?? '').trim()),
     );
-    const experienceRows = detail.pastExperience.filter((row) =>
+  }
+
+  private filterPastExperienceRows(
+    rows: ApplicationFormPastExperienceRow[],
+  ): ApplicationFormPastExperienceRow[] {
+    return rows.filter((row) =>
       [
         row.company,
         row.position,
@@ -792,115 +933,101 @@ export class ApplicationFormService {
         row.lastSalary,
       ].some((value) => String(value ?? '').trim()),
     );
+  }
+
+  private mapEducationRowForApi(
+    row: ApplicationFormEducationRow,
+    toApiDate: (value: string) => string,
+    toNullableString: (value: string | undefined | null) => string | null,
+  ): EmployeeProfileAddPayload['educationSections'][number] {
+    const institution = sanitizeApiText(row.institution || row.institute);
+    const fromDate = toApiDate(row.fromDate);
+    const toDate = toApiDate(row.toDate);
 
     return {
-      jobSpecificationId: options.jobSpecificationId?.trim() || detail.requisition.reqId || undefined,
-      personName: personal.personName,
-      firstName: personal.firstName,
-      middleName: personal.middleName,
-      lastName: personal.lastName,
-      fatherOrHusbandName: personal.fatherOrHusbandName,
-      gender: personal.gender,
-      maritalStatus: personal.maritalStatus,
-      dateOfBirth: personal.dateOfBirth,
-      nationality: personal.nationality,
-      religion: personal.religion,
-      bloodGroup: personal.bloodGroup,
-      nationalIdCardNo: personal.nationalIdCardNo,
-      incomeTaxNo: personal.incomeTaxNo,
-      employmentNature: personal.employmentNature,
-      employeeCategory: personal.employmentCategory,
-      employmentCategory: personal.employmentCategory || null,
-      workGradeLevel: personal.workGradeLevel || personal.roleSalary || null,
-      employmentStatus:
-        normalizeEmploymentStatus(personal.employmentStatus) || 'Permanent',
-      hiringManager: toNullableString(reportingManager),
-      department: personal.departmentInAhcp,
-      branchLocation: branchCode,
-      branch: branchLabel,
-      location: branchLabel,
-      designation: personal.designation,
-      jobDescription: personal.jobDescription,
-      roleSalary: personal.roleSalary || personal.workGradeLevel,
-      basicSalary: toApiNumber(remuneration.basicSalary),
-      paymentMode: paymentModeForApi(remuneration.paymentMode),
-      accountTitle: remuneration.accountTitle,
-      bankName: remuneration.bankName,
-      branchName: remuneration.branchName,
-      accountNo: remuneration.accountNo,
-      accountType: remuneration.accountType,
-      effectiveDate: remuneration.effectiveDate,
-      taxPercentage: toApiNumber(remuneration.taxPercentage),
-      dateOfJoining: remuneration.dateOfJoining,
-      advancePercentAllowed: toApiNumber(remuneration.advancePercentAllowed),
-      loanAmountAllowed: toApiNumber(
-        remuneration.loanAmountAllowed || remuneration.maximumLoanCapacity,
-      ),
-      overTimeApplicable: toApiFlag(remuneration.overTimeApplicable, 0),
-      allowancesApplicable: toApiFlag(remuneration.allowancesApplicable, 0),
-      eobiApplicable: toApiFlag(remuneration.eobiApplicable, 0),
-      socialSecurityApplicable: toApiFlag(remuneration.socialSecurityApplicable, 0),
-      medicalAllowances: toApiNumber(remuneration.medicalAllowances),
-      fuelAllowances: toApiNumber(remuneration.fuelAllowances),
-      mobileAllowances: toApiNumber(remuneration.mobileAllowances),
-      carAllowances: toApiNumber(remuneration.carAllowances),
-      otherAllowances: toApiNumber(remuneration.otherAllowances),
-      cashSalaryPercentage: toApiNumber(remuneration.cashSalaryPercentage),
-      maximumAdvanceCapacity: toApiNumber(remuneration.maximumAdvanceCapacity),
-      fuelLimit: toNullableApiNumber(remuneration.fuelLimit),
-      remarks: personal.remarks,
-      leaveType: primaryLeave.leaveType || remuneration.leaveType,
-      leaveDays: toApiNumber(leaveDays),
-      leavesAvailed: toApiNumber(leavesAvailed),
-      remainingLeaves: toApiNumber(remainingLeaves),
-      totalLeaves: toApiNumber(leaveDays || remuneration.totalLeaves),
-      requestStatus: hr.requestStatus || 'Pending',
-      contactNumber: personal.contactNumber,
-      emergencyContactNumber: personal.emergencyContactNumber,
-      street: personal.street,
-      streetNo: personal.streetNo,
-      buildingFloorRoom: personal.buildingFloorRoom,
-      city: personal.city,
-      state: personal.state,
-      country: personal.country,
-      zipCode: personal.zipCode,
-      educationSections: educationRows.map((row) => ({
-        qualification: row.qualification,
-        institution: row.institution || row.institute,
-        institute: row.institute || row.institution,
-        passingYear: row.passingYear,
-        fromDate: toApiDate(row.fromDate),
-        toDate: toApiDate(row.toDate),
-        subject: row.subject,
-        awardedQualification: row.awardedQualification,
-        marksGrades: row.marksGrades,
-        notes: row.notes,
-      })),
-      pastExperienceSections: experienceRows.map((row) => ({
-        company: row.company,
-        designation: row.designation || row.position,
-        position: row.position || row.designation,
-        duration: row.duration,
-        duties: row.duties,
-        fromDate: toApiDate(row.fromDate),
-        toDate: toApiDate(row.toDate),
-        lastSalary: row.lastSalary,
-        remarks: row.remarks,
-      })),
-      attachments: detail.attachments.map((row) => ({
-        fileName: row.fileName,
-        fileUrl: row.fileUrl,
-        type: row.type || row.attachmentFor,
-      })),
-      employeeMaster: toApiNumber(hr.employeeMaster),
-      salaryStructure: hr.salaryStructure || personal.workGradeLevel || personal.roleSalary,
-      attendanceShiftManagement: hr.attendanceShiftManagement,
-      leaveManagement: hr.leaveManagement || 'Enabled',
-      loanAdvancesForm: hr.loanAdvancesForm,
-      employeeCode: login.employeeCode,
-      userId: toApiNumber(login.userId) || login.userId,
-      loginEmployeeName: login.employeeName,
-      password: login.password,
+      qualification: sanitizeApiText(row.qualification),
+      institution,
+      institute: institution,
+      passingYear: sanitizeApiText(row.passingYear),
+      fromDate: fromDate || null,
+      toDate: toDate || null,
+      subject: toNullableString(row.subject) ?? '',
+      awardedQualification: toNullableString(row.awardedQualification) ?? '',
+      marksGrades: toNullableString(row.marksGrades) ?? '',
+      notes: toNullableString(row.notes) ?? '',
+    };
+  }
+
+  private mapPastExperienceRowForApi(
+    row: ApplicationFormPastExperienceRow,
+    toApiDate: (value: string) => string,
+    toNullableString: (value: string | undefined | null) => string | null,
+  ): EmployeeProfileAddPayload['pastExperienceSections'][number] {
+    const designation = sanitizeApiText(row.designation || row.position);
+    const fromDate = toApiDate(row.fromDate);
+    const toDate = toApiDate(row.toDate);
+
+    return {
+      company: sanitizeApiText(row.company),
+      designation,
+      position: designation,
+      duration: sanitizeApiText(row.duration),
+      duties: toNullableString(row.duties) ?? '',
+      fromDate: fromDate || null,
+      toDate: toDate || null,
+      lastSalary: toNullableString(row.lastSalary) ?? '',
+      remarks: toNullableString(row.remarks) ?? '',
+    };
+  }
+
+  private mapEducationSectionsSnakeCase(
+    rows: EmployeeProfileAddPayload['educationSections'],
+  ): Array<Record<string, string | null>> {
+    return rows.map((row) => ({
+      qualification: row.qualification || null,
+      institution: row.institution || row.institute || null,
+      institute: row.institute || row.institution || null,
+      passing_year: row.passingYear || null,
+      from_date: row.fromDate || null,
+      to_date: row.toDate || null,
+      subject: row.subject || null,
+      awarded_qualification: row.awardedQualification || null,
+      marks_grades: row.marksGrades || null,
+      notes: row.notes || null,
+    }));
+  }
+
+  private mapPastExperienceSectionsSnakeCase(
+    rows: EmployeeProfileAddPayload['pastExperienceSections'],
+  ): Array<Record<string, string | null>> {
+    return rows.map((row) => ({
+      company: row.company || null,
+      designation: row.designation || row.position || null,
+      position: row.position || row.designation || null,
+      duration: row.duration || null,
+      duties: row.duties || null,
+      from_date: row.fromDate || null,
+      to_date: row.toDate || null,
+      last_salary: row.lastSalary || null,
+      remarks: row.remarks || null,
+    }));
+  }
+
+  /** Ensures section arrays are sent in every shape the backend may accept. */
+  private serializeEmployeeProfilePayload(
+    payload: EmployeeProfileAddPayload,
+  ): Record<string, unknown> {
+    const educationSections = payload.educationSections ?? [];
+    const pastExperienceSections = payload.pastExperienceSections ?? [];
+
+    return {
+      ...payload,
+      educationSections,
+      education_sections: this.mapEducationSectionsSnakeCase(educationSections),
+      education: educationSections,
+      pastExperienceSections,
+      past_experience_sections: this.mapPastExperienceSectionsSnakeCase(pastExperienceSections),
+      pastExperience: pastExperienceSections,
     };
   }
 
