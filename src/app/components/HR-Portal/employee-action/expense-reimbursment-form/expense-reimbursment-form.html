@@ -99,11 +99,9 @@
             <div class="js-detail-section">
               <h3>Expense Detail</h3>
               <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Form Number:</label> <span>{{ record.ExpenseDetail.formNumber }}</span></div>
-                <div class="js-detail-item"><label>Employee ID:</label> <span>{{ record.ExpenseDetail.employeeID }}</span></div>
-                <div class="js-detail-item"><label>Employee Name:</label> <span>{{ record.ExpenseDetail.employeeName }}</span></div>
-                <div class="js-detail-item"><label>Department:</label> <span>{{ record.ExpenseDetail.department }}</span></div>
                 <div class="js-detail-item"><label>Expense Type:</label> <span>{{ record.ExpenseDetail.expenseType }}</span></div>
+                <div class="js-detail-item"><label>From Date:</label> <span>{{ record.ExpenseDetail.fromDate }}</span></div>
+                <div class="js-detail-item"><label>To Date:</label> <span>{{ record.ExpenseDetail.toDate }}</span></div>
                 <div class="js-detail-item"><label>Claim Amount:</label> <span>{{ record.ExpenseDetail.claimAmount }}</span></div>
                 <div class="js-detail-item"><label>Claim Date:</label> <span>{{ formatClaimDate(record.ExpenseDetail.claimDate) }}</span></div>
                 <div class="js-detail-item"><label>Approval Status:</label> <span>{{ record.ExpenseDetail.approvalStatus }}</span></div>
@@ -111,21 +109,6 @@
               <div class="js-detail-full" *ngIf="record.ExpenseDetail.remarks">
                 <label>Remarks:</label>
                 <p>{{ record.ExpenseDetail.remarks }}</p>
-              </div>
-            </div>
-            <div class="js-detail-section">
-              <h3>Travel</h3>
-              <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Travel From Date:</label> <span>{{ record.Travel.travelFromDate }}</span></div>
-                <div class="js-detail-item"><label>Travel To Date:</label> <span>{{ record.Travel.travelToDate }}</span></div>
-                <div class="js-detail-item"><label>Daily Allowance Applicable:</label> <span>{{ record.Travel.dailyAllowanceApplicable }}</span></div>
-                <div class="js-detail-item"><label>Daily Allowance Rate:</label> <span>{{ record.Travel.dailyAllowanceRate }}</span></div>
-                <div class="js-detail-item"><label>Number of Days:</label> <span>{{ record.Travel.numberOfDays }}</span></div>
-                <div class="js-detail-item"><label>Daily Allowance Amount:</label> <span>{{ record.Travel.dailyAllowanceAmount }}</span></div>
-              </div>
-              <div class="js-detail-full" *ngIf="record.Travel.remarks">
-                <label>Remarks:</label>
-                <p>{{ record.Travel.remarks }}</p>
               </div>
             </div>
             </ng-container>

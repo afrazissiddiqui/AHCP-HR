@@ -21,6 +21,8 @@ export interface ExpenseDetailPayload {
   department: string;
   expenseType: string;
   claimAmount: string;
+  fromDate: string;
+  toDate: string;
   claimDate: string;
   approvalStatus: string;
   remarks: string;
@@ -68,6 +70,10 @@ export interface ExpenseReimbursementRecord {
   ExpenseType: string;
   /** expenseDetail.claimAmount */
   ClaimAmount: string;
+  /** expenseDetail.fromDate */
+  FromDate: string;
+  /** expenseDetail.toDate */
+  ToDate: string;
   /** expenseDetail.claimDate */
   ClaimDate: string;
   /** expenseDetail.approvalStatus */
@@ -95,6 +101,18 @@ const EXPENSE_REIMBURSEMENT_ADD_URL = apiUrl('expense-reimbursement-add');
 const EXPENSE_REIMBURSEMENT_UPDATE_URL = apiUrl('expense-reimbursement-update');
 const EXPENSE_REIMBURSEMENT_DETAIL_URL = apiUrl('expense-reimbursement-detail');
 const EXPENSE_REIMBURSEMENT_DELETE_URL = apiUrl('expense-reimbursement-delete');
+
+export function createEmptyExpenseTravelPayload(): ExpenseTravelPayload {
+  return {
+    travelFromDate: '',
+    travelToDate: '',
+    dailyAllowanceApplicable: 'No',
+    dailyAllowanceRate: '',
+    numberOfDays: '',
+    dailyAllowanceAmount: '',
+    remarks: '',
+  };
+}
 
 export function buildExpenseReimbursementSubmitPayload(
   draft: ExpenseReimbursementAddPayload,
@@ -129,6 +147,8 @@ export function buildExpenseReimbursementSubmitPayload(
       department,
       expenseType: draft.expenseDetail.expenseType.trim(),
       claimAmount: draft.expenseDetail.claimAmount.trim(),
+      fromDate: draft.expenseDetail.fromDate.trim(),
+      toDate: draft.expenseDetail.toDate.trim(),
       claimDate: draft.expenseDetail.claimDate.trim(),
       approvalStatus: draft.expenseDetail.approvalStatus.trim() || 'Pending',
       remarks: draft.expenseDetail.remarks.trim(),
@@ -159,18 +179,15 @@ export function buildExpenseReimbursementDraftFromForm(input: {
   detailDepartment: string;
   expenseType: string;
   claimAmount: string;
+  expenseFromDate: string;
+  expenseToDate: string;
   claimDate: string;
   approvalStatus: string;
   expenseRemarks: string;
-  travelFromDate: string;
-  travelToDate: string;
-  dailyAllowanceApplicable: string;
-  dailyAllowanceRate: string;
-  numberOfDays: string;
-  dailyAllowanceAmount: string;
-  travelRemarks: string;
+  travel?: ExpenseTravelPayload;
 }): ExpenseReimbursementAddPayload {
   const formNumber = input.formNumber.trim();
+  const travel = input.travel ?? createEmptyExpenseTravelPayload();
 
   return {
     headerFields: {
@@ -190,18 +207,20 @@ export function buildExpenseReimbursementDraftFromForm(input: {
       department: input.detailDepartment || input.headerDepartment,
       expenseType: input.expenseType,
       claimAmount: input.claimAmount,
+      fromDate: input.expenseFromDate,
+      toDate: input.expenseToDate,
       claimDate: input.claimDate,
       approvalStatus: input.approvalStatus,
       remarks: input.expenseRemarks,
     },
     travel: {
-      travelFromDate: input.travelFromDate,
-      travelToDate: input.travelToDate,
-      dailyAllowanceApplicable: input.dailyAllowanceApplicable,
-      dailyAllowanceRate: input.dailyAllowanceRate,
-      numberOfDays: input.numberOfDays,
-      dailyAllowanceAmount: input.dailyAllowanceAmount,
-      remarks: input.travelRemarks,
+      travelFromDate: travel.travelFromDate,
+      travelToDate: travel.travelToDate,
+      dailyAllowanceApplicable: travel.dailyAllowanceApplicable,
+      dailyAllowanceRate: travel.dailyAllowanceRate,
+      numberOfDays: travel.numberOfDays,
+      dailyAllowanceAmount: travel.dailyAllowanceAmount,
+      remarks: travel.remarks,
     },
   };
 }
@@ -439,6 +458,8 @@ export class ExpenseReimbursementService {
         headerFields.department,
       expenseType: this.pickString(sources, ['expenseType', 'expense_type', 'ExpenseType']),
       claimAmount: this.pickString(sources, ['claimAmount', 'claim_amount', 'ClaimAmount']),
+      fromDate: this.pickString(sources, ['fromDate', 'from_date', 'FromDate']),
+      toDate: this.pickString(sources, ['toDate', 'to_date', 'ToDate']),
       claimDate: this.pickString(sources, ['claimDate', 'claim_date', 'ClaimDate']),
       approvalStatus:
         this.pickString(sources, ['approvalStatus', 'approval_status', 'ApprovalStatus']) ||
@@ -486,6 +507,8 @@ export class ExpenseReimbursementService {
       SubmissionDate: headerFields.submissionDate || '—',
       ExpenseType: expenseDetail.expenseType || '—',
       ClaimAmount: expenseDetail.claimAmount || '—',
+      FromDate: expenseDetail.fromDate || '—',
+      ToDate: expenseDetail.toDate || '—',
       ClaimDate: expenseDetail.claimDate || '—',
       ApprovalStatus: expenseDetail.approvalStatus || '—',
       TravelFromDate: travel.travelFromDate || '—',

@@ -28,26 +28,18 @@
           <span class="scd-form-hero__title">Expense Reimbursement</span>
         </div>
         <div class="scd-form-hero__steps">
-          <span class="scd-step-chip scd-step-chip--active">
+          <span class="scd-step-chip scd-step-chip--active" [class.scd-step-chip--ready]="formNumber().trim()">
             <span class="scd-step-chip__num">1</span>
             Header Info
           </span>
           <span class="scd-step-chip__connector" aria-hidden="true"></span>
           <span
             class="scd-step-chip"
-            [class.scd-step-chip--active]="employeeCode().trim() && headerEmployeeName().trim()"
-            [class.scd-step-chip--ready]="formNumber().trim()"
+            [class.scd-step-chip--active]="expenseType().trim() || claimAmount().trim()"
+            [class.scd-step-chip--ready]="expenseType().trim()"
           >
             <span class="scd-step-chip__num">2</span>
             Expense Detail
-          </span>
-          <span class="scd-step-chip__connector" aria-hidden="true"></span>
-          <span
-            class="scd-step-chip"
-            [class.scd-step-chip--active]="expenseType().trim() || claimAmount().trim()"
-          >
-            <span class="scd-step-chip__num">3</span>
-            Travel
           </span>
         </div>
       </div>
@@ -60,7 +52,7 @@
           [class.cjr-section-nav-item--active]="activeSection() === 'er-header-section'"
           (click)="scrollToSection('er-header-section')"
         >
-          Header information
+          Employee Information
         </li>
         <li
           class="cjr-section-nav-item"
@@ -68,13 +60,6 @@
           (click)="scrollToSection('er-expense-detail-section')"
         >
           Expense detail
-        </li>
-        <li
-          class="cjr-section-nav-item"
-          [class.cjr-section-nav-item--active]="activeSection() === 'er-travel-section'"
-          (click)="scrollToSection('er-travel-section')"
-        >
-          Travel
         </li>
       </ul>
     </nav>
@@ -89,13 +74,24 @@
             </svg>
           </span>
           <div class="mad-form-panel__titles">
-            <h2 class="cjr-section-title mad-form-panel__title">Header Information</h2>
+            <h2 class="cjr-section-title mad-form-panel__title">Employee Information</h2>
             <span class="mad-form-panel__subtitle">Employee identity, claim period, and submission details</span>
           </div>
         </div>
 
         <div class="cjr-personal-grid">
           <div class="cjr-personal-col">
+            <div class="cjr-row">
+              <label class="cjr-label-required">Form Number:</label>
+              <input
+                type="text"
+                [ngModel]="formNumber()"
+                (ngModelChange)="onFormNumberChange($event)"
+                placeholder="e.g. FRM-1001"
+                [class.cjr-invalid]="isFieldInvalid('formNumber')"
+              />
+            </div>
+
             <div class="cjr-row">
               <label class="cjr-label-required">Employee Code:</label>
               <div class="employee-search-wrap">
@@ -194,17 +190,6 @@
             </div>
 
             <div class="cjr-row">
-              <label class="cjr-label-required">Form Number:</label>
-              <input
-                type="text"
-                [ngModel]="formNumber()"
-                (ngModelChange)="onFormNumberChange($event)"
-                placeholder="e.g. FRM-1001"
-                [class.cjr-invalid]="isFieldInvalid('formNumber')"
-              />
-            </div>
-
-            <div class="cjr-row">
               <label>Submission Date:</label>
               <input type="date" [ngModel]="submissionDate()" (ngModelChange)="submissionDate.set($event)" />
             </div>
@@ -224,32 +209,12 @@
           </span>
           <div class="mad-form-panel__titles">
             <h2 class="cjr-section-title mad-form-panel__title">Expense Detail</h2>
-            <span class="mad-form-panel__subtitle">Claim type, amount, date, and supporting remarks</span>
+            <span class="mad-form-panel__subtitle">Claim type, amount, period, and supporting remarks</span>
           </div>
         </div>
 
         <div class="cjr-personal-grid">
           <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label>Form Number:</label>
-              <input type="text" [value]="formNumber()" readonly />
-            </div>
-
-            <div class="cjr-row">
-              <label>Employee ID:</label>
-              <input type="text" [ngModel]="employeeId()" (ngModelChange)="employeeId.set($event)" placeholder="e.g. EMP-001" />
-            </div>
-
-            <div class="cjr-row">
-              <label>Employee Name:</label>
-              <input type="text" [ngModel]="detailEmployeeName()" (ngModelChange)="onDetailEmployeeNameInput($event)" />
-            </div>
-
-            <div class="cjr-row">
-              <label>Department:</label>
-              <input type="text" [ngModel]="detailDepartment()" (ngModelChange)="detailDepartment.set($event)" />
-            </div>
-
             <div class="cjr-row">
               <label class="cjr-label-required">Expense Type:</label>
               <select
@@ -263,12 +228,22 @@
                 }
               </select>
             </div>
+
+            <div class="cjr-row">
+              <label>From Date:</label>
+              <input type="date" [ngModel]="expenseFromDate()" (ngModelChange)="expenseFromDate.set($event)" />
+            </div>
+
+            <div class="cjr-row">
+              <label>Claim Amount:</label>
+              <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" placeholder="e.g. 5000" />
+            </div>
           </div>
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Claim Amount:</label>
-              <input type="text" [ngModel]="claimAmount()" (ngModelChange)="claimAmount.set($event)" placeholder="e.g. 5000" />
+              <label>To Date:</label>
+              <input type="date" [ngModel]="expenseToDate()" (ngModelChange)="expenseToDate.set($event)" />
             </div>
 
             <div class="cjr-row">
@@ -288,72 +263,6 @@
         <div class="cjr-row cjr-row--remarks">
           <label>Remarks:</label>
           <textarea rows="3" [ngModel]="expenseRemarks()" (ngModelChange)="expenseRemarks.set($event)" placeholder="Expense remarks"></textarea>
-        </div>
-      </section>
-
-      <section class="mad-form-panel" id="er-travel-section">
-        <div class="mad-form-panel__heading">
-          <span class="mad-form-panel__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-          </span>
-          <div class="mad-form-panel__titles">
-            <h2 class="cjr-section-title mad-form-panel__title">Travel</h2>
-            <span class="mad-form-panel__subtitle">Travel dates, daily allowance, and related notes</span>
-          </div>
-        </div>
-
-        <div class="cjr-personal-grid">
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label>Travel From Date:</label>
-              <input type="date" [ngModel]="travelFromDate()" (ngModelChange)="travelFromDate.set($event)" />
-            </div>
-
-            <div class="cjr-row">
-              <label>Travel To Date:</label>
-              <input type="date" [ngModel]="travelToDate()" (ngModelChange)="travelToDate.set($event)" />
-            </div>
-
-            <div class="cjr-row">
-              <label>Daily Allowance Applicable:</label>
-              <select [ngModel]="dailyAllowanceApplicable()" (ngModelChange)="dailyAllowanceApplicable.set($event)">
-                <option value="">Select</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label>Daily Allowance Rate:</label>
-              <input
-                type="text"
-                [ngModel]="dailyAllowanceRate()"
-                (ngModelChange)="dailyAllowanceRate.set($event)"
-                placeholder="e.g. 3000"
-                [disabled]="dailyAllowanceApplicable() !== 'Yes'"
-              />
-            </div>
-
-            <div class="cjr-row">
-              <label>Number of Days:</label>
-              <input type="text" [value]="numberOfDays()" readonly />
-            </div>
-
-            <div class="cjr-row">
-              <label>Daily Allowance Amount:</label>
-              <input type="text" [value]="dailyAllowanceAmount()" readonly />
-            </div>
-          </div>
-        </div>
-
-        <div class="cjr-row cjr-row--remarks">
-          <label>Remarks:</label>
-          <textarea rows="3" [ngModel]="travelRemarks()" (ngModelChange)="travelRemarks.set($event)" placeholder="Travel remarks"></textarea>
         </div>
       </section>
     </div>

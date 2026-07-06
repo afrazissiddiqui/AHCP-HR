@@ -4,7 +4,6 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
-  computed,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -18,12 +17,15 @@ import { finalize } from 'rxjs';
 import {
   ExpenseReimbursementRecord,
   ExpenseReimbursementService,
+  ExpenseTravelPayload,
   buildExpenseReimbursementDraftFromForm,
   buildExpenseReimbursementSubmitPayload,
+  createEmptyExpenseTravelPayload,
 } from '../../../../../services/expense-reimbursement.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   formatDateDdMmYyyyInput,
+  formatDateForInput,
   formatDateOfBirthFromApi,
   formatDateOfBirthToApi,
 } from '../../../../../utils/date-format.util';
@@ -59,8 +61,8 @@ export class AddExpenseReimbursmentComponent implements OnInit {
 
   get pageSubtitle(): string {
     return this.editingId
-      ? 'Update expense claim details, reimbursement amounts, and travel allowance.'
-      : 'Submit employee expense claims with header, expense detail, and travel information.';
+      ? 'Update expense claim details and reimbursement amounts.'
+      : 'Submit employee expense claims with header and expense detail information.';
   }
 
   protected readonly expenseTypeOptions = ['Fuel', 'Travel', 'Medical', 'Meals', 'Utilities', 'Lodging', 'Other'] as const;
@@ -70,6 +72,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
   protected readonly headerDepartment = signal('');
   protected readonly designation = signal('');
   private readonly preservedCostCenter = signal('');
+  private readonly preservedTravel = signal<ExpenseTravelPayload>(createEmptyExpenseTravelPayload());
 
   protected readonly claimMonth = signal('');
   protected readonly formNumber = signal('');
@@ -80,55 +83,23 @@ export class AddExpenseReimbursmentComponent implements OnInit {
   protected readonly detailDepartment = signal('');
   protected readonly expenseType = signal('');
   protected readonly claimAmount = signal('');
+  protected readonly expenseFromDate = signal('');
+  protected readonly expenseToDate = signal('');
   protected readonly claimDate = signal('');
   protected readonly approvalStatus = signal('Pending');
   protected readonly expenseRemarks = signal('');
-
-  protected readonly travelFromDate = signal('');
-  protected readonly travelToDate = signal('');
-  protected readonly dailyAllowanceApplicable = signal<'Yes' | 'No' | ''>('');
-  protected readonly dailyAllowanceRate = signal('');
-  protected readonly travelRemarks = signal('');
 
   private readonly employeeOptions = signal<ExpenseEmployeeOption[]>([]);
   protected readonly codeSuggestionsOpen = signal(false);
   protected readonly nameSuggestionsOpen = signal(false);
 
-  protected readonly codeSuggestions = computed(() =>
-    this.filterEmployeeSuggestions(this.employeeCode()),
-  );
+  protected codeSuggestions(): ExpenseEmployeeOption[] {
+    return this.filterEmployeeSuggestions(this.employeeCode());
+  }
 
-  protected readonly nameSuggestions = computed(() =>
-    this.filterEmployeeSuggestions(this.headerEmployeeName()),
-  );
-
-  protected readonly numberOfDays = computed(() => {
-    const from = this.travelFromDate();
-    const to = this.travelToDate();
-    if (!from || !to) {
-      return '';
-    }
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime()) || toDate < fromDate) {
-      return '';
-    }
-    const diffMs = toDate.getTime() - fromDate.getTime();
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    return String(days);
-  });
-
-  protected readonly dailyAllowanceAmount = computed(() => {
-    if (this.dailyAllowanceApplicable() !== 'Yes') {
-      return '';
-    }
-    const days = Number(this.numberOfDays() || '0');
-    const rate = Number(this.dailyAllowanceRate() || '0');
-    if (!Number.isFinite(days) || !Number.isFinite(rate) || days <= 0 || rate <= 0) {
-      return '';
-    }
-    return String(days * rate);
-  });
+  protected nameSuggestions(): ExpenseEmployeeOption[] {
+    return this.filterEmployeeSuggestions(this.headerEmployeeName());
+  }
 
   constructor(
     private readonly router: Router,
@@ -322,16 +293,12 @@ export class AddExpenseReimbursmentComponent implements OnInit {
       detailDepartment: this.detailDepartment() || this.headerDepartment(),
       expenseType: this.expenseType(),
       claimAmount: this.claimAmount(),
+      expenseFromDate: this.expenseFromDate(),
+      expenseToDate: this.expenseToDate(),
       claimDate: formatDateOfBirthToApi(this.claimDate().replace(/\//g, '-')),
       approvalStatus: this.approvalStatus(),
       expenseRemarks: this.expenseRemarks(),
-      travelFromDate: this.travelFromDate(),
-      travelToDate: this.travelToDate(),
-      dailyAllowanceApplicable: this.dailyAllowanceApplicable(),
-      dailyAllowanceRate: this.dailyAllowanceRate(),
-      numberOfDays: this.numberOfDays(),
-      dailyAllowanceAmount: this.dailyAllowanceAmount(),
-      travelRemarks: this.travelRemarks(),
+      travel: this.editingId ? this.preservedTravel() : createEmptyExpenseTravelPayload(),
     });
 
     const payload = buildExpenseReimbursementSubmitPayload(draft);
@@ -424,8 +391,6 @@ export class AddExpenseReimbursmentComponent implements OnInit {
 
   private populateFromRecord(record: ExpenseReimbursementRecord): void {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
-    const yesNo = (value: string): 'Yes' | 'No' | '' =>
-      value === 'Yes' || value === 'No' ? value : '';
 
     const header = record.HeaderFields;
     this.employeeCode.set(emptyIfDash(header.employeeCode));
@@ -443,15 +408,11 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     this.detailDepartment.set(emptyIfDash(detail.department));
     this.expenseType.set(emptyIfDash(detail.expenseType));
     this.claimAmount.set(emptyIfDash(detail.claimAmount));
+    this.expenseFromDate.set(formatDateForInput(emptyIfDash(detail.fromDate)));
+    this.expenseToDate.set(formatDateForInput(emptyIfDash(detail.toDate)));
     this.claimDate.set(formatDateOfBirthFromApi(emptyIfDash(detail.claimDate)).replace(/-/g, '/'));
     this.approvalStatus.set(emptyIfDash(detail.approvalStatus) || 'Pending');
     this.expenseRemarks.set(emptyIfDash(detail.remarks));
-
-    const travel = record.Travel;
-    this.travelFromDate.set(emptyIfDash(travel.travelFromDate));
-    this.travelToDate.set(emptyIfDash(travel.travelToDate));
-    this.dailyAllowanceApplicable.set(yesNo(travel.dailyAllowanceApplicable));
-    this.dailyAllowanceRate.set(emptyIfDash(travel.dailyAllowanceRate));
-    this.travelRemarks.set(emptyIfDash(travel.remarks));
+    this.preservedTravel.set({ ...record.Travel });
   }
 }
