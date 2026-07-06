@@ -692,7 +692,10 @@ export class ApplicationFormService {
   fetchEmployeeProfiles(): Observable<ApplicationFormRecord[]> {
     return this.http.get<unknown>(EMPLOYEE_PROFILE_LIST_URL).pipe(
       map((response) =>
-        this.extractApiItems(response).map((item) => this.mapApiItemToFullRecord(item)),
+        this.extractApiItems(response).map((item) => {
+          const normalized = this.normalizeEmployeeProfileItem(item) ?? item;
+          return this.mapApiItemToFullRecord(normalized);
+        }),
       ),
       tap((records) => {
         this.applicationRecords.set(records);
@@ -1023,6 +1026,7 @@ export class ApplicationFormService {
 
     return {
       ...payload,
+      fuel_limit: payload.fuelLimit,
       educationSections,
       education_sections: this.mapEducationSectionsSnakeCase(educationSections),
       education: educationSections,
@@ -1421,7 +1425,36 @@ export class ApplicationFormService {
       return fromRemuneration;
     }
 
-    return this.pickRemunerationValue(item, camel, snake);
+    const fromItem = this.pickRemunerationValue(item, camel, snake);
+    if (fromItem !== '') {
+      return fromItem;
+    }
+
+    const fromRemNumeric = this.pickFieldValue(remunerationSource, camel, snake);
+    if (fromRemNumeric !== '') {
+      return fromRemNumeric;
+    }
+
+    return this.pickFieldValue(item, camel, snake);
+  }
+
+  /** Maps API `fuelLimit` (number | string | null) to form display text. */
+  formatFuelLimitForForm(value: string | number | null | undefined): string {
+    if (value === undefined || value === null) {
+      return '';
+    }
+
+    const text = String(value).trim();
+    if (!text || text.toLowerCase() === 'null') {
+      return '';
+    }
+
+    const numeric = Number.parseFloat(text.replace(/,/g, ''));
+    if (Number.isFinite(numeric)) {
+      return Number.isInteger(numeric) ? String(numeric) : String(numeric);
+    }
+
+    return text;
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
@@ -1873,7 +1906,11 @@ export class ApplicationFormService {
         socialSecurityApplicable: this.yesNoFromApi(
           pickRem('socialSecurityApplicable', 'social_security_applicable'),
         ),
-        fuelLimit: asNumberString(pickRem('fuelLimit', 'fuel_limit')),
+        fuelLimit: this.formatFuelLimitForForm(
+          pickRem('fuelLimit', 'fuel_limit') ||
+            asNumberString(item['fuelLimit']) ||
+            asNumberString(item['fuel_limit']),
+        ),
         leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },
       leaveManagement: this.mapLeaveManagementRows(item, {

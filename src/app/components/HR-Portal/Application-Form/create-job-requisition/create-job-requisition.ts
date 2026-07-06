@@ -1724,7 +1724,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.socialSecurityApplicable.set(
       (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',
     );
-    this.fuelLimit.set(remuneration.fuelLimit ?? '');
+    this.fuelLimit.set(this.applicationFormService.formatFuelLimitForForm(remuneration.fuelLimit));
 
     const leaveRows = detail.leaveManagement?.length
       ? detail.leaveManagement
