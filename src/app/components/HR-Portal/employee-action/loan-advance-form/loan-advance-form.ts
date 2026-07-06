@@ -12,7 +12,6 @@ import { displayDateSlash } from '../../../../utils/date-format.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   LOAN_ADVANCE_TABLE_FILTER,
-  TableFilterComponent,
   TableFilterService,
 } from '../../../table-filter';
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
@@ -26,7 +25,7 @@ type LoanColumnKey = Exclude<
 @Component({
   selector: 'app-loan-advance-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent, TableFilterComponent],
+  imports: [CommonModule, FormsModule, ColumnResizeDirective, SidebarComponent, PageToolbarComponent],
   templateUrl: './loan-advance-form.html',
   styleUrls: ['../../Application-Form/Application-Form.css'],
   styles: [`
