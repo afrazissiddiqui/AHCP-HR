@@ -26,6 +26,26 @@ export interface PerformanceAllowanceRowPayload {
   revised: number;
 }
 
+export const PERFORMANCE_ALLOWANCE_FIELD_LABELS: Readonly<Record<string, string>> = {
+  fuelLimit: 'Fuel Limit (liter)',
+  fuel_limit: 'Fuel Limit (liter)',
+  'Fuel Limit (liter)': 'Fuel Limit (liter)',
+  mobileAllowances: 'Mobile Allowances',
+  mobile_allowances: 'Mobile Allowances',
+  'Mobile Allowances': 'Mobile Allowances',
+  carAllowances: 'Car Allowances',
+  car_allowances: 'Car Allowances',
+  'Car Allowances': 'Car Allowances',
+  otherAllowances: 'Other Allowances',
+  other_allowances: 'Other Allowances',
+  'Other Allowances': 'Other Allowances',
+};
+
+export function getPerformanceAllowanceLabel(key: string): string {
+  const trimmed = key.trim();
+  return PERFORMANCE_ALLOWANCE_FIELD_LABELS[trimmed] ?? trimmed;
+}
+
 export interface PerformanceOtherBenefitsPayload {
   allowances: PerformanceAllowanceRowPayload[];
   existing_benefits_details: string;
@@ -219,7 +239,7 @@ export function buildPerformanceAppraisalDraftFromForm(input: {
       existing_benefits_details: input.allowances
         .map(
           (row) =>
-            `${row.allowance}: ${row.existing} (+${row.increment_percentage}% = ${row.revised})`,
+            `${getPerformanceAllowanceLabel(row.allowance)}: ${row.existing} (+${row.increment_percentage}% = ${row.revised})`,
         )
         .join('; '),
       new_benefits: '',
@@ -466,7 +486,14 @@ export class PerformanceAppraisalService {
       .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object')
       .map((row) => ({
         allowance:
-          String(row['allowance'] ?? row['name'] ?? row['label'] ?? '').trim(),
+          String(
+            row['allowance'] ??
+              row['allowance_key'] ??
+              row['allowanceKey'] ??
+              row['name'] ??
+              row['label'] ??
+              '',
+          ).trim(),
         existing: toAmount(this.asAmountInput(row['existing'] ?? row['existing_amount'])),
         increment_percentage: toAmount(
           this.asAmountInput(row['increment_percentage'] ?? row['incrementPercentage']),

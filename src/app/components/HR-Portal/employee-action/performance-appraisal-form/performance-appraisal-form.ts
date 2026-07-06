@@ -8,6 +8,7 @@ import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/
 import {
   PerformanceAppraisalRecord,
   PerformanceAppraisalService,
+  getPerformanceAllowanceLabel,
 } from '../../../../services/performance-appraisal.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
@@ -116,6 +117,7 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   }
 
   Math = Math;
+  getAllowanceLabel = getPerformanceAllowanceLabel;
 
   columns: Array<{ key: AppraisalColumnKey; label: string; visible: boolean }> = [
     { key: 'FormNumber', label: 'Form Number', visible: true },

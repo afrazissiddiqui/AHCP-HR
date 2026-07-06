@@ -53,6 +53,13 @@ interface AllowanceRowState {
   incrementPercentage: string;
 }
 
+const ALLOWANCE_KEY_ALIASES: Record<AllowanceKey, readonly string[]> = {
+  fuelLimit: ['fuelLimit', 'fuel_limit', 'Fuel Limit (liter)'],
+  mobileAllowances: ['mobileAllowances', 'mobile_allowances', 'Mobile Allowances'],
+  carAllowances: ['carAllowances', 'car_allowances', 'Car Allowances'],
+  otherAllowances: ['otherAllowances', 'other_allowances', 'Other Allowances'],
+};
+
 const DEFAULT_ALLOWANCE_ROWS: AllowanceRowState[] = [
   { key: 'fuelLimit', label: 'Fuel Limit (liter)', existing: '', incrementPercentage: '' },
   { key: 'mobileAllowances', label: 'Mobile Allowances', existing: '', incrementPercentage: '' },
@@ -638,7 +645,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
       const incrementPercentage = this.toAmount(row.incrementPercentage);
       const revised = this.toAmount(this.allowanceRevised(row));
       return {
-        allowance: row.label,
+        allowance: row.key,
         existing,
         increment_percentage: incrementPercentage,
         revised: revised > 0 ? revised : existing,
@@ -651,17 +658,10 @@ export class AddPerformanceAppraisalComponent implements OnInit {
       return;
     }
 
-    const values: Record<AllowanceKey, string> = {
-      fuelLimit: remuneration.fuelLimit ?? '',
-      mobileAllowances: remuneration.mobileAllowances ?? '',
-      carAllowances: remuneration.carAllowances ?? '',
-      otherAllowances: remuneration.otherAllowances ?? '',
-    };
-
     this.allowanceRows.set(
       DEFAULT_ALLOWANCE_ROWS.map((row) => ({
         ...row,
-        existing: this.formatAllowanceValue(values[row.key]),
+        existing: this.formatAllowanceValue(remuneration[row.key]),
         incrementPercentage: '',
       })),
     );
@@ -686,9 +686,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
 
     this.allowanceRows.set(
       DEFAULT_ALLOWANCE_ROWS.map((defaultRow) => {
-        const match = allowances.find(
-          (row) => row.allowance.trim().toLowerCase() === defaultRow.label.trim().toLowerCase(),
-        );
+        const match = allowances.find((row) => this.matchesAllowanceRow(row, defaultRow));
         if (!match) {
           return { ...defaultRow };
         }
@@ -700,6 +698,20 @@ export class AddPerformanceAppraisalComponent implements OnInit {
             : '',
         };
       }),
+    );
+  }
+
+  private matchesAllowanceRow(
+    apiRow: PerformanceAllowanceRowPayload,
+    defaultRow: AllowanceRowState,
+  ): boolean {
+    const allowance = apiRow.allowance.trim().toLowerCase();
+    if (!allowance) {
+      return false;
+    }
+
+    return ALLOWANCE_KEY_ALIASES[defaultRow.key].some(
+      (alias) => alias.trim().toLowerCase() === allowance,
     );
   }
 

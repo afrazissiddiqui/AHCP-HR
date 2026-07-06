@@ -163,7 +163,7 @@
                   </thead>
                   <tbody>
                     <tr *ngFor="let row of record.OtherBenefits.allowances">
-                      <td>{{ row.allowance || '—' }}</td>
+                      <td>{{ getAllowanceLabel(row.allowance) }}</td>
                       <td>{{ row.existing }}</td>
                       <td>{{ row.increment_percentage }}</td>
                       <td>{{ row.revised }}</td>
