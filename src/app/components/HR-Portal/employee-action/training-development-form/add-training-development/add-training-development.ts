@@ -152,6 +152,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   protected readonly promotionRemarks = signal('');
 
   private readonly employeeOptions = signal<TrainingEmployeeOption[]>([]);
+  protected readonly employeeProfileLoaded = signal(false);
   protected readonly codeSuggestionsOpen = signal(false);
   protected readonly nameSuggestionsOpen = signal(false);
 
@@ -254,6 +255,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     if (this.editingId) {
       return;
     }
+    this.employeeProfileLoaded.set(false);
     this.codeSuggestionsOpen.set(code.trim().length > 0);
     this.closeNameSuggestions();
   }
@@ -263,6 +265,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     if (this.editingId) {
       return;
     }
+    this.employeeProfileLoaded.set(false);
     this.nameSuggestionsOpen.set(name.trim().length > 0);
     this.closeCodeSuggestions();
   }
@@ -292,23 +295,37 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   }
 
   protected onCodeInputBlur(): void {
-    setTimeout(() => this.closeCodeSuggestions(), 150);
+    setTimeout(() => {
+      this.closeCodeSuggestions();
+      if (!this.editingId) {
+        this.trySelectEmployeeFromTypedValue('code');
+      }
+    }, 150);
   }
 
   protected onNameInputBlur(): void {
-    setTimeout(() => this.closeNameSuggestions(), 150);
+    setTimeout(() => {
+      this.closeNameSuggestions();
+      if (!this.editingId) {
+        this.trySelectEmployeeFromTypedValue('name');
+      }
+    }, 150);
   }
 
   protected selectEmployeeFromSuggestion(employee: TrainingEmployeeOption, event?: MouseEvent): void {
     event?.preventDefault();
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
+    this.resetEmployeeProfileFields();
+    this.populateFromEmployeeOption(employee);
+    this.employeeProfileLoaded.set(true);
 
     const applyRecord = (record: ApplicationFormRecord): void => {
       const profileFields = this.mapApplicationRecordToEmployeeFields(record);
       const employeeCode = this.resolveEmployeeCode(record);
       this.populateFromApplicationRecord(record);
       this.applyExistingTrainingForEmployee(employeeCode, profileFields);
+      this.employeeProfileLoaded.set(true);
       this.cdr.markForCheck();
     };
 
@@ -338,7 +355,28 @@ export class AddTrainingDevelopmentComponent implements OnInit {
 
     this.populateFromEmployeeOption(employee);
     this.applyExistingTrainingForEmployee(employee.code, employee);
+    this.employeeProfileLoaded.set(true);
     this.cdr.markForCheck();
+  }
+
+  private trySelectEmployeeFromTypedValue(field: 'code' | 'name'): void {
+    if (this.employeeProfileLoaded()) {
+      return;
+    }
+
+    const query = (field === 'code' ? this.employeeCode() : this.employeeName()).trim().toLowerCase();
+    if (!query) {
+      return;
+    }
+
+    const match = this.employeeOptions().find((employee) => {
+      const value = (field === 'code' ? employee.code : employee.name).trim().toLowerCase();
+      return value === query;
+    });
+
+    if (match) {
+      this.selectEmployeeFromSuggestion(match);
+    }
   }
 
   /** If this employee already has a training record, load it for update. */
@@ -750,6 +788,9 @@ export class AddTrainingDevelopmentComponent implements OnInit {
       if (grossSalary && !this.normalizeProfileValue(this.currentSalary())) {
         this.currentSalary.set(grossSalary);
       }
+      if (this.employeeCode().trim() && this.employeeName().trim()) {
+        this.employeeProfileLoaded.set(true);
+      }
       this.cdr.markForCheck();
     };
 
@@ -779,6 +820,24 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     return this.applicationFormService
       .getApplicationRecords()
       .find((record) => this.resolveEmployeeCode(record).trim().toLowerCase() === code);
+  }
+
+  private resetEmployeeProfileFields(): void {
+    this.employeeCode.set('');
+    this.employeeName.set('');
+    this.department.set('');
+    this.location.set('');
+    this.designation.set('');
+    this.jobTitle.set('');
+    this.dateOfJoining.set('');
+    this.reportingManager.set('');
+    this.employeeNature.set('');
+    this.employeeType.set('');
+    this.gradeWorkLevel.set('');
+    this.employmentCategory.set('');
+    this.remarks.set('');
+    this.currentSalary.set('');
+    this.employeeProfileLoaded.set(false);
   }
 
   private resetTrainingSpecificFields(): void {
@@ -831,7 +890,7 @@ export class AddTrainingDevelopmentComponent implements OnInit {
   }
 
   private resolveEmployeeCode(record: ApplicationFormRecord): string {
-    const fromLogin = record.detail?.loginDetails.employeeCode?.trim();
+    const fromLogin = record.detail?.loginDetails?.employeeCode?.trim();
     if (fromLogin) {
       return fromLogin;
     }
@@ -874,9 +933,6 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     const setField = (target: ReturnType<typeof signal<string>>, value: string): void => {
       const next = this.normalizeProfileValue(value);
       if (!next) {
-        if (overwrite) {
-          target.set('');
-        }
         return;
       }
       if (overwrite || !this.normalizeProfileValue(target())) {
@@ -935,6 +991,9 @@ export class AddTrainingDevelopmentComponent implements OnInit {
     this.employmentCategory.set(emptyIfDash(record.EmploymentCategory));
     this.dateOfJoining.set(emptyDate(record.DateOfJoining));
     this.remarks.set(emptyIfDash(record.Remarks));
+    if (this.employeeCode().trim() && this.employeeName().trim()) {
+      this.employeeProfileLoaded.set(true);
+    }
 
     const detail = record.TrainingDetail;
     this.trainingTitle.set(emptyIfDash(detail.training_title));

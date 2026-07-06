@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
-import { UserAuthorizationModule } from '../utils/user-authorization.util';
+import { UserAuthorizationModule, authorizationToApiPayload } from '../utils/user-authorization.util';
 
 export type { UserAuthorizationModule };
 
@@ -45,12 +45,12 @@ export class UserSetupService {
   }
 
   addUser(payload: UserSetupPayload): Observable<unknown> {
-    return this.http.post(USER_ADD_URL, payload);
+    return this.http.post(USER_ADD_URL, this.serializePayload(payload));
   }
 
   updateUser(id: string | number, payload: UserSetupPayload): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.post(`${USER_UPDATE_URL}/${identifier}`, payload);
+    return this.http.post(`${USER_UPDATE_URL}/${identifier}`, this.serializePayload(payload));
   }
 
   deleteUser(id: string | number): Observable<unknown> {
@@ -119,5 +119,21 @@ export class UserSetupService {
     return ['id', 'Id', 'ID', 'name', 'Name', 'email', 'Email', 'username', 'Username'].some(
       (key) => key in item,
     );
+  }
+
+  private serializePayload(payload: UserSetupPayload): Record<string, unknown> {
+    const authorizationModules = authorizationToApiPayload(payload.authorization);
+    const body: Record<string, unknown> = {
+      name: payload.name.trim(),
+      email: payload.email.trim(),
+      authorization: authorizationModules,
+    };
+
+    const password = payload.password?.trim();
+    if (password) {
+      body['password'] = password;
+    }
+
+    return body;
   }
 }

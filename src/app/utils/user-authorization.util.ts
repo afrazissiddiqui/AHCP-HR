@@ -37,12 +37,52 @@ const CRUD_ACTION_MAP: Record<string, CrudBucket> = {
   detail: 'read',
   read: 'read',
   update: 'update',
+  list_update: 'update',
   edit: 'update',
   delete: 'delete',
   remove: 'delete',
 };
 
 const EXTRA_ACTIONS = new Set(['export', 'import', 'approve', 'reject', 'print', 'download', 'upload']);
+
+/** Known action suffixes — longest first so `list_update` wins over `update`. */
+const KNOWN_ACTION_SUFFIXES = [
+  'list_update',
+  'add',
+  'view',
+  'list',
+  'update',
+  'delete',
+  'create',
+  'edit',
+  'detail',
+  'read',
+  'remove',
+  'export',
+  'import',
+  'approve',
+  'reject',
+  'print',
+  'download',
+  'upload',
+] as const;
+
+export const AUTHORIZATION_MODULE_DEFINITIONS = [
+  {
+    slug: 'job_specification',
+    name: 'Job Specification',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'application_form',
+    name: 'Application Form',
+    actions: ['add', 'view', 'list', 'list_update', 'delete'] as const,
+  },
+] as const;
+
+function permissionKeyForModule(moduleSlug: string, action: string): string {
+  return `${moduleSlug.trim().toLowerCase()}_${action.trim().toLowerCase()}`;
+}
 
 function humanizeSlug(value: string): string {
   return value
@@ -61,8 +101,8 @@ function capitalize(value: string): string {
 }
 
 function splitPermissionKey(key: string): { moduleSlug: string; moduleName: string; actionKey: string; actionLabel: string } {
-  const parts = key.split('_').filter(Boolean);
-  if (parts.length < 2) {
+  const normalized = key.trim().toLowerCase();
+  if (!normalized) {
     return {
       moduleSlug: key,
       moduleName: humanizeSlug(key),
@@ -71,7 +111,32 @@ function splitPermissionKey(key: string): { moduleSlug: string; moduleName: stri
     };
   }
 
-  const actionKey = parts[parts.length - 1].toLowerCase();
+  for (const actionKey of KNOWN_ACTION_SUFFIXES) {
+    const suffix = `_${actionKey}`;
+    if (normalized.endsWith(suffix)) {
+      const moduleSlug = normalized.slice(0, -suffix.length);
+      if (moduleSlug) {
+        return {
+          moduleSlug,
+          moduleName: humanizeSlug(moduleSlug),
+          actionKey,
+          actionLabel: humanizeSlug(actionKey),
+        };
+      }
+    }
+  }
+
+  const parts = normalized.split('_').filter(Boolean);
+  if (parts.length < 2) {
+    return {
+      moduleSlug: normalized,
+      moduleName: humanizeSlug(normalized),
+      actionKey: normalized,
+      actionLabel: 'Access',
+    };
+  }
+
+  const actionKey = parts[parts.length - 1];
   const moduleSlug = parts.slice(0, -1).join('_');
   return {
     moduleSlug,
@@ -111,24 +176,45 @@ function normalizePermissionValue(value: unknown): number {
   return 0;
 }
 
+function buildModuleAuthorizationObject(
+  moduleSlug: string,
+  actions: readonly string[],
+  values: UserAuthorizationModule = {},
+): UserAuthorizationModule {
+  const payload: UserAuthorizationModule = {};
+  for (const action of actions) {
+    const key = permissionKeyForModule(moduleSlug, action);
+    payload[key] = normalizePermissionValue(values[key]);
+  }
+  return payload;
+}
+
+export const DEFAULT_USER_AUTHORIZATION: UserAuthorizationModule[] =
+  AUTHORIZATION_MODULE_DEFINITIONS.map((definition) =>
+    buildModuleAuthorizationObject(definition.slug, definition.actions),
+  );
+
 function isGranted(value: number): boolean {
   return value === 1;
 }
 
-export const DEFAULT_USER_AUTHORIZATION: UserAuthorizationModule[] = [
-  {
-    job_specification_add: 0,
-    job_specification_view: 0,
-    job_specification_list: 0,
-    job_specification_delete: 0,
-  },
-  {
-    application_form_add: 0,
-    application_form_view: 0,
-    application_form_list: 0,
-    application_form_delete: 0,
-  },
-];
+function isPermissionKey(key: string): boolean {
+  return key.includes('_');
+}
+
+function isArrayLikeObject(value: Record<string, unknown>): boolean {
+  const keys = Object.keys(value);
+  return keys.length > 0 && keys.every((key) => /^\d+$/.test(key));
+}
+
+function isModulePermissionObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return Object.keys(record).some((key) => isPermissionKey(key));
+}
 
 function normalizeAuthorizationObjects(value: unknown): Record<string, unknown>[] {
   if (!value) {
@@ -148,11 +234,26 @@ function normalizeAuthorizationObjects(value: unknown): Record<string, unknown>[
   }
 
   if (Array.isArray(value)) {
-    return value.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
+    return value.flatMap((entry) => normalizeAuthorizationObjects(entry));
   }
 
   if (typeof value === 'object') {
-    return [value as Record<string, unknown>];
+    const record = value as Record<string, unknown>;
+
+    if (isArrayLikeObject(record)) {
+      return Object.keys(record)
+        .sort((left, right) => Number(left) - Number(right))
+        .flatMap((key) => normalizeAuthorizationObjects(record[key]));
+    }
+
+    const nestedModules = Object.values(record).filter((entry) => isModulePermissionObject(entry));
+    if (nestedModules.length > 0 && nestedModules.length === Object.keys(record).length) {
+      return nestedModules.flatMap((entry) => normalizeAuthorizationObjects(entry));
+    }
+
+    if (Object.keys(record).some((key) => isPermissionKey(key))) {
+      return [record];
+    }
   }
 
   return [];
@@ -185,11 +286,11 @@ export function cloneAuthorization(modules: UserAuthorizationModule[]): UserAuth
 }
 
 function moduleSlugFromObject(obj: Record<string, unknown>): string {
-  const firstKey = Object.keys(obj)[0];
-  if (!firstKey) {
+  const permissionEntryKey = Object.keys(obj).find((key) => isPermissionKey(key));
+  if (!permissionEntryKey) {
     return '';
   }
-  return splitPermissionKey(firstKey).moduleSlug;
+  return splitPermissionKey(permissionEntryKey).moduleSlug;
 }
 
 export function buildAuthorizationTemplate(...sources: unknown[]): UserAuthorizationModule[] {
@@ -197,20 +298,25 @@ export function buildAuthorizationTemplate(...sources: unknown[]): UserAuthoriza
 
   const ingest = (value: unknown): void => {
     for (const object of normalizeAuthorizationObjects(value)) {
-      const slug = moduleSlugFromObject(object);
-      if (!slug) {
+      const entries = Object.entries(object).filter(([key]) => isPermissionKey(key));
+      if (!entries.length) {
         continue;
       }
 
-      const normalized: UserAuthorizationModule = {};
-      for (const [key, permissionValue] of Object.entries(object)) {
-        normalized[key] = normalizePermissionValue(permissionValue);
+      const grouped = new Map<string, UserAuthorizationModule>();
+      for (const [key, permissionValue] of entries) {
+        const { moduleSlug } = splitPermissionKey(key);
+        const module = grouped.get(moduleSlug) ?? {};
+        module[key] = normalizePermissionValue(permissionValue);
+        grouped.set(moduleSlug, module);
       }
 
-      moduleMap.set(slug, {
-        ...(moduleMap.get(slug) ?? {}),
-        ...normalized,
-      });
+      for (const [slug, normalized] of grouped) {
+        moduleMap.set(slug, {
+          ...(moduleMap.get(slug) ?? {}),
+          ...normalized,
+        });
+      }
     }
   };
 
@@ -229,17 +335,50 @@ export function buildAuthorizationTemplate(...sources: unknown[]): UserAuthoriza
     });
   }
 
-  return [...moduleMap.values()];
+  return AUTHORIZATION_MODULE_DEFINITIONS.map((definition) =>
+    buildModuleAuthorizationObject(
+      definition.slug,
+      definition.actions,
+      moduleMap.get(definition.slug) ?? {},
+    ),
+  );
 }
 
 export function authorizationToApiPayload(modules: UserAuthorizationModule[]): UserAuthorizationModule[] {
-  return cloneAuthorization(modules).map((module) => {
-    const payload: UserAuthorizationModule = {};
+  const merged = new Map<string, UserAuthorizationModule>();
+  for (const module of cloneAuthorization(modules)) {
     for (const [key, value] of Object.entries(module)) {
-      payload[key] = normalizePermissionValue(value);
+      if (!isPermissionKey(key)) {
+        continue;
+      }
+      const { moduleSlug } = splitPermissionKey(key);
+      const bucket = merged.get(moduleSlug) ?? {};
+      bucket[key] = normalizePermissionValue(value);
+      merged.set(moduleSlug, bucket);
     }
-    return payload;
-  });
+  }
+
+  return AUTHORIZATION_MODULE_DEFINITIONS.map((definition) =>
+    buildModuleAuthorizationObject(
+      definition.slug,
+      definition.actions,
+      merged.get(definition.slug) ?? {},
+    ),
+  );
+}
+
+/** Flat module map for APIs that expect one authorization object instead of an array. */
+export function authorizationToApiObject(modules: UserAuthorizationModule[]): UserAuthorizationModule {
+  const merged: UserAuthorizationModule = {};
+  for (const module of authorizationToApiPayload(modules)) {
+    Object.assign(merged, module);
+  }
+  return merged;
+}
+
+/** JSON string form used by backends that store authorization as a serialized object. */
+export function authorizationToApiJson(modules: UserAuthorizationModule[]): string {
+  return JSON.stringify(authorizationToApiPayload(modules));
 }
 
 export function parseUserAuthorization(value: unknown): UserAuthorizationSummary | null {
@@ -252,6 +391,9 @@ export function parseUserAuthorization(value: unknown): UserAuthorizationSummary
 
   for (const object of objects) {
     for (const [key, permissionValue] of Object.entries(object)) {
+      if (!isPermissionKey(key)) {
+        continue;
+      }
       const { moduleSlug, moduleName, actionKey, actionLabel } = splitPermissionKey(key);
       const numericValue = normalizePermissionValue(permissionValue);
       const bucket = resolveCrudBucket(actionKey);
@@ -359,15 +501,21 @@ export function updateAllPermissionsInDraft(
 }
 
 export function permissionKey(moduleSlug: string, action: string): string {
-  const normalizedAction = action.trim().toLowerCase();
-  return `${moduleSlug.trim().toLowerCase()}_${normalizedAction}`;
+  return permissionKeyForModule(moduleSlug, action);
 }
 
-function resolvePermissionAction(action: string): string[] {
+function resolvePermissionAction(moduleSlug: string, action: string): string[] {
   const normalized = action.trim().toLowerCase();
+  const slug = moduleSlug.trim().toLowerCase();
+
+  if (slug === 'application_form' && (normalized === 'update' || normalized === 'edit')) {
+    return ['list_update', 'update', 'edit', 'add'];
+  }
+
   if (normalized === 'update' || normalized === 'edit') {
     return ['update', 'edit', 'add'];
   }
+
   return [normalized];
 }
 
@@ -381,10 +529,10 @@ export function isPermissionGranted(
   }
 
   const slug = moduleSlug.trim().toLowerCase();
-  const actionCandidates = resolvePermissionAction(action);
+  const actionCandidates = resolvePermissionAction(slug, action);
 
   for (const candidate of actionCandidates) {
-    const key = permissionKey(slug, candidate);
+    const key = permissionKeyForModule(slug, candidate);
     for (const module of authorization) {
       if (key in module) {
         return normalizePermissionValue(module[key]) === 1;

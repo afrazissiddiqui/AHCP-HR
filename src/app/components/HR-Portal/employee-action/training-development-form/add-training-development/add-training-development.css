@@ -118,6 +118,43 @@
   color: #64748b;
 }
 
+.cjr-personal-grid,
+.cjr-personal-col,
+.cjr-row,
+.employee-search-wrap {
+  min-width: 0;
+}
+
+.cjr-personal-grid + .cjr-row--remarks,
+.training-evaluation-table-section + .cjr-row--remarks {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f6;
+}
+
+.cjr-row--remarks {
+  align-items: start;
+}
+
+.cjr-row--remarks label {
+  padding-top: 10px;
+}
+
+.cjr-row--remarks + .cjr-row--remarks {
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.cjr-row--remarks textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.supervision-remark-gap {
+  margin-top: 16px;
+}
+
 @media (max-width: 1120px) {
   .training-evaluation-table-wrapper {
     overflow-x: auto;

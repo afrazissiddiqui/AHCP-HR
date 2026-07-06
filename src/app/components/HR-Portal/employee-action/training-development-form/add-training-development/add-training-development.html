@@ -198,53 +198,111 @@
 
             <div class="cjr-row">
               <label>Department:</label>
-              <input type="text" [ngModel]="department()" (ngModelChange)="department.set($event)" />
+              <input
+                type="text"
+                [ngModel]="department()"
+                (ngModelChange)="department.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Location:</label>
-              <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
+              <input
+                type="text"
+                [ngModel]="location()"
+                (ngModelChange)="location.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Designation:</label>
-              <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
+              <input
+                type="text"
+                [ngModel]="designation()"
+                (ngModelChange)="designation.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Job Title:</label>
-              <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
+              <input
+                type="text"
+                [ngModel]="jobTitle()"
+                (ngModelChange)="jobTitle.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
           </div>
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Reporting Manager:</label>
-              <input type="text" [ngModel]="reportingManager()" (ngModelChange)="reportingManager.set($event)" />
+              <input
+                type="text"
+                [ngModel]="reportingManager()"
+                (ngModelChange)="reportingManager.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Employee Nature:</label>
-              <input type="text" [ngModel]="employeeNature()" (ngModelChange)="employeeNature.set($event)" placeholder="e.g. Permanent" />
+              <input
+                type="text"
+                [ngModel]="employeeNature()"
+                (ngModelChange)="employeeNature.set($event)"
+                placeholder="e.g. Permanent"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Employment Status:</label>
-              <input type="text" [ngModel]="employeeType()" (ngModelChange)="employeeType.set($event)" placeholder="e.g. Full Time" />
+              <input
+                type="text"
+                [ngModel]="employeeType()"
+                (ngModelChange)="employeeType.set($event)"
+                placeholder="e.g. Full Time"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Grade Work Level:</label>
-              <input type="text" [ngModel]="gradeWorkLevel()" (ngModelChange)="gradeWorkLevel.set($event)" placeholder="e.g. GWL-5" />
+              <input
+                type="text"
+                [ngModel]="gradeWorkLevel()"
+                (ngModelChange)="gradeWorkLevel.set($event)"
+                placeholder="e.g. GWL-5"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Employment Category:</label>
-              <input type="text" [ngModel]="employmentCategory()" (ngModelChange)="employmentCategory.set($event)" />
+              <input
+                type="text"
+                [ngModel]="employmentCategory()"
+                (ngModelChange)="employmentCategory.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
             <div class="cjr-row">
               <label>Date of Joining:</label>
-              <input type="date" [ngModel]="dateOfJoining()" (ngModelChange)="dateOfJoining.set($event)" />
+              <input
+                type="date"
+                [ngModel]="dateOfJoining()"
+                (ngModelChange)="dateOfJoining.set($event)"
+                [readonly]="employeeProfileLoaded() && !editingId"
+              />
             </div>
           </div>
         </div>
 
         <div class="cjr-row cjr-row--remarks">
           <label>Remarks:</label>
-          <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
+          <textarea
+            rows="4"
+            [ngModel]="remarks()"
+            (ngModelChange)="remarks.set($event)"
+            [readonly]="employeeProfileLoaded() && !editingId"
+          ></textarea>
         </div>
       </section>
 

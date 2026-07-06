@@ -474,8 +474,11 @@ export class UserSetupComponent implements OnInit {
             ...this.users().map((item) => item['authorization'] ?? item['Authorization']),
             authorization,
           );
+          const userAuthorization = buildAuthorizationTemplate(authorization);
           this.authorizationTemplate.set(template);
-          this.authorizationDraft.set(cloneAuthorization(template));
+          this.authorizationDraft.set(
+            cloneAuthorization(userAuthorization.length ? userAuthorization : template),
+          );
           this.scrollToFormPanel();
         },
         error: (error: unknown) => {
