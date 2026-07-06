@@ -1540,10 +1540,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
             detail.education,
             detail.pastExperience,
           );
-          this.applicationFormService.cacheEmployeeRemunerationFields(
-            String(key),
-            detail.remuneration,
-          );
         }
 
         if (!editId) {
@@ -1728,7 +1724,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.socialSecurityApplicable.set(
       (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',
     );
-    this.fuelLimit.set(this.remunerationValue(remuneration.fuelLimit));
+    this.fuelLimit.set(remuneration.fuelLimit ?? '');
 
     const leaveRows = detail.leaveManagement?.length
       ? detail.leaveManagement
