@@ -669,7 +669,10 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.allowanceRows.set(
       DEFAULT_ALLOWANCE_ROWS.map((row) => ({
         ...row,
-        existing: this.formatAllowanceValue(remuneration[row.key]),
+        existing:
+          row.key === 'fuelLimit'
+            ? this.applicationFormService.formatFuelLimitForForm(remuneration[row.key])
+            : this.formatAllowanceValue(remuneration[row.key]),
         incrementPercentage: '',
       })),
     );
@@ -755,7 +758,10 @@ export class AddPerformanceAppraisalComponent implements OnInit {
       this.allowanceRows.set(
         DEFAULT_ALLOWANCE_ROWS.map((row) => ({
           ...row,
-          existing: this.formatAllowanceValue(remuneration[row.key]),
+          existing:
+            row.key === 'fuelLimit'
+              ? this.applicationFormService.formatFuelLimitForForm(remuneration[row.key])
+              : this.formatAllowanceValue(remuneration[row.key]),
           incrementPercentage: preserveIncrement ? savedIncrements.get(row.key) ?? '' : '',
         })),
       );

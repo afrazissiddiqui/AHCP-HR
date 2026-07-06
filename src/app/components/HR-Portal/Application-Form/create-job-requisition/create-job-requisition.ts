@@ -504,6 +504,12 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   protected onNumericOnlyChange(value: string, target: { set: (next: string) => void }): void {
     target.set(this.sanitizeDecimalValue(value));
+    this.cdr.markForCheck();
+  }
+
+  protected onFuelLimitChange(value: string): void {
+    this.fuelLimit.set(this.sanitizeDecimalValue(value));
+    this.cdr.markForCheck();
   }
 
   protected onAccountNoChange(value: string): void {

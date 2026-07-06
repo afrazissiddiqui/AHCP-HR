@@ -933,7 +933,7 @@
           <div class="cjr-row">
             <label>Fuel Limit (Liters:)</label>
             <input type="text" inputmode="decimal" [ngModel]="fuelLimit()"
-              (ngModelChange)="onNumericOnlyChange($event, fuelLimit)" (keydown)="onDecimalKeyDown($event)"
+              (ngModelChange)="onFuelLimitChange($event)" (keydown)="onDecimalKeyDown($event)"
               placeholder="e.g. 50" (blur)="touch('fuelLimit')" />
           </div>
 

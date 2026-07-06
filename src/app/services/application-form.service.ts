@@ -852,7 +852,7 @@ export class ApplicationFormService {
       allowancesApplicable: toApiFlag(remuneration.allowancesApplicable),
       eobiApplicable: toApiFlag(remuneration.eobiApplicable),
       socialSecurityApplicable: toApiFlag(remuneration.socialSecurityApplicable),
-      fuelLimit: toNullableApiNumber(remuneration.fuelLimit),
+      fuelLimit: this.parseFuelLimitForApi(remuneration.fuelLimit),
       leaveType: primaryLeave.leaveType || remuneration.leaveType,
       leaveDays: toApiNumber(leaveDays),
       leavesAvailed: toApiNumber(leavesAvailed),
@@ -1277,8 +1277,8 @@ export class ApplicationFormService {
       }
 
       for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
-        const flatValue = this.pickRemunerationValue(layer, camel, snake);
-        if (flatValue !== '' && this.pickRemunerationValue(merged, camel, snake) === '') {
+        const flatValue = this.pickRemunerationRawValue(layer, camel, snake);
+        if (flatValue !== '' && this.pickRemunerationRawValue(merged, camel, snake) === '') {
           merged[camel] = flatValue;
         }
       }
@@ -1351,8 +1351,8 @@ export class ApplicationFormService {
     }
 
     for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
-      const flatValue = this.pickRemunerationValue(item, camel, snake);
-      if (flatValue !== '' && this.pickRemunerationValue(merged, camel, snake) === '') {
+      const flatValue = this.pickRemunerationRawValue(item, camel, snake);
+      if (flatValue !== '' && this.pickRemunerationRawValue(merged, camel, snake) === '') {
         merged[camel] = flatValue;
       }
     }
@@ -1387,13 +1387,29 @@ export class ApplicationFormService {
     );
 
     for (const key of keys) {
-      const value = sanitizeApiText(source[key]);
-      if (value) {
+      const raw = source[key];
+      if (raw === undefined || raw === null) {
+        continue;
+      }
+
+      const value = sanitizeApiText(raw);
+      if (value !== '') {
         return value;
       }
     }
 
     return '';
+  }
+
+  private pickRemunerationRawValue(
+    source: Record<string, unknown>,
+    camel: string,
+    snake?: string,
+  ): string {
+    return (
+      this.pickRemunerationValue(source, camel, snake) ||
+      this.pickFieldValue(source, camel, snake)
+    );
   }
 
   private pickFieldValue(
@@ -1420,22 +1436,50 @@ export class ApplicationFormService {
     camel: string,
     snake?: string,
   ): string {
-    const fromRemuneration = this.pickRemunerationValue(remunerationSource, camel, snake);
+    const fromRemuneration = this.pickRemunerationRawValue(remunerationSource, camel, snake);
     if (fromRemuneration !== '') {
       return fromRemuneration;
     }
 
-    const fromItem = this.pickRemunerationValue(item, camel, snake);
-    if (fromItem !== '') {
-      return fromItem;
+    return this.pickRemunerationRawValue(item, camel, snake);
+  }
+
+  /** Reads `fuelLimit` from flat or nested employee profile API shapes. */
+  readFuelLimitFromProfileItem(item: Record<string, unknown>): string {
+    const remunerationSource = this.resolveRemunerationSource(item);
+    const nestedRemuneration = this.pickNestedRecord(item['remuneration']);
+
+    const candidates: unknown[] = [
+      item['fuelLimit'],
+      item['fuel_limit'],
+      item['FuelLimit'],
+      remunerationSource['fuelLimit'],
+      remunerationSource['fuel_limit'],
+      nestedRemuneration?.['fuelLimit'],
+      nestedRemuneration?.['fuel_limit'],
+    ];
+
+    for (const candidate of candidates) {
+      const formatted = this.formatFuelLimitForForm(
+        candidate as string | number | null | undefined,
+      );
+      if (formatted !== '') {
+        return formatted;
+      }
     }
 
-    const fromRemNumeric = this.pickFieldValue(remunerationSource, camel, snake);
-    if (fromRemNumeric !== '') {
-      return fromRemNumeric;
+    return '';
+  }
+
+  /** Parses fuel limit form text for API (`null` when empty). */
+  parseFuelLimitForApi(value: string | undefined | null): number | null {
+    const trimmed = sanitizeApiText(value);
+    if (!trimmed) {
+      return null;
     }
 
-    return this.pickFieldValue(item, camel, snake);
+    const numeric = Number.parseFloat(trimmed.replace(/,/g, ''));
+    return Number.isFinite(numeric) ? numeric : null;
   }
 
   /** Maps API `fuelLimit` (number | string | null) to form display text. */
@@ -1906,11 +1950,7 @@ export class ApplicationFormService {
         socialSecurityApplicable: this.yesNoFromApi(
           pickRem('socialSecurityApplicable', 'social_security_applicable'),
         ),
-        fuelLimit: this.formatFuelLimitForForm(
-          pickRem('fuelLimit', 'fuel_limit') ||
-            asNumberString(item['fuelLimit']) ||
-            asNumberString(item['fuel_limit']),
-        ),
+        fuelLimit: this.readFuelLimitFromProfileItem(item),
         leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },
       leaveManagement: this.mapLeaveManagementRows(item, {
