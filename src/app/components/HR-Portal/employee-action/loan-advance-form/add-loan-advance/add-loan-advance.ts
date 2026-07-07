@@ -28,6 +28,7 @@ interface LoanEmployeeOption {
   branch: string;
   dateOfJoining: string;
   eligibleAmount: string;
+  advanceEligibleAmount: string;
   employeeNature: string;
   employmentType: string;
   workGradeLevel: string;
@@ -307,6 +308,18 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.loanAmountRequested.set(value);
   }
 
+  protected onAdvanceAmountRequestedChange(value: string): void {
+    const eligible = this.parseDecimal(this.newAdvanceAmountEligible());
+    const requested = this.parseDecimal(value);
+
+    if (eligible !== null && requested !== null && requested > eligible) {
+      this.newAdvanceAmountRequested.set(this.newAdvanceAmountEligible());
+      return;
+    }
+
+    this.newAdvanceAmountRequested.set(value);
+  }
+
   private buildEmployeeOptions(): LoanEmployeeOption[] {
     return this.applicationFormService
       .getApplicationRecords()
@@ -330,6 +343,7 @@ export class AddLoanAdvanceComponent implements OnInit {
         emptyIfDash(record.detail?.remuneration?.dateOfJoining ?? ''),
       ),
       eligibleAmount: emptyIfDash(record.detail?.remuneration?.maximumLoanCapacity ?? ''),
+      advanceEligibleAmount: emptyIfDash(record.detail?.remuneration?.maximumAdvanceCapacity ?? ''),
       employeeNature: emptyIfDash(record.EmployeeNature),
       employmentType: emptyIfDash(record.EmploymentType),
       workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
@@ -380,6 +394,7 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.branch.set(employee.branch);
     this.joiningDate.set(employee.dateOfJoining);
     this.eligibleAmount.set(employee.eligibleAmount);
+    this.newAdvanceAmountEligible.set(employee.advanceEligibleAmount);
     this.employeeNature.set(employee.employeeNature);
     this.employmentType.set(employee.employmentType);
     this.workGradeLevel.set(employee.workGradeLevel);
@@ -704,6 +719,7 @@ export class AddLoanAdvanceComponent implements OnInit {
       this.hasExistingAdvanceDetails.set(false);
       this.resetExistingAdvanceFields();
       this.existingAdvance.set('No');
+      this.populateAdvanceEligibleFromProfile();
       return;
     }
 
@@ -736,6 +752,28 @@ export class AddLoanAdvanceComponent implements OnInit {
     );
     this.advanceBalance.set(advanceDetail.advanceBalance?.trim() ?? '');
     this.resetNewAdvanceRequestFields();
+  }
+
+  private populateAdvanceEligibleFromProfile(): void {
+    if (this.editingId || this.hasExistingAdvanceDetails()) {
+      return;
+    }
+
+    const code = this.headerEmployeeID().trim().toLowerCase();
+    const name = this.headerEmployeeName().trim().toLowerCase();
+    if (!code && !name) {
+      return;
+    }
+
+    const employee = this.employeeOptions().find((option) => {
+      const optionCode = option.code.trim().toLowerCase();
+      const optionName = option.name.trim().toLowerCase();
+      return (code && optionCode === code) || (!code && name && optionName === name);
+    });
+
+    if (employee) {
+      this.newAdvanceAmountEligible.set(employee.advanceEligibleAmount);
+    }
   }
 
   private findExistingLoanRecord(

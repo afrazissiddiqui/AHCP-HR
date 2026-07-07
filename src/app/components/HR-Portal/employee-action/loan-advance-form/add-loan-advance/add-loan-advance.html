@@ -554,12 +554,7 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Advance Amount Eligible</label>
-              <input
-                type="text"
-                [ngModel]="newAdvanceAmountEligible()"
-                (ngModelChange)="newAdvanceAmountEligible.set($event)"
-                [readonly]="newAdvanceRequestLocked()"
-              />
+              <input type="text" [value]="newAdvanceAmountEligible()" readonly />
             </div>
           </div>
           <div class="cjr-personal-col">
@@ -568,7 +563,7 @@
               <input
                 type="text"
                 [ngModel]="newAdvanceAmountRequested()"
-                (ngModelChange)="newAdvanceAmountRequested.set($event)"
+                (ngModelChange)="onAdvanceAmountRequestedChange($event)"
                 [readonly]="newAdvanceRequestLocked()"
               />
             </div>
