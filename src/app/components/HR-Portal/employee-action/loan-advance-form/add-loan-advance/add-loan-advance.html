@@ -113,7 +113,7 @@
             </div>
             <div class="cjr-row">
               <label class="cjr-label-required">Request Type:</label>
-              <select [ngModel]="requestType()" (ngModelChange)="requestType.set($event)">
+              <select [ngModel]="requestType()" (ngModelChange)="onRequestTypeChange($event)">
                 <option value="">Select Type</option>
                 <option value="Loan">Loan</option>
                 <option value="Salary Advance">Salary Advance</option>

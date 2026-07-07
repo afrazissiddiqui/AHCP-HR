@@ -145,9 +145,9 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly hasExistingLoanDetails = signal(false);
   protected readonly hasExistingAdvanceDetails = signal(false);
   protected readonly isEditing = signal(false);
-  protected readonly existingLoanFieldsLocked = signal(false);
+  protected readonly existingLoanFieldsLocked = computed(() => this.isEditing() || this.isLoanRequest());
   protected readonly newLoanRequestLocked = computed(() => !this.isEditing() && this.hasExistingLoanDetails());
-  protected readonly existingAdvanceFieldsLocked = signal(false);
+  protected readonly existingAdvanceFieldsLocked = computed(() => this.isEditing() || this.isAdvanceRequest());
   protected readonly newAdvanceRequestLocked = computed(() => !this.isEditing() && this.hasExistingAdvanceDetails());
   protected readonly saving = signal(false);
 
@@ -166,6 +166,12 @@ export class AddLoanAdvanceComponent implements OnInit {
     });
 
     this.loanAdvanceService.fetchLoanAdvances().subscribe({
+      next: () => {
+        if (!this.editingId) {
+          this.refreshExistingDetailsForEmployee();
+          this.cdr.markForCheck();
+        }
+      },
       error: () => {
         // Keep the form usable even if prior loan history cannot be loaded.
       },
@@ -218,6 +224,15 @@ export class AddLoanAdvanceComponent implements OnInit {
         );
       },
     });
+  }
+
+  protected onRequestTypeChange(type: string): void {
+    this.requestType.set(type);
+    if (this.editingId) {
+      return;
+    }
+    this.refreshExistingDetailsForEmployee();
+    this.cdr.markForCheck();
   }
 
   protected back(): void {
@@ -372,8 +387,58 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.jobTitle.set(employee.jobTitle);
     this.employeeCategory.set(employee.employeeCategory);
     this.reportingManager.set(employee.reportingManager);
-    this.populateExistingLoanDetails(employee.code, employee.name);
-    this.populateExistingAdvanceDetails(employee.code, employee.name);
+    this.refreshExistingDetailsForEmployee();
+  }
+
+  private refreshExistingDetailsForEmployee(): void {
+    if (this.editingId) {
+      return;
+    }
+
+    const code = this.headerEmployeeID();
+    const name = this.headerEmployeeName();
+    if (!code.trim() && !name.trim()) {
+      return;
+    }
+
+    if (this.isLoanRequest()) {
+      this.clearAdvanceDetailState();
+      this.populateExistingLoanDetails(code, name);
+      return;
+    }
+
+    if (this.isAdvanceRequest()) {
+      this.clearLoanDetailState();
+      this.populateExistingAdvanceDetails(code, name);
+    }
+  }
+
+  private clearLoanDetailState(): void {
+    this.hasExistingLoanDetails.set(false);
+    this.resetExistingLoanFields();
+    this.resetNewLoanRequestFields();
+    this.existingLoan.set('');
+  }
+
+  private clearAdvanceDetailState(): void {
+    this.hasExistingAdvanceDetails.set(false);
+    this.resetExistingAdvanceFields();
+    this.resetNewAdvanceRequestFields();
+    this.existingAdvance.set('');
+  }
+
+  private resetNewLoanRequestFields(): void {
+    this.newLoanPurpose.set('');
+    this.loanAmountRequested.set('');
+    this.loanStartMonth.set('');
+    this.loanEndMonth.set('');
+    this.remarks.set('');
+  }
+
+  private resetNewAdvanceRequestFields(): void {
+    this.newAdvancePurpose.set('');
+    this.newAdvanceAmountEligible.set('');
+    this.newAdvanceAmountRequested.set('');
   }
 
   private populateFromRecord(record: LoanAdvanceRecord): void {
@@ -397,8 +462,6 @@ export class AddLoanAdvanceComponent implements OnInit {
 
     this.hasExistingLoanDetails.set((record.LoanDetail.existingLoan || '').trim().toLowerCase() === 'yes');
     this.hasExistingAdvanceDetails.set((record.AdvanceDetail.existingAdvance || '').trim().toLowerCase() === 'yes');
-    this.existingLoanFieldsLocked.set(true);
-    this.existingAdvanceFieldsLocked.set(true);
     this.existingLoan.set((record.LoanDetail.existingLoan as 'Yes' | 'No' | '') || '');
     this.loanAcquiredDate.set(this.normalizeMonthInput(record.LoanDetail.loanAcquiredDate));
     this.installmentNumber.set(record.LoanDetail.installmentNumber?.trim() ?? '');
@@ -613,11 +676,11 @@ export class AddLoanAdvanceComponent implements OnInit {
   }
 
   private populateExistingLoanDetails(employeeCode: string, employeeName: string): void {
-    this.existingLoanFieldsLocked.set(true);
     const existingLoanRecord = this.findExistingLoanRecord(employeeCode, employeeName);
     if (!existingLoanRecord) {
       this.hasExistingLoanDetails.set(false);
       this.resetExistingLoanFields();
+      this.resetNewLoanRequestFields();
       this.existingLoan.set('No');
       return;
     }
@@ -633,10 +696,10 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.loanAmountDeductedTillNow.set(
       existingLoanRecord.LoanDetail.loanAmountDeductedTillNow?.trim() ?? '',
     );
+    this.resetNewLoanRequestFields();
   }
 
   private populateExistingAdvanceDetails(employeeCode: string, employeeName: string): void {
-    this.existingAdvanceFieldsLocked.set(true);
     const existingAdvanceRecord = this.findExistingAdvanceRecord(employeeCode, employeeName);
     if (!existingAdvanceRecord) {
       this.hasExistingAdvanceDetails.set(false);
@@ -645,17 +708,35 @@ export class AddLoanAdvanceComponent implements OnInit {
       return;
     }
 
+    const advanceDetail = existingAdvanceRecord.AdvanceDetail;
+    const newAdvanceRequest = advanceDetail.newAdvanceRequest;
+
     this.hasExistingAdvanceDetails.set(true);
     this.existingAdvance.set('Yes');
-    this.advanceAcquiredDate.set(formatDateForInput(existingAdvanceRecord.AdvanceDetail.advanceAcquiredDate ?? ''));
-    this.advanceEligibleAmount.set(existingAdvanceRecord.AdvanceDetail.advanceEligibleAmount?.trim() ?? '');
-    this.previousAdvancePurpose.set(existingAdvanceRecord.AdvanceDetail.previousAdvancePurpose?.trim() ?? '');
-    this.advanceRemarks.set(existingAdvanceRecord.AdvanceDetail.advanceRemarks?.trim() ?? '');
-    this.advanceAmount.set(existingAdvanceRecord.AdvanceDetail.advanceAmount?.trim() ?? '');
-    this.advanceAmountToBeDeductedThisMonth.set(
-      existingAdvanceRecord.AdvanceDetail.advanceAmountToBeDeductedThisMonth?.trim() ?? '',
+    this.advanceAcquiredDate.set(
+      formatDateForInput(
+        this.pickRecordValue(
+          advanceDetail.advanceAcquiredDate,
+          existingAdvanceRecord.RequestDate,
+          existingAdvanceRecord.HeaderInfo.requestDate,
+        ),
+      ),
     );
-    this.advanceBalance.set(existingAdvanceRecord.AdvanceDetail.advanceBalance?.trim() ?? '');
+    this.advanceEligibleAmount.set(
+      this.pickRecordValue(advanceDetail.advanceEligibleAmount, newAdvanceRequest.advanceAmountEligible),
+    );
+    this.previousAdvancePurpose.set(
+      this.pickRecordValue(advanceDetail.previousAdvancePurpose, newAdvanceRequest.purpose),
+    );
+    this.advanceRemarks.set(advanceDetail.advanceRemarks?.trim() ?? '');
+    this.advanceAmount.set(
+      this.pickRecordValue(advanceDetail.advanceAmount, newAdvanceRequest.advanceAmountRequested),
+    );
+    this.advanceAmountToBeDeductedThisMonth.set(
+      advanceDetail.advanceAmountToBeDeductedThisMonth?.trim() ?? '',
+    );
+    this.advanceBalance.set(advanceDetail.advanceBalance?.trim() ?? '');
+    this.resetNewAdvanceRequestFields();
   }
 
   private findExistingLoanRecord(
@@ -704,7 +785,7 @@ export class AddLoanAdvanceComponent implements OnInit {
     return [...this.loanAdvanceService.loans()]
       .sort((left, right) => right.Id - left.Id)
       .find((record) => {
-        if (record.RequestType !== 'Salary Advance') {
+        if (!this.isSalaryAdvanceRequest(record)) {
           return false;
         }
 
@@ -719,15 +800,25 @@ export class AddLoanAdvanceComponent implements OnInit {
         }
 
         const advanceDetail = record.AdvanceDetail;
+        const newAdvanceRequest = advanceDetail.newAdvanceRequest;
         return Boolean(
           (advanceDetail.existingAdvance || '').trim().toLowerCase() === 'yes' ||
             (advanceDetail.advanceAmount || '').trim() ||
             (advanceDetail.advanceAmountToBeDeductedThisMonth || '').trim() ||
             (advanceDetail.advanceBalance || '').trim() ||
             (advanceDetail.advanceAcquiredDate || '').trim() ||
-            (advanceDetail.previousAdvancePurpose || '').trim(),
+            (advanceDetail.previousAdvancePurpose || '').trim() ||
+            (advanceDetail.advanceEligibleAmount || '').trim() ||
+            (newAdvanceRequest.advanceAmountRequested || '').trim() ||
+            (newAdvanceRequest.purpose || '').trim() ||
+            (newAdvanceRequest.advanceAmountEligible || '').trim(),
         );
       });
+  }
+
+  private isSalaryAdvanceRequest(record: LoanAdvanceRecord): boolean {
+    const requestType = this.pickRecordValue(record.HeaderInfo.requestType, record.RequestType).toLowerCase();
+    return requestType === 'salary advance' || requestType === 'salary_advance' || requestType === 'advance';
   }
 
   private resetExistingLoanFields(): void {
