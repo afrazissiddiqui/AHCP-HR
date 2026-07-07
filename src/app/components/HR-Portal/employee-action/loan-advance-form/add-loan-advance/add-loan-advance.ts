@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
-import { LoanAdvanceRecord, LoanAdvanceService } from '../../../../../services/loan-advance.service';
+import { LoanAdvanceRecord, LoanAdvancePayload, LoanAdvanceService } from '../../../../../services/loan-advance.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { formatApiToDateSlash, formatDateForInput, formatDateSlashToApi } from '../../../../../utils/date-format.util';
@@ -189,49 +189,28 @@ export class AddLoanAdvanceComponent implements OnInit {
       this.cdr.markForCheck();
     };
 
-    const stateRecord = this.readRecordFromNavigationState(editId);
-    if (stateRecord) {
-      applyRecord(stateRecord);
-      return;
+    const state = history.state as {
+      loanAdvanceRecord?: LoanAdvanceRecord;
+      loanAdvancePayload?: LoanAdvancePayload;
+    };
+
+    if (state?.loanAdvancePayload) {
+      applyRecord(this.loanAdvanceService.buildRecordFromPayload(editId, state.loanAdvancePayload));
+    } else if (state?.loanAdvanceRecord && this.loanAdvanceService.recordHasFormData(state.loanAdvanceRecord)) {
+      applyRecord(state.loanAdvanceRecord);
+    } else {
+      const cachedPayload = this.loanAdvanceService.getCachedPayload(editId);
+      if (cachedPayload) {
+        applyRecord(this.loanAdvanceService.buildRecordFromPayload(editId, cachedPayload));
+      }
     }
 
-    const cached = this.loanAdvanceService.findLoanById(editId);
-    if (cached) {
-      applyRecord(cached);
-      return;
-    }
-
-    this.loanAdvanceService.fetchLoanAdvances().subscribe({
-      next: () => {
-        const fromList = this.loanAdvanceService.findLoanById(editId);
-        if (fromList) {
-          applyRecord(fromList);
-          return;
+    this.loanAdvanceService.loadRecordForEdit(editId).subscribe({
+      next: (record) => {
+        if (this.loanAdvanceService.recordHasFormData(record)) {
+          applyRecord(record);
         }
-        this.fetchDetailForEdit(editId, applyRecord);
       },
-      error: () => {
-        this.fetchDetailForEdit(editId, applyRecord);
-      },
-    });
-  }
-
-  private readRecordFromNavigationState(editId: string): LoanAdvanceRecord | null {
-    const state = history.state as { loanAdvanceRecord?: LoanAdvanceRecord } | undefined;
-    const record = state?.loanAdvanceRecord;
-    if (!record) {
-      return null;
-    }
-
-    return String(record.Id) === editId ? record : null;
-  }
-
-  private fetchDetailForEdit(
-    editId: string,
-    applyRecord: (record: LoanAdvanceRecord) => void,
-  ): void {
-    this.loanAdvanceService.fetchLoanAdvanceDetail(editId).subscribe({
-      next: applyRecord,
       error: (error: unknown) => {
         void this.alertService.error(
           'Load Failed',

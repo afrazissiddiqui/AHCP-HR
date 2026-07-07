@@ -150,25 +150,224 @@ export class LoanAdvanceService {
   }
 
   submitLoanAdvance(payload: LoanAdvancePayload): Observable<LoanAdvanceResponse> {
-    return this.http.post<LoanAdvanceResponse>(LOAN_ADVANCE_ADD_URL, payload);
+    return this.http.post<LoanAdvanceResponse>(LOAN_ADVANCE_ADD_URL, payload).pipe(
+      tap((response) => {
+        const id = this.extractResponseId(response);
+        if (id) {
+          this.cachePayload(id, payload);
+        }
+      }),
+    );
   }
 
   updateLoanAdvance(id: string | number, payload: LoanAdvancePayload): Observable<LoanAdvanceResponse> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.put<LoanAdvanceResponse>(`${LOAN_ADVANCE_UPDATE_URL}/${identifier}`, payload);
+    const numericId = Number.parseInt(String(id), 10) || 0;
+    return this.http.post<LoanAdvanceResponse>(`${LOAN_ADVANCE_UPDATE_URL}/${identifier}`, payload).pipe(
+      tap(() => {
+        if (numericId) {
+          this.cachePayload(numericId, payload);
+        }
+      }),
+    );
   }
 
   fetchLoanAdvanceDetail(id: string | number): Observable<LoanAdvanceRecord> {
     const numericId = Number.parseInt(String(id), 10) || 0;
     const cached = this.findLoanById(id);
-    if (cached) {
+    if (cached && this.recordHasFormData(cached)) {
       return of(this.ensureRecordId(cached, numericId));
+    }
+
+    const cachedPayload = this.getCachedPayload(id);
+    if (cachedPayload) {
+      return of(this.buildRecordFromPayload(numericId, cachedPayload));
     }
 
     const identifier = encodeURIComponent(String(id));
     return this.http.get<unknown>(`${LOAN_ADVANCE_DETAIL_URL}/${identifier}`).pipe(
       map((response) => this.ensureRecordId(this.mapDetailResponse(response), numericId)),
       catchError(() => this.resolveLoanAdvanceFromList(numericId)),
+    );
+  }
+
+  loadRecordForEdit(id: string | number): Observable<LoanAdvanceRecord> {
+    const numericId = Number.parseInt(String(id), 10) || 0;
+    const cachedPayload = this.getCachedPayload(id);
+    if (cachedPayload) {
+      return of(this.buildRecordFromPayload(numericId, cachedPayload));
+    }
+
+    return this.fetchLoanAdvances().pipe(
+      switchMap((records) => {
+        const fromList = records.find((item) => item.Id === numericId);
+        if (fromList && this.recordHasFormData(fromList)) {
+          return of(fromList);
+        }
+
+        return this.fetchLoanAdvanceDetail(id);
+      }),
+      catchError(() => this.fetchLoanAdvanceDetail(id)),
+    );
+  }
+
+  cachePayload(id: string | number, payload: LoanAdvancePayload): void {
+    const numericId = Number.parseInt(String(id), 10);
+    if (!numericId) {
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(this.payloadStorageKey(numericId), JSON.stringify(payload));
+    } catch {
+      // Ignore storage failures and keep the in-memory list as fallback.
+    }
+  }
+
+  getCachedPayload(id: string | number): LoanAdvancePayload | null {
+    const numericId = Number.parseInt(String(id), 10);
+    if (!numericId) {
+      return null;
+    }
+
+    try {
+      const raw = sessionStorage.getItem(this.payloadStorageKey(numericId));
+      if (!raw) {
+        return null;
+      }
+
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') {
+        return null;
+      }
+
+      return parsed as LoanAdvancePayload;
+    } catch {
+      return null;
+    }
+  }
+
+  buildPayloadFromRecord(record: LoanAdvanceRecord): LoanAdvancePayload {
+    const pick = (...values: Array<string | undefined>): string => this.pickDisplayValue(...values);
+
+    return {
+      headerInfo: {
+        documentNo: pick(record.HeaderInfo.documentNo, record.DocumentNo),
+        employeeNature: pick(record.HeaderInfo.employeeNature, record.EmployeeNature),
+        department: pick(record.HeaderInfo.department, record.Department),
+        requestType: pick(record.HeaderInfo.requestType, record.RequestType),
+        employeeID: pick(record.HeaderInfo.employeeID, record.EmployeeID),
+        employmentType: pick(record.HeaderInfo.employmentType, record.EmploymentType),
+        designation: pick(record.HeaderInfo.designation, record.Designation),
+        requestDate: pick(record.HeaderInfo.requestDate, record.RequestDate),
+        employeeName: pick(record.HeaderInfo.employeeName, record.EmployeeName),
+        workGradeLevel: pick(record.HeaderInfo.workGradeLevel, record.WorkGradeLevel),
+        jobTitle: pick(record.HeaderInfo.jobTitle, record.JobTitle),
+        status: pick(record.HeaderInfo.status, record.Status, 'Pending'),
+        employeeCategory: pick(record.HeaderInfo.employeeCategory, record.EmployeeCategory),
+        reportingManager: pick(record.HeaderInfo.reportingManager, record.ReportingManager),
+        location: pick(record.HeaderInfo.location, record.Location),
+        joiningDate: pick(record.HeaderInfo.joiningDate, record.JoiningDate),
+        yearsOfService: pick(record.HeaderInfo.yearsOfService, record.YearsOfService),
+        payrollMonth: pick(record.HeaderInfo.payrollMonth, record.PayrollMonth),
+      },
+      loanDetail: {
+        existingLoan: pick(record.LoanDetail.existingLoan, record.ExistingLoan),
+        loanAcquiredDate: record.LoanDetail.loanAcquiredDate ?? '',
+        installmentNumber: record.LoanDetail.installmentNumber ?? '',
+        loanEndingDate: record.LoanDetail.loanEndingDate ?? '',
+        previousInstallmentAmount: record.LoanDetail.previousInstallmentAmount ?? '',
+        previousLoanPurpose: record.LoanDetail.previousLoanPurpose ?? '',
+        loanAmount: record.LoanDetail.loanAmount ?? '',
+        loanAmountDeductedTillNow: record.LoanDetail.loanAmountDeductedTillNow ?? '',
+        loanBalance: record.LoanDetail.loanBalance ?? '',
+        newLoanRequest: {
+          purpose: pick(record.LoanDetail.newLoanRequest.purpose, record.LoanPurpose),
+          loanAmountRequested: pick(
+            record.LoanDetail.newLoanRequest.loanAmountRequested,
+            record.LoanAmountRequested,
+          ),
+          installmentAmount: pick(
+            record.LoanDetail.newLoanRequest.installmentAmount,
+            record.LoanInstallmentAmount,
+          ),
+          noOfInstallments: pick(
+            record.LoanDetail.newLoanRequest.noOfInstallments,
+            record.NoOfInstallments,
+          ),
+          loanEndMonth: record.LoanDetail.newLoanRequest.loanEndMonth ?? '',
+          loanStartMonth: record.LoanDetail.newLoanRequest.loanStartMonth ?? '',
+          loanTenure: record.LoanDetail.newLoanRequest.loanTenure ?? '',
+          eligibleAmount: pick(
+            record.LoanDetail.newLoanRequest.eligibleAmount,
+            record.LoanEligibleAmount,
+          ),
+        },
+        remarks: record.LoanDetail.remarks ?? '',
+      },
+      advanceDetail: {
+        existingAdvance: pick(record.AdvanceDetail.existingAdvance, record.ExistingAdvance),
+        advanceAcquiredDate: record.AdvanceDetail.advanceAcquiredDate ?? '',
+        advanceEligibleAmount: pick(
+          record.AdvanceDetail.advanceEligibleAmount,
+          record.AdvanceEligibleAmount,
+        ),
+        previousAdvancePurpose: record.AdvanceDetail.previousAdvancePurpose ?? '',
+        advanceRemarks: record.AdvanceDetail.advanceRemarks ?? '',
+        advanceAmount: record.AdvanceDetail.advanceAmount ?? '',
+        advanceAmountToBeDeductedThisMonth:
+          record.AdvanceDetail.advanceAmountToBeDeductedThisMonth ?? '',
+        advanceBalance: record.AdvanceDetail.advanceBalance ?? '',
+        newAdvanceRequest: {
+          purpose: pick(record.AdvanceDetail.newAdvanceRequest.purpose, record.AdvancePurpose),
+          advanceAmountEligible: pick(
+            record.AdvanceDetail.newAdvanceRequest.advanceAmountEligible,
+            record.AdvanceEligibleAmount,
+          ),
+          advanceAmountRequested: pick(
+            record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested,
+            record.AdvanceAmountRequested,
+          ),
+        },
+      },
+      repaymentSchedule: {
+        repaymentStartDate: pick(
+          record.RepaymentSchedule.repaymentStartDate,
+          record.RepaymentStartDate,
+        ),
+        repaymentFrequency: pick(
+          record.RepaymentSchedule.repaymentFrequency,
+          record.RepaymentFrequency,
+        ),
+        deductionAmount: pick(record.RepaymentSchedule.deductionAmount, record.DeductionAmount),
+        remarks: record.RepaymentSchedule.remarks ?? '',
+      },
+    };
+  }
+
+  buildRecordFromPayload(id: string | number, payload: LoanAdvancePayload): LoanAdvanceRecord {
+    return this.mapApiItemToRecord({
+      id: Number.parseInt(String(id), 10) || 0,
+      headerInfo: payload.headerInfo,
+      loanDetail: payload.loanDetail,
+      advanceDetail: payload.advanceDetail,
+      repaymentSchedule: payload.repaymentSchedule,
+    });
+  }
+
+  recordHasFormData(record: LoanAdvanceRecord): boolean {
+    return Boolean(
+      this.pickDisplayValue(record.HeaderInfo.documentNo, record.DocumentNo) ||
+        this.pickDisplayValue(record.HeaderInfo.employeeID, record.EmployeeID) ||
+        this.pickDisplayValue(record.HeaderInfo.requestType, record.RequestType) ||
+        this.pickDisplayValue(
+          record.LoanDetail.newLoanRequest.loanAmountRequested,
+          record.LoanAmountRequested,
+        ) ||
+        this.pickDisplayValue(
+          record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested,
+          record.AdvanceAmountRequested,
+        ),
     );
   }
 
@@ -188,8 +387,13 @@ export class LoanAdvanceService {
 
   private resolveLoanAdvanceFromList(numericId: number): Observable<LoanAdvanceRecord> {
     const fromCache = this.loanList().find((item) => item.Id === numericId);
-    if (fromCache) {
+    if (fromCache && this.recordHasFormData(fromCache)) {
       return of(fromCache);
+    }
+
+    const cachedPayload = this.getCachedPayload(numericId);
+    if (cachedPayload) {
+      return of(this.buildRecordFromPayload(numericId, cachedPayload));
     }
 
     return this.fetchLoanAdvances().pipe(
@@ -363,10 +567,71 @@ export class LoanAdvanceService {
       sectionKeys.reduce<unknown>((current, key) => current ?? item[key], undefined),
     );
 
-    return {
-      ...flatFields,
-      ...nested,
-    };
+    const merged: Record<string, unknown> = { ...flatFields };
+    for (const [key, value] of Object.entries(nested)) {
+      if (!this.hasMeaningfulValue(value)) {
+        continue;
+      }
+
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        merged[key] = {
+          ...this.asRecord(merged[key]),
+          ...(value as Record<string, unknown>),
+        };
+        continue;
+      }
+
+      merged[key] = value;
+    }
+
+    return merged;
+  }
+
+  private hasMeaningfulValue(value: unknown): boolean {
+    if (value === undefined || value === null) {
+      return false;
+    }
+
+    if (typeof value === 'string') {
+      const text = value.trim();
+      return Boolean(text && text.toLowerCase() !== 'null' && text.toLowerCase() !== 'undefined');
+    }
+
+    if (Array.isArray(value)) {
+      return value.some((entry) => this.hasMeaningfulValue(entry));
+    }
+
+    if (typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>).some((entry) =>
+        this.hasMeaningfulValue(entry),
+      );
+    }
+
+    return true;
+  }
+
+  private pickDisplayValue(...values: Array<string | undefined>): string {
+    for (const value of values) {
+      const text = (value ?? '').trim();
+      if (text && text !== '—' && text.toLowerCase() !== 'null' && text.toLowerCase() !== 'undefined') {
+        return text;
+      }
+    }
+    return '';
+  }
+
+  private payloadStorageKey(id: number): string {
+    return `loan-advance-payload:${id}`;
+  }
+
+  private extractResponseId(response: LoanAdvanceResponse): number {
+    const data = response.data;
+    if (!data || typeof data !== 'object') {
+      return 0;
+    }
+
+    const idValue = data['id'] ?? data['Id'] ?? data['loan_advance_id'] ?? data['loanAdvanceId'];
+    return Number.parseInt(String(idValue ?? ''), 10) || 0;
   }
 
   private extractFlatHeader(item: Record<string, unknown>): Record<string, unknown> {

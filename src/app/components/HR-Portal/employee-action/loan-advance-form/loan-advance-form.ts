@@ -282,7 +282,10 @@ export class LoanAdvanceFormComponent implements OnInit {
       return;
     }
     void this.router.navigate(['/employee-action/loan-advance-form/edit', record.Id], {
-      state: { loanAdvanceRecord: record },
+      state: {
+        loanAdvanceRecord: record,
+        loanAdvancePayload: this.loanService.buildPayloadFromRecord(record),
+      },
     });
   }
 
