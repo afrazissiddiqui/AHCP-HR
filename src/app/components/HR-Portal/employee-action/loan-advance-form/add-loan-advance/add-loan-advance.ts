@@ -144,10 +144,11 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly isAdvanceRequest = computed(() => this.requestType() === 'Salary Advance');
   protected readonly hasExistingLoanDetails = signal(false);
   protected readonly hasExistingAdvanceDetails = signal(false);
+  protected readonly isEditing = signal(false);
   protected readonly existingLoanFieldsLocked = signal(false);
-  protected readonly newLoanRequestLocked = computed(() => this.hasExistingLoanDetails());
+  protected readonly newLoanRequestLocked = computed(() => !this.isEditing() && this.hasExistingLoanDetails());
   protected readonly existingAdvanceFieldsLocked = signal(false);
-  protected readonly newAdvanceRequestLocked = computed(() => this.hasExistingAdvanceDetails());
+  protected readonly newAdvanceRequestLocked = computed(() => !this.isEditing() && this.hasExistingAdvanceDetails());
   protected readonly saving = signal(false);
 
   ngOnInit(): void {
@@ -176,14 +177,61 @@ export class AddLoanAdvanceComponent implements OnInit {
     }
 
     this.editingId = editId;
+    this.isEditing.set(true);
     this.pageTitle = 'Update Loan/Advance';
     this.submitButtonLabel = 'Update Loan/Advance';
+    this.loadRecordForEdit(editId);
+  }
 
-    this.loanAdvanceService.fetchLoanAdvanceDetail(editId).subscribe({
-      next: (record) => {
-        this.populateFromRecord(record);
-        this.cdr.markForCheck();
+  private loadRecordForEdit(editId: string): void {
+    const applyRecord = (record: LoanAdvanceRecord): void => {
+      this.populateFromRecord(record);
+      this.cdr.markForCheck();
+    };
+
+    const stateRecord = this.readRecordFromNavigationState(editId);
+    if (stateRecord) {
+      applyRecord(stateRecord);
+      return;
+    }
+
+    const cached = this.loanAdvanceService.findLoanById(editId);
+    if (cached) {
+      applyRecord(cached);
+      return;
+    }
+
+    this.loanAdvanceService.fetchLoanAdvances().subscribe({
+      next: () => {
+        const fromList = this.loanAdvanceService.findLoanById(editId);
+        if (fromList) {
+          applyRecord(fromList);
+          return;
+        }
+        this.fetchDetailForEdit(editId, applyRecord);
       },
+      error: () => {
+        this.fetchDetailForEdit(editId, applyRecord);
+      },
+    });
+  }
+
+  private readRecordFromNavigationState(editId: string): LoanAdvanceRecord | null {
+    const state = history.state as { loanAdvanceRecord?: LoanAdvanceRecord } | undefined;
+    const record = state?.loanAdvanceRecord;
+    if (!record) {
+      return null;
+    }
+
+    return String(record.Id) === editId ? record : null;
+  }
+
+  private fetchDetailForEdit(
+    editId: string,
+    applyRecord: (record: LoanAdvanceRecord) => void,
+  ): void {
+    this.loanAdvanceService.fetchLoanAdvanceDetail(editId).subscribe({
+      next: applyRecord,
       error: (error: unknown) => {
         void this.alertService.error(
           'Load Failed',

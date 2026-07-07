@@ -261,7 +261,7 @@ export class LoanAdvanceFormComponent implements OnInit {
     }
 
     this.showViewDialog.set(true);
-    this.selectedRecord.set(null);
+    this.selectedRecord.set(record);
     this.viewLoading.set(true);
 
     this.loanService.fetchLoanAdvanceDetail(record.Id).subscribe({
@@ -269,13 +269,9 @@ export class LoanAdvanceFormComponent implements OnInit {
         this.selectedRecord.set(detail);
         this.viewLoading.set(false);
       },
-      error: (error: unknown) => {
+      error: () => {
+        this.selectedRecord.set(record);
         this.viewLoading.set(false);
-        this.showViewDialog.set(false);
-        this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load loan / advance details.'),
-        );
       },
     });
   }
@@ -285,7 +281,9 @@ export class LoanAdvanceFormComponent implements OnInit {
       this.alertService.warning('Update', 'Unable to update this row: missing loan / advance id.');
       return;
     }
-    void this.router.navigate(['/employee-action/loan-advance-form/edit', record.Id]);
+    void this.router.navigate(['/employee-action/loan-advance-form/edit', record.Id], {
+      state: { loanAdvanceRecord: record },
+    });
   }
 
   async onDelete(record: LoanAdvanceRecord): Promise<void> {

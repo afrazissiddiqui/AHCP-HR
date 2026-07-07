@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
 import { apiUrl } from '../config/api.config';
 
 export interface LoanAdvanceHeaderInfo {
@@ -159,17 +159,16 @@ export class LoanAdvanceService {
   }
 
   fetchLoanAdvanceDetail(id: string | number): Observable<LoanAdvanceRecord> {
-    const identifier = encodeURIComponent(String(id));
     const numericId = Number.parseInt(String(id), 10) || 0;
+    const cached = this.findLoanById(id);
+    if (cached) {
+      return of(this.ensureRecordId(cached, numericId));
+    }
 
+    const identifier = encodeURIComponent(String(id));
     return this.http.get<unknown>(`${LOAN_ADVANCE_DETAIL_URL}/${identifier}`).pipe(
-      map((response) => {
-        const record = this.mapDetailResponse(response);
-        if (!record.Id && numericId) {
-          return { ...record, Id: numericId };
-        }
-        return record;
-      }),
+      map((response) => this.ensureRecordId(this.mapDetailResponse(response), numericId)),
+      catchError(() => this.resolveLoanAdvanceFromList(numericId)),
     );
   }
 
@@ -185,6 +184,30 @@ export class LoanAdvanceService {
   findLoanById(id: string | number): LoanAdvanceRecord | undefined {
     const numericId = Number.parseInt(String(id), 10);
     return this.loanList().find((item) => item.Id === numericId);
+  }
+
+  private resolveLoanAdvanceFromList(numericId: number): Observable<LoanAdvanceRecord> {
+    const fromCache = this.loanList().find((item) => item.Id === numericId);
+    if (fromCache) {
+      return of(fromCache);
+    }
+
+    return this.fetchLoanAdvances().pipe(
+      switchMap((records) => {
+        const found = records.find((item) => item.Id === numericId);
+        if (found) {
+          return of(found);
+        }
+        return throwError(() => new Error('Loan advance record not found'));
+      }),
+    );
+  }
+
+  private ensureRecordId(record: LoanAdvanceRecord, numericId: number): LoanAdvanceRecord {
+    if (!record.Id && numericId) {
+      return { ...record, Id: numericId };
+    }
+    return record;
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
