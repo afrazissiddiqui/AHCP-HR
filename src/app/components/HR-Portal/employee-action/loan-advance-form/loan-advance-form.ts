@@ -344,12 +344,18 @@ export class LoanAdvanceFormComponent implements OnInit {
       return displayDateSlash(String(value));
     }
     const text = String(value).trim();
-    return text === '' || text === '—' ? '—' : text;
+    if (text === '' || text === '—' || text.toLowerCase() === 'null' || text.toLowerCase() === 'undefined') {
+      return '—';
+    }
+    return text;
   }
 
   formatDetail(value: string | undefined): string {
     const text = (value ?? '').trim();
-    return text ? text : '—';
+    if (!text || text === '—' || text.toLowerCase() === 'null' || text.toLowerCase() === 'undefined') {
+      return '—';
+    }
+    return text;
   }
 
   formatDateDetail(value: string | undefined): string {

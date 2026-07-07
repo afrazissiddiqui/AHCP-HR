@@ -398,23 +398,23 @@ export class AddLoanAdvanceComponent implements OnInit {
   }
 
   private populateFromRecord(record: LoanAdvanceRecord): void {
-    this.documentNo.set(record.HeaderInfo.documentNo || record.DocumentNo);
-    this.requestType.set(record.HeaderInfo.requestType || record.RequestType);
-    this.headerEmployeeID.set(record.HeaderInfo.employeeID || record.EmployeeID);
-    this.headerEmployeeName.set(record.HeaderInfo.employeeName || record.EmployeeName);
-    this.department.set(record.HeaderInfo.department || record.Department);
-    this.designation.set(record.HeaderInfo.designation || record.Designation);
-    this.branch.set(record.HeaderInfo.location || record.Location);
-    this.joiningDate.set(formatDateForInput(record.HeaderInfo.joiningDate || record.JoiningDate));
-    this.requestDate.set(this.normalizeDisplayDate(record.HeaderInfo.requestDate || record.RequestDate));
-    this.payrollMonth.set(record.HeaderInfo.payrollMonth || record.PayrollMonth);
-    this.status.set(record.HeaderInfo.status || record.Status || 'Pending');
-    this.employeeNature.set(record.HeaderInfo.employeeNature || record.EmployeeNature);
-    this.employmentType.set(record.HeaderInfo.employmentType || record.EmploymentType);
-    this.workGradeLevel.set(record.HeaderInfo.workGradeLevel || record.WorkGradeLevel);
-    this.jobTitle.set(record.HeaderInfo.jobTitle || record.JobTitle);
-    this.employeeCategory.set(record.HeaderInfo.employeeCategory || record.EmployeeCategory);
-    this.reportingManager.set(record.HeaderInfo.reportingManager || record.ReportingManager);
+    this.documentNo.set(this.pickRecordValue(record.HeaderInfo.documentNo, record.DocumentNo));
+    this.requestType.set(this.pickRecordValue(record.HeaderInfo.requestType, record.RequestType));
+    this.headerEmployeeID.set(this.pickRecordValue(record.HeaderInfo.employeeID, record.EmployeeID));
+    this.headerEmployeeName.set(this.pickRecordValue(record.HeaderInfo.employeeName, record.EmployeeName));
+    this.department.set(this.pickRecordValue(record.HeaderInfo.department, record.Department));
+    this.designation.set(this.pickRecordValue(record.HeaderInfo.designation, record.Designation));
+    this.branch.set(this.pickRecordValue(record.HeaderInfo.location, record.Location));
+    this.joiningDate.set(formatDateForInput(this.pickRecordValue(record.HeaderInfo.joiningDate, record.JoiningDate)));
+    this.requestDate.set(this.normalizeDisplayDate(this.pickRecordValue(record.HeaderInfo.requestDate, record.RequestDate)));
+    this.payrollMonth.set(this.pickRecordValue(record.HeaderInfo.payrollMonth, record.PayrollMonth));
+    this.status.set(this.pickRecordValue(record.HeaderInfo.status, record.Status, 'Pending'));
+    this.employeeNature.set(this.pickRecordValue(record.HeaderInfo.employeeNature, record.EmployeeNature));
+    this.employmentType.set(this.pickRecordValue(record.HeaderInfo.employmentType, record.EmploymentType));
+    this.workGradeLevel.set(this.pickRecordValue(record.HeaderInfo.workGradeLevel, record.WorkGradeLevel));
+    this.jobTitle.set(this.pickRecordValue(record.HeaderInfo.jobTitle, record.JobTitle));
+    this.employeeCategory.set(this.pickRecordValue(record.HeaderInfo.employeeCategory, record.EmployeeCategory));
+    this.reportingManager.set(this.pickRecordValue(record.HeaderInfo.reportingManager, record.ReportingManager));
 
     this.hasExistingLoanDetails.set((record.LoanDetail.existingLoan || '').trim().toLowerCase() === 'yes');
     this.hasExistingAdvanceDetails.set((record.AdvanceDetail.existingAdvance || '').trim().toLowerCase() === 'yes');
@@ -429,11 +429,25 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.loanAmount.set(record.LoanDetail.loanAmount?.trim() ?? '');
     this.loanAmountDeductedTillNow.set(record.LoanDetail.loanAmountDeductedTillNow?.trim() ?? '');
 
-    this.newLoanPurpose.set(record.LoanDetail.newLoanRequest.purpose?.trim() ?? '');
-    this.loanAmountRequested.set(record.LoanDetail.newLoanRequest.loanAmountRequested?.trim() ?? '');
-    this.loanEndMonth.set(this.normalizeMonthInput(record.LoanDetail.newLoanRequest.loanEndMonth));
-    this.loanStartMonth.set(this.normalizeMonthInput(record.LoanDetail.newLoanRequest.loanStartMonth));
-    this.eligibleAmount.set(record.LoanDetail.newLoanRequest.eligibleAmount?.trim() ?? '');
+    this.newLoanPurpose.set(
+      this.pickRecordValue(record.LoanDetail.newLoanRequest.purpose, record.LoanPurpose),
+    );
+    this.loanAmountRequested.set(
+      this.pickRecordValue(record.LoanDetail.newLoanRequest.loanAmountRequested, record.LoanAmountRequested),
+    );
+    this.loanEndMonth.set(
+      this.normalizeMonthInput(
+        this.pickRecordValue(record.LoanDetail.newLoanRequest.loanEndMonth, ''),
+      ),
+    );
+    this.loanStartMonth.set(
+      this.normalizeMonthInput(
+        this.pickRecordValue(record.LoanDetail.newLoanRequest.loanStartMonth, ''),
+      ),
+    );
+    this.eligibleAmount.set(
+      this.pickRecordValue(record.LoanDetail.newLoanRequest.eligibleAmount, record.LoanEligibleAmount),
+    );
     this.remarks.set(record.LoanDetail.remarks?.trim() ?? '');
 
     this.existingAdvance.set((record.AdvanceDetail.existingAdvance as 'Yes' | 'No' | '') || '');
@@ -446,18 +460,44 @@ export class AddLoanAdvanceComponent implements OnInit {
       record.AdvanceDetail.advanceAmountToBeDeductedThisMonth?.trim() ?? '',
     );
     this.advanceBalance.set(record.AdvanceDetail.advanceBalance?.trim() ?? '');
-    this.newAdvancePurpose.set(record.AdvanceDetail.newAdvanceRequest.purpose?.trim() ?? '');
+    this.newAdvancePurpose.set(
+      this.pickRecordValue(record.AdvanceDetail.newAdvanceRequest.purpose, record.AdvancePurpose),
+    );
     this.newAdvanceAmountEligible.set(
-      record.AdvanceDetail.newAdvanceRequest.advanceAmountEligible?.trim() ?? '',
+      this.pickRecordValue(
+        record.AdvanceDetail.newAdvanceRequest.advanceAmountEligible,
+        record.AdvanceEligibleAmount,
+      ),
     );
     this.newAdvanceAmountRequested.set(
-      record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested?.trim() ?? '',
+      this.pickRecordValue(
+        record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested,
+        record.AdvanceAmountRequested,
+      ),
     );
 
-    this.repaymentStartDate.set(formatDateForInput(record.RepaymentSchedule.repaymentStartDate ?? ''));
-    this.repaymentFrequency.set(record.RepaymentSchedule.repaymentFrequency?.trim() ?? '');
-    this.deductionAmount.set(record.RepaymentSchedule.deductionAmount?.trim() ?? '');
+    this.repaymentStartDate.set(
+      formatDateForInput(
+        this.pickRecordValue(record.RepaymentSchedule.repaymentStartDate, record.RepaymentStartDate),
+      ),
+    );
+    this.repaymentFrequency.set(
+      this.pickRecordValue(record.RepaymentSchedule.repaymentFrequency, record.RepaymentFrequency),
+    );
+    this.deductionAmount.set(
+      this.pickRecordValue(record.RepaymentSchedule.deductionAmount, record.DeductionAmount),
+    );
     this.repaymentRemarks.set(record.RepaymentSchedule.remarks?.trim() ?? '');
+  }
+
+  private pickRecordValue(...values: Array<string | undefined>): string {
+    for (const value of values) {
+      const text = (value ?? '').trim();
+      if (text && text !== '—' && text.toLowerCase() !== 'null' && text.toLowerCase() !== 'undefined') {
+        return text;
+      }
+    }
+    return '';
   }
 
   private generateDocumentNo(): string {

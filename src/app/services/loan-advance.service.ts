@@ -260,7 +260,12 @@ export class LoanAdvanceService {
       obj['LoanDetail'] ||
       obj['documentNo'] ||
       obj['document_no'] ||
-      obj['DocumentNo']
+      obj['DocumentNo'] ||
+      obj['employee_id'] ||
+      obj['employeeId'] ||
+      obj['employeeID'] ||
+      obj['loan_amount_requested'] ||
+      obj['loanAmountRequested']
     ) {
       return [obj];
     }
@@ -298,8 +303,16 @@ export class LoanAdvanceService {
   }
 
   private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
-    const asString = (value: unknown): string =>
-      value === undefined || value === null ? '' : String(value).trim();
+    const asString = (value: unknown): string => {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const text = String(value).trim();
+      if (!text || text.toLowerCase() === 'null' || text.toLowerCase() === 'undefined') {
+        return '';
+      }
+      return text;
+    };
 
     for (const source of sources) {
       for (const key of keys) {
@@ -310,6 +323,225 @@ export class LoanAdvanceService {
       }
     }
     return '';
+  }
+
+  private normalizeApiItem(item: Record<string, unknown>): Record<string, unknown> {
+    let normalized: Record<string, unknown> = { ...item };
+
+    const payloadKeys = [
+      'payload',
+      'form_data',
+      'formData',
+      'loan_advance_data',
+      'loanAdvanceData',
+      'loan_advance_payload',
+      'loanAdvancePayload',
+      'request_payload',
+      'requestPayload',
+      'loan_advance',
+      'loanAdvance',
+      'record',
+      'Record',
+    ];
+
+    for (const key of payloadKeys) {
+      const unwrapped = this.asRecord(item[key]);
+      if (Object.keys(unwrapped).length > 0) {
+        normalized = { ...normalized, ...unwrapped };
+      }
+    }
+
+    return normalized;
+  }
+
+  private mergeSection(
+    item: Record<string, unknown>,
+    sectionKeys: string[],
+    flatFields: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const nested = this.asRecord(
+      sectionKeys.reduce<unknown>((current, key) => current ?? item[key], undefined),
+    );
+
+    return {
+      ...flatFields,
+      ...nested,
+    };
+  }
+
+  private extractFlatHeader(item: Record<string, unknown>): Record<string, unknown> {
+    return {
+      documentNo: this.pickString([item], ['documentNo', 'document_no', 'DocumentNo']),
+      employeeNature: this.pickString([item], ['employeeNature', 'employee_nature', 'EmployeeNature']),
+      department: this.pickString([item], ['department', 'Department']),
+      requestType: this.pickString([item], ['requestType', 'request_type', 'RequestType']),
+      employeeID: this.pickString([item], ['employeeID', 'employee_id', 'employeeId', 'EmployeeID']),
+      employmentType: this.pickString([item], ['employmentType', 'employment_type', 'EmploymentType']),
+      designation: this.pickString([item], ['designation', 'Designation']),
+      requestDate: this.pickString([item], ['requestDate', 'request_date', 'RequestDate']),
+      employeeName: this.pickString([item], ['employeeName', 'employee_name', 'EmployeeName']),
+      workGradeLevel: this.pickString([item], ['workGradeLevel', 'work_grade_level', 'WorkGradeLevel']),
+      jobTitle: this.pickString([item], ['jobTitle', 'job_title', 'JobTitle']),
+      status: this.pickString([item], ['status', 'Status', 'approvalStatus', 'approval_status']),
+      employeeCategory: this.pickString([item], ['employeeCategory', 'employee_category', 'EmployeeCategory']),
+      reportingManager: this.pickString([item], ['reportingManager', 'reporting_manager', 'ReportingManager']),
+      location: this.pickString([item], ['location', 'Location', 'branch', 'Branch']),
+      joiningDate: this.pickString([item], ['joiningDate', 'joining_date', 'JoiningDate']),
+      yearsOfService: this.pickString([item], ['yearsOfService', 'years_of_service', 'YearsOfService']),
+      payrollMonth: this.pickString([item], ['payrollMonth', 'payroll_month', 'PayrollMonth']),
+    };
+  }
+
+  private extractFlatLoanDetail(item: Record<string, unknown>): Record<string, unknown> {
+    return {
+      existingLoan: this.pickString([item], ['existingLoan', 'existing_loan', 'ExistingLoan']),
+      loanAcquiredDate: this.pickString([item], [
+        'loanAcquiredDate',
+        'loan_acquired_date',
+        'LoanAcquiredDate',
+        'loanAcquiredMonth',
+        'loan_acquired_month',
+      ]),
+      installmentNumber: this.pickString([item], ['installmentNumber', 'installment_number', 'InstallmentNumber']),
+      loanEndingDate: this.pickString([item], [
+        'loanEndingDate',
+        'loan_ending_date',
+        'LoanEndingDate',
+        'loanEndingMonth',
+        'loan_ending_month',
+      ]),
+      previousInstallmentAmount: this.pickString([item], [
+        'previousInstallmentAmount',
+        'previous_installment_amount',
+        'PreviousInstallmentAmount',
+      ]),
+      previousLoanPurpose: this.pickString([item], [
+        'previousLoanPurpose',
+        'previous_loan_purpose',
+        'PreviousLoanPurpose',
+      ]),
+      loanAmount: this.pickString([item], ['loanAmount', 'loan_amount', 'LoanAmount']),
+      loanAmountDeductedTillNow: this.pickString([item], [
+        'loanAmountDeductedTillNow',
+        'loan_amount_deducted_till_now',
+        'LoanAmountDeductedTillNow',
+      ]),
+      loanBalance: this.pickString([item], ['loanBalance', 'loan_balance', 'LoanBalance']),
+      remarks: this.pickString([item], ['loanRemarks', 'loan_remarks', 'LoanRemarks', 'remarks', 'Remarks']),
+    };
+  }
+
+  private extractFlatNewLoanRequest(
+    item: Record<string, unknown>,
+    loanSource: Record<string, unknown>,
+  ): Record<string, unknown> {
+    return {
+      purpose: this.pickString([loanSource, item], ['purpose', 'Purpose', 'loanPurpose', 'loan_purpose', 'LoanPurpose']),
+      loanAmountRequested: this.pickString([loanSource, item], [
+        'loanAmountRequested',
+        'loan_amount_requested',
+        'LoanAmountRequested',
+      ]),
+      installmentAmount: this.pickString([loanSource, item], [
+        'installmentAmount',
+        'installment_amount',
+        'InstallmentAmount',
+        'loanInstallmentAmount',
+        'loan_installment_amount',
+        'LoanInstallmentAmount',
+      ]),
+      noOfInstallments: this.pickString([loanSource, item], [
+        'noOfInstallments',
+        'no_of_installments',
+        'NoOfInstallments',
+      ]),
+      loanEndMonth: this.pickString([loanSource, item], ['loanEndMonth', 'loan_end_month', 'LoanEndMonth']),
+      loanStartMonth: this.pickString([loanSource, item], ['loanStartMonth', 'loan_start_month', 'LoanStartMonth']),
+      loanTenure: this.pickString([loanSource, item], ['loanTenure', 'loan_tenure', 'LoanTenure']),
+      eligibleAmount: this.pickString([loanSource, item], [
+        'eligibleAmount',
+        'eligible_amount',
+        'EligibleAmount',
+        'loanEligibleAmount',
+        'loan_eligible_amount',
+        'LoanEligibleAmount',
+      ]),
+    };
+  }
+
+  private extractFlatAdvanceDetail(item: Record<string, unknown>): Record<string, unknown> {
+    return {
+      existingAdvance: this.pickString([item], ['existingAdvance', 'existing_advance', 'ExistingAdvance']),
+      advanceAcquiredDate: this.pickString([item], [
+        'advanceAcquiredDate',
+        'advance_acquired_date',
+        'AdvanceAcquiredDate',
+      ]),
+      advanceEligibleAmount: this.pickString([item], [
+        'advanceEligibleAmount',
+        'advance_eligible_amount',
+        'AdvanceEligibleAmount',
+      ]),
+      previousAdvancePurpose: this.pickString([item], [
+        'previousAdvancePurpose',
+        'previous_advance_purpose',
+        'PreviousAdvancePurpose',
+      ]),
+      advanceRemarks: this.pickString([item], ['advanceRemarks', 'advance_remarks', 'AdvanceRemarks']),
+      advanceAmount: this.pickString([item], ['advanceAmount', 'advance_amount', 'AdvanceAmount']),
+      advanceAmountToBeDeductedThisMonth: this.pickString([item], [
+        'advanceAmountToBeDeductedThisMonth',
+        'advance_amount_to_be_deducted_this_month',
+        'AdvanceAmountToBeDeductedThisMonth',
+      ]),
+      advanceBalance: this.pickString([item], ['advanceBalance', 'advance_balance', 'AdvanceBalance']),
+    };
+  }
+
+  private extractFlatNewAdvanceRequest(
+    item: Record<string, unknown>,
+    advanceSource: Record<string, unknown>,
+  ): Record<string, unknown> {
+    return {
+      purpose: this.pickString([advanceSource, item], [
+        'purpose',
+        'Purpose',
+        'advancePurpose',
+        'advance_purpose',
+        'AdvancePurpose',
+      ]),
+      advanceAmountEligible: this.pickString([advanceSource, item], [
+        'advanceAmountEligible',
+        'advance_amount_eligible',
+        'AdvanceAmountEligible',
+      ]),
+      advanceAmountRequested: this.pickString([advanceSource, item], [
+        'advanceAmountRequested',
+        'advance_amount_requested',
+        'AdvanceAmountRequested',
+      ]),
+    };
+  }
+
+  private extractFlatRepaymentSchedule(item: Record<string, unknown>): Record<string, unknown> {
+    return {
+      repaymentStartDate: this.pickString([item], [
+        'repaymentStartDate',
+        'repayment_start_date',
+        'RepaymentStartDate',
+      ]),
+      repaymentFrequency: this.pickString([item], [
+        'repaymentFrequency',
+        'repayment_frequency',
+        'RepaymentFrequency',
+      ]),
+      deductionAmount: this.pickString([item], ['deductionAmount', 'deduction_amount', 'DeductionAmount']),
+      remarks: this.pickString([item], [
+        'repaymentRemarks',
+        'repayment_remarks',
+        'RepaymentRemarks',
+      ]),
+    };
   }
 
   private mapDetailResponse(response: unknown): LoanAdvanceRecord {
@@ -326,27 +558,40 @@ export class LoanAdvanceService {
   }
 
   private mapApiItemToRecord(item: Record<string, unknown>): LoanAdvanceRecord {
-    const headerSource = this.asRecord(
-      item['headerInfo'] ?? item['header_info'] ?? item['HeaderInfo'],
+    const normalizedItem = this.normalizeApiItem(item);
+    const headerSource = this.mergeSection(
+      normalizedItem,
+      ['headerInfo', 'header_info', 'HeaderInfo'],
+      this.extractFlatHeader(normalizedItem),
     );
-    const loanSource = this.asRecord(item['loanDetail'] ?? item['loan_detail'] ?? item['LoanDetail']);
-    const advanceSource = this.asRecord(
-      item['advanceDetail'] ?? item['advance_detail'] ?? item['AdvanceDetail'],
+    const loanSource = this.mergeSection(
+      normalizedItem,
+      ['loanDetail', 'loan_detail', 'LoanDetail'],
+      this.extractFlatLoanDetail(normalizedItem),
     );
-    const repaymentSource = this.asRecord(
-      item['repaymentSchedule'] ?? item['repayment_schedule'] ?? item['RepaymentSchedule'],
+    const advanceSource = this.mergeSection(
+      normalizedItem,
+      ['advanceDetail', 'advance_detail', 'AdvanceDetail'],
+      this.extractFlatAdvanceDetail(normalizedItem),
     );
-    const newLoanSource = this.asRecord(
-      loanSource['newLoanRequest'] ?? loanSource['new_loan_request'] ?? loanSource['NewLoanRequest'],
+    const repaymentSource = this.mergeSection(
+      normalizedItem,
+      ['repaymentSchedule', 'repayment_schedule', 'RepaymentSchedule'],
+      this.extractFlatRepaymentSchedule(normalizedItem),
     );
-    const newAdvanceSource = this.asRecord(
-      advanceSource['newAdvanceRequest'] ??
-        advanceSource['new_advance_request'] ??
-        advanceSource['NewAdvanceRequest'],
+    const newLoanSource = this.mergeSection(
+      loanSource,
+      ['newLoanRequest', 'new_loan_request', 'NewLoanRequest'],
+      this.extractFlatNewLoanRequest(normalizedItem, loanSource),
+    );
+    const newAdvanceSource = this.mergeSection(
+      advanceSource,
+      ['newAdvanceRequest', 'new_advance_request', 'NewAdvanceRequest'],
+      this.extractFlatNewAdvanceRequest(normalizedItem, advanceSource),
     );
 
-    const sources = [headerSource, loanSource, advanceSource, repaymentSource, newLoanSource, newAdvanceSource, item];
-    const id = this.pickString([item], ['id', 'Id', 'loan_advance_id']);
+    const sources = [headerSource, loanSource, advanceSource, repaymentSource, newLoanSource, newAdvanceSource, normalizedItem];
+    const id = this.pickString([normalizedItem], ['id', 'Id', 'loan_advance_id', 'loanAdvanceId']);
 
     const headerInfo: LoanAdvanceHeaderInfo = {
       documentNo: this.pickString(sources, ['documentNo', 'document_no', 'DocumentNo']),
@@ -370,19 +615,19 @@ export class LoanAdvanceService {
     };
 
     const newLoanRequest: LoanAdvanceNewLoanRequest = {
-      purpose: this.pickString([newLoanSource, loanSource, item], [
+      purpose: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'purpose',
         'Purpose',
         'loanPurpose',
         'loan_purpose',
         'LoanPurpose',
       ]),
-      loanAmountRequested: this.pickString([newLoanSource, loanSource, item], [
+      loanAmountRequested: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'loanAmountRequested',
         'loan_amount_requested',
         'LoanAmountRequested',
       ]),
-      installmentAmount: this.pickString([newLoanSource, loanSource, item], [
+      installmentAmount: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'installmentAmount',
         'installment_amount',
         'InstallmentAmount',
@@ -390,27 +635,27 @@ export class LoanAdvanceService {
         'loan_installment_amount',
         'LoanInstallmentAmount',
       ]),
-      noOfInstallments: this.pickString([newLoanSource, loanSource, item], [
+      noOfInstallments: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'noOfInstallments',
         'no_of_installments',
         'NoOfInstallments',
       ]),
-      loanEndMonth: this.pickString([newLoanSource, loanSource, item], [
+      loanEndMonth: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'loanEndMonth',
         'loan_end_month',
         'LoanEndMonth',
       ]),
-      loanStartMonth: this.pickString([newLoanSource, loanSource, item], [
+      loanStartMonth: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'loanStartMonth',
         'loan_start_month',
         'LoanStartMonth',
       ]),
-      loanTenure: this.pickString([newLoanSource, loanSource, item], [
+      loanTenure: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'loanTenure',
         'loan_tenure',
         'LoanTenure',
       ]),
-      eligibleAmount: this.pickString([newLoanSource, loanSource, item], [
+      eligibleAmount: this.pickString([newLoanSource, loanSource, normalizedItem], [
         'eligibleAmount',
         'eligible_amount',
         'EligibleAmount',
@@ -421,8 +666,8 @@ export class LoanAdvanceService {
     };
 
     const loanDetail: LoanAdvanceLoanDetail = {
-      existingLoan: this.pickString([loanSource, item], ['existingLoan', 'existing_loan', 'ExistingLoan']),
-      loanAcquiredDate: this.pickString([loanSource, item], [
+      existingLoan: this.pickString([loanSource, normalizedItem], ['existingLoan', 'existing_loan', 'ExistingLoan']),
+      loanAcquiredDate: this.pickString([loanSource, normalizedItem], [
         'loanAcquiredDate',
         'loan_acquired_date',
         'LoanAcquiredDate',
@@ -430,12 +675,12 @@ export class LoanAdvanceService {
         'loan_acquired_month',
         'LoanAcquiredMonth',
       ]),
-      installmentNumber: this.pickString([loanSource, item], [
+      installmentNumber: this.pickString([loanSource, normalizedItem], [
         'installmentNumber',
         'installment_number',
         'InstallmentNumber',
       ]),
-      loanEndingDate: this.pickString([loanSource, item], [
+      loanEndingDate: this.pickString([loanSource, normalizedItem], [
         'loanEndingDate',
         'loan_ending_date',
         'LoanEndingDate',
@@ -443,41 +688,41 @@ export class LoanAdvanceService {
         'loan_ending_month',
         'LoanEndingMonth',
       ]),
-      previousInstallmentAmount: this.pickString([loanSource, item], [
+      previousInstallmentAmount: this.pickString([loanSource, normalizedItem], [
         'previousInstallmentAmount',
         'previous_installment_amount',
         'PreviousInstallmentAmount',
       ]),
-      previousLoanPurpose: this.pickString([loanSource, item], [
+      previousLoanPurpose: this.pickString([loanSource, normalizedItem], [
         'previousLoanPurpose',
         'previous_loan_purpose',
         'PreviousLoanPurpose',
       ]),
-      loanAmount: this.pickString([loanSource, item], ['loanAmount', 'loan_amount', 'LoanAmount']),
-      loanAmountDeductedTillNow: this.pickString([loanSource, item], [
+      loanAmount: this.pickString([loanSource, normalizedItem], ['loanAmount', 'loan_amount', 'LoanAmount']),
+      loanAmountDeductedTillNow: this.pickString([loanSource, normalizedItem], [
         'loanAmountDeductedTillNow',
         'loan_amount_deducted_till_now',
         'LoanAmountDeductedTillNow',
       ]),
-      loanBalance: this.pickString([loanSource, item], ['loanBalance', 'loan_balance', 'LoanBalance']),
+      loanBalance: this.pickString([loanSource, normalizedItem], ['loanBalance', 'loan_balance', 'LoanBalance']),
       newLoanRequest,
-      remarks: this.pickString([loanSource, item], ['remarks', 'Remarks']),
+      remarks: this.pickString([loanSource, normalizedItem], ['remarks', 'Remarks']),
     };
 
     const newAdvanceRequest: LoanAdvanceNewAdvanceRequest = {
-      purpose: this.pickString([newAdvanceSource, advanceSource, item], [
+      purpose: this.pickString([newAdvanceSource, advanceSource, normalizedItem], [
         'purpose',
         'Purpose',
         'advancePurpose',
         'advance_purpose',
         'AdvancePurpose',
       ]),
-      advanceAmountEligible: this.pickString([newAdvanceSource, advanceSource, item], [
+      advanceAmountEligible: this.pickString([newAdvanceSource, advanceSource, normalizedItem], [
         'advanceAmountEligible',
         'advance_amount_eligible',
         'AdvanceAmountEligible',
       ]),
-      advanceAmountRequested: this.pickString([newAdvanceSource, advanceSource, item], [
+      advanceAmountRequested: this.pickString([newAdvanceSource, advanceSource, normalizedItem], [
         'advanceAmountRequested',
         'advance_amount_requested',
         'AdvanceAmountRequested',
@@ -485,42 +730,42 @@ export class LoanAdvanceService {
     };
 
     const advanceDetail: LoanAdvanceAdvanceDetail = {
-      existingAdvance: this.pickString([advanceSource, item], [
+      existingAdvance: this.pickString([advanceSource, normalizedItem], [
         'existingAdvance',
         'existing_advance',
         'ExistingAdvance',
       ]),
-      advanceAcquiredDate: this.pickString([advanceSource, item], [
+      advanceAcquiredDate: this.pickString([advanceSource, normalizedItem], [
         'advanceAcquiredDate',
         'advance_acquired_date',
         'AdvanceAcquiredDate',
       ]),
-      advanceEligibleAmount: this.pickString([advanceSource, item], [
+      advanceEligibleAmount: this.pickString([advanceSource, normalizedItem], [
         'advanceEligibleAmount',
         'advance_eligible_amount',
         'AdvanceEligibleAmount',
       ]),
-      previousAdvancePurpose: this.pickString([advanceSource, item], [
+      previousAdvancePurpose: this.pickString([advanceSource, normalizedItem], [
         'previousAdvancePurpose',
         'previous_advance_purpose',
         'PreviousAdvancePurpose',
       ]),
-      advanceRemarks: this.pickString([advanceSource, item], [
+      advanceRemarks: this.pickString([advanceSource, normalizedItem], [
         'advanceRemarks',
         'advance_remarks',
         'AdvanceRemarks',
       ]),
-      advanceAmount: this.pickString([advanceSource, item], [
+      advanceAmount: this.pickString([advanceSource, normalizedItem], [
         'advanceAmount',
         'advance_amount',
         'AdvanceAmount',
       ]),
-      advanceAmountToBeDeductedThisMonth: this.pickString([advanceSource, item], [
+      advanceAmountToBeDeductedThisMonth: this.pickString([advanceSource, normalizedItem], [
         'advanceAmountToBeDeductedThisMonth',
         'advance_amount_to_be_deducted_this_month',
         'AdvanceAmountToBeDeductedThisMonth',
       ]),
-      advanceBalance: this.pickString([advanceSource, item], [
+      advanceBalance: this.pickString([advanceSource, normalizedItem], [
         'advanceBalance',
         'advance_balance',
         'AdvanceBalance',
@@ -529,16 +774,16 @@ export class LoanAdvanceService {
     };
 
     const repaymentSchedule: LoanAdvanceRepaymentSchedule = {
-      repaymentStartDate: this.pickString([repaymentSource, item], [
+      repaymentStartDate: this.pickString([repaymentSource, normalizedItem], [
         'repaymentStartDate',
         'repayment_start_date',
       ]),
-      repaymentFrequency: this.pickString([repaymentSource, item], [
+      repaymentFrequency: this.pickString([repaymentSource, normalizedItem], [
         'repaymentFrequency',
         'repayment_frequency',
       ]),
-      deductionAmount: this.pickString([repaymentSource, item], ['deductionAmount', 'deduction_amount']),
-      remarks: this.pickString([repaymentSource, item], ['remarks', 'Remarks']),
+      deductionAmount: this.pickString([repaymentSource, normalizedItem], ['deductionAmount', 'deduction_amount']),
+      remarks: this.pickString([repaymentSource, normalizedItem], ['remarks', 'Remarks']),
     };
 
     return {
