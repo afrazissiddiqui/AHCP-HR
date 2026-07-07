@@ -285,7 +285,7 @@ export class LoanAdvanceFormComponent implements OnInit {
       this.alertService.warning('Update', 'Unable to update this row: missing loan / advance id.');
       return;
     }
-    this.alertService.warning('Update', 'Edit screen for loan / advance is not available yet.');
+    void this.router.navigate(['/employee-action/loan-advance-form/edit', record.Id]);
   }
 
   async onDelete(record: LoanAdvanceRecord): Promise<void> {

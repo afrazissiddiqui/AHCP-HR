@@ -379,20 +379,44 @@ export class LoanAdvanceService {
 
     const loanDetail: LoanAdvanceLoanDetail = {
       existingLoan: this.pickString([loanSource, item], ['existingLoan', 'existing_loan', 'ExistingLoan']),
-      loanAcquiredDate: this.pickString([loanSource, item], ['loanAcquiredDate', 'loan_acquired_date']),
-      installmentNumber: this.pickString([loanSource, item], ['installmentNumber', 'installment_number']),
-      loanEndingDate: this.pickString([loanSource, item], ['loanEndingDate', 'loan_ending_date']),
+      loanAcquiredDate: this.pickString([loanSource, item], [
+        'loanAcquiredDate',
+        'loan_acquired_date',
+        'LoanAcquiredDate',
+        'loanAcquiredMonth',
+        'loan_acquired_month',
+        'LoanAcquiredMonth',
+      ]),
+      installmentNumber: this.pickString([loanSource, item], [
+        'installmentNumber',
+        'installment_number',
+        'InstallmentNumber',
+      ]),
+      loanEndingDate: this.pickString([loanSource, item], [
+        'loanEndingDate',
+        'loan_ending_date',
+        'LoanEndingDate',
+        'loanEndingMonth',
+        'loan_ending_month',
+        'LoanEndingMonth',
+      ]),
       previousInstallmentAmount: this.pickString([loanSource, item], [
         'previousInstallmentAmount',
         'previous_installment_amount',
+        'PreviousInstallmentAmount',
       ]),
-      previousLoanPurpose: this.pickString([loanSource, item], ['previousLoanPurpose', 'previous_loan_purpose']),
-      loanAmount: this.pickString([loanSource, item], ['loanAmount', 'loan_amount']),
+      previousLoanPurpose: this.pickString([loanSource, item], [
+        'previousLoanPurpose',
+        'previous_loan_purpose',
+        'PreviousLoanPurpose',
+      ]),
+      loanAmount: this.pickString([loanSource, item], ['loanAmount', 'loan_amount', 'LoanAmount']),
       loanAmountDeductedTillNow: this.pickString([loanSource, item], [
         'loanAmountDeductedTillNow',
         'loan_amount_deducted_till_now',
+        'LoanAmountDeductedTillNow',
       ]),
-      loanBalance: this.pickString([loanSource, item], ['loanBalance', 'loan_balance']),
+      loanBalance: this.pickString([loanSource, item], ['loanBalance', 'loan_balance', 'LoanBalance']),
       newLoanRequest,
       remarks: this.pickString([loanSource, item], ['remarks', 'Remarks']),
     };

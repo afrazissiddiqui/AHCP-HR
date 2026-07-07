@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import { LoanAdvanceRecord, LoanAdvanceService } from '../../../../../services/loan-advance.service';
@@ -58,6 +58,7 @@ export class AddLoanAdvanceComponent implements OnInit {
 
   constructor(
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly alertService: AlertService,
     private readonly loanAdvanceService: LoanAdvanceService,
     private readonly applicationFormService: ApplicationFormService,
@@ -65,6 +66,7 @@ export class AddLoanAdvanceComponent implements OnInit {
   ) {}
 
   private readonly employeeOptions = signal<LoanEmployeeOption[]>([]);
+  private editingId: string | null = null;
 
   protected readonly activeSection = signal('header-info-section');
   protected readonly documentNo = signal(this.generateDocumentNo());
@@ -161,6 +163,28 @@ export class AddLoanAdvanceComponent implements OnInit {
         // Keep the form usable even if prior loan history cannot be loaded.
       },
     });
+
+    const editId = this.route.snapshot.paramMap.get('id');
+    if (!editId) {
+      return;
+    }
+
+    this.editingId = editId;
+    this.pageTitle = 'Update Loan/Advance';
+    this.submitButtonLabel = 'Update Loan/Advance';
+
+    this.loanAdvanceService.fetchLoanAdvanceDetail(editId).subscribe({
+      next: (record) => {
+        this.populateFromRecord(record);
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load loan/advance for edit.'),
+        );
+      },
+    });
   }
 
   protected back(): void {
@@ -176,18 +200,24 @@ export class AddLoanAdvanceComponent implements OnInit {
 
   protected onEmployeeCodeChange(code: string): void {
     this.headerEmployeeID.set(code);
+    if (this.editingId) {
+      return;
+    }
     this.codeSuggestionsOpen.set(code.trim().length > 0);
     this.closeNameSuggestions();
   }
 
   protected onEmployeeNameChange(name: string): void {
     this.headerEmployeeName.set(name);
+    if (this.editingId) {
+      return;
+    }
     this.nameSuggestionsOpen.set(name.trim().length > 0);
     this.closeCodeSuggestions();
   }
 
   protected openCodeSuggestions(): void {
-    if (!this.headerEmployeeID().trim()) {
+    if (this.editingId || !this.headerEmployeeID().trim()) {
       return;
     }
     this.codeSuggestionsOpen.set(true);
@@ -195,7 +225,7 @@ export class AddLoanAdvanceComponent implements OnInit {
   }
 
   protected openNameSuggestions(): void {
-    if (!this.headerEmployeeName().trim()) {
+    if (this.editingId || !this.headerEmployeeName().trim()) {
       return;
     }
     this.nameSuggestionsOpen.set(true);
@@ -312,6 +342,68 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.populateExistingLoanDetails(employee.code, employee.name);
   }
 
+  private populateFromRecord(record: LoanAdvanceRecord): void {
+    this.documentNo.set(record.HeaderInfo.documentNo || record.DocumentNo);
+    this.requestType.set(record.HeaderInfo.requestType || record.RequestType);
+    this.headerEmployeeID.set(record.HeaderInfo.employeeID || record.EmployeeID);
+    this.headerEmployeeName.set(record.HeaderInfo.employeeName || record.EmployeeName);
+    this.department.set(record.HeaderInfo.department || record.Department);
+    this.designation.set(record.HeaderInfo.designation || record.Designation);
+    this.branch.set(record.HeaderInfo.location || record.Location);
+    this.joiningDate.set(formatDateForInput(record.HeaderInfo.joiningDate || record.JoiningDate));
+    this.requestDate.set(this.normalizeDisplayDate(record.HeaderInfo.requestDate || record.RequestDate));
+    this.payrollMonth.set(record.HeaderInfo.payrollMonth || record.PayrollMonth);
+    this.status.set(record.HeaderInfo.status || record.Status || 'Pending');
+    this.employeeNature.set(record.HeaderInfo.employeeNature || record.EmployeeNature);
+    this.employmentType.set(record.HeaderInfo.employmentType || record.EmploymentType);
+    this.workGradeLevel.set(record.HeaderInfo.workGradeLevel || record.WorkGradeLevel);
+    this.jobTitle.set(record.HeaderInfo.jobTitle || record.JobTitle);
+    this.employeeCategory.set(record.HeaderInfo.employeeCategory || record.EmployeeCategory);
+    this.reportingManager.set(record.HeaderInfo.reportingManager || record.ReportingManager);
+
+    this.hasExistingLoanDetails.set((record.LoanDetail.existingLoan || '').trim().toLowerCase() === 'yes');
+    this.existingLoanFieldsLocked.set(true);
+    this.existingLoan.set((record.LoanDetail.existingLoan as 'Yes' | 'No' | '') || '');
+    this.loanAcquiredDate.set(this.normalizeMonthInput(record.LoanDetail.loanAcquiredDate));
+    this.installmentNumber.set(record.LoanDetail.installmentNumber?.trim() ?? '');
+    this.loanEndingDate.set(this.normalizeMonthInput(record.LoanDetail.loanEndingDate));
+    this.previousInstallmentAmount.set(record.LoanDetail.previousInstallmentAmount?.trim() ?? '');
+    this.previousLoanPurpose.set(record.LoanDetail.previousLoanPurpose?.trim() ?? '');
+    this.loanAmount.set(record.LoanDetail.loanAmount?.trim() ?? '');
+    this.loanAmountDeductedTillNow.set(record.LoanDetail.loanAmountDeductedTillNow?.trim() ?? '');
+
+    this.newLoanPurpose.set(record.LoanDetail.newLoanRequest.purpose?.trim() ?? '');
+    this.loanAmountRequested.set(record.LoanDetail.newLoanRequest.loanAmountRequested?.trim() ?? '');
+    this.installmentAmount.set(record.LoanDetail.newLoanRequest.installmentAmount?.trim() ?? '');
+    this.loanEndMonth.set(this.normalizeMonthInput(record.LoanDetail.newLoanRequest.loanEndMonth));
+    this.loanStartMonth.set(this.normalizeMonthInput(record.LoanDetail.newLoanRequest.loanStartMonth));
+    this.eligibleAmount.set(record.LoanDetail.newLoanRequest.eligibleAmount?.trim() ?? '');
+    this.remarks.set(record.LoanDetail.remarks?.trim() ?? '');
+
+    this.existingAdvance.set((record.AdvanceDetail.existingAdvance as 'Yes' | 'No' | '') || '');
+    this.advanceAcquiredDate.set(formatDateForInput(record.AdvanceDetail.advanceAcquiredDate ?? ''));
+    this.advanceEligibleAmount.set(record.AdvanceDetail.advanceEligibleAmount?.trim() ?? '');
+    this.previousAdvancePurpose.set(record.AdvanceDetail.previousAdvancePurpose?.trim() ?? '');
+    this.advanceRemarks.set(record.AdvanceDetail.advanceRemarks?.trim() ?? '');
+    this.advanceAmount.set(record.AdvanceDetail.advanceAmount?.trim() ?? '');
+    this.advanceAmountToBeDeductedThisMonth.set(
+      record.AdvanceDetail.advanceAmountToBeDeductedThisMonth?.trim() ?? '',
+    );
+    this.advanceBalance.set(record.AdvanceDetail.advanceBalance?.trim() ?? '');
+    this.newAdvancePurpose.set(record.AdvanceDetail.newAdvanceRequest.purpose?.trim() ?? '');
+    this.newAdvanceAmountEligible.set(
+      record.AdvanceDetail.newAdvanceRequest.advanceAmountEligible?.trim() ?? '',
+    );
+    this.newAdvanceAmountRequested.set(
+      record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested?.trim() ?? '',
+    );
+
+    this.repaymentStartDate.set(formatDateForInput(record.RepaymentSchedule.repaymentStartDate ?? ''));
+    this.repaymentFrequency.set(record.RepaymentSchedule.repaymentFrequency?.trim() ?? '');
+    this.deductionAmount.set(record.RepaymentSchedule.deductionAmount?.trim() ?? '');
+    this.repaymentRemarks.set(record.RepaymentSchedule.remarks?.trim() ?? '');
+  }
+
   private generateDocumentNo(): string {
     return `LA-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   }
@@ -424,6 +516,24 @@ export class AddLoanAdvanceComponent implements OnInit {
     }
 
     return { year, month };
+  }
+
+  private normalizeDisplayDate(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return this.getTodayDateDisplay();
+    }
+
+    if (trimmed.includes('/')) {
+      return trimmed;
+    }
+
+    const inputDate = formatDateForInput(trimmed);
+    if (inputDate) {
+      return formatApiToDateSlash(inputDate);
+    }
+
+    return trimmed;
   }
 
   private populateExistingLoanDetails(employeeCode: string, employeeName: string): void {
@@ -595,8 +705,11 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.saving.set(true);
     this.cdr.markForCheck();
 
-    this.loanAdvanceService
-      .submitLoanAdvance(payload)
+    const request$ = this.editingId
+      ? this.loanAdvanceService.updateLoanAdvance(this.editingId, payload)
+      : this.loanAdvanceService.submitLoanAdvance(payload);
+
+    request$
       .pipe(
         finalize(() => {
           this.saving.set(false);
@@ -606,17 +719,34 @@ export class AddLoanAdvanceComponent implements OnInit {
       .subscribe({
         next: async (response) => {
           if (response.status) {
-            await this.alertService.successAndWait('Saved', response.message || 'Loan/Advance submitted successfully.');
+            await this.alertService.successAndWait(
+              this.editingId ? 'Updated' : 'Saved',
+              response.message ||
+                (this.editingId
+                  ? 'Loan/Advance updated successfully.'
+                  : 'Loan/Advance submitted successfully.'),
+            );
             this.loanAdvanceService.fetchLoanAdvances().subscribe();
             void this.router.navigateByUrl('/employee-action/loan-advance-form');
           } else {
-            void this.alertService.error('Error', response.message || 'Failed to submit loan/advance request.');
+            void this.alertService.error(
+              'Error',
+              response.message ||
+                (this.editingId
+                  ? 'Failed to update loan/advance request.'
+                  : 'Failed to submit loan/advance request.'),
+            );
           }
         },
         error: (error: unknown) => {
           void this.alertService.error(
             'Error',
-            formatApiErrorMessage(error, 'Failed to submit loan/advance request.'),
+            formatApiErrorMessage(
+              error,
+              this.editingId
+                ? 'Failed to update loan/advance request.'
+                : 'Failed to submit loan/advance request.',
+            ),
           );
         },
       });
