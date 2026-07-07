@@ -102,7 +102,7 @@ export class LeaveApplicationFormComponent implements OnInit {
     { key: 'RequestStatus', label: 'Request Status', visible: true },
     { key: 'EmployeeCategory', label: 'Employee Category', visible: false },
     { key: 'EmploymentNature', label: 'Employment Nature', visible: false },
-    { key: 'EmploymentType', label: 'Employment Type', visible: false },
+    { key: 'EmploymentType', label: 'Employment Status', visible: false },
     { key: 'WorkGradeLevel', label: 'Work Grade Level', visible: false },
     { key: 'JobTitle', label: 'Job Title', visible: false },
     { key: 'Location', label: 'Location', visible: false },

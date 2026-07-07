@@ -190,7 +190,7 @@
               <input type="text" [ngModel]="employmentNature()" (ngModelChange)="employmentNature.set($event)" />
             </div>
             <div class="cjr-row">
-              <label>Employment Type:</label>
+              <label>Employment Status:</label>
               <input type="text" [ngModel]="employmentType()" (ngModelChange)="employmentType.set($event)" />
             </div>
           </div>
@@ -209,7 +209,7 @@
               <input type="text" [ngModel]="jobTitle()" (ngModelChange)="jobTitle.set($event)" />
             </div>
             <div class="cjr-row">
-              <label>Location:</label>
+              <label>Branch:</label>
               <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" />
             </div>
           </div>
@@ -240,7 +240,12 @@
             </div>
             <div class="cjr-row">
               <label class="cjr-label-required">Leave Type:</label>
-              <input type="text" [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)" placeholder="e.g. Annual Leave" />
+              <select [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)">
+                <option value="">Select leave type</option>
+                @for (option of leaveTypeOptions(); track option.id) {
+                  <option [value]="option.name">{{ option.name }}</option>
+                }
+              </select>
             </div>
             <div class="cjr-row">
               <label>Cause of Leave:</label>

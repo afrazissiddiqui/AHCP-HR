@@ -19,7 +19,9 @@ import {
   LeaveApplicationService,
 } from '../../../../../services/leave-application.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
+import { LeaveTypeRecord, LeaveTypeService } from '../../../../../services/leave-type.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import { normalizeEmploymentStatus } from '../../../../../utils/employment-status.util';
 import {
   formatApiToDateSlash,
   formatDateInputSlash,
@@ -79,10 +81,12 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     private readonly alertService: AlertService,
     private readonly leaveService: LeaveApplicationService,
     private readonly applicationFormService: ApplicationFormService,
+    private readonly leaveTypeService: LeaveTypeService,
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
   private readonly employeeOptions = signal<LeaveEmployeeOption[]>([]);
+  protected readonly leaveTypeOptions = signal<LeaveTypeRecord[]>([]);
 
   protected readonly activeSection = signal('header-info-section');
   protected readonly formNumber = signal(this.generateFormNumber());
@@ -113,6 +117,8 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected readonly nameSuggestions = computed(() => this.filterEmployeeSuggestions(this.employeeName()));
 
   ngOnInit(): void {
+    this.loadLeaveTypeOptions();
+
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => {
         this.employeeOptions.set(this.buildEmployeeOptions());
@@ -386,11 +392,43 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     };
   }
 
+  private loadLeaveTypeOptions(): void {
+    this.leaveTypeService.fetchLeaveTypes().subscribe({
+      next: (records) => {
+        this.leaveTypeOptions.set(
+          records.filter((record) => {
+            const status = String(record.status ?? '').trim().toLowerCase();
+            return !status || status === '1' || status === 'active';
+          }),
+        );
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.leaveTypeOptions.set([]);
+        this.cdr.markForCheck();
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load leave types.'),
+        );
+      },
+    });
+  }
+
   private buildEmployeeOptions(): LeaveEmployeeOption[] {
     return this.applicationFormService
       .getApplicationRecords()
       .map((record) => this.toEmployeeOption(record))
       .filter((option) => option.employeeId || option.employeeName);
+  }
+
+  private firstNonEmpty(...values: string[]): string {
+    for (const value of values) {
+      const text = value.trim();
+      if (text) {
+        return text;
+      }
+    }
+    return '';
   }
 
   private toEmployeeOption(record: ApplicationFormRecord): LeaveEmployeeOption {
@@ -406,8 +444,18 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       employeeName:
         emptyIfDash(personal?.personName ?? '') || emptyIfDash(record.EmployeeName),
       employeeCategory: emptyIfDash(record.EmploymentCategory),
-      employmentNature: emptyIfDash(record.EmployeeNature),
-      employmentType: emptyIfDash(record.EmploymentType),
+      employmentNature: this.firstNonEmpty(
+        emptyIfDash(personal?.employmentNature ?? ''),
+        emptyIfDash(record.EmployeeNature),
+        emptyIfDash(requisition?.company ?? ''),
+      ),
+      employmentType: normalizeEmploymentStatus(
+        this.firstNonEmpty(
+          emptyIfDash(personal?.employmentStatus ?? ''),
+          emptyIfDash(record.EmploymentStatus),
+          emptyIfDash(record.status),
+        ),
+      ),
       workGradeLevel:
         emptyIfDash(requisition?.costCenter ?? '') ||
         emptyIfDash(personal?.workGradeLevel ?? ''),
