@@ -264,7 +264,7 @@
               <select
                 [ngModel]="existingLoan()"
                 (ngModelChange)="existingLoan.set($event)"
-                [disabled]="hasExistingLoanDetails()"
+                [disabled]="existingLoanFieldsLocked()"
               >
                 <option value="">Select option</option>
                 <option value="Yes">Yes</option>
@@ -277,7 +277,7 @@
                 type="month"
                 [ngModel]="loanAcquiredDate()"
                 (ngModelChange)="loanAcquiredDate.set($event)"
-                [readonly]="hasExistingLoanDetails()"
+                [readonly]="existingLoanFieldsLocked()"
               />
             </div>
             <div class="cjr-row">
@@ -286,7 +286,7 @@
                 type="text"
                 [ngModel]="installmentNumber()"
                 (ngModelChange)="installmentNumber.set($event)"
-                [readonly]="hasExistingLoanDetails()"
+                [readonly]="existingLoanFieldsLocked()"
               />
             </div>
           </div>
@@ -298,16 +298,16 @@
                 type="month"
                 [ngModel]="loanEndingDate()"
                 (ngModelChange)="loanEndingDate.set($event)"
-                [readonly]="hasExistingLoanDetails()"
+                [readonly]="existingLoanFieldsLocked()"
               />
             </div>
             <div class="cjr-row">
-              <label>Precious Installment Amount:</label>
+              <label>Previous Installment Amount:</label>
               <input
                 type="text"
                 [ngModel]="previousInstallmentAmount()"
                 (ngModelChange)="previousInstallmentAmount.set($event)"
-                [readonly]="hasExistingLoanDetails()"
+                [readonly]="existingLoanFieldsLocked()"
               />
             </div>
           </div>
@@ -319,7 +319,7 @@
                 type="text"
                 [ngModel]="previousLoanPurpose()"
                 (ngModelChange)="previousLoanPurpose.set($event)"
-                [readonly]="hasExistingLoanDetails()"
+                [readonly]="existingLoanFieldsLocked()"
               />
             </div>
           </div>
@@ -331,7 +331,7 @@
                 type="text"
                 [ngModel]="loanAmount()"
                 (ngModelChange)="loanAmount.set($event)"
-                [readonly]="hasExistingLoanDetails()"
+                [readonly]="existingLoanFieldsLocked()"
               />
             </div>
           </div>
@@ -343,7 +343,7 @@
                 type="text"
                 [ngModel]="loanAmountDeductedTillNow()"
                 (ngModelChange)="loanAmountDeductedTillNow.set($event)"
-                [readonly]="hasExistingLoanDetails()"
+                [readonly]="existingLoanFieldsLocked()"
               />
             </div>
           </div>
@@ -371,7 +371,7 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">Loan Amount Requested:</label>
-              <input type="text" [ngModel]="loanAmountRequested()" (ngModelChange)="loanAmountRequested.set($event)" />
+              <input type="text" [ngModel]="loanAmountRequested()" (ngModelChange)="onLoanAmountRequestedChange($event)" />
             </div>
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">Loan Start Month:</label>
@@ -385,17 +385,17 @@
             </div>
             <div class="cjr-row">
               <label>Loan Tenure:</label>
-              <input type="text" [ngModel]="loanTenure()" (ngModelChange)="loanTenure.set($event)" />
+              <input type="text" [value]="loanTenure()" readonly />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">No of Installments:</label>
-              <input type="text" [ngModel]="noOfInstallments()" (ngModelChange)="noOfInstallments.set($event)" />
+              <input type="text" [value]="noOfInstallments()" readonly />
             </div>
             <div class="cjr-row">
               <label>Eligible Amount:</label>
-              <input type="text" [ngModel]="eligibleAmount()" (ngModelChange)="eligibleAmount.set($event)" />
+              <input type="text" [value]="eligibleAmount()" readonly />
             </div>
           </div>
         </div>

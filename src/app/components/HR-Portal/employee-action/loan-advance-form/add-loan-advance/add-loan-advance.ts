@@ -27,6 +27,7 @@ interface LoanEmployeeOption {
   designation: string;
   branch: string;
   dateOfJoining: string;
+  eligibleAmount: string;
   employeeNature: string;
   employmentType: string;
   workGradeLevel: string;
@@ -109,10 +110,14 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly newLoanPurpose = signal('');
   protected readonly loanAmountRequested = signal('');
   protected readonly installmentAmount = signal('');
-  protected readonly noOfInstallments = signal('');
+  protected readonly noOfInstallments = computed(() =>
+    this.calculateInstallmentCount(this.loanAmountRequested(), this.installmentAmount()),
+  );
   protected readonly loanEndMonth = signal('');
   protected readonly loanStartMonth = signal('');
-  protected readonly loanTenure = signal('');
+  protected readonly loanTenure = computed(() =>
+    this.calculateLoanTenure(this.loanStartMonth(), this.loanEndMonth()),
+  );
   protected readonly eligibleAmount = signal('');
   protected readonly remarks = signal('');
   protected readonly existingAdvance = signal<'Yes' | 'No' | ''>('');
@@ -134,6 +139,7 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly isLoanRequest = computed(() => this.requestType() === 'Loan');
   protected readonly isAdvanceRequest = computed(() => this.requestType() === 'Salary Advance');
   protected readonly hasExistingLoanDetails = signal(false);
+  protected readonly existingLoanFieldsLocked = signal(false);
   protected readonly saving = signal(false);
 
   ngOnInit(): void {
@@ -212,6 +218,18 @@ export class AddLoanAdvanceComponent implements OnInit {
     setTimeout(() => this.closeNameSuggestions(), 150);
   }
 
+  protected onLoanAmountRequestedChange(value: string): void {
+    const eligible = this.parseDecimal(this.eligibleAmount());
+    const requested = this.parseDecimal(value);
+
+    if (eligible !== null && requested !== null && requested > eligible) {
+      this.loanAmountRequested.set(this.eligibleAmount());
+      return;
+    }
+
+    this.loanAmountRequested.set(value);
+  }
+
   private buildEmployeeOptions(): LoanEmployeeOption[] {
     return this.applicationFormService
       .getApplicationRecords()
@@ -234,6 +252,7 @@ export class AddLoanAdvanceComponent implements OnInit {
       dateOfJoining: formatDateForInput(
         emptyIfDash(record.detail?.remuneration?.dateOfJoining ?? ''),
       ),
+      eligibleAmount: emptyIfDash(record.detail?.remuneration?.maximumLoanCapacity ?? ''),
       employeeNature: emptyIfDash(record.EmployeeNature),
       employmentType: emptyIfDash(record.EmploymentType),
       workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
@@ -283,6 +302,7 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.designation.set(employee.designation);
     this.branch.set(employee.branch);
     this.joiningDate.set(employee.dateOfJoining);
+    this.eligibleAmount.set(employee.eligibleAmount);
     this.employeeNature.set(employee.employeeNature);
     this.employmentType.set(employee.employmentType);
     this.workGradeLevel.set(employee.workGradeLevel);
@@ -363,11 +383,56 @@ export class AddLoanAdvanceComponent implements OnInit {
     return Number.isFinite(parsed) ? parsed : null;
   }
 
+  private calculateInstallmentCount(requestedValue: string, installmentValue: string): string {
+    const requested = this.parseDecimal(requestedValue);
+    const installment = this.parseDecimal(installmentValue);
+
+    if (requested === null || installment === null || installment <= 0) {
+      return '';
+    }
+
+    return `${Math.ceil(requested / installment)}`;
+  }
+
+  private calculateLoanTenure(startMonth: string, endMonth: string): string {
+    const start = this.parseMonthValue(startMonth);
+    const end = this.parseMonthValue(endMonth);
+
+    if (!start || !end) {
+      return '';
+    }
+
+    const totalMonths =
+      (end.year - start.year) * 12 +
+      (end.month - start.month) +
+      1;
+
+    return totalMonths > 0 ? `${totalMonths}` : '';
+  }
+
+  private parseMonthValue(value: string): { year: number; month: number } | null {
+    const trimmed = value.trim();
+    const match = trimmed.match(/^(\d{4})-(\d{2})$/);
+    if (!match) {
+      return null;
+    }
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+      return null;
+    }
+
+    return { year, month };
+  }
+
   private populateExistingLoanDetails(employeeCode: string, employeeName: string): void {
+    this.existingLoanFieldsLocked.set(true);
     const existingLoanRecord = this.findExistingLoanRecord(employeeCode, employeeName);
     if (!existingLoanRecord) {
       this.hasExistingLoanDetails.set(false);
       this.resetExistingLoanFields();
+      this.existingLoan.set('No');
       return;
     }
 
@@ -421,7 +486,6 @@ export class AddLoanAdvanceComponent implements OnInit {
   }
 
   private resetExistingLoanFields(): void {
-    this.existingLoan.set('');
     this.loanAcquiredDate.set('');
     this.installmentNumber.set('');
     this.loanEndingDate.set('');
