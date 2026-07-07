@@ -61,6 +61,7 @@
           Header information
         </li>
         <li
+          *ngIf="isLoanRequest()"
           class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'loan-detail-section'"
           (click)="scrollToSection('loan-detail-section')"
@@ -68,6 +69,7 @@
           Loan detail
         </li>
         <li
+          *ngIf="isAdvanceRequest()"
           class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'advance-detail-section'"
           (click)="scrollToSection('advance-detail-section')"
@@ -115,16 +117,6 @@
                 <option value="">Select Type</option>
                 <option value="Loan">Loan</option>
                 <option value="Salary Advance">Salary Advance</option>
-              </select>
-            </div>
-            <div class="cjr-row">
-              <label class="cjr-label-required">Status:</label>
-              <select [ngModel]="status()" (ngModelChange)="status.set($event)">
-                <option value="Draft">Draft</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Closed">Closed</option>
               </select>
             </div>
           </div>
@@ -249,7 +241,7 @@
         </div>
       </section>
 
-      <section class="mad-form-panel" id="loan-detail-section">
+      <section *ngIf="isLoanRequest()" class="mad-form-panel" id="loan-detail-section">
         <div class="mad-form-panel__heading">
           <span class="mad-form-panel__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -320,7 +312,7 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Loan Balance:</label>
-              <input type="text" [ngModel]="loanBalance()" (ngModelChange)="loanBalance.set($event)" />
+              <input type="text" [value]="loanBalance()" readonly />
             </div>
           </div>
         </div>
@@ -375,7 +367,7 @@
         </div>
       </section>
 
-      <section class="mad-form-panel" id="advance-detail-section">
+      <section *ngIf="isAdvanceRequest()" class="mad-form-panel" id="advance-detail-section">
         <div class="mad-form-panel__heading">
           <span class="mad-form-panel__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -103,7 +103,9 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly previousLoanPurpose = signal('');
   protected readonly loanAmount = signal('');
   protected readonly loanAmountDeductedTillNow = signal('');
-  protected readonly loanBalance = signal('');
+  protected readonly loanBalance = computed(() =>
+    this.calculateBalance(this.loanAmount(), this.loanAmountDeductedTillNow()),
+  );
   protected readonly newLoanPurpose = signal('');
   protected readonly loanAmountRequested = signal('');
   protected readonly installmentAmount = signal('');
@@ -328,6 +330,29 @@ export class AddLoanAdvanceComponent implements OnInit {
     }
 
     return `${Math.floor(completedMonths / 12)}`;
+  }
+
+  private calculateBalance(amountValue: string, deductedValue: string): string {
+    const amount = this.parseDecimal(amountValue);
+    const deducted = this.parseDecimal(deductedValue);
+
+    if (amount === null && deducted === null) {
+      return '';
+    }
+
+    const balance = (amount ?? 0) - (deducted ?? 0);
+    return Number.isInteger(balance) ? `${balance}` : `${balance.toFixed(2)}`;
+  }
+
+  private parseDecimal(value: string): number | null {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const normalized = trimmed.replace(/,/g, '');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   protected scrollToSection(sectionId: string): void {
