@@ -1589,6 +1589,59 @@ export class ApplicationFormService {
     return text;
   }
 
+  computeMaximumAdvanceCapacity(
+    advancePercentAllowed: string | number | null | undefined,
+    basicSalary: string | number | null | undefined,
+  ): string {
+    const percentStr = sanitizeApiText(advancePercentAllowed);
+    const salaryStr = sanitizeApiText(basicSalary);
+
+    if (!percentStr || !salaryStr) {
+      return '';
+    }
+
+    const percent = Number.parseFloat(percentStr.replace(/,/g, ''));
+    const salary = Number.parseFloat(salaryStr.replace(/,/g, ''));
+
+    if (!Number.isFinite(percent) || !Number.isFinite(salary)) {
+      return '';
+    }
+
+    const capacity = (percent / 100) * salary;
+    const rounded = Math.round(capacity * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  }
+
+  resolveMaximumAdvanceCapacity(
+    remuneration: Pick<
+      ApplicationFormRemuneration,
+      'maximumAdvanceCapacity' | 'advancePercentAllowed' | 'basicSalary'
+    >,
+  ): string {
+    const stored = sanitizeApiText(remuneration.maximumAdvanceCapacity);
+    if (stored) {
+      return stored;
+    }
+
+    return this.computeMaximumAdvanceCapacity(
+      remuneration.advancePercentAllowed,
+      remuneration.basicSalary,
+    );
+  }
+
+  private resolveMaximumAdvanceCapacityValue(
+    stored: string,
+    advancePercentAllowed: string,
+    basicSalary: string,
+  ): string {
+    const direct = sanitizeApiText(stored);
+    if (direct) {
+      return direct;
+    }
+
+    return this.computeMaximumAdvanceCapacity(advancePercentAllowed, basicSalary);
+  }
+
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
     if (Array.isArray(response)) {
       return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
@@ -2025,7 +2078,11 @@ export class ApplicationFormService {
           pickRem('loanAmountAllowed', 'loan_amount_allowed'),
         ),
         maximumAdvanceCapacity: asNumberString(
-          pickRem('maximumAdvanceCapacity', 'maximum_advance_capacity'),
+          this.resolveMaximumAdvanceCapacityValue(
+            pickRem('maximumAdvanceCapacity', 'maximum_advance_capacity'),
+            pickRem('advancePercentAllowed', 'advance_percent_allowed'),
+            pickRem('basicSalary', 'basic_salary'),
+          ),
         ),
         otherAllowances: asNumberString(pickRem('otherAllowances', 'other_allowances')),
         allowancesApplicable: this.yesNoFromApi(

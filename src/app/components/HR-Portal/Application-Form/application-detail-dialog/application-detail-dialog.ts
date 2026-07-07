@@ -52,6 +52,10 @@ export class ApplicationDetailDialogComponent {
     return this.displayDash(value);
   }
 
+  displayMaximumAdvanceCapacity(remuneration: ApplicationFormRemuneration): string {
+    return this.displayDash(this.applicationFormService.resolveMaximumAdvanceCapacity(remuneration));
+  }
+
   displayDate(value: string | number | undefined | null): string {
     return displayDateOnly(value);
   }

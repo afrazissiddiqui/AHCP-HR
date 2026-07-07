@@ -1719,7 +1719,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       ),
     );
     this.updateMedicalAllowanceFromGrossSalary();
-    this.updateMaximumAdvanceCapacityFromAdvancePercent();
+    const storedAdvanceCapacity = this.firstNonEmpty(
+      this.remunerationValue(remuneration.maximumAdvanceCapacity),
+    );
+    if (storedAdvanceCapacity) {
+      this.maximumAdvanceCapacity.set(storedAdvanceCapacity);
+    } else {
+      this.updateMaximumAdvanceCapacityFromAdvancePercent();
+    }
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.fuelAllowances.set(this.remunerationValue(remuneration.fuelAllowances));
     this.mobileAllowances.set(this.remunerationValue(remuneration.mobileAllowances));

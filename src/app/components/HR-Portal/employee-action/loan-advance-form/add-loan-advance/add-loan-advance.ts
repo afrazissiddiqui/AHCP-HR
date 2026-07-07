@@ -343,7 +343,11 @@ export class AddLoanAdvanceComponent implements OnInit {
         emptyIfDash(record.detail?.remuneration?.dateOfJoining ?? ''),
       ),
       eligibleAmount: emptyIfDash(record.detail?.remuneration?.maximumLoanCapacity ?? ''),
-      advanceEligibleAmount: emptyIfDash(record.detail?.remuneration?.maximumAdvanceCapacity ?? ''),
+      advanceEligibleAmount: emptyIfDash(
+        record.detail?.remuneration
+          ? this.applicationFormService.resolveMaximumAdvanceCapacity(record.detail.remuneration)
+          : '',
+      ),
       employeeNature: emptyIfDash(record.EmployeeNature),
       employmentType: emptyIfDash(record.EmploymentType),
       workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
