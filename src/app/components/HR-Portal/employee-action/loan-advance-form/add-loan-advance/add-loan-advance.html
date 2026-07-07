@@ -361,27 +361,55 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">Purpose:</label>
-              <input type="text" [ngModel]="newLoanPurpose()" (ngModelChange)="newLoanPurpose.set($event)" />
+              <input
+                type="text"
+                [ngModel]="newLoanPurpose()"
+                (ngModelChange)="newLoanPurpose.set($event)"
+                [readonly]="newLoanRequestLocked()"
+              />
             </div>
+            <!-- start month -->
             <div class="cjr-row">
-              <label>Loan End Month:</label>
-              <input type="month" [ngModel]="loanEndMonth()" (ngModelChange)="loanEndMonth.set($event)" />
+              <label [class.cjr-label-required]="isLoanRequest()">Loan Start Month:</label>
+              <input
+                type="month"
+                [ngModel]="loanStartMonth()"
+                (ngModelChange)="loanStartMonth.set($event)"
+                [readonly]="newLoanRequestLocked()"
+              />
             </div>
+            
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">Loan Amount Requested:</label>
-              <input type="text" [ngModel]="loanAmountRequested()" (ngModelChange)="onLoanAmountRequestedChange($event)" />
+              <input
+                type="text"
+                [ngModel]="loanAmountRequested()"
+                (ngModelChange)="onLoanAmountRequestedChange($event)"
+                [readonly]="newLoanRequestLocked()"
+              />
             </div>
+            <!-- end month -->
             <div class="cjr-row">
-              <label [class.cjr-label-required]="isLoanRequest()">Loan Start Month:</label>
-              <input type="month" [ngModel]="loanStartMonth()" (ngModelChange)="loanStartMonth.set($event)" />
+              <label>Loan End Month:</label>
+              <input
+                type="month"
+                [ngModel]="loanEndMonth()"
+                (ngModelChange)="loanEndMonth.set($event)"
+                [readonly]="newLoanRequestLocked()"
+              />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">Installment Amount:</label>
-              <input type="text" [ngModel]="installmentAmount()" (ngModelChange)="installmentAmount.set($event)" />
+              <input
+                type="text"
+                [ngModel]="installmentAmount()"
+                (ngModelChange)="installmentAmount.set($event)"
+                [readonly]="newLoanRequestLocked()"
+              />
             </div>
             <div class="cjr-row">
               <label>Loan Tenure:</label>
@@ -402,7 +430,12 @@
 
         <div class="cjr-row cjr-row--remarks">
           <label>Remarks:</label>
-          <textarea rows="4" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
+          <textarea
+            rows="4"
+            [ngModel]="remarks()"
+            (ngModelChange)="remarks.set($event)"
+            [readonly]="newLoanRequestLocked()"
+          ></textarea>
         </div>
       </section>
 
@@ -426,7 +459,11 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isAdvanceRequest()">Exiting Advance (Yes/No)</label>
-              <select [ngModel]="existingAdvance()" (ngModelChange)="existingAdvance.set($event)">
+              <select
+                [ngModel]="existingAdvance()"
+                (ngModelChange)="existingAdvance.set($event)"
+                [disabled]="existingAdvanceFieldsLocked()"
+              >
                 <option value="">Select option</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
@@ -434,39 +471,74 @@
             </div>
             <div class="cjr-row">
               <label>Advance Acquired Date</label>
-              <input type="date" [ngModel]="advanceAcquiredDate()" (ngModelChange)="advanceAcquiredDate.set($event)" />
+              <input
+                type="date"
+                [ngModel]="advanceAcquiredDate()"
+                (ngModelChange)="advanceAcquiredDate.set($event)"
+                [readonly]="existingAdvanceFieldsLocked()"
+              />
             </div>
             <div class="cjr-row">
               <label>Eligible Amount</label>
-              <input type="text" [ngModel]="advanceEligibleAmount()" (ngModelChange)="advanceEligibleAmount.set($event)" />
+              <input
+                type="text"
+                [ngModel]="advanceEligibleAmount()"
+                (ngModelChange)="advanceEligibleAmount.set($event)"
+                [readonly]="existingAdvanceFieldsLocked()"
+              />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Previous Advance Purpose</label>
-              <input type="text" [ngModel]="previousAdvancePurpose()" (ngModelChange)="previousAdvancePurpose.set($event)" />
+              <input
+                type="text"
+                [ngModel]="previousAdvancePurpose()"
+                (ngModelChange)="previousAdvancePurpose.set($event)"
+                [readonly]="existingAdvanceFieldsLocked()"
+              />
             </div>
             <div class="cjr-row">
               <label>Remarks</label>
-              <input type="text" [ngModel]="advanceRemarks()" (ngModelChange)="advanceRemarks.set($event)" />
+              <input
+                type="text"
+                [ngModel]="advanceRemarks()"
+                (ngModelChange)="advanceRemarks.set($event)"
+                [readonly]="existingAdvanceFieldsLocked()"
+              />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Advance Amount</label>
-              <input type="text" [ngModel]="advanceAmount()" (ngModelChange)="advanceAmount.set($event)" />
+              <input
+                type="text"
+                [ngModel]="advanceAmount()"
+                (ngModelChange)="advanceAmount.set($event)"
+                [readonly]="existingAdvanceFieldsLocked()"
+              />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Advance Amount To be Deducted This Month</label>
-              <input type="text" [ngModel]="advanceAmountToBeDeductedThisMonth()" (ngModelChange)="advanceAmountToBeDeductedThisMonth.set($event)" />
+              <input
+                type="text"
+                [ngModel]="advanceAmountToBeDeductedThisMonth()"
+                (ngModelChange)="advanceAmountToBeDeductedThisMonth.set($event)"
+                [readonly]="existingAdvanceFieldsLocked()"
+              />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Advance Balance</label>
-              <input type="text" [ngModel]="advanceBalance()" (ngModelChange)="advanceBalance.set($event)" />
+              <input
+                type="text"
+                [ngModel]="advanceBalance()"
+                (ngModelChange)="advanceBalance.set($event)"
+                [readonly]="existingAdvanceFieldsLocked()"
+              />
             </div>
           </div>
         </div>
@@ -476,19 +548,34 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isAdvanceRequest()">Purpose</label>
-              <input type="text" [ngModel]="newAdvancePurpose()" (ngModelChange)="newAdvancePurpose.set($event)" />
+              <input
+                type="text"
+                [ngModel]="newAdvancePurpose()"
+                (ngModelChange)="newAdvancePurpose.set($event)"
+                [readonly]="newAdvanceRequestLocked()"
+              />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Advance Amount Eligible</label>
-              <input type="text" [ngModel]="newAdvanceAmountEligible()" (ngModelChange)="newAdvanceAmountEligible.set($event)" />
+              <input
+                type="text"
+                [ngModel]="newAdvanceAmountEligible()"
+                (ngModelChange)="newAdvanceAmountEligible.set($event)"
+                [readonly]="newAdvanceRequestLocked()"
+              />
             </div>
           </div>
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isAdvanceRequest()">Advance Amount Requested</label>
-              <input type="text" [ngModel]="newAdvanceAmountRequested()" (ngModelChange)="newAdvanceAmountRequested.set($event)" />
+              <input
+                type="text"
+                [ngModel]="newAdvanceAmountRequested()"
+                (ngModelChange)="newAdvanceAmountRequested.set($event)"
+                [readonly]="newAdvanceRequestLocked()"
+              />
             </div>
           </div>
         </div>

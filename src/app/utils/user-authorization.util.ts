@@ -76,7 +76,137 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
   {
     slug: 'application_form',
     name: 'Application Form',
-    actions: ['add', 'view', 'list', 'list_update', 'delete'] as const,
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'probation_evaluation_form',
+    name: 'Probation Evaluation Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'training_development_form',
+    name: 'Training Development Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'performance_appraisal_form',
+    name: 'Performance Appraisal Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'expense_reimbursment_form',
+    name: 'Expense Reimbursment Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'loan_advance_form',
+    name: 'Loan Advance Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'leave_application_form',
+    name: 'Leave Application Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'termination_form',
+    name: 'Termination Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'payroll_processing_form',
+    name: 'Payroll Processing Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'attendance_managment_form',
+    name: 'Attendance Managment Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'tax_allowance_form',
+    name: 'Tax Allowance Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'tax_computation_form',
+    name: 'Tax Computation Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'igp_form',
+    name: 'IGP Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'ogp_form',
+    name: 'OGP Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'agp_form',
+    name: 'AGP Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'plant_maintenance_master_form',
+    name: 'Plant Maintenance Master Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'husky_form',
+    name: 'Husky Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'itr_form',
+    name: 'ITR Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'sub_component_defination_form',
+    name: 'Sub Component Defination Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'maintenance_activity_defination_form',
+    name: 'Maintenance Activity Defination Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'gl_account_determination_form',
+    name: 'GL Account Determination Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'user_setup_form',
+    name: 'User Setup Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'leave_types_form',
+    name: 'Leave Types Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'good_receipt_note_form',
+    name: 'Good Receipt Note Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'delivery_form',
+    name: 'Delivery Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'inventory_transfer_form',
+    name: 'Inventory Transfer Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'good_issue_form',
+    name: 'Good Issue Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
 ] as const;
 
