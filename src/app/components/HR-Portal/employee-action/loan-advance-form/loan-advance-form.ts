@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/sidebar';
-import { LoanAdvanceRecord, LoanAdvanceService } from '../../../../services/loan-advance.service';
+import { LoanAdvanceRecord, LoanAdvancePayload, LoanAdvanceService } from '../../../../services/loan-advance.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { displayDateSlash } from '../../../../utils/date-format.util';
@@ -281,10 +281,17 @@ export class LoanAdvanceFormComponent implements OnInit {
       this.alertService.warning('Update', 'Unable to update this row: missing loan / advance id.');
       return;
     }
+    let loanAdvancePayload: LoanAdvancePayload | undefined;
+    try {
+      loanAdvancePayload = this.loanService.buildPayloadFromRecord(record);
+    } catch {
+      loanAdvancePayload = undefined;
+    }
+
     void this.router.navigate(['/employee-action/loan-advance-form/edit', record.Id], {
       state: {
         loanAdvanceRecord: record,
-        loanAdvancePayload: this.loanService.buildPayloadFromRecord(record),
+        loanAdvancePayload,
       },
     });
   }

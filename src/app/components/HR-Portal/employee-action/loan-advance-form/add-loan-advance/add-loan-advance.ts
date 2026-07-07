@@ -145,9 +145,9 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly hasExistingLoanDetails = signal(false);
   protected readonly hasExistingAdvanceDetails = signal(false);
   protected readonly isEditing = signal(false);
-  protected readonly existingLoanFieldsLocked = computed(() => this.isEditing() || this.isLoanRequest());
+  protected readonly existingLoanFieldsLocked = computed(() => !this.isEditing() && this.isLoanRequest());
   protected readonly newLoanRequestLocked = computed(() => !this.isEditing() && this.hasExistingLoanDetails());
-  protected readonly existingAdvanceFieldsLocked = computed(() => this.isEditing() || this.isAdvanceRequest());
+  protected readonly existingAdvanceFieldsLocked = computed(() => !this.isEditing() && this.isAdvanceRequest());
   protected readonly newAdvanceRequestLocked = computed(() => !this.isEditing() && this.hasExistingAdvanceDetails());
   protected readonly saving = signal(false);
 
@@ -166,12 +166,6 @@ export class AddLoanAdvanceComponent implements OnInit {
     });
 
     this.loanAdvanceService.fetchLoanAdvances().subscribe({
-      next: () => {
-        if (!this.editingId) {
-          this.refreshExistingDetailsForEmployee();
-          this.cdr.markForCheck();
-        }
-      },
       error: () => {
         // Keep the form usable even if prior loan history cannot be loaded.
       },
@@ -202,18 +196,23 @@ export class AddLoanAdvanceComponent implements OnInit {
 
     if (state?.loanAdvancePayload) {
       applyRecord(this.loanAdvanceService.buildRecordFromPayload(editId, state.loanAdvancePayload));
-    } else if (state?.loanAdvanceRecord && this.loanAdvanceService.recordHasFormData(state.loanAdvanceRecord)) {
+    } else if (state?.loanAdvanceRecord) {
       applyRecord(state.loanAdvanceRecord);
     } else {
       const cachedPayload = this.loanAdvanceService.getCachedPayload(editId);
       if (cachedPayload) {
         applyRecord(this.loanAdvanceService.buildRecordFromPayload(editId, cachedPayload));
+      } else {
+        const cachedRecord = this.loanAdvanceService.findLoanById(editId);
+        if (cachedRecord) {
+          applyRecord(cachedRecord);
+        }
       }
     }
 
     this.loanAdvanceService.loadRecordForEdit(editId).subscribe({
       next: (record) => {
-        if (this.loanAdvanceService.recordHasFormData(record)) {
+        if (record?.Id) {
           applyRecord(record);
         }
       },

@@ -144,17 +144,55 @@ export class LoanAdvanceService {
 
   fetchLoanAdvances(): Observable<LoanAdvanceRecord[]> {
     return this.http.get<unknown>(LOAN_ADVANCE_LIST_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((response) =>
+        this.extractApiItems(response)
+          .map((item) => {
+            try {
+              return this.mapApiItemToRecord(item);
+            } catch {
+              return null;
+            }
+          })
+          .filter((record): record is LoanAdvanceRecord => record !== null),
+      ),
       tap((records) => this.loanList.set(records)),
     );
   }
 
+  sanitizePayload(payload: LoanAdvancePayload): LoanAdvancePayload {
+    const toStringValue = (value: unknown): string => {
+      if (value === undefined || value === null) {
+        return '';
+      }
+      const text = String(value).trim();
+      if (text.toLowerCase() === 'null' || text.toLowerCase() === 'undefined') {
+        return '';
+      }
+      return text;
+    };
+
+    const sanitizeSection = <T extends Record<string, unknown>>(section: T): T => {
+      const sanitized: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(section)) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          sanitized[key] = sanitizeSection(value as Record<string, unknown>);
+          continue;
+        }
+        sanitized[key] = toStringValue(value);
+      }
+      return sanitized as T;
+    };
+
+    return sanitizeSection(payload as unknown as Record<string, unknown>) as unknown as LoanAdvancePayload;
+  }
+
   submitLoanAdvance(payload: LoanAdvancePayload): Observable<LoanAdvanceResponse> {
-    return this.http.post<LoanAdvanceResponse>(LOAN_ADVANCE_ADD_URL, payload).pipe(
+    const sanitizedPayload = this.sanitizePayload(payload);
+    return this.http.post<LoanAdvanceResponse>(LOAN_ADVANCE_ADD_URL, sanitizedPayload).pipe(
       tap((response) => {
         const id = this.extractResponseId(response);
         if (id) {
-          this.cachePayload(id, payload);
+          this.cachePayload(id, sanitizedPayload);
         }
       }),
     );
@@ -163,10 +201,11 @@ export class LoanAdvanceService {
   updateLoanAdvance(id: string | number, payload: LoanAdvancePayload): Observable<LoanAdvanceResponse> {
     const identifier = encodeURIComponent(String(id));
     const numericId = Number.parseInt(String(id), 10) || 0;
-    return this.http.post<LoanAdvanceResponse>(`${LOAN_ADVANCE_UPDATE_URL}/${identifier}`, payload).pipe(
+    const sanitizedPayload = this.sanitizePayload(payload);
+    return this.http.post<LoanAdvanceResponse>(`${LOAN_ADVANCE_UPDATE_URL}/${identifier}`, sanitizedPayload).pipe(
       tap(() => {
         if (numericId) {
-          this.cachePayload(numericId, payload);
+          this.cachePayload(numericId, sanitizedPayload);
         }
       }),
     );
@@ -201,7 +240,7 @@ export class LoanAdvanceService {
     return this.fetchLoanAdvances().pipe(
       switchMap((records) => {
         const fromList = records.find((item) => item.Id === numericId);
-        if (fromList && this.recordHasFormData(fromList)) {
+        if (fromList) {
           return of(fromList);
         }
 
@@ -249,98 +288,81 @@ export class LoanAdvanceService {
 
   buildPayloadFromRecord(record: LoanAdvanceRecord): LoanAdvancePayload {
     const pick = (...values: Array<string | undefined>): string => this.pickDisplayValue(...values);
+    const header = record.HeaderInfo ?? ({} as LoanAdvanceHeaderInfo);
+    const loanDetail = record.LoanDetail ?? ({
+      newLoanRequest: {} as LoanAdvanceNewLoanRequest,
+      remarks: '',
+    } as LoanAdvanceLoanDetail);
+    const advanceDetail = record.AdvanceDetail ?? ({
+      newAdvanceRequest: {} as LoanAdvanceNewAdvanceRequest,
+    } as LoanAdvanceAdvanceDetail);
+    const repaymentSchedule = record.RepaymentSchedule ?? ({} as LoanAdvanceRepaymentSchedule);
+    const newLoanRequest = loanDetail.newLoanRequest ?? ({} as LoanAdvanceNewLoanRequest);
+    const newAdvanceRequest = advanceDetail.newAdvanceRequest ?? ({} as LoanAdvanceNewAdvanceRequest);
 
     return {
       headerInfo: {
-        documentNo: pick(record.HeaderInfo.documentNo, record.DocumentNo),
-        employeeNature: pick(record.HeaderInfo.employeeNature, record.EmployeeNature),
-        department: pick(record.HeaderInfo.department, record.Department),
-        requestType: pick(record.HeaderInfo.requestType, record.RequestType),
-        employeeID: pick(record.HeaderInfo.employeeID, record.EmployeeID),
-        employmentType: pick(record.HeaderInfo.employmentType, record.EmploymentType),
-        designation: pick(record.HeaderInfo.designation, record.Designation),
-        requestDate: pick(record.HeaderInfo.requestDate, record.RequestDate),
-        employeeName: pick(record.HeaderInfo.employeeName, record.EmployeeName),
-        workGradeLevel: pick(record.HeaderInfo.workGradeLevel, record.WorkGradeLevel),
-        jobTitle: pick(record.HeaderInfo.jobTitle, record.JobTitle),
-        status: pick(record.HeaderInfo.status, record.Status, 'Pending'),
-        employeeCategory: pick(record.HeaderInfo.employeeCategory, record.EmployeeCategory),
-        reportingManager: pick(record.HeaderInfo.reportingManager, record.ReportingManager),
-        location: pick(record.HeaderInfo.location, record.Location),
-        joiningDate: pick(record.HeaderInfo.joiningDate, record.JoiningDate),
-        yearsOfService: pick(record.HeaderInfo.yearsOfService, record.YearsOfService),
-        payrollMonth: pick(record.HeaderInfo.payrollMonth, record.PayrollMonth),
+        documentNo: pick(header.documentNo, record.DocumentNo),
+        employeeNature: pick(header.employeeNature, record.EmployeeNature),
+        department: pick(header.department, record.Department),
+        requestType: pick(header.requestType, record.RequestType),
+        employeeID: pick(header.employeeID, record.EmployeeID),
+        employmentType: pick(header.employmentType, record.EmploymentType),
+        designation: pick(header.designation, record.Designation),
+        requestDate: pick(header.requestDate, record.RequestDate),
+        employeeName: pick(header.employeeName, record.EmployeeName),
+        workGradeLevel: pick(header.workGradeLevel, record.WorkGradeLevel),
+        jobTitle: pick(header.jobTitle, record.JobTitle),
+        status: pick(header.status, record.Status, 'Pending'),
+        employeeCategory: pick(header.employeeCategory, record.EmployeeCategory),
+        reportingManager: pick(header.reportingManager, record.ReportingManager),
+        location: pick(header.location, record.Location),
+        joiningDate: pick(header.joiningDate, record.JoiningDate),
+        yearsOfService: pick(header.yearsOfService, record.YearsOfService),
+        payrollMonth: pick(header.payrollMonth, record.PayrollMonth),
       },
       loanDetail: {
-        existingLoan: pick(record.LoanDetail.existingLoan, record.ExistingLoan),
-        loanAcquiredDate: record.LoanDetail.loanAcquiredDate ?? '',
-        installmentNumber: record.LoanDetail.installmentNumber ?? '',
-        loanEndingDate: record.LoanDetail.loanEndingDate ?? '',
-        previousInstallmentAmount: record.LoanDetail.previousInstallmentAmount ?? '',
-        previousLoanPurpose: record.LoanDetail.previousLoanPurpose ?? '',
-        loanAmount: record.LoanDetail.loanAmount ?? '',
-        loanAmountDeductedTillNow: record.LoanDetail.loanAmountDeductedTillNow ?? '',
-        loanBalance: record.LoanDetail.loanBalance ?? '',
+        existingLoan: pick(loanDetail.existingLoan, record.ExistingLoan),
+        loanAcquiredDate: loanDetail.loanAcquiredDate ?? '',
+        installmentNumber: loanDetail.installmentNumber ?? '',
+        loanEndingDate: loanDetail.loanEndingDate ?? '',
+        previousInstallmentAmount: loanDetail.previousInstallmentAmount ?? '',
+        previousLoanPurpose: loanDetail.previousLoanPurpose ?? '',
+        loanAmount: loanDetail.loanAmount ?? '',
+        loanAmountDeductedTillNow: loanDetail.loanAmountDeductedTillNow ?? '',
+        loanBalance: loanDetail.loanBalance ?? '',
         newLoanRequest: {
-          purpose: pick(record.LoanDetail.newLoanRequest.purpose, record.LoanPurpose),
-          loanAmountRequested: pick(
-            record.LoanDetail.newLoanRequest.loanAmountRequested,
-            record.LoanAmountRequested,
-          ),
-          installmentAmount: pick(
-            record.LoanDetail.newLoanRequest.installmentAmount,
-            record.LoanInstallmentAmount,
-          ),
-          noOfInstallments: pick(
-            record.LoanDetail.newLoanRequest.noOfInstallments,
-            record.NoOfInstallments,
-          ),
-          loanEndMonth: record.LoanDetail.newLoanRequest.loanEndMonth ?? '',
-          loanStartMonth: record.LoanDetail.newLoanRequest.loanStartMonth ?? '',
-          loanTenure: record.LoanDetail.newLoanRequest.loanTenure ?? '',
-          eligibleAmount: pick(
-            record.LoanDetail.newLoanRequest.eligibleAmount,
-            record.LoanEligibleAmount,
-          ),
+          purpose: pick(newLoanRequest.purpose, record.LoanPurpose),
+          loanAmountRequested: pick(newLoanRequest.loanAmountRequested, record.LoanAmountRequested),
+          installmentAmount: pick(newLoanRequest.installmentAmount, record.LoanInstallmentAmount),
+          noOfInstallments: pick(newLoanRequest.noOfInstallments, record.NoOfInstallments),
+          loanEndMonth: newLoanRequest.loanEndMonth ?? '',
+          loanStartMonth: newLoanRequest.loanStartMonth ?? '',
+          loanTenure: newLoanRequest.loanTenure ?? '',
+          eligibleAmount: pick(newLoanRequest.eligibleAmount, record.LoanEligibleAmount),
         },
-        remarks: record.LoanDetail.remarks ?? '',
+        remarks: loanDetail.remarks ?? '',
       },
       advanceDetail: {
-        existingAdvance: pick(record.AdvanceDetail.existingAdvance, record.ExistingAdvance),
-        advanceAcquiredDate: record.AdvanceDetail.advanceAcquiredDate ?? '',
-        advanceEligibleAmount: pick(
-          record.AdvanceDetail.advanceEligibleAmount,
-          record.AdvanceEligibleAmount,
-        ),
-        previousAdvancePurpose: record.AdvanceDetail.previousAdvancePurpose ?? '',
-        advanceRemarks: record.AdvanceDetail.advanceRemarks ?? '',
-        advanceAmount: record.AdvanceDetail.advanceAmount ?? '',
-        advanceAmountToBeDeductedThisMonth:
-          record.AdvanceDetail.advanceAmountToBeDeductedThisMonth ?? '',
-        advanceBalance: record.AdvanceDetail.advanceBalance ?? '',
+        existingAdvance: pick(advanceDetail.existingAdvance, record.ExistingAdvance),
+        advanceAcquiredDate: advanceDetail.advanceAcquiredDate ?? '',
+        advanceEligibleAmount: pick(advanceDetail.advanceEligibleAmount, record.AdvanceEligibleAmount),
+        previousAdvancePurpose: advanceDetail.previousAdvancePurpose ?? '',
+        advanceRemarks: advanceDetail.advanceRemarks ?? '',
+        advanceAmount: advanceDetail.advanceAmount ?? '',
+        advanceAmountToBeDeductedThisMonth: advanceDetail.advanceAmountToBeDeductedThisMonth ?? '',
+        advanceBalance: advanceDetail.advanceBalance ?? '',
         newAdvanceRequest: {
-          purpose: pick(record.AdvanceDetail.newAdvanceRequest.purpose, record.AdvancePurpose),
-          advanceAmountEligible: pick(
-            record.AdvanceDetail.newAdvanceRequest.advanceAmountEligible,
-            record.AdvanceEligibleAmount,
-          ),
-          advanceAmountRequested: pick(
-            record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested,
-            record.AdvanceAmountRequested,
-          ),
+          purpose: pick(newAdvanceRequest.purpose, record.AdvancePurpose),
+          advanceAmountEligible: pick(newAdvanceRequest.advanceAmountEligible, record.AdvanceEligibleAmount),
+          advanceAmountRequested: pick(newAdvanceRequest.advanceAmountRequested, record.AdvanceAmountRequested),
         },
       },
       repaymentSchedule: {
-        repaymentStartDate: pick(
-          record.RepaymentSchedule.repaymentStartDate,
-          record.RepaymentStartDate,
-        ),
-        repaymentFrequency: pick(
-          record.RepaymentSchedule.repaymentFrequency,
-          record.RepaymentFrequency,
-        ),
-        deductionAmount: pick(record.RepaymentSchedule.deductionAmount, record.DeductionAmount),
-        remarks: record.RepaymentSchedule.remarks ?? '',
+        repaymentStartDate: pick(repaymentSchedule.repaymentStartDate, record.RepaymentStartDate),
+        repaymentFrequency: pick(repaymentSchedule.repaymentFrequency, record.RepaymentFrequency),
+        deductionAmount: pick(repaymentSchedule.deductionAmount, record.DeductionAmount),
+        remarks: repaymentSchedule.remarks ?? '',
       },
     };
   }
@@ -356,18 +378,21 @@ export class LoanAdvanceService {
   }
 
   recordHasFormData(record: LoanAdvanceRecord): boolean {
+    const header = record.HeaderInfo;
+    const loanDetail = record.LoanDetail;
+    const advanceDetail = record.AdvanceDetail;
+
     return Boolean(
-      this.pickDisplayValue(record.HeaderInfo.documentNo, record.DocumentNo) ||
-        this.pickDisplayValue(record.HeaderInfo.employeeID, record.EmployeeID) ||
-        this.pickDisplayValue(record.HeaderInfo.requestType, record.RequestType) ||
+      this.pickDisplayValue(header?.documentNo, record.DocumentNo) ||
+        this.pickDisplayValue(header?.employeeID, record.EmployeeID) ||
+        this.pickDisplayValue(header?.requestType, record.RequestType) ||
+        this.pickDisplayValue(loanDetail?.newLoanRequest?.loanAmountRequested, record.LoanAmountRequested) ||
         this.pickDisplayValue(
-          record.LoanDetail.newLoanRequest.loanAmountRequested,
-          record.LoanAmountRequested,
-        ) ||
-        this.pickDisplayValue(
-          record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested,
+          advanceDetail?.newAdvanceRequest?.advanceAmountRequested,
           record.AdvanceAmountRequested,
-        ),
+        ) ||
+        this.pickDisplayValue(loanDetail?.newLoanRequest?.purpose, record.LoanPurpose) ||
+        this.pickDisplayValue(advanceDetail?.newAdvanceRequest?.purpose, record.AdvancePurpose),
     );
   }
 
@@ -455,26 +480,42 @@ export class LoanAdvanceService {
       }
     }
 
-    if (
-      obj['headerInfo'] ||
-      obj['header_info'] ||
-      obj['HeaderInfo'] ||
-      obj['loanDetail'] ||
-      obj['loan_detail'] ||
-      obj['LoanDetail'] ||
-      obj['documentNo'] ||
-      obj['document_no'] ||
-      obj['DocumentNo'] ||
-      obj['employee_id'] ||
-      obj['employeeId'] ||
-      obj['employeeID'] ||
-      obj['loan_amount_requested'] ||
-      obj['loanAmountRequested']
-    ) {
+    if (this.looksLikeLoanAdvanceRecord(obj) && !this.looksLikeApiEnvelope(obj)) {
       return [obj];
     }
 
     return [];
+  }
+
+  private looksLikeLoanAdvanceRecord(obj: Record<string, unknown>): boolean {
+    return Boolean(
+      obj['headerInfo'] ||
+        obj['header_info'] ||
+        obj['HeaderInfo'] ||
+        obj['loanDetail'] ||
+        obj['loan_detail'] ||
+        obj['LoanDetail'] ||
+        obj['documentNo'] ||
+        obj['document_no'] ||
+        obj['DocumentNo'] ||
+        obj['employee_id'] ||
+        obj['employeeId'] ||
+        obj['employeeID'] ||
+        obj['loan_amount_requested'] ||
+        obj['loanAmountRequested'] ||
+        obj['id'] ||
+        obj['Id'] ||
+        obj['loan_advance_id'] ||
+        obj['loanAdvanceId'],
+    );
+  }
+
+  private looksLikeApiEnvelope(obj: Record<string, unknown>): boolean {
+    const hasEnvelopeKeys = 'status' in obj || 'message' in obj || 'success' in obj;
+    const hasRecordId = Boolean(
+      this.pickString([obj], ['id', 'Id', 'loan_advance_id', 'loanAdvanceId']),
+    );
+    return hasEnvelopeKeys && !hasRecordId;
   }
 
   private asRecord(value: unknown): Record<string, unknown> {
@@ -544,8 +585,6 @@ export class LoanAdvanceService {
       'requestPayload',
       'loan_advance',
       'loanAdvance',
-      'record',
-      'Record',
     ];
 
     for (const key of payloadKeys) {
@@ -587,7 +626,11 @@ export class LoanAdvanceService {
     return merged;
   }
 
-  private hasMeaningfulValue(value: unknown): boolean {
+  private hasMeaningfulValue(value: unknown, depth = 0): boolean {
+    if (depth > 8) {
+      return false;
+    }
+
     if (value === undefined || value === null) {
       return false;
     }
@@ -598,12 +641,12 @@ export class LoanAdvanceService {
     }
 
     if (Array.isArray(value)) {
-      return value.some((entry) => this.hasMeaningfulValue(entry));
+      return value.some((entry) => this.hasMeaningfulValue(entry, depth + 1));
     }
 
     if (typeof value === 'object') {
       return Object.values(value as Record<string, unknown>).some((entry) =>
-        this.hasMeaningfulValue(entry),
+        this.hasMeaningfulValue(entry, depth + 1),
       );
     }
 
