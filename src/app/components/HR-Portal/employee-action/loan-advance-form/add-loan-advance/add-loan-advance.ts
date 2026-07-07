@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
-import { LoanAdvanceService } from '../../../../../services/loan-advance.service';
+import { LoanAdvanceRecord, LoanAdvanceService } from '../../../../../services/loan-advance.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { formatApiToDateSlash, formatDateForInput, formatDateSlashToApi } from '../../../../../utils/date-format.util';
@@ -133,6 +133,7 @@ export class AddLoanAdvanceComponent implements OnInit {
 
   protected readonly isLoanRequest = computed(() => this.requestType() === 'Loan');
   protected readonly isAdvanceRequest = computed(() => this.requestType() === 'Salary Advance');
+  protected readonly hasExistingLoanDetails = signal(false);
   protected readonly saving = signal(false);
 
   ngOnInit(): void {
@@ -146,6 +147,12 @@ export class AddLoanAdvanceComponent implements OnInit {
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load employees for search.'),
         );
+      },
+    });
+
+    this.loanAdvanceService.fetchLoanAdvances().subscribe({
+      error: () => {
+        // Keep the form usable even if prior loan history cannot be loaded.
       },
     });
   }
@@ -282,6 +289,7 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.jobTitle.set(employee.jobTitle);
     this.employeeCategory.set(employee.employeeCategory);
     this.reportingManager.set(employee.reportingManager);
+    this.populateExistingLoanDetails(employee.code, employee.name);
   }
 
   private generateDocumentNo(): string {
@@ -353,6 +361,93 @@ export class AddLoanAdvanceComponent implements OnInit {
     const normalized = trimmed.replace(/,/g, '');
     const parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private populateExistingLoanDetails(employeeCode: string, employeeName: string): void {
+    const existingLoanRecord = this.findExistingLoanRecord(employeeCode, employeeName);
+    if (!existingLoanRecord) {
+      this.hasExistingLoanDetails.set(false);
+      this.resetExistingLoanFields();
+      return;
+    }
+
+    this.hasExistingLoanDetails.set(true);
+    this.existingLoan.set('Yes');
+    this.loanAcquiredDate.set(this.normalizeMonthInput(existingLoanRecord.LoanDetail.loanAcquiredDate));
+    this.installmentNumber.set(existingLoanRecord.LoanDetail.installmentNumber?.trim() ?? '');
+    this.loanEndingDate.set(this.normalizeMonthInput(existingLoanRecord.LoanDetail.loanEndingDate));
+    this.previousInstallmentAmount.set(existingLoanRecord.LoanDetail.previousInstallmentAmount?.trim() ?? '');
+    this.previousLoanPurpose.set(existingLoanRecord.LoanDetail.previousLoanPurpose?.trim() ?? '');
+    this.loanAmount.set(existingLoanRecord.LoanDetail.loanAmount?.trim() ?? '');
+    this.loanAmountDeductedTillNow.set(
+      existingLoanRecord.LoanDetail.loanAmountDeductedTillNow?.trim() ?? '',
+    );
+  }
+
+  private findExistingLoanRecord(
+    employeeCode: string,
+    employeeName: string,
+  ): LoanAdvanceRecord | undefined {
+    const normalizedCode = employeeCode.trim().toLowerCase();
+    const normalizedName = employeeName.trim().toLowerCase();
+
+    return [...this.loanAdvanceService.loans()]
+      .sort((left, right) => right.Id - left.Id)
+      .find((record) => {
+        if (record.RequestType !== 'Loan') {
+          return false;
+        }
+
+        const matchesEmployee =
+          (normalizedCode && record.EmployeeID.trim().toLowerCase() === normalizedCode) ||
+          (!normalizedCode &&
+            normalizedName &&
+            record.EmployeeName.trim().toLowerCase() === normalizedName);
+
+        if (!matchesEmployee) {
+          return false;
+        }
+
+        const loanDetail = record.LoanDetail;
+        return Boolean(
+          (loanDetail.existingLoan || '').trim().toLowerCase() === 'yes' ||
+            (loanDetail.loanAmount || '').trim() ||
+            (loanDetail.loanAmountDeductedTillNow || '').trim() ||
+            (loanDetail.loanBalance || '').trim() ||
+            (loanDetail.loanEndingDate || '').trim() ||
+            (loanDetail.loanAcquiredDate || '').trim(),
+        );
+      });
+  }
+
+  private resetExistingLoanFields(): void {
+    this.existingLoan.set('');
+    this.loanAcquiredDate.set('');
+    this.installmentNumber.set('');
+    this.loanEndingDate.set('');
+    this.previousInstallmentAmount.set('');
+    this.previousLoanPurpose.set('');
+    this.loanAmount.set('');
+    this.loanAmountDeductedTillNow.set('');
+  }
+
+  private normalizeMonthInput(value: string | undefined): string {
+    const trimmed = (value ?? '').trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const directMonthMatch = trimmed.match(/^(\d{4})-(\d{2})$/);
+    if (directMonthMatch) {
+      return trimmed;
+    }
+
+    const formattedDate = formatDateForInput(trimmed);
+    if (formattedDate) {
+      return formattedDate.slice(0, 7);
+    }
+
+    return '';
   }
 
   protected scrollToSection(sectionId: string): void {

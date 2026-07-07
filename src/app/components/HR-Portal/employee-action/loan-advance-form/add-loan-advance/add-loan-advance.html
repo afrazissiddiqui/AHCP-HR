@@ -261,51 +261,90 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">Existing Loan (Yes/No):</label>
-              <select [ngModel]="existingLoan()" (ngModelChange)="existingLoan.set($event)">
+              <select
+                [ngModel]="existingLoan()"
+                (ngModelChange)="existingLoan.set($event)"
+                [disabled]="hasExistingLoanDetails()"
+              >
                 <option value="">Select option</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
               </select>
             </div>
             <div class="cjr-row">
-              <label>Loan Acquired Date:</label>
-              <input type="date" [ngModel]="loanAcquiredDate()" (ngModelChange)="loanAcquiredDate.set($event)" />
+              <label>Loan Acquired Month:</label>
+              <input
+                type="month"
+                [ngModel]="loanAcquiredDate()"
+                (ngModelChange)="loanAcquiredDate.set($event)"
+                [readonly]="hasExistingLoanDetails()"
+              />
             </div>
             <div class="cjr-row">
               <label>Installment Number:</label>
-              <input type="text" [ngModel]="installmentNumber()" (ngModelChange)="installmentNumber.set($event)" />
+              <input
+                type="text"
+                [ngModel]="installmentNumber()"
+                (ngModelChange)="installmentNumber.set($event)"
+                [readonly]="hasExistingLoanDetails()"
+              />
             </div>
           </div>
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>Loan Ending Date:</label>
-              <input type="date" [ngModel]="loanEndingDate()" (ngModelChange)="loanEndingDate.set($event)" />
+              <label>Loan Ending Month:</label>
+              <input
+                type="month"
+                [ngModel]="loanEndingDate()"
+                (ngModelChange)="loanEndingDate.set($event)"
+                [readonly]="hasExistingLoanDetails()"
+              />
             </div>
             <div class="cjr-row">
               <label>Precious Installment Amount:</label>
-              <input type="text" [ngModel]="previousInstallmentAmount()" (ngModelChange)="previousInstallmentAmount.set($event)" />
+              <input
+                type="text"
+                [ngModel]="previousInstallmentAmount()"
+                (ngModelChange)="previousInstallmentAmount.set($event)"
+                [readonly]="hasExistingLoanDetails()"
+              />
             </div>
           </div>
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
-              <label>PreviousLoan Purpose:</label>
-              <input type="text" [ngModel]="previousLoanPurpose()" (ngModelChange)="previousLoanPurpose.set($event)" />
+              <label>Previous Loan Purpose:</label>
+              <input
+                type="text"
+                [ngModel]="previousLoanPurpose()"
+                (ngModelChange)="previousLoanPurpose.set($event)"
+                [readonly]="hasExistingLoanDetails()"
+              />
             </div>
           </div>
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Loan Amount:</label>
-              <input type="text" [ngModel]="loanAmount()" (ngModelChange)="loanAmount.set($event)" />
+              <input
+                type="text"
+                [ngModel]="loanAmount()"
+                (ngModelChange)="loanAmount.set($event)"
+                [readonly]="hasExistingLoanDetails()"
+              />
             </div>
           </div>
 
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label>Loan Amount Deducted Till Now:</label>
-              <input type="text" [ngModel]="loanAmountDeductedTillNow()" (ngModelChange)="loanAmountDeductedTillNow.set($event)" />
+              <input
+                type="text"
+                [ngModel]="loanAmountDeductedTillNow()"
+                (ngModelChange)="loanAmountDeductedTillNow.set($event)"
+                [readonly]="hasExistingLoanDetails()"
+              />
             </div>
           </div>
 
