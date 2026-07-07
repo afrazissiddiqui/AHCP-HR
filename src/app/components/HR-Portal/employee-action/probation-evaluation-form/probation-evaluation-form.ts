@@ -19,7 +19,7 @@ import {
 } from '../../../table-filter';
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
-import { displayDateOnly } from '../../../../utils/date-format.util';
+import { formatTableCellValue } from '../../../../utils/date-format.util';
 import { ProbationDetailDialogComponent } from './probation-detail-dialog/probation-detail-dialog';
 
 type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 'Location' | 'ReportingManager' | 'EmployeeType' | 'GradeWorkLevel' | 'EmploymentCategory' | 'Remarks' | 'ProbationRating' | 'SupervisionRemark' | 'ExtensionOfProbation' | 'TerminationOfProbation' | 'SalaryAdjustment' | 'Allowances' | 'TotalSalary'>;
@@ -100,8 +100,6 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   Math = Math;
-
-  private readonly dateColumns = new Set<ProbationColumnKey>(['ProbationStartDate', 'ProbationEndDate']);
 
   columns: Array<{ key: ProbationColumnKey; label: string; visible: boolean }> = [
     { key: 'EmployeeCode', label: 'Employee Code', visible: true },
@@ -292,10 +290,6 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   displayCellValue(item: ProbationEvaluationRecord, key: ProbationColumnKey): string {
-    const value = item[key];
-    if (this.dateColumns.has(key)) {
-      return displayDateOnly(typeof value === 'string' ? value : String(value ?? ''));
-    }
-    return String(value ?? '');
+    return formatTableCellValue(key, item[key]);
   }
 }

@@ -11,7 +11,7 @@ import {
 } from '../../../../services/expense-reimbursement.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
-import { displayDateOnly } from '../../../../utils/date-format.util';
+import { displayDateSlash, formatTableCellValue } from '../../../../utils/date-format.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   EXPENSE_REIMBURSEMENT_TABLE_FILTER,
@@ -325,22 +325,10 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   }
 
   formatCellValue(record: ExpenseReimbursementRecord, key: ExpenseColumnKey): string {
-    const value = record[key];
-    if (value === undefined || value === null) {
-      return '—';
-    }
-    if (key === 'ClaimDate') {
-      return this.formatClaimDate(String(value));
-    }
-    const text = String(value).trim();
-    return text === '' || text === '—' ? '—' : text;
+    return formatTableCellValue(key, record[key]);
   }
 
   formatClaimDate(value: string): string {
-    const formatted = displayDateOnly(value);
-    if (formatted === '—') {
-      return '—';
-    }
-    return formatted.replace(/-/g, '/');
+    return displayDateSlash(value);
   }
 }

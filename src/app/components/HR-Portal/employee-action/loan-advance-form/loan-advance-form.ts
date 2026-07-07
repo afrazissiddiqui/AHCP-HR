@@ -8,7 +8,7 @@ import { SidebarComponent, SidebarItem, SidebarSection } from '../../../sidebar/
 import { LoanAdvanceRecord, LoanAdvancePayload, LoanAdvanceService } from '../../../../services/loan-advance.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
-import { displayDateSlash } from '../../../../utils/date-format.util';
+import { displayDateSlash, formatTableCellValue } from '../../../../utils/date-format.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   LOAN_ADVANCE_TABLE_FILTER,
@@ -346,18 +346,7 @@ export class LoanAdvanceFormComponent implements OnInit {
   }
 
   formatCellValue(record: LoanAdvanceRecord, key: LoanColumnKey): string {
-    const value = record[key];
-    if (value === undefined || value === null) {
-      return '—';
-    }
-    if (key === 'RequestDate') {
-      return displayDateSlash(String(value));
-    }
-    const text = String(value).trim();
-    if (text === '' || text === '—' || text.toLowerCase() === 'null' || text.toLowerCase() === 'undefined') {
-      return '—';
-    }
-    return text;
+    return formatTableCellValue(key, record[key]);
   }
 
   formatDetail(value: string | undefined): string {

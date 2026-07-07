@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import {
   LeaveApplicationAddPayload,
@@ -25,6 +26,7 @@ import {
   formatDateSlashToApi,
   parseSlashOrIsoDate,
 } from '../../../../../utils/date-format.util';
+import { glAccountBranchLabel } from '../../../../setup/gl-account-determination/gl-account-branch.options';
 
 interface LeaveEmployeeOption {
   employeeId: string;
@@ -36,6 +38,10 @@ interface LeaveEmployeeOption {
   department: string;
   jobTitle: string;
   location: string;
+  leaveType: string;
+  totalLeaves: number | null;
+  leavesAvailed: number | null;
+  remainingLeaves: number | null;
 }
 
 @Component({
@@ -46,6 +52,7 @@ interface LeaveEmployeeOption {
   styleUrls: [
     '../../../Application-Form/create-job-requisition/create-job-requisition.css',
     '../../probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
+    './add-leave-application.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -60,6 +67,11 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected editingId: string | null = null;
   protected pageTitle = 'Add Leave Request';
   protected submitButtonLabel = 'Save Leave Request';
+  protected readonly saving = signal(false);
+
+  get pageSubtitle(): string {
+    return 'Submit employee leave requests with balance tracking and approval details.';
+  }
 
   constructor(
     private readonly router: Router,
@@ -242,6 +254,10 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   }
 
   protected save(): void {
+    if (this.saving()) {
+      return;
+    }
+
     if (!this.formNumber().trim()) {
       void this.alertService.warning('Validation', 'Form Number is required.');
       return;
@@ -268,7 +284,17 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       ? this.leaveService.updateLeaveApplication(this.editingId, payload)
       : this.leaveService.addLeaveApplication(payload);
 
-    request$.subscribe({
+    this.saving.set(true);
+    this.cdr.markForCheck();
+
+    request$
+      .pipe(
+        finalize(() => {
+          this.saving.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
       next: async () => {
         const message = this.editingId
           ? 'Leave request updated successfully.'
@@ -369,21 +395,77 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
 
   private toEmployeeOption(record: ApplicationFormRecord): LeaveEmployeeOption {
     const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const detail = record.detail;
+    const personal = detail?.personalInfo;
+    const requisition = detail?.requisition;
+    const remuneration = detail?.remuneration;
+    const leaveBalance = this.extractLeaveBalanceFromRecord(record);
 
     return {
       employeeId: this.resolveEmployeeId(record),
-      employeeName: emptyIfDash(record.EmployeeName),
+      employeeName:
+        emptyIfDash(personal?.personName ?? '') || emptyIfDash(record.EmployeeName),
       employeeCategory: emptyIfDash(record.EmploymentCategory),
       employmentNature: emptyIfDash(record.EmployeeNature),
       employmentType: emptyIfDash(record.EmploymentType),
-      workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
-      department: emptyIfDash(record.Department),
+      workGradeLevel:
+        emptyIfDash(requisition?.costCenter ?? '') ||
+        emptyIfDash(personal?.workGradeLevel ?? ''),
+      department:
+        emptyIfDash(record.Department) ||
+        emptyIfDash(personal?.departmentInAhcp ?? ''),
       jobTitle:
-        emptyIfDash(record.detail?.requisition.internalJobTitle ?? '') ||
+        emptyIfDash(requisition?.internalJobTitle ?? '') ||
         emptyIfDash(record.Designation),
-      location:
-        emptyIfDash(record.detail?.requisition.location ?? '') ||
-        emptyIfDash(record.detail?.personalInfo.city ?? ''),
+      location: glAccountBranchLabel(
+        emptyIfDash(personal?.branchLocation ?? '') ||
+          emptyIfDash(requisition?.location ?? '') ||
+          emptyIfDash(personal?.city ?? ''),
+      ),
+      leaveType: leaveBalance.leaveType,
+      totalLeaves: leaveBalance.totalLeaves,
+      leavesAvailed: leaveBalance.leavesAvailed,
+      remainingLeaves: leaveBalance.remainingLeaves,
+    };
+  }
+
+  private extractLeaveBalanceFromRecord(record: ApplicationFormRecord): {
+    leaveType: string;
+    totalLeaves: number | null;
+    leavesAvailed: number | null;
+    remainingLeaves: number | null;
+  } {
+    const emptyIfDash = (value: string): string => (value === '—' ? '' : value);
+    const remuneration = record.detail?.remuneration;
+    const primaryLeave = record.detail?.leaveManagement?.[0];
+
+    const leaveType = emptyIfDash(
+      remuneration?.leaveType ?? primaryLeave?.leaveType ?? '',
+    );
+
+    const totalLeaves = this.parseNumber(
+      remuneration?.totalLeaves ||
+        remuneration?.leaveDays ||
+        primaryLeave?.leavesAllocated ||
+        '',
+    );
+    const leavesAvailed = this.parseNumber(
+      remuneration?.leavesAvailed || primaryLeave?.leavesAvailed || '',
+    );
+    const remainingFromProfile = this.parseNumber(
+      remuneration?.remainingLeaves || primaryLeave?.remainingLeave || '',
+    );
+    const remainingLeaves =
+      remainingFromProfile ??
+      (totalLeaves !== null && leavesAvailed !== null
+        ? Math.max(totalLeaves - leavesAvailed, 0)
+        : null);
+
+    return {
+      leaveType,
+      totalLeaves,
+      leavesAvailed,
+      remainingLeaves,
     };
   }
 
@@ -428,6 +510,16 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.department.set(employee.department);
     this.jobTitle.set(employee.jobTitle);
     this.location.set(employee.location);
+
+    if (!this.editingId) {
+      this.leaveType.set(employee.leaveType);
+      this.totalLeaves.set(employee.totalLeaves);
+      this.leavesAvailed.set(employee.leavesAvailed);
+      this.remainingLeaves.set(employee.remainingLeaves);
+      if (!this.requestStatus()) {
+        this.requestStatus.set('Submitted');
+      }
+    }
   }
 
   private syncTotalLeaveDays(): void {

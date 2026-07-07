@@ -11,6 +11,7 @@ import {
 } from '../../../../services/training-development.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { formatTableCellValue } from '../../../../utils/date-format.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   TRAINING_DEVELOPMENT_TABLE_FILTER,
@@ -332,5 +333,9 @@ export class TrainingDevelopmentFormComponent implements OnInit {
 
   createNewTraining(): void {
     void this.router.navigateByUrl('/employee-action/training-development-form/create');
+  }
+
+  formatCellValue(record: TrainingDevelopmentRecord, key: TrainingColumnKey): string {
+    return formatTableCellValue(key, record[key]);
   }
 }

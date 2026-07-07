@@ -9,6 +9,7 @@ import { AlertService } from '../../../services/alert.service';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
+import { formatTableCellValue } from '../../../utils/date-format.util';
 import {
   TERMINATION_TABLE_FILTER,
   TableFilterComponent,
@@ -259,7 +260,7 @@ export class TerminationFormComponent implements OnInit {
     if (key === 'YearOfService') {
       return record.YearOfService.toFixed(1);
     }
-    return record[key];
+    return formatTableCellValue(key, record[key]);
   }
 
   createNewTermination(): void {

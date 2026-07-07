@@ -79,7 +79,7 @@
                 <input type="checkbox" [(ngModel)]="item.selected" />
               </td>
               <td *ngFor="let col of visibleColumns">
-                {{ item[col.key] }}
+                {{ formatCellValue(item, col.key) }}
               </td>
               <td class="table-action-cell">
                 <div class="action-buttons">

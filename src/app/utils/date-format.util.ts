@@ -27,9 +27,21 @@ export function formatDateOfBirthFromApi(value: string): string {
     return trimmed;
   }
 
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+    const [day, month, year] = trimmed.split('/');
+    return `${day}-${month}-${year}`;
+  }
+
+  const datePart = trimmed.split(/[T ]/)[0]?.trim() ?? '';
+
+  const isoMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoMatch) {
     return `${isoMatch[3]}-${isoMatch[2]}-${isoMatch[1]}`;
+  }
+
+  const slashMatch = datePart.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slashMatch) {
+    return `${slashMatch[1]}-${slashMatch[2]}-${slashMatch[3]}`;
   }
 
   return formatDateDdMmYyyyInput(trimmed);
@@ -108,6 +120,32 @@ export function displayDateOnly(value: string | number | undefined | null): stri
 export function displayDateSlash(value: string | number | undefined | null): string {
   const formatted = displayDateOnly(value);
   return formatted === '—' ? '—' : formatted.replace(/-/g, '/');
+}
+
+/** True when a list/table column key should be rendered as a date. */
+export function isTableDateColumnKey(key: string): boolean {
+  return /date/i.test(key) || key === 'LastWorkingDay';
+}
+
+/** Formats generic list/table cell values, using DD/MM/YYYY for date columns. */
+export function formatTableCellValue(
+  key: string,
+  value: string | number | undefined | null,
+): string {
+  if (value === undefined || value === null) {
+    return '—';
+  }
+
+  if (isTableDateColumnKey(key)) {
+    return displayDateSlash(value);
+  }
+
+  const text = String(value).trim();
+  if (!text || text === '—' || text.toLowerCase() === 'null' || text.toLowerCase() === 'undefined') {
+    return '—';
+  }
+
+  return text;
 }
 
 /** Formats user input into DD/MM/YYYY as the user types. */

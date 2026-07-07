@@ -12,6 +12,7 @@ import {
 } from '../../../../services/performance-appraisal.service';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { formatTableCellValue } from '../../../../utils/date-format.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   PERFORMANCE_APPRAISAL_TABLE_FILTER,
@@ -333,11 +334,6 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   }
 
   formatCellValue(record: PerformanceAppraisalRecord, key: AppraisalColumnKey): string {
-    const value = record[key];
-    if (value === undefined || value === null) {
-      return '—';
-    }
-    const text = String(value).trim();
-    return text === '' || text === '—' ? '—' : text;
+    return formatTableCellValue(key, record[key]);
   }
 }
