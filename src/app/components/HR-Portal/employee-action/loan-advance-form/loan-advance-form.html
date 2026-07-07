@@ -139,6 +139,7 @@
                 <div class="js-detail-item"><label>Advance Amount To Be Deducted This Month:</label> <span>{{ formatDetail(record.AdvanceDetail.advanceAmountToBeDeductedThisMonth) }}</span></div>
                 <div class="js-detail-item"><label>Advance Balance:</label> <span>{{ formatDetail(record.AdvanceDetail.advanceBalance) }}</span></div>
                 <div class="js-detail-item"><label>Purpose:</label> <span>{{ formatDetail(record.AdvanceDetail.newAdvanceRequest.purpose) }}</span></div>
+                <div class="js-detail-item"><label>Advance Amount Eligible:</label> <span>{{ formatDetail(record.AdvanceDetail.newAdvanceRequest.advanceAmountEligible) }}</span></div>
                 <div class="js-detail-item"><label>Advance Amount Requested:</label> <span>{{ formatDetail(record.AdvanceDetail.newAdvanceRequest.advanceAmountRequested) }}</span></div>
               </div>
               <div class="js-detail-full" *ngIf="record.AdvanceDetail.advanceRemarks">

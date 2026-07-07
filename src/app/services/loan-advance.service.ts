@@ -347,33 +347,53 @@ export class LoanAdvanceService {
     };
 
     const newLoanRequest: LoanAdvanceNewLoanRequest = {
-      purpose: this.pickString([newLoanSource, loanSource], ['purpose', 'Purpose']),
-      loanAmountRequested: this.pickString([newLoanSource, loanSource], [
+      purpose: this.pickString([newLoanSource, loanSource, item], [
+        'purpose',
+        'Purpose',
+        'loanPurpose',
+        'loan_purpose',
+        'LoanPurpose',
+      ]),
+      loanAmountRequested: this.pickString([newLoanSource, loanSource, item], [
         'loanAmountRequested',
         'loan_amount_requested',
         'LoanAmountRequested',
       ]),
-      installmentAmount: this.pickString([newLoanSource, loanSource], [
+      installmentAmount: this.pickString([newLoanSource, loanSource, item], [
         'installmentAmount',
         'installment_amount',
         'InstallmentAmount',
+        'loanInstallmentAmount',
+        'loan_installment_amount',
+        'LoanInstallmentAmount',
       ]),
-      noOfInstallments: this.pickString([newLoanSource, loanSource], [
+      noOfInstallments: this.pickString([newLoanSource, loanSource, item], [
         'noOfInstallments',
         'no_of_installments',
         'NoOfInstallments',
       ]),
-      loanEndMonth: this.pickString([newLoanSource, loanSource], ['loanEndMonth', 'loan_end_month', 'LoanEndMonth']),
-      loanStartMonth: this.pickString([newLoanSource, loanSource], [
+      loanEndMonth: this.pickString([newLoanSource, loanSource, item], [
+        'loanEndMonth',
+        'loan_end_month',
+        'LoanEndMonth',
+      ]),
+      loanStartMonth: this.pickString([newLoanSource, loanSource, item], [
         'loanStartMonth',
         'loan_start_month',
         'LoanStartMonth',
       ]),
-      loanTenure: this.pickString([newLoanSource, loanSource], ['loanTenure', 'loan_tenure', 'LoanTenure']),
-      eligibleAmount: this.pickString([newLoanSource, loanSource], [
+      loanTenure: this.pickString([newLoanSource, loanSource, item], [
+        'loanTenure',
+        'loan_tenure',
+        'LoanTenure',
+      ]),
+      eligibleAmount: this.pickString([newLoanSource, loanSource, item], [
         'eligibleAmount',
         'eligible_amount',
         'EligibleAmount',
+        'loanEligibleAmount',
+        'loan_eligible_amount',
+        'LoanEligibleAmount',
       ]),
     };
 
@@ -422,14 +442,22 @@ export class LoanAdvanceService {
     };
 
     const newAdvanceRequest: LoanAdvanceNewAdvanceRequest = {
-      purpose: this.pickString([newAdvanceSource, advanceSource], ['purpose', 'Purpose']),
-      advanceAmountEligible: this.pickString([newAdvanceSource, advanceSource], [
+      purpose: this.pickString([newAdvanceSource, advanceSource, item], [
+        'purpose',
+        'Purpose',
+        'advancePurpose',
+        'advance_purpose',
+        'AdvancePurpose',
+      ]),
+      advanceAmountEligible: this.pickString([newAdvanceSource, advanceSource, item], [
         'advanceAmountEligible',
         'advance_amount_eligible',
+        'AdvanceAmountEligible',
       ]),
-      advanceAmountRequested: this.pickString([newAdvanceSource, advanceSource], [
+      advanceAmountRequested: this.pickString([newAdvanceSource, advanceSource, item], [
         'advanceAmountRequested',
         'advance_amount_requested',
+        'AdvanceAmountRequested',
       ]),
     };
 
@@ -439,22 +467,41 @@ export class LoanAdvanceService {
         'existing_advance',
         'ExistingAdvance',
       ]),
-      advanceAcquiredDate: this.pickString([advanceSource, item], ['advanceAcquiredDate', 'advance_acquired_date']),
+      advanceAcquiredDate: this.pickString([advanceSource, item], [
+        'advanceAcquiredDate',
+        'advance_acquired_date',
+        'AdvanceAcquiredDate',
+      ]),
       advanceEligibleAmount: this.pickString([advanceSource, item], [
         'advanceEligibleAmount',
         'advance_eligible_amount',
+        'AdvanceEligibleAmount',
       ]),
       previousAdvancePurpose: this.pickString([advanceSource, item], [
         'previousAdvancePurpose',
         'previous_advance_purpose',
+        'PreviousAdvancePurpose',
       ]),
-      advanceRemarks: this.pickString([advanceSource, item], ['advanceRemarks', 'advance_remarks']),
-      advanceAmount: this.pickString([advanceSource, item], ['advanceAmount', 'advance_amount']),
+      advanceRemarks: this.pickString([advanceSource, item], [
+        'advanceRemarks',
+        'advance_remarks',
+        'AdvanceRemarks',
+      ]),
+      advanceAmount: this.pickString([advanceSource, item], [
+        'advanceAmount',
+        'advance_amount',
+        'AdvanceAmount',
+      ]),
       advanceAmountToBeDeductedThisMonth: this.pickString([advanceSource, item], [
         'advanceAmountToBeDeductedThisMonth',
         'advance_amount_to_be_deducted_this_month',
+        'AdvanceAmountToBeDeductedThisMonth',
       ]),
-      advanceBalance: this.pickString([advanceSource, item], ['advanceBalance', 'advance_balance']),
+      advanceBalance: this.pickString([advanceSource, item], [
+        'advanceBalance',
+        'advance_balance',
+        'AdvanceBalance',
+      ]),
       newAdvanceRequest,
     };
 

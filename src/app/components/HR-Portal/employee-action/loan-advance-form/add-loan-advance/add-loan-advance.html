@@ -404,15 +404,10 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label [class.cjr-label-required]="isLoanRequest()">Installment Amount:</label>
-              <input
-                type="text"
-                [ngModel]="installmentAmount()"
-                (ngModelChange)="installmentAmount.set($event)"
-                [readonly]="newLoanRequestLocked()"
-              />
+              <input type="text" [value]="installmentAmount()" readonly />
             </div>
             <div class="cjr-row">
-              <label>Loan Tenure:</label>
+              <label>Loan Tenure (In Months):</label>
               <input type="text" [value]="loanTenure()" readonly />
             </div>
           </div>

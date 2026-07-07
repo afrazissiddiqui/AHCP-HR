@@ -111,14 +111,16 @@ export class AddLoanAdvanceComponent implements OnInit {
   );
   protected readonly newLoanPurpose = signal('');
   protected readonly loanAmountRequested = signal('');
-  protected readonly installmentAmount = signal('');
   protected readonly noOfInstallments = computed(() =>
-    this.calculateInstallmentCount(this.loanAmountRequested(), this.installmentAmount()),
+    this.loanTenure(),
   );
   protected readonly loanEndMonth = signal('');
   protected readonly loanStartMonth = signal('');
   protected readonly loanTenure = computed(() =>
     this.calculateLoanTenure(this.loanStartMonth(), this.loanEndMonth()),
+  );
+  protected readonly installmentAmount = computed(() =>
+    this.calculateInstallmentAmount(this.loanAmountRequested(), this.noOfInstallments()),
   );
   protected readonly eligibleAmount = signal('');
   protected readonly remarks = signal('');
@@ -381,7 +383,6 @@ export class AddLoanAdvanceComponent implements OnInit {
 
     this.newLoanPurpose.set(record.LoanDetail.newLoanRequest.purpose?.trim() ?? '');
     this.loanAmountRequested.set(record.LoanDetail.newLoanRequest.loanAmountRequested?.trim() ?? '');
-    this.installmentAmount.set(record.LoanDetail.newLoanRequest.installmentAmount?.trim() ?? '');
     this.loanEndMonth.set(this.normalizeMonthInput(record.LoanDetail.newLoanRequest.loanEndMonth));
     this.loanStartMonth.set(this.normalizeMonthInput(record.LoanDetail.newLoanRequest.loanStartMonth));
     this.eligibleAmount.set(record.LoanDetail.newLoanRequest.eligibleAmount?.trim() ?? '');
@@ -482,15 +483,16 @@ export class AddLoanAdvanceComponent implements OnInit {
     return Number.isFinite(parsed) ? parsed : null;
   }
 
-  private calculateInstallmentCount(requestedValue: string, installmentValue: string): string {
+  private calculateInstallmentAmount(requestedValue: string, installmentCountValue: string): string {
     const requested = this.parseDecimal(requestedValue);
-    const installment = this.parseDecimal(installmentValue);
+    const installmentCount = this.parseDecimal(installmentCountValue);
 
-    if (requested === null || installment === null || installment <= 0) {
+    if (requested === null || installmentCount === null || installmentCount <= 0) {
       return '';
     }
 
-    return `${Math.ceil(requested / installment)}`;
+    const amount = requested / installmentCount;
+    return Number.isInteger(amount) ? `${amount}` : amount.toFixed(2);
   }
 
   private calculateLoanTenure(startMonth: string, endMonth: string): string {
