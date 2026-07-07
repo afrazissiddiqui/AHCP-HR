@@ -240,9 +240,9 @@
             </div>
             <div class="cjr-row">
               <label class="cjr-label-required">Leave Type:</label>
-              <select [ngModel]="leaveType()" (ngModelChange)="leaveType.set($event)">
+              <select [ngModel]="leaveType()" (ngModelChange)="onLeaveTypeChange($event)">
                 <option value="">Select leave type</option>
-                @for (option of leaveTypeOptions(); track option.id) {
+                @for (option of leaveTypeSelectOptions(); track option.id) {
                   <option [value]="option.name">{{ option.name }}</option>
                 }
               </select>
