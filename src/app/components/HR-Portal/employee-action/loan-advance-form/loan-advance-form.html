@@ -150,10 +150,44 @@
 
             <div class="js-detail-section">
               <h3>Repayment Schedule</h3>
-              <div class="js-detail-grid">
-                <div class="js-detail-item"><label>Repayment Start Date:</label> <span>{{ formatDetail(record.RepaymentSchedule.repaymentStartDate) }}</span></div>
-                <div class="js-detail-item"><label>Repayment Frequency:</label> <span>{{ formatDetail(record.RepaymentSchedule.repaymentFrequency) }}</span></div>
-                <div class="js-detail-item"><label>Deduction Amount:</label> <span>{{ formatDetail(record.RepaymentSchedule.deductionAmount) }}</span></div>
+              <div class="repayment-schedule-table-wrap">
+                <table class="repayment-schedule-table">
+                  <tbody>
+                    <tr class="repayment-schedule-title-row">
+                      <th colspan="2">Loan Amorization Schedule</th>
+                    </tr>
+                    <tr>
+                      <th>Loan Amount</th>
+                      <td>{{ formatDetail(record.LoanDetail.newLoanRequest.loanAmountRequested || record.LoanDetail.loanAmount) }}</td>
+                    </tr>
+                    <tr>
+                      <th>Tenure</th>
+                      <td>{{ formatDetail(record.LoanDetail.newLoanRequest.loanTenure || record.LoanDetail.newLoanRequest.noOfInstallments) }}</td>
+                    </tr>
+                    <tr>
+                      <th>Installment Amount</th>
+                      <td>{{ formatDetail(record.LoanDetail.newLoanRequest.installmentAmount || record.RepaymentSchedule.deductionAmount) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="repayment-schedule-table-wrap">
+                <table class="repayment-schedule-table">
+                  <thead>
+                    <tr class="repayment-schedule-title-row">
+                      <th>Sr.</th>
+                      <th>Month</th>
+                      <th>Installment</th>
+                      <th>Balance</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="5" class="repayment-schedule-empty">No repayment schedule available.</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
               <div class="js-detail-full" *ngIf="record.RepaymentSchedule.remarks">
                 <label>Remarks:</label>

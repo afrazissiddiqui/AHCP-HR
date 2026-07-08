@@ -56,6 +56,34 @@ type LoanColumnKey = Exclude<
       z-index: 12;
       background: #f5f5f5;
     }
+    :host .repayment-schedule-table-wrap {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+    :host .repayment-schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 520px;
+    }
+    :host .repayment-schedule-table th,
+    :host .repayment-schedule-table td {
+      border: 1px solid #d9d9d9;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    :host .repayment-schedule-table th {
+      background: #f7f7f7;
+      font-weight: 600;
+    }
+    :host .repayment-schedule-title-row th {
+      background: #eef4ff;
+    }
+    :host .repayment-schedule-empty {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+    }
   `],
 })
 export class LoanAdvanceFormComponent implements OnInit {
