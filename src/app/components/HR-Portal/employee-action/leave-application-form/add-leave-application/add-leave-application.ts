@@ -87,8 +87,37 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
 
   private readonly employeeOptions = signal<LeaveEmployeeOption[]>([]);
   protected readonly leaveTypeOptions = signal<LeaveTypeRecord[]>([]);
+  protected readonly selectedEmployeeLeaveRows = computed(() => this.selectedEmployeeRecord?.detail?.leaveManagement ?? []);
+  protected readonly selectedEmployeeLeaveTypeOptions = computed(() => {
+    const seen = new Set<string>();
+    const rows = this.selectedEmployeeLeaveRows();
+    return rows
+      .map((row) => this.resolveLeaveTypeName(row.leaveType))
+      .filter((value) => {
+        const normalized = value.trim().toLowerCase();
+        if (!normalized || seen.has(normalized)) {
+          return false;
+        }
+        seen.add(normalized);
+        return true;
+      });
+  });
+  protected readonly leaveTypeLocked = computed(
+    () => !this.editingId && this.selectedEmployeeLeaveTypeOptions().length > 0,
+  );
   protected readonly leaveTypeSelectOptions = computed(() => {
-    const options = this.leaveTypeOptions();
+    const profileLeaveTypes = this.selectedEmployeeLeaveTypeOptions();
+    const options = this.leaveTypeOptions().filter((option) => {
+      if (!profileLeaveTypes.length) {
+        return true;
+      }
+      const resolvedName = this.resolveLeaveTypeName(String(option.name ?? ''));
+      const resolvedCode = this.resolveLeaveTypeName(String(option.code ?? ''));
+      return profileLeaveTypes.some((type) =>
+        type.toLowerCase() === resolvedName.toLowerCase() ||
+        type.toLowerCase() === resolvedCode.toLowerCase(),
+      );
+    });
     const current = this.leaveType().trim();
     if (!current) {
       return options;
@@ -139,6 +168,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected readonly remainingLeaves = signal<number | null>(null);
   protected readonly requestStatus = signal<'Submitted' | 'Approved' | 'Rejected' | ''>('');
   protected readonly remarks = signal('');
+  protected readonly leaveBalanceLocked = computed(() => !this.editingId && !!this.selectedEmployeeRecord);
 
   protected readonly codeSuggestionsOpen = signal(false);
   protected readonly nameSuggestionsOpen = signal(false);
@@ -261,6 +291,9 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   private selectedEmployeeRecord: ApplicationFormRecord | null = null;
 
   protected onLeaveTypeChange(value: string): void {
+    if (this.leaveTypeLocked()) {
+      return;
+    }
     const resolved = this.resolveLeaveTypeName(value);
     this.leaveType.set(resolved);
 
@@ -285,11 +318,17 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   }
 
   protected onTotalLeavesChange(value: number | string | null): void {
+    if (this.leaveBalanceLocked()) {
+      return;
+    }
     this.totalLeaves.set(this.parseNumber(value));
     this.syncRemainingLeaves();
   }
 
   protected onLeavesAvailedChange(value: number | string | null): void {
+    if (this.leaveBalanceLocked()) {
+      return;
+    }
     this.leavesAvailed.set(this.parseNumber(value));
     this.syncRemainingLeaves();
   }
@@ -407,6 +446,11 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.totalLeaves.set(balance.totalLeaves > 0 ? balance.totalLeaves : null);
     this.leavesAvailed.set(balance.leavesAvailed > 0 ? balance.leavesAvailed : null);
     this.remainingLeaves.set(balance.remainingLeaves > 0 ? balance.remainingLeaves : null);
+
+    const matchedRecord = this.applicationFormService
+      .getApplicationRecords()
+      .find((item) => this.resolveEmployeeId(item) === this.employeeId());
+    this.selectedEmployeeRecord = matchedRecord ?? null;
   }
 
   private buildPayload(): LeaveApplicationAddPayload {

@@ -240,12 +240,17 @@
             </div>
             <div class="cjr-row">
               <label class="cjr-label-required">Leave Type:</label>
-              <select [ngModel]="leaveType()" (ngModelChange)="onLeaveTypeChange($event)">
+              <select
+                [ngModel]="leaveType()"
+                (ngModelChange)="onLeaveTypeChange($event)"
+                [disabled]="leaveTypeLocked()"
+              >
                 <option value="">Select leave type</option>
                 @for (option of leaveTypeSelectOptions(); track option.id) {
                   <option [value]="option.name">{{ option.name }}</option>
                 }
               </select>
+              <small *ngIf="leaveTypeLocked()">Leave type is fixed from the selected employee's leave management setup.</small>
             </div>
             <div class="cjr-row">
               <label>Cause of Leave:</label>
@@ -322,6 +327,7 @@
                 min="0"
                 [ngModel]="totalLeaves()"
                 (ngModelChange)="onTotalLeavesChange($event)"
+                [readonly]="leaveBalanceLocked()"
               />
             </div>
             <div class="cjr-row">
@@ -331,6 +337,7 @@
                 min="0"
                 [ngModel]="leavesAvailed()"
                 (ngModelChange)="onLeavesAvailedChange($event)"
+                [readonly]="leaveBalanceLocked()"
               />
             </div>
             <div class="cjr-row">
