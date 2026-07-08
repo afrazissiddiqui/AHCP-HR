@@ -341,7 +341,10 @@
                 <td>{{ row.leavesAvailed || '—' }}</td>
                 <td>{{ row.remainingLeave || '—' }}</td>
               </tr>
-              <tr *ngIf="selectedEmployeeLeaveRows().length === 0">
+              <tr *ngIf="loadingEmployeeLeaveManagement()">
+                <td colspan="4" class="lam-table__empty">Loading leave management balances...</td>
+              </tr>
+              <tr *ngIf="!loadingEmployeeLeaveManagement() && selectedEmployeeLeaveRows().length === 0">
                 <td colspan="4" class="lam-table__empty">Select an employee to view leave management balances.</td>
               </tr>
             </tbody>

@@ -170,6 +170,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected readonly requestStatus = signal<'Submitted' | 'Approved' | 'Rejected' | ''>('');
   protected readonly remarks = signal('');
   protected readonly leaveBalanceLocked = computed(() => !this.editingId && !!this.selectedEmployeeRecord);
+  protected readonly loadingEmployeeLeaveManagement = signal(false);
 
   protected readonly codeSuggestionsOpen = signal(false);
   protected readonly nameSuggestionsOpen = signal(false);
@@ -281,12 +282,38 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected selectEmployee(employee: LeaveEmployeeOption): void {
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
-    this.selectedEmployeeRecord =
+    const cachedRecord =
       this.applicationFormService
         .getApplicationRecords()
         .find((record) => this.resolveEmployeeId(record) === employee.employeeId) ?? null;
+    this.selectedEmployeeRecord = cachedRecord;
     this.populateFromEmployeeOption(employee);
+
+    if (!cachedRecord?.apiId) {
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.loadingEmployeeLeaveManagement.set(true);
     this.cdr.markForCheck();
+    this.applicationFormService.fetchEmployeeProfileDetail(cachedRecord.apiId).subscribe({
+      next: (record) => {
+        this.selectedEmployeeRecord = record;
+        const resolvedLeaveType = this.resolveLeaveTypeName(this.leaveType().trim());
+        if (resolvedLeaveType) {
+          const balance = this.extractLeaveBalanceForLeaveType(record, resolvedLeaveType);
+          this.totalLeaves.set(balance.totalLeaves);
+          this.leavesAvailed.set(balance.leavesAvailed);
+          this.remainingLeaves.set(balance.remainingLeaves);
+        }
+        this.loadingEmployeeLeaveManagement.set(false);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.loadingEmployeeLeaveManagement.set(false);
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   private selectedEmployeeRecord: ApplicationFormRecord | null = null;
@@ -452,6 +479,20 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       .getApplicationRecords()
       .find((item) => this.resolveEmployeeId(item) === this.employeeId());
     this.selectedEmployeeRecord = matchedRecord ?? null;
+    if (this.selectedEmployeeRecord?.apiId) {
+      this.loadingEmployeeLeaveManagement.set(true);
+      this.applicationFormService.fetchEmployeeProfileDetail(this.selectedEmployeeRecord.apiId).subscribe({
+        next: (fullRecord) => {
+          this.selectedEmployeeRecord = fullRecord;
+          this.loadingEmployeeLeaveManagement.set(false);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.loadingEmployeeLeaveManagement.set(false);
+          this.cdr.markForCheck();
+        },
+      });
+    }
   }
 
   private buildPayload(): LeaveApplicationAddPayload {
