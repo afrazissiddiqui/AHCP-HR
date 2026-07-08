@@ -88,7 +88,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
 
   private readonly employeeOptions = signal<LeaveEmployeeOption[]>([]);
   protected readonly leaveTypeOptions = signal<LeaveTypeRecord[]>([]);
-  protected readonly selectedEmployeeLeaveRows = computed(() => this.selectedEmployeeRecord?.detail?.leaveManagement ?? []);
+  protected readonly selectedEmployeeLeaveRows = computed(() => this.selectedEmployeeRecord()?.detail?.leaveManagement ?? []);
   protected readonly selectedEmployeeLeaveTypeOptions = computed(() => {
     const seen = new Set<string>();
     const rows = this.selectedEmployeeLeaveRows();
@@ -169,7 +169,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected readonly remainingLeaves = signal<number | null>(null);
   protected readonly requestStatus = signal<'Submitted' | 'Approved' | 'Rejected' | ''>('');
   protected readonly remarks = signal('');
-  protected readonly leaveBalanceLocked = computed(() => !this.editingId && !!this.selectedEmployeeRecord);
+  protected readonly leaveBalanceLocked = computed(() => !this.editingId && !!this.selectedEmployeeRecord());
   protected readonly loadingEmployeeLeaveManagement = signal(false);
 
   protected readonly codeSuggestionsOpen = signal(false);
@@ -286,7 +286,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       this.applicationFormService
         .getApplicationRecords()
         .find((record) => this.resolveEmployeeId(record) === employee.employeeId) ?? null;
-    this.selectedEmployeeRecord = cachedRecord;
+    this.selectedEmployeeRecord.set(cachedRecord);
     this.populateFromEmployeeOption(employee);
 
     if (!cachedRecord?.apiId) {
@@ -298,7 +298,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.cdr.markForCheck();
     this.applicationFormService.fetchEmployeeProfileDetail(cachedRecord.apiId).subscribe({
       next: (record) => {
-        this.selectedEmployeeRecord = record;
+        this.selectedEmployeeRecord.set(record);
         const resolvedLeaveType = this.resolveLeaveTypeName(this.leaveType().trim());
         if (resolvedLeaveType) {
           const balance = this.extractLeaveBalanceForLeaveType(record, resolvedLeaveType);
@@ -316,7 +316,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     });
   }
 
-  private selectedEmployeeRecord: ApplicationFormRecord | null = null;
+  private readonly selectedEmployeeRecord = signal<ApplicationFormRecord | null>(null);
 
   protected onLeaveTypeChange(value: string): void {
     if (this.leaveTypeLocked()) {
@@ -325,11 +325,11 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     const resolved = this.resolveLeaveTypeName(value);
     this.leaveType.set(resolved);
 
-    if (this.editingId || !this.selectedEmployeeRecord || !resolved) {
+    if (this.editingId || !this.selectedEmployeeRecord() || !resolved) {
       return;
     }
 
-    const balance = this.extractLeaveBalanceForLeaveType(this.selectedEmployeeRecord, resolved);
+    const balance = this.extractLeaveBalanceForLeaveType(this.selectedEmployeeRecord()!, resolved);
     this.totalLeaves.set(balance.totalLeaves);
     this.leavesAvailed.set(balance.leavesAvailed);
     this.remainingLeaves.set(balance.remainingLeaves);
@@ -478,12 +478,13 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     const matchedRecord = this.applicationFormService
       .getApplicationRecords()
       .find((item) => this.resolveEmployeeId(item) === this.employeeId());
-    this.selectedEmployeeRecord = matchedRecord ?? null;
-    if (this.selectedEmployeeRecord?.apiId) {
+    this.selectedEmployeeRecord.set(matchedRecord ?? null);
+    const selectedRecordApiId = this.selectedEmployeeRecord()?.apiId;
+    if (selectedRecordApiId) {
       this.loadingEmployeeLeaveManagement.set(true);
-      this.applicationFormService.fetchEmployeeProfileDetail(this.selectedEmployeeRecord.apiId).subscribe({
+      this.applicationFormService.fetchEmployeeProfileDetail(selectedRecordApiId).subscribe({
         next: (fullRecord) => {
-          this.selectedEmployeeRecord = fullRecord;
+          this.selectedEmployeeRecord.set(fullRecord);
           this.loadingEmployeeLeaveManagement.set(false);
           this.cdr.markForCheck();
         },
@@ -779,9 +780,9 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     if (!this.editingId) {
       const resolvedLeaveType = this.resolveLeaveTypeName(employee.leaveType);
       this.leaveType.set(resolvedLeaveType);
-      if (this.selectedEmployeeRecord && resolvedLeaveType) {
+      if (this.selectedEmployeeRecord() && resolvedLeaveType) {
         const balance = this.extractLeaveBalanceForLeaveType(
-          this.selectedEmployeeRecord,
+          this.selectedEmployeeRecord()!,
           resolvedLeaveType,
         );
         this.totalLeaves.set(balance.totalLeaves);
