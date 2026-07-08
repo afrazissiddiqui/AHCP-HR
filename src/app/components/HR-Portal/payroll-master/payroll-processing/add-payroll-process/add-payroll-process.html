@@ -56,7 +56,7 @@
             id="pp-period-month"
             class="comp-plan-field__select comp-plan-field__select--month"
             [ngModel]="selectedMonth()"
-            (ngModelChange)="selectedMonth.set(+$event)"
+            (ngModelChange)="onSelectedMonthChange($event)"
             aria-label="Payroll month"
           >
             @for (month of monthOptions; track month.value) {
@@ -68,7 +68,7 @@
             id="pp-period-year"
             class="comp-plan-field__select comp-plan-field__select--year"
             [ngModel]="selectedYear()"
-            (ngModelChange)="selectedYear.set(+$event)"
+            (ngModelChange)="onSelectedYearChange($event)"
             aria-label="Payroll year"
           >
             @for (year of yearOptions; track year) {

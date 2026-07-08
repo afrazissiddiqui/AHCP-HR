@@ -22,6 +22,10 @@ import {
 import { AlertService } from '../../../../../services/alert.service';
 import { AuthService } from '../../../../../services/auth.service';
 import {
+  LoanAdvanceRecord,
+  LoanAdvanceService,
+} from '../../../../../services/loan-advance.service';
+import {
   PayrollProcessingService,
   PayrollProcessingSubmitPayload,
 } from '../../../../../services/payroll-processing.service';
@@ -127,6 +131,7 @@ export class AddPayrollProcessComponent implements OnInit {
   private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
   private readonly authService = inject(AuthService);
+  private readonly loanAdvanceService = inject(LoanAdvanceService);
   private readonly payrollSetupService = inject(PayrollSetupService);
   private readonly payrollProcessingService = inject(PayrollProcessingService);
   private readonly router = inject(Router);
@@ -319,6 +324,7 @@ export class AddPayrollProcessComponent implements OnInit {
 
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => this.pageDetailsSub?.unsubscribe());
+    this.loadLoanAdvances();
     this.loadEmployees();
   }
 
@@ -340,6 +346,16 @@ export class AddPayrollProcessComponent implements OnInit {
     this.currentPage.set(1);
     this.scrollTablesToTop();
     this.loadCurrentPageDetails();
+  }
+
+  onSelectedMonthChange(value: string | number): void {
+    this.selectedMonth.set(Number(value));
+    this.refreshPayrollRows();
+  }
+
+  onSelectedYearChange(value: string | number): void {
+    this.selectedYear.set(Number(value));
+    this.refreshPayrollRows();
   }
 
   onSearchChange(value: string): void {
@@ -772,6 +788,25 @@ export class AddPayrollProcessComponent implements OnInit {
     });
   }
 
+  private loadLoanAdvances(): void {
+    this.loanAdvanceService.fetchLoanAdvances().subscribe({
+      next: () => {
+        this.refreshPayrollRows();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Keep payroll usable even if loan/advance records fail to load.
+      },
+    });
+  }
+
+  private refreshPayrollRows(): void {
+    this.rowCache.set(new Map());
+    if (this.employeeSummaries().length > 0) {
+      this.loadCurrentPageDetails();
+    }
+  }
+
   private loadCurrentPageDetails(): void {
     this.pageDetailsSub?.unsubscribe();
     const generation = ++this.pageDetailsGeneration;
@@ -877,6 +912,8 @@ export class AddPayrollProcessComponent implements OnInit {
   private mapRecordToRow(record: ApplicationFormRecord): PayrollProcessRow {
     const detail = record.detail;
     const remuneration = detail?.remuneration;
+    const employeeCode = record.EmployeeCode || detail?.loginDetails.employeeCode || '';
+    const employeeName = detail?.personalInfo.personName || record.EmployeeName;
     const basicSalary = this.parseAmount(remuneration?.basicSalary ?? 0);
     const allowedLiters = this.parseAmount(remuneration?.fuelLimit ?? 0);
     const profileFuelAmount = this.parseAmount(remuneration?.fuelAllowances ?? 0);
@@ -891,9 +928,9 @@ export class AddPayrollProcessComponent implements OnInit {
 
     return this.recalculateRow({
       apiId: record.apiId ?? record.EmployeeCode,
-      employeeCode: record.EmployeeCode,
-      personName: detail?.personalInfo.personName || record.EmployeeName,
-      username: detail?.loginDetails.userId || record.EmployeeCode,
+      employeeCode,
+      personName: employeeName,
+      username: detail?.loginDetails.userId || employeeCode,
       designation: record.Designation || detail?.personalInfo.designation || '',
       department: record.Department,
       employeeCategory: record.EmploymentCategory,
@@ -923,8 +960,8 @@ export class AddPayrollProcessComponent implements OnInit {
       eobiEmployee: 0,
       eobiEmployer: 0,
       arrears: 0,
-      loanAdjustment: 0,
-      loanAdvForm: 0,
+      loanAdjustment: this.resolvePayrollLoanAdjustment(employeeCode, employeeName),
+      loanAdvForm: this.resolvePayrollAdvanceDeduction(employeeCode, employeeName),
       approved: false,
     });
   }
@@ -961,6 +998,97 @@ export class AddPayrollProcessComponent implements OnInit {
   private isEobiApplicable(value: string | undefined): boolean {
     const normalized = (value ?? '').trim().toLowerCase();
     return normalized === 'yes' || normalized === 'y' || normalized === '1' || normalized === 'true';
+  }
+
+  private resolvePayrollLoanAdjustment(employeeCode: string, employeeName: string): number {
+    const loanRecord = this.findLoanAdvanceRecord(employeeCode, employeeName, false);
+    if (!loanRecord) {
+      return 0;
+    }
+
+    return this.parseAmount(
+      loanRecord.RepaymentSchedule.installmentAmount ||
+        loanRecord.RepaymentSchedule.deductionAmount ||
+        loanRecord.LoanDetail.newLoanRequest.installmentAmount ||
+        '0',
+    );
+  }
+
+  private resolvePayrollAdvanceDeduction(employeeCode: string, employeeName: string): number {
+    const advanceRecord = this.findLoanAdvanceRecord(employeeCode, employeeName, true);
+    if (!advanceRecord) {
+      return 0;
+    }
+
+    return this.parseAmount(
+      advanceRecord.AdvanceDetail.advanceAmountToBeDeductedThisMonth ||
+        advanceRecord.RepaymentSchedule.deductionAmount ||
+        advanceRecord.AdvanceDetail.newAdvanceRequest.advanceAmountRequested ||
+        '0',
+    );
+  }
+
+  private findLoanAdvanceRecord(
+    employeeCode: string,
+    employeeName: string,
+    salaryAdvance: boolean,
+  ): LoanAdvanceRecord | undefined {
+    const normalizedCode = employeeCode.trim().toLowerCase();
+    const normalizedName = employeeName.trim().toLowerCase();
+    const selectedPayrollMonth = this.getSelectedPayrollMonth();
+
+    return [...this.loanAdvanceService.loans()]
+      .sort((left, right) => right.Id - left.Id)
+      .find((record) => {
+        const requestType = this.resolveLoanRequestType(record);
+        const matchesRequestType = salaryAdvance
+          ? requestType === 'salary advance' || requestType === 'salary_advance' || requestType === 'advance'
+          : requestType === 'loan';
+
+        if (!matchesRequestType) {
+          return false;
+        }
+
+        const recordEmployeeCode = (record.EmployeeID || record.HeaderInfo.employeeID || '').trim().toLowerCase();
+        const recordEmployeeName = (record.EmployeeName || record.HeaderInfo.employeeName || '').trim().toLowerCase();
+        const matchesEmployee =
+          (normalizedCode && recordEmployeeCode === normalizedCode) ||
+          (!normalizedCode && normalizedName && recordEmployeeName === normalizedName) ||
+          (normalizedCode && recordEmployeeName === normalizedName);
+
+        if (!matchesEmployee) {
+          return false;
+        }
+
+        const recordPayrollMonth = this.normalizePayrollMonth(
+          record.PayrollMonth || record.HeaderInfo.payrollMonth || '',
+        );
+
+        return !recordPayrollMonth || recordPayrollMonth === selectedPayrollMonth;
+      });
+  }
+
+  private resolveLoanRequestType(record: LoanAdvanceRecord): string {
+    return (record.RequestType || record.HeaderInfo.requestType || '').trim().toLowerCase();
+  }
+
+  private getSelectedPayrollMonth(): string {
+    return `${this.selectedYear()}-${String(this.selectedMonth()).padStart(2, '0')}`;
+  }
+
+  private normalizePayrollMonth(value: string): string {
+    const trimmed = value.trim();
+    const directMatch = trimmed.match(/^(\d{4})-(\d{2})$/);
+    if (directMatch) {
+      return `${directMatch[1]}-${directMatch[2]}`;
+    }
+
+    const dateMatch = trimmed.match(/^(\d{4})-(\d{2})-\d{2}$/);
+    if (dateMatch) {
+      return `${dateMatch[1]}-${dateMatch[2]}`;
+    }
+
+    return '';
   }
 
   private resolveLastMonthGrossSalary(employeeCode: string, basicSalary: number): number {
