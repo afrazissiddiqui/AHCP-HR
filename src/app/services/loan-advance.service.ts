@@ -911,8 +911,10 @@ export class LoanAdvanceService {
         const record = row && typeof row === 'object' && !Array.isArray(row)
           ? (row as Record<string, unknown>)
           : {};
+        const srValue = this.pickString([record], ['sr', 'Sr', 'serial', 'Serial']);
+        const parsedSr = Number.parseInt(srValue, 10);
         return {
-          sr: this.pickString([record], ['sr', 'Sr', 'serial', 'Serial']) || String(index + 1),
+          sr: Number.isFinite(parsedSr) ? parsedSr : index + 1,
           month: this.pickString([record], ['month', 'Month', 'monthLabel', 'month_label']),
           installment: this.pickString([record], ['installment', 'Installment']),
           balance: this.pickString([record], ['balance', 'Balance', 'remainingBalance', 'remaining_balance']),
