@@ -137,24 +137,41 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly newAdvanceAmountEligible = signal('');
   protected readonly newAdvanceAmountRequested = signal('');
   protected readonly repaymentStartDate = signal('');
-  protected readonly repaymentMonth = computed(() => this.repaymentStartDate().trim().slice(0, 7));
   protected readonly repaymentFrequency = signal('');
   protected readonly deductionAmount = signal('');
   protected readonly repaymentRemarks = signal('');
-  protected readonly repaymentBalance = computed(() => {
-    const requested = this.parseDecimal(this.loanAmountRequested() || this.loanAmount());
-    const installment = this.parseDecimal(this.deductionAmount() || this.installmentAmount());
+  protected readonly repaymentScheduleRows = computed(() => {
+    const start = this.parseMonthValue(this.loanStartMonth());
+    const end = this.parseMonthValue(this.loanEndMonth());
+    const installmentText = this.installmentAmount() || this.deductionAmount();
+    const loanAmountValue = this.parseDecimal(this.loanAmountRequested() || this.loanAmount());
+    const installmentValue = this.parseDecimal(installmentText) ?? 0;
 
-    if (requested === null && installment === null) {
-      return '';
+    if (!start || !end) {
+      return [];
     }
 
-    const balance = (requested ?? 0) - (installment ?? 0);
-    return balance > 0 ? `${balance}` : '0';
+    const totalMonths = (end.year - start.year) * 12 + (end.month - start.month) + 1;
+    if (totalMonths <= 0) {
+      return [];
+    }
+
+    return Array.from({ length: totalMonths }, (_, index) => {
+      const absoluteMonth = start.month - 1 + index;
+      const year = start.year + Math.floor(absoluteMonth / 12);
+      const month = (absoluteMonth % 12) + 1;
+      const deducted = installmentValue * (index + 1);
+      const rawBalance = loanAmountValue === null ? null : Math.max(loanAmountValue - deducted, 0);
+
+      return {
+        sr: index + 1,
+        monthLabel: this.formatMonthLabel(year, month),
+        installment: installmentText,
+        balance: rawBalance === null ? '' : this.formatDecimal(rawBalance),
+        status: 'Planned',
+      };
+    });
   });
-  protected readonly repaymentStatus = computed(() =>
-    this.repaymentStartDate().trim() || this.deductionAmount().trim() ? 'Planned' : '',
-  );
 
   protected readonly isLoanRequest = computed(() => this.requestType() === 'Loan');
   protected readonly isAdvanceRequest = computed(() => this.requestType() === 'Salary Advance');
@@ -333,10 +350,6 @@ export class AddLoanAdvanceComponent implements OnInit {
     }
 
     this.newAdvanceAmountRequested.set(value);
-  }
-
-  protected onRepaymentMonthChange(value: string): void {
-    this.repaymentStartDate.set(value ? `${value}-01` : '');
   }
 
   private buildEmployeeOptions(): LoanEmployeeOption[] {
@@ -659,7 +672,7 @@ export class AddLoanAdvanceComponent implements OnInit {
     }
 
     const amount = requested / installmentCount;
-    return Number.isInteger(amount) ? `${amount}` : amount.toFixed(2);
+    return this.formatDecimal(amount);
   }
 
   private calculateLoanTenure(startMonth: string, endMonth: string): string {
@@ -692,6 +705,17 @@ export class AddLoanAdvanceComponent implements OnInit {
     }
 
     return { year, month };
+  }
+
+  private formatMonthLabel(year: number, month: number): string {
+    return new Date(year, month - 1, 1).toLocaleString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  private formatDecimal(value: number): string {
+    return Number.isInteger(value) ? `${value}` : value.toFixed(2);
   }
 
   private normalizeDisplayDate(value: string): string {
@@ -991,9 +1015,9 @@ export class AddLoanAdvanceComponent implements OnInit {
         }
       },
       repaymentSchedule: {
-        repaymentStartDate: this.repaymentStartDate(),
+        repaymentStartDate: this.repaymentStartDate() || (this.loanStartMonth() ? `${this.loanStartMonth()}-01` : ''),
         repaymentFrequency: this.repaymentFrequency(),
-        deductionAmount: this.deductionAmount(),
+        deductionAmount: this.deductionAmount() || this.installmentAmount(),
         remarks: this.repaymentRemarks()
       }
     };

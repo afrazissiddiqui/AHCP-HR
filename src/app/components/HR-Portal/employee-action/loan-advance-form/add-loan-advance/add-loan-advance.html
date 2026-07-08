@@ -616,29 +616,20 @@
                 <th>Sr.</th>
                 <th>Month</th>
                 <th>Installment</th>
-                <th>Balance</th>
+                <th>Remaining Balance</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1</td>
-                <td>
-                  <input
-                    type="month"
-                    [ngModel]="repaymentMonth()"
-                    (ngModelChange)="onRepaymentMonthChange($event)"
-                  />
-                </td>
-                <td>
-                  <input type="text" [ngModel]="deductionAmount()" (ngModelChange)="deductionAmount.set($event)" />
-                </td>
-                <td>
-                  <input type="text" [value]="repaymentBalance()" readonly />
-                </td>
-                <td>
-                  <input type="text" [value]="repaymentStatus()" readonly />
-                </td>
+              <tr *ngFor="let row of repaymentScheduleRows()">
+                <td>{{ row.sr }}</td>
+                <td>{{ row.monthLabel }}</td>
+                <td>{{ row.installment }}</td>
+                <td>{{ row.balance }}</td>
+                <td>{{ row.status }}</td>
+              </tr>
+              <tr *ngIf="repaymentScheduleRows().length === 0">
+                <td colspan="5">Select loan start and end month to generate the schedule.</td>
               </tr>
             </tbody>
           </table>
