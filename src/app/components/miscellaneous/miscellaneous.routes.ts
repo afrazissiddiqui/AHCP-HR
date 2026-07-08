@@ -5,12 +5,26 @@ import { GoodIssuePageComponent } from './good-issue-page';
 import { InventoryTransferPageComponent } from './inventory-transfer-page';
 import { MiscellaneousPageComponent } from './miscellaneous-page';
 import { MiscellaneousShellComponent } from './miscellaneous-shell';
-import { requirePermission } from '../../guards/permission.guard';
+import { requireAccess, requirePermission } from '../../guards/permission.guard';
 
 export const miscellaneousRoutes: Routes = [
   {
     path: 'miscellaneous',
     component: MiscellaneousShellComponent,
+    canActivate: [
+      requireAccess(
+        {
+          anyOf: [
+            { moduleSlug: 'good_receipt_note_form', action: 'list' },
+            { moduleSlug: 'delivery_form', action: 'list' },
+            { moduleSlug: 'inventory_transfer_form', action: 'list' },
+            { moduleSlug: 'good_issue_form', action: 'list' },
+          ],
+        },
+        'good_receipt_note_form',
+        'list',
+      ),
+    ],
     children: [
       { path: '', redirectTo: 'good-receipt-note', pathMatch: 'full' },
       {

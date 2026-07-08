@@ -11,12 +11,25 @@ import { HuskyFormComponent } from './main-form/husky-form/husky-form';
 import { AddHuskyFormComponent } from './main-form/husky-form/add-husky-form/add-husky-form';
 import { ItrFormComponent } from './main-form/itr-form/itr-form';
 import { AddItrFormComponent } from './main-form/itr-form/add-itr-form/add-itr-form';
-import { requirePermission } from '../../guards/permission.guard';
+import { requireAccess, requirePermission } from '../../guards/permission.guard';
 
 export const plantMaintenanceRoutes: Routes = [
   {
     path: 'plant-maintenance/main-form',
     component: PlantMaintenanceMainFormComponent,
+    canActivate: [
+      requireAccess(
+        {
+          anyOf: [
+            { moduleSlug: 'plant_maintenance_master_form', action: 'list' },
+            { moduleSlug: 'husky_form', action: 'list' },
+            { moduleSlug: 'itr_form', action: 'list' },
+          ],
+        },
+        'plant_maintenance_master_form',
+        'list',
+      ),
+    ],
     children: [
       { path: '', redirectTo: 'plant-maintenance-master-form', pathMatch: 'full' },
       {
@@ -69,6 +82,18 @@ export const plantMaintenanceRoutes: Routes = [
   {
     path: 'plant-maintenance/setup-form',
     component: PlantMaintenanceSetupShellComponent,
+    canActivate: [
+      requireAccess(
+        {
+          anyOf: [
+            { moduleSlug: 'sub_component_defination_form', action: 'list' },
+            { moduleSlug: 'maintenance_activity_defination_form', action: 'list' },
+          ],
+        },
+        'sub_component_defination_form',
+        'list',
+      ),
+    ],
     children: [
       { path: '', redirectTo: 'sub-component-definition', pathMatch: 'full' },
       { path: 'sub-component-definition', component: SubComponentDefinitionComponent, canActivate: [requirePermission('sub_component_defination_form', 'list')] },

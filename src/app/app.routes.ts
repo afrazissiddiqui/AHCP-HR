@@ -27,7 +27,7 @@ import { TerminationFormComponent } from './components/HR-Portal/termination/ter
 import { AddTerminationComponent } from './components/HR-Portal/termination/add-termination/add-termination';
 import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-maintenance.routes';
 import { authGuard } from './guards/auth.guard';
-import { requirePermission } from './guards/permission.guard';
+import { requireAccess, requirePermission } from './guards/permission.guard';
 import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.routes';
 import { GlAccountDeterminationComponent } from './components/setup/gl-account-determination/gl-account-determination';
 import { LeaveTypesComponent } from './components/setup/leave-types/leave-types';
@@ -91,7 +91,23 @@ export const routes: Routes = [
   {
     path: 'employee-action',
     component: EmployeeActionComponent,
-    canActivate: [authGuard],
+    canActivate: [
+      authGuard,
+      requireAccess(
+        {
+          anyOf: [
+            { moduleSlug: 'probation_evaluation_form', action: 'list' },
+            { moduleSlug: 'training_development_form', action: 'list' },
+            { moduleSlug: 'performance_appraisal_form', action: 'list' },
+            { moduleSlug: 'expense_reimbursment_form', action: 'list' },
+            { moduleSlug: 'loan_advance_form', action: 'list' },
+            { moduleSlug: 'leave_application_form', action: 'list' },
+          ],
+        },
+        'probation_evaluation_form',
+        'list',
+      ),
+    ],
   },
   ...payrollMasterRoutes.map((route) =>
     route.redirectTo ? route : { ...route, canActivate: [authGuard] }
