@@ -16,6 +16,9 @@ import {
   PaginationFooterItem,
 } from '../../../../utils/pagination.util';
 import { PayrollMasterLayoutService } from '../payroll-master-layout.service';
+import { PermissionService } from '../../../../services/permission.service';
+
+const PAYROLL_PROCESSING_MODULE = 'payroll_processing_form';
 
 type PayrollProcessingColumnKey = Exclude<keyof PayrollProcessingListRecord, never>;
 
@@ -75,6 +78,7 @@ export class PayrollProcessingComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly payrollProcessingService = inject(PayrollProcessingService);
   private readonly alertService = inject(AlertService);
+  private readonly permissionService = inject(PermissionService);
 
   readonly loading = signal(false);
   readonly showViewDialog = signal(false);
@@ -248,6 +252,10 @@ export class PayrollProcessingComponent implements OnInit {
   }
 
   createPayrollProcess(): void {
+    if (!this.permissionService.assertCan(PAYROLL_PROCESSING_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/payroll-master/payroll-processing/create');
   }
 
@@ -259,6 +267,10 @@ export class PayrollProcessingComponent implements OnInit {
   }
 
   viewRecord(record: PayrollProcessingListRecord): void {
+    if (!this.permissionService.assertCan(PAYROLL_PROCESSING_MODULE, 'view')) {
+      return;
+    }
+
     if (!record.Id) {
       void this.alertService.warning('View', 'Unable to view this row: missing payroll process id.');
       return;

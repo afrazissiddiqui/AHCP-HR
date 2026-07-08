@@ -21,6 +21,9 @@ import { ShellbarSearchService } from '../../../../services/shellbar-search.serv
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
 import { formatTableCellValue } from '../../../../utils/date-format.util';
 import { ProbationDetailDialogComponent } from './probation-detail-dialog/probation-detail-dialog';
+import { PermissionService } from '../../../../services/permission.service';
+
+const PROBATION_EVALUATION_MODULE = 'probation_evaluation_form';
 
 type ProbationColumnKey = Exclude<keyof ProbationEvaluationRecord, 'selected' | 'Location' | 'ReportingManager' | 'EmployeeType' | 'GradeWorkLevel' | 'EmploymentCategory' | 'Remarks' | 'ProbationRating' | 'SupervisionRemark' | 'ExtensionOfProbation' | 'TerminationOfProbation' | 'SalaryAdjustment' | 'Allowances' | 'TotalSalary'>;
 
@@ -83,6 +86,7 @@ export class ProbationEvaluationFormComponent implements OnInit {
     private readonly router: Router,
     private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -230,6 +234,10 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   viewRecord(record: ProbationEvaluationRecord): void {
+    if (!this.permissionService.assertCan(PROBATION_EVALUATION_MODULE, 'view')) {
+      return;
+    }
+
     this.showViewDialog = true;
     this.selectedRecord = record;
     this.viewLoading = false;
@@ -242,6 +250,10 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   onUpdate(record: ProbationEvaluationRecord): void {
+    if (!this.permissionService.assertCan(PROBATION_EVALUATION_MODULE, 'update')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('Update', 'Unable to update this row: missing probation evaluation id.');
       return;
@@ -250,6 +262,10 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   async onDelete(record: ProbationEvaluationRecord): Promise<void> {
+    if (!this.permissionService.assertCan(PROBATION_EVALUATION_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete probation evaluation?',
       `Remove ${record.EmployeeName} (${record.EmployeeCode}) from the list?`,
@@ -286,6 +302,10 @@ export class ProbationEvaluationFormComponent implements OnInit {
   }
 
   createNewProbation(): void {
+    if (!this.permissionService.assertCan(PROBATION_EVALUATION_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/employee-action/probation-evaluation-form/create');
   }
 

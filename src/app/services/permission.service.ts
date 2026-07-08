@@ -7,8 +7,8 @@ import {
   UserAuthorizationModule,
   buildAuthorizationTemplate,
   humanizeModuleSlug,
-  isPermissionGranted,
 } from '../utils/user-authorization.util';
+import { AccessRequirement, hasAccessRequirement } from '../utils/access-requirement.util';
 
 const SESSION_AUTHORIZATION_KEY = 'sapqc_session_authorization_v2';
 
@@ -31,7 +31,15 @@ export class PermissionService {
       return true;
     }
 
-    return isPermissionGranted(this.authorization(), moduleSlug, action);
+    return hasAccessRequirement(this.authorization(), { moduleSlug, action });
+  }
+
+  canAccess(requirement: AccessRequirement): boolean {
+    if (this.authService.getSessionUser()?.is_admin) {
+      return true;
+    }
+
+    return hasAccessRequirement(this.authorization(), requirement);
   }
 
   deniedMessage(moduleSlug: string, action: string): string {

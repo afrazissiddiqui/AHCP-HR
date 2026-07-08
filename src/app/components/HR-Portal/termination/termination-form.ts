@@ -15,6 +15,9 @@ import {
   TableFilterComponent,
   TableFilterService,
 } from '../../table-filter';
+import { PermissionService } from '../../../services/permission.service';
+
+const TERMINATION_MODULE = 'termination_form';
 
 type TerminationColumnKey = Exclude<keyof TerminationRecord, 'selected' | 'detail' | 'Id'>;
 
@@ -35,6 +38,7 @@ export class TerminationFormComponent implements OnInit {
     private readonly router: Router,
     private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -179,6 +183,10 @@ export class TerminationFormComponent implements OnInit {
   }
 
   viewRecord(record: TerminationRecord): void {
+    if (!this.permissionService.assertCan(TERMINATION_MODULE, 'view')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('View', 'Unable to view this row: missing termination id.');
       return;
@@ -205,6 +213,10 @@ export class TerminationFormComponent implements OnInit {
   }
 
   onUpdate(record: TerminationRecord): void {
+    if (!this.permissionService.assertCan(TERMINATION_MODULE, 'update')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('Update', 'Unable to update this row: missing termination id.');
       return;
@@ -213,6 +225,10 @@ export class TerminationFormComponent implements OnInit {
   }
 
   async onDelete(record: TerminationRecord): Promise<void> {
+    if (!this.permissionService.assertCan(TERMINATION_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete termination?',
       `Remove ${record.EmployeeName} (Employee ID: ${record.EmployeeId}) from the list?`,
@@ -264,6 +280,10 @@ export class TerminationFormComponent implements OnInit {
   }
 
   createNewTermination(): void {
+    if (!this.permissionService.assertCan(TERMINATION_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/termination/create');
   }
 }

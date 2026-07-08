@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import { HR_FORM_TABS } from './forms-hub.registry';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'app-forms-hub',
@@ -11,9 +12,14 @@ import { HR_FORM_TABS } from './forms-hub.registry';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class FormsHubComponent {
-  protected readonly forms = HR_FORM_TABS;
+  protected readonly forms;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private readonly permissionService: PermissionService,
+  ) {
+    this.forms = HR_FORM_TABS.filter((form) => this.permissionService.canAccess(form.access));
+  }
 
   get totalForms(): number {
     return this.forms.length;

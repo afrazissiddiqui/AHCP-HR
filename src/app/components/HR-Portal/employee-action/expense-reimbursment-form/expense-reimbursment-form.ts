@@ -20,6 +20,9 @@ import {
 } from '../../../table-filter';
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
+import { PermissionService } from '../../../../services/permission.service';
+
+const EXPENSE_REIMBURSEMENT_MODULE = 'expense_reimbursment_form';
 
 type ExpenseColumnKey = Exclude<
   keyof ExpenseReimbursementRecord,
@@ -69,6 +72,7 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
     private readonly router: Router,
     private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -242,6 +246,10 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   }
 
   viewRecord(record: ExpenseReimbursementRecord): void {
+    if (!this.permissionService.assertCan(EXPENSE_REIMBURSEMENT_MODULE, 'view')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('View', 'Unable to view this row: missing expense reimbursement id.');
       return;
@@ -268,6 +276,10 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   }
 
   onUpdate(record: ExpenseReimbursementRecord): void {
+    if (!this.permissionService.assertCan(EXPENSE_REIMBURSEMENT_MODULE, 'update')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('Update', 'Unable to update this row: missing expense reimbursement id.');
       return;
@@ -276,6 +288,10 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   }
 
   async onDelete(record: ExpenseReimbursementRecord): Promise<void> {
+    if (!this.permissionService.assertCan(EXPENSE_REIMBURSEMENT_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete expense reimbursement?',
       `Remove ${record.EmployeeName} (${record.FormNumber}) from the list?`,
@@ -321,6 +337,10 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   }
 
   createNewExpense(): void {
+    if (!this.permissionService.assertCan(EXPENSE_REIMBURSEMENT_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/employee-action/expense-reimbursement-form/create');
   }
 

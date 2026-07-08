@@ -21,6 +21,9 @@ import {
 } from '../../../table-filter';
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
+import { PermissionService } from '../../../../services/permission.service';
+
+const PERFORMANCE_APPRAISAL_MODULE = 'performance_appraisal_form';
 
 type AppraisalColumnKey = Exclude<
   keyof PerformanceAppraisalRecord,
@@ -98,6 +101,7 @@ export class PerformanceAppraisalFormComponent implements OnInit {
     private readonly router: Router,
     private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -251,6 +255,10 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   }
 
   viewRecord(record: PerformanceAppraisalRecord): void {
+    if (!this.permissionService.assertCan(PERFORMANCE_APPRAISAL_MODULE, 'view')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('View', 'Unable to view this row: missing performance appraisal id.');
       return;
@@ -277,6 +285,10 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   }
 
   onUpdate(record: PerformanceAppraisalRecord): void {
+    if (!this.permissionService.assertCan(PERFORMANCE_APPRAISAL_MODULE, 'update')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('Update', 'Unable to update this row: missing performance appraisal id.');
       return;
@@ -285,6 +297,10 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   }
 
   async onDelete(record: PerformanceAppraisalRecord): Promise<void> {
+    if (!this.permissionService.assertCan(PERFORMANCE_APPRAISAL_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete performance appraisal?',
       `Remove ${record.EmployeeName} (${record.FormNumber}) from the list?`,
@@ -330,6 +346,10 @@ export class PerformanceAppraisalFormComponent implements OnInit {
   }
 
   createNewAppraisal(): void {
+    if (!this.permissionService.assertCan(PERFORMANCE_APPRAISAL_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/employee-action/performance-appraisal-form/create');
   }
 

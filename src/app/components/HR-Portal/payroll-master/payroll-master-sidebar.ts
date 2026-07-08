@@ -1,7 +1,7 @@
 import { SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 
 export const PAYROLL_MASTER_SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: 'payroll-processing', label: 'Payroll Processing', route: '/payroll-master' }
+  { id: 'payroll-processing', label: 'Payroll Processing', route: '/payroll-master', access: { moduleSlug: 'payroll_processing_form', action: 'list' } }
 ];
 
 export const PAYROLL_MASTER_SIDEBAR_SECTIONS: SidebarSection[] = [
@@ -9,9 +9,9 @@ export const PAYROLL_MASTER_SIDEBAR_SECTIONS: SidebarSection[] = [
     id: 'payroll-sub-modules',
     title: 'Payroll Sub Modules',
     items: [
-      { id: 'attendance-managment', label: 'Attendance Managment', route: '/payroll-master/attendance-managment' },
-      { id: 'tax-managment', label: 'Tax Allowance Form', route: '/payroll-master/tax-managment' },
-      { id: 'tax-computation', label: 'Tax Computation', route: '/payroll-master/tax-computation' },
+      { id: 'attendance-managment', label: 'Attendance Managment', route: '/payroll-master/attendance-managment', access: { moduleSlug: 'attendance_managment_form', action: 'list' } },
+      { id: 'tax-managment', label: 'Tax Allowance Form', route: '/payroll-master/tax-managment', access: { moduleSlug: 'tax_allowance_form', action: 'list' } },
+      { id: 'tax-computation', label: 'Tax Computation', route: '/payroll-master/tax-computation', access: { moduleSlug: 'tax_computation_form', action: 'list' } },
       // { id: 'payroll-setup', label: 'Payroll Setup', route: '/payroll-master/payroll-setup' }
     ]
   }

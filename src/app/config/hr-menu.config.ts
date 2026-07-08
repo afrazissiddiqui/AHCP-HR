@@ -1,9 +1,12 @@
+import { AccessRequirement } from '../utils/access-requirement.util';
+
 export interface HrMenuOption {
   label: string;
   value: string;
   icon: string;
   route?: string;
   children?: HrMenuOption[];
+  access?: AccessRequirement;
 }
 
 export interface HrMenuAction {
@@ -11,6 +14,7 @@ export interface HrMenuAction {
   icon: string;
   route: string;
   value: string;
+  access?: AccessRequirement;
 }
 
 /** HR shellbar dropdown — single source for navigation targets. */
@@ -21,14 +25,31 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
     value: 'hr',
     icon: 'employee',
     children: [
-      { label: 'Recruitment', value: 'recruitment', icon: 'employee-pane', route: '/recruitment' },
-      { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action' },
-      { label: 'Payroll', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master' },
-      { label: 'Termination', value: 'termination', icon: 'feedback', route: '/termination' },
+      { label: 'Recruitment', value: 'recruitment', icon: 'employee-pane', route: '/recruitment', access: { anyOf: [{ moduleSlug: 'application_form', action: 'list' }, { moduleSlug: 'job_specification', action: 'list' }] } },
+      { label: 'Employee Action', value: 'employee-action', icon: 'employee', route: '/employee-action', access: { anyOf: [
+        { moduleSlug: 'probation_evaluation_form', action: 'list' },
+        { moduleSlug: 'training_development_form', action: 'list' },
+        { moduleSlug: 'performance_appraisal_form', action: 'list' },
+        { moduleSlug: 'expense_reimbursment_form', action: 'list' },
+        { moduleSlug: 'loan_advance_form', action: 'list' },
+        { moduleSlug: 'leave_application_form', action: 'list' },
+      ] } },
+      { label: 'Payroll', value: 'payroll-master', icon: 'opportunities', route: '/payroll-master', access: { anyOf: [
+        { moduleSlug: 'payroll_processing_form', action: 'list' },
+        { moduleSlug: 'attendance_managment_form', action: 'list' },
+        { moduleSlug: 'tax_allowance_form', action: 'list' },
+        { moduleSlug: 'tax_computation_form', action: 'list' },
+      ] } },
+      { label: 'Termination', value: 'termination', icon: 'feedback', route: '/termination', access: { moduleSlug: 'termination_form', action: 'list' } },
     ],
   },
   { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
-  { label: 'Miscellaneous', value: 'miscellaneous', icon: 'grid', route: '/miscellaneous' },
+  { label: 'Miscellaneous', value: 'miscellaneous', icon: 'grid', route: '/miscellaneous', access: { anyOf: [
+    { moduleSlug: 'good_receipt_note_form', action: 'list' },
+    { moduleSlug: 'delivery_form', action: 'list' },
+    { moduleSlug: 'inventory_transfer_form', action: 'list' },
+    { moduleSlug: 'good_issue_form', action: 'list' },
+  ] } },
   {
     label: 'Plant maintenance',
     value: 'plant-maintenance',
@@ -39,12 +60,21 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         value: 'plant-maintenance/main-form',
         icon: 'form',
         route: '/plant-maintenance/main-form',
+        access: { anyOf: [
+          { moduleSlug: 'plant_maintenance_master_form', action: 'list' },
+          { moduleSlug: 'husky_form', action: 'list' },
+          { moduleSlug: 'itr_form', action: 'list' },
+        ] },
       },
       {
         label: 'Setup Form',
         value: 'plant-maintenance/setup-form',
         icon: 'settings',
         route: '/plant-maintenance/setup-form',
+        access: { anyOf: [
+          { moduleSlug: 'sub_component_defination_form', action: 'list' },
+          { moduleSlug: 'maintenance_activity_defination_form', action: 'list' },
+        ] },
       },
     ],
   },
@@ -58,18 +88,21 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         value: 'setup/gl-account-determination',
         icon: 'account',
         route: '/setup/gl-account-determination',
+        access: { moduleSlug: 'gl_account_determination_form', action: 'list' },
       },
       {
         label: 'User Setup',
         value: 'setup/user-setup',
         icon: 'employee',
         route: '/setup/user-setup',
+        access: { moduleSlug: 'user_setup_form', action: 'list' },
       },
       {
         label: 'Leave Types',
         value: 'setup/leave-types',
         icon: 'calendar',
         route: '/setup/leave-types',
+        access: { moduleSlug: 'leave_types_form', action: 'list' },
       },
     ],
   },

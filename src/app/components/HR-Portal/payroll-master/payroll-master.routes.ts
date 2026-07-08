@@ -5,6 +5,7 @@ import { AddPayrollProcessComponent } from './payroll-processing/add-payroll-pro
 import { AttendanceManagmentComponent } from './attendance-managment/attendance-managment';
 import { TaxManagmentComponent } from './tax-managment/tax-managment';
 import { TaxComputationComponent } from './tax-computation/tax-computation';
+import { requirePermission } from '../../../guards/permission.guard';
 // import { AddPayrollSetupComponent } from './payroll-setup/add-payroll-setup/add-payroll-setup';
 
 export const payrollMasterRoutes: Routes = [
@@ -12,11 +13,11 @@ export const payrollMasterRoutes: Routes = [
     path: 'payroll-master',
     component: PayrollMasterShellComponent,
     children: [
-      { path: '', component: PayrollProcessingComponent },
-      { path: 'payroll-processing/create', component: AddPayrollProcessComponent },
-      { path: 'attendance-managment', component: AttendanceManagmentComponent },
-      { path: 'tax-managment', component: TaxManagmentComponent },
-      { path: 'tax-computation', component: TaxComputationComponent },
+      { path: '', component: PayrollProcessingComponent, canActivate: [requirePermission('payroll_processing_form', 'list')] },
+      { path: 'payroll-processing/create', component: AddPayrollProcessComponent, canActivate: [requirePermission('payroll_processing_form', 'add')] },
+      { path: 'attendance-managment', component: AttendanceManagmentComponent, canActivate: [requirePermission('attendance_managment_form', 'list')] },
+      { path: 'tax-managment', component: TaxManagmentComponent, canActivate: [requirePermission('tax_allowance_form', 'list')] },
+      { path: 'tax-computation', component: TaxComputationComponent, canActivate: [requirePermission('tax_computation_form', 'list')] },
       // { path: 'payroll-setup', component: AddPayrollSetupComponent },
       // { path: 'payroll-setup/create', redirectTo: 'payroll-setup', pathMatch: 'full' },
     ],

@@ -11,6 +11,7 @@ import { HuskyFormComponent } from './main-form/husky-form/husky-form';
 import { AddHuskyFormComponent } from './main-form/husky-form/add-husky-form/add-husky-form';
 import { ItrFormComponent } from './main-form/itr-form/itr-form';
 import { AddItrFormComponent } from './main-form/itr-form/add-itr-form/add-itr-form';
+import { requirePermission } from '../../guards/permission.guard';
 
 export const plantMaintenanceRoutes: Routes = [
   {
@@ -21,38 +22,47 @@ export const plantMaintenanceRoutes: Routes = [
       {
         path: 'plant-maintenance-master-form',
         component: PlantMaintenanceMasterFormComponent,
+        canActivate: [requirePermission('plant_maintenance_master_form', 'list')],
       },
       {
         path: 'plant-maintenance-master-form/create',
         component: AddPlantMaintenanceMasterFormComponent,
+        canActivate: [requirePermission('plant_maintenance_master_form', 'add')],
       },
       {
         path: 'plant-maintenance-master-form/edit/:id',
         component: AddPlantMaintenanceMasterFormComponent,
+        canActivate: [requirePermission('plant_maintenance_master_form', 'update')],
       },
       {
         path: 'husky-form',
         component: HuskyFormComponent,
+        canActivate: [requirePermission('husky_form', 'list')],
       },
       {
         path: 'husky-form/create',
         component: AddHuskyFormComponent,
+        canActivate: [requirePermission('husky_form', 'add')],
       },
       {
         path: 'husky-form/edit/:id',
         component: AddHuskyFormComponent,
+        canActivate: [requirePermission('husky_form', 'update')],
       },
       {
         path: 'itr-form',
         component: ItrFormComponent,
+        canActivate: [requirePermission('itr_form', 'list')],
       },
       {
         path: 'itr-form/create',
         component: AddItrFormComponent,
+        canActivate: [requirePermission('itr_form', 'add')],
       },
       {
         path: 'itr-form/edit/:id',
         component: AddItrFormComponent,
+        canActivate: [requirePermission('itr_form', 'update')],
       },
     ],
   },
@@ -61,26 +71,31 @@ export const plantMaintenanceRoutes: Routes = [
     component: PlantMaintenanceSetupShellComponent,
     children: [
       { path: '', redirectTo: 'sub-component-definition', pathMatch: 'full' },
-      { path: 'sub-component-definition', component: SubComponentDefinitionComponent },
+      { path: 'sub-component-definition', component: SubComponentDefinitionComponent, canActivate: [requirePermission('sub_component_defination_form', 'list')] },
       {
         path: 'sub-component-definition/create',
         component: AddSubComponentDefinitionComponent,
+        canActivate: [requirePermission('sub_component_defination_form', 'add')],
       },
       {
         path: 'sub-component-definition/edit/:id',
         component: AddSubComponentDefinitionComponent,
+        canActivate: [requirePermission('sub_component_defination_form', 'update')],
       },
       {
         path: 'maintenance-activity-definition',
         component: MaintenanceActivityDefinitionComponent,
+        canActivate: [requirePermission('maintenance_activity_defination_form', 'list')],
       },
       {
         path: 'maintenance-activity-definition/create',
         component: AddMaintenanceActivityDefinitionComponent,
+        canActivate: [requirePermission('maintenance_activity_defination_form', 'add')],
       },
       {
         path: 'maintenance-activity-definition/edit/:id',
         component: AddMaintenanceActivityDefinitionComponent,
+        canActivate: [requirePermission('maintenance_activity_defination_form', 'update')],
       },
     ],
   },

@@ -57,7 +57,7 @@
       (mouseleave)="clearPreviewHrOption()"
       (click)="stopEvent($event)"
     >
-      @for (option of hrMenuOptions; track option.value) {
+      @for (option of visibleHrMenuOptions; track option.value) {
         <div class="hr-dropdown-group">
           <button
             class="hr-dropdown-item"

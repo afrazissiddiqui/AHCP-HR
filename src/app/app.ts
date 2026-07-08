@@ -9,6 +9,7 @@ import { AuthService } from './services/auth.service';
 import { resolveShellbarTitle, resolveShellbarSearchPlaceholder } from './utils/shellbar-title.util';
 import { HR_MENU_OPTIONS, HrMenuOption } from './config/hr-menu.config';
 import { ShellbarSearchService } from './services/shellbar-search.service';
+import { PermissionService } from './services/permission.service';
 
 type HrMenuOptionLocal = HrMenuOption;
 
@@ -40,6 +41,7 @@ export class App {
   private shellbarSearchInput?: ElementRef<HTMLInputElement>;
 
   protected readonly shellbarSearch = inject(ShellbarSearchService);
+  private readonly permissionService = inject(PermissionService);
 
   /** Ignore document click-close briefly after opening profile menu (same click bubble). */
   private profileMenuIgnoreCloseUntil = 0;
@@ -64,6 +66,19 @@ export class App {
   });
 
   protected readonly hrMenuOptions: HrMenuOptionLocal[] = HR_MENU_OPTIONS;
+
+  protected get visibleHrMenuOptions(): HrMenuOptionLocal[] {
+    return this.hrMenuOptions
+      .map((option) => ({
+        ...option,
+        children: option.children?.filter((child) => this.permissionService.canAccess(child.access)),
+      }))
+      .filter(
+        (option) =>
+          this.permissionService.canAccess(option.access) &&
+          (!option.children?.length || option.children.length > 0),
+      );
+  }
 
   constructor(
     private router: Router,

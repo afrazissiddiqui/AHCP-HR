@@ -11,11 +11,13 @@ export const PLANT_MAINTENANCE_SETUP_SIDEBAR_SECTIONS: SidebarSection[] = [
         id: 'sub-component-definition',
         label: 'Sub Component Defination',
         route: '/plant-maintenance/setup-form/sub-component-definition',
+        access: { moduleSlug: 'sub_component_defination_form', action: 'list' },
       },
       {
         id: 'maintenance-activity-definition',
         label: 'Maintenance Activity Defination',
         route: '/plant-maintenance/setup-form/maintenance-activity-definition',
+        access: { moduleSlug: 'maintenance_activity_defination_form', action: 'list' },
       },
     ],
   },

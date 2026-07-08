@@ -20,6 +20,9 @@ import {
 } from '../../../table-filter';
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
+import { PermissionService } from '../../../../services/permission.service';
+
+const LEAVE_APPLICATION_MODULE = 'leave_application_form';
 
 type LeaveColumnKey = Exclude<
   keyof LeaveApplicationRecord,
@@ -69,6 +72,7 @@ export class LeaveApplicationFormComponent implements OnInit {
     private readonly router: Router,
     private readonly alertService: AlertService,
     readonly tableFilter: TableFilterService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -238,6 +242,10 @@ export class LeaveApplicationFormComponent implements OnInit {
   }
 
   viewRecord(record: LeaveApplicationRecord): void {
+    if (!this.permissionService.assertCan(LEAVE_APPLICATION_MODULE, 'view')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('View', 'Unable to view this row: missing leave application id.');
       return;
@@ -264,6 +272,10 @@ export class LeaveApplicationFormComponent implements OnInit {
   }
 
   onUpdate(record: LeaveApplicationRecord): void {
+    if (!this.permissionService.assertCan(LEAVE_APPLICATION_MODULE, 'update')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('Update', 'Unable to update this row: missing leave application id.');
       return;
@@ -272,6 +284,10 @@ export class LeaveApplicationFormComponent implements OnInit {
   }
 
   async onDelete(record: LeaveApplicationRecord): Promise<void> {
+    if (!this.permissionService.assertCan(LEAVE_APPLICATION_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete leave application?',
       `Remove ${record.EmployeeName} (${record.FormNumber}) from the list?`,
@@ -317,6 +333,10 @@ export class LeaveApplicationFormComponent implements OnInit {
   }
 
   createNewLeave(): void {
+    if (!this.permissionService.assertCan(LEAVE_APPLICATION_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/employee-action/leave-application-form/create');
   }
 

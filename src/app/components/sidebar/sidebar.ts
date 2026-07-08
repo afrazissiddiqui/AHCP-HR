@@ -1,12 +1,15 @@
-import { Component, signal, ChangeDetectionStrategy, Input, Output, EventEmitter, HostBinding } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy, Input, Output, EventEmitter, HostBinding, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { PermissionService } from '../../services/permission.service';
+import { AccessRequirement } from '../../utils/access-requirement.util';
 
 export interface SidebarItem {
   id: string;
   label: string;
   route?: string;
   icon?: string; // Optional icon
+  access?: AccessRequirement;
 }
 
 export interface SidebarSection {
@@ -24,6 +27,7 @@ export interface SidebarSection {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent {
+  private readonly permissionService = inject(PermissionService);
   // Input: Configure sidebar items
   @Input() items: SidebarItem[] = [];
   @Input() sections: SidebarSection[] = [];
@@ -47,6 +51,19 @@ export class SidebarComponent {
   protected readonly selected = signal<string | null>(null);
 
   protected readonly expanded = signal<Record<string, boolean>>({});
+
+  get visibleItems(): SidebarItem[] {
+    return this.items.filter((item) => this.permissionService.canAccess(item.access));
+  }
+
+  get visibleSections(): SidebarSection[] {
+    return this.sections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => this.permissionService.canAccess(item.access)),
+      }))
+      .filter((section) => section.items.length > 0);
+  }
 
   @Input() set activeItemId(value: string | null) {
     this.selected.set(value);

@@ -20,6 +20,9 @@ import {
 } from '../../../table-filter';
 import { ShellbarSearchService } from '../../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../../utils/shellbar-search-connect.util';
+import { PermissionService } from '../../../../services/permission.service';
+
+const TRAINING_DEVELOPMENT_MODULE = 'training_development_form';
 
 type TrainingColumnKey = Exclude<
   keyof TrainingDevelopmentRecord,
@@ -97,7 +100,8 @@ export class TrainingDevelopmentFormComponent implements OnInit {
     private readonly trainingService: TrainingDevelopmentService,
     private readonly router: Router,
     private readonly alertService: AlertService,
-    readonly tableFilter: TableFilterService
+    readonly tableFilter: TableFilterService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -253,6 +257,10 @@ export class TrainingDevelopmentFormComponent implements OnInit {
   }
 
   viewRecord(record: TrainingDevelopmentRecord): void {
+    if (!this.permissionService.assertCan(TRAINING_DEVELOPMENT_MODULE, 'view')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('View', 'Unable to view this row: missing training & development id.');
       return;
@@ -279,6 +287,10 @@ export class TrainingDevelopmentFormComponent implements OnInit {
   }
 
   onUpdate(record: TrainingDevelopmentRecord): void {
+    if (!this.permissionService.assertCan(TRAINING_DEVELOPMENT_MODULE, 'update')) {
+      return;
+    }
+
     if (!record.Id) {
       this.alertService.warning('Update', 'Unable to update this row: missing training & development id.');
       return;
@@ -287,6 +299,10 @@ export class TrainingDevelopmentFormComponent implements OnInit {
   }
 
   async onDelete(record: TrainingDevelopmentRecord): Promise<void> {
+    if (!this.permissionService.assertCan(TRAINING_DEVELOPMENT_MODULE, 'delete')) {
+      return;
+    }
+
     const result = await this.alertService.confirm(
       'Delete training & development?',
       `Remove ${record.EmployeeName} (${record.EmployeeCode}) from the list?`,
@@ -332,6 +348,10 @@ export class TrainingDevelopmentFormComponent implements OnInit {
   }
 
   createNewTraining(): void {
+    if (!this.permissionService.assertCan(TRAINING_DEVELOPMENT_MODULE, 'add')) {
+      return;
+    }
+
     void this.router.navigateByUrl('/employee-action/training-development-form/create');
   }
 
