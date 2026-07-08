@@ -299,13 +299,10 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.applicationFormService.fetchEmployeeProfileDetail(cachedRecord.apiId).subscribe({
       next: (record) => {
         this.selectedEmployeeRecord.set(record);
-        const resolvedLeaveType = this.resolveLeaveTypeName(this.leaveType().trim());
-        if (resolvedLeaveType) {
-          const balance = this.extractLeaveBalanceForLeaveType(record, resolvedLeaveType);
-          this.totalLeaves.set(balance.totalLeaves);
-          this.leavesAvailed.set(balance.leavesAvailed);
-          this.remainingLeaves.set(balance.remainingLeaves);
-        }
+        const balance = this.extractAggregateLeaveBalance(record);
+        this.totalLeaves.set(balance.totalLeaves);
+        this.leavesAvailed.set(balance.leavesAvailed);
+        this.remainingLeaves.set(balance.remainingLeaves);
         this.loadingEmployeeLeaveManagement.set(false);
         this.cdr.markForCheck();
       },
@@ -329,7 +326,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       return;
     }
 
-    const balance = this.extractLeaveBalanceForLeaveType(this.selectedEmployeeRecord()!, resolved);
+    const balance = this.extractAggregateLeaveBalance(this.selectedEmployeeRecord()!);
     this.totalLeaves.set(balance.totalLeaves);
     this.leavesAvailed.set(balance.leavesAvailed);
     this.remainingLeaves.set(balance.remainingLeaves);
@@ -661,6 +658,52 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     };
   }
 
+  private extractAggregateLeaveBalance(record: ApplicationFormRecord): {
+    totalLeaves: number | null;
+    leavesAvailed: number | null;
+    remainingLeaves: number | null;
+  } {
+    const leaveRows = record.detail?.leaveManagement ?? [];
+    if (!leaveRows.length) {
+      const singleBalance = this.extractLeaveBalanceFromRecord(record);
+      return {
+        totalLeaves: singleBalance.totalLeaves,
+        leavesAvailed: singleBalance.leavesAvailed,
+        remainingLeaves: singleBalance.remainingLeaves,
+      };
+    }
+
+    let totalLeaves = 0;
+    let leavesAvailed = 0;
+    let remainingLeaves = 0;
+    let hasAnyValue = false;
+
+    for (const row of leaveRows) {
+      const allocated = this.parseNumber(row.leavesAllocated);
+      const availed = this.parseNumber(row.leavesAvailed);
+      const remaining =
+        this.parseNumber(row.remainingLeave) ??
+        (allocated !== null && availed !== null ? Math.max(allocated - availed, 0) : null);
+
+      if (allocated !== null) {
+        totalLeaves += allocated;
+        hasAnyValue = true;
+      }
+      if (availed !== null) {
+        leavesAvailed += availed;
+        hasAnyValue = true;
+      }
+      if (remaining !== null) {
+        remainingLeaves += remaining;
+        hasAnyValue = true;
+      }
+    }
+
+    return hasAnyValue
+      ? { totalLeaves, leavesAvailed, remainingLeaves }
+      : { totalLeaves: null, leavesAvailed: null, remainingLeaves: null };
+  }
+
   private extractLeaveBalanceForLeaveType(
     record: ApplicationFormRecord,
     selectedLeaveType: string,
@@ -780,11 +823,8 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     if (!this.editingId) {
       const resolvedLeaveType = this.resolveLeaveTypeName(employee.leaveType);
       this.leaveType.set(resolvedLeaveType);
-      if (this.selectedEmployeeRecord() && resolvedLeaveType) {
-        const balance = this.extractLeaveBalanceForLeaveType(
-          this.selectedEmployeeRecord()!,
-          resolvedLeaveType,
-        );
+      if (this.selectedEmployeeRecord()) {
+        const balance = this.extractAggregateLeaveBalance(this.selectedEmployeeRecord()!);
         this.totalLeaves.set(balance.totalLeaves);
         this.leavesAvailed.set(balance.leavesAvailed);
         this.remainingLeaves.set(balance.remainingLeaves);
