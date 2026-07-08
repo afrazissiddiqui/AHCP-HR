@@ -142,6 +142,7 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly pageSize = signal(10);
   readonly pageSizeOptions = [10, 25, 50, 100];
   readonly remarks = signal('');
+  readonly searchText = signal('');
   readonly selectedMonth = signal(new Date().getMonth() + 1);
   readonly selectedYear = signal(new Date().getFullYear());
   readonly monthOptions: PayrollMonthOption[] = [
@@ -213,6 +214,27 @@ export class AddPayrollProcessComponent implements OnInit {
     this.payrollColumns.reduce((sum, col) => sum + col.minWidth, 0),
   );
 
+  readonly filteredEmployeeSummaries = computed(() => {
+    const list = this.employeeSummaries();
+    const search = this.searchText().trim().toLowerCase();
+    if (!search) {
+      return list;
+    }
+
+    return list.filter((record) => {
+      const haystack = [
+        record.EmployeeName,
+        record.EmployeeCode,
+        record.apiId,
+        record.Department,
+        record.Designation,
+      ]
+        .map((value) => String(value ?? '').toLowerCase())
+        .join(' ');
+      return haystack.includes(search);
+    });
+  });
+
   readonly paginatedRows = computed(() => {
     const cache = this.rowCache();
     return this.currentPageSummaries().map((summary) => {
@@ -222,13 +244,13 @@ export class AddPayrollProcessComponent implements OnInit {
   });
 
   readonly currentPageSummaries = computed(() => {
-    const list = this.employeeSummaries();
+    const list = this.filteredEmployeeSummaries();
     const start = (this.currentPage() - 1) * this.pageSize();
     return list.slice(start, start + this.pageSize());
   });
 
   readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.employeeSummaries().length / this.pageSize())),
+    Math.max(1, Math.ceil(this.filteredEmployeeSummaries().length / this.pageSize())),
   );
 
   readonly paginationFooterItems = computed((): PaginationFooterItem[] =>
@@ -315,6 +337,13 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   onPageSizeChange(): void {
+    this.currentPage.set(1);
+    this.scrollTablesToTop();
+    this.loadCurrentPageDetails();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchText.set(value);
     this.currentPage.set(1);
     this.scrollTablesToTop();
     this.loadCurrentPageDetails();

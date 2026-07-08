@@ -17,11 +17,26 @@
       @if (loading()) {
         <span class="comp-skeleton comp-skeleton--title-count" aria-hidden="true"></span>
       } @else {
-        <strong>({{ employeeSummaries().length }} Employees)</strong>
+        <strong>({{ filteredEmployeeSummaries().length }} Employees)</strong>
       }
     </h2>
 
     <div class="comp-plan-header__tools">
+      <div class="comp-plan-field comp-plan-field--search">
+        <label class="comp-plan-field__label" for="pp-employee-search">Search Employee</label>
+        <div class="comp-plan-search">
+          <input
+            id="pp-employee-search"
+            type="search"
+            class="comp-plan-field__input comp-plan-field__input--search"
+            placeholder="Search by name, ID, department..."
+            [ngModel]="searchText()"
+            (ngModelChange)="onSearchChange($event)"
+          />
+          <span class="comp-plan-search__icon" aria-hidden="true">🔍</span>
+        </div>
+      </div>
+
       <div class="comp-plan-field">
         <label class="comp-plan-field__label" for="pp-remarks">Remarks</label>
         <input
@@ -190,6 +205,8 @@
       </div>
     } @else if (employeeSummaries().length === 0) {
       <div class="comp-empty-cell">No employees found.</div>
+    } @else if (filteredEmployeeSummaries().length === 0) {
+      <div class="comp-empty-cell">No employees match your search.</div>
     } @else {
       <div class="comp-table-card">
           <div class="comp-table-layout">
@@ -359,9 +376,12 @@
 
         <div class="comp-pagination">
           <div class="pagination-info">
-            @if (employeeSummaries().length > 0) {
+            @if (filteredEmployeeSummaries().length > 0) {
               Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
-              {{ Math.min(currentPage() * pageSize(), employeeSummaries().length) }} of {{ employeeSummaries().length }} employees
+              {{ Math.min(currentPage() * pageSize(), filteredEmployeeSummaries().length) }} of {{ filteredEmployeeSummaries().length }} employees
+              @if (searchText().trim() && filteredEmployeeSummaries().length !== employeeSummaries().length) {
+                (filtered from {{ employeeSummaries().length }})
+              }
               @if (loadingPageDetails()) {
                 · Loading page details…
               }

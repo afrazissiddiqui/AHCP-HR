@@ -168,7 +168,7 @@ export class AddLoanAdvanceComponent implements OnInit {
         monthLabel: this.formatMonthLabel(year, month),
         installment: installmentText,
         balance: rawBalance === null ? '' : this.formatDecimal(rawBalance),
-        status: 'Planned',
+        status: 'Payable',
       };
     });
   });
@@ -502,7 +502,7 @@ export class AddLoanAdvanceComponent implements OnInit {
     this.joiningDate.set(formatDateForInput(this.pickRecordValue(record.HeaderInfo.joiningDate, record.JoiningDate)));
     this.requestDate.set(this.normalizeDisplayDate(this.pickRecordValue(record.HeaderInfo.requestDate, record.RequestDate)));
     this.payrollMonth.set(this.pickRecordValue(record.HeaderInfo.payrollMonth, record.PayrollMonth));
-    this.status.set(this.pickRecordValue(record.HeaderInfo.status, record.Status, 'Pending'));
+    this.status.set(this.pickRecordValue(record.HeaderInfo.status, record.Status, 'Payable'));
     this.employeeNature.set(this.pickRecordValue(record.HeaderInfo.employeeNature, record.EmployeeNature));
     this.employmentType.set(this.pickRecordValue(record.HeaderInfo.employmentType, record.EmploymentType));
     this.workGradeLevel.set(this.pickRecordValue(record.HeaderInfo.workGradeLevel, record.WorkGradeLevel));
