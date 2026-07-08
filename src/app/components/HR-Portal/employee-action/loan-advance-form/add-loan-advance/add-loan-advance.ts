@@ -960,7 +960,7 @@ export class AddLoanAdvanceComponent implements OnInit {
       return;
     }
 
-    const payload = {
+    const payload: LoanAdvancePayload = {
       headerInfo: {
         documentNo: this.documentNo(),
         requestType: this.requestType(),

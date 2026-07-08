@@ -37,14 +37,14 @@ export interface LoanAdvanceNewLoanRequest {
 
 export interface LoanAdvanceLoanDetail {
   existingLoan: string;
-  loanAcquiredDate?: string;
-  installmentNumber?: string;
-  loanEndingDate?: string;
-  previousInstallmentAmount?: string;
-  previousLoanPurpose?: string;
-  loanAmount?: string;
-  loanAmountDeductedTillNow?: string;
-  loanBalance?: string;
+  loanAcquiredDate: string;
+  installmentNumber: string;
+  loanEndingDate: string;
+  previousInstallmentAmount: string;
+  previousLoanPurpose: string;
+  loanAmount: string;
+  loanAmountDeductedTillNow: string;
+  loanBalance: string;
   newLoanRequest: LoanAdvanceNewLoanRequest;
   remarks: string;
 }
@@ -57,18 +57,18 @@ export interface LoanAdvanceNewAdvanceRequest {
 
 export interface LoanAdvanceAdvanceDetail {
   existingAdvance: string;
-  advanceAcquiredDate?: string;
+  advanceAcquiredDate: string;
   advanceEligibleAmount: string;
-  previousAdvancePurpose?: string;
-  advanceRemarks?: string;
-  advanceAmount?: string;
-  advanceAmountToBeDeductedThisMonth?: string;
-  advanceBalance?: string;
+  previousAdvancePurpose: string;
+  advanceRemarks: string;
+  advanceAmount: string;
+  advanceAmountToBeDeductedThisMonth: string;
+  advanceBalance: string;
   newAdvanceRequest: LoanAdvanceNewAdvanceRequest;
 }
 
 export interface LoanAdvanceScheduleRow {
-  sr: number | string;
+  sr: number;
   month: string;
   installment: string;
   balance: string;
@@ -81,12 +81,9 @@ export interface LoanAdvanceRepaymentSchedule {
   installmentAmount: string;
   schedule: LoanAdvanceScheduleRow[];
   remarks: string;
-  /** @deprecated kept for backward compatibility with older saved records */
-  repaymentStartDate?: string;
-  /** @deprecated kept for backward compatibility with older saved records */
-  repaymentFrequency?: string;
-  /** @deprecated kept for backward compatibility with older saved records */
-  deductionAmount?: string;
+  repaymentStartDate: string;
+  repaymentFrequency: string;
+  deductionAmount: string;
 }
 
 export interface LoanAdvancePayload {
