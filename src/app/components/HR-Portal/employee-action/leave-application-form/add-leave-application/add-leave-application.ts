@@ -62,6 +62,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   private readonly sectionIds = [
     'header-info-section',
     'leave-detail-section',
+    'leave-management-section',
     'leave-balance-information-section',
   ] as const;
   private sectionObserver: IntersectionObserver | null = null;
@@ -670,7 +671,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     };
   }
 
-  private resolveLeaveTypeName(value: string): string {
+  protected resolveLeaveTypeName(value: string): string {
     const trimmed = value.trim();
     if (!trimmed) {
       return '';

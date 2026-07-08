@@ -44,6 +44,35 @@
   resize: vertical;
 }
 
+.lam-table-wrap {
+  overflow-x: auto;
+}
+
+.lam-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+  background: #fff;
+}
+
+.lam-table th,
+.lam-table td {
+  border: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.lam-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+}
+
+.lam-table__empty {
+  text-align: center;
+  color: #64748b;
+}
+
 @media (max-width: 1120px) {
   .cjr-personal-grid {
     grid-template-columns: 1fr;

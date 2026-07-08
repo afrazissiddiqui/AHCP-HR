@@ -73,6 +73,13 @@
         </li>
         <li
           class="cjr-section-nav-item"
+          [class.cjr-section-nav-item--active]="activeSection() === 'leave-management-section'"
+          (click)="scrollToSection('leave-management-section')"
+        >
+          Leave management
+        </li>
+        <li
+          class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'leave-balance-information-section'"
           (click)="scrollToSection('leave-balance-information-section')"
         >
@@ -300,6 +307,45 @@
               <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="mad-form-panel" id="leave-management-section">
+        <div class="mad-form-panel__heading">
+          <span class="mad-form-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
+          </span>
+          <div class="mad-form-panel__titles">
+            <h2 class="cjr-section-title mad-form-panel__title">Leave Management</h2>
+            <span class="mad-form-panel__subtitle">Leave balances pulled from the selected employee application form</span>
+          </div>
+        </div>
+
+        <div class="lam-table-wrap">
+          <table class="lam-table">
+            <thead>
+              <tr>
+                <th>Leave Type</th>
+                <th>Total Leaves</th>
+                <th>Leaves Availed</th>
+                <th>Remaining Leaves</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of selectedEmployeeLeaveRows()">
+                <td>{{ resolveLeaveTypeName(row.leaveType) || '—' }}</td>
+                <td>{{ row.leavesAllocated || '—' }}</td>
+                <td>{{ row.leavesAvailed || '—' }}</td>
+                <td>{{ row.remainingLeave || '—' }}</td>
+              </tr>
+              <tr *ngIf="selectedEmployeeLeaveRows().length === 0">
+                <td colspan="4" class="lam-table__empty">Select an employee to view leave management balances.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
