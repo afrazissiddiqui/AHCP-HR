@@ -67,11 +67,26 @@ export interface LoanAdvanceAdvanceDetail {
   newAdvanceRequest: LoanAdvanceNewAdvanceRequest;
 }
 
+export interface LoanAdvanceScheduleRow {
+  sr: number | string;
+  month: string;
+  installment: string;
+  balance: string;
+  status: string;
+}
+
 export interface LoanAdvanceRepaymentSchedule {
-  repaymentStartDate: string;
-  repaymentFrequency: string;
-  deductionAmount: string;
+  loanAmount: string;
+  tenure: string;
+  installmentAmount: string;
+  schedule: LoanAdvanceScheduleRow[];
   remarks: string;
+  /** @deprecated kept for backward compatibility with older saved records */
+  repaymentStartDate?: string;
+  /** @deprecated kept for backward compatibility with older saved records */
+  repaymentFrequency?: string;
+  /** @deprecated kept for backward compatibility with older saved records */
+  deductionAmount?: string;
 }
 
 export interface LoanAdvancePayload {
@@ -171,14 +186,25 @@ export class LoanAdvanceService {
       return text;
     };
 
+    const sanitizeValue = (value: unknown): unknown => {
+      if (Array.isArray(value)) {
+        return value.map((item) => {
+          if (item && typeof item === 'object' && !Array.isArray(item)) {
+            return sanitizeSection(item as Record<string, unknown>);
+          }
+          return toStringValue(item);
+        });
+      }
+      if (value && typeof value === 'object') {
+        return sanitizeSection(value as Record<string, unknown>);
+      }
+      return toStringValue(value);
+    };
+
     const sanitizeSection = <T extends Record<string, unknown>>(section: T): T => {
       const sanitized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(section)) {
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          sanitized[key] = sanitizeSection(value as Record<string, unknown>);
-          continue;
-        }
-        sanitized[key] = toStringValue(value);
+        sanitized[key] = sanitizeValue(value);
       }
       return sanitized as T;
     };
@@ -359,10 +385,25 @@ export class LoanAdvanceService {
         },
       },
       repaymentSchedule: {
+        loanAmount: pick(
+          repaymentSchedule.loanAmount,
+          newLoanRequest.loanAmountRequested,
+          record.LoanAmountRequested,
+          loanDetail.loanAmount,
+        ),
+        tenure: pick(repaymentSchedule.tenure, newLoanRequest.loanTenure, newLoanRequest.noOfInstallments, record.NoOfInstallments),
+        installmentAmount: pick(
+          repaymentSchedule.installmentAmount,
+          newLoanRequest.installmentAmount,
+          repaymentSchedule.deductionAmount,
+          record.LoanInstallmentAmount,
+          record.DeductionAmount,
+        ),
+        schedule: Array.isArray(repaymentSchedule.schedule) ? repaymentSchedule.schedule : [],
+        remarks: repaymentSchedule.remarks ?? '',
         repaymentStartDate: pick(repaymentSchedule.repaymentStartDate, record.RepaymentStartDate),
         repaymentFrequency: pick(repaymentSchedule.repaymentFrequency, record.RepaymentFrequency),
         deductionAmount: pick(repaymentSchedule.deductionAmount, record.DeductionAmount),
-        remarks: repaymentSchedule.remarks ?? '',
       },
     };
   }
@@ -833,6 +874,21 @@ export class LoanAdvanceService {
 
   private extractFlatRepaymentSchedule(item: Record<string, unknown>): Record<string, unknown> {
     return {
+      loanAmount: this.pickString([item], ['loanAmount', 'loan_amount', 'LoanAmount']),
+      tenure: this.pickString([item], ['tenure', 'Tenure', 'loanTenure', 'loan_tenure']),
+      installmentAmount: this.pickString([item], [
+        'installmentAmount',
+        'installment_amount',
+        'InstallmentAmount',
+      ]),
+      schedule: this.pickScheduleRows(item),
+      remarks: this.pickString([item], [
+        'remarks',
+        'Remarks',
+        'repaymentRemarks',
+        'repayment_remarks',
+        'RepaymentRemarks',
+      ]),
       repaymentStartDate: this.pickString([item], [
         'repaymentStartDate',
         'repayment_start_date',
@@ -844,12 +900,31 @@ export class LoanAdvanceService {
         'RepaymentFrequency',
       ]),
       deductionAmount: this.pickString([item], ['deductionAmount', 'deduction_amount', 'DeductionAmount']),
-      remarks: this.pickString([item], [
-        'repaymentRemarks',
-        'repayment_remarks',
-        'RepaymentRemarks',
-      ]),
     };
+  }
+
+  private pickScheduleRows(source: Record<string, unknown>): LoanAdvanceScheduleRow[] {
+    const candidates = [source['schedule'], source['Schedule'], source['rows'], source['Rows']];
+    for (const candidate of candidates) {
+      if (!Array.isArray(candidate)) {
+        continue;
+      }
+
+      return candidate.map((row, index) => {
+        const record = row && typeof row === 'object' && !Array.isArray(row)
+          ? (row as Record<string, unknown>)
+          : {};
+        return {
+          sr: this.pickString([record], ['sr', 'Sr', 'serial', 'Serial']) || String(index + 1),
+          month: this.pickString([record], ['month', 'Month', 'monthLabel', 'month_label']),
+          installment: this.pickString([record], ['installment', 'Installment']),
+          balance: this.pickString([record], ['balance', 'Balance', 'remainingBalance', 'remaining_balance']),
+          status: this.pickString([record], ['status', 'Status']) || 'Payable',
+        };
+      });
+    }
+
+    return [];
   }
 
   private mapDetailResponse(response: unknown): LoanAdvanceRecord {
@@ -1082,6 +1157,25 @@ export class LoanAdvanceService {
     };
 
     const repaymentSchedule: LoanAdvanceRepaymentSchedule = {
+      loanAmount: this.pickString(
+        [repaymentSource, newLoanSource, loanSource, normalizedItem],
+        ['loanAmount', 'loan_amount', 'loanAmountRequested', 'loan_amount_requested'],
+      ),
+      tenure: this.pickString(
+        [repaymentSource, newLoanSource, loanSource, normalizedItem],
+        ['tenure', 'loanTenure', 'loan_tenure', 'noOfInstallments', 'no_of_installments'],
+      ),
+      installmentAmount: this.pickString(
+        [repaymentSource, newLoanSource, loanSource, normalizedItem],
+        [
+          'installmentAmount',
+          'installment_amount',
+          'deductionAmount',
+          'deduction_amount',
+        ],
+      ),
+      schedule: this.pickScheduleRows(repaymentSource),
+      remarks: this.pickString([repaymentSource, normalizedItem], ['remarks', 'Remarks']),
       repaymentStartDate: this.pickString([repaymentSource, normalizedItem], [
         'repaymentStartDate',
         'repayment_start_date',
@@ -1091,7 +1185,6 @@ export class LoanAdvanceService {
         'repayment_frequency',
       ]),
       deductionAmount: this.pickString([repaymentSource, normalizedItem], ['deductionAmount', 'deduction_amount']),
-      remarks: this.pickString([repaymentSource, normalizedItem], ['remarks', 'Remarks']),
     };
 
     return {
@@ -1127,7 +1220,8 @@ export class LoanAdvanceService {
         newAdvanceRequest.advanceAmountEligible || advanceDetail.advanceEligibleAmount || '—',
       RepaymentStartDate: repaymentSchedule.repaymentStartDate || '—',
       RepaymentFrequency: repaymentSchedule.repaymentFrequency || '—',
-      DeductionAmount: repaymentSchedule.deductionAmount || '—',
+      DeductionAmount:
+        repaymentSchedule.installmentAmount || repaymentSchedule.deductionAmount || '—',
       HeaderInfo: headerInfo,
       LoanDetail: loanDetail,
       AdvanceDetail: advanceDetail,

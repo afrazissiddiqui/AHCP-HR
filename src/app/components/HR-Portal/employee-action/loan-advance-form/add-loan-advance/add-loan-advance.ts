@@ -577,7 +577,11 @@ export class AddLoanAdvanceComponent implements OnInit {
       this.pickRecordValue(record.RepaymentSchedule.repaymentFrequency, record.RepaymentFrequency),
     );
     this.deductionAmount.set(
-      this.pickRecordValue(record.RepaymentSchedule.deductionAmount, record.DeductionAmount),
+      this.pickRecordValue(
+        record.RepaymentSchedule.installmentAmount,
+        record.RepaymentSchedule.deductionAmount,
+        record.DeductionAmount,
+      ),
     );
     this.repaymentRemarks.set(record.RepaymentSchedule.remarks?.trim() ?? '');
   }
@@ -1015,10 +1019,20 @@ export class AddLoanAdvanceComponent implements OnInit {
         }
       },
       repaymentSchedule: {
+        loanAmount: this.loanAmountRequested() || this.loanAmount(),
+        tenure: this.loanTenure() || this.noOfInstallments(),
+        installmentAmount: this.installmentAmount() || this.deductionAmount(),
+        schedule: this.repaymentScheduleRows().map((row) => ({
+          sr: row.sr,
+          month: row.monthLabel,
+          installment: row.installment,
+          balance: row.balance,
+          status: row.status,
+        })),
+        remarks: this.repaymentRemarks(),
         repaymentStartDate: this.repaymentStartDate() || (this.loanStartMonth() ? `${this.loanStartMonth()}-01` : ''),
         repaymentFrequency: this.repaymentFrequency(),
         deductionAmount: this.deductionAmount() || this.installmentAmount(),
-        remarks: this.repaymentRemarks()
       }
     };
 

@@ -158,15 +158,15 @@
                     </tr>
                     <tr>
                       <th>Loan Amount</th>
-                      <td>{{ formatDetail(record.LoanDetail.newLoanRequest.loanAmountRequested || record.LoanDetail.loanAmount) }}</td>
+                      <td>{{ formatDetail(record.RepaymentSchedule.loanAmount || record.LoanDetail.newLoanRequest.loanAmountRequested || record.LoanDetail.loanAmount) }}</td>
                     </tr>
                     <tr>
                       <th>Tenure</th>
-                      <td>{{ formatDetail(record.LoanDetail.newLoanRequest.loanTenure || record.LoanDetail.newLoanRequest.noOfInstallments) }}</td>
+                      <td>{{ formatDetail(record.RepaymentSchedule.tenure || record.LoanDetail.newLoanRequest.loanTenure || record.LoanDetail.newLoanRequest.noOfInstallments) }}</td>
                     </tr>
                     <tr>
                       <th>Installment Amount</th>
-                      <td>{{ formatDetail(record.LoanDetail.newLoanRequest.installmentAmount || record.RepaymentSchedule.deductionAmount) }}</td>
+                      <td>{{ formatDetail(record.RepaymentSchedule.installmentAmount || record.LoanDetail.newLoanRequest.installmentAmount || record.RepaymentSchedule.deductionAmount) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -183,7 +183,14 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
+                    <tr *ngFor="let row of record.RepaymentSchedule.schedule">
+                      <td>{{ row.sr }}</td>
+                      <td>{{ row.month }}</td>
+                      <td>{{ row.installment }}</td>
+                      <td>{{ row.balance }}</td>
+                      <td>{{ row.status }}</td>
+                    </tr>
+                    <tr *ngIf="!record.RepaymentSchedule.schedule.length">
                       <td colspan="5" class="repayment-schedule-empty">No repayment schedule available.</td>
                     </tr>
                   </tbody>
