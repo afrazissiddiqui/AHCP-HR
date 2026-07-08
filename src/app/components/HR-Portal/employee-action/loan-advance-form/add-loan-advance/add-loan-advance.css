@@ -63,6 +63,54 @@
   resize: vertical;
 }
 
+.la-schedule-table-wrap {
+  margin-top: 18px;
+  overflow-x: auto;
+}
+
+.la-schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+  background: #fff;
+}
+
+.la-schedule-table th,
+.la-schedule-table td {
+  border: 1px solid #dbe2ea;
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.la-schedule-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+}
+
+.la-schedule-table__title th {
+  background: #e8f0ff;
+}
+
+.la-schedule-table input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.la-schedule-table input[readonly] {
+  background: transparent;
+  color: #334155;
+}
+
+.la-schedule-remarks {
+  margin-top: 18px;
+}
+
 @media (max-width: 1120px) {
   .cjr-personal-grid {
     grid-template-columns: 1fr;

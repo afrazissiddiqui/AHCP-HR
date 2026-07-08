@@ -137,9 +137,24 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly newAdvanceAmountEligible = signal('');
   protected readonly newAdvanceAmountRequested = signal('');
   protected readonly repaymentStartDate = signal('');
+  protected readonly repaymentMonth = computed(() => this.repaymentStartDate().trim().slice(0, 7));
   protected readonly repaymentFrequency = signal('');
   protected readonly deductionAmount = signal('');
   protected readonly repaymentRemarks = signal('');
+  protected readonly repaymentBalance = computed(() => {
+    const requested = this.parseDecimal(this.loanAmountRequested() || this.loanAmount());
+    const installment = this.parseDecimal(this.deductionAmount() || this.installmentAmount());
+
+    if (requested === null && installment === null) {
+      return '';
+    }
+
+    const balance = (requested ?? 0) - (installment ?? 0);
+    return balance > 0 ? `${balance}` : '0';
+  });
+  protected readonly repaymentStatus = computed(() =>
+    this.repaymentStartDate().trim() || this.deductionAmount().trim() ? 'Planned' : '',
+  );
 
   protected readonly isLoanRequest = computed(() => this.requestType() === 'Loan');
   protected readonly isAdvanceRequest = computed(() => this.requestType() === 'Salary Advance');
@@ -318,6 +333,10 @@ export class AddLoanAdvanceComponent implements OnInit {
     }
 
     this.newAdvanceAmountRequested.set(value);
+  }
+
+  protected onRepaymentMonthChange(value: string): void {
+    this.repaymentStartDate.set(value ? `${value}-01` : '');
   }
 
   private buildEmployeeOptions(): LoanEmployeeOption[] {

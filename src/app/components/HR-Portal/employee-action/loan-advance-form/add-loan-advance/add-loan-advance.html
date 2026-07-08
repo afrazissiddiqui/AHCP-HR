@@ -583,31 +583,70 @@
           </span>
           <div class="mad-form-panel__titles">
             <h2 class="cjr-section-title mad-form-panel__title">Repayment Schedule</h2>
-            <span class="mad-form-panel__subtitle">Repayment start date, frequency, and deduction details</span>
+            <span class="mad-form-panel__subtitle">Loan summary and amortization schedule</span>
           </div>
         </div>
 
-        <div class="cjr-personal-grid">
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label [class.cjr-label-required]="isLoanRequest()">Repayment Start Date:</label>
-              <input type="date" [ngModel]="repaymentStartDate()" (ngModelChange)="repaymentStartDate.set($event)" />
-            </div>
-            <div class="cjr-row">
-              <label [class.cjr-label-required]="isLoanRequest()">Repayment Frequency:</label>
-              <input type="text" [ngModel]="repaymentFrequency()" (ngModelChange)="repaymentFrequency.set($event)" />
-            </div>
-          </div>
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label [class.cjr-label-required]="isLoanRequest()">Deduction Amount:</label>
-              <input type="text" [ngModel]="deductionAmount()" (ngModelChange)="deductionAmount.set($event)" />
-            </div>
-            <div class="cjr-row">
-              <label>Remarks:</label>
-              <input type="text" [ngModel]="repaymentRemarks()" (ngModelChange)="repaymentRemarks.set($event)" />
-            </div>
-          </div>
+        <div class="la-schedule-table-wrap">
+          <table class="la-schedule-table">
+            <tbody>
+              <tr class="la-schedule-table__title">
+                <th colspan="2">Loan Amorization Schedule</th>
+              </tr>
+              <tr>
+                <th>Loan Amount</th>
+                <td><input type="text" [value]="loanAmountRequested() || loanAmount()" readonly /></td>
+              </tr>
+              <tr>
+                <th>Tenure</th>
+                <td><input type="text" [value]="loanTenure() || noOfInstallments()" readonly /></td>
+              </tr>
+              <tr>
+                <th>Installment Amount</th>
+                <td><input type="text" [value]="installmentAmount() || deductionAmount()" readonly /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="la-schedule-table-wrap">
+          <table class="la-schedule-table">
+            <thead>
+              <tr class="la-schedule-table__title">
+                <th>Sr.</th>
+                <th>Month</th>
+                <th>Installment</th>
+                <th>Balance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>
+                  <input
+                    type="month"
+                    [ngModel]="repaymentMonth()"
+                    (ngModelChange)="onRepaymentMonthChange($event)"
+                  />
+                </td>
+                <td>
+                  <input type="text" [ngModel]="deductionAmount()" (ngModelChange)="deductionAmount.set($event)" />
+                </td>
+                <td>
+                  <input type="text" [value]="repaymentBalance()" readonly />
+                </td>
+                <td>
+                  <input type="text" [value]="repaymentStatus()" readonly />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cjr-row cjr-row--remarks la-schedule-remarks">
+          <label>Remarks:</label>
+          <input type="text" [ngModel]="repaymentRemarks()" (ngModelChange)="repaymentRemarks.set($event)" />
         </div>
       </section>
     </div>
