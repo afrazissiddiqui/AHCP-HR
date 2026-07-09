@@ -11,14 +11,18 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import {
   LeaveApplicationAddPayload,
   LeaveApplicationRecord,
   LeaveApplicationService,
 } from '../../../../../services/leave-application.service';
-import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
+import {
+  ApplicationFormDetail,
+  ApplicationFormService,
+  ApplicationFormRecord,
+} from '../../../../../services/application-form.service';
 import { LeaveTypeRecord, LeaveTypeService } from '../../../../../services/leave-type.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { normalizeEmploymentStatus } from '../../../../../utils/employment-status.util';
@@ -87,6 +91,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   ) {}
 
   private readonly employeeOptions = signal<LeaveEmployeeOption[]>([]);
+  private originalLeaveApplicationRecord: LeaveApplicationRecord | null = null;
   protected readonly leaveTypeOptions = signal<LeaveTypeRecord[]>([]);
   protected readonly selectedEmployeeLeaveRows = computed(() => this.selectedEmployeeRecord()?.detail?.leaveManagement ?? []);
   protected readonly selectedEmployeeLeaveTypeOptions = computed(() => {
@@ -103,22 +108,8 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         return true;
       });
   });
-  protected readonly leaveTypeLocked = computed(
-    () => !this.editingId && this.selectedEmployeeLeaveTypeOptions().length > 0,
-  );
   protected readonly leaveTypeSelectOptions = computed(() => {
-    const profileLeaveTypes = this.selectedEmployeeLeaveTypeOptions();
-    const options = this.leaveTypeOptions().filter((option) => {
-      if (!profileLeaveTypes.length) {
-        return true;
-      }
-      const resolvedName = this.resolveLeaveTypeName(String(option.name ?? ''));
-      const resolvedCode = this.resolveLeaveTypeName(String(option.code ?? ''));
-      return profileLeaveTypes.some((type) =>
-        type.toLowerCase() === resolvedName.toLowerCase() ||
-        type.toLowerCase() === resolvedCode.toLowerCase(),
-      );
-    });
+    const options = [...this.leaveTypeOptions()];
     const current = this.leaveType().trim();
     if (!current) {
       return options;
@@ -204,6 +195,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
 
     this.leaveService.fetchLeaveApplicationDetail(editId).subscribe({
       next: (record) => {
+        this.originalLeaveApplicationRecord = record;
         this.populateFromRecord(record);
         this.cdr.markForCheck();
       },
@@ -303,6 +295,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         this.totalLeaves.set(balance.totalLeaves);
         this.leavesAvailed.set(balance.leavesAvailed);
         this.remainingLeaves.set(balance.remainingLeaves);
+        this.applySelectedLeaveTypeBalance();
         this.loadingEmployeeLeaveManagement.set(false);
         this.cdr.markForCheck();
       },
@@ -316,20 +309,9 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   private readonly selectedEmployeeRecord = signal<ApplicationFormRecord | null>(null);
 
   protected onLeaveTypeChange(value: string): void {
-    if (this.leaveTypeLocked()) {
-      return;
-    }
     const resolved = this.resolveLeaveTypeName(value);
     this.leaveType.set(resolved);
-
-    if (this.editingId || !this.selectedEmployeeRecord() || !resolved) {
-      return;
-    }
-
-    const balance = this.extractAggregateLeaveBalance(this.selectedEmployeeRecord()!);
-    this.totalLeaves.set(balance.totalLeaves);
-    this.leavesAvailed.set(balance.leavesAvailed);
-    this.remainingLeaves.set(balance.remainingLeaves);
+    this.applySelectedLeaveTypeBalance();
   }
 
   protected onFromDateChange(value: string): void {
@@ -398,6 +380,23 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       return;
     }
 
+    if (this.selectedEmployeeRecord() && this.totalLeaves() === null && this.leavesAvailed() === null) {
+      void this.alertService.warning(
+        'Validation',
+        'The selected leave type is not configured for this employee in Leave Management.',
+      );
+      return;
+    }
+
+    const remaining = this.remainingLeaves();
+    if (remaining !== null && totalDays > remaining) {
+      void this.alertService.warning(
+        'Validation',
+        'Requested leave days exceed the remaining leave balance for the selected leave type.',
+      );
+      return;
+    }
+
     const payload = this.buildPayload();
     const request$ = this.editingId
       ? this.leaveService.updateLeaveApplication(this.editingId, payload)
@@ -408,6 +407,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
 
     request$
       .pipe(
+        switchMap(() => this.persistLeaveManagementBalance$(payload)),
         finalize(() => {
           this.saving.set(false);
           this.cdr.markForCheck();
@@ -482,6 +482,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       this.applicationFormService.fetchEmployeeProfileDetail(selectedRecordApiId).subscribe({
         next: (fullRecord) => {
           this.selectedEmployeeRecord.set(fullRecord);
+          this.applySelectedLeaveTypeBalance();
           this.loadingEmployeeLeaveManagement.set(false);
           this.cdr.markForCheck();
         },
@@ -491,6 +492,8 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         },
       });
     }
+
+    this.applySelectedLeaveTypeBalance();
   }
 
   private buildPayload(): LeaveApplicationAddPayload {
@@ -538,6 +541,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         if (currentLeaveType) {
           this.leaveType.set(this.resolveLeaveTypeName(currentLeaveType));
         }
+        this.applySelectedLeaveTypeBalance();
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
@@ -821,8 +825,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.location.set(employee.location);
 
     if (!this.editingId) {
-      const resolvedLeaveType = this.resolveLeaveTypeName(employee.leaveType);
-      this.leaveType.set(resolvedLeaveType);
+      this.leaveType.set('');
       if (this.selectedEmployeeRecord()) {
         const balance = this.extractAggregateLeaveBalance(this.selectedEmployeeRecord()!);
         this.totalLeaves.set(balance.totalLeaves);
@@ -837,6 +840,201 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         this.requestStatus.set('Submitted');
       }
     }
+
+    this.applySelectedLeaveTypeBalance();
+  }
+
+  private applySelectedLeaveTypeBalance(): void {
+    const record = this.selectedEmployeeRecord();
+    const selectedLeaveType = this.leaveType().trim();
+
+    if (!record) {
+      if (!selectedLeaveType) {
+        this.totalLeaves.set(null);
+        this.leavesAvailed.set(null);
+        this.remainingLeaves.set(null);
+      }
+      return;
+    }
+
+    if (!selectedLeaveType) {
+      const aggregate = this.extractAggregateLeaveBalance(record);
+      this.totalLeaves.set(aggregate.totalLeaves);
+      this.leavesAvailed.set(aggregate.leavesAvailed);
+      this.remainingLeaves.set(aggregate.remainingLeaves);
+      return;
+    }
+
+    const balance = this.extractLeaveBalanceForLeaveType(record, selectedLeaveType);
+    this.totalLeaves.set(balance.totalLeaves);
+    this.leavesAvailed.set(balance.leavesAvailed);
+    this.remainingLeaves.set(balance.remainingLeaves);
+  }
+
+  private persistLeaveManagementBalance$(payload: LeaveApplicationAddPayload): Observable<null> {
+    const currentLeaveType = this.resolveLeaveTypeName(payload.leaveRequest.leaveType);
+    const currentDays = payload.leaveRequest.totalLeaveDaysRequested;
+    const currentProfile = this.selectedEmployeeRecord();
+    const currentProfileId = currentProfile?.apiId?.trim() || '';
+
+    if (!currentProfile || !currentProfileId || !currentProfile.detail || !currentLeaveType || currentDays <= 0) {
+      return of(null);
+    }
+
+    const currentSnapshot = {
+      apiId: currentProfileId,
+      record: currentProfile,
+      leaveType: currentLeaveType,
+      days: currentDays,
+    };
+
+    const originalEmployeeId = this.originalLeaveApplicationRecord?.HeaderInfo.employeeId?.trim() || '';
+    const originalLeaveType = this.resolveLeaveTypeName(
+      this.originalLeaveApplicationRecord?.LeaveRequest.leaveType ?? '',
+    );
+    const originalDays = this.originalLeaveApplicationRecord?.LeaveRequest.totalLeaveDaysRequested ?? 0;
+
+    if (!this.editingId || !originalEmployeeId || !originalLeaveType || originalDays <= 0) {
+      return this.updateEmployeeLeaveBalances$(currentSnapshot.record, currentSnapshot.apiId, [
+        { leaveType: currentSnapshot.leaveType, daysDelta: currentSnapshot.days },
+      ]).pipe(switchMap(() => of(null)));
+    }
+
+    const originalProfile =
+      this.applicationFormService
+        .getApplicationRecords()
+        .find((item) => this.resolveEmployeeId(item) === originalEmployeeId) ?? null;
+    const originalProfileId = originalProfile?.apiId?.trim() || '';
+
+    if (!originalProfileId) {
+      return this.updateEmployeeLeaveBalances$(currentSnapshot.record, currentSnapshot.apiId, [
+        { leaveType: currentSnapshot.leaveType, daysDelta: currentSnapshot.days },
+      ]).pipe(switchMap(() => of(null)));
+    }
+
+    if (originalProfileId === currentSnapshot.apiId) {
+      const deltas = new Map<string, number>();
+      deltas.set(originalLeaveType, (deltas.get(originalLeaveType) ?? 0) - originalDays);
+      deltas.set(currentSnapshot.leaveType, (deltas.get(currentSnapshot.leaveType) ?? 0) + currentSnapshot.days);
+      return this.updateEmployeeLeaveBalances$(
+        currentSnapshot.record,
+        currentSnapshot.apiId,
+        [...deltas.entries()]
+          .filter(([, daysDelta]) => daysDelta !== 0)
+          .map(([leaveType, daysDelta]) => ({ leaveType, daysDelta })),
+      ).pipe(switchMap(() => of(null)));
+    }
+
+    return forkJoin([
+      this.fetchProfileForBalanceUpdate$(originalProfileId, originalProfile),
+      this.fetchProfileForBalanceUpdate$(currentSnapshot.apiId, currentSnapshot.record),
+    ]).pipe(
+      switchMap(([originalRecord, currentRecord]) =>
+        forkJoin([
+          this.updateEmployeeLeaveBalances$(originalRecord, originalProfileId, [
+            { leaveType: originalLeaveType, daysDelta: -originalDays },
+          ]),
+          this.updateEmployeeLeaveBalances$(currentRecord, currentSnapshot.apiId, [
+            { leaveType: currentSnapshot.leaveType, daysDelta: currentSnapshot.days },
+          ]),
+        ]),
+      ),
+      switchMap(() => of(null)),
+    );
+  }
+
+  private fetchProfileForBalanceUpdate$(
+    apiId: string,
+    fallback: ApplicationFormRecord | null,
+  ): Observable<ApplicationFormRecord> {
+    if (fallback?.detail) {
+      return of(fallback);
+    }
+    return this.applicationFormService.fetchEmployeeProfileDetail(apiId);
+  }
+
+  private updateEmployeeLeaveBalances$(
+    record: ApplicationFormRecord,
+    apiId: string,
+    adjustments: Array<{ leaveType: string; daysDelta: number }>,
+  ): Observable<ApplicationFormRecord | null> {
+    if (!record.detail || adjustments.length === 0) {
+      return of(null);
+    }
+
+    const updatedDetail = this.applyLeaveAdjustments(record.detail, adjustments);
+    const updatedRecord: ApplicationFormRecord = {
+      ...record,
+      detail: updatedDetail,
+    };
+    const payload = this.applicationFormService.buildFlatEmployeeProfilePayload(updatedDetail);
+    return this.applicationFormService.updateEmployeeProfile(apiId, payload).pipe(
+      switchMap(() => {
+        if (record.apiId === this.selectedEmployeeRecord()?.apiId) {
+          this.selectedEmployeeRecord.set(updatedRecord);
+          this.applySelectedLeaveTypeBalance();
+        }
+        return of(updatedRecord);
+      }),
+    );
+  }
+
+  private applyLeaveAdjustments(
+    detail: ApplicationFormDetail,
+    adjustments: Array<{ leaveType: string; daysDelta: number }>,
+  ): ApplicationFormDetail {
+    const normalizedAdjustments = adjustments
+      .map((adjustment) => ({
+        leaveType: this.resolveLeaveTypeName(adjustment.leaveType),
+        daysDelta: adjustment.daysDelta,
+      }))
+      .filter((adjustment) => adjustment.leaveType && adjustment.daysDelta !== 0);
+
+    if (!normalizedAdjustments.length) {
+      return detail;
+    }
+
+    const updatedLeaveManagement = detail.leaveManagement.map((row) => {
+      const matchingAdjustment = normalizedAdjustments.find((adjustment) =>
+        this.leaveTypesMatch(row.leaveType, adjustment.leaveType),
+      );
+      if (!matchingAdjustment) {
+        return { ...row };
+      }
+
+      const allocated = this.parseNumber(row.leavesAllocated) ?? 0;
+      const currentAvailed = this.parseNumber(row.leavesAvailed) ?? 0;
+      const nextAvailed = Math.max(currentAvailed + matchingAdjustment.daysDelta, 0);
+      const nextRemaining = Math.max(allocated - nextAvailed, 0);
+
+      return {
+        ...row,
+        leavesAvailed: this.formatLeaveNumber(nextAvailed),
+        remainingLeave: this.formatLeaveNumber(nextRemaining),
+      };
+    });
+
+    const primaryRow = updatedLeaveManagement[0];
+    const remuneration = primaryRow
+      ? {
+          ...detail.remuneration,
+          leaveType: primaryRow.leaveType || detail.remuneration.leaveType,
+          leaveDays: primaryRow.leavesAllocated || detail.remuneration.leaveDays,
+          totalLeaves: primaryRow.leavesAllocated || detail.remuneration.totalLeaves,
+          leavesAvailed: primaryRow.leavesAvailed || detail.remuneration.leavesAvailed,
+          remainingLeaves: primaryRow.remainingLeave || detail.remuneration.remainingLeaves,
+        }
+      : detail.remuneration;
+
+    return {
+      ...detail,
+      remuneration,
+      leaveManagement: updatedLeaveManagement,
+    };
+  }
+
+  private formatLeaveNumber(value: number): string {
+    return Number.isInteger(value) ? `${value}` : value.toFixed(1).replace(/\.0$/, '');
   }
 
   private syncTotalLeaveDays(): void {
