@@ -104,6 +104,13 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         route: '/setup/leave-types',
         access: { moduleSlug: 'leave_types_form', action: 'list' },
       },
+      {
+        label: 'Workstation',
+        value: 'setup/workstation',
+        icon: 'building',
+        route: '/setup/workstation',
+        access: { moduleSlug: 'workstation_form', action: 'list' },
+      },
     ],
   },
   { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },

@@ -123,12 +123,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
 
   readonly maintenanceNatureOptions = [
-    'Preventive',
     'Electrical',
     'Mechanical',
-    'Corrective',
-    'Breakdown',
-    'Pre-Cautionary',
   ] as const;
 
   readonly plantMaintenanceFrequencyOptions = [

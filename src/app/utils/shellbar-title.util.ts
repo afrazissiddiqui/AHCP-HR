@@ -48,6 +48,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/gl-account-determination': 'GL Account Determination',
   'setup/leave-types': 'Leave Types',
   'setup/user-setup': 'User Setup',
+  'setup/workstation': 'Workstation',
   'plant-maintenance/main-form': 'Main Form',
   'plant-maintenance/main-form/plant-maintenance-master-form': 'Plant Maintenance Master Form',
   'plant-maintenance/main-form/plant-maintenance-master-form/create': 'Add Machine',
@@ -92,6 +93,7 @@ const NON_SEARCH_ROUTE_KEYS = new Set([
   'setup/gl-account-determination',
   'setup/leave-types',
   'setup/user-setup',
+  'setup/workstation',
 ]);
 
 export function isShellbarSearchRoute(routeKey: string): boolean {

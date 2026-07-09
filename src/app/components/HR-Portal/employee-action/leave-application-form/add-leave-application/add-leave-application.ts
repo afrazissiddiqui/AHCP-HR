@@ -159,6 +159,9 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected readonly totalLeaves = signal<number | null>(null);
   protected readonly leavesAvailed = signal<number | null>(null);
   protected readonly remainingLeaves = signal<number | null>(null);
+  private readonly selectedLeaveTypeTotalLeaves = signal<number | null>(null);
+  private readonly selectedLeaveTypeLeavesAvailed = signal<number | null>(null);
+  private readonly selectedLeaveTypeRemainingLeaves = signal<number | null>(null);
   protected readonly requestStatus = signal<'Submitted' | 'Approved' | 'Rejected' | ''>('');
   protected readonly remarks = signal('');
   protected readonly leaveBalanceLocked = computed(() => !this.editingId && !!this.selectedEmployeeRecord());
@@ -377,7 +380,11 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       return;
     }
 
-    if (this.selectedEmployeeRecord() && this.totalLeaves() === null && this.leavesAvailed() === null) {
+    if (
+      this.selectedEmployeeRecord() &&
+      this.selectedLeaveTypeTotalLeaves() === null &&
+      this.selectedLeaveTypeLeavesAvailed() === null
+    ) {
       void this.alertService.warning(
         'Validation',
         'The selected leave type is not configured for this employee in Leave Management.',
@@ -385,7 +392,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       return;
     }
 
-    const remaining = this.remainingLeaves();
+    const remaining = this.selectedLeaveTypeRemainingLeaves();
     if (remaining !== null && totalDays > remaining) {
       void this.alertService.warning(
         'Validation',
@@ -846,26 +853,23 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     const selectedLeaveType = this.leaveType().trim();
 
     if (!record) {
-      if (!selectedLeaveType) {
-        this.totalLeaves.set(null);
-        this.leavesAvailed.set(null);
-        this.remainingLeaves.set(null);
-      }
+      this.selectedLeaveTypeTotalLeaves.set(null);
+      this.selectedLeaveTypeLeavesAvailed.set(null);
+      this.selectedLeaveTypeRemainingLeaves.set(null);
       return;
     }
 
     if (!selectedLeaveType) {
-      const aggregate = this.extractAggregateLeaveBalance(record);
-      this.totalLeaves.set(aggregate.totalLeaves);
-      this.leavesAvailed.set(aggregate.leavesAvailed);
-      this.remainingLeaves.set(aggregate.remainingLeaves);
+      this.selectedLeaveTypeTotalLeaves.set(null);
+      this.selectedLeaveTypeLeavesAvailed.set(null);
+      this.selectedLeaveTypeRemainingLeaves.set(null);
       return;
     }
 
     const balance = this.extractLeaveBalanceForLeaveType(record, selectedLeaveType);
-    this.totalLeaves.set(balance.totalLeaves);
-    this.leavesAvailed.set(balance.leavesAvailed);
-    this.remainingLeaves.set(balance.remainingLeaves);
+    this.selectedLeaveTypeTotalLeaves.set(balance.totalLeaves);
+    this.selectedLeaveTypeLeavesAvailed.set(balance.leavesAvailed);
+    this.selectedLeaveTypeRemainingLeaves.set(balance.remainingLeaves);
   }
 
   private persistLeaveManagementBalance$(payload: LeaveApplicationAddPayload): Observable<null> {
@@ -969,6 +973,10 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       switchMap(() => {
         if (record.apiId === this.selectedEmployeeRecord()?.apiId) {
           this.selectedEmployeeRecord.set(updatedRecord);
+          const aggregate = this.extractAggregateLeaveBalance(updatedRecord);
+          this.totalLeaves.set(aggregate.totalLeaves);
+          this.leavesAvailed.set(aggregate.leavesAvailed);
+          this.remainingLeaves.set(aggregate.remainingLeaves);
           this.applySelectedLeaveTypeBalance();
         }
         return of(updatedRecord);

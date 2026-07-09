@@ -189,6 +189,11 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
+    slug: 'workstation_form',
+    name: 'Workstation Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
     slug: 'good_receipt_note_form',
     name: 'Good Receipt Note Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,

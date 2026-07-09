@@ -1,0 +1,172 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div class="setup-body">
+      <div class="setup-intro">
+        <h2>Workstation Setup</h2>
+        <p>Define daily office timings and the in/out grace minutes used to avoid salary deductions.</p>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">{{ formTitle() }}</h3>
+            <p class="panel-subtitle">
+              @if (formMode() === 'edit') {
+                Update the selected workstation timing rule.
+              } @else {
+                Create a workstation and configure office in/out timings with grace minutes.
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field-block">
+            <span class="field-label">Workstation Name</span>
+            <input
+              type="text"
+              class="field-input"
+              [ngModel]="formName()"
+              (ngModelChange)="formName.set($event)"
+              name="workstation-name"
+              placeholder="Head Office"
+            />
+          </label>
+
+          <label class="field-block">
+            <span class="field-label">Office In Time</span>
+            <input
+              type="time"
+              class="field-input"
+              [ngModel]="formOfficeInTime()"
+              (ngModelChange)="formOfficeInTime.set($event)"
+              name="office-in-time"
+            />
+          </label>
+
+          <label class="field-block">
+            <span class="field-label">Office Out Time</span>
+            <input
+              type="time"
+              class="field-input"
+              [ngModel]="formOfficeOutTime()"
+              (ngModelChange)="formOfficeOutTime.set($event)"
+              name="office-out-time"
+            />
+          </label>
+
+          <label class="field-block">
+            <span class="field-label">In Grace Time (Minutes)</span>
+            <input
+              type="number"
+              min="0"
+              class="field-input"
+              [ngModel]="formInGraceMinutes()"
+              (ngModelChange)="formInGraceMinutes.set($event)"
+              name="in-grace-time"
+              placeholder="15"
+            />
+          </label>
+
+          <label class="field-block">
+            <span class="field-label">Out Grace Time (Minutes)</span>
+            <input
+              type="number"
+              min="0"
+              class="field-input"
+              [ngModel]="formOutGraceMinutes()"
+              (ngModelChange)="formOutGraceMinutes.set($event)"
+              name="out-grace-time"
+              placeholder="10"
+            />
+          </label>
+
+          <label class="field-block field-block--wide">
+            <span class="field-label">Description</span>
+            <input
+              type="text"
+              class="field-input"
+              [ngModel]="formDescription()"
+              (ngModelChange)="formDescription.set($event)"
+              name="workstation-description"
+              placeholder="Used for regular office attendance policy."
+            />
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitWorkstation()">
+            {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update Workstation' : 'Add Workstation' }}
+          </button>
+          @if (formMode() === 'edit') {
+            <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
+          }
+        </div>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">Workstations</h3>
+            <p class="panel-subtitle">Total workstations: {{ totalWorkstations() }}</p>
+          </div>
+          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadWorkstations()">
+            {{ loading() ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+
+        @if (loading()) {
+          <div class="panel-message">Loading workstation setup…</div>
+        } @else if (!workstations().length) {
+          <div class="panel-message">No workstation rules found.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="entry-table">
+              <thead>
+                <tr>
+                  <th class="col-sr">SR No.</th>
+                  <th>Name</th>
+                  <th>Office In</th>
+                  <th>Office Out</th>
+                  <th>In Grace</th>
+                  <th>Out Grace</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th class="col-action">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (record of workstations(); track record.id; let index = $index) {
+                  <tr>
+                    <td class="col-sr">{{ index + 1 }}</td>
+                    <td>{{ cellValue(record, 'name') }}</td>
+                    <td>{{ cellValue(record, 'officeInTime') }}</td>
+                    <td>{{ cellValue(record, 'officeOutTime') }}</td>
+                    <td>{{ cellValue(record, 'inGraceMinutes') }}</td>
+                    <td>{{ cellValue(record, 'outGraceMinutes') }}</td>
+                    <td>{{ cellValue(record, 'description') }}</td>
+                    <td>{{ cellValue(record, 'status') }}</td>
+                    <td class="col-action">
+                      <div class="action-buttons">
+                        <button type="button" class="btn-edit" [disabled]="saving() || deleting()" (click)="startEdit(record)">
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-delete"
+                          [disabled]="saving() || deleting()"
+                          (click)="deleteWorkstation(record)">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

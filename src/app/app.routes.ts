@@ -32,6 +32,7 @@ import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.ro
 import { GlAccountDeterminationComponent } from './components/setup/gl-account-determination/gl-account-determination';
 import { LeaveTypesComponent } from './components/setup/leave-types/leave-types';
 import { UserSetupComponent } from './components/setup/user-setup/user-setup';
+import { WorkstationComponent } from './components/setup/workstation/workstation';
 
 export const routes: Routes = [
   {
@@ -221,6 +222,11 @@ export const routes: Routes = [
     path: 'setup/user-setup',
     component: UserSetupComponent,
     canActivate: [authGuard, requirePermission('user_setup_form', 'list')],
+  },
+  {
+    path: 'setup/workstation',
+    component: WorkstationComponent,
+    canActivate: [authGuard, requirePermission('workstation_form', 'list')],
   },
   {
     path: 'termination',
