@@ -263,14 +263,7 @@
           <div class="cjr-personal-col">
             <div class="cjr-row">
               <label class="cjr-label-required">From Date:</label>
-              <input
-                type="text"
-                [ngModel]="fromDate()"
-                (ngModelChange)="onFromDateChange($event)"
-                placeholder="DD/MM/YYYY"
-                inputmode="numeric"
-                maxlength="10"
-              />
+              <input type="date" [ngModel]="fromDate()" (ngModelChange)="onFromDateChange($event)" />
             </div>
             <div class="cjr-row">
               <label class="cjr-label-required">To Date:</label>
@@ -283,20 +276,12 @@
                 min="0"
                 step="0.5"
                 [ngModel]="totalLeaveDaysRequested()"
-                (ngModelChange)="onTotalLeaveDaysChange($event)"
+                readonly
               />
             </div>
           </div>
 
           <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label>Request Status:</label>
-              <select [ngModel]="requestStatus()" (ngModelChange)="requestStatus.set($event)">
-                <option value="Submitted">Submitted</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
             <div class="cjr-row cjr-row--remarks">
               <label>Remarks:</label>
               <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"></textarea>

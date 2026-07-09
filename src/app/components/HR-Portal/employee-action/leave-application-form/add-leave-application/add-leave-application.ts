@@ -28,6 +28,7 @@ import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { normalizeEmploymentStatus } from '../../../../../utils/employment-status.util';
 import {
   formatApiToDateSlash,
+  formatDateForInput,
   formatDateInputSlash,
   formatDateSlashToApi,
   parseSlashOrIsoDate,
@@ -315,7 +316,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   }
 
   protected onFromDateChange(value: string): void {
-    this.fromDate.set(formatDateInputSlash(value));
+    this.fromDate.set(value);
     this.syncTotalLeaveDays();
   }
 
@@ -338,10 +339,6 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     }
     this.leavesAvailed.set(this.parseNumber(value));
     this.syncRemainingLeaves();
-  }
-
-  protected onTotalLeaveDaysChange(value: number | string | null): void {
-    this.totalLeaveDaysRequested.set(this.parseNumber(value));
   }
 
   protected scrollToSection(sectionId: string): void {
@@ -454,8 +451,8 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.requestDate.set(emptyIfDash(leave.requestDate) || this.getTodayDate());
     this.leaveType.set(this.resolveLeaveTypeName(emptyIfDash(leave.leaveType)));
     this.causeOfLeave.set(emptyIfDash(leave.causeOfLeave));
-    this.fromDate.set(formatApiToDateSlash(emptyIfDash(leave.fromDate)));
-    this.toDate.set(emptyIfDash(leave.toDate));
+    this.fromDate.set(formatDateForInput(emptyIfDash(leave.fromDate)));
+    this.toDate.set(formatDateForInput(emptyIfDash(leave.toDate)));
     this.totalLeaveDaysRequested.set(
       leave.totalLeaveDaysRequested > 0 ? leave.totalLeaveDaysRequested : null,
     );
@@ -517,7 +514,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
         fromDate: formatDateSlashToApi(this.fromDate().trim()),
         toDate: this.toDate().trim(),
         totalLeaveDaysRequested: this.totalLeaveDaysRequested() ?? 0,
-        requestStatus: this.requestStatus(),
+        requestStatus: this.requestStatus() || 'Submitted',
         remarks: this.remarks().trim(),
       },
       leaveBalanceInformation: {
