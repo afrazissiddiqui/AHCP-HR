@@ -104,18 +104,29 @@ export function roundPayrollAmount(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** Medical Allowance = (Basic Salary / 110%) × 10% */
-export function computeMedicalAllowance(basicSalary: number): number {
-  if (basicSalary <= 0) {
+/**
+ * Medical Allowance = (Gross Salary / 110%) × 10%
+ * Matches Application Form: Gross is entered; medical is derived from gross.
+ */
+export function computeMedicalAllowance(grossSalary: number): number {
+  if (grossSalary <= 0) {
     return 0;
   }
-  return roundPayrollAmount((basicSalary / 1.1) * 0.1);
+  return roundPayrollAmount((grossSalary / 1.1) * 0.1);
+}
+
+/** Basic Salary = Gross Salary − Medical Allowance */
+export function computeBasicSalary(grossSalary: number, medicalAllowance?: number): number {
+  if (grossSalary <= 0) {
+    return 0;
+  }
+  const medical = medicalAllowance ?? computeMedicalAllowance(grossSalary);
+  return roundPayrollAmount(Math.max(0, grossSalary - medical));
 }
 
 /** Gross Salary = Basic Salary + Medical Allowance */
-export function computeGrossSalary(basicSalary: number, medicalAllowance?: number): number {
-  const medical = medicalAllowance ?? computeMedicalAllowance(basicSalary);
-  return roundPayrollAmount(basicSalary + medical);
+export function computeGrossSalary(basicSalary: number, medicalAllowance: number): number {
+  return roundPayrollAmount(basicSalary + medicalAllowance);
 }
 
 /** Fuel Allowance = Allowed Liters × Monthly Fuel Rate */

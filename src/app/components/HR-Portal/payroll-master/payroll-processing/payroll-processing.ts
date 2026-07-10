@@ -67,9 +67,20 @@ type PayrollProcessingColumnKey = Exclude<keyof PayrollProcessingListRecord, nev
     .payroll-list-pagination__ellipsis {
       color: #6a6d70;
       letter-spacing: 0.08em;
-      padding: 0 6px;
+      padding: 0 8px;
       user-select: none;
       font-weight: 600;
+      min-width: 32px;
+      height: 32px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .payroll-list-pagination__ellipsis:hover {
+      border-color: #d0d7de;
+      background: #f5f6f7;
+      color: #32363a;
     }
   `],
 })
@@ -162,7 +173,7 @@ export class PayrollProcessingComponent implements OnInit {
   }
 
   get paginationFooterItems(): PaginationFooterItem[] {
-    return buildPaginationFooterItems(this.totalPages);
+    return buildPaginationFooterItems(this.totalPages, this.currentPage);
   }
 
   get visibleColumns(): Array<{ key: PayrollProcessingColumnKey; label: string; visible: boolean }> {

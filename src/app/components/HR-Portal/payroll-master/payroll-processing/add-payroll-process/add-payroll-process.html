@@ -420,7 +420,15 @@
                     </button>
                   }
                   @case ('ellipsis') {
-                    <span class="comp-pagination__ellipsis" aria-hidden="true">…</span>
+                    <button
+                      type="button"
+                      class="comp-pagination__ellipsis"
+                      [attr.title]="'Go to page ' + item.jumpTo"
+                      [attr.aria-label]="'Go to page ' + item.jumpTo"
+                      (click)="setPage(item.jumpTo)"
+                    >
+                      …
+                    </button>
                   }
                   @case ('last') {
                     <button

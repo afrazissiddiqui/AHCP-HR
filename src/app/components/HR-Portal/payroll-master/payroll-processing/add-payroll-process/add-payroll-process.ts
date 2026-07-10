@@ -31,6 +31,7 @@ import {
 } from '../../../../../services/payroll-processing.service';
 import {
   PayrollSetupService,
+  computeBasicSalary,
   computeEobiEmployeeContribution,
   computeEobiEmployerContribution,
   computeFuelAllowance,
@@ -193,7 +194,7 @@ export class AddPayrollProcessComponent implements OnInit {
   ];
 
   readonly payrollColumns: PayrollColumnDef[] = [
-    { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'currency', minWidth: 152 },
+    { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'readonly', minWidth: 152 },
     { key: 'grossSalary', label: 'Gross Salary', groupId: 'salary', type: 'readonly', minWidth: 152 },
     { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'readonly', minWidth: 145 },
     { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'readonly', minWidth: 145 },
@@ -260,7 +261,7 @@ export class AddPayrollProcessComponent implements OnInit {
   );
 
   readonly paginationFooterItems = computed((): PaginationFooterItem[] =>
-    buildPaginationFooterItems(this.totalPages()),
+    buildPaginationFooterItems(this.totalPages(), this.currentPage()),
   );
 
   readonly paginationItemTrack = paginationItemTrack;
@@ -606,7 +607,6 @@ export class AddPayrollProcessComponent implements OnInit {
     value: string | number,
   ): void {
     const numericFields: Array<keyof PayrollProcessRow> = [
-      'basicSalary',
       'mobileAllowance',
       'carAllowance',
       'otherAllowances',
@@ -927,7 +927,10 @@ export class AddPayrollProcessComponent implements OnInit {
     const remuneration = detail?.remuneration;
     const employeeCode = record.EmployeeCode || detail?.loginDetails.employeeCode || '';
     const employeeName = detail?.personalInfo.personName || record.EmployeeName;
-    const basicSalary = this.parseAmount(remuneration?.basicSalary ?? 0);
+    // Application Form "Gross Salary" is stored in remuneration.basicSalary.
+    const grossSalary = this.parseAmount(remuneration?.basicSalary ?? 0);
+    const medicalAllowance = computeMedicalAllowance(grossSalary);
+    const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
     const allowedLiters = this.parseAmount(remuneration?.fuelLimit ?? 0);
     const profileFuelAmount = this.parseAmount(remuneration?.fuelAllowances ?? 0);
     const monthlyFuelRate =
@@ -936,7 +939,7 @@ export class AddPayrollProcessComponent implements OnInit {
         : 0;
     const lastMonthGrossSalary = this.resolveLastMonthGrossSalary(
       record.EmployeeCode,
-      basicSalary,
+      grossSalary,
     );
 
     return this.recalculateRow({
@@ -956,8 +959,8 @@ export class AddPayrollProcessComponent implements OnInit {
       yearsOfService: 0,
       eobiApplicable: this.isEobiApplicable(remuneration?.eobiApplicable),
       basicSalary,
-      grossSalary: 0,
-      medicalAllowance: 0,
+      grossSalary,
+      medicalAllowance,
       allowedLiters,
       monthlyFuelRate,
       fuelAllowance: 0,
@@ -980,8 +983,10 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   private recalculateRow(row: PayrollProcessRow): PayrollProcessRow {
-    const medicalAllowance = computeMedicalAllowance(row.basicSalary);
-    const grossSalary = computeGrossSalary(row.basicSalary, medicalAllowance);
+    // Gross comes from Application Form; medical and basic are derived from it.
+    const grossSalary = row.grossSalary > 0 ? row.grossSalary : row.basicSalary;
+    const medicalAllowance = computeMedicalAllowance(grossSalary);
+    const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
     const effectiveFuelRate = row.monthlyFuelRate + this.fuelPriceAdjust();
     const fuelAllowance = computeFuelAllowance(row.allowedLiters, effectiveFuelRate);
     const overtimeRate = computeOvertimeRate(row.lastMonthGrossSalary);
@@ -998,6 +1003,7 @@ export class AddPayrollProcessComponent implements OnInit {
 
     return {
       ...row,
+      basicSalary,
       medicalAllowance,
       grossSalary,
       fuelAllowance,
@@ -1105,7 +1111,7 @@ export class AddPayrollProcessComponent implements OnInit {
     return '';
   }
 
-  private resolveLastMonthGrossSalary(employeeCode: string, basicSalary: number): number {
+  private resolveLastMonthGrossSalary(employeeCode: string, grossSalary: number): number {
     const cached = this.lastMonthGrossSalaryCache.get(employeeCode);
     if (cached !== undefined) {
       return cached;
@@ -1119,7 +1125,7 @@ export class AddPayrollProcessComponent implements OnInit {
     const result =
       priorRecords.length > 0
         ? computeGrossSalary(priorRecords[0].basicSalary, priorRecords[0].medicalAllowance)
-        : computeGrossSalary(basicSalary, computeMedicalAllowance(basicSalary));
+        : grossSalary;
 
     this.lastMonthGrossSalaryCache.set(employeeCode, result);
     return result;

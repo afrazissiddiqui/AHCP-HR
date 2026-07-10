@@ -194,7 +194,7 @@ export class AttendanceManagmentComponent implements OnInit {
   }
 
   get paginationFooterItems(): PaginationFooterItem[] {
-    return buildPaginationFooterItems(this.totalPages);
+    return buildPaginationFooterItems(this.totalPages, this.currentPage);
   }
 
   trackPaginationItem(index: number, item: PaginationFooterItem): string {

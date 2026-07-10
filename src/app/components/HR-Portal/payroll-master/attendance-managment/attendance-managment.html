@@ -326,7 +326,16 @@
                   >
                     {{ item.page }}
                   </button>
-                  <span *ngIf="item.kind === 'ellipsis'" class="attendance-pagination__ellipsis" aria-hidden="true">.........</span>
+                  <button
+                    *ngIf="item.kind === 'ellipsis'"
+                    type="button"
+                    class="attendance-pagination__ellipsis"
+                    [attr.title]="'Go to page ' + item.jumpTo"
+                    [attr.aria-label]="'Go to page ' + item.jumpTo"
+                    (click)="setPage(item.jumpTo)"
+                  >
+                    …
+                  </button>
                   <button
                     *ngIf="item.kind === 'last'"
                     type="button"
