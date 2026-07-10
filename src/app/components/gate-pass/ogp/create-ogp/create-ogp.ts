@@ -27,6 +27,7 @@ import {
   formatGatePassCnic,
   formatGatePassPhoneDigits,
 } from '../../gate-pass-input-format.util';
+import { GatePassDepartmentService } from '../../gate-pass-department.service';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -86,6 +87,7 @@ export class CreateOgpComponent implements OnInit {
   readonly typeOptions = ['Delivery', 'Standalone'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
+  departmentOptions: string[] = [];
 
   constructor(
     private readonly router: Router,
@@ -94,6 +96,7 @@ export class CreateOgpComponent implements OnInit {
     private readonly alertService: AlertService,
     private readonly itemMasterService: GatePassItemMasterService,
     private readonly businessPartnerService: GatePassBusinessPartnerService,
+    private readonly departmentService: GatePassDepartmentService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -102,6 +105,11 @@ export class CreateOgpComponent implements OnInit {
   ngOnInit(): void {
     this.itemMasterService.ensureLoaded().subscribe();
     this.businessPartnerService.ensureLoaded().subscribe();
+    this.departmentService.ensureLoaded().subscribe({
+      next: () => {
+        this.departmentOptions = this.departmentService.departmentNames();
+      },
+    });
 
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {

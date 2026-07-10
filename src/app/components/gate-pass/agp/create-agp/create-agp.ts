@@ -22,6 +22,7 @@ import { GatePassBusinessPartnerSearchInputComponent } from '../../business-part
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
+import { GatePassDepartmentService } from '../../gate-pass-department.service';
 
 const AGP_TYPE = 'Article Gate Pass';
 
@@ -87,17 +88,7 @@ export class CreateAgpComponent implements OnInit {
   lines: AgpLineItem[] = [];
   remarks = '';
 
-  readonly departmentOptions = [
-    'Engineering',
-    'Marketing',
-    'Finance',
-    'Human Resources',
-    'Operations',
-    'Procurement',
-    'Logistics',
-    'Sales',
-    'Supply Chain',
-  ] as const;
+  departmentOptions: string[] = [];
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 
@@ -108,6 +99,7 @@ export class CreateAgpComponent implements OnInit {
     private readonly alertService: AlertService,
     private readonly itemMasterService: GatePassItemMasterService,
     private readonly businessPartnerService: GatePassBusinessPartnerService,
+    private readonly departmentService: GatePassDepartmentService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -116,6 +108,11 @@ export class CreateAgpComponent implements OnInit {
   ngOnInit(): void {
     this.itemMasterService.ensureLoaded().subscribe();
     this.businessPartnerService.ensureLoaded().subscribe();
+    this.departmentService.ensureLoaded().subscribe({
+      next: () => {
+        this.departmentOptions = this.departmentService.departmentNames();
+      },
+    });
 
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
