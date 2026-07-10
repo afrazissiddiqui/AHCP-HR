@@ -251,6 +251,11 @@ export class App {
     this.selectedHrOption.set(option.value);
     this.selectedHeaderTitle.set(option.label);
 
+    if (option.externalUrl) {
+      window.location.href = option.externalUrl;
+      return;
+    }
+
     if (option.route) {
       const route =
         option.value === 'recruitment'

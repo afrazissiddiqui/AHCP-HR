@@ -5,6 +5,8 @@ export interface HrMenuOption {
   value: string;
   icon: string;
   route?: string;
+  /** Full URL for external apps (navigates away from this portal). */
+  externalUrl?: string;
   children?: HrMenuOption[];
   access?: AccessRequirement;
 }
@@ -126,7 +128,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   
   { label: 'Learning', value: 'learning', icon: 'learning-assistant' },
   { label: 'Org Chart', value: 'org-chart', icon: 'org-chart' },
-  { label: 'Performance', value: 'performance', icon: 'performance' },
+  { label: 'Quality Control', value: 'quality-control', icon: 'performance', externalUrl: 'http://alhafiz.vdc.services:8092/dashboard' },
   { label: 'Succession', value: 'succession', icon: 'family-care' },
 ];
 
