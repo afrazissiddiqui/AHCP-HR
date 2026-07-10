@@ -1,6 +1,10 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
-import { getNavigableHrMenuActions, HrMenuAction } from '../../config/hr-menu.config';
+import {
+  getNavigableHrMenuActions,
+  HrMenuAction,
+  resolveRecruitmentRoute,
+} from '../../config/hr-menu.config';
 import { PermissionService } from '../../services/permission.service';
 
 @Component({
@@ -17,9 +21,18 @@ export class dashboardComponent {
     private readonly router: Router,
     private readonly permissionService: PermissionService,
   ) {
-    this.menuActions = getNavigableHrMenuActions().filter((action) =>
-      this.permissionService.canAccess(action.access),
-    );
+    this.menuActions = getNavigableHrMenuActions()
+      .filter((action) => this.permissionService.canAccess(action.access))
+      .map((action) =>
+        action.value === 'recruitment'
+          ? {
+              ...action,
+              route: resolveRecruitmentRoute((requirement) =>
+                this.permissionService.canAccess(requirement),
+              ),
+            }
+          : action,
+      );
   }
 
   openAction(action: HrMenuAction): void {

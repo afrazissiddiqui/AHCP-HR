@@ -147,6 +147,7 @@ export function getNavigableHrMenuActions(options: HrMenuOption[] = HR_MENU_OPTI
             icon: child.icon,
             route: child.route,
             value: child.value,
+            access: child.access,
           });
         }
       }
@@ -159,9 +160,23 @@ export function getNavigableHrMenuActions(options: HrMenuOption[] = HR_MENU_OPTI
         icon: option.icon,
         route: option.route,
         value: option.value,
+        access: option.access,
       });
     }
   }
 
   return actions;
+}
+
+/** Prefer Application Form when allowed; otherwise Job Specification. */
+export function resolveRecruitmentRoute(
+  canAccess: (requirement: AccessRequirement) => boolean,
+): string {
+  if (canAccess({ moduleSlug: 'application_form', action: 'list' })) {
+    return '/recruitment';
+  }
+  if (canAccess({ moduleSlug: 'job_specification', action: 'list' })) {
+    return '/job-specification-form';
+  }
+  return '/dashboard';
 }

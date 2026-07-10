@@ -7,7 +7,7 @@ import { ViewProfileComponent } from './components/profile/view-profile';
 import { ApplicationFormService } from './services/application-form.service';
 import { AuthService } from './services/auth.service';
 import { resolveShellbarTitle, resolveShellbarSearchPlaceholder } from './utils/shellbar-title.util';
-import { HR_MENU_OPTIONS, HrMenuOption } from './config/hr-menu.config';
+import { HR_MENU_OPTIONS, HrMenuOption, resolveRecruitmentRoute } from './config/hr-menu.config';
 import { ShellbarSearchService } from './services/shellbar-search.service';
 import { PermissionService } from './services/permission.service';
 
@@ -252,7 +252,11 @@ export class App {
     this.selectedHeaderTitle.set(option.label);
 
     if (option.route) {
-      void this.router.navigate([option.route]);
+      const route =
+        option.value === 'recruitment'
+          ? resolveRecruitmentRoute((requirement) => this.permissionService.canAccess(requirement))
+          : option.route;
+      void this.router.navigate([route]);
     }
   }
 

@@ -84,7 +84,12 @@ export class JobSpecificationFormComponent implements OnInit {
   Math = Math;
 
   sidebarItems: SidebarItem[] = [
-    { id: 'recruitment-list', label: 'Recruitment List', route: '/recruitment' }
+    {
+      id: 'recruitment-list',
+      label: 'Recruitment List',
+      route: '/recruitment',
+      access: { moduleSlug: 'application_form', action: 'list' },
+    },
   ];
 
   sidebarSections: SidebarSection[] = [
@@ -92,10 +97,20 @@ export class JobSpecificationFormComponent implements OnInit {
       id: 'recruitment-actions',
       title: 'Recruitment Actions',
       items: [
-        { id: 'Job-Specification-Form', label: 'Job Specification Form', route: '/job-specification-form' },
-        { id: 'create-requisition', label: 'Application Form / Employee Profile', route: '/recruitment' },
-      ]
-    }
+        {
+          id: 'Job-Specification-Form',
+          label: 'Job Specification Form',
+          route: '/job-specification-form',
+          access: { moduleSlug: JOB_SPECIFICATION_MODULE, action: 'list' },
+        },
+        {
+          id: 'create-requisition',
+          label: 'Application Form / Employee Profile',
+          route: '/recruitment',
+          access: { moduleSlug: 'application_form', action: 'list' },
+        },
+      ],
+    },
   ];
 
   activeSidebarItemId = 'Job-Specification-Form';
