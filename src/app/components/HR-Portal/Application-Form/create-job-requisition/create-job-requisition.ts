@@ -26,6 +26,7 @@ import {
   GatePassItemMaster,
   GatePassItemMasterService,
 } from '../../../gate-pass/gate-pass-item-master.service';
+import { GatePassDepartmentService } from '../../../gate-pass/gate-pass-department.service';
 import {
   GL_ACCOUNT_BRANCH_OPTIONS,
   glAccountBranchLabel,
@@ -58,23 +59,6 @@ const ATTACHMENT_FIELD_OPTIONS = [
 ] as const;
 
 const DEFAULT_ATTACHMENT_ROWS: AttachmentRow[] = [{ type: '', fileName: '', fileUrl: '', file: null }];
-
-const DEPARTMENT_OPTIONS = [
-  'Production Department',
-  'Plant Maintenance Department',
-  'Electrical Department',
-  'Quality Control Department',
-  'Logistics Department',
-  'Procurement Department',
-  'Admin Department',
-  'Accounts & Finance Department',
-  'Internal Audit Department',
-  'Human Resource (HR) Department',
-  'Sales & Marketing Department',
-  'IT Department',
-  'BOD Department',
-  'Common Department',
-] as const;
 
 const WORK_GRADE_LEVEL_OPTIONS = [
   'WL 5',
@@ -189,7 +173,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly employmentCategory = signal('');
   protected readonly employmentStatus = signal('');
   protected readonly departmentInAhcp = signal('');
-  protected readonly departmentOptions = DEPARTMENT_OPTIONS;
+  protected readonly departmentOptions = signal<string[]>([]);
   protected readonly designation = signal('');
   protected readonly jobDescription = signal('');
   protected readonly roleSalary = signal('');
@@ -275,7 +259,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly maximumLoanCapacity = signal('');
   protected readonly maximumAdvanceCapacity = signal('');
   protected readonly otherAllowances = signal('');
-  protected readonly allowancesApplicable = signal<'Yes' | 'No' | ''>('No');
+  protected readonly allowancesApplicable = signal<'Yes' | 'No' | ''>('Yes');
   protected readonly cashSalaryPercentage = signal('');
   protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('No');
@@ -337,12 +321,29 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return this.paymentMode() === 'Hybrid';
   }
 
+  protected areAllowancesEnabled(): boolean {
+    return this.allowancesApplicable() === 'Yes';
+  }
+
   protected onPaymentModeChange(value: string): void {
     this.paymentMode.set(value as 'Cash' | 'Bank' | 'Hybrid' | '');
     if (value !== 'Hybrid') {
       this.taxPercentage.set('');
       this.cashSalaryPercentage.set('');
     }
+  }
+
+  protected onAllowancesApplicableChange(value: string): void {
+    this.allowancesApplicable.set(value as 'Yes' | 'No' | '');
+    if (value === 'Yes') {
+      this.updateMedicalAllowanceFromGrossSalary();
+      return;
+    }
+
+    this.medicalAllowances.set('');
+    this.mobileAllowances.set('');
+    this.carAllowances.set('');
+    this.otherAllowances.set('');
   }
 
   protected onBankSalaryPercentageChange(value: string): void {
@@ -594,13 +595,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       leavesAvailed: '',
       remainingLeaves: '',
       totalLeaves: '',
-      medicalAllowances: this.medicalAllowances(),
+      medicalAllowances: this.areAllowancesEnabled() ? this.medicalAllowances() : '',
       fuelAllowances: this.fuelAllowances(),
-      mobileAllowances: this.mobileAllowances(),
-      carAllowances: this.carAllowances(),
+      mobileAllowances: this.areAllowancesEnabled() ? this.mobileAllowances() : '',
+      carAllowances: this.areAllowancesEnabled() ? this.carAllowances() : '',
       maximumLoanCapacity: this.maximumLoanCapacity(),
       maximumAdvanceCapacity: this.maximumAdvanceCapacity(),
-      otherAllowances: this.otherAllowances(),
+      otherAllowances: this.areAllowancesEnabled() ? this.otherAllowances() : '',
       allowancesApplicable: this.allowancesApplicable(),
       cashSalaryPercentage: this.cashSalaryPercentage(),
       eobiApplicable: this.eobiApplicable(),
@@ -664,6 +665,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   private updateMedicalAllowanceFromGrossSalary(): void {
+    if (!this.areAllowancesEnabled()) {
+      this.medicalAllowances.set('');
+      return;
+    }
+
     const salaryStr = this.basicSalary().trim();
     if (!salaryStr) {
       this.medicalAllowances.set('');
@@ -1145,6 +1151,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.setupIntersectionObserver();
     this.loadJobSpecificationOptions();
     this.loadLeaveTypeOptions();
+    this.loadDepartmentOptions();
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       const nextCode = this.applicationFormService.getNextEmployeeCode();
@@ -1183,6 +1190,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     private readonly jobSpecificationService: JobSpecificationService,
     private readonly leaveTypeService: LeaveTypeService,
     private readonly itemMasterService: GatePassItemMasterService,
+    private readonly departmentService: GatePassDepartmentService,
     private readonly alertService: AlertService,
     private readonly cdr: ChangeDetectorRef,
   ) {
@@ -1268,6 +1276,19 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
           (error as { message?: string })?.message ||
           'Failed to load leave types.';
         this.alertService.error('Load Failed', errorMessage);
+      },
+    });
+  }
+
+  private loadDepartmentOptions(): void {
+    this.departmentService.ensureLoaded().subscribe({
+      next: () => {
+        this.departmentOptions.set(this.departmentService.departmentNames());
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.departmentOptions.set([]);
+        this.cdr.markForCheck();
       },
     });
   }
@@ -1718,6 +1739,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         this.remunerationValue(remuneration.loanAmountAllowed),
       ),
     );
+    this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') || 'Yes');
     this.updateMedicalAllowanceFromGrossSalary();
     const storedAdvanceCapacity = this.firstNonEmpty(
       this.remunerationValue(remuneration.maximumAdvanceCapacity),
@@ -1729,10 +1751,15 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     }
     this.overTimeApplicable.set((remuneration.overTimeApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.fuelAllowances.set(this.remunerationValue(remuneration.fuelAllowances));
-    this.mobileAllowances.set(this.remunerationValue(remuneration.mobileAllowances));
-    this.carAllowances.set(this.remunerationValue(remuneration.carAllowances));
-    this.otherAllowances.set(this.remunerationValue(remuneration.otherAllowances));
-    this.allowancesApplicable.set((remuneration.allowancesApplicable as 'Yes' | 'No' | '') ?? 'No');
+    if (this.areAllowancesEnabled()) {
+      this.mobileAllowances.set(this.remunerationValue(remuneration.mobileAllowances));
+      this.carAllowances.set(this.remunerationValue(remuneration.carAllowances));
+      this.otherAllowances.set(this.remunerationValue(remuneration.otherAllowances));
+    } else {
+      this.mobileAllowances.set('');
+      this.carAllowances.set('');
+      this.otherAllowances.set('');
+    }
     this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? 'No');
     this.socialSecurityApplicable.set(
       (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',

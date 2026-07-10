@@ -588,6 +588,13 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.cjr-row input:disabled,
+.cjr-row select:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
 .cjr-row select {
   appearance: none;
   cursor: pointer;

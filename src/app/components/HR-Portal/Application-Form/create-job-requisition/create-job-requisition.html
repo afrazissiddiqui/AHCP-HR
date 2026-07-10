@@ -364,7 +364,7 @@
               <select [ngModel]="departmentInAhcp()" (ngModelChange)="departmentInAhcp.set($event)"
                 [class.cjr-invalid]="showFieldError('departmentInAhcp')" (blur)="touch('departmentInAhcp')">
                 <option value="">No Selection</option>
-                @for (dept of departmentOptions; track dept) {
+                @for (dept of departmentOptions(); track dept) {
                 <option [value]="dept">{{ dept }}</option>
                 }
               </select>
@@ -902,7 +902,7 @@
 
           <div class="cjr-row">
             <label>Allowances Applicable:</label>
-            <select [ngModel]="allowancesApplicable()" (ngModelChange)="allowancesApplicable.set($event)"
+            <select [ngModel]="allowancesApplicable()" (ngModelChange)="onAllowancesApplicableChange($event)"
               (blur)="touch('allowancesApplicable')">
               <option value="">No Selection</option>
               <option value="Yes">Yes</option>
@@ -940,6 +940,7 @@
           <div class="cjr-row">
             <label>Medical Allowances:</label>
             <input type="text" inputmode="decimal" [ngModel]="medicalAllowances()" readonly
+              [disabled]="!areAllowancesEnabled()"
               placeholder="Auto-calculated: (Gross Salary / 110%) × 10%" tabindex="-1" />
           </div>
 
@@ -947,21 +948,21 @@
             <label>Mobile Allowances:</label>
             <input type="text" inputmode="decimal" [ngModel]="mobileAllowances()"
               (ngModelChange)="onNumericOnlyChange($event, mobileAllowances)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('mobileAllowances')" />
+              [disabled]="!areAllowancesEnabled()" (blur)="touch('mobileAllowances')" />
           </div>
 
           <div class="cjr-row">
             <label>Car Allowances:</label>
             <input type="text" inputmode="decimal" [ngModel]="carAllowances()"
               (ngModelChange)="onNumericOnlyChange($event, carAllowances)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('carAllowances')" />
+              [disabled]="!areAllowancesEnabled()" (blur)="touch('carAllowances')" />
           </div>
 
           <div class="cjr-row">
             <label>Other Allowances:</label>
             <input type="text" inputmode="decimal" [ngModel]="otherAllowances()"
               (ngModelChange)="onNumericOnlyChange($event, otherAllowances)" (keydown)="onDecimalKeyDown($event)"
-              (blur)="touch('otherAllowances')" />
+              [disabled]="!areAllowancesEnabled()" (blur)="touch('otherAllowances')" />
           </div>
         </div>
       </div>

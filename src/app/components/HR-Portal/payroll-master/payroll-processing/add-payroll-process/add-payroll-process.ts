@@ -200,6 +200,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'readonly', minWidth: 152 },
     { key: 'grossSalary', label: 'Gross Salary', groupId: 'salary', type: 'readonly', minWidth: 152 },
     { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'readonly', minWidth: 145 },
+    { key: 'allowedLiters', label: 'Petrol Liters', groupId: 'allowances', type: 'readonly', minWidth: 120 },
     { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'readonly', minWidth: 145 },
     { key: 'mobileAllowance', label: 'Mobile', groupId: 'allowances', type: 'currency', minWidth: 145 },
     { key: 'carAllowance', label: 'Car', groupId: 'allowances', type: 'currency', minWidth: 145 },
@@ -279,6 +280,7 @@ export class AddPayrollProcessComponent implements OnInit {
       basicSalary: 0,
       grossSalary: 0,
       medicalAllowance: 0,
+      allowedLiters: 0,
       fuelAllowance: 0,
       mobileAllowance: 0,
       carAllowance: 0,
@@ -305,6 +307,7 @@ export class AddPayrollProcessComponent implements OnInit {
       totals.basicSalary += row.basicSalary;
       totals.grossSalary += row.grossSalary;
       totals.medicalAllowance += row.medicalAllowance;
+      totals.allowedLiters += row.allowedLiters;
       totals.fuelAllowance += row.fuelAllowance;
       totals.mobileAllowance += row.mobileAllowance;
       totals.carAllowance += row.carAllowance;
@@ -582,7 +585,7 @@ export class AddPayrollProcessComponent implements OnInit {
 
   formatColumnDisplay(row: PayrollProcessRow, column: PayrollColumnDef): string {
     const value = this.getColumnValue(row, column);
-    if (column.key === 'overtimeHours') {
+    if (column.key === 'overtimeHours' || column.key === 'allowedLiters') {
       return typeof value === 'number'
         ? value.toLocaleString('en-PK', { maximumFractionDigits: 2 })
         : String(value);
@@ -627,6 +630,17 @@ export class AddPayrollProcessComponent implements OnInit {
     }
     const totals = this.groupTotals();
     return totals[column.key as keyof typeof totals] ?? 0;
+  }
+
+  formatGroupTotal(column: PayrollColumnDef): string {
+    const total = this.getGroupTotal(column);
+    if (total === null) {
+      return '';
+    }
+    if (column.key === 'allowedLiters' || column.key === 'overtimeHours') {
+      return total.toLocaleString('en-PK', { maximumFractionDigits: 2 });
+    }
+    return this.formatMoney(total);
   }
 
   onMinimumWageChange(value: string | number): void {
@@ -995,8 +1009,9 @@ export class AddPayrollProcessComponent implements OnInit {
     const grossSalary = this.parseAmount(remuneration?.basicSalary ?? 0);
     const medicalAllowance = computeMedicalAllowance(grossSalary);
     const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
-    const allowedLiters = this.parseAmount(remuneration?.fuelLimit ?? 0);
+    const allowedLiters = this.parseFuelLiters(remuneration?.fuelLimit);
     const profileFuelAmount = this.parseAmount(remuneration?.fuelAllowances ?? 0);
+    // Prefer a derived per-liter rate from profile fuel amount; otherwise Fuel Price Adjust is the rate.
     const monthlyFuelRate =
       allowedLiters > 0 && profileFuelAmount > 0
         ? profileFuelAmount / allowedLiters
@@ -1055,8 +1070,9 @@ export class AddPayrollProcessComponent implements OnInit {
     const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
     const providentFund = computeProvidentFund(basicSalary);
 
+    const effectiveFuelRate = row.monthlyFuelRate + this.fuelPriceAdjust();
     const fuelAllowance = row.allowancesApplicable
-      ? computeFuelAllowance(row.allowedLiters, row.monthlyFuelRate + this.fuelPriceAdjust())
+      ? computeFuelAllowance(row.allowedLiters, effectiveFuelRate)
       : 0;
     const mobileAllowance = row.allowancesApplicable ? row.mobileAllowance : 0;
     const carAllowance = row.allowancesApplicable ? row.carAllowance : 0;
@@ -1094,6 +1110,15 @@ export class AddPayrollProcessComponent implements OnInit {
       eobiEmployee,
       eobiEmployer,
     };
+  }
+
+  /** Reads application-form Fuel Limit (liters), tolerating formatted API values. */
+  private parseFuelLiters(value: string | number | null | undefined): number {
+    const formatted = this.applicationFormService.formatFuelLimitForForm(value);
+    if (!formatted) {
+      return 0;
+    }
+    return this.parseAmount(formatted.replace(/,/g, ''));
   }
 
   private isYesFlag(value: string | undefined): boolean {

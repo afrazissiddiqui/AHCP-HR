@@ -903,16 +903,20 @@
 .comp-table-fixed .comp-grid thead th,
 .comp-table-scroll .comp-grid thead th {
   position: sticky;
+  z-index: 4;
+}
+
+.comp-table-fixed .comp-group-row th,
+.comp-table-scroll .comp-group-row th {
   top: 0;
-  z-index: 2;
+  z-index: 5;
 }
 
-.comp-table-fixed .comp-col-row th {
-  top: 42px;
-}
-
+.comp-table-fixed .comp-col-row th,
 .comp-table-scroll .comp-col-row th {
   top: 42px;
+  z-index: 4;
+  box-shadow: 0 1px 0 #e8edf2;
 }
 
 .comp-pagination {

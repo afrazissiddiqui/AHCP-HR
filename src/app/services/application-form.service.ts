@@ -447,7 +447,7 @@ const REMUNERATION_EXTRA_KEYS: Readonly<Record<string, readonly string[]>> = {
   basicSalary: ['grossSalary', 'gross_salary', 'GrossSalary', 'salaryOffer', 'salary_offer'],
   medicalAllowances: ['medicalAllowance', 'medical_allowance', 'MedicalAllowances', 'MedicalAllowance'],
   fuelAllowances: ['fuelAllowance', 'fuel_allowance', 'FuelAllowances', 'FuelAllowance'],
-  fuelLimit: ['FuelLimit', 'fuel_limit'],
+  fuelLimit: ['FuelLimit', 'fuel_limit', 'petrolLimit', 'petrol_limit', 'fuelLiters', 'fuel_liters', 'allowedLiters', 'allowed_liters'],
   mobileAllowances: ['mobileAllowance', 'mobile_allowance', 'MobileAllowances', 'MobileAllowance'],
   carAllowances: ['carAllowance', 'car_allowance', 'CarAllowances', 'CarAllowance'],
   otherAllowances: [
@@ -1541,10 +1541,24 @@ export class ApplicationFormService {
       item['fuelLimit'],
       item['fuel_limit'],
       item['FuelLimit'],
+      item['petrolLimit'],
+      item['petrol_limit'],
+      item['fuelLiters'],
+      item['fuel_liters'],
+      item['allowedLiters'],
+      item['allowed_liters'],
       remunerationSource['fuelLimit'],
       remunerationSource['fuel_limit'],
+      remunerationSource['FuelLimit'],
+      remunerationSource['petrolLimit'],
+      remunerationSource['petrol_limit'],
+      remunerationSource['fuelLiters'],
+      remunerationSource['fuel_liters'],
+      remunerationSource['allowedLiters'],
+      remunerationSource['allowed_liters'],
       nestedRemuneration?.['fuelLimit'],
       nestedRemuneration?.['fuel_limit'],
+      nestedRemuneration?.['FuelLimit'],
     ];
 
     for (const candidate of candidates) {

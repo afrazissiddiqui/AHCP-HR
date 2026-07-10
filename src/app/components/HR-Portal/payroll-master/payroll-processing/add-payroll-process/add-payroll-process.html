@@ -86,7 +86,7 @@
           min="0"
           step="0.01"
           class="comp-plan-field__input"
-          placeholder="Enter fuel price adjust"
+          placeholder="PKR per liter"
           [ngModel]="fuelPriceAdjust()"
           (ngModelChange)="onFuelPriceAdjustChange($event)"
         />
@@ -332,7 +332,7 @@
                                 <input
                                   type="text"
                                   class="comp-input comp-input--readonly"
-                                  [value]="formatMoney($any(getColumnValue(row, col)))"
+                                  [value]="formatColumnDisplay(row, col)"
                                   readonly
                                   [attr.title]="readonlyReason(row, col)"
                                 />
@@ -391,7 +391,7 @@
                   @for (col of payrollColumns; track col.key) {
                     <td class="comp-total-value" [class]="columnSectionClass(col)">
                       @if (getGroupTotal(col) !== null) {
-                        {{ formatMoney(getGroupTotal(col)!) }}
+                        {{ formatGroupTotal(col) }}
                       }
                     </td>
                   }
