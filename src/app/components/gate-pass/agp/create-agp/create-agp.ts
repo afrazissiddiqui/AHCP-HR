@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import {
@@ -87,6 +88,8 @@ export class CreateAgpComponent implements OnInit {
 
   lines: AgpLineItem[] = [];
   remarks = '';
+  loading = false;
+  submitting = false;
 
   departmentOptions: string[] = [];
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
@@ -123,18 +126,24 @@ export class CreateAgpComponent implements OnInit {
     this.editingId = editId;
     this.pageTitle = 'Update AGP';
     this.submitButtonLabel = 'Update AGP';
+    this.loading = true;
 
-    this.agpService.fetchArticleGatePassDetail(editId).subscribe({
-      next: (record) => {
-        this.populateFromRecord(record);
-      },
-      error: (error: unknown) => {
-        void this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load AGP for edit.'),
-        );
-      },
-    });
+    this.agpService
+      .fetchArticleGatePassDetail(editId)
+      .pipe(finalize(() => {
+        this.loading = false;
+      }))
+      .subscribe({
+        next: (record) => {
+          this.populateFromRecord(record);
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Load Failed',
+            formatApiErrorMessage(error, 'Failed to load AGP for edit.'),
+          );
+        },
+      });
   }
 
   private assignNextReferenceNo(): void {
@@ -216,6 +225,10 @@ export class CreateAgpComponent implements OnInit {
   }
 
   submitForm(): void {
+    if (this.submitting || this.loading) {
+      return;
+    }
+
     if (!this.documentDate?.trim() || !this.requestingDepartment?.trim() || !this.businessPartnerName?.trim()) {
       void this.alertService.validation(
         'Please ensure Date, Requesting department, and Business partner name are filled.',
@@ -233,27 +246,32 @@ export class CreateAgpComponent implements OnInit {
       ? this.agpService.updateArticleGatePass(this.editingId, payload)
       : this.agpService.addArticleGatePass(payload);
 
-    request$.subscribe({
-      next: async (response) => {
-        if (response?.status === false || response?.success === false) {
-          const fallback = this.editingId ? 'Failed to update AGP.' : 'Failed to save AGP.';
-          this.alertService.error('Error', response.message || fallback);
-          return;
-        }
+    this.submitting = true;
+    request$
+      .pipe(finalize(() => {
+        this.submitting = false;
+      }))
+      .subscribe({
+        next: async (response) => {
+          if (response?.status === false || response?.success === false) {
+            const fallback = this.editingId ? 'Failed to update AGP.' : 'Failed to save AGP.';
+            this.alertService.error('Error', response.message || fallback);
+            return;
+          }
 
-        const title = this.editingId ? 'Updated' : 'Success';
-        const message = this.editingId
-          ? response?.message || 'AGP record updated successfully.'
-          : response?.message || 'AGP record saved successfully.';
-        await this.alertService.successAndWait(title, message);
-        this.agpService.fetchArticleGatePasses().subscribe();
-        this.back();
-      },
-      error: (error: unknown) => {
-        const fallback = this.editingId ? 'Failed to update AGP.' : 'Failed to save AGP.';
-        this.alertService.error('Error', formatApiErrorMessage(error, fallback));
-      },
-    });
+          const title = this.editingId ? 'Updated' : 'Success';
+          const message = this.editingId
+            ? response?.message || 'AGP record updated successfully.'
+            : response?.message || 'AGP record saved successfully.';
+          await this.alertService.successAndWait(title, message);
+          this.agpService.fetchArticleGatePasses().subscribe();
+          this.back();
+        },
+        error: (error: unknown) => {
+          const fallback = this.editingId ? 'Failed to update AGP.' : 'Failed to save AGP.';
+          this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+        },
+      });
   }
 
   private populateFromRecord(record: AgpRecord): void {

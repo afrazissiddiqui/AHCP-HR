@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { OpenBaseDocument } from '../../open-base-documents.service';
@@ -80,6 +81,8 @@ export class CreateIgpComponent implements OnInit {
   remarks = '';
 
   showBaseDocModal = false;
+  loading = false;
+  submitting = false;
 
   readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
@@ -117,18 +120,24 @@ export class CreateIgpComponent implements OnInit {
     this.editingId = editId;
     this.pageTitle = 'Update IGP';
     this.submitButtonLabel = 'Update IGP';
+    this.loading = true;
 
-    this.igpService.fetchInwardGatePassDetail(editId).subscribe({
-      next: (record) => {
-        this.populateFromRecord(record);
-      },
-      error: (error: unknown) => {
-        void this.alertService.error(
-          'Load Failed',
-          formatApiErrorMessage(error, 'Failed to load IGP for edit.'),
-        );
-      },
-    });
+    this.igpService
+      .fetchInwardGatePassDetail(editId)
+      .pipe(finalize(() => {
+        this.loading = false;
+      }))
+      .subscribe({
+        next: (record) => {
+          this.populateFromRecord(record);
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Load Failed',
+            formatApiErrorMessage(error, 'Failed to load IGP for edit.'),
+          );
+        },
+      });
   }
 
   private assignNextReferenceNo(): void {
@@ -262,6 +271,10 @@ export class CreateIgpComponent implements OnInit {
   }
 
   submitForm(): void {
+    if (this.submitting || this.loading) {
+      return;
+    }
+
     if (!this.type?.trim() || !this.documentDate?.trim() || !this.department?.trim() || !this.businessPartnerName?.trim()) {
       void this.alertService.validation('Please ensure Type, Date, Department, and Business partner name are filled.');
       return;
@@ -277,27 +290,32 @@ export class CreateIgpComponent implements OnInit {
       ? this.igpService.updateInwardGatePass(this.editingId, payload)
       : this.igpService.addInwardGatePass(payload);
 
-    request$.subscribe({
-      next: async (response) => {
-        if (response?.status === false || response?.success === false) {
-          const fallback = this.editingId ? 'Failed to update IGP.' : 'Failed to save IGP.';
-          this.alertService.error('Error', response.message || fallback);
-          return;
-        }
+    this.submitting = true;
+    request$
+      .pipe(finalize(() => {
+        this.submitting = false;
+      }))
+      .subscribe({
+        next: async (response) => {
+          if (response?.status === false || response?.success === false) {
+            const fallback = this.editingId ? 'Failed to update IGP.' : 'Failed to save IGP.';
+            this.alertService.error('Error', response.message || fallback);
+            return;
+          }
 
-        const title = this.editingId ? 'Updated' : 'Success';
-        const message = this.editingId
-          ? response?.message || 'IGP record updated successfully.'
-          : response?.message || 'IGP record saved successfully.';
-        await this.alertService.successAndWait(title, message);
-        this.igpService.fetchInwardGatePasses().subscribe();
-        this.back();
-      },
-      error: (error: unknown) => {
-        const fallback = this.editingId ? 'Failed to update IGP.' : 'Failed to save IGP.';
-        this.alertService.error('Error', formatApiErrorMessage(error, fallback));
-      },
-    });
+          const title = this.editingId ? 'Updated' : 'Success';
+          const message = this.editingId
+            ? response?.message || 'IGP record updated successfully.'
+            : response?.message || 'IGP record saved successfully.';
+          await this.alertService.successAndWait(title, message);
+          this.igpService.fetchInwardGatePasses().subscribe();
+          this.back();
+        },
+        error: (error: unknown) => {
+          const fallback = this.editingId ? 'Failed to update IGP.' : 'Failed to save IGP.';
+          this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+        },
+      });
   }
 
   private populateFromRecord(record: IgpRecord): void {

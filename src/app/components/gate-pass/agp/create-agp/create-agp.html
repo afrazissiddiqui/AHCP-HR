@@ -1,5 +1,16 @@
 <div class="husky-add-page cjr-page scd-add-page agp-create-page">
-  <div class="husky-add-scroll">
+  <div
+    *ngIf="loading"
+    class="gate-pass-page-loader"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <span class="gate-pass-page-loader__spinner" aria-hidden="true"></span>
+    <span>Loading…</span>
+  </div>
+
+  <div class="husky-add-scroll" [class.gate-pass-form--dimmed]="loading || submitting">
     <div class="cjr-header">
       <div class="cjr-header-left">
         <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
@@ -406,10 +417,16 @@
     </div>
 
     <div class="cjr-actions-footer husky-actions-footer">
-      <button type="button" class="btn-secondary" (click)="back()">Cancel</button>
-      <button type="button" class="cjr-submit-btn" (click)="submitForm()">
-        <span class="cjr-submit-icon">✓</span>
-        {{ submitButtonLabel }}
+      <button type="button" class="btn-secondary" (click)="back()" [disabled]="loading || submitting">Cancel</button>
+      <button type="button" class="cjr-submit-btn" (click)="submitForm()" [disabled]="loading || submitting">
+        <ng-container *ngIf="submitting; else agpSubmitIdle">
+          <span class="cjr-submit-spinner" aria-hidden="true"></span>
+          <span>{{ editingId ? 'Updating…' : 'Saving…' }}</span>
+        </ng-container>
+        <ng-template #agpSubmitIdle>
+          <span class="cjr-submit-icon">✓</span>
+          {{ submitButtonLabel }}
+        </ng-template>
       </button>
     </div>
   </div>
