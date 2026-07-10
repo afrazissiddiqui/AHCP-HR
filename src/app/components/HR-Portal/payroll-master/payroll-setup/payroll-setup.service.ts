@@ -134,6 +134,14 @@ export function computeFuelAllowance(allowedLiters: number, monthlyFuelRate: num
   return roundPayrollAmount(allowedLiters * monthlyFuelRate);
 }
 
+/** Provident Fund = 8.33% of Basic Salary */
+export function computeProvidentFund(basicSalary: number): number {
+  if (basicSalary <= 0) {
+    return 0;
+  }
+  return roundPayrollAmount(basicSalary * 0.0833);
+}
+
 /** Overtime Rate = Last Month Gross Salary ÷ 30 */
 export function computeOvertimeRate(lastMonthGrossSalary: number): number {
   if (lastMonthGrossSalary <= 0) {

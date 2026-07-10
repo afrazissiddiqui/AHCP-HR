@@ -41,6 +41,7 @@ import {
   computeNetPayable,
   computeOvertimeAmount,
   computeOvertimeRate,
+  computeProvidentFund,
   computeYearsOfService,
 } from '../../payroll-setup/payroll-setup.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
@@ -66,6 +67,8 @@ export interface PayrollProcessRow {
   workGradeLevel: string;
   dateOfJoining: string;
   yearsOfService: number;
+  overtimeApplicable: boolean;
+  allowancesApplicable: boolean;
   eobiApplicable: boolean;
   basicSalary: number;
   grossSalary: number;
@@ -204,7 +207,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'bonus', label: 'Bonus', groupId: 'bonuses', type: 'currency', minWidth: 145 },
     { key: 'overtimeHours', label: 'OT Hours', groupId: 'bonuses', type: 'currency', minWidth: 96 },
     { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'readonly', minWidth: 145 },
-    { key: 'providentFund', label: 'Provident Fund', groupId: 'deductions', type: 'currency', minWidth: 152 },
+    { key: 'providentFund', label: 'Provident Fund', groupId: 'deductions', type: 'readonly', minWidth: 152 },
     { key: 'gratuity', label: 'Gratuity', groupId: 'deductions', type: 'readonly', minWidth: 172 },
     { key: 'eobiEmployee', label: 'EOBI (Employee)', groupId: 'deductions', type: 'readonly', minWidth: 152 },
     { key: 'eobiEmployer', label: 'EOBI (Employer)', groupId: 'deductions', type: 'readonly', minWidth: 152 },
@@ -561,6 +564,54 @@ export class AddPayrollProcessComponent implements OnInit {
     return typeof value === 'number' ? value : String(value ?? '');
   }
 
+  isColumnReadonlyForRow(row: PayrollProcessRow, column: PayrollColumnDef): boolean {
+    if (column.type !== 'currency') {
+      return true;
+    }
+
+    if (!row.allowancesApplicable && this.isAllowanceColumn(column.key)) {
+      return true;
+    }
+
+    if (!row.overtimeApplicable && column.key === 'overtimeHours') {
+      return true;
+    }
+
+    return false;
+  }
+
+  formatColumnDisplay(row: PayrollProcessRow, column: PayrollColumnDef): string {
+    const value = this.getColumnValue(row, column);
+    if (column.key === 'overtimeHours') {
+      return typeof value === 'number'
+        ? value.toLocaleString('en-PK', { maximumFractionDigits: 2 })
+        : String(value);
+    }
+    return this.formatMoney(typeof value === 'number' ? value : this.parseAmount(value));
+  }
+
+  private isAllowanceColumn(key: string): boolean {
+    return (
+      key === 'fuelAllowance' ||
+      key === 'mobileAllowance' ||
+      key === 'carAllowance' ||
+      key === 'otherAllowances'
+    );
+  }
+
+  readonlyReason(row: PayrollProcessRow, column: PayrollColumnDef): string {
+    if (!row.allowancesApplicable && this.isAllowanceColumn(column.key)) {
+      return 'Allowances not applicable for this employee';
+    }
+    if (!row.overtimeApplicable && (column.key === 'overtimeHours' || column.key === 'overtime')) {
+      return 'Overtime not applicable for this employee';
+    }
+    if (!row.eobiApplicable && (column.key === 'eobiEmployee' || column.key === 'eobiEmployer')) {
+      return 'EOBI not applicable for this employee';
+    }
+    return '';
+  }
+
   getGroupTotal(column: PayrollColumnDef): number | null {
     if (column.key === 'approved') {
       return null;
@@ -606,13 +657,24 @@ export class AddPayrollProcessComponent implements OnInit {
     field: keyof PayrollProcessRow,
     value: string | number,
   ): void {
+    const row = this.rowCache().get(apiId);
+    if (!row) {
+      return;
+    }
+
+    if (!row.allowancesApplicable && this.isAllowanceColumn(String(field))) {
+      return;
+    }
+    if (!row.overtimeApplicable && field === 'overtimeHours') {
+      return;
+    }
+
     const numericFields: Array<keyof PayrollProcessRow> = [
       'mobileAllowance',
       'carAllowance',
       'otherAllowances',
       'bonus',
       'overtimeHours',
-      'providentFund',
       'arrears',
       'loanAdjustment',
       'loanAdvForm',
@@ -622,12 +684,12 @@ export class AddPayrollProcessComponent implements OnInit {
       : String(value);
 
     this.rowCache.update((cache) => {
-      const row = cache.get(apiId);
-      if (!row) {
+      const current = cache.get(apiId);
+      if (!current) {
         return cache;
       }
       const next = new Map(cache);
-      next.set(apiId, this.recalculateRow({ ...row, [field]: parsed }));
+      next.set(apiId, this.recalculateRow({ ...current, [field]: parsed }));
       return next;
     });
   }
@@ -897,6 +959,8 @@ export class AddPayrollProcessComponent implements OnInit {
       workGradeLevel: '',
       dateOfJoining: '',
       yearsOfService: 0,
+      overtimeApplicable: false,
+      allowancesApplicable: false,
       eobiApplicable: false,
       basicSalary: 0,
       grossSalary: 0,
@@ -957,7 +1021,9 @@ export class AddPayrollProcessComponent implements OnInit {
       workGradeLevel: detail?.personalInfo.workGradeLevel ?? '',
       dateOfJoining: remuneration?.dateOfJoining ?? '',
       yearsOfService: 0,
-      eobiApplicable: this.isEobiApplicable(remuneration?.eobiApplicable),
+      overtimeApplicable: this.isYesFlag(remuneration?.overTimeApplicable),
+      allowancesApplicable: this.isYesFlag(remuneration?.allowancesApplicable),
+      eobiApplicable: this.isYesFlag(remuneration?.eobiApplicable),
       basicSalary,
       grossSalary,
       medicalAllowance,
@@ -987,10 +1053,20 @@ export class AddPayrollProcessComponent implements OnInit {
     const grossSalary = row.grossSalary > 0 ? row.grossSalary : row.basicSalary;
     const medicalAllowance = computeMedicalAllowance(grossSalary);
     const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
-    const effectiveFuelRate = row.monthlyFuelRate + this.fuelPriceAdjust();
-    const fuelAllowance = computeFuelAllowance(row.allowedLiters, effectiveFuelRate);
-    const overtimeRate = computeOvertimeRate(row.lastMonthGrossSalary);
-    const overtime = computeOvertimeAmount(overtimeRate, row.overtimeHours);
+    const providentFund = computeProvidentFund(basicSalary);
+
+    const fuelAllowance = row.allowancesApplicable
+      ? computeFuelAllowance(row.allowedLiters, row.monthlyFuelRate + this.fuelPriceAdjust())
+      : 0;
+    const mobileAllowance = row.allowancesApplicable ? row.mobileAllowance : 0;
+    const carAllowance = row.allowancesApplicable ? row.carAllowance : 0;
+    const otherAllowances = row.allowancesApplicable ? row.otherAllowances : 0;
+
+    const overtimeHours = row.overtimeApplicable ? row.overtimeHours : 0;
+    const overtime = row.overtimeApplicable
+      ? computeOvertimeAmount(computeOvertimeRate(row.lastMonthGrossSalary), overtimeHours)
+      : 0;
+
     const yearsOfService = computeYearsOfService(row.dateOfJoining);
     const gratuity = computeGratuity(grossSalary, yearsOfService);
     const minimumWage = this.payrollSetupService.minimumWage();
@@ -1007,7 +1083,12 @@ export class AddPayrollProcessComponent implements OnInit {
       medicalAllowance,
       grossSalary,
       fuelAllowance,
+      mobileAllowance,
+      carAllowance,
+      otherAllowances,
+      overtimeHours,
       overtime,
+      providentFund,
       yearsOfService,
       gratuity,
       eobiEmployee,
@@ -1015,7 +1096,7 @@ export class AddPayrollProcessComponent implements OnInit {
     };
   }
 
-  private isEobiApplicable(value: string | undefined): boolean {
+  private isYesFlag(value: string | undefined): boolean {
     const normalized = (value ?? '').trim().toLowerCase();
     return normalized === 'yes' || normalized === 'y' || normalized === '1' || normalized === 'true';
   }

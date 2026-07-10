@@ -299,17 +299,29 @@
                         @switch (col.type) {
                           @case ('currency') {
                             @if (isRowLoaded(row.apiId)) {
-                              <div class="comp-input-wrap">
-                                <span class="comp-input-prefix">{{ currencyCode }}</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  class="comp-input"
-                                  [ngModel]="getColumnValue(row, col)"
-                                  (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
-                                />
-                              </div>
+                              @if (isColumnReadonlyForRow(row, col)) {
+                                <div class="comp-input-wrap comp-input-wrap--readonly">
+                                  <input
+                                    type="text"
+                                    class="comp-input comp-input--readonly"
+                                    [value]="formatColumnDisplay(row, col)"
+                                    readonly
+                                    [attr.title]="readonlyReason(row, col)"
+                                  />
+                                </div>
+                              } @else {
+                                <div class="comp-input-wrap">
+                                  <span class="comp-input-prefix">{{ currencyCode }}</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    class="comp-input"
+                                    [ngModel]="getColumnValue(row, col)"
+                                    (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
+                                  />
+                                </div>
+                              }
                             } @else {
                               <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
                             }
@@ -322,6 +334,7 @@
                                   class="comp-input comp-input--readonly"
                                   [value]="formatMoney($any(getColumnValue(row, col)))"
                                   readonly
+                                  [attr.title]="readonlyReason(row, col)"
                                 />
                               </div>
                             } @else {
