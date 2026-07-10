@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  Component,
+  CUSTOM_ELEMENTS_SCHEMA,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ColumnResizeDirective } from '../../../../column-resize';
@@ -58,6 +67,8 @@ export class AttendanceManagmentComponent implements OnInit {
   readonly showViewDialog = signal(false);
   readonly selectedRecord = signal<AttendanceDailyRecord | null>(null);
   readonly pageRecords = signal<AttendanceDailyRecord[]>([]);
+
+  @ViewChild('tableScroll') private tableScroll?: ElementRef<HTMLDivElement>;
 
   private pageEnrichSub?: Subscription;
   private pageEnrichGeneration = 0;
@@ -401,9 +412,24 @@ export class AttendanceManagmentComponent implements OnInit {
   }
 
   private renderCurrentPage(): void {
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
     const slots = this.paginatedSlots;
     this.pageRecords.set(this.attendanceService.materializeSlots(slots));
     this.enrichCurrentPageEmployees(slots);
+    queueMicrotask(() => this.resetTableScroll());
+  }
+
+  private resetTableScroll(): void {
+    const scrollHost = this.tableScroll?.nativeElement;
+    if (!scrollHost) {
+      return;
+    }
+
+    scrollHost.scrollTop = 0;
+    scrollHost.scrollLeft = 0;
   }
 
   private enrichCurrentPageEmployees(slots: AttendanceSlotRef[]): void {

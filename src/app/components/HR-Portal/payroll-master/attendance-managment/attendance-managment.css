@@ -527,6 +527,11 @@
   color: #115e59;
 }
 
+.attendance-table thead {
+  position: relative;
+  z-index: 4;
+}
+
 .attendance-table__column-row th {
   position: sticky;
   top: 40px;
@@ -538,6 +543,10 @@
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
   vertical-align: middle;
+}
+
+.attendance-table__column-row th.sortable-header[appColumnResize] {
+  position: sticky;
 }
 
 .attendance-table__column-row th.sortable-header {
@@ -589,6 +598,8 @@
 }
 
 .attendance-table tbody td {
+  position: relative;
+  z-index: 1;
   padding: 12px;
   font-size: 13px;
   color: #1e293b;

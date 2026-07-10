@@ -33,6 +33,7 @@ import { GlAccountDeterminationComponent } from './components/setup/gl-account-d
 import { LeaveTypesComponent } from './components/setup/leave-types/leave-types';
 import { UserSetupComponent } from './components/setup/user-setup/user-setup';
 import { WorkstationComponent } from './components/setup/workstation/workstation';
+import { OvertimeListComponent } from './components/setup/overtime-list/overtime-list';
 
 export const routes: Routes = [
   {
@@ -227,6 +228,11 @@ export const routes: Routes = [
     path: 'setup/workstation',
     component: WorkstationComponent,
     canActivate: [authGuard, requirePermission('workstation_form', 'list')],
+  },
+  {
+    path: 'setup/overtime-list',
+    component: OvertimeListComponent,
+    canActivate: [authGuard, requirePermission('overtime_list_form', 'list')],
   },
   {
     path: 'termination',

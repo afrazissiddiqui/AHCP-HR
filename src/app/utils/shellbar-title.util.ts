@@ -49,6 +49,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/leave-types': 'Leave Types',
   'setup/user-setup': 'User Setup',
   'setup/workstation': 'Workstation',
+  'setup/overtime-list': 'Overtime List',
   'plant-maintenance/main-form': 'Main Form',
   'plant-maintenance/main-form/plant-maintenance-master-form': 'Plant Maintenance Master Form',
   'plant-maintenance/main-form/plant-maintenance-master-form/create': 'Add Machine',
@@ -94,6 +95,7 @@ const NON_SEARCH_ROUTE_KEYS = new Set([
   'setup/leave-types',
   'setup/user-setup',
   'setup/workstation',
+  'setup/overtime-list',
 ]);
 
 export function isShellbarSearchRoute(routeKey: string): boolean {

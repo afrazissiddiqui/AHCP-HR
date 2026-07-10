@@ -16,7 +16,11 @@ export class ColumnResizeDirective implements OnInit {
   ngOnInit(): void {
     const th = this.el.nativeElement;
 
-    this.renderer.setStyle(th, "position", "relative");
+    // Preserve sticky headers; only add a positioning context when the cell is static.
+    const position = getComputedStyle(th).position;
+    if (position === "static") {
+      this.renderer.setStyle(th, "position", "relative");
+    }
 
     const resizer = this.renderer.createElement("span");
     this.renderer.addClass(resizer, "resize-handle");

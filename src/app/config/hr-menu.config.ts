@@ -111,6 +111,13 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         route: '/setup/workstation',
         access: { moduleSlug: 'workstation_form', action: 'list' },
       },
+      {
+        label: 'Overtime List',
+        value: 'setup/overtime-list',
+        icon: 'time-entry-request',
+        route: '/setup/overtime-list',
+        access: { moduleSlug: 'overtime_list_form', action: 'list' },
+      },
     ],
   },
   { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },

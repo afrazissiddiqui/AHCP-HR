@@ -1,0 +1,170 @@
+.setup-layout {
+  background: #f3f6fb;
+  min-height: 100vh;
+}
+
+.setup-content {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.setup-body {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 18px 20px 32px;
+  width: 100%;
+}
+
+.setup-intro {
+  margin-bottom: 16px;
+}
+
+.setup-intro h2 {
+  color: #1d2d3e;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.setup-intro p {
+  color: #5f6b7a;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+
+.form-panel {
+  background: #ffffff;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 16px 18px 20px;
+}
+
+.form-panel-head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.form-panel-title {
+  color: #1d2d3e;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.panel-subtitle {
+  color: #5f6b7a;
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.panel-message {
+  color: #5f6b7a;
+  font-size: 14px;
+  padding: 8px 0 4px;
+}
+
+.panel-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.search-input {
+  border: 1px solid #c7d3e3;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 220px;
+  padding: 8px 12px;
+}
+
+.search-input:focus {
+  border-color: #4f46b8;
+  box-shadow: 0 0 0 3px rgba(79, 70, 184, 0.12);
+  outline: none;
+}
+
+.btn-refresh {
+  background: #ffffff;
+  border: 1px solid #4f46b8;
+  border-radius: 6px;
+  color: #4f46b8;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: #f5f3ff;
+}
+
+.btn-refresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.entry-table {
+  border-collapse: collapse;
+  min-width: 960px;
+  width: 100%;
+}
+
+.entry-table th,
+.entry-table td {
+  border-bottom: 1px solid #e4e9f0;
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.entry-table th {
+  background: #f8fafc;
+  color: #1d2d3e;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.entry-table td {
+  color: #1f2d3d;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.col-sr {
+  text-align: center;
+  width: 72px;
+}
+
+.col-status {
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .form-panel-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .panel-actions {
+    width: 100%;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 0;
+  }
+}

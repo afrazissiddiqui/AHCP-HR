@@ -194,6 +194,11 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
+    slug: 'overtime_list_form',
+    name: 'Overtime List Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
     slug: 'good_receipt_note_form',
     name: 'Good Receipt Note Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
