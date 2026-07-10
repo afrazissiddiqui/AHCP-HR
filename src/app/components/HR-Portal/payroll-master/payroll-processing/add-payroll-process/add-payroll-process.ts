@@ -147,6 +147,7 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly pageSize = signal(10);
   readonly pageSizeOptions = [10, 25, 50, 100];
   readonly remarks = signal('');
+  readonly fuelPriceAdjust = signal(0);
   readonly searchText = signal('');
   readonly selectedMonth = signal(new Date().getMonth() + 1);
   readonly selectedYear = signal(new Date().getFullYear());
@@ -363,6 +364,17 @@ export class AddPayrollProcessComponent implements OnInit {
     this.currentPage.set(1);
     this.scrollTablesToTop();
     this.loadCurrentPageDetails();
+  }
+
+  onFuelPriceAdjustChange(value: string | number): void {
+    this.fuelPriceAdjust.set(this.parseAmount(value));
+    this.rowCache.update((cache) => {
+      const next = new Map(cache);
+      for (const [id, row] of next) {
+        next.set(id, this.recalculateRow(row));
+      }
+      return next;
+    });
   }
 
   isLastPageActive(): boolean {
@@ -711,6 +723,7 @@ export class AddPayrollProcessComponent implements OnInit {
         status: 'Draft',
         processedBy: this.authService.getSessionUser()?.id ?? 1,
         processedDate: this.formatProcessedDate(new Date()),
+        fuelPriceAdjust: this.fuelPriceAdjust(),
       },
       details: rows.map((row) => ({
         employeeId: row.apiId,
@@ -969,7 +982,8 @@ export class AddPayrollProcessComponent implements OnInit {
   private recalculateRow(row: PayrollProcessRow): PayrollProcessRow {
     const medicalAllowance = computeMedicalAllowance(row.basicSalary);
     const grossSalary = computeGrossSalary(row.basicSalary, medicalAllowance);
-    const fuelAllowance = computeFuelAllowance(row.allowedLiters, row.monthlyFuelRate);
+    const effectiveFuelRate = row.monthlyFuelRate + this.fuelPriceAdjust();
+    const fuelAllowance = computeFuelAllowance(row.allowedLiters, effectiveFuelRate);
     const overtimeRate = computeOvertimeRate(row.lastMonthGrossSalary);
     const overtime = computeOvertimeAmount(overtimeRate, row.overtimeHours);
     const yearsOfService = computeYearsOfService(row.dateOfJoining);

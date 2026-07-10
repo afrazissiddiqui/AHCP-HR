@@ -11,6 +11,7 @@ export interface PayrollProcessingHeaderPayload {
   status: string;
   processedBy: number;
   processedDate: string;
+  fuelPriceAdjust?: number;
 }
 
 export interface PayrollProcessingDetailPayload {
@@ -145,6 +146,7 @@ export class PayrollProcessingService {
       status: this.pickString([source], ['status', 'Status']) || 'Draft',
       processedBy: this.pickNumber([source], ['processedBy', 'processed_by', 'ProcessedBy']),
       processedDate: this.pickString([source], ['processedDate', 'processed_date', 'ProcessedDate']),
+      fuelPriceAdjust: this.pickAmount(source, ['fuelPriceAdjust', 'fuel_price_adjust', 'FuelPriceAdjust']),
     };
   }
 

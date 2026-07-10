@@ -79,6 +79,20 @@
       </div>
 
       <div class="comp-plan-field">
+        <label class="comp-plan-field__label" for="pp-fuel-price-adjust">Fuel Price Adjust</label>
+        <input
+          id="pp-fuel-price-adjust"
+          type="number"
+          min="0"
+          step="0.01"
+          class="comp-plan-field__input"
+          placeholder="Enter fuel price adjust"
+          [ngModel]="fuelPriceAdjust()"
+          (ngModelChange)="onFuelPriceAdjustChange($event)"
+        />
+      </div>
+
+      <div class="comp-plan-field">
         <label class="comp-plan-field__label" for="pp-prepared-by-id">Employee ID</label>
         <input
           id="pp-prepared-by-id"
