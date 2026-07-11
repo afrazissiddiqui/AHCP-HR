@@ -276,8 +276,8 @@ export class CreateAgpComponent implements OnInit {
     this.kantaSlip = doc.kantaSlip?.trim() ?? '';
     this.requestingDepartment = this.departmentService.resolveDepartmentName(doc.department);
     this.biltyNo = doc.biltyNo?.trim() ?? '';
-    this.store = resolveGatePassWarehouseCode(doc.store);
-    this.location = resolveGatePassLocation(doc.location);
+    this.store = resolveGatePassWarehouseCode(doc.store) || doc.store?.trim() || '';
+    this.location = resolveGatePassLocation(doc.location) || doc.location?.trim() || '';
     this.reasonForMovement = doc.reasonForMovement?.trim() ?? '';
     this.requestingEmployee = doc.requestingEmployee?.trim() ?? '';
     this.requestedBy = doc.requestedBy?.trim() ?? '';

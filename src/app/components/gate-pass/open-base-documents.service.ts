@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, timeout } from 'rxjs';
 import { apiUrl } from '../../config/api.config';
+import { resolveGatePassLocation } from './gate-pass-location.options';
+import { resolveGatePassWarehouseCode } from './gate-pass-warehouse.options';
 
 export type GatePassModule = 'igp' | 'ogp' | 'agp';
 
@@ -855,8 +857,12 @@ export class OpenBaseDocumentsService {
   }
 
   private mapApiRecordToOpenBaseDocument(item: Record<string, unknown>): OpenBaseDocument {
-    const lineSources = this.extractDocumentLineSources(item);
-    const sources = [item, ...lineSources];
+    const nestedDocument = this.asRecord(item['Document'] ?? item['document'] ?? item['header'] ?? item['Header']);
+    const lineSources = [
+      ...this.extractDocumentLineSources(item),
+      ...(nestedDocument ? this.extractDocumentLineSources(nestedDocument) : []),
+    ];
+    const sources = [item, ...(nestedDocument ? [nestedDocument] : []), ...lineSources];
     const number = this.pickString(sources, [
       'baseDocNo',
       'base_doc_no',
@@ -928,44 +934,47 @@ export class OpenBaseDocumentsService {
       vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo', 'U_VehicleNo']),
       fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit']),
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']),
-      // BPLId from SAP/PO APIs maps to Department on IGP/OGP forms.
-      department: this.pickString(sources, [
-        'department',
-        'Department',
-        'BPLId',
-        'BPLID',
-        'bplId',
-        'bpl_id',
-        'BPLName',
-        'bplName',
-      ]),
+      department: this.pickString(sources, ['department', 'Department', 'DepartmentName', 'department_name']),
       biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo', 'U_BuiltyNo']),
-      // WhsCode from SAP/PO APIs maps to Warehouse on IGP/OGP forms.
-      store: this.pickString(sources, [
-        'store',
-        'Store',
-        'warehouse',
-        'Warehouse',
-        'WhsCode',
-        'whsCode',
-        'whs_code',
-        'WarehouseCode',
-        'warehouseCode',
-        'warehouse_code',
-      ]),
+      // WhsCode is the warehouse code on PO / SRR / Delivery base documents.
+      store: (() => {
+        const rawStore = this.pickString(sources, [
+          'WhsCode',
+          'whsCode',
+          'whs_code',
+          'WarehouseCode',
+          'warehouseCode',
+          'warehouse_code',
+          'store',
+          'Store',
+          'warehouse',
+          'Warehouse',
+        ]);
+        return resolveGatePassWarehouseCode(rawStore) || rawStore;
+      })(),
       freight: this.pickString(sources, ['freight', 'Freight', 'freightAmount', 'freight_amount']),
       weightMachineName: this.pickString(sources, ['weightMachineName', 'weight_machine_name', 'WeightMachineName']),
       weight: this.pickString(sources, ['weight', 'Weight']),
-      location: this.pickString(sources, [
-        'location',
-        'Location',
-        'LocCode',
-        'locCode',
-        'loc_code',
-        'LocationCode',
-        'locationCode',
-        'location_code',
-      ]),
+      // BPLId is branch: 1=Peshawar, 2=HO, 3=Faisalabad → Location dropdown.
+      location: (() => {
+        const rawLocation = this.pickString(sources, [
+          'BPLId',
+          'BPLID',
+          'bplId',
+          'bpl_id',
+          'BPLName',
+          'bplName',
+          'location',
+          'Location',
+          'LocCode',
+          'locCode',
+          'loc_code',
+          'LocationCode',
+          'locationCode',
+          'location_code',
+        ]);
+        return resolveGatePassLocation(rawLocation) || rawLocation;
+      })(),
       referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo', 'U_CusPoNo']),
       remarks: this.pickString(sources, ['remarks', 'Remarks']),
       driverName: this.pickString(sources, [
@@ -1007,13 +1016,29 @@ export class OpenBaseDocumentsService {
       item['lineItems'] ??
       item['line_items'];
 
-    if (!Array.isArray(rawLines)) {
+    let lines = rawLines;
+    if (typeof rawLines === 'string' && rawLines.trim().startsWith('[')) {
+      try {
+        lines = JSON.parse(rawLines) as unknown;
+      } catch {
+        lines = [];
+      }
+    }
+
+    if (!Array.isArray(lines)) {
       return [];
     }
 
-    return rawLines.filter(
+    return lines.filter(
       (line): line is Record<string, unknown> => !!line && typeof line === 'object' && !Array.isArray(line),
     );
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return null;
+    }
+    return value as Record<string, unknown>;
   }
 
   private normalizeApiDate(value: string): string {

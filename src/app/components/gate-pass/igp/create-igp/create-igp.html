@@ -226,7 +226,7 @@
         </section>
 
         <section id="igp-weighing-section" class="husky-form-section">
-          <div class="cjr-section-title">Weighing &amp; location</div>
+          <div class="cjr-section-title">Weighing &amp; branch</div>
           <div class="cjr-personal-grid pmm-profile-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
@@ -248,7 +248,7 @@
             </div>
             <div class="cjr-personal-col">
               <div class="cjr-row">
-                <label for="igp-location">Location:</label>
+                <label for="igp-location">Branch:</label>
                 <select id="igp-location" class="igp-input--wide" [(ngModel)]="location" name="location">
                   <option value="">No selection</option>
                   <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>

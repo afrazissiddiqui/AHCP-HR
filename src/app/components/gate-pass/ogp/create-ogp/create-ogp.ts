@@ -250,12 +250,12 @@ export class CreateOgpComponent implements OnInit {
     this.kantaSlip = doc.kantaSlip?.trim() ?? '';
     this.department = this.departmentService.resolveDepartmentName(doc.department);
     this.biltyNo = doc.biltyNo?.trim() ?? '';
-    this.store = resolveGatePassWarehouseCode(doc.store);
+    this.store = resolveGatePassWarehouseCode(doc.store) || doc.store?.trim() || '';
     this.driverName = (doc.driverName ?? doc.transporterName)?.trim() ?? '';
     this.driverCnic = formatGatePassCnic((doc.driverCnic ?? doc.transporterCnic)?.trim() ?? '');
     this.driverPhone = formatGatePassPhoneDigits((doc.driverPhone ?? doc.transporterPhone)?.trim() ?? '');
     this.weight = numericFieldFromDoc(doc.weight);
-    this.location = resolveGatePassLocation(doc.location);
+    this.location = resolveGatePassLocation(doc.location) || doc.location?.trim() || '';
     this.remarks = doc.remarks?.trim() ?? '';
     this.lines =
       doc.lines?.map((l) => ({

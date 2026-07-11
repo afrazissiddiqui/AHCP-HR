@@ -71,7 +71,7 @@ export class OgpComponent implements OnInit {
     { key: 'businessPartnerName', label: 'Business partner', visible: true },
     { key: 'department', label: 'Department', visible: true },
     { key: 'vehicleNo', label: 'Vehicle no.', visible: true },
-    { key: 'location', label: 'Location', visible: true },
+    { key: 'location', label: 'Branch', visible: true },
     { key: 'totalQty', label: 'Total qty', visible: true },
     { key: 'status', label: 'Status', visible: true },
   ];
