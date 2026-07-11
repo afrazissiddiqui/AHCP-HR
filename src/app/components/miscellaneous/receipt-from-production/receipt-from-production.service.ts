@@ -25,6 +25,8 @@ export interface CreateReceiptFromProductionResponse {
   status?: boolean;
   success?: boolean;
   message?: string;
+  error?: string;
+  error_code?: string | number;
   docEntry?: string | number;
   data?: Record<string, unknown>;
 }

@@ -6,6 +6,7 @@ import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { GoodReceiptService, buildCreateGoodReceiptPayload } from '../good-receipt.service';
 import { WarehouseService } from '../../../../services/warehouse.service';
+import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
@@ -175,8 +176,9 @@ export class AddGoodReceipt implements OnInit {
         this.saving.set(false);
         const ok = response?.success === true || response?.status === true;
         if (!ok) {
-          this.alertService.validation(
-            response?.message?.trim() || 'Good receipt could not be saved.',
+          void this.alertService.error(
+            'Save Failed',
+            formatSapApiFailureMessage(response, 'Good receipt could not be saved.'),
           );
           return;
         }
@@ -192,12 +194,11 @@ export class AddGoodReceipt implements OnInit {
           void this.router.navigate(['/miscellaneous/good-receipt-note']);
         });
       },
-      error: (err: { error?: { message?: string }; message?: string }) => {
+      error: (err: unknown) => {
         this.saving.set(false);
-        this.alertService.validation(
-          err?.error?.message ??
-            err?.message ??
-            'Could not save good receipt. Make sure the backend is running.',
+        void this.alertService.error(
+          'Save Failed',
+          formatApiErrorMessage(err, 'Could not save good receipt. Make sure the backend is running.'),
         );
       },
     });

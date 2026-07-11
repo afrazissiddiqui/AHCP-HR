@@ -21,6 +21,7 @@ import {
   InventoryTransferRequestRecord,
   InventoryTransferService,
 } from '../inventory-transfer.service';
+import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
 @Component({
   selector: 'app-add-inventory-transfer',
@@ -384,10 +385,9 @@ export class AddInventoryTransfer implements OnInit {
         this.saving.set(false);
         const ok = response?.success === true || response?.status === true;
         if (!ok) {
-          this.alertService.validation(
-            response?.error?.trim() ||
-              response?.message?.trim() ||
-              'Inventory transfer could not be saved.',
+          void this.alertService.error(
+            'Save Failed',
+            formatSapApiFailureMessage(response, 'Inventory transfer could not be saved.'),
           );
           return;
         }
@@ -404,14 +404,12 @@ export class AddInventoryTransfer implements OnInit {
           void this.router.navigate(['/miscellaneous/inventory-transfer']);
         });
       },
-      error: (err: { error?: { message?: string; error?: string }; message?: string }) => {
+      error: (err: unknown) => {
         this.saving.set(false);
-        const message =
-          err?.error?.error ??
-          err?.error?.message ??
-          err?.message ??
-          'Could not save inventory transfer. Make sure the backend is running.';
-        this.alertService.validation(message);
+        void this.alertService.error(
+          'Save Failed',
+          formatApiErrorMessage(err, 'Could not save inventory transfer. Make sure the backend is running.'),
+        );
       },
     });
   }

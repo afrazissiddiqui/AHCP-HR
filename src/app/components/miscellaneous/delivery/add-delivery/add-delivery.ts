@@ -18,6 +18,7 @@ import {
   updateDeliveryLine,
 } from '../delivery.model';
 import { DeliveryService, buildCreateDeliveryPayload } from '../delivery.service';
+import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
 interface DeliveryTab {
   key: 'contents';
@@ -312,10 +313,9 @@ export class AddDelivery {
         this.saving.set(false);
         const ok = response?.success === true || response?.status === true;
         if (!ok) {
-          this.alertService.validation(
-            response?.error?.trim() ||
-              response?.message?.trim() ||
-              'Delivery could not be saved.',
+          void this.alertService.error(
+            'Save Failed',
+            formatSapApiFailureMessage(response, 'Delivery could not be saved.'),
           );
           return;
         }
@@ -332,14 +332,12 @@ export class AddDelivery {
           void this.router.navigate(['/miscellaneous/delivery']);
         });
       },
-      error: (err: { error?: { message?: string; error?: string }; message?: string }) => {
+      error: (err: unknown) => {
         this.saving.set(false);
-        const message =
-          err?.error?.error ??
-          err?.error?.message ??
-          err?.message ??
-          'Could not save delivery. Make sure the backend is running.';
-        this.alertService.validation(message);
+        void this.alertService.error(
+          'Save Failed',
+          formatApiErrorMessage(err, 'Could not save delivery. Make sure the backend is running.'),
+        );
       },
     });
   }

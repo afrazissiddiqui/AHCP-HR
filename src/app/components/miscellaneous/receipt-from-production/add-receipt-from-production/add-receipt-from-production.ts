@@ -21,6 +21,7 @@ import {
   ReceiptFromProductionService,
   buildCreateReceiptFromProductionPayload,
 } from '../receipt-from-production.service';
+import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
 @Component({
   selector: 'app-add-receipt-from-production',
@@ -252,8 +253,9 @@ export class AddReceiptFromProduction implements OnInit {
         this.saving.set(false);
         const ok = response?.success === true || response?.status === true;
         if (!ok) {
-          this.alertService.validation(
-            response?.message?.trim() || 'Receipt from production could not be saved.',
+          void this.alertService.error(
+            'Save Failed',
+            formatSapApiFailureMessage(response, 'Receipt from production could not be saved.'),
           );
           return;
         }
@@ -269,12 +271,11 @@ export class AddReceiptFromProduction implements OnInit {
           void this.router.navigate(['/miscellaneous/receipt-from-production']);
         });
       },
-      error: (err: { error?: { message?: string }; message?: string }) => {
+      error: (err: unknown) => {
         this.saving.set(false);
-        this.alertService.validation(
-          err?.error?.message ??
-            err?.message ??
-            'Could not save receipt from production. Make sure the backend is running.',
+        void this.alertService.error(
+          'Save Failed',
+          formatApiErrorMessage(err, 'Could not save receipt from production. Make sure the backend is running.'),
         );
       },
     });

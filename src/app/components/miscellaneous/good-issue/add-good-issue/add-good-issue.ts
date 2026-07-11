@@ -18,6 +18,7 @@ import {
   updateGoodIssueLine,
 } from '../good-issue.model';
 import { GoodIssueService, buildCreateGoodIssuePayload } from '../good-issue.service';
+import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
 @Component({
   selector: 'app-add-good-issue',
@@ -258,10 +259,9 @@ export class AddGoodIssue implements OnInit {
         this.saving.set(false);
         const ok = response?.success === true || response?.status === true;
         if (!ok) {
-          this.alertService.validation(
-            response?.error?.trim() ||
-              response?.message?.trim() ||
-              'Good issue could not be saved.',
+          void this.alertService.error(
+            'Save Failed',
+            formatSapApiFailureMessage(response, 'Good issue could not be saved.'),
           );
           return;
         }
@@ -277,13 +277,11 @@ export class AddGoodIssue implements OnInit {
           void this.router.navigate(['/miscellaneous/good-issue']);
         });
       },
-      error: (err: { error?: { message?: string; error?: string }; message?: string }) => {
+      error: (err: unknown) => {
         this.saving.set(false);
-        this.alertService.validation(
-          err?.error?.error ??
-            err?.error?.message ??
-            err?.message ??
-            'Could not save good issue. Make sure the backend is running.',
+        void this.alertService.error(
+          'Save Failed',
+          formatApiErrorMessage(err, 'Could not save good issue. Make sure the backend is running.'),
         );
       },
     });
