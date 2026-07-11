@@ -87,7 +87,7 @@ export class OitmItemPickerDialogComponent implements OnChanges, OnInit {
   });
 
   ngOnInit(): void {
-    this.oitmItemsService.ensureLoaded().subscribe();
+    this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -101,8 +101,8 @@ export class OitmItemPickerDialogComponent implements OnChanges, OnInit {
     this.openChange.emit(false);
   }
 
-  loadItems(): void {
-    if (this.oitmItemsService.isLoaded()) {
+  loadItems(forceReload = false): void {
+    if (!forceReload && this.oitmItemsService.isLoaded()) {
       this.items.set([...this.oitmItemsService.getCatalog()]);
       this.loading.set(false);
       this.loadError.set(null);
@@ -112,10 +112,15 @@ export class OitmItemPickerDialogComponent implements OnChanges, OnInit {
     this.loading.set(true);
     this.loadError.set(null);
 
-    this.oitmItemsService.ensureLoaded().subscribe({
+    const request = forceReload
+      ? this.oitmItemsService.reload()
+      : this.oitmItemsService.ensureLoaded();
+
+    request.subscribe({
       next: (rows) => {
         this.items.set(rows);
         this.loading.set(false);
+        this.loadError.set(rows.length === 0 ? 'No items returned from AHCP.' : null);
       },
       error: () => {
         this.items.set([]);

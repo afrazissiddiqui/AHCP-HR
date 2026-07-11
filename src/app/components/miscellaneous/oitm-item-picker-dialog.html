@@ -24,7 +24,7 @@
           <p class="sir-modal-status-text">Loading items…</p>
         } @else if (loadError()) {
           <p class="sir-modal-error-text">{{ loadError() }}</p>
-          <button type="button" class="sir-primary-button" (click)="loadItems()">Retry</button>
+          <button type="button" class="sir-primary-button" (click)="loadItems(true)">Retry</button>
         } @else {
           <p class="sir-modal-hint">Select one or more items. The first fills the current row; extras add new rows.</p>
           <div class="sir-data-table-wrapper">

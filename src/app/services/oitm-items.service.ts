@@ -18,19 +18,14 @@ export class OitmItemsService {
       return of(this.catalog());
     }
 
-    if (!this.load$) {
-      this.load$ = this.http.get<unknown>(apiUrl('items')).pipe(
-        map((response) => this.parseItems(response)),
-        tap((items) => this.catalog.set(items)),
-        shareReplay(1),
-        catchError((error) => {
-          this.load$ = undefined;
-          return throwError(() => error);
-        }),
-      );
-    }
+    return this.fetchCatalog();
+  }
 
-    return this.load$;
+  /** Clears cache and fetches items again (Retry). */
+  reload(): Observable<OitmItem[]> {
+    this.load$ = undefined;
+    this.catalog.set([]);
+    return this.fetchCatalog();
   }
 
   getItems(): Observable<OitmItem[]> {
@@ -43,6 +38,28 @@ export class OitmItemsService {
 
   isLoaded(): boolean {
     return this.catalog().length > 0;
+  }
+
+  private fetchCatalog(): Observable<OitmItem[]> {
+    if (!this.load$) {
+      this.load$ = this.http.get<unknown>(apiUrl('items')).pipe(
+        map((response) => this.parseItems(response)),
+        tap((items) => {
+          this.catalog.set(items);
+          if (items.length === 0) {
+            this.load$ = undefined;
+          }
+        }),
+        catchError((error) => {
+          this.load$ = undefined;
+          this.catalog.set([]);
+          return throwError(() => error);
+        }),
+        shareReplay(1),
+      );
+    }
+
+    return this.load$;
   }
 
   private parseItems(response: unknown): OitmItem[] {
@@ -68,6 +85,10 @@ export class OitmItemsService {
     }
 
     const obj = response as Record<string, unknown>;
+    if (obj['status'] === false) {
+      return [];
+    }
+
     const arrayKeys = ['data', 'items', 'results', 'records', 'list'];
 
     for (const key of arrayKeys) {
@@ -85,7 +106,7 @@ export class OitmItemsService {
       }
     }
 
-    return [obj];
+    return [];
   }
 
   private mapOitmItem(item: Record<string, unknown>): OitmItem {
@@ -99,12 +120,21 @@ export class OitmItemsService {
     };
   }
 
+  private cleanSapText(value: unknown): string {
+    return String(value ?? '')
+      .replace(/\u0000/g, '')
+      .trim();
+  }
+
   private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
     for (const source of sources) {
       for (const key of keys) {
         const value = source[key];
-        if (value !== undefined && value !== null && String(value).trim() !== '') {
-          return String(value).trim();
+        if (value !== undefined && value !== null) {
+          const text = this.cleanSapText(value);
+          if (text !== '') {
+            return text;
+          }
         }
       }
     }
@@ -116,10 +146,11 @@ export class OitmItemsService {
     if (value === undefined || value === null || value === '') {
       return undefined;
     }
-    if (typeof value === 'number' || typeof value === 'string') {
+    if (typeof value === 'number') {
       return value;
     }
-    return String(value);
+    const text = this.cleanSapText(value);
+    return text || undefined;
   }
 
   private pickBatches(item: Record<string, unknown>): OitmItem['batches'] {
@@ -131,12 +162,25 @@ export class OitmItemsService {
     return raw
       .filter((batch): batch is Record<string, unknown> => !!batch && typeof batch === 'object')
       .map((batch) => ({
-        batchNumber: this.pickString([batch], ['batchNumber', 'batch_number', 'BatchNumber']),
-        warehouse: this.pickString([batch], ['warehouse', 'Warehouse', 'warehouseCode', 'warehouse_code']),
+        batchNumber: this.pickString([batch], ['batchNumber', 'batch_number', 'BatchNumber', 'BatchNum']),
+        warehouse: this.pickString([batch], [
+          'warehouse',
+          'Warehouse',
+          'warehouseCode',
+          'warehouse_code',
+          'WhsCode',
+        ]),
         quantity: this.pickQtyValue(batch),
-        manufacturingDate: this.pickString([batch], ['manufacturingDate', 'manufacturing_date', 'ManufacturingDate']),
+        manufacturingDate: this.pickString([batch], [
+          'manufacturingDate',
+          'manufacturing_date',
+          'ManufacturingDate',
+        ]),
         expiryDate: this.pickString([batch], ['expiryDate', 'expiry_date', 'ExpiryDate']),
       }))
-      .filter((batch) => batch.batchNumber || batch.warehouse || batch.quantity || batch.manufacturingDate || batch.expiryDate);
+      .filter(
+        (batch) =>
+          batch.batchNumber || batch.warehouse || batch.quantity || batch.manufacturingDate || batch.expiryDate,
+      );
   }
 }

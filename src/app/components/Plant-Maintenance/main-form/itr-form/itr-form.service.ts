@@ -931,8 +931,7 @@ const ITR_FORM_ADD_URL = apiUrl('itr-form-add');
 const ITR_FORM_DETAIL_URL = apiUrl('itr-form-detail');
 const ITR_FORM_UPDATE_URL = apiUrl('itr-form-update');
 const ITR_FORM_DELETE_URL = apiUrl('itr-form-delete');
-const ITR_FORM_SAP_SUBMIT_URL =
-  'http://alhafiz.vdc.services:8084/ahcp/public/api/itr_submit_in_sap';
+const ITR_FORM_SAP_SUBMIT_URL = apiUrl('itr_submit_in_sap');
 
 function getKpiSectionName(row: ItrKpiRow): string {
   if (row.key === 'safety') {

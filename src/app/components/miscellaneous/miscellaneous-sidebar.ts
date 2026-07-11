@@ -5,7 +5,7 @@ export const MISCELLANEOUS_SIDEBAR_ITEMS: SidebarItem[] = [];
 export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     id: 'miscellaneous-actions',
-    title: 'Miscellaneous',
+    title: 'SAP Form',
     items: [
       {
         id: 'miscellaneous-good-receipt-note',

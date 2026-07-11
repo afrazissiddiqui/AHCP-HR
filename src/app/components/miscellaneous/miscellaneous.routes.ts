@@ -22,7 +22,7 @@ export const miscellaneousRoutes: Routes = [
       {
         path: '',
         component: MiscellaneousPageComponent,
-        data: { title: 'Miscellaneous' },
+        data: { title: 'SAP Form' },
       },
       {
         path: 'good-receipt-note',
