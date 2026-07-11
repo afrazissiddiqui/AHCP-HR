@@ -280,36 +280,40 @@ export class UserSetupComponent implements OnInit {
   }
 
   private buildSubmitPayload(): UserSetupPayload {
-    const payload: UserSetupPayload = {};
-    for (const field of this.formFields()) {
-      const rawValue = this.formModel()[field] ?? '';
-      const trimmed = rawValue.trim();
-      if (!trimmed && field === 'password' && this.formMode() === 'edit') {
-        continue;
+    const model = this.formModel();
+    const read = (...keys: string[]): string => {
+      for (const key of keys) {
+        const value = (model[key] ?? '').trim();
+        if (value) {
+          return value;
+        }
       }
-      payload[field] = this.normalizeFieldValue(field, trimmed);
+      return '';
+    };
+
+    const payload: UserSetupPayload = {
+      name: read('name', 'Name'),
+      email: read('email', 'Email'),
+      authorization: [],
+    };
+
+    const password = read('password');
+    if (password || this.formMode() === 'add') {
+      payload.password = password;
     }
+
     return payload;
   }
 
-  private normalizeFieldValue(field: string, value: string): unknown {
-    if (field === 'is_admin' || field === 'isAdmin') {
-      return value === '1' || value.toLowerCase() === 'yes' ? 1 : 0;
-    }
-    return value;
-  }
-
   private firstMissingRequiredField(payload: UserSetupPayload): string | null {
-    const requiredFields = this.formMode() === 'edit' ? ['name', 'email'] : ['name', 'email', 'password'];
-    for (const requiredField of requiredFields) {
-      const actualField = this.formFields().find((field) => field.toLowerCase() === requiredField);
-      if (!actualField) {
-        continue;
-      }
-      const value = payload[actualField];
-      if (value === null || value === undefined || String(value).trim() === '') {
-        return actualField;
-      }
+    if (!payload.name.trim()) {
+      return 'name';
+    }
+    if (!payload.email.trim()) {
+      return 'email';
+    }
+    if (this.formMode() === 'add' && !payload.password?.trim()) {
+      return 'password';
     }
     return null;
   }
