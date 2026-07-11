@@ -156,7 +156,9 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     }
 
     const usesApi =
-      this.gatePassModule === 'igp' || this.gatePassModule === 'ogp';
+      this.gatePassModule === 'igp' ||
+      this.gatePassModule === 'ogp' ||
+      this.gatePassModule === 'agp';
 
     if (!usesApi) {
       return null;

@@ -12,7 +12,7 @@ import {
   AgpService,
   createEmptyAgpLineItem,
 } from '../agp.service';
-import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
+import { GATE_PASS_LOCATION_OPTIONS, resolveGatePassLocation } from '../../gate-pass-location.options';
 import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
 import {
@@ -21,9 +21,11 @@ import {
 } from '../../gate-pass-business-partner.service';
 import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
-import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
+import { GATE_PASS_WAREHOUSE_OPTIONS, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
+import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
+import { OpenBaseDocument } from '../../open-base-documents.service';
 
 const AGP_TYPE = 'Article Gate Pass';
 
@@ -42,6 +44,7 @@ function numericFieldFromDoc(value: string | undefined): string {
   imports: [
     CommonModule,
     FormsModule,
+    BaseDocumentModalComponent,
     GatePassItemSearchInputComponent,
     GatePassBusinessPartnerSearchInputComponent,
   ],
@@ -59,8 +62,10 @@ export class CreateAgpComponent implements OnInit {
   submitButtonLabel = 'Save AGP';
 
   readonly agpType = AGP_TYPE;
+  type = 'Purchase Order';
   documentDate = '';
   businessPartnerCode = '';
+  baseDocNo = '';
   referenceNo = '';
   businessPartnerName = '';
   vehicleNo = '';
@@ -90,8 +95,15 @@ export class CreateAgpComponent implements OnInit {
   remarks = '';
   loading = false;
   submitting = false;
+  showBaseDocModal = false;
 
   departmentOptions: string[] = [];
+  readonly typeOptions = [
+    'Purchase Order',
+    'Sales Return Request',
+    'Stand Alone Documents',
+    'Article Gate Pass',
+  ] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 
@@ -220,6 +232,81 @@ export class CreateAgpComponent implements OnInit {
     this.attachmentFileName = '';
   }
 
+  get isBaseDocumentDisabled(): boolean {
+    return !!this.editingId || this.type === 'Stand Alone Documents';
+  }
+
+  onBaseDocumentTypeChange(): void {
+    if (this.editingId) {
+      return;
+    }
+    this.baseDocNo = '';
+  }
+
+  clearBaseDocumentSelection(): void {
+    if (this.editingId) {
+      return;
+    }
+    this.baseDocNo = '';
+  }
+
+  openBaseDocumentModal(): void {
+    if (this.isBaseDocumentDisabled) {
+      return;
+    }
+    if (!this.type?.trim()) {
+      void this.alertService.validation('Select a document type first.');
+      return;
+    }
+    this.showBaseDocModal = true;
+  }
+
+  onBaseDocumentPicked(doc: OpenBaseDocument): void {
+    this.applyBaseDocument(doc);
+  }
+
+  private applyBaseDocument(doc: OpenBaseDocument): void {
+    this.baseDocNo = doc.number;
+    if (doc.date?.trim()) {
+      this.documentDate = doc.date.trim();
+    }
+    this.businessPartnerCode = doc.businessPartnerCode?.trim() ?? '';
+    this.businessPartnerName = (doc.businessPartnerName || doc.partner || '').trim();
+    this.vehicleNo = doc.vehicleNo?.trim() ?? '';
+    this.kantaSlip = doc.kantaSlip?.trim() ?? '';
+    this.requestingDepartment = this.departmentService.resolveDepartmentName(doc.department);
+    this.biltyNo = doc.biltyNo?.trim() ?? '';
+    this.store = resolveGatePassWarehouseCode(doc.store);
+    this.location = resolveGatePassLocation(doc.location);
+    this.reasonForMovement = doc.reasonForMovement?.trim() ?? '';
+    this.requestingEmployee = doc.requestingEmployee?.trim() ?? '';
+    this.requestedBy = doc.requestedBy?.trim() ?? '';
+    this.issuedTo = doc.issuedTo?.trim() ?? '';
+    this.articleOutDate = doc.articleOutDate?.trim() ?? '';
+    this.articleReturnedDate = doc.articleReturnedDate?.trim() ?? '';
+    this.driverName = (doc.driverName ?? doc.transporterName)?.trim() ?? '';
+    this.driverCnic = formatGatePassCnic((doc.driverCnic ?? doc.transporterCnic)?.trim() ?? '');
+    this.driverPhone = formatGatePassPhoneDigits((doc.driverPhone ?? doc.transporterPhone)?.trim() ?? '');
+    this.weight = numericFieldFromDoc(doc.weight);
+    this.remarks = doc.remarks?.trim() ?? '';
+    this.lines =
+      doc.lines?.map((l) => ({
+        itemCode: l.itemCode,
+        itemName: l.itemName,
+        oitmCode: l.itemCode,
+        serialNumbers: '',
+        category: l.category,
+        packingCondition: l.packingCondition,
+        productQuality: l.productQuality,
+        uom: l.uom,
+        qtySent: Number(l.qty) || 0,
+        qtyReceived: 0,
+        info: l.info ?? '',
+        remarks: l.remarks ?? '',
+        deleted: false,
+      })) ?? [];
+  }
+
   back(): void {
     void this.router.navigateByUrl('/gate-pass/agp');
   }
@@ -275,8 +362,10 @@ export class CreateAgpComponent implements OnInit {
   }
 
   private populateFromRecord(record: AgpRecord): void {
+    this.type = emptyIfDash(record.type) || 'Purchase Order';
     this.documentDate = emptyIfDash(record.submittedDate) || this.documentDate;
     this.referenceNo = emptyIfDash(record.referenceNo);
+    this.baseDocNo = emptyIfDash(record.baseDocNo);
     this.businessPartnerCode = emptyIfDash(record.businessPartnerCode);
     this.businessPartnerName = emptyIfDash(record.businessPartnerName);
     this.vehicleNo = emptyIfDash(record.vehicleNo);
@@ -287,8 +376,8 @@ export class CreateAgpComponent implements OnInit {
     this.issuedTo = emptyIfDash(record.issuedTo);
     this.articleOutDate = emptyIfDash(record.articleOutDate);
     this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
-    this.location = emptyIfDash(record.location);
-    this.store = emptyIfDash(record.store);
+    this.location = resolveGatePassLocation(emptyIfDash(record.location));
+    this.store = resolveGatePassWarehouseCode(emptyIfDash(record.store));
     this.kantaSlip = emptyIfDash(record.kantaSlip);
     this.driverName = emptyIfDash(record.driverName);
     this.driverCnic = formatGatePassCnic(emptyIfDash(record.driverCnic));
@@ -303,8 +392,8 @@ export class CreateAgpComponent implements OnInit {
 
   private buildPayload(): AgpAddPayload {
     return {
-      type: AGP_TYPE,
-      baseDocNo: '',
+      type: this.type.trim() || AGP_TYPE,
+      baseDocNo: this.baseDocNo.trim(),
       documentDate: this.documentDate.trim(),
       referenceNo: this.referenceNo.trim(),
       businessPartnerCode: this.businessPartnerCode.trim(),

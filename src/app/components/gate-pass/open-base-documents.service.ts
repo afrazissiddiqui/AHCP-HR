@@ -89,7 +89,7 @@ const IGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10488',
       department: 'Procurement',
       biltyNo: 'BL-77821',
-      store: 'Store A',
+      store: 'FSD-WH01',
       freight: '1250',
       weightMachineName: 'Kanta-1',
       weight: '18.2',
@@ -113,7 +113,7 @@ const IGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10502',
       department: 'Operations',
       biltyNo: 'BL-77901',
-      store: 'Spares',
+      store: 'FSD-WH09',
       freight: '850',
       weightMachineName: 'Kanta-2',
       weight: '2.4',
@@ -137,7 +137,7 @@ const IGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10520',
       department: 'Procurement',
       biltyNo: 'BL-77944',
-      store: 'Raw material',
+      store: 'FSD-WH04',
       freight: '4200',
       weightMachineName: 'Weighbridge East',
       weight: '22.0',
@@ -160,7 +160,7 @@ const IGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10340',
       department: 'Sales',
       biltyNo: 'BL-77001',
-      store: 'Returns dock',
+      store: 'PSH-WH01',
       freight: '0',
       weightMachineName: 'Kanta-1',
       weight: '3.1',
@@ -181,7 +181,7 @@ const IGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10388',
       department: 'Logistics',
       biltyNo: 'BL-77088',
-      store: 'QA hold',
+      store: 'FSD-WH06',
       freight: '650',
       weightMachineName: 'Kanta-2',
       weight: '5.0',
@@ -206,7 +206,7 @@ const IGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10001',
       department: 'Operations',
       biltyNo: '',
-      store: 'General',
+      store: '01',
       freight: '0',
       weightMachineName: 'Kanta-1',
       weight: '0.5',
@@ -227,7 +227,7 @@ const IGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10601',
       department: 'Marketing',
       biltyNo: 'BL-78000',
-      store: 'Samples',
+      store: 'FSD-WH08',
       freight: '200',
       weightMachineName: 'Kanta-2',
       weight: '0.2',
@@ -253,7 +253,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10640',
       department: 'Sales',
       biltyNo: 'BL-78110',
-      store: 'Dispatch bay 2',
+      store: 'PSH-WH02',
       freight: '2800',
       weightMachineName: 'Weighbridge East',
       weight: '14.6',
@@ -277,7 +277,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10655',
       department: 'Logistics',
       biltyNo: 'BL-78144',
-      store: 'Loading dock A',
+      store: 'FSD-WH02',
       freight: '5200',
       weightMachineName: 'Kanta-1',
       weight: '19.8',
@@ -298,7 +298,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10670',
       department: 'Sales',
       biltyNo: 'BL-78190',
-      store: 'Export staging',
+      store: '03',
       freight: '12500',
       weightMachineName: 'Weighbridge East',
       weight: '24.5',
@@ -324,7 +324,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10622',
       department: 'Procurement',
       biltyNo: 'BL-78055',
-      store: 'Reject store',
+      store: 'FSD-WH10',
       freight: '950',
       weightMachineName: 'Kanta-2',
       weight: '1.8',
@@ -345,7 +345,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10630',
       department: 'Operations',
       biltyNo: 'BL-78070',
-      store: 'WIP store',
+      store: 'FSD-WH03',
       freight: '600',
       weightMachineName: 'Kanta-1',
       weight: '3.2',
@@ -371,7 +371,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10605',
       department: 'Sales',
       biltyNo: 'BL-78020',
-      store: 'Dispatch bay 1',
+      store: 'PSH-WH01',
       freight: '450',
       weightMachineName: 'Kanta-2',
       weight: '2.1',
@@ -392,7 +392,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10618',
       department: 'Logistics',
       biltyNo: 'BL-78040',
-      store: 'Returns dock',
+      store: 'PSH-WH01',
       freight: '0',
       weightMachineName: 'Kanta-1',
       weight: '4.5',
@@ -415,7 +415,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10590',
       department: 'Logistics',
       biltyNo: '',
-      store: 'General',
+      store: '01',
       freight: '0',
       weightMachineName: 'Kanta-1',
       weight: '6.0',
@@ -436,7 +436,7 @@ const OGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       kantaSlip: 'KS-10660',
       department: 'Operations',
       biltyNo: '',
-      store: 'Assets',
+      store: '02',
       freight: '350',
       weightMachineName: 'Kanta-2',
       weight: '1.2',
@@ -460,6 +460,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'INT-401',
       department: 'Engineering',
       biltyNo: '',
+      store: 'FSD-WH01',
       location: 'FSD',
       freight: '0',
       referenceNo: '',
@@ -488,6 +489,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'LHR-8820',
       department: 'Operations',
       biltyNo: 'BL-78105',
+      store: 'PSH-WH01',
       location: 'PSH',
       freight: '500',
       referenceNo: '',
@@ -516,6 +518,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'KHI-4411',
       department: 'Marketing',
       biltyNo: 'BL-78125',
+      store: '01',
       location: 'Head Office',
       freight: '1800',
       referenceNo: '',
@@ -546,6 +549,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'RWP-3300',
       department: 'Procurement',
       biltyNo: 'BL-78085',
+      store: 'FSD-WH01',
       location: 'FSD',
       freight: '1200',
       referenceNo: '',
@@ -571,6 +575,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'FSB-2299',
       department: 'Operations',
       biltyNo: 'BL-78100',
+      store: 'PSH-WH09',
       location: 'PSH',
       freight: '750',
       referenceNo: '',
@@ -601,6 +606,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'LHR-7700',
       department: 'Sales',
       biltyNo: 'BL-78015',
+      store: 'FSD-WH06',
       location: 'FSD',
       freight: '0',
       referenceNo: '',
@@ -626,6 +632,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'KHI-5522',
       department: 'Sales',
       biltyNo: 'BL-78115',
+      store: '01',
       location: 'Head Office',
       freight: '400',
       referenceNo: '',
@@ -653,6 +660,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'INT-150',
       department: 'Supply Chain',
       biltyNo: '',
+      store: 'FSD-WH01',
       location: 'FSD',
       freight: '0',
       referenceNo: '',
@@ -681,6 +689,7 @@ const AGP_OPEN_BY_TYPE: Record<string, OpenBaseDocument[]> = {
       vehicleNo: 'INT-505',
       department: 'Finance',
       biltyNo: '',
+      store: 'PSH-WH01',
       location: 'PSH',
       freight: '0',
       referenceNo: '',
@@ -846,7 +855,8 @@ export class OpenBaseDocumentsService {
   }
 
   private mapApiRecordToOpenBaseDocument(item: Record<string, unknown>): OpenBaseDocument {
-    const sources = [item];
+    const lineSources = this.extractDocumentLineSources(item);
+    const sources = [item, ...lineSources];
     const number = this.pickString(sources, [
       'baseDocNo',
       'base_doc_no',
@@ -916,15 +926,46 @@ export class OpenBaseDocumentsService {
       ]),
       businessPartnerName,
       vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo', 'U_VehicleNo']),
-      fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit', 'Branch']),
+      fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit']),
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']),
-      department: this.pickString(sources, ['department', 'Department']),
+      // BPLId from SAP/PO APIs maps to Department on IGP/OGP forms.
+      department: this.pickString(sources, [
+        'department',
+        'Department',
+        'BPLId',
+        'BPLID',
+        'bplId',
+        'bpl_id',
+        'BPLName',
+        'bplName',
+      ]),
       biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo', 'U_BuiltyNo']),
-      store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse']),
+      // WhsCode from SAP/PO APIs maps to Warehouse on IGP/OGP forms.
+      store: this.pickString(sources, [
+        'store',
+        'Store',
+        'warehouse',
+        'Warehouse',
+        'WhsCode',
+        'whsCode',
+        'whs_code',
+        'WarehouseCode',
+        'warehouseCode',
+        'warehouse_code',
+      ]),
       freight: this.pickString(sources, ['freight', 'Freight', 'freightAmount', 'freight_amount']),
       weightMachineName: this.pickString(sources, ['weightMachineName', 'weight_machine_name', 'WeightMachineName']),
       weight: this.pickString(sources, ['weight', 'Weight']),
-      location: this.pickString(sources, ['location', 'Location']),
+      location: this.pickString(sources, [
+        'location',
+        'Location',
+        'LocCode',
+        'locCode',
+        'loc_code',
+        'LocationCode',
+        'locationCode',
+        'location_code',
+      ]),
       referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo', 'U_CusPoNo']),
       remarks: this.pickString(sources, ['remarks', 'Remarks']),
       driverName: this.pickString(sources, [
@@ -952,6 +993,27 @@ export class OpenBaseDocumentsService {
       transporterName: this.pickString(sources, ['transporterName', 'transporter_name', 'U_TransporterName']),
       lines: this.mapDocumentLines(item),
     };
+  }
+
+  /** Prefer header values, then first document line (WhsCode / BPLId often live on lines). */
+  private extractDocumentLineSources(item: Record<string, unknown>): Array<Record<string, unknown>> {
+    const rawLines =
+      item['DocumentLines'] ??
+      item['documentLines'] ??
+      item['document_lines'] ??
+      item['lines'] ??
+      item['Lines'] ??
+      item['items'] ??
+      item['lineItems'] ??
+      item['line_items'];
+
+    if (!Array.isArray(rawLines)) {
+      return [];
+    }
+
+    return rawLines.filter(
+      (line): line is Record<string, unknown> => !!line && typeof line === 'object' && !Array.isArray(line),
+    );
   }
 
   private normalizeApiDate(value: string): string {

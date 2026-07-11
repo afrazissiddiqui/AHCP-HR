@@ -59,6 +59,33 @@ export class GatePassDepartmentService {
     return this.departmentsSignal().map((dept) => dept.name);
   }
 
+  /** Resolves an API department id/code/name onto a dropdown department name. */
+  resolveDepartmentName(value: string | undefined | null): string {
+    const trimmed = value?.trim() ?? '';
+    if (!trimmed || trimmed === '—') {
+      return '';
+    }
+
+    const normalized = trimmed.toLowerCase();
+    const departments = this.departmentsSignal();
+    const byId = departments.find((dept) => dept.id.toLowerCase() === normalized);
+    if (byId) {
+      return byId.name;
+    }
+
+    const byName = departments.find((dept) => dept.name.toLowerCase() === normalized);
+    if (byName) {
+      return byName.name;
+    }
+
+    const partial = departments.find(
+      (dept) =>
+        dept.name.toLowerCase().includes(normalized) ||
+        normalized.includes(dept.name.toLowerCase()),
+    );
+    return partial?.name ?? trimmed;
+  }
+
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
     if (!response) {
       return [];
@@ -108,10 +135,25 @@ export class GatePassDepartmentService {
       'DepartmentName',
       'title',
       'Title',
+      'BPLName',
+      'bplName',
     ]);
 
     return {
-      id: this.pickString(item, ['id', 'Id', 'ID', 'departmentId', 'department_id', 'code', 'Code']) || name,
+      id:
+        this.pickString(item, [
+          'id',
+          'Id',
+          'ID',
+          'departmentId',
+          'department_id',
+          'code',
+          'Code',
+          'BPLId',
+          'BPLID',
+          'bplId',
+          'bpl_id',
+        ]) || name,
       name,
     };
   }

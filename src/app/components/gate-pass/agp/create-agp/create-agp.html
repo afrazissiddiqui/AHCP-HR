@@ -27,6 +27,20 @@
         <div class="cjr-personal-grid pmm-profile-grid">
           <div class="cjr-personal-col">
             <div class="cjr-row">
+              <label for="agp-type">Type:</label>
+              <select
+                id="agp-type"
+                class="igp-input--wide"
+                [(ngModel)]="type"
+                (ngModelChange)="onBaseDocumentTypeChange()"
+                [disabled]="!!editingId"
+                name="type"
+              >
+                <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+
+            <div class="cjr-row">
               <label for="agp-date">Date:</label>
               <input id="agp-date" type="date" class="igp-input--date" [(ngModel)]="documentDate" name="documentDate" />
             </div>
@@ -38,14 +52,31 @@
           </div>
 
           <div class="cjr-personal-col">
-            <div class="cjr-row igp-base-doc-row igp-base-doc-row--disabled">
+            <div class="cjr-row igp-base-doc-row" [class.igp-base-doc-row--disabled]="isBaseDocumentDisabled">
               <label>Base document:</label>
               <div class="igp-base-doc-field">
+                <span class="gate-pass-optional" *ngIf="!isBaseDocumentDisabled">(optional)</span>
                 <div class="gate-pass-base-doc-row">
-                  <button type="button" class="gate-pass-base-doc-btn" disabled>
+                  <button
+                    type="button"
+                    class="gate-pass-base-doc-btn"
+                    (click)="openBaseDocumentModal()"
+                    [disabled]="isBaseDocumentDisabled"
+                  >
                     Choose base document…
                   </button>
-                  <span class="gate-pass-base-doc-summary gate-pass-base-doc-summary--muted">Not applicable</span>
+                  <span
+                    class="gate-pass-base-doc-summary"
+                    [class.gate-pass-base-doc-summary--muted]="!baseDocNo || isBaseDocumentDisabled"
+                  >{{ isBaseDocumentDisabled ? 'Not applicable' : (baseDocNo || 'None selected') }}</span>
+                  <button
+                    *ngIf="baseDocNo && !isBaseDocumentDisabled"
+                    type="button"
+                    class="gate-pass-clear-base-doc"
+                    (click)="clearBaseDocumentSelection()"
+                  >
+                    Clear selection
+                  </button>
                 </div>
               </div>
             </div>
@@ -431,3 +462,10 @@
     </div>
   </div>
 </div>
+
+<app-base-document-modal
+  [(open)]="showBaseDocModal"
+  gatePassModule="agp"
+  [documentType]="type"
+  (documentPicked)="onBaseDocumentPicked($event)"
+/>

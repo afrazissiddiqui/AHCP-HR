@@ -39,3 +39,43 @@ export function gatePassWarehouseLabel(code: string | undefined | null): string 
   );
   return match ? `${match.code} — ${match.name}` : trimmed;
 }
+
+/** Maps a base-document / API warehouse value onto a known warehouse code. */
+export function resolveGatePassWarehouseCode(value: string | undefined | null): string {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed || trimmed === '—') {
+    return '';
+  }
+
+  const normalized = trimmed.toLowerCase();
+  const byCode = GATE_PASS_WAREHOUSE_OPTIONS.find(
+    (warehouse) => warehouse.code.toLowerCase() === normalized,
+  );
+  if (byCode) {
+    return byCode.code;
+  }
+
+  const byName = GATE_PASS_WAREHOUSE_OPTIONS.find(
+    (warehouse) => warehouse.name.toLowerCase() === normalized,
+  );
+  if (byName) {
+    return byName.code;
+  }
+
+  const byLabel = GATE_PASS_WAREHOUSE_OPTIONS.find((warehouse) => {
+    const label = `${warehouse.code} — ${warehouse.name}`.toLowerCase();
+    const compact = `${warehouse.code} - ${warehouse.name}`.toLowerCase();
+    return label === normalized || compact === normalized;
+  });
+  if (byLabel) {
+    return byLabel.code;
+  }
+
+  const partial = GATE_PASS_WAREHOUSE_OPTIONS.find(
+    (warehouse) =>
+      warehouse.name.toLowerCase().includes(normalized) ||
+      normalized.includes(warehouse.name.toLowerCase()) ||
+      warehouse.code.toLowerCase().includes(normalized),
+  );
+  return partial?.code ?? '';
+}

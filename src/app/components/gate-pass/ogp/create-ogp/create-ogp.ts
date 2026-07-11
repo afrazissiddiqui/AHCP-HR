@@ -14,11 +14,11 @@ import {
   OgpRecord,
   OgpService,
 } from '../ogp.service';
-import { GATE_PASS_LOCATION_OPTIONS } from '../../gate-pass-location.options';
+import { GATE_PASS_LOCATION_OPTIONS, resolveGatePassLocation } from '../../gate-pass-location.options';
 import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
-import { GATE_PASS_WAREHOUSE_OPTIONS } from '../../gate-pass-warehouse.options';
+import { GATE_PASS_WAREHOUSE_OPTIONS, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import {
   GatePassBusinessPartner,
   GatePassBusinessPartnerService,
@@ -248,14 +248,14 @@ export class CreateOgpComponent implements OnInit {
     this.vehicleNo = doc.vehicleNo?.trim() ?? '';
     this.fromUnit = doc.fromUnit?.trim() ?? '';
     this.kantaSlip = doc.kantaSlip?.trim() ?? '';
-    this.department = doc.department?.trim() ?? '';
+    this.department = this.departmentService.resolveDepartmentName(doc.department);
     this.biltyNo = doc.biltyNo?.trim() ?? '';
-    this.store = doc.store?.trim() ?? '';
+    this.store = resolveGatePassWarehouseCode(doc.store);
     this.driverName = (doc.driverName ?? doc.transporterName)?.trim() ?? '';
     this.driverCnic = formatGatePassCnic((doc.driverCnic ?? doc.transporterCnic)?.trim() ?? '');
     this.driverPhone = formatGatePassPhoneDigits((doc.driverPhone ?? doc.transporterPhone)?.trim() ?? '');
     this.weight = numericFieldFromDoc(doc.weight);
-    this.location = doc.location?.trim() ?? '';
+    this.location = resolveGatePassLocation(doc.location);
     this.remarks = doc.remarks?.trim() ?? '';
     this.lines =
       doc.lines?.map((l) => ({
@@ -332,13 +332,13 @@ export class CreateOgpComponent implements OnInit {
     this.fromUnit = emptyIfDash(record.fromUnit);
     this.kantaSlip = emptyIfDash(record.kantaSlip);
     this.biltyNo = emptyIfDash(record.biltyNo);
-    this.store = emptyIfDash(record.store);
+    this.store = resolveGatePassWarehouseCode(emptyIfDash(record.store));
     this.driverName = emptyIfDash(record.driverName);
     this.driverCnic = formatGatePassCnic(emptyIfDash(record.driverCnic));
     this.driverPhone = formatGatePassPhoneDigits(emptyIfDash(record.driverPhone));
     this.department = emptyIfDash(record.department);
     this.weight = numericFieldFromDoc(emptyIfDash(record.weight));
-    this.location = emptyIfDash(record.location);
+    this.location = resolveGatePassLocation(emptyIfDash(record.location));
     this.employee = emptyIfDash(record.employee);
     this.remarks = emptyIfDash(record.remarks ?? '');
     this.lines = record.lines.length ? record.lines.map((line) => ({ ...line })) : [];

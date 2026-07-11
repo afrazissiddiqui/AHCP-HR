@@ -127,93 +127,105 @@
       >
         <div class="comp-table-layout">
           <div class="comp-table-fixed">
-            <table class="comp-grid comp-grid--fixed">
-              <thead>
-                <tr class="comp-group-row">
-                  <th class="tone-employee comp-section-end comp-section-end--employee">Employee Information</th>
-                </tr>
-                <tr class="comp-col-row">
-                  <th class="comp-section-end comp-section-end--employee">Employee</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (i of skeletonRows(); track i; let odd = $odd) {
-                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
-                    <td class="comp-emp-cell comp-section-end comp-section-end--employee">
-                      <div class="comp-skeleton-emp">
-                        <span class="comp-skeleton comp-skeleton--avatar" aria-hidden="true"></span>
-                        <div class="comp-skeleton-emp__text">
-                          <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-lg" aria-hidden="true"></span>
-                          <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-sm" aria-hidden="true"></span>
-                        </div>
-                      </div>
-                    </td>
+            <div class="comp-pane-head">
+              <table class="comp-grid comp-grid--fixed">
+                <thead>
+                  <tr class="comp-group-row">
+                    <th class="tone-employee comp-section-end comp-section-end--employee">Employee Information</th>
                   </tr>
-                }
-              </tbody>
-              <tfoot>
-                <tr class="comp-total-row">
-                  <td class="comp-section-end comp-section-end--employee"><span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md" aria-hidden="true"></span></td>
-                </tr>
-              </tfoot>
-            </table>
+                  <tr class="comp-col-row">
+                    <th class="comp-section-end comp-section-end--employee">Employee</th>
+                  </tr>
+                </thead>
+              </table>
+            </div>
+            <div class="comp-pane-body">
+              <table class="comp-grid comp-grid--fixed">
+                <tbody>
+                  @for (i of skeletonRows(); track i; let odd = $odd) {
+                    <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                      <td class="comp-emp-cell comp-section-end comp-section-end--employee">
+                        <div class="comp-skeleton-emp">
+                          <span class="comp-skeleton comp-skeleton--avatar" aria-hidden="true"></span>
+                          <div class="comp-skeleton-emp__text">
+                            <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-lg" aria-hidden="true"></span>
+                            <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-sm" aria-hidden="true"></span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="comp-total-row">
+                    <td class="comp-section-end comp-section-end--employee"><span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md" aria-hidden="true"></span></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
           <div class="comp-table-scroll">
-            <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
-              <thead>
-                <tr class="comp-group-row">
-                  @for (group of columnGroups; track group.id) {
-                    @if (groupColspan(group.id) > 0) {
-                      <th [attr.colspan]="groupColspan(group.id)" [class]="groupHeaderClass(group)">
-                        {{ group.label }}
-                      </th>
+            <div class="comp-pane-head">
+              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+                <thead>
+                  <tr class="comp-group-row">
+                    @for (group of columnGroups; track group.id) {
+                      @if (groupColspan(group.id) > 0) {
+                        <th [attr.colspan]="groupColspan(group.id)" [class]="groupHeaderClass(group)">
+                          {{ group.label }}
+                        </th>
+                      }
                     }
-                  }
-                </tr>
-                <tr class="comp-col-row">
-                  @for (col of payrollColumns; track col.key) {
-                    <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                @for (i of skeletonRows(); track i; let odd = $odd) {
-                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                  </tr>
+                  <tr class="comp-col-row">
                     @for (col of payrollColumns; track col.key) {
-                      <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
-                        @switch (col.type) {
-                          @case ('currency') {
-                            <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                      <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
+                    }
+                  </tr>
+                </thead>
+              </table>
+            </div>
+            <div class="comp-pane-body">
+              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+                <tbody>
+                  @for (i of skeletonRows(); track i; let odd = $odd) {
+                    <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                      @for (col of payrollColumns; track col.key) {
+                        <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
+                          @switch (col.type) {
+                            @case ('currency') {
+                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                            }
+                            @case ('readonly') {
+                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                            }
+                            @case ('readonly-pill') {
+                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                              <span class="comp-skeleton comp-skeleton--pill comp-skeleton--center" aria-hidden="true"></span>
+                            }
+                            @case ('approval') {
+                              <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
+                            }
                           }
-                          @case ('readonly') {
-                            <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
-                          }
-                          @case ('readonly-pill') {
-                            <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
-                            <span class="comp-skeleton comp-skeleton--pill comp-skeleton--center" aria-hidden="true"></span>
-                          }
-                          @case ('approval') {
-                            <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
-                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="comp-total-row">
+                    @for (col of payrollColumns; track col.key) {
+                      <td class="comp-total-value" [class]="columnSectionClass(col)">
+                        @if (col.key !== 'approved') {
+                          <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-sm comp-skeleton--right" aria-hidden="true"></span>
                         }
                       </td>
                     }
                   </tr>
-                }
-              </tbody>
-              <tfoot>
-                <tr class="comp-total-row">
-                  @for (col of payrollColumns; track col.key) {
-                    <td class="comp-total-value" [class]="columnSectionClass(col)">
-                      @if (col.key !== 'approved') {
-                        <span class="comp-skeleton comp-skeleton--line comp-skeleton--line-sm comp-skeleton--right" aria-hidden="true"></span>
-                      }
-                    </td>
-                  }
-                </tr>
-              </tfoot>
-            </table>
+                </tfoot>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -224,82 +236,121 @@
     } @else {
       <div class="comp-table-card">
           <div class="comp-table-layout">
-          <div
-            class="comp-table-fixed"
-            #fixedPane
-            (scroll)="onFixedPaneScroll($event)"
-            (wheel)="onTableWheel($event)"
-          >
-            <table class="comp-grid comp-grid--fixed">
-              <thead>
-                <tr class="comp-group-row">
-                  <th class="tone-employee comp-section-end comp-section-end--employee">Employee Information</th>
-                </tr>
-                <tr class="comp-col-row">
-                  <th class="comp-section-end comp-section-end--employee">Employee</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of paginatedRows(); track row.apiId; let odd = $odd) {
-                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
-                    <td class="comp-emp-cell comp-section-end comp-section-end--employee">
-                      <div class="comp-emp-profile">
-                        <span class="comp-emp-avatar" aria-hidden="true">{{ avatarInitials(row.personName) }}</span>
-                        <div class="comp-emp-info">
-                          <button type="button" class="comp-emp-name" (click)="openEmployeeProfile(row.apiId)">
-                            {{ row.personName }}
-                          </button>
-                          @if (row.designation) {
-                            <div class="comp-emp-meta">
-                              <span class="comp-emp-id-icon" title="Employee profile">🪪</span>
-                              <span class="comp-emp-designation">{{ row.designation }}</span>
-                            </div>
-                          }
-                        </div>
-                        <div class="comp-emp-actions">
-                          <button type="button" class="comp-emp-action-btn" title="Comment" aria-label="Comment">💬</button>
-                          <button type="button" class="comp-emp-action-btn" title="More actions" aria-label="More actions">⋯</button>
-                        </div>
-                      </div>
-                    </td>
+          <div class="comp-table-fixed">
+            <div class="comp-pane-head">
+              <table class="comp-grid comp-grid--fixed">
+                <thead>
+                  <tr class="comp-group-row">
+                    <th class="tone-employee comp-section-end comp-section-end--employee">Employee Information</th>
                   </tr>
-                }
-              </tbody>
-              <tfoot>
-                <tr class="comp-total-row">
-                  <td class="comp-section-end comp-section-end--employee">Page Total</td>
-                </tr>
-              </tfoot>
-            </table>
+                  <tr class="comp-col-row">
+                    <th class="comp-section-end comp-section-end--employee">Employee</th>
+                  </tr>
+                </thead>
+              </table>
+            </div>
+            <div
+              class="comp-pane-body"
+              #fixedPane
+              (scroll)="onFixedPaneScroll($event)"
+              (wheel)="onTableWheel($event)"
+            >
+              <table class="comp-grid comp-grid--fixed">
+                <tbody>
+                  @for (row of paginatedRows(); track row.apiId; let odd = $odd) {
+                    <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                      <td class="comp-emp-cell comp-section-end comp-section-end--employee">
+                        <div class="comp-emp-profile">
+                          <span class="comp-emp-avatar" aria-hidden="true">{{ avatarInitials(row.personName) }}</span>
+                          <div class="comp-emp-info">
+                            <button type="button" class="comp-emp-name" (click)="openEmployeeProfile(row.apiId)">
+                              {{ row.personName }}
+                            </button>
+                            @if (row.designation) {
+                              <div class="comp-emp-meta">
+                                <span class="comp-emp-id-icon" title="Employee profile">🪪</span>
+                                <span class="comp-emp-designation">{{ row.designation }}</span>
+                              </div>
+                            }
+                          </div>
+                          <div class="comp-emp-actions">
+                            <button type="button" class="comp-emp-action-btn" title="Comment" aria-label="Comment">💬</button>
+                            <button type="button" class="comp-emp-action-btn" title="More actions" aria-label="More actions">⋯</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="comp-total-row">
+                    <td class="comp-section-end comp-section-end--employee">Page Total</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
-          <div class="comp-table-scroll" #scrollPane (scroll)="onScrollPaneScroll($event)">
-            <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
-              <thead>
-                <tr class="comp-group-row">
-                  @for (group of columnGroups; track group.id) {
-                    @if (groupColspan(group.id) > 0) {
-                      <th [attr.colspan]="groupColspan(group.id)" [class]="groupHeaderClass(group)">
-                        {{ group.label }}
-                      </th>
+          <div class="comp-table-scroll">
+            <div class="comp-pane-head">
+              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+                <thead>
+                  <tr class="comp-group-row">
+                    @for (group of columnGroups; track group.id) {
+                      @if (groupColspan(group.id) > 0) {
+                        <th [attr.colspan]="groupColspan(group.id)" [class]="groupHeaderClass(group)">
+                          {{ group.label }}
+                        </th>
+                      }
                     }
-                  }
-                </tr>
-                <tr class="comp-col-row">
-                  @for (col of payrollColumns; track col.key) {
-                    <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of paginatedRows(); track row.apiId; let odd = $odd) {
-                  <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                  </tr>
+                  <tr class="comp-col-row">
                     @for (col of payrollColumns; track col.key) {
-                      <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
-                        @switch (col.type) {
-                          @case ('currency') {
-                            @if (isRowLoaded(row.apiId)) {
-                              @if (isColumnReadonlyForRow(row, col)) {
+                      <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
+                    }
+                  </tr>
+                </thead>
+              </table>
+            </div>
+            <div class="comp-pane-body" #scrollPane (scroll)="onScrollPaneScroll($event)">
+              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+                <tbody>
+                  @for (row of paginatedRows(); track row.apiId; let odd = $odd) {
+                    <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
+                      @for (col of payrollColumns; track col.key) {
+                        <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
+                          @switch (col.type) {
+                            @case ('currency') {
+                              @if (isRowLoaded(row.apiId)) {
+                                @if (isColumnReadonlyForRow(row, col)) {
+                                  <div class="comp-input-wrap comp-input-wrap--readonly">
+                                    <input
+                                      type="text"
+                                      class="comp-input comp-input--readonly"
+                                      [value]="formatColumnDisplay(row, col)"
+                                      readonly
+                                      [attr.title]="readonlyReason(row, col)"
+                                    />
+                                  </div>
+                                } @else {
+                                  <div class="comp-input-wrap">
+                                    <span class="comp-input-prefix">{{ currencyCode }}</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      class="comp-input"
+                                      [ngModel]="getColumnValue(row, col)"
+                                      (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
+                                    />
+                                  </div>
+                                }
+                              } @else {
+                                <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                              }
+                            }
+                            @case ('readonly') {
+                              @if (isRowLoaded(row.apiId)) {
                                 <div class="comp-input-wrap comp-input-wrap--readonly">
                                   <input
                                     type="text"
@@ -310,94 +361,67 @@
                                   />
                                 </div>
                               } @else {
-                                <div class="comp-input-wrap">
-                                  <span class="comp-input-prefix">{{ currencyCode }}</span>
+                                <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                              }
+                            }
+                            @case ('readonly-pill') {
+                              @if (isRowLoaded(row.apiId)) {
+                                <div class="comp-input-wrap comp-input-wrap--readonly">
                                   <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    class="comp-input"
-                                    [ngModel]="getColumnValue(row, col)"
-                                    (ngModelChange)="updateRowField(row.apiId, $any(col.key), $event)"
+                                    type="text"
+                                    class="comp-input comp-input--readonly"
+                                    [value]="formatMoney($any(getColumnValue(row, col)))"
+                                    readonly
                                   />
                                 </div>
+                                <div class="comp-cell-center comp-pill-wrap">
+                                  <span
+                                    class="comp-pill"
+                                    [class.comp-pill--green]="earningsRatioForRow(row) >= 95 && earningsRatioForRow(row) <= 110"
+                                    [class.comp-pill--yellow]="earningsRatioForRow(row) > 110"
+                                  >
+                                    {{ earningsRatioForRow(row) }}%
+                                  </span>
+                                </div>
+                              } @else {
+                                <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                                <span class="comp-skeleton comp-skeleton--pill comp-skeleton--center" aria-hidden="true"></span>
                               }
-                            } @else {
-                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
+                            }
+                            @case ('approval') {
+                              @if (isRowLoaded(row.apiId)) {
+                                <div class="comp-approval-cell">
+                                  <input
+                                    type="checkbox"
+                                    class="comp-approval-checkbox"
+                                    [ngModel]="row.approved"
+                                    (ngModelChange)="setApproval(row.apiId, $event)"
+                                    [attr.aria-label]="'Approve payroll for ' + row.personName"
+                                  />
+                                </div>
+                              } @else {
+                                <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
+                              }
                             }
                           }
-                          @case ('readonly') {
-                            @if (isRowLoaded(row.apiId)) {
-                              <div class="comp-input-wrap comp-input-wrap--readonly">
-                                <input
-                                  type="text"
-                                  class="comp-input comp-input--readonly"
-                                  [value]="formatColumnDisplay(row, col)"
-                                  readonly
-                                  [attr.title]="readonlyReason(row, col)"
-                                />
-                              </div>
-                            } @else {
-                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
-                            }
-                          }
-                          @case ('readonly-pill') {
-                            @if (isRowLoaded(row.apiId)) {
-                              <div class="comp-input-wrap comp-input-wrap--readonly">
-                                <input
-                                  type="text"
-                                  class="comp-input comp-input--readonly"
-                                  [value]="formatMoney($any(getColumnValue(row, col)))"
-                                  readonly
-                                />
-                              </div>
-                              <div class="comp-cell-center comp-pill-wrap">
-                                <span
-                                  class="comp-pill"
-                                  [class.comp-pill--green]="earningsRatioForRow(row) >= 95 && earningsRatioForRow(row) <= 110"
-                                  [class.comp-pill--yellow]="earningsRatioForRow(row) > 110"
-                                >
-                                  {{ earningsRatioForRow(row) }}%
-                                </span>
-                              </div>
-                            } @else {
-                              <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
-                              <span class="comp-skeleton comp-skeleton--pill comp-skeleton--center" aria-hidden="true"></span>
-                            }
-                          }
-                          @case ('approval') {
-                            @if (isRowLoaded(row.apiId)) {
-                              <div class="comp-approval-cell">
-                                <input
-                                  type="checkbox"
-                                  class="comp-approval-checkbox"
-                                  [ngModel]="row.approved"
-                                  (ngModelChange)="setApproval(row.apiId, $event)"
-                                  [attr.aria-label]="'Approve payroll for ' + row.personName"
-                                />
-                              </div>
-                            } @else {
-                              <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
-                            }
-                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="comp-total-row">
+                    @for (col of payrollColumns; track col.key) {
+                      <td class="comp-total-value" [class]="columnSectionClass(col)">
+                        @if (getGroupTotal(col) !== null) {
+                          {{ formatGroupTotal(col) }}
                         }
                       </td>
                     }
                   </tr>
-                }
-              </tbody>
-              <tfoot>
-                <tr class="comp-total-row">
-                  @for (col of payrollColumns; track col.key) {
-                    <td class="comp-total-value" [class]="columnSectionClass(col)">
-                      @if (getGroupTotal(col) !== null) {
-                        {{ formatGroupTotal(col) }}
-                      }
-                    </td>
-                  }
-                </tr>
-              </tfoot>
-            </table>
+                </tfoot>
+              </table>
+            </div>
           </div>
         </div>
 
