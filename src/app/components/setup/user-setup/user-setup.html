@@ -1,600 +1,123 @@
 <div class="setup-layout">
   <div class="setup-content">
     <div class="setup-body">
-      <header class="setup-hero">
-        <div class="setup-hero-glow" aria-hidden="true"></div>
-        <div class="setup-hero-copy">
-          <span class="setup-hero-eyebrow">Administration</span>
-          <h2>User Setup</h2>
-          <p>Create accounts, define access levels, and manage permissions with clarity.</p>
-        </div>
-        <div class="setup-hero-stats">
-          <div class="setup-stat-card">
-            <span class="setup-stat-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </span>
-            <span class="setup-stat-value">{{ totalUsers() }}</span>
-            <span class="setup-stat-label">Registered users</span>
-          </div>
-        </div>
-      </header>
+      <div class="setup-intro">
+        <h2>User Setup</h2>
+        <p>View all users returned by the user list API.</p>
+      </div>
 
-      <div class="user-setup-workspace">
-        <aside #userFormPanel class="form-panel form-panel--editor">
-          <div class="form-panel-accent" aria-hidden="true"></div>
-
-          <div class="form-panel-head">
-            <div class="form-panel-head-copy">
-              <h3 class="form-panel-title">{{ formTitle() }}</h3>
-              <p class="panel-subtitle">{{ formSubtitle() }}</p>
-            </div>
-            @if (formMode() === 'edit') {
-              <span class="form-mode-badge form-mode-badge--edit">
-                <span class="form-mode-dot"></span>
-                Editing
-              </span>
-            } @else {
-              <span class="form-mode-badge">
-                <span class="form-mode-dot"></span>
-                New user
-              </span>
-            }
-          </div>
-
-          <div class="form-flow">
-            <div class="form-flow-step">
-              <span class="form-flow-number">1</span>
-              <span class="form-flow-label">Account</span>
-            </div>
-            <span class="form-flow-line" aria-hidden="true"></span>
-            <div class="form-flow-step">
-              <span class="form-flow-number">2</span>
-              <span class="form-flow-label">Permissions</span>
-            </div>
-          </div>
-
-          <section class="form-section">
-            <div class="form-section-head">
-              <h4 class="form-section-title">Account details</h4>
-            </div>
-            <div class="form-grid">
-              <label class="field-block">
-                <span class="field-label">Full name</span>
-                <input
-                  type="text"
-                  class="field-input"
-                  [ngModel]="formName()"
-                  (ngModelChange)="formName.set($event)"
-                  name="user-name"
-                  placeholder="e.g. Alex Morgan"
-                />
-              </label>
-
-              <label class="field-block field-block--wide">
-                <span class="field-label">Email address</span>
-                <input
-                  type="email"
-                  class="field-input"
-                  [ngModel]="formEmail()"
-                  (ngModelChange)="formEmail.set($event)"
-                  name="user-email"
-                  placeholder="name@company.com"
-                />
-              </label>
-
-              <label class="field-block field-block--wide">
-                <span class="field-label">
-                  Password
-                  @if (formMode() === 'edit') {
-                    <span class="field-hint">Leave blank to keep current password</span>
-                  }
-                </span>
-                <input
-                  type="password"
-                  class="field-input"
-                  [ngModel]="formPassword()"
-                  (ngModelChange)="formPassword.set($event)"
-                  name="user-password"
-                  placeholder="Minimum 6 characters"
-                />
-              </label>
-            </div>
-          </section>
-
-          <section class="form-section form-section--permissions">
-            <div class="form-auth-head">
-              <div class="form-section-head">
-                <h4 class="form-section-title">Form permissions</h4>
-                <p class="form-auth-subtitle">
-                  Set each action to <span class="text-allowed">Allowed</span> or <span class="text-denied">Denied</span>.
-                </p>
-              </div>
-              @if (formAuthorizationSummary()) {
-                <div class="form-auth-summary-chip">
-                  <div class="form-auth-ring" [style.--progress]="formProgressPercent() + '%'">
-                    <span>{{ formProgressPercent() }}%</span>
-                  </div>
-                  <div class="form-auth-summary-text">
-                    <span class="form-auth-summary-count">{{ formGrantedCount() }}/{{ formTotalCount() }}</span>
-                    <span class="form-auth-summary-label">permissions allowed</span>
-                  </div>
-                </div>
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">{{ formTitle() }}</h3>
+            <p class="panel-subtitle">
+              @if (formMode() === 'edit') {
+                Update the selected user record.
+              } @else {
+                Enter user details to create a new user.
               }
-            </div>
+            </p>
+          </div>
+        </div>
 
-            <div class="form-auth-toolbar">
-              <div class="form-auth-toolbar-row">
-                <div class="search-field search-field--modules">
-                  <span class="search-field-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                  </span>
+        <div class="form-grid">
+          @for (field of formFields(); track trackByColumn($index, field)) {
+            @if (field.toLowerCase() !== 'authorization') {
+              <label class="field-block">
+                <span class="field-label">{{ columnLabel(field) }}</span>
+                @if (field === 'is_admin' || field === 'isAdmin') {
+                  <select
+                    class="field-input"
+                    [ngModel]="fieldValue(field)"
+                    (ngModelChange)="updateField(field, $event)"
+                    [name]="'user-field-' + field">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                  </select>
+                } @else {
                   <input
-                    type="search"
-                    class="form-module-search"
-                    [ngModel]="formModuleFilter()"
-                    (ngModelChange)="formModuleFilter.set($event)"
-                    name="form-module-search"
-                    placeholder="Filter modules…"
+                    [type]="field.toLowerCase() === 'password' ? 'password' : 'text'"
+                    class="field-input"
+                    [ngModel]="fieldValue(field)"
+                    (ngModelChange)="updateField(field, $event)"
+                    [name]="'user-field-' + field"
+                    [placeholder]="columnLabel(field)"
                   />
-                </div>
-              </div>
-              <div class="form-auth-toolbar-row form-auth-toolbar-row--actions">
-                <div class="form-auth-bulk">
-                  <button type="button" class="btn-bulk" (click)="expandAllFormModules()">Expand all</button>
-                  <button type="button" class="btn-bulk" (click)="collapseAllFormModules()">Collapse all</button>
-                  <button type="button" class="btn-bulk btn-bulk--allow" (click)="grantAllFormPermissions()">
-                    Allow all
-                  </button>
-                  <button type="button" class="btn-bulk btn-bulk--deny" (click)="denyAllFormPermissions()">
-                    Deny all
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            @if (loadingDetail()) {
-              <div class="panel-state panel-state--loading">
-                <span class="panel-state-spinner" aria-hidden="true"></span>
-                <p>Loading permissions…</p>
-              </div>
-            } @else if (!filteredFormModules().length) {
-              <div class="panel-state">
-                <p>No modules match your search.</p>
-              </div>
-            } @else {
-              <div class="form-module-list">
-                @for (module of filteredFormModules(); track module.moduleSlug) {
-                  <article
-                    class="form-module-card"
-                    [class.form-module-card--expanded]="isFormModuleExpanded(module.moduleSlug)"
-                    [class.form-module-card--full]="moduleGrantedCount(module) === module.totalCount"
-                    [class.form-module-card--empty]="moduleGrantedCount(module) === 0">
-                    <header class="form-module-card-head">
-                      <button
-                        type="button"
-                        class="module-collapse-btn"
-                        [attr.aria-expanded]="isFormModuleExpanded(module.moduleSlug)"
-                        [attr.aria-label]="isFormModuleExpanded(module.moduleSlug) ? 'Collapse ' + module.moduleName : 'Expand ' + module.moduleName"
-                        (click)="toggleFormModuleExpanded(module.moduleSlug)">
-                        <svg class="module-collapse-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                          <path d="M9 18l6-6-6-6"/>
-                        </svg>
-                      </button>
-                      <div class="form-module-card-main">
-                        <div class="form-module-card-brand">
-                          <span class="form-module-icon" aria-hidden="true">{{ moduleInitials(module.moduleName) }}</span>
-                          <div class="form-module-card-title">
-                            <h5>{{ module.moduleName }}</h5>
-                            <span class="form-module-card-meta">
-                              {{ moduleGrantedCount(module) }} of {{ module.totalCount }} allowed
-                            </span>
-                          </div>
-                        </div>
-                        <div class="form-module-card-actions">
-                          <button
-                            type="button"
-                            class="btn-module-bulk"
-                            (click)="setModulePermissions(module.moduleSlug, true); $event.stopPropagation()">
-                            All on
-                          </button>
-                          <button
-                            type="button"
-                            class="btn-module-bulk btn-module-bulk--deny"
-                            (click)="setModulePermissions(module.moduleSlug, false); $event.stopPropagation()">
-                            All off
-                          </button>
-                        </div>
-                      </div>
-                    </header>
-
-                    <div class="form-module-progress">
-                      <span class="form-module-progress-fill" [style.width.%]="moduleProgressPercent(module)"></span>
-                    </div>
-
-                    @if (!isFormModuleExpanded(module.moduleSlug)) {
-                      <div class="module-collapsed-summary">
-                        @for (entry of moduleEntries(module); track entry.key) {
-                          <span
-                            class="module-mini-pill"
-                            [class.module-mini-pill--allowed]="entry.granted"
-                            [class.module-mini-pill--denied]="!entry.granted"
-                            [title]="entry.actionLabel + ': ' + permissionStatusLabel(entry.value)">
-                            {{ entry.actionLabel }}
-                          </span>
-                        }
-                      </div>
-                    } @else {
-                      <div class="form-module-card-body">
-                        <div class="permission-toggle-grid">
-                          @for (entry of moduleEntries(module); track entry.key) {
-                            <label
-                              class="permission-toggle"
-                              [class.permission-toggle--allowed]="entry.granted"
-                              [class.permission-toggle--denied]="!entry.granted">
-                              <span class="permission-toggle-label">{{ entry.actionLabel }}</span>
-                              <span class="permission-toggle-switch">
-                                <input
-                                  type="checkbox"
-                                  class="permission-toggle-input"
-                                  [checked]="entry.granted"
-                                  (change)="setFormPermission(entry.key, $any($event.target).checked)"
-                                />
-                                <span class="permission-toggle-track" aria-hidden="true"></span>
-                                <span class="permission-toggle-status">
-                                  {{ permissionStatusLabel(entry.value) }}
-                                </span>
-                              </span>
-                            </label>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </article>
                 }
-              </div>
+              </label>
             }
-          </section>
-
-          <div class="form-actions">
-            @if (formMode() === 'edit') {
-              <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
-            }
-            <button type="button" class="btn-submit-form" [disabled]="saving() || loadingDetail()" (click)="submitUser()">
-              {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Save changes' : 'Create user' }}
-            </button>
-          </div>
-        </aside>
-
-        <section class="form-panel form-panel--list">
-          <div class="form-panel-head users-panel-head">
-            <div class="form-panel-head-copy">
-              <h3 class="form-panel-title">Directory</h3>
-              <p class="panel-subtitle">
-                {{ filteredUsers().length }} of {{ totalUsers() }} users visible
-              </p>
-            </div>
-            <div class="users-panel-actions">
-              <div class="search-field search-field--table">
-                <span class="search-field-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                  </svg>
-                </span>
-                <input
-                  type="search"
-                  class="search-input"
-                  [ngModel]="searchText()"
-                  (ngModelChange)="searchText.set($event)"
-                  name="user-search"
-                  placeholder="Search users…"
-                />
-              </div>
-              <button type="button" class="btn-add-user" (click)="startAddUser()">
-                <span aria-hidden="true">+</span> Add user
-              </button>
-              <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">
-                {{ loading() ? 'Loading…' : 'Refresh' }}
-              </button>
-            </div>
-          </div>
-
-          @if (loading()) {
-            <div class="panel-state panel-state--loading">
-              <span class="panel-state-spinner" aria-hidden="true"></span>
-              <p>Loading users…</p>
-            </div>
-          } @else if (!users().length) {
-            <div class="panel-state panel-state--empty">
-              <span class="panel-state-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                </svg>
-              </span>
-              <p>No users yet</p>
-              <span class="panel-state-hint">Create your first user using the form on the left.</span>
-            </div>
-          } @else if (!filteredUsers().length) {
-            <div class="panel-state">
-              <p>No users match your search.</p>
-            </div>
-          } @else {
-            <div class="table-card">
-              <div class="table-wrap">
-                <table class="entry-table">
-                  <thead>
-                    <tr>
-                      <th class="col-sr">#</th>
-                      @for (column of displayTableColumns; track column.key) {
-                        <th [class.col-auth]="column.key === 'authorization'">{{ tableColumnLabel(column) }}</th>
-                      }
-                      <th class="col-action">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (user of filteredUsers(); track resolveUserId(user) ?? $index; let index = $index) {
-                      <tr [class.entry-row--active]="isUserRowActive(user)">
-                        <td class="col-sr">{{ index + 1 }}</td>
-
-                        @for (column of displayTableColumns; track column.key) {
-                          @if (column.key === 'name') {
-                            <td>
-                              <div class="user-name-cell">
-                                <span class="user-avatar" aria-hidden="true">{{ userInitials(user) }}</span>
-                                <div class="user-name-meta">
-                                  <span class="user-name">{{ resolveField(user, column.aliases) || '—' }}</span>
-                                  <span class="user-id">ID {{ resolveUserId(user) ?? '—' }}</span>
-                                </div>
-                              </div>
-                            </td>
-                          } @else if (column.key === 'email') {
-                            <td class="col-email">{{ resolveField(user, column.aliases) || '—' }}</td>
-                          } @else if (column.key === 'created_at') {
-                            <td class="col-date">{{ displayCreatedAt(user) }}</td>
-                          } @else if (column.key === 'authorization') {
-                            <td class="col-auth">
-                              @if (authorizationSummary(user); as summary) {
-                                <div class="auth-cell">
-                                  <div class="auth-summary">
-                                    <div class="auth-progress-mini">
-                                      <span
-                                        class="auth-progress-mini-fill"
-                                        [style.width.%]="authorizationProgressPercent(summary)"></span>
-                                    </div>
-                                    <span class="auth-count">{{ summary.granted }}/{{ summary.total }}</span>
-                                    <span class="auth-label">allowed</span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    class="btn-view-auth"
-                                    (click)="openAuthorizationDialog(user)">
-                                    Inspect
-                                  </button>
-                                </div>
-                              } @else {
-                                <span class="empty-value">—</span>
-                              }
-                            </td>
-                          }
-                        }
-
-                        <td class="col-action">
-                          <div class="action-buttons">
-                            <button
-                              type="button"
-                              class="btn-edit"
-                              [class.btn-edit--active]="isUserRowActive(user)"
-                              [disabled]="saving() || deleting()"
-                              (click)="startEdit(user)">
-                              {{ isUserRowActive(user) ? 'Editing' : 'Edit' }}
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-delete"
-                              [disabled]="saving() || deleting()"
-                              (click)="deleteUser(user)">
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
           }
-        </section>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitUser()">
+            {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}
+          </button>
+          @if (formMode() === 'edit') {
+            <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
+          }
+        </div>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">Users</h3>
+            <p class="panel-subtitle">Total users: {{ totalUsers() }}</p>
+          </div>
+          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">
+            {{ loading() ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+
+        @if (loading()) {
+          <div class="panel-message">Loading users…</div>
+        } @else if (!users().length) {
+          <div class="panel-message">No users found.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="entry-table">
+              <thead>
+                <tr>
+                  <th class="col-sr">SR No.</th>
+                  @for (column of columns(); track trackByColumn($index, column)) {
+                    @if (column.toLowerCase() !== 'authorization') {
+                      <th>{{ columnLabel(column) }}</th>
+                    }
+                  }
+                  <th class="col-action">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of users(); track $index; let index = $index) {
+                  <tr>
+                    <td class="col-sr">{{ index + 1 }}</td>
+                    @for (column of columns(); track trackByColumn($index, column)) {
+                      @if (column.toLowerCase() !== 'authorization') {
+                        <td>{{ cellValue(user, column) }}</td>
+                      }
+                    }
+                    <td class="col-action">
+                      <div class="action-buttons">
+                        <button type="button" class="btn-edit" [disabled]="saving() || deleting()" (click)="startEdit(user)">
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-delete"
+                          [disabled]="saving() || deleting()"
+                          (click)="deleteUser(user)">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
     </div>
   </div>
 </div>
-
-@if (authorizationDialogOpen()) {
-  <div #authDialogOverlay class="auth-dialog-overlay">
-    <div class="auth-dialog-backdrop" (click)="closeAuthorizationDialog()"></div>
-    <div
-      class="auth-dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="auth-dialog-title"
-      (click)="$event.stopPropagation()">
-    @if (authorizationDialogSummary(); as summary) {
-      <div class="auth-dialog-hero">
-        <div class="auth-dialog-hero-pattern" aria-hidden="true"></div>
-        <button type="button" class="auth-dialog-close" (click)="closeAuthorizationDialog()" title="Close" aria-label="Close">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12"/>
-          </svg>
-        </button>
-        <div class="auth-dialog-hero-grid">
-          <div class="auth-dialog-hero-main">
-            @if (authorizationDialogUser(); as dialogUser) {
-              <span class="auth-dialog-avatar" aria-hidden="true">{{ userInitials(dialogUser) }}</span>
-            }
-            <div class="auth-dialog-hero-text">
-              <span class="auth-dialog-eyebrow">Permission inspector</span>
-              <h3 id="auth-dialog-title">{{ authorizationDialogTitle() }}</h3>
-              <p>{{ authorizationDialogEmail() || 'No email on record' }}</p>
-            </div>
-          </div>
-
-          <div class="auth-dialog-stats">
-            <div class="auth-dialog-stat">
-              <span class="auth-dialog-stat-value">{{ summary.modules.length }}</span>
-              <span class="auth-dialog-stat-label">Modules</span>
-            </div>
-            <div class="auth-dialog-stat auth-dialog-stat--allowed">
-              <span class="auth-dialog-stat-value">{{ summary.granted }}</span>
-              <span class="auth-dialog-stat-label">Allowed</span>
-            </div>
-            <div class="auth-dialog-stat auth-dialog-stat--denied">
-              <span class="auth-dialog-stat-value">{{ summary.total - summary.granted }}</span>
-              <span class="auth-dialog-stat-label">Denied</span>
-            </div>
-            <div class="auth-dialog-progress-card">
-              <div class="auth-progress-ring" [style.--progress]="authorizationProgressPercent(summary) + '%'">
-                <span class="auth-progress-value">{{ authorizationProgressPercent(summary) }}%</span>
-              </div>
-              <div class="auth-progress-copy">
-                <strong>Coverage</strong>
-                <span>Overall access</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="auth-dialog-toolbar">
-        <div class="auth-dialog-toolbar-main">
-          <div class="search-field search-field--dialog">
-            <span class="search-field-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-            </span>
-            <input
-              type="search"
-              class="auth-module-search"
-              [ngModel]="authorizationModuleFilter()"
-              (ngModelChange)="authorizationModuleFilter.set($event)"
-              name="auth-module-search"
-              placeholder="Filter modules…"
-            />
-          </div>
-          <div class="auth-dialog-toolbar-actions">
-            <button type="button" class="btn-dialog-utility" (click)="expandAllDialogModules()">Expand all</button>
-            <button type="button" class="btn-dialog-utility" (click)="collapseAllDialogModules()">Collapse all</button>
-          </div>
-        </div>
-        <div class="auth-crud-legend">
-          <span class="auth-legend-item"><span class="auth-legend-dot auth-legend-dot--granted"></span> Allowed</span>
-          <span class="auth-legend-item"><span class="auth-legend-dot auth-legend-dot--denied"></span> Denied</span>
-        </div>
-      </div>
-
-      <div class="auth-dialog-body">
-        @if (!filteredAuthorizationModules().length) {
-          <div class="auth-empty-state">
-            <span class="auth-empty-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-            </span>
-            <p>No modules match your search.</p>
-          </div>
-        } @else {
-          <div class="auth-inspect-list">
-            @for (module of filteredAuthorizationModules(); track module.moduleSlug) {
-              <article
-                class="auth-inspect-card"
-                [class.auth-inspect-card--expanded]="isDialogModuleExpanded(module.moduleSlug)"
-                [class.auth-inspect-card--full]="moduleGrantedCount(module) === module.totalCount"
-                [class.auth-inspect-card--empty]="moduleGrantedCount(module) === 0">
-                <header class="auth-inspect-card-head">
-                  <button
-                    type="button"
-                    class="module-collapse-btn module-collapse-btn--dialog"
-                    [attr.aria-expanded]="isDialogModuleExpanded(module.moduleSlug)"
-                    [attr.aria-label]="isDialogModuleExpanded(module.moduleSlug) ? 'Collapse ' + module.moduleName : 'Expand ' + module.moduleName"
-                    (click)="toggleDialogModuleExpanded(module.moduleSlug)">
-                    <svg class="module-collapse-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                      <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                  </button>
-                  <div class="auth-inspect-card-brand">
-                    <span class="auth-inspect-icon" aria-hidden="true">{{ moduleInitials(module.moduleName) }}</span>
-                    <div>
-                      <h4 class="auth-inspect-card-title">{{ module.moduleName }}</h4>
-                      <span class="auth-inspect-card-meta">
-                        {{ moduleGrantedCount(module) }} of {{ module.totalCount }} allowed
-                      </span>
-                    </div>
-                  </div>
-                  <div class="auth-inspect-card-side">
-                    <div class="auth-module-progress">
-                      <div class="auth-module-progress-bar">
-                        <span
-                          class="auth-module-progress-fill"
-                          [style.width.%]="moduleProgressPercent(module)"></span>
-                      </div>
-                      <span class="auth-module-progress-label">{{ moduleProgressPercent(module) }}%</span>
-                    </div>
-                  </div>
-                </header>
-
-                @if (!isDialogModuleExpanded(module.moduleSlug)) {
-                  <div class="module-collapsed-summary module-collapsed-summary--dialog">
-                    @for (entry of moduleEntries(module); track entry.key) {
-                      <span
-                        class="module-mini-pill"
-                        [class.module-mini-pill--allowed]="entry.granted"
-                        [class.module-mini-pill--denied]="!entry.granted"
-                        [title]="entry.actionLabel + ': ' + permissionStatusLabel(entry.value)">
-                        <span class="module-mini-pill-action">{{ entry.actionLabel }}</span>
-                        <span class="module-mini-pill-status">{{ permissionStatusLabel(entry.value) }}</span>
-                      </span>
-                    }
-                  </div>
-                } @else {
-                  <div class="auth-inspect-card-body">
-                    <div class="auth-inspect-permissions">
-                      @for (entry of moduleEntries(module); track entry.key) {
-                        <div
-                          class="auth-inspect-pill"
-                          [class.auth-inspect-pill--allowed]="entry.granted"
-                          [class.auth-inspect-pill--denied]="!entry.granted"
-                          [title]="entry.key">
-                          <span class="auth-inspect-action">{{ entry.actionLabel }}</span>
-                          <span class="auth-inspect-status">{{ permissionStatusLabel(entry.value) }}</span>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-              </article>
-            }
-          </div>
-        }
-      </div>
-
-      <div class="auth-dialog-footer">
-        <button type="button" class="btn-secondary" (click)="closeAuthorizationDialog()">Close</button>
-        <button type="button" class="btn-edit-permissions" (click)="editPermissionsFromDialog()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          Edit permissions
-        </button>
-      </div>
-    }
-    </div>
-  </div>
-}

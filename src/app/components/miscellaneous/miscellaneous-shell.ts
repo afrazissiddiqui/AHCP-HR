@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SidebarComponent } from '../sidebar/sidebar';
-import { MiscellaneousLayoutService } from './miscellaneous-layout.service';
+import { MiscellaneousLayoutService, isMiscellaneousFormRoute } from './miscellaneous-layout.service';
 import {
   MISCELLANEOUS_SIDEBAR_ITEMS,
   MISCELLANEOUS_SIDEBAR_SECTIONS,
@@ -24,7 +24,7 @@ export class MiscellaneousShellComponent {
 
   readonly sidebarItems = MISCELLANEOUS_SIDEBAR_ITEMS;
   readonly sidebarSections = MISCELLANEOUS_SIDEBAR_SECTIONS;
-  readonly activeSidebarItemId = signal('miscellaneous-good-receipt-note');
+  readonly activeSidebarItemId = signal('');
 
   constructor() {
     this.syncRouteState(this.router.url);
@@ -42,5 +42,10 @@ export class MiscellaneousShellComponent {
 
   private syncRouteState(url: string): void {
     this.activeSidebarItemId.set(miscellaneousActiveItemFromUrl(url));
+    if (isMiscellaneousFormRoute(url)) {
+      this.layout.enterFormMode();
+    } else {
+      this.layout.exitFormMode();
+    }
   }
 }

@@ -1,0 +1,111 @@
+@if (open) {
+  <div class="sir-modal-overlay" (click)="close()">
+    <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
+      <div class="sir-modal-header">
+        <h2>Select Item</h2>
+        <button type="button" class="sir-modal-close" (click)="close()">×</button>
+      </div>
+
+      <div class="sir-modal-search">
+        <div class="sir-search-field">
+          <input
+            type="text"
+            placeholder="Search by item name or code..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchInput($event)"
+            name="oitmPickerSearch"
+          />
+          <span class="sir-search-icon">🔍</span>
+        </div>
+      </div>
+
+      <div class="sir-modal-body">
+        @if (loading()) {
+          <p class="sir-modal-status-text">Loading items…</p>
+        } @else if (loadError()) {
+          <p class="sir-modal-error-text">{{ loadError() }}</p>
+          <button type="button" class="sir-primary-button" (click)="loadItems()">Retry</button>
+        } @else {
+          <p class="sir-modal-hint">Select one or more items. The first fills the current row; extras add new rows.</p>
+          <div class="sir-data-table-wrapper">
+            <table class="sir-modal-table">
+              <thead>
+                <tr>
+                  <th class="sir-modal-col-check">
+                    <input type="checkbox" [checked]="allVisibleSelected()" (click)="toggleSelectAll($event)" />
+                  </th>
+                  <th class="sir-sortable-header" (click)="sortData('itemCode')">
+                    Item Code
+                    @if (sortColumn() === 'itemCode') {
+                      <span class="sir-sort-indicator">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th class="sir-sortable-header" (click)="sortData('itemName')">
+                    Item Name
+                    @if (sortColumn() === 'itemName') {
+                      <span class="sir-sort-indicator">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th class="sir-sortable-header" (click)="sortData('uom')">
+                    UOM
+                    @if (sortColumn() === 'uom') {
+                      <span class="sir-sort-indicator">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of paginatedItems(); track item.itemCode) {
+                  <tr class="sir-modal-row" [class.sir-modal-row--selected]="isSelected(item)" (click)="toggleSelection(item)">
+                    <td class="sir-modal-col-check">
+                      <input type="checkbox" [checked]="isSelected(item)" (click)="toggleSelection(item, $event)" />
+                    </td>
+                    <td>{{ item.itemCode }}</td>
+                    <td>{{ item.itemName }}</td>
+                    <td>{{ item.uom || '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="sir-modal-empty">No items match your search.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="sir-modal-pagination">
+            <div class="sir-modal-pagination-info">
+              Showing {{ filteredItems().length ? (currentPage() - 1) * pageSize() + 1 : 0 }} to
+              {{ Math.min(currentPage() * pageSize(), filteredItems().length) }} of
+              {{ filteredItems().length }} entries
+            </div>
+
+            <div class="sir-modal-pagination-nav">
+              <div class="sir-modal-pagination-controls">
+                <button type="button" class="sir-modal-page-nav" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+                <span class="sir-modal-page-status">Page {{ currentPage() }} of {{ totalPages() }}</span>
+                <button type="button" class="sir-modal-page-nav" [disabled]="currentPage() === totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
+              </div>
+
+              <div class="sir-modal-page-size">
+                <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange(+$event)" name="oitmPickerPageSize">
+                  @for (size of pageSizeOptions; track size) {
+                    <option [ngValue]="size">Show {{ size }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="sir-modal-footer sir-modal-footer--split">
+        <span class="sir-modal-selection-count">Selected: {{ selectedCount() }}</span>
+        <div class="sir-modal-footer-actions">
+          <button type="button" class="sir-secondary-button" (click)="close()">Cancel</button>
+          <button type="button" class="sir-primary-button" [disabled]="selectedCount() === 0" (click)="confirm()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

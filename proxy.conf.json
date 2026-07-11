@@ -1,4 +1,12 @@
 {
+  "/ahcp-api": {
+    "target": "http://alhafiz.vdc.services:8084/ahcp/public",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/ahcp-api": ""
+    }
+  },
   "/biometrics-api": {
     "target": "http://pioneerbiometrics.com:71",
     "secure": false,

@@ -1,0 +1,638 @@
+<div class="sir-page">
+  <header class="sir-page-header">
+    <div class="sir-page-titlebar">
+      @if (viewMode() || editMode()) {
+        <button type="button" class="sir-back-button" (click)="back()" title="Back to list" aria-label="Back to list">
+          <span class="sir-back-icon" aria-hidden="true">❮</span>
+        </button>
+      } @else {
+        <button type="button" class="sir-back-button" (click)="layout.backToModuleHome()" title="Back" aria-label="Back">
+          <span class="sir-back-icon" aria-hidden="true">❮</span>
+        </button>
+      }
+        <h1 class="sir-page-title">
+          Sample Inspection Request (SIR)@if (viewMode()) { — View }@else if (editMode()) { — Edit }
+        </h1>
+      </div>
+    </header>
+
+    <div class="sir-page-content">
+      <div
+        class="sir-card"
+        [class.sir-card--view]="viewMode()"
+        [class.sir-card--edit]="editMode()"
+      >
+        <nav class="sir-section-nav">
+          <ul class="sir-section-nav-list">
+            <li
+              class="sir-section-nav-item"
+              [class.sir-section-nav-item--active]="activeSection() === 'header'"
+              (click)="scrollTo('header')"
+            >
+              Header Info
+            </li>
+            <li
+              class="sir-section-nav-item"
+              [class.sir-section-nav-item--active]="activeSection() === 'items'"
+              (click)="scrollTo('items')"
+            >
+              Row Level Info
+            </li>
+          </ul>
+        </nav>
+
+        <section class="sir-form-section" id="header">
+
+          <div class="sir-form-grid">
+            <div class="sir-form-column">
+              <div class="sir-field-row sir-field--igp-linked">
+                <label>IGP No:</label>
+                <div class="sir-input-with-action">
+                  <input type="text" [ngModel]="igpNo()" (ngModelChange)="onIgpNoChange($event)" [readonly]="isIgpLinkedReadonly()" />
+                  @if (!isIgpLinkedReadonly()) {
+                    <button type="button" class="sir-input-action-button" (click)="openIgpDialog()" title="Select IGP">🔍</button>
+                  }
+                </div>
+              </div>
+
+              <div class="sir-field-row sir-field--igp-linked">
+                <label>BP Code:</label>
+                <input type="text" [ngModel]="bpCode()" (ngModelChange)="bpCode.set($event)" [readonly]="isIgpLinkedReadonly()" />
+              </div>
+
+              <div class="sir-field-row sir-field--igp-linked">
+                <label>BP Name:</label>
+                <input type="text" [ngModel]="bpName()" (ngModelChange)="bpName.set($event)" [readonly]="isIgpLinkedReadonly()" />
+              </div>
+
+              <div class="sir-field-row sir-field--igp-linked">
+                <label>Receiving Date:</label>
+                @if (isViewOnly()) {
+                  <input type="date" [ngModel]="receivingDate()" readonly />
+                } @else {
+                  <input
+                    type="date"
+                    [ngModel]="receivingDate()"
+                    (ngModelChange)="onReceivingDateChange($event)"
+                    [max]="maxTodayDate()"
+                    [disabled]="isIgpLinkedReadonly()"
+                    title="Future dates are not allowed"
+                  />
+                }
+              </div>
+
+              <div class="sir-field-row sir-field--igp-linked">
+                <label>Receiving Time:</label>
+                <input type="time" [ngModel]="receivingTime()" (ngModelChange)="receivingTime.set($event)" [readonly]="isIgpLinkedReadonly()" />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Document Date:</label>
+                <input type="date" [ngModel]="documentDate()" readonly />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Revision No:</label>
+                <input type="text" [ngModel]="revNo()" readonly />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Revision Date:</label>
+                <input
+                  type="date"
+                  class="sir-input--revision-date"
+                  [ngModel]="revDate()"
+                  (ngModelChange)="onRevDateChange($event)"
+                  [max]="maxTodayDate()"
+                  [readonly]="!isRevDateEditable()"
+                  title="Current date or earlier only"
+                />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Department (OUDP):</label>
+                @if (isHeaderReadonly()) {
+                  <input type="text" [ngModel]="departmentDisplay()" readonly title="Linked to OUDP" />
+                } @else {
+                  <ui5-select
+                    class="sapqc-form-select"
+                    [value]="department()"
+                    (change)="department.set(ui5SelectStringValue($event))"
+                    [disabled]="oudpDepartmentsLoading()"
+                    title="Linked to SAP B1 OUDP department master">
+                    <ui5-option value="">{{ oudpDepartmentsLoading() ? 'Loading departments…' : 'Select department' }}</ui5-option>
+                    @for (dept of oudpDepartments(); track dept.code) {
+                      <ui5-option [value]="dept.code">{{ dept.code }} — {{ dept.name }}</ui5-option>
+                    }
+                  </ui5-select>
+                  @if (oudpDepartmentsError()) {
+                    <span class="sir-field-hint sir-field-hint--error">{{ oudpDepartmentsError() }}</span>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="sir-form-column">
+              <div class="sir-field-row">
+                <label>SIR NO:</label>
+                <input type="text" [ngModel]="documentNumber()" readonly />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Lot / Batch No (Vendor):</label>
+                <input type="text" [ngModel]="lotBatchNo()" (ngModelChange)="lotBatchNo.set($event)" [readonly]="isHeaderReadonly()" />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Manufacturing Date:</label>
+                <input type="date" [ngModel]="manufacturingDate()" (ngModelChange)="manufacturingDate.set($event)" [readonly]="isHeaderReadonly()" />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Expiry Date / Shelf Life:</label>
+                <input type="date" [ngModel]="expiryDate()" (ngModelChange)="expiryDate.set($event)" [readonly]="isHeaderReadonly()" />
+              </div>
+
+              <div class="sir-field-row">
+                <label>Seal Intact:</label>
+                @if (isHeaderReadonly()) {
+                  <input type="text" [ngModel]="displayFieldValue(sealIntact())" readonly />
+                } @else {
+                  <ui5-select
+                    class="sapqc-form-select"
+                    [value]="sealIntact()"
+                    (change)="sealIntact.set(ui5SelectStringValue($event))">
+                    <ui5-option value="">Select</ui5-option>
+                    <ui5-option value="Yes">Yes</ui5-option>
+                    <ui5-option value="No">No</ui5-option>
+                  </ui5-select>
+                }
+              </div>
+
+              <div class="sir-field-row">
+                <label>Pest Infection:</label>
+                @if (isHeaderReadonly()) {
+                  <input type="text" [ngModel]="displayFieldValue(pestInfection())" readonly />
+                } @else {
+                  <ui5-select
+                    class="sapqc-form-select"
+                    [value]="pestInfection()"
+                    (change)="pestInfection.set(ui5SelectStringValue($event))">
+                    <ui5-option value="">Select</ui5-option>
+                    <ui5-option value="Yes">Yes</ui5-option>
+                    <ui5-option value="No">No</ui5-option>
+                  </ui5-select>
+                }
+              </div>
+
+              <div class="sir-field-row">
+                <label>Najas / Non-Halal Contamination:</label>
+                @if (isHeaderReadonly()) {
+                  <input type="text" [ngModel]="displayFieldValue(najas())" readonly />
+                } @else {
+                  <ui5-select
+                    class="sapqc-form-select"
+                    [value]="najas()"
+                    (change)="najas.set(ui5SelectStringValue($event))">
+                    <ui5-option value="">Select</ui5-option>
+                    <ui5-option value="Yes">Yes</ui5-option>
+                    <ui5-option value="No">No</ui5-option>
+                  </ui5-select>
+                }
+              </div>
+
+              <div class="sir-field-row">
+                <label>Physical Condition:</label>
+                @if (isHeaderReadonly()) {
+                  <input type="text" [ngModel]="displayFieldValue(physicalCondition())" readonly />
+                } @else {
+                  <ui5-select
+                    class="sapqc-form-select"
+                    [value]="physicalCondition()"
+                    (change)="physicalCondition.set(ui5SelectStringValue($event))">
+                    <ui5-option value="">Select</ui5-option>
+                    <ui5-option value="Okay">Okay</ui5-option>
+                    <ui5-option value="Not Okay">Not Okay</ui5-option>
+                  </ui5-select>
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sir-form-section" id="items">
+          <h2 class="sir-section-title">Row Level Information</h2>
+          <div class="sir-data-table-sticky-container">
+            <div class="sir-data-table-wrapper">
+              <table class="sir-data-table sir-data-table--row-level">
+                <thead>
+                  <tr>
+                    <th appColumnResize class="sir-col-sr">Sr. No</th>
+                    <th appColumnResize class="sir-col-item-code">Item Code</th>
+                    <th appColumnResize class="sir-col-item-name">Item Name</th>
+                    <th appColumnResize class="sir-col-qty">Available QTY</th>
+                    <th appColumnResize class="sir-col-uom">UOM</th>
+                    <th appColumnResize class="sir-col-remarks">Remarks</th>
+                    @if (!isFieldReadonly()) {
+                      <th appColumnResize class="sir-col-actions">Action</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (i of filteredRowIndexes; track trackRowIndex(i)) {
+                    <tr [class.sir-row--from-igp]="isIgpRow(i)" [attr.title]="isIgpRow(i) ? 'Auto-fetched from IGP' : null">
+                      <td class="sir-col-sr">{{ i + 1 }}</td>
+                      <td class="sir-col-item-code">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          [class.sir-table-input--picker]="canOpenItemPicker(i)"
+                          readonly
+                          [name]="'sir-itemCode-' + i"
+                          [ngModel]="rows()[i].itemCode"
+                          [title]="isIgpRow(i) ? 'Auto-fetched from IGP' : (canOpenItemPicker(i) ? 'Click to select item' : '')"
+                          (click)="canOpenItemPicker(i) && openItemDialog(i)"
+                          (keydown.enter)="canOpenItemPicker(i) && openItemDialog(i)"
+                        />
+                      </td>
+                      <td class="sir-col-item-name">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          readonly
+                          [name]="'sir-item-' + i"
+                          [ngModel]="rows()[i].item"
+                        />
+                      </td>
+                      <td class="sir-col-qty">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          inputmode="numeric"
+                          [name]="'sir-qty-' + i"
+                          [ngModel]="rows()[i].qty"
+                          (ngModelChange)="onQtyInput(i, $event)"
+                          [readonly]="isRowQtyReadonly(i)"
+                          placeholder="Numeric only"
+                        />
+                      </td>
+                      <td class="sir-col-uom">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          readonly
+                          [name]="'sir-uom-' + i"
+                          [ngModel]="rows()[i].uom"
+                        />
+                      </td>
+                      <td class="sir-col-remarks">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          [class.sir-table-input--igp-remarks]="isIgpRow(i) && !isRowRemarksReadonly(i)"
+                          [name]="'sir-remarks-' + i"
+                          [ngModel]="rows()[i].remarks"
+                          (ngModelChange)="patchRow(i, 'remarks', $event)"
+                          [readonly]="isRowRemarksReadonly(i)"
+                          placeholder="Required"
+                        />
+                      </td>
+                      @if (!isFieldReadonly()) {
+                        <td class="sir-col-actions">
+                          <div class="sir-row-action-buttons" data-ui5-compact-size>
+                            <ui5-button
+                              design="Transparent"
+                              icon="add"
+                              accessible-name="Add row"
+                              (click)="addRow()"
+                            ></ui5-button>
+                            <ui5-button
+                              design="Negative"
+                              icon="delete"
+                              accessible-name="Delete row"
+                              [disabled]="rows().length <= 1 || isIgpRow(i)"
+                              (click)="deleteRow(i)"
+                            ></ui5-button>
+                          </div>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="sir-form-section" id="footer">
+          <div class="sir-footer-grid">
+            <div class="sir-field-row">
+              <label>Submitted By:</label>
+              <input type="text" [ngModel]="submittedBy()" readonly />
+            </div>
+
+            <div class="sir-field-row">
+              <label>Remarks:</label>
+              <input
+                type="text"
+                placeholder="Document level remarks"
+                [ngModel]="remarks()"
+                (ngModelChange)="remarks.set($event)"
+                [readonly]="isHeaderReadonly()"
+              />
+            </div>
+          </div>
+
+          <div class="sir-form-actions">
+            @if (canSubmit()) {
+              <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="submit()">
+                {{ saving() ? (editMode() ? 'Saving…' : 'Submitting…') : (editMode() ? 'Save' : 'Submit') }}
+              </button>
+            } @else {
+              <button type="button" class="sapqc-back-to-list-button" (click)="back()">
+                <span class="sapqc-back-to-list-icon" aria-hidden="true">❮</span>
+                Back to List
+              </button>
+            }
+          </div>
+        </section>
+      </div>
+    </div>
+
+  @if (igpDialogOpen()) {
+    <div class="sir-modal-overlay" (click)="closeIgpDialog()">
+      <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
+        <div class="sir-modal-header">
+          <h2>Select IGP</h2>
+          <button type="button" class="sir-modal-close" (click)="closeIgpDialog()">×</button>
+        </div>
+
+        <div class="sir-modal-search">
+          <div class="sir-search-field">
+            <input
+              type="text"
+              placeholder="Search by IGP No, BP Code, or BP Name..."
+              [(ngModel)]="igpSearchTerm"
+              (ngModelChange)="onIgpSearchChange()"
+              name="igpSearchTerm"
+            />
+            <span class="sir-search-icon">🔍</span>
+          </div>
+        </div>
+
+        <div class="sir-modal-body">
+          @if (igpLoading()) {
+            <p class="sir-modal-status-text">Loading IGP records…</p>
+          } @else if (igpLoadError()) {
+            <p class="sir-modal-error-text">{{ igpLoadError() }}</p>
+          } @else {
+            <div class="sir-data-table-wrapper">
+              <table class="sir-modal-table">
+                <thead>
+                  <tr>
+                    <th class="sir-sortable-header" (click)="sortIgpData('igpNo')">
+                      IGP No
+                      @if (igpSortColumn === 'igpNo') {
+                        <span class="sir-sort-indicator">{{ igpSortDirection === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                    </th>
+                    <th class="sir-sortable-header" (click)="sortIgpData('bpCode')">
+                      BP Code
+                      @if (igpSortColumn === 'bpCode') {
+                        <span class="sir-sort-indicator">{{ igpSortDirection === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                    </th>
+                    <th class="sir-sortable-header" (click)="sortIgpData('bpName')">
+                      BP Name
+                      @if (igpSortColumn === 'bpName') {
+                        <span class="sir-sort-indicator">{{ igpSortDirection === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                    </th>
+                    <th class="sir-sortable-header" (click)="sortIgpData('receivingDate')">
+                      Receiving Date
+                      @if (igpSortColumn === 'receivingDate') {
+                        <span class="sir-sort-indicator">{{ igpSortDirection === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (record of paginatedIgpRecords(); track record.igpNo) {
+                    <tr class="sir-modal-row" (click)="selectIgpRecord(record)">
+                      <td>{{ record.igpNo }}</td>
+                      <td>{{ record.bpCode }}</td>
+                      <td>{{ record.bpName }}</td>
+                      <td>{{ record.receivingDate }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="4" class="sir-modal-empty">No IGP records found.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <div class="sir-modal-pagination">
+              <div class="sir-modal-pagination-info">
+                Showing {{ filteredIgpRecords().length ? (igpCurrentPage - 1) * igpPageSize + 1 : 0 }} to
+                {{ Math.min(igpCurrentPage * igpPageSize, filteredIgpRecords().length) }} of
+                {{ filteredIgpRecords().length }} entries
+              </div>
+
+              <div class="sir-modal-pagination-nav">
+                <div class="sir-modal-pagination-controls">
+                  <button
+                    type="button"
+                    class="sir-modal-page-nav"
+                    [disabled]="igpCurrentPage === 1"
+                    (click)="setIgpPage(igpCurrentPage - 1)"
+                  >
+                    Previous
+                  </button>
+
+                  <span class="sir-modal-page-status">Page {{ igpCurrentPage }} of {{ igpTotalPages }}</span>
+
+                  <button
+                    type="button"
+                    class="sir-modal-page-nav"
+                    [disabled]="igpCurrentPage === igpTotalPages"
+                    (click)="setIgpPage(igpCurrentPage + 1)"
+                  >
+                    Next
+                  </button>
+                </div>
+
+                <div class="sir-modal-page-size">
+                  <ui5-select
+                    class="sapqc-page-size-select"
+                    [value]="'' + igpPageSize"
+                    (change)="onIgpPageSizeUi5Change($event)"
+                  >
+                    @for (size of igpPageSizeOptions; track size) {
+                      <ui5-option [value]="'' + size">Show {{ size }}</ui5-option>
+                    }
+                  </ui5-select>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="sir-modal-footer">
+          <button type="button" class="sir-secondary-button" (click)="closeIgpDialog()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (itemDialogOpen) {
+    <div class="sir-modal-overlay" (click)="closeItemDialog()">
+      <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
+        <div class="sir-modal-header">
+          <h2>Select Item (OITM)</h2>
+          <button type="button" class="sir-modal-close" (click)="closeItemDialog()">×</button>
+        </div>
+
+        <div class="sir-modal-search">
+          <div class="sir-search-field">
+            <input
+              type="text"
+              placeholder="Search by item name or code..."
+              [ngModel]="itemSearchTerm()"
+              (ngModelChange)="onItemSearchInput($event)"
+              name="itemSearchTerm"
+            />
+            <span class="sir-search-icon">🔍</span>
+          </div>
+        </div>
+
+        <div class="sir-modal-body">
+          @if (itemLoading()) {
+            <p class="sir-modal-status-text">Loading items…</p>
+          } @else if (itemLoadError()) {
+            <p class="sir-modal-error-text">{{ itemLoadError() }}</p>
+          } @else {
+            <p class="sir-modal-hint">Select one or more items from OITM. The first fills the current row; extras add new rows.</p>
+            <div class="sir-data-table-wrapper">
+              <table class="sir-modal-table">
+                <thead>
+                  <tr>
+                    <th class="sir-modal-col-check">
+                      <input
+                        type="checkbox"
+                        [checked]="allCatalogSelected()"
+                        (click)="toggleSelectAllCatalog($event)"
+                      />
+                    </th>
+                    <th class="sir-sortable-header" (click)="sortItemData('itemCode')">
+                      Item Code
+                      @if (itemSortColumn() === 'itemCode') {
+                        <span class="sir-sort-indicator">{{ itemSortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                    </th>
+                    <th class="sir-sortable-header" (click)="sortItemData('itemName')">
+                      Item Name
+                      @if (itemSortColumn() === 'itemName') {
+                        <span class="sir-sort-indicator">{{ itemSortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                    </th>
+                    <th class="sir-sortable-header" (click)="sortItemData('uom')">
+                      UOM
+                      @if (itemSortColumn() === 'uom') {
+                        <span class="sir-sort-indicator">{{ itemSortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (cat of paginatedCatalogItems(); track cat.itemCode) {
+                    <tr
+                      class="sir-modal-row"
+                      [class.sir-modal-row--selected]="isCatalogSelected(cat)"
+                      (click)="toggleCatalogSelection(cat)"
+                    >
+                      <td class="sir-modal-col-check">
+                        <input
+                          type="checkbox"
+                          [checked]="isCatalogSelected(cat)"
+                          (click)="toggleCatalogSelection(cat, $event)"
+                        />
+                      </td>
+                      <td>{{ cat.itemCode }}</td>
+                      <td>{{ cat.itemName }}</td>
+                      <td>{{ cat.uom || '—' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="4" class="sir-modal-empty">No items match your search.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <div class="sir-modal-pagination">
+              <div class="sir-modal-pagination-info">
+                Showing {{ filteredCatalogItems().length ? (itemCurrentPage() - 1) * itemPageSize() + 1 : 0 }} to
+                {{ Math.min(itemCurrentPage() * itemPageSize(), filteredCatalogItems().length) }} of
+                {{ filteredCatalogItems().length }} entries
+              </div>
+
+              <div class="sir-modal-pagination-nav">
+                <div class="sir-modal-pagination-controls">
+                  <button
+                    type="button"
+                    class="sir-modal-page-nav"
+                    [disabled]="itemCurrentPage() === 1"
+                    (click)="setItemPage(itemCurrentPage() - 1)"
+                  >
+                    Previous
+                  </button>
+
+                  <span class="sir-modal-page-status">Page {{ itemCurrentPage() }} of {{ itemTotalPages() }}</span>
+
+                  <button
+                    type="button"
+                    class="sir-modal-page-nav"
+                    [disabled]="itemCurrentPage() === itemTotalPages()"
+                    (click)="setItemPage(itemCurrentPage() + 1)"
+                  >
+                    Next
+                  </button>
+                </div>
+
+                <div class="sir-modal-page-size">
+                  <ui5-select
+                    class="sapqc-page-size-select"
+                    [value]="'' + itemPageSize()"
+                    (change)="onItemPageSizeUi5Change($event)"
+                  >
+                    @for (size of itemPageSizeOptions; track size) {
+                      <ui5-option [value]="'' + size">Show {{ size }}</ui5-option>
+                    }
+                  </ui5-select>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="sir-modal-footer sir-modal-footer--split">
+          <span class="sir-modal-selection-count">Selected: {{ selectedCatalogCount() }}</span>
+          <div class="sir-modal-footer-actions">
+            <button type="button" class="sir-secondary-button" (click)="closeItemDialog()">Cancel</button>
+            <button
+              type="button"
+              class="sir-primary-button"
+              [disabled]="selectedCatalogCount() === 0"
+              (click)="confirmItemSelection()"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

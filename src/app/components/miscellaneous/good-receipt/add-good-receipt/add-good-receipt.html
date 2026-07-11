@@ -1,0 +1,161 @@
+<div class="sir-page">
+  <header class="sir-page-header">
+    <div class="sir-page-titlebar">
+      <button type="button" class="sir-back-button" (click)="layout.backToModuleHome()" title="Back" aria-label="Back">
+        <span class="sir-back-icon" aria-hidden="true">❮</span>
+      </button>
+      <h1 class="sir-page-title">{{ pageTitle() }}</h1>
+    </div>
+  </header>
+
+  <div class="sir-page-content">
+    <div class="sir-card">
+      <nav class="sir-section-nav">
+        <ul class="sir-section-nav-list">
+          <li
+            class="sir-section-nav-item"
+            [class.sir-section-nav-item--active]="activeSection() === 'header'"
+            (click)="scrollTo('header')"
+          >
+            Header Info
+          </li>
+          <li
+            class="sir-section-nav-item"
+            [class.sir-section-nav-item--active]="activeSection() === 'items'"
+            (click)="scrollTo('items')"
+          >
+            Row Level Info
+          </li>
+        </ul>
+      </nav>
+
+      <section class="sir-form-section" id="header">
+        <div class="sir-form-grid">
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Branch:</label>
+              <select [ngModel]="headerForm().branchId" (ngModelChange)="updateBranch($event)">
+                @for (branch of branchOptions(); track branch.code) {
+                  <option [value]="branch.code">{{ branch.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="sir-field-row">
+              <label>Document Date:</label>
+              <input type="date" [ngModel]="headerForm().documentDate" (ngModelChange)="updateHeaderField('documentDate', $event)">
+            </div>
+          </div>
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Posting Date:</label>
+              <input type="date" [ngModel]="headerForm().postingDate" (ngModelChange)="updateHeaderField('postingDate', $event)">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sir-form-section" id="items">
+        <h2 class="sir-section-title">Row Level Information</h2>
+        <div class="sir-data-table-sticky-container">
+          <div class="sir-data-table-wrapper">
+            <table class="sir-data-table sir-data-table--row-level">
+              <thead>
+                <tr>
+                  <th class="sir-col-sr">Sr. No</th>
+                  <th class="sir-col-item-code">Item Code</th>
+                  <th class="sir-col-item-name">Item Name</th>
+                  <th class="sir-col-warehouse">Warehouse</th>
+                  <th class="sir-col-qty">Quantity</th>
+                  <th class="sir-col-price">Unit Price</th>
+                  <th class="sir-col-batch">Batch Number</th>
+                  <th class="sir-col-date">Mfg Date</th>
+                  <th class="sir-col-date">Expiry Date</th>
+                  <th class="sir-col-actions">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of contentLines(); track $index) {
+                  <tr>
+                    <td class="sir-col-sr">{{ $index + 1 }}</td>
+                    <td class="sir-col-item-code">
+                      <input
+                        type="text"
+                        class="sir-table-input sir-table-input--picker"
+                        readonly
+                        [ngModel]="line.itemCode"
+                        title="Click to select item"
+                        (click)="openItemPicker($index)"
+                        (keydown.enter)="openItemPicker($index)"
+                      />
+                    </td>
+                    <td class="sir-col-item-name">
+                      <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
+                    </td>
+                    <td class="sir-col-warehouse">
+                      <app-warehouse-search-select
+                        [compact]="true"
+                        [warehouseCode]="line.warehouse"
+                        (warehouseCodeChange)="updateContentLine($index, 'warehouse', $event)"
+                      />
+                    </td>
+                    <td class="sir-col-qty">
+                      <input type="number" class="sir-table-input" min="1" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)">
+                    </td>
+                    <td class="sir-col-price">
+                      <input type="number" class="sir-table-input" [ngModel]="line.unitPrice" (ngModelChange)="updateContentLine($index, 'unitPrice', $event)">
+                    </td>
+                    <td class="sir-col-batch">
+                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)">
+                    </td>
+                    <td class="sir-col-date">
+                      <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)">
+                    </td>
+                    <td class="sir-col-date">
+                      <input type="date" class="sir-table-input" [ngModel]="line.expiryDate" (ngModelChange)="updateContentLine($index, 'expiryDate', $event)">
+                    </td>
+                    <td class="sir-col-actions">
+                      <div class="sir-row-action-buttons" data-ui5-compact-size>
+                        <ui5-button design="Transparent" icon="add" accessible-name="Add row" (click)="addContentLine()"></ui5-button>
+                        <ui5-button design="Negative" icon="delete" accessible-name="Delete row" [disabled]="contentLines().length <= 1" (click)="deleteContentLine($index)"></ui5-button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="sir-form-section" id="footer">
+        <div class="sir-footer-grid">
+          <div class="sir-field-row">
+            <label>Submitted By:</label>
+            <input type="text" [ngModel]="submittedBy()" readonly />
+          </div>
+          <div class="sir-field-row">
+            <label>Remarks:</label>
+            <input type="text" placeholder="Document level remarks" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" />
+          </div>
+        </div>
+        <div class="sir-footer-grid sir-footer-grid--totals">
+          <div class="sir-field-row">
+            <label>Total Amount:</label>
+            <input type="text" class="sir-input--amount" [value]="formatAmount(totalAmount())" readonly>
+          </div>
+        </div>
+        <div class="sir-form-actions">
+          <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="save()">
+            {{ saving() ? 'Saving…' : 'Save' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<app-oitm-item-picker-dialog
+  [open]="itemPickerOpen()"
+  (openChange)="itemPickerOpen.set($event)"
+  (selected)="onItemsSelected($event)"
+/>

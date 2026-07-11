@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, tap, throwError } from 'rxjs';
 import { apiUrl } from '../config/api.config';
 
 export interface WarehouseOption {
@@ -8,42 +8,96 @@ export interface WarehouseOption {
   warehouseName: string;
 }
 
-const WAREHOUSES_URL = apiUrl('warehouses');
-
 @Injectable({ providedIn: 'root' })
 export class WarehouseService {
   private readonly http = inject(HttpClient);
-  private readonly _warehouses = signal<WarehouseOption[]>([]);
-  private loaded = false;
+  private readonly catalog = signal<WarehouseOption[]>([]);
   private load$?: Observable<WarehouseOption[]>;
 
-  readonly warehouses = this._warehouses.asReadonly();
+  readonly warehouses = this.catalog.asReadonly();
 
-  fetchWarehouses(): Observable<WarehouseOption[]> {
-    if (this.loaded) {
-      return of(this._warehouses());
+  /** Returns cached warehouses when available; otherwise fetches once and reuses. */
+  ensureLoaded(): Observable<WarehouseOption[]> {
+    if (this.catalog().length > 0) {
+      return of(this.catalog());
     }
 
+    return this.fetchCatalog();
+  }
+
+  /** Clears cache and fetches warehouses again. */
+  reload(): Observable<WarehouseOption[]> {
+    this.load$ = undefined;
+    this.catalog.set([]);
+    return this.fetchCatalog();
+  }
+
+  getCatalog(): readonly WarehouseOption[] {
+    return this.catalog();
+  }
+
+  isLoaded(): boolean {
+    return this.catalog().length > 0;
+  }
+
+  fetchWarehouses(): Observable<WarehouseOption[]> {
+    return this.ensureLoaded();
+  }
+
+  formatLabel(warehouse: WarehouseOption): string {
+    const code = warehouse.warehouseCode.trim();
+    const name = warehouse.warehouseName.trim();
+    if (code && name) {
+      return `${code} — ${name}`;
+    }
+    return code || name;
+  }
+
+  search(term: string): WarehouseOption[] {
+    const query = term.trim().toLowerCase();
+    const catalog = this.catalog();
+    if (!query) {
+      return [...catalog];
+    }
+    return catalog.filter(
+      (warehouse) =>
+        warehouse.warehouseCode.toLowerCase().includes(query) ||
+        warehouse.warehouseName.toLowerCase().includes(query),
+    );
+  }
+
+  private fetchCatalog(): Observable<WarehouseOption[]> {
     if (!this.load$) {
-      this.load$ = this.http.get<unknown>(WAREHOUSES_URL).pipe(
-        map((response) =>
-          this.extractApiItems(response)
-            .map((item) => this.mapItem(item))
-            .filter((warehouse) => warehouse.warehouseCode),
-        ),
+      this.load$ = this.http.get<unknown>(apiUrl('warehouses')).pipe(
+        map((response) => this.parseWarehouses(response)),
         tap((records) => {
-          this._warehouses.set(records);
-          this.loaded = true;
+          this.catalog.set(records);
+          if (records.length === 0) {
+            this.load$ = undefined;
+          }
         }),
-        catchError(() => {
-          this._warehouses.set([]);
-          this.loaded = true;
-          return of([]);
+        catchError((error) => {
+          this.load$ = undefined;
+          this.catalog.set([]);
+          return throwError(() => error);
         }),
+        shareReplay(1),
       );
     }
 
     return this.load$;
+  }
+
+  private parseWarehouses(response: unknown): WarehouseOption[] {
+    return this.extractApiItems(response)
+      .map((item) => this.mapItem(item))
+      .filter((warehouse) => warehouse.warehouseCode.trim() !== '')
+      .sort((left, right) =>
+        left.warehouseName.localeCompare(right.warehouseName, undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        }),
+      );
   }
 
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
@@ -62,6 +116,11 @@ export class WarehouseService {
     }
 
     const obj = response as Record<string, unknown>;
+
+    if (obj['status'] === false) {
+      return [];
+    }
+
     const arrayKeys = ['data', 'items', 'results', 'records', 'list', 'warehouses'];
 
     for (const key of arrayKeys) {
@@ -84,9 +143,12 @@ export class WarehouseService {
     if (
       obj['warehouseCode'] ||
       obj['warehouse_code'] ||
+      obj['WarehouseCode'] ||
+      obj['Code'] ||
       obj['code'] ||
       obj['WhsCode'] ||
-      obj['name']
+      obj['name'] ||
+      obj['Name']
     ) {
       return [obj];
     }
@@ -96,25 +158,21 @@ export class WarehouseService {
 
   private mapItem(item: Record<string, unknown>): WarehouseOption {
     return {
-      warehouseCode: this.pickString([
-        item,
-      ], [
+      warehouseCode: this.pickString([item], [
+        'Code',
+        'WarehouseCode',
         'warehouseCode',
         'warehouse_code',
-        'WarehouseCode',
         'code',
-        'Code',
         'WhsCode',
         'whs_code',
       ]),
-      warehouseName: this.pickString([
-        item,
-      ], [
+      warehouseName: this.pickString([item], [
+        'Name',
+        'WarehouseName',
         'warehouseName',
         'warehouse_name',
-        'WarehouseName',
         'name',
-        'Name',
         'WhsName',
         'whs_name',
         'description',

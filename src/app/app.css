@@ -235,6 +235,10 @@
   width: 100%;
 }
 
+.app-content > app-miscellaneous-shell {
+  background: #ffffff;
+}
+
 .app-content--bare {
   display: flex;
   flex-direction: column;

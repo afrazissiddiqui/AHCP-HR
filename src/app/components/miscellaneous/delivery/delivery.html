@@ -1,0 +1,243 @@
+<div class="miscellaneous-content">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
+    <button class="btn-default" pageToolbarActions (click)="onAddNewDelivery()">Add Delivery</button>
+  </app-page-toolbar>
+
+  <div class="misc-list-container">
+    <div class="misc-list-toolbar">
+      <div class="misc-list-title">Deliveries ({{ filteredDeliveries().length }}) · Selected (0)</div>
+      <div class="misc-toolbar-right">
+        <div class="misc-search-box">
+          <input
+            type="text"
+            class="misc-search-input"
+            placeholder="Search..."
+            [ngModel]="searchText()"
+            (ngModelChange)="onSearchChange($event)"
+          />
+          <span class="misc-search-icon">🔍</span>
+        </div>
+        <button type="button" class="misc-icon-button" (click)="openDialog()" title="Filter">⏷</button>
+        <button type="button" class="misc-icon-button" (click)="openDialog()" title="Settings">⚙</button>
+      </div>
+    </div>
+
+    @if (showDialog()) {
+      <div class="misc-dialog-backdrop" (click)="closeDialog()"></div>
+      <div class="misc-dialog">
+        <div class="misc-dialog-header">
+          <h3>Filter</h3>
+          <button type="button" class="misc-dialog-close" (click)="closeDialog()">&times;</button>
+        </div>
+        <div class="misc-dialog-body">
+          @for (column of columns(); track column.key) {
+            <label class="misc-dialog-option">
+              <input
+                type="checkbox"
+                [checked]="column.visible"
+                (change)="toggleColumnVisibility(column.key, $any($event.target).checked)"
+              />
+              <span>{{ column.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="misc-empty-state">Loading deliveries...</div>
+    } @else if (loadError()) {
+      <div class="misc-empty-state">
+        {{ loadError() }}
+        <button type="button" class="btn-primary" (click)="loadDeliveries()">Retry</button>
+      </div>
+    } @else {
+      <div class="misc-table-wrapper">
+        <table class="misc-data-table">
+          <thead>
+            <tr>
+              <th class="col-sr">Sr#</th>
+              <th [hidden]="!isColumnVisible('docNum')">Delivery No.</th>
+              <th [hidden]="!isColumnVisible('docDate')">Posting Date</th>
+              <th [hidden]="!isColumnVisible('customer')">Customer</th>
+              <th [hidden]="!isColumnVisible('shipToAddress')">Ship To Address</th>
+              <th [hidden]="!isColumnVisible('itemCount')">Item Count</th>
+              <th [hidden]="!isColumnVisible('status')">Status</th>
+              <th class="col-action">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of paginatedDeliveries(); let idx = $index; track row.docEntry || row.docNum) {
+              <tr>
+                <td class="col-sr">{{ ((currentPage() - 1) * pageSize) + idx + 1 }}</td>
+                <td [hidden]="!isColumnVisible('docNum')">{{ row.docNum }}</td>
+                <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate }}</td>
+                <td [hidden]="!isColumnVisible('customer')">{{ row.cardCode }} - {{ row.cardName }}</td>
+                <td [hidden]="!isColumnVisible('shipToAddress')">{{ row.shipToAddress }}</td>
+                <td [hidden]="!isColumnVisible('itemCount')" style="text-align: center;">{{ row.itemCount }}</td>
+                <td [hidden]="!isColumnVisible('status')">
+                  <span
+                    class="status-badge"
+                    [class.status-open]="!isClosed(row.status)"
+                    [class.status-close]="isClosed(row.status)"
+                  >
+                    {{ statusLabel(row.status) }}
+                  </span>
+                </td>
+                <td class="col-action">
+                  <div class="action-buttons">
+                    <button
+                      type="button"
+                      class="btn-details"
+                      (click)="onViewDetails(row)"
+                      title="View full details"
+                    >
+                      <span class="btn-details-icon" aria-hidden="true">◎</span>
+                      Details
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="misc-empty-state">No deliveries found</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="misc-pagination">
+        <div class="misc-pagination-info">
+          Showing {{ filteredDeliveries().length ? ((currentPage() - 1) * pageSize) + 1 : 0 }} to
+          {{ paginationEnd() }} of {{ filteredDeliveries().length }}
+        </div>
+        <div class="misc-pagination-controls">
+          <button type="button" class="btn-default" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+          <span class="misc-pagination-status">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <button type="button" class="btn-default" [disabled]="currentPage() === totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showDetailDialog() && selectedRow(); as row) {
+  <div class="misc-dialog-backdrop" (click)="closeDetailDialog()"></div>
+  <div class="misc-detail-dialog" (click)="$event.stopPropagation()">
+    <div class="misc-dialog-header">
+      <h3>Delivery #{{ row.docNum }}</h3>
+      <button type="button" class="misc-dialog-close" (click)="closeDetailDialog()">&times;</button>
+    </div>
+
+    <div class="misc-detail-body">
+      <div class="misc-detail-grid">
+        <div class="misc-detail-field">
+          <label>Delivery No</label>
+          <div>{{ row.docNum || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Doc Entry</label>
+          <div>{{ row.docEntry || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Posting Date</label>
+          <div>{{ row.docDate || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Due Date</label>
+          <div>{{ row.docDueDate || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Status</label>
+          <div>
+            <span
+              class="status-badge"
+              [class.status-open]="!isClosed(row.status)"
+              [class.status-close]="isClosed(row.status)"
+            >
+              {{ statusLabel(row.status) }}
+            </span>
+          </div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Series</label>
+          <div>{{ row.seriesName || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Customer Code</label>
+          <div>{{ row.cardCode || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Customer Name</label>
+          <div>{{ row.cardName || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Customer PO No</label>
+          <div>{{ row.customerPoNo || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Branch</label>
+          <div>{{ row.branch || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Driver</label>
+          <div>{{ row.driverName || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Vehicle No</label>
+          <div>{{ row.vehicleNo || '—' }}</div>
+        </div>
+        <div class="misc-detail-field">
+          <label>Transporter</label>
+          <div>{{ row.transporterName || '—' }}</div>
+        </div>
+        <div class="misc-detail-field misc-detail-field--full">
+          <label>Ship To Address</label>
+          <div>{{ row.shipToAddress || '—' }}</div>
+        </div>
+      </div>
+
+      <h4 class="misc-detail-section-title">Line Items ({{ row.items.length }})</h4>
+      <div class="misc-detail-table-wrapper">
+        <table class="misc-data-table">
+          <thead>
+            <tr>
+              <th>Sr#</th>
+              <th>Item Code</th>
+              <th>Item Description</th>
+              <th>Warehouse</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Batch</th>
+              <th>Line Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of row.items; let idx = $index; track line.itemCode + '-' + line.lineNum + '-' + idx) {
+              <tr>
+                <td>{{ idx + 1 }}</td>
+                <td>{{ line.itemCode }}</td>
+                <td>{{ line.itemDescription }}</td>
+                <td>{{ line.warehouse }}</td>
+                <td>{{ line.quantity }}</td>
+                <td>{{ formatAmount(line.unitPrice) }}</td>
+                <td>{{ line.batchNumber || '—' }}</td>
+                <td>{{ formatAmount(line.lineTotal) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="misc-empty-state">No line items</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="misc-detail-footer">
+      <button type="button" class="btn-default" (click)="closeDetailDialog()">Close</button>
+    </div>
+  </div>
+}
+

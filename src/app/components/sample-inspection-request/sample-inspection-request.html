@@ -1,0 +1,168 @@
+<div class="sir-list-page">
+  <header class="sir-page-header">
+    <div class="sir-page-titlebar">
+      <button type="button" class="sir-back-button" aria-label="Toggle sidebar" title="Toggle sidebar" (click)="toggleSidebar()">
+        <span class="sir-back-icon">❮</span>
+      </button>
+
+      <h1 class="sir-page-title" title="Sample Inspection Request List">Sample Inspection Request List</h1>
+    </div>
+
+    @if (perm.can('sample-inspection-request', 'create')) {
+    <button type="button" class="sir-primary-button" (click)="createNewSIR()">Add New</button>
+    }
+  </header>
+
+  <div class="sir-page-content">
+      <div class="sir-card">
+        <div class="sir-toolbar">
+          <div class="sir-toolbar-title">Line Items ({{ sirList().length }}) · Selected ({{ getSelectedCount() }})</div>
+
+          <div class="sir-toolbar-spacer"></div>
+
+          <div class="sir-search-field">
+            <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" placeholder="Search..." />
+            <span class="sir-search-icon">🔍</span>
+          </div>
+
+          <div class="sir-toolbar-actions">
+            <button type="button" class="sir-icon-button" title="Toggle Full Screen" (click)="toggleFullScreen()">⛶</button>
+            <button type="button" class="sir-icon-button" title="View settings" (click)="openDialog()">⚙</button>
+          </div>
+        </div>
+
+        <div class="sir-dialog-backdrop" *ngIf="showDialog" (click)="closeDialog()"></div>
+
+        <div class="sir-dialog" *ngIf="showDialog">
+          <div class="sir-dialog-header">
+            <h3>View Settings</h3>
+            <button type="button" class="sir-dialog-close" (click)="closeDialog()">×</button>
+          </div>
+
+          <div class="sir-dialog-tabs">
+            <button type="button" (click)="activeTab='filter'" [class.active]="activeTab==='filter'">Filter</button>
+          </div>
+
+          <div class="sir-dialog-body">
+            <div *ngIf="activeTab === 'filter'" class="sir-dialog-option-list">
+              <label class="sir-checkbox-row" *ngFor="let col of columns">
+                <input type="checkbox" [(ngModel)]="col.visible" />
+                <span>{{ col.label }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="sir-dialog-footer">
+            <button type="button" class="sir-primary-button" (click)="closeDialog()">Done</button>
+          </div>
+        </div>
+
+        @if (loadError()) {
+          <div class="sir-error-banner">
+            <p>{{ loadError() }}</p>
+            <button type="button" class="sir-primary-button" (click)="retryLoad()">Retry</button>
+          </div>
+        }
+
+        <div class="sir-table-card">
+          @if (loading()) {
+            <p class="sir-loading">Loading sample inspection requests…</p>
+          } @else {
+          <div class="sir-data-table-sticky-container">
+            <div class="sir-data-table-wrapper">
+              <table class="sir-data-table sir-data-table--row-level">
+                <thead>
+                  <tr>
+                    <th class="sir-select-column">
+                      <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll($event)" />
+                    </th>
+
+                    <th
+                      *ngFor="let col of columns"
+                      [hidden]="!col.visible"
+                      appColumnResize
+                      (click)="col.key !== 'action' && sortData(col.key)"
+                      class="sir-sortable-header"
+                    >
+                      {{ col.label }}
+                      <span *ngIf="col.key !== 'action' && sortColumn === col.key" class="sir-sort-indicator">
+                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr
+                    *ngFor="let s of paginatedList; trackBy: trackBySirNo"
+                    class="sir-data-row"
+                    [class.sir-data-row--selected]="s.selected"
+                  >
+                    <td class="sir-select-column">
+                      <input type="checkbox" [(ngModel)]="s.selected" />
+                    </td>
+
+                    <td *ngFor="let col of columns" [hidden]="!col.visible" appColumnResize>
+                      <ng-container *ngIf="col.key !== 'action'; else sirActionCell">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          readonly
+                          tabindex="-1"
+                          [name]="'sir-list-' + col.key + '-' + s.sirNo"
+                          [value]="cellDisplayValue(s, col.key)"
+                          [attr.title]="cellDisplayValue(s, col.key)"
+                        />
+                      </ng-container>
+                      <ng-template #sirActionCell>
+                        <div class="sir-row-actions">
+                          @if (perm.can('sample-inspection-request', 'view')) {
+                          <button type="button" class="sir-action-button sir-action-button-secondary" (click)="$event.stopPropagation(); viewRecord(s)">View</button>
+                          }
+                          @if (perm.can('sample-inspection-request', 'edit')) {
+                          <button type="button" class="sir-action-button sir-action-button-edit" (click)="$event.stopPropagation(); editRecord(s)">Edit</button>
+                          }
+                          @if (perm.can('sample-inspection-request', 'print')) {
+                          <button type="button" class="sir-action-button sir-action-button-primary" (click)="$event.stopPropagation(); printRecord(s)">Print</button>
+                          }
+                        </div>
+                      </ng-template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sir-pagination">
+            <div class="sir-pagination-info">
+              Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredList.length) }} of
+              {{ filteredList.length }} entries
+            </div>
+
+            <div class="sir-pagination-controls">
+              <button type="button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+
+              <div class="sir-page-numbers">
+                <button type="button" *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
+                  {{ page }}
+                </button>
+              </div>
+
+              <button type="button" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+            </div>
+
+            <div class="sir-page-size">
+              <ui5-select
+                class="sapqc-page-size-select"
+                [value]="'' + pageSize"
+                (change)="onPageSizeUi5Change($event)">
+                <ui5-option *ngFor="let size of pageSizeOptions" [value]="'' + size">Show {{ size }}</ui5-option>
+              </ui5-select>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+</div>

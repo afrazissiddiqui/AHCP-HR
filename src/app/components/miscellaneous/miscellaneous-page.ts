@@ -1,19 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { PageToolbarComponent } from '../page-toolbar/page-toolbar';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-miscellaneous-page',
   standalone: true,
-  imports: [CommonModule, PageToolbarComponent],
+  imports: [CommonModule],
   templateUrl: './miscellaneous-page.html',
   styleUrl: './miscellaneous-page.css',
 })
-export class MiscellaneousPageComponent {
-  private readonly route = inject(ActivatedRoute);
-
-  readonly pageTitle = computed(
-    () => this.route.snapshot.data['title'] as string ?? 'Miscellaneous'
-  );
-}
+export class MiscellaneousPageComponent {}

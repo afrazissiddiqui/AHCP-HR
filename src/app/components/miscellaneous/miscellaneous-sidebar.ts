@@ -1,13 +1,6 @@
 import { SidebarItem, SidebarSection } from '../sidebar/sidebar';
 
-export const MISCELLANEOUS_SIDEBAR_ITEMS: SidebarItem[] = [
-  {
-    id: 'miscellaneous-good-receipt-note',
-    label: 'Good Receipt Note',
-    route: '/miscellaneous/good-receipt-note',
-    access: { moduleSlug: 'good_receipt_note_form', action: 'list' },
-  },
-];
+export const MISCELLANEOUS_SIDEBAR_ITEMS: SidebarItem[] = [];
 
 export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
   {
@@ -16,33 +9,49 @@ export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       {
         id: 'miscellaneous-good-receipt-note',
-        label: 'Good Receipt Note',
+        label: 'Good Receipt',
         route: '/miscellaneous/good-receipt-note',
-        access: { moduleSlug: 'good_receipt_note_form', action: 'list' },
-      },
-      {
-        id: 'miscellaneous-delivery',
-        label: 'Delivery',
-        route: '/miscellaneous/delivery',
-        access: { moduleSlug: 'delivery_form', action: 'list' },
-      },
-      {
-        id: 'miscellaneous-inventory-transfer',
-        label: 'Inventory transfer',
-        route: '/miscellaneous/inventory-transfer',
-        access: { moduleSlug: 'inventory_transfer_form', action: 'list' },
       },
       {
         id: 'miscellaneous-good-issue',
         label: 'Good Issue',
         route: '/miscellaneous/good-issue',
-        access: { moduleSlug: 'good_issue_form', action: 'list' },
+      },
+      {
+        id: 'miscellaneous-delivery',
+        label: 'Delivery',
+        route: '/miscellaneous/delivery',
+      },
+      {
+        id: 'miscellaneous-inventory-transfer',
+        label: 'Inventory transfer',
+        route: '/miscellaneous/inventory-transfer',
+      },
+      {
+        id: 'miscellaneous-receipt-from-production',
+        label: 'Receipt From Production',
+        route: '/miscellaneous/receipt-from-production',
+      },
+      {
+        id: 'miscellaneous-sample-inspection-request',
+        label: 'Sample Inspection Request',
+        route: '/miscellaneous/sample-inspection-request',
       },
     ],
   },
 ];
 
 export function miscellaneousActiveItemFromUrl(url: string): string {
+  const path = url.split('?')[0].split('#')[0];
+  if (/\/miscellaneous\/?$/.test(path)) {
+    return '';
+  }
+  if (url.includes('/miscellaneous/sample-inspection-request')) {
+    return 'miscellaneous-sample-inspection-request';
+  }
+  if (url.includes('/miscellaneous/receipt-from-production')) {
+    return 'miscellaneous-receipt-from-production';
+  }
   if (url.includes('/miscellaneous/delivery')) {
     return 'miscellaneous-delivery';
   }
@@ -52,5 +61,8 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   if (url.includes('/miscellaneous/good-issue')) {
     return 'miscellaneous-good-issue';
   }
-  return 'miscellaneous-good-receipt-note';
+  if (url.includes('/miscellaneous/good-receipt-note')) {
+    return 'miscellaneous-good-receipt-note';
+  }
+  return '';
 }

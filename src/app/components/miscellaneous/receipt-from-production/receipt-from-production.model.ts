@@ -1,0 +1,82 @@
+export interface ReceiptFromProductionHeader {
+  branchId: string;
+  branchName: string;
+  remarks: string;
+  postingDate: string;
+  documentDate: string;
+  dueDate: string;
+  baseProductionOrderDocEntry?: string;
+  baseProductionOrderDocNum?: string;
+}
+
+export interface ReceiptFromProductionLine {
+  itemCode: string;
+  itemDescription: string;
+  warehouse: string;
+  quantity: number | null;
+  unitPrice: number | null;
+  batchNumber: string;
+  manufacturingDate: string;
+  expiryDate: string;
+  baseEntry?: string;
+  baseLine?: string;
+}
+
+function todayDateString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function plusDaysDateString(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+}
+
+export function createEmptyReceiptFromProductionHeader(): ReceiptFromProductionHeader {
+  const today = todayDateString();
+  return {
+    branchId: '2',
+    branchName: 'AHCP_HO',
+    remarks: '',
+    postingDate: today,
+    documentDate: today,
+    dueDate: today,
+    baseProductionOrderDocEntry: '',
+    baseProductionOrderDocNum: '',
+  };
+}
+
+export function createEmptyReceiptFromProductionLine(): ReceiptFromProductionLine {
+  return {
+    itemCode: '',
+    itemDescription: '',
+    warehouse: '',
+    quantity: null,
+    unitPrice: null,
+    batchNumber: '',
+    manufacturingDate: '',
+    expiryDate: plusDaysDateString(10),
+    baseEntry: '',
+    baseLine: '',
+  };
+}
+
+export function updateReceiptFromProductionLine(
+  rows: ReceiptFromProductionLine[],
+  index: number,
+  field: keyof ReceiptFromProductionLine,
+  value: string,
+): ReceiptFromProductionLine[] {
+  return rows.map((row, rowIndex) => {
+    if (rowIndex !== index) {
+      return row;
+    }
+
+    if (field === 'unitPrice' || field === 'quantity') {
+      const numericValue = value === '' ? null : Number(value);
+      return { ...row, [field]: Number.isNaN(numericValue) ? null : numericValue };
+    }
+
+    return { ...row, [field]: value };
+  });
+}
