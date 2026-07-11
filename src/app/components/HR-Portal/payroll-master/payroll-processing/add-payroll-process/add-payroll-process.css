@@ -348,6 +348,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  /* Keep panes sized to the wide table so horizontal scroll reveals all columns */
+  align-items: flex-start;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior: auto;
@@ -359,6 +361,9 @@
   z-index: 5;
   background: #fff;
   box-shadow: 0 1px 0 #e8edf2;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
 }
 
 .comp-table-scroll .comp-pane-head {
@@ -370,6 +375,9 @@
 .comp-pane-body {
   flex: 1 1 auto;
   min-height: 0;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: auto;
