@@ -192,7 +192,7 @@ export class CreateIgpComponent implements OnInit {
   }
 
   private applyLoggedInUserDefaults(): void {
-    if (this.editingId || this.employee?.trim() || this.department?.trim()) {
+    if (this.editingId || this.department?.trim()) {
       return;
     }
 
@@ -215,8 +215,27 @@ export class CreateIgpComponent implements OnInit {
     }
 
     if (departmentValue) {
-      this.department = this.departmentService.resolveDepartmentName(departmentValue);
+      this.department = this.findMatchingDepartmentOption(departmentValue);
     }
+  }
+
+  private findMatchingDepartmentOption(value: string): string {
+    const trimmed = value?.trim() ?? '';
+    if (!trimmed) {
+      return '';
+    }
+
+    const normalized = trimmed.toLowerCase();
+    const directMatch = this.departmentOptions.find((option) => option.trim().toLowerCase() === normalized);
+    if (directMatch) {
+      return directMatch;
+    }
+
+    const partialMatch = this.departmentOptions.find(
+      (option) => option.trim().toLowerCase().includes(normalized) || normalized.includes(option.trim().toLowerCase()),
+    );
+
+    return partialMatch ?? this.departmentService.resolveDepartmentName(trimmed);
   }
 
   get totalQty(): number {
