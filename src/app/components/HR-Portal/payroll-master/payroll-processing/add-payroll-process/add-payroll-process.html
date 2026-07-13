@@ -156,6 +156,10 @@
                     </tr>
                   }
                 </tbody>
+              </table>
+            </div>
+            <div class="comp-pane-foot">
+              <table class="comp-grid comp-grid--fixed">
                 <tfoot>
                   <tr class="comp-total-row">
                     <td class="comp-section-end comp-section-end--employee"><span class="comp-skeleton comp-skeleton--line comp-skeleton--line-md" aria-hidden="true"></span></td>
@@ -223,6 +227,15 @@
                     </tr>
                   }
                 </tbody>
+              </table>
+            </div>
+            <div class="comp-pane-foot">
+              <table class="comp-grid comp-grid--scroll" [style.width.px]="scrollMinWidth()">
+                <colgroup>
+                  @for (col of payrollColumns; track col.key) {
+                    <col [style.width.px]="col.minWidth" />
+                  }
+                </colgroup>
                 <tfoot>
                   <tr class="comp-total-row">
                     @for (col of payrollColumns; track col.key) {
@@ -292,6 +305,10 @@
                     </tr>
                   }
                 </tbody>
+              </table>
+            </div>
+            <div class="comp-pane-foot">
+              <table class="comp-grid comp-grid--fixed">
                 <tfoot>
                   <tr class="comp-total-row">
                     <td class="comp-section-end comp-section-end--employee">Page Total</td>
@@ -429,6 +446,15 @@
                     </tr>
                   }
                 </tbody>
+              </table>
+            </div>
+            <div class="comp-pane-foot">
+              <table class="comp-grid comp-grid--scroll" [style.width.px]="scrollMinWidth()">
+                <colgroup>
+                  @for (col of payrollColumns; track col.key) {
+                    <col [style.width.px]="col.minWidth" />
+                  }
+                </colgroup>
                 <tfoot>
                   <tr class="comp-total-row">
                     @for (col of payrollColumns; track col.key) {

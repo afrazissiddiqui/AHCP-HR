@@ -306,9 +306,10 @@
 }
 
 .comp-table-card {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   max-height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -348,7 +349,6 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  /* Keep panes sized to the wide table so horizontal scroll reveals all columns */
   align-items: flex-start;
   overflow-x: auto;
   overflow-y: hidden;
@@ -374,7 +374,7 @@
 }
 
 .comp-pane-body {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   width: max-content;
   min-width: 100%;
@@ -383,6 +383,21 @@
   overflow-y: auto;
   overscroll-behavior: auto;
   scrollbar-gutter: stable;
+}
+
+.comp-pane-foot {
+  flex: 0 0 auto;
+  z-index: 4;
+  background: #fff;
+  box-shadow: 0 -1px 0 #e8edf2;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+.comp-table-scroll .comp-pane-foot {
+  background: #fcfdfe;
+  padding-right: 10px;
 }
 
 .comp-table-fixed .comp-pane-body {
@@ -570,9 +585,11 @@
 
 .comp-data-row td {
   height: 72px;
+  max-height: 72px;
   padding: 10px 8px;
   background: #fff;
-  overflow: visible;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .comp-data-row--alt td {
@@ -759,6 +776,11 @@
   font-weight: 700;
   font-size: 13px;
   color: #3a4552;
+  box-sizing: border-box;
+}
+
+.comp-pane-foot .comp-grid {
+  margin: 0;
 }
 
 .comp-total-value {
@@ -770,15 +792,16 @@
 }
 
 .comp-pill-wrap {
-  margin-top: 6px;
+  margin-top: 4px;
+  line-height: 1;
 }
 
 .comp-pill {
   display: inline-block;
-  min-width: 52px;
-  padding: 4px 10px;
+  min-width: 48px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-align: center;
   background: #e8edf2;
