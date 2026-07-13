@@ -44,6 +44,7 @@ export interface ProductionOrderRecord {
   startDate: string;
   status: string;
   warehouse: string;
+  batchNumber: string;
 }
 
 export interface ReceiptFromProductionListLineItem {
@@ -158,8 +159,24 @@ export class ReceiptFromProductionService {
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
           status: this.pickString(item, ['Status', 'status']),
           warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']),
+          batchNumber: this.pickProductionOrderBatchNumber(item),
         };
       });
+  }
+
+  private pickProductionOrderBatchNumber(item: Record<string, unknown>): string {
+    const batches = this.pickArray(item, ['batches', 'Batches']);
+    const firstBatch =
+      batches.find(
+        (batch): batch is Record<string, unknown> =>
+          !!batch && typeof batch === 'object' && !Array.isArray(batch),
+      ) ?? null;
+
+    if (firstBatch) {
+      return this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']);
+    }
+
+    return this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']);
   }
 
   private parseReceipts(

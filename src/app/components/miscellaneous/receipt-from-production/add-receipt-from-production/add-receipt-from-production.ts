@@ -178,6 +178,7 @@ export class AddReceiptFromProduction implements OnInit {
         warehouse,
         quantity: order.receiptQty > 0 ? order.receiptQty : null,
         manufacturingDate: docDate,
+        batchNumber: order.batchNumber.trim(),
         baseEntry: order.docEntry,
         baseLine: '0',
       },
