@@ -167,7 +167,12 @@
 
           <div class="comp-table-scroll">
             <div class="comp-pane-head">
-              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+              <table class="comp-grid comp-grid--scroll" [style.width.px]="scrollMinWidth()">
+                <colgroup>
+                  @for (col of payrollColumns; track col.key) {
+                    <col [style.width.px]="col.minWidth" />
+                  }
+                </colgroup>
                 <thead>
                   <tr class="comp-group-row">
                     @for (group of columnGroups; track group.id) {
@@ -180,19 +185,24 @@
                   </tr>
                   <tr class="comp-col-row">
                     @for (col of payrollColumns; track col.key) {
-                      <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
+                      <th [style.width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
                     }
                   </tr>
                 </thead>
               </table>
             </div>
             <div class="comp-pane-body">
-              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+              <table class="comp-grid comp-grid--scroll" [style.width.px]="scrollMinWidth()">
+                <colgroup>
+                  @for (col of payrollColumns; track col.key) {
+                    <col [style.width.px]="col.minWidth" />
+                  }
+                </colgroup>
                 <tbody>
                   @for (i of skeletonRows(); track i; let odd = $odd) {
                     <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                       @for (col of payrollColumns; track col.key) {
-                        <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
+                        <td [style.width.px]="col.minWidth" [class]="columnSectionClass(col)">
                           @switch (col.type) {
                             @case ('currency') {
                               <span class="comp-skeleton comp-skeleton--input" aria-hidden="true"></span>
@@ -293,7 +303,12 @@
 
           <div class="comp-table-scroll">
             <div class="comp-pane-head">
-              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+              <table class="comp-grid comp-grid--scroll" [style.width.px]="scrollMinWidth()">
+                <colgroup>
+                  @for (col of payrollColumns; track col.key) {
+                    <col [style.width.px]="col.minWidth" />
+                  }
+                </colgroup>
                 <thead>
                   <tr class="comp-group-row">
                     @for (group of columnGroups; track group.id) {
@@ -306,19 +321,24 @@
                   </tr>
                   <tr class="comp-col-row">
                     @for (col of payrollColumns; track col.key) {
-                      <th [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
+                      <th [style.width.px]="col.minWidth" [class]="columnSectionClass(col)">{{ col.label }}</th>
                     }
                   </tr>
                 </thead>
               </table>
             </div>
             <div class="comp-pane-body" #scrollPane (scroll)="onScrollPaneScroll($event)">
-              <table class="comp-grid comp-grid--scroll" [style.min-width.px]="scrollMinWidth()">
+              <table class="comp-grid comp-grid--scroll" [style.width.px]="scrollMinWidth()">
+                <colgroup>
+                  @for (col of payrollColumns; track col.key) {
+                    <col [style.width.px]="col.minWidth" />
+                  }
+                </colgroup>
                 <tbody>
                   @for (row of paginatedRows(); track row.apiId; let odd = $odd) {
                     <tr class="comp-data-row" [class.comp-data-row--alt]="odd">
                       @for (col of payrollColumns; track col.key) {
-                        <td [style.min-width.px]="col.minWidth" [class]="columnSectionClass(col)">
+                        <td [style.width.px]="col.minWidth" [class]="columnSectionClass(col)">
                           @switch (col.type) {
                             @case ('currency') {
                               @if (isRowLoaded(row.apiId)) {

@@ -368,8 +368,9 @@
 
 .comp-table-scroll .comp-pane-head {
   background: #fcfdfe;
-  /* Match body scrollbar gutter so header columns stay aligned */
-  scrollbar-gutter: stable;
+  /* Reserve the body vertical scrollbar width so header columns stay aligned */
+  padding-right: 10px;
+  box-sizing: border-box;
 }
 
 .comp-pane-body {
@@ -442,9 +443,13 @@
 }
 
 .comp-grid--scroll {
-  table-layout: auto;
+  table-layout: fixed;
   width: max-content;
   min-width: 100%;
+}
+
+.comp-grid--scroll col {
+  width: auto;
 }
 
 .comp-grid th,
@@ -462,6 +467,7 @@
   color: #3a4552;
   letter-spacing: 0.01em;
   border-top: 3px solid transparent;
+  box-sizing: border-box;
 }
 
 .comp-section-end {
@@ -550,6 +556,16 @@
   color: #5b6775;
   background: #fafbfd;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+.comp-grid--scroll .comp-col-row th,
+.comp-grid--scroll .comp-data-row td,
+.comp-grid--scroll .comp-total-row td {
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .comp-data-row td {
