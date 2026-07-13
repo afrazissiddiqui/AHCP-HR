@@ -610,6 +610,26 @@ app-root {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.print-btn {
+  background: #0f9d58;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.print-btn:hover {
+  background: #0b7a45;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .update-btn,
 .delete-btn {
   border: none;

@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
@@ -35,6 +35,7 @@ export class IgpComponent implements OnInit {
   private readonly alertService = inject(AlertService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly shellbarSearch = inject(ShellbarSearchService);
+  private readonly document = inject(DOCUMENT);
 
   readonly warehouseLabel = gatePassWarehouseLabel;
   readonly records = this.igpService.records;
@@ -180,6 +181,147 @@ export class IgpComponent implements OnInit {
     this.selectedRow.set(null);
     this.showDetailDialog.set(false);
     this.detailLoading.set(false);
+  }
+
+  printRecord(record: IgpRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Print', 'Unable to print this row: missing IGP id.');
+      return;
+    }
+
+    const printWindow = this.document.defaultView?.open('', '_blank', 'width=900,height=800');
+    if (!printWindow) {
+      this.alertService.warning('Print', 'Your browser blocked the print window. Please allow pop-ups and try again.');
+      return;
+    }
+
+    const content = this.buildPrintableDocument(record);
+    printWindow.document.write(content);
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 250);
+    };
+  }
+
+  buildPrintableDocument(record: IgpRecord): string {
+    const headerFields = [
+      ['IGP no.', record.referenceNo],
+      ['Date', record.submittedDate],
+      ['Type', record.type],
+      ['Business partner', record.businessPartnerName],
+      ['Department', record.department],
+      ['Vehicle', record.vehicleNo],
+      ['Branch', record.location],
+      ['Status', record.status],
+      ['Total qty', record.totalQty],
+    ];
+
+    const lineItems = (record.lines ?? [])
+      .map((line, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${this.escapeHtml(line.itemCode ?? '—')}</td>
+          <td>${this.escapeHtml(line.itemName ?? '—')}</td>
+          <td>${this.escapeHtml(line.serialNumbers ?? '—')}</td>
+          <td>${this.escapeHtml(line.category ?? '—')}</td>
+          <td>${this.escapeHtml(line.packingCondition ?? '—')}</td>
+          <td>${this.escapeHtml(line.productQuality ?? '—')}</td>
+          <td>${this.escapeHtml(line.qty ?? '—')}</td>
+          <td>${this.escapeHtml(line.uom ?? '—')}</td>
+        </tr>`)
+      .join('');
+
+    const remarks = this.escapeHtml(record.remarks ?? '—');
+
+    return `<!doctype html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <title>IGP Print - ${this.escapeHtml(record.referenceNo ?? 'IGP')}</title>
+        <style>
+          :root { color-scheme: light; }
+          body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #fff; color: #1d2d3e; }
+          .print-shell { max-width: 900px; margin: 0 auto; border: 1px solid #dbe4ee; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+          .print-header { background: linear-gradient(135deg, #0a6ed1, #004d9f); color: #fff; padding: 24px 28px; }
+          .print-header h1 { margin: 0 0 6px; font-size: 24px; }
+          .print-header p { margin: 0; opacity: 0.92; }
+          .print-body { padding: 24px 28px 28px; }
+          .print-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 18px; margin-bottom: 22px; }
+          .print-field { background: #f7f9fc; border: 1px solid #e7edf4; border-radius: 8px; padding: 10px 12px; }
+          .print-field strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #5d6874; margin-bottom: 4px; }
+          .print-field span { font-size: 14px; color: #17212b; }
+          .print-section { margin-top: 18px; }
+          .print-section h2 { font-size: 15px; margin: 0 0 10px; color: #0a6ed1; border-bottom: 2px solid #eef5ff; padding-bottom: 6px; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          th, td { border: 1px solid #e5eaf0; padding: 8px 10px; text-align: left; }
+          th { background: #f3f7fb; color: #3c4858; font-weight: 700; }
+          .remarks-box { background: #f9fbfe; border: 1px solid #e7edf4; border-radius: 8px; padding: 12px; color: #394651; line-height: 1.5; }
+          @page { margin: 10mm; size: auto; }
+          @media print { body { padding: 0; } .print-shell { box-shadow: none; border-color: #b9c4cf; } }
+        </style>
+      </head>
+      <body>
+        <div class="print-shell">
+          <div class="print-header">
+            <h1>Inward Gate Pass</h1>
+            <p>Posted line printout for ${this.escapeHtml(record.referenceNo ?? 'IGP')}</p>
+          </div>
+          <div class="print-body">
+            <div class="print-grid">
+              ${headerFields.map(([label, value]) => `
+                <div class="print-field">
+                  <strong>${this.escapeHtml(label)}</strong>
+                  <span>${this.escapeHtml(value ?? '—')}</span>
+                </div>`).join('')}
+            </div>
+            <div class="print-section">
+              <h2>Remarks</h2>
+              <div class="remarks-box">${remarks}</div>
+            </div>
+            <div class="print-section">
+              <h2>Line items</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sr.#</th>
+                    <th>Item code</th>
+                    <th>Item name</th>
+                    <th>Batch #</th>
+                    <th>Category</th>
+                    <th>Packing</th>
+                    <th>Quality</th>
+                    <th>Qty</th>
+                    <th>UOM</th>
+                  </tr>
+                </thead>
+                <tbody>${lineItems || '<tr><td colspan="9">No line items available.</td></tr>'}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <script>
+          window.onload = function () {
+            setTimeout(function () {
+              window.focus();
+              window.print();
+            }, 250);
+          };
+        </script>
+      </body>
+      </html>`;
+  }
+
+  private escapeHtml(value: unknown): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   formatDetail(value: string | number | null | undefined): string {
