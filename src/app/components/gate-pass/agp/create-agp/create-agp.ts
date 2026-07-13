@@ -382,7 +382,9 @@ export class CreateAgpComponent implements OnInit {
     this.businessPartnerName = (doc.businessPartnerName || doc.partner || '').trim();
     this.vehicleNo = doc.vehicleNo?.trim() ?? '';
     this.kantaSlip = doc.kantaSlip?.trim() ?? '';
-    this.requestingDepartment = this.departmentService.resolveDepartmentName(doc.department);
+    if (doc.department?.trim()) {
+      this.requestingDepartment = this.findMatchingDepartmentOption(doc.department);
+    }
     this.biltyNo = doc.biltyNo?.trim() ?? '';
     this.store = resolveGatePassWarehouseCode(doc.store) || doc.store?.trim() || '';
     this.location = resolveGatePassLocation(doc.location) || doc.location?.trim() || '';

@@ -363,7 +363,9 @@ export class CreateOgpComponent implements OnInit {
     this.vehicleNo = doc.vehicleNo?.trim() ?? '';
     this.fromUnit = doc.fromUnit?.trim() ?? '';
     this.kantaSlip = doc.kantaSlip?.trim() ?? '';
-    this.department = this.departmentService.resolveDepartmentName(doc.department);
+    if (doc.department?.trim()) {
+      this.department = this.findMatchingDepartmentOption(doc.department);
+    }
     this.biltyNo = doc.biltyNo?.trim() ?? '';
     this.store = resolveGatePassWarehouseCode(doc.store) || doc.store?.trim() || '';
     this.driverName = (doc.driverName ?? doc.transporterName)?.trim() ?? '';

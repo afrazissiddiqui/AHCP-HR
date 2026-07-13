@@ -56,6 +56,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/user-setup': 'User Setup',
   'setup/workstation': 'Workstation',
   'setup/overtime-list': 'Overtime List',
+  'setup/issue-from-production': 'Issue From Production',
   'plant-maintenance/main-form': 'Main Form',
   'plant-maintenance/main-form/plant-maintenance-master-form': 'Plant Maintenance Master Form',
   'plant-maintenance/main-form/plant-maintenance-master-form/create': 'Add Machine',
@@ -102,6 +103,7 @@ const NON_SEARCH_ROUTE_KEYS = new Set([
   'setup/user-setup',
   'setup/workstation',
   'setup/overtime-list',
+  'setup/issue-from-production',
 ]);
 
 export function isShellbarSearchRoute(routeKey: string): boolean {

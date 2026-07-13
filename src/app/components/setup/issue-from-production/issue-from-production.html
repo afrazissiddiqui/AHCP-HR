@@ -1,0 +1,65 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div class="setup-body">
+      <div class="setup-intro">
+        <h2>Issue from production</h2>
+        <p>View posted production orders returned from the receipt-from-production API.</p>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">Posted production orders</h3>
+            <p class="panel-subtitle">
+              {{ filteredRecords().length }} of {{ totalRecords() }} records visible
+            </p>
+          </div>
+          <div class="panel-actions">
+            <input
+              type="search"
+              class="search-input"
+              [ngModel]="searchText()"
+              (ngModelChange)="searchText.set($event)"
+              name="issue-from-production-search"
+              placeholder="Search records…"
+            />
+            <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadRecords()">
+              {{ loading() ? 'Loading…' : 'Refresh' }}
+            </button>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <div class="panel-message">Loading posted production orders…</div>
+        } @else if (!records().length) {
+          <div class="panel-message">No posted production orders found.</div>
+        } @else if (!filteredRecords().length) {
+          <div class="panel-message">No records match your search.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="entry-table">
+              <thead>
+                <tr>
+                  <th class="col-sr">SR No.</th>
+                  @for (column of columns; track column.key) {
+                    <th>{{ column.label }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (record of filteredRecords(); track record.docEntry; let index = $index) {
+                  <tr>
+                    <td class="col-sr">{{ index + 1 }}</td>
+                    @for (column of columns; track column.key) {
+                      <td>{{ cellValue(record, column.key) }}</td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
