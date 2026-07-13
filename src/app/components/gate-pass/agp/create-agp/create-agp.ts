@@ -26,6 +26,8 @@ import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-i
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { OpenBaseDocument } from '../../open-base-documents.service';
+import { ApplicationFormService } from '../../../../services/application-form.service';
+import { AuthService } from '../../../../services/auth.service';
 
 const AGP_TYPE = 'Article Gate Pass';
 
@@ -121,6 +123,8 @@ export class CreateAgpComponent implements OnInit {
     private readonly itemMasterService: GatePassItemMasterService,
     private readonly businessPartnerService: GatePassBusinessPartnerService,
     private readonly departmentService: GatePassDepartmentService,
+    private readonly applicationFormService: ApplicationFormService,
+    private readonly authService: AuthService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -132,12 +136,16 @@ export class CreateAgpComponent implements OnInit {
     this.departmentService.ensureLoaded().subscribe({
       next: () => {
         this.departmentOptions = this.departmentService.departmentNames();
+        if (!this.editingId) {
+          this.applyLoggedInUserDefaults();
+        }
       },
     });
 
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       this.assignNextReferenceNo();
+      this.loadSignedInUserDetails();
       return;
     }
 
@@ -182,6 +190,51 @@ export class CreateAgpComponent implements OnInit {
         this.referenceNo = nextGatePassReferenceNo('AGP', []);
       },
     });
+  }
+
+  private loadSignedInUserDetails(): void {
+    if (this.editingId) {
+      return;
+    }
+
+    const hasRecords = this.applicationFormService.getApplicationRecords().length > 0;
+    if (hasRecords) {
+      this.applyLoggedInUserDefaults();
+      return;
+    }
+
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => this.applyLoggedInUserDefaults(),
+      error: () => this.applyLoggedInUserDefaults(),
+    });
+  }
+
+  private applyLoggedInUserDefaults(): void {
+    if (this.editingId || this.requestingEmployee?.trim() || this.requestingDepartment?.trim()) {
+      return;
+    }
+
+    const sessionUser = this.authService.getSessionUser();
+    const sessionUserId = this.authService.getSessionUserId();
+    const profileRecord = this.applicationFormService.getSignedInUserRecord(sessionUserId);
+
+    const employeeName =
+      profileRecord?.EmployeeName?.trim() ||
+      profileRecord?.detail?.personalInfo?.personName?.trim() ||
+      sessionUser?.name?.trim() ||
+      sessionUserId?.trim() ||
+      '';
+
+    const departmentValue =
+      profileRecord?.Department?.trim() || profileRecord?.detail?.personalInfo?.departmentInAhcp?.trim() || '';
+
+    if (employeeName) {
+      this.requestingEmployee = employeeName;
+    }
+
+    if (departmentValue) {
+      this.requestingDepartment = this.departmentService.resolveDepartmentName(departmentValue);
+    }
   }
 
   get totalQtySent(): number {

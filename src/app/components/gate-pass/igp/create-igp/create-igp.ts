@@ -26,6 +26,8 @@ import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GATE_PASS_WAREHOUSE_OPTIONS, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
+import { ApplicationFormService } from '../../../../services/application-form.service';
+import { AuthService } from '../../../../services/auth.service';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -103,6 +105,8 @@ export class CreateIgpComponent implements OnInit {
     private readonly itemMasterService: GatePassItemMasterService,
     private readonly businessPartnerService: GatePassBusinessPartnerService,
     private readonly departmentService: GatePassDepartmentService,
+    private readonly applicationFormService: ApplicationFormService,
+    private readonly authService: AuthService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -114,12 +118,16 @@ export class CreateIgpComponent implements OnInit {
     this.departmentService.ensureLoaded().subscribe({
       next: () => {
         this.departmentOptions = this.departmentService.departmentNames();
+        if (!this.editingId) {
+          this.applyLoggedInUserDefaults();
+        }
       },
     });
 
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       this.assignNextReferenceNo();
+      this.loadSignedInUserDetails();
       return;
     }
 
@@ -164,6 +172,51 @@ export class CreateIgpComponent implements OnInit {
         this.referenceNo = nextGatePassReferenceNo('IGP', []);
       },
     });
+  }
+
+  private loadSignedInUserDetails(): void {
+    if (this.editingId) {
+      return;
+    }
+
+    const hasRecords = this.applicationFormService.getApplicationRecords().length > 0;
+    if (hasRecords) {
+      this.applyLoggedInUserDefaults();
+      return;
+    }
+
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: () => this.applyLoggedInUserDefaults(),
+      error: () => this.applyLoggedInUserDefaults(),
+    });
+  }
+
+  private applyLoggedInUserDefaults(): void {
+    if (this.editingId || this.employee?.trim() || this.department?.trim()) {
+      return;
+    }
+
+    const sessionUser = this.authService.getSessionUser();
+    const sessionUserId = this.authService.getSessionUserId();
+    const profileRecord = this.applicationFormService.getSignedInUserRecord(sessionUserId);
+
+    const employeeName =
+      profileRecord?.EmployeeName?.trim() ||
+      profileRecord?.detail?.personalInfo?.personName?.trim() ||
+      sessionUser?.name?.trim() ||
+      sessionUserId?.trim() ||
+      '';
+
+    const departmentValue =
+      profileRecord?.Department?.trim() || profileRecord?.detail?.personalInfo?.departmentInAhcp?.trim() || '';
+
+    if (employeeName) {
+      this.employee = employeeName;
+    }
+
+    if (departmentValue) {
+      this.department = this.departmentService.resolveDepartmentName(departmentValue);
+    }
   }
 
   get totalQty(): number {
