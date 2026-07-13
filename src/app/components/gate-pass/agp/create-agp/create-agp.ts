@@ -216,7 +216,7 @@ export class CreateAgpComponent implements OnInit {
 
     const sessionUser = this.authService.getSessionUser();
     const sessionUserId = this.authService.getSessionUserId();
-    const profileRecord = this.applicationFormService.getSignedInUserRecord(sessionUserId);
+    const profileRecord = this.findProfileRecordForSessionUser();
 
     const employeeName =
       profileRecord?.EmployeeName?.trim() ||
@@ -226,7 +226,9 @@ export class CreateAgpComponent implements OnInit {
       '';
 
     const departmentValue =
-      profileRecord?.Department?.trim() || profileRecord?.detail?.personalInfo?.departmentInAhcp?.trim() || '';
+      profileRecord?.Department?.trim() ||
+      profileRecord?.detail?.personalInfo?.departmentInAhcp?.trim() ||
+      '';
 
     if (employeeName) {
       this.requestingEmployee = employeeName;
@@ -235,6 +237,34 @@ export class CreateAgpComponent implements OnInit {
     if (departmentValue) {
       this.requestingDepartment = this.findMatchingDepartmentOption(departmentValue);
     }
+  }
+
+  private findProfileRecordForSessionUser() {
+    const sessionUserId = this.authService.getSessionUserId()?.trim().toLowerCase();
+    const sessionUserName = this.authService.getSessionUser()?.name?.trim().toLowerCase();
+
+    const directMatch = this.applicationFormService.getSignedInUserRecord(this.authService.getSessionUserId());
+    if (directMatch) {
+      return directMatch;
+    }
+
+    return this.applicationFormService
+      .getApplicationRecords()
+      .find((record) => {
+        const employeeName = record.EmployeeName?.trim().toLowerCase() || '';
+        const detailName = record.detail?.personalInfo?.personName?.trim().toLowerCase() || '';
+        const loginName = record.detail?.loginDetails?.employeeName?.trim().toLowerCase() || '';
+        const employeeCode = record.EmployeeCode?.trim().toLowerCase() || '';
+        const userId = record.userId?.trim().toLowerCase() || '';
+
+        return (
+          employeeName === sessionUserName ||
+          detailName === sessionUserName ||
+          loginName === sessionUserName ||
+          employeeCode === sessionUserId ||
+          userId === sessionUserId
+        );
+      });
   }
 
   private findMatchingDepartmentOption(value: string): string {
