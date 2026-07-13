@@ -52,8 +52,7 @@ function numericFieldFromDoc(value: string | undefined): string {
   templateUrl: './create-ogp.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../../Plant-Maintenance/setup-form/plant-maintenance-setup-form.css',
-    '../../../Plant-Maintenance/main-form/husky-form/add-husky-form/add-husky-form.css',
+    '../../../HR-Portal/employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
     '../../igp/create-igp/create-igp.css',
   ],
 })
@@ -61,6 +60,13 @@ export class CreateOgpComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add OGP';
   submitButtonLabel = 'Save OGP';
+  activeSection = 'ogp-form-header-section';
+
+  get pageSubtitle(): string {
+    return this.editingId
+      ? 'Update outward gate pass details, shipment lines, and document summary.'
+      : 'Create a new outward gate pass with partner, logistics, and line items.';
+  }
 
   type = 'Standalone';
   documentDate = '';
@@ -207,6 +213,13 @@ export class CreateOgpComponent implements OnInit {
 
   back(): void {
     void this.router.navigateByUrl('/gate-pass/ogp');
+  }
+
+  scrollToSection(sectionId: string): void {
+    this.activeSection = sectionId;
+    setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   onBaseDocumentTypeChange(): void {

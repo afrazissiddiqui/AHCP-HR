@@ -6,6 +6,188 @@
   width: 100%;
 }
 
+/* Gate pass add forms — Loan Advance theme */
+.igp-add-page,
+.ogp-add-page,
+.agp-add-page {
+  position: relative;
+}
+
+.igp-add-page .cjr-personal-grid,
+.ogp-add-page .cjr-personal-grid,
+.agp-add-page .cjr-personal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 28px;
+}
+
+.igp-add-page .cjr-row,
+.ogp-add-page .cjr-row,
+.agp-add-page .cjr-row {
+  align-items: center;
+}
+
+.igp-add-page .cjr-row--textarea,
+.ogp-add-page .cjr-row--textarea,
+.agp-add-page .cjr-row--textarea {
+  grid-template-columns: 170px 1fr;
+  align-items: start;
+  margin-top: 4px;
+}
+
+.igp-add-page .cjr-row--textarea textarea,
+.ogp-add-page .cjr-row--textarea textarea,
+.agp-add-page .cjr-row--textarea textarea {
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--mad-border, #e2e8f0);
+  border-radius: var(--mad-radius-sm, 8px);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.igp-add-page .cjr-row--textarea textarea:focus,
+.ogp-add-page .cjr-row--textarea textarea:focus,
+.agp-add-page .cjr-row--textarea textarea:focus {
+  outline: none;
+  border-color: var(--mad-accent, #0052cc);
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.12);
+}
+
+.igp-add-page .igp-base-doc-row,
+.ogp-add-page .igp-base-doc-row,
+.agp-add-page .igp-base-doc-row {
+  align-items: start;
+}
+
+.igp-add-page .ogp-input-unit-row,
+.ogp-add-page .ogp-input-unit-row,
+.agp-add-page .ogp-input-unit-row {
+  max-width: 11rem;
+}
+
+.igp-add-page .igp-lines-panel,
+.ogp-add-page .igp-lines-panel,
+.agp-add-page .igp-lines-panel {
+  overflow: visible;
+}
+
+.igp-add-page .mad-section-heading__left,
+.ogp-add-page .mad-section-heading__left,
+.agp-add-page .mad-section-heading__left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.igp-add-page .igp-add-line-btn,
+.ogp-add-page .igp-add-line-btn,
+.agp-add-page .igp-add-line-btn {
+  color: var(--mad-accent, #0052cc);
+  border-color: var(--mad-accent-mid, rgba(0, 82, 204, 0.35));
+  border-radius: var(--mad-radius-sm, 8px);
+  min-height: 36px;
+  padding: 8px 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.igp-add-page .igp-add-line-btn:hover,
+.ogp-add-page .igp-add-line-btn:hover,
+.agp-add-page .igp-add-line-btn:hover {
+  background: var(--mad-accent-soft, #eff6ff);
+  border-color: var(--mad-accent, #0052cc);
+}
+
+.igp-add-page .igp-lines-scroll,
+.ogp-add-page .igp-lines-scroll,
+.agp-add-page .igp-lines-scroll {
+  border-radius: var(--mad-radius-sm, 8px);
+  border-color: var(--mad-border-light, #e8edf2);
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.igp-add-page .igp-lines-table th,
+.ogp-add-page .igp-lines-table th,
+.agp-add-page .igp-lines-table th {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #334155;
+  font-size: 12px;
+}
+
+.igp-add-page .igp-lines-table input,
+.ogp-add-page .igp-lines-table input,
+.agp-add-page .igp-lines-table input {
+  border-radius: 6px;
+  border-color: #e2e8f0;
+}
+
+.igp-add-page .igp-lines-table input:focus,
+.ogp-add-page .igp-lines-table input:focus,
+.agp-add-page .igp-lines-table input:focus {
+  border-color: var(--mad-accent, #0052cc);
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.1);
+}
+
+.agp-add-page .agp-attachment-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.agp-add-page .ogp-field-hint {
+  margin: 6px 0 0;
+  padding-left: 182px;
+  font-size: 11px;
+  color: var(--mad-muted, #64748b);
+}
+
+@media (max-width: 720px) {
+  .agp-add-page .ogp-field-hint {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  .igp-add-page .cjr-personal-grid,
+  .ogp-add-page .cjr-personal-grid,
+  .agp-add-page .cjr-personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .igp-add-page .cjr-personal-grid,
+  .ogp-add-page .cjr-personal-grid,
+  .agp-add-page .cjr-personal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .igp-add-page .cjr-row,
+  .ogp-add-page .cjr-row,
+  .agp-add-page .cjr-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 6px;
+  }
+
+  .igp-add-page .cjr-row label,
+  .ogp-add-page .cjr-row label,
+  .agp-add-page .cjr-row label {
+    text-align: left;
+    padding-right: 0;
+  }
+
+  .igp-add-page .cjr-row--textarea,
+  .ogp-add-page .cjr-row--textarea,
+  .agp-add-page .cjr-row--textarea {
+    grid-template-columns: 1fr;
+  }
+}
+
 .igp-create-page.husky-add-page,
 .ogp-create-page.husky-add-page,
 .agp-create-page.husky-add-page {

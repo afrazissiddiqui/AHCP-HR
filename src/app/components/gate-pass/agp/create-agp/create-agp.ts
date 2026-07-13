@@ -51,8 +51,7 @@ function numericFieldFromDoc(value: string | undefined): string {
   templateUrl: './create-agp.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../../Plant-Maintenance/setup-form/plant-maintenance-setup-form.css',
-    '../../../Plant-Maintenance/main-form/husky-form/add-husky-form/add-husky-form.css',
+    '../../../HR-Portal/employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
     '../../igp/create-igp/create-igp.css',
   ],
 })
@@ -60,6 +59,13 @@ export class CreateAgpComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add AGP';
   submitButtonLabel = 'Save AGP';
+  activeSection = 'agp-form-header-section';
+
+  get pageSubtitle(): string {
+    return this.editingId
+      ? 'Update article gate pass details, movement lines, and document summary.'
+      : 'Create a new article gate pass with movement, logistics, and line items.';
+  }
 
   readonly agpType = AGP_TYPE;
   type = 'Purchase Order';
@@ -309,6 +315,13 @@ export class CreateAgpComponent implements OnInit {
 
   back(): void {
     void this.router.navigateByUrl('/gate-pass/agp');
+  }
+
+  scrollToSection(sectionId: string): void {
+    this.activeSection = sectionId;
+    setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   submitForm(): void {

@@ -1,4 +1,4 @@
-<div class="husky-add-page cjr-page scd-add-page igp-create-page">
+<div class="cjr-page mad-add-page igp-add-page">
   <div
     *ngIf="loading"
     class="gate-pass-page-loader"
@@ -10,153 +10,264 @@
     <span>Loading…</span>
   </div>
 
-  <div class="husky-add-scroll" [class.gate-pass-form--dimmed]="loading || submitting">
+  <div [class.gate-pass-form--dimmed]="loading || submitting">
     <div class="cjr-header">
       <div class="cjr-header-left">
         <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
           <span class="cjr-back-icon">❮</span>
         </button>
-        <h1>{{ pageTitle }}</h1>
-      </div>
-    </div>
-
-    <div class="cjr-card scd-form-card husky-header-card igp-header-card">
-      <div class="cjr-personal" id="igp-form-header-section">
-        <div class="cjr-section-title">Inward gate pass</div>
-
-        <div class="cjr-personal-grid pmm-profile-grid">
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label for="igp-type">Type:</label>
-              <select
-                id="igp-type"
-                class="igp-input--wide"
-                [(ngModel)]="type"
-                (ngModelChange)="onBaseDocumentTypeChange()"
-                [disabled]="!!editingId"
-                name="type"
-              >
-                <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
-              </select>
-            </div>
-
-            <div class="cjr-row">
-              <label for="igp-date">Date:</label>
-              <input id="igp-date" type="date" class="igp-input--date" [(ngModel)]="documentDate" name="documentDate" />
-            </div>
-
-            <div class="cjr-row">
-              <label for="igp-ref">IGP no.:</label>
-              <input id="igp-ref" type="text" class="igp-input--ref" [(ngModel)]="referenceNo" name="referenceNo" readonly />
-            </div>
-          </div>
-
-          <div class="cjr-personal-col">
-            <div class="cjr-row igp-base-doc-row" [class.igp-base-doc-row--disabled]="isBaseDocumentDisabled">
-              <label>Base document:</label>
-              <div class="igp-base-doc-field">
-                <span class="gate-pass-optional" *ngIf="!isBaseDocumentDisabled">(optional)</span>
-                <div class="gate-pass-base-doc-row">
-                  <button
-                    type="button"
-                    class="gate-pass-base-doc-btn"
-                    (click)="openBaseDocumentModal()"
-                    [disabled]="isBaseDocumentDisabled"
-                  >
-                    Choose base document…
-                  </button>
-                  <span
-                    class="gate-pass-base-doc-summary"
-                    [class.gate-pass-base-doc-summary--muted]="!baseDocNo || isBaseDocumentDisabled"
-                  >{{ isBaseDocumentDisabled ? 'Not applicable' : (baseDocNo || 'None selected') }}</span>
-                  <button
-                    *ngIf="baseDocNo && !isBaseDocumentDisabled"
-                    type="button"
-                    class="gate-pass-clear-base-doc"
-                    (click)="clearBaseDocumentSelection()"
-                  >
-                    Clear selection
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="cjr-row">
-              <label for="igp-bp-code">Business partner code:</label>
-              <app-gate-pass-business-partner-search-input
-                inputId="igp-bp-code"
-                class="igp-input--code"
-                [value]="businessPartnerCode"
-                (valueChange)="businessPartnerCode = $event"
-                (partnerSelected)="applyBusinessPartner($event)"
-                placeholder="Search code or name"
-              />
-            </div>
-
-            <div class="cjr-row">
-              <label for="igp-bp-name">Business partner name:</label>
-              <app-gate-pass-business-partner-search-input
-                inputId="igp-bp-name"
-                class="igp-input--wide"
-                [value]="businessPartnerName"
-                (valueChange)="businessPartnerName = $event"
-                (partnerSelected)="applyBusinessPartner($event)"
-                placeholder="Search code or name"
-              />
-            </div>
-          </div>
-
-          <div class="cjr-personal-col">
-            <div class="cjr-row">
-              <label for="igp-vehicle">Vehicle no.:</label>
-              <input id="igp-vehicle" type="text" class="igp-input--vehicle" [(ngModel)]="vehicleNo" name="vehicleNo" />
-            </div>
-
-            <div class="cjr-row">
-              <label for="igp-department">Department:</label>
-              <select id="igp-department" class="igp-input--wide" [(ngModel)]="department" name="department">
-                <option value="">No selection</option>
-                <option *ngFor="let d of departmentOptions" [value]="d">{{ d }}</option>
-              </select>
-            </div>
-
-            <div class="cjr-row">
-              <label for="igp-employee">Employee:</label>
-              <input
-                id="igp-employee"
-                type="text"
-                class="igp-input--wide"
-                [(ngModel)]="employee"
-                name="employee"
-                placeholder="Employee name or code"
-              />
-            </div>
-          </div>
+        <div>
+          <h1>{{ pageTitle }}</h1>
+          <p class="mad-page-subtitle">{{ pageSubtitle }}</p>
         </div>
       </div>
     </div>
 
-    <div class="cjr-card scd-form-card husky-sections-card">
-      <div class="husky-form-sections">
-        <section id="igp-shipment-section" class="husky-form-section">
-          <div class="cjr-section-title">Shipment &amp; logistics</div>
-          <div class="cjr-personal-grid pmm-profile-grid">
+    <div class="cjr-card cjr-form-card">
+      <div class="scd-form-hero" aria-hidden="true">
+        <div class="scd-form-hero__glow"></div>
+        <div class="scd-form-hero__content">
+          <span class="scd-form-hero__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M3 7h18M3 12h18M3 17h18" />
+              <path d="M7 7v10M17 7v10" />
+            </svg>
+          </span>
+          <div class="scd-form-hero__text">
+            <span class="scd-form-hero__label">Gate Pass</span>
+            <span class="scd-form-hero__title">Inward Gate Pass</span>
+          </div>
+          <div class="scd-form-hero__steps">
+            <span
+              class="scd-step-chip scd-step-chip--active"
+              [class.scd-step-chip--ready]="type && documentDate"
+            >
+              <span class="scd-step-chip__num">1</span>
+              Gate pass
+            </span>
+            <span class="scd-step-chip__connector" aria-hidden="true"></span>
+            <span class="scd-step-chip" [class.scd-step-chip--active]="activeSection === 'igp-shipment-section' || activeSection === 'igp-driver-section' || activeSection === 'igp-weighing-section'" [class.scd-step-chip--ready]="fromUnit || store || driverName">
+              <span class="scd-step-chip__num">2</span>
+              Logistics
+            </span>
+            <span class="scd-step-chip__connector" aria-hidden="true"></span>
+            <span class="scd-step-chip" [class.scd-step-chip--active]="activeSection === 'igp-lines-section'" [class.scd-step-chip--ready]="lines.length > 0">
+              <span class="scd-step-chip__num">3</span>
+              Line items
+            </span>
+            <span class="scd-step-chip__connector" aria-hidden="true"></span>
+            <span class="scd-step-chip" [class.scd-step-chip--active]="activeSection === 'igp-form-footer-section'">
+              <span class="scd-step-chip__num">4</span>
+              Summary
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="cjr-section-nav mad-sticky-nav" aria-label="Inward gate pass sections">
+        <ul class="cjr-section-nav-list">
+          <li
+            class="cjr-section-nav-item"
+            [class.cjr-section-nav-item--active]="activeSection === 'igp-form-header-section'"
+            (click)="scrollToSection('igp-form-header-section')"
+          >
+            Gate pass details
+          </li>
+          <li
+            class="cjr-section-nav-item"
+            [class.cjr-section-nav-item--active]="activeSection === 'igp-shipment-section'"
+            (click)="scrollToSection('igp-shipment-section')"
+          >
+            Shipment
+          </li>
+          <li
+            class="cjr-section-nav-item"
+            [class.cjr-section-nav-item--active]="activeSection === 'igp-driver-section'"
+            (click)="scrollToSection('igp-driver-section')"
+          >
+            Driver &amp; bilty
+          </li>
+          <li
+            class="cjr-section-nav-item"
+            [class.cjr-section-nav-item--active]="activeSection === 'igp-weighing-section'"
+            (click)="scrollToSection('igp-weighing-section')"
+          >
+            Weighing &amp; branch
+          </li>
+          <li
+            class="cjr-section-nav-item"
+            [class.cjr-section-nav-item--active]="activeSection === 'igp-lines-section'"
+            (click)="scrollToSection('igp-lines-section')"
+          >
+            Line items
+          </li>
+          <li
+            class="cjr-section-nav-item"
+            [class.cjr-section-nav-item--active]="activeSection === 'igp-form-footer-section'"
+            (click)="scrollToSection('igp-form-footer-section')"
+          >
+            Summary
+          </li>
+        </ul>
+      </nav>
+
+      <div class="cjr-form-body">
+        <section class="mad-form-panel cjr-form-section" id="igp-form-header-section">
+          <div class="mad-form-panel__heading">
+            <span class="mad-form-panel__icon mad-form-panel__icon--profile" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </span>
+            <div class="mad-form-panel__titles">
+              <h2 class="mad-form-panel__title">Gate pass details</h2>
+              <span class="mad-form-panel__subtitle">Document type, date, reference, and business partner</span>
+            </div>
+          </div>
+
+          <div class="cjr-personal-grid">
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="igp-type">Type:</label>
+                <select
+                  id="igp-type"
+                  [(ngModel)]="type"
+                  (ngModelChange)="onBaseDocumentTypeChange()"
+                  [disabled]="!!editingId"
+                  name="type"
+                >
+                  <option *ngFor="let t of typeOptions" [value]="t">{{ t }}</option>
+                </select>
+              </div>
+
+              <div class="cjr-row">
+                <label for="igp-date">Date:</label>
+                <input id="igp-date" type="date" [(ngModel)]="documentDate" name="documentDate" />
+              </div>
+
+              <div class="cjr-row">
+                <label for="igp-ref">IGP no.:</label>
+                <input id="igp-ref" type="text" [(ngModel)]="referenceNo" name="referenceNo" readonly />
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row igp-base-doc-row" [class.igp-base-doc-row--disabled]="isBaseDocumentDisabled">
+                <label>Base document:</label>
+                <div class="igp-base-doc-field">
+                  <span class="gate-pass-optional" *ngIf="!isBaseDocumentDisabled">(optional)</span>
+                  <div class="gate-pass-base-doc-row">
+                    <button
+                      type="button"
+                      class="gate-pass-base-doc-btn"
+                      (click)="openBaseDocumentModal()"
+                      [disabled]="isBaseDocumentDisabled"
+                    >
+                      Choose base document…
+                    </button>
+                    <span
+                      class="gate-pass-base-doc-summary"
+                      [class.gate-pass-base-doc-summary--muted]="!baseDocNo || isBaseDocumentDisabled"
+                    >{{ isBaseDocumentDisabled ? 'Not applicable' : (baseDocNo || 'None selected') }}</span>
+                    <button
+                      *ngIf="baseDocNo && !isBaseDocumentDisabled"
+                      type="button"
+                      class="gate-pass-clear-base-doc"
+                      (click)="clearBaseDocumentSelection()"
+                    >
+                      Clear selection
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cjr-row">
+                <label for="igp-bp-code">Business partner code:</label>
+                <app-gate-pass-business-partner-search-input
+                  inputId="igp-bp-code"
+                  [value]="businessPartnerCode"
+                  (valueChange)="businessPartnerCode = $event"
+                  (partnerSelected)="applyBusinessPartner($event)"
+                  placeholder="Search code or name"
+                />
+              </div>
+
+              <div class="cjr-row">
+                <label for="igp-bp-name">Business partner name:</label>
+                <app-gate-pass-business-partner-search-input
+                  inputId="igp-bp-name"
+                  [value]="businessPartnerName"
+                  (valueChange)="businessPartnerName = $event"
+                  (partnerSelected)="applyBusinessPartner($event)"
+                  placeholder="Search code or name"
+                />
+              </div>
+            </div>
+
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="igp-vehicle">Vehicle no.:</label>
+                <input id="igp-vehicle" type="text" [(ngModel)]="vehicleNo" name="vehicleNo" />
+              </div>
+
+              <div class="cjr-row">
+                <label for="igp-department">Department:</label>
+                <select id="igp-department" [(ngModel)]="department" name="department">
+                  <option value="">No selection</option>
+                  <option *ngFor="let d of departmentOptions" [value]="d">{{ d }}</option>
+                </select>
+              </div>
+
+              <div class="cjr-row">
+                <label for="igp-employee">Employee:</label>
+                <input
+                  id="igp-employee"
+                  type="text"
+                  [(ngModel)]="employee"
+                  name="employee"
+                  placeholder="Employee name or code"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mad-form-panel cjr-form-section" id="igp-shipment-section">
+          <div class="mad-form-panel__heading">
+            <span class="mad-form-panel__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="3" width="15" height="13" />
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                <circle cx="5.5" cy="18.5" r="2.5" />
+                <circle cx="18.5" cy="18.5" r="2.5" />
+              </svg>
+            </span>
+            <div class="mad-form-panel__titles">
+              <h2 class="mad-form-panel__title">Shipment &amp; logistics</h2>
+              <span class="mad-form-panel__subtitle">From unit, kanta slip, and warehouse</span>
+            </div>
+          </div>
+
+          <div class="cjr-personal-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-from-unit">From unit:</label>
-                <input id="igp-from-unit" type="text" class="igp-input--wide" [(ngModel)]="fromUnit" name="fromUnit" />
+                <input id="igp-from-unit" type="text" [(ngModel)]="fromUnit" name="fromUnit" />
               </div>
             </div>
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-kanta-slip">Kanta slip:</label>
-                <input id="igp-kanta-slip" type="text" class="igp-input--ref" [(ngModel)]="kantaSlip" name="kantaSlip" />
+                <input id="igp-kanta-slip" type="text" [(ngModel)]="kantaSlip" name="kantaSlip" />
               </div>
             </div>
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-store">Warehouse:</label>
-                <select id="igp-store" class="igp-input--wide" [(ngModel)]="store" name="store">
+                <select id="igp-store" [(ngModel)]="store" name="store">
                   <option value="">No selection</option>
                   <option *ngFor="let wh of warehouseOptions" [value]="wh.code">
                     {{ wh.code }} — {{ wh.name }}
@@ -167,16 +278,27 @@
           </div>
         </section>
 
-        <section id="igp-driver-section" class="husky-form-section">
-          <div class="cjr-section-title">Driver &amp; bilty</div>
-          <div class="cjr-personal-grid pmm-profile-grid">
+        <section class="mad-form-panel cjr-form-section" id="igp-driver-section">
+          <div class="mad-form-panel__heading">
+            <span class="mad-form-panel__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+            <div class="mad-form-panel__titles">
+              <h2 class="mad-form-panel__title">Driver &amp; bilty</h2>
+              <span class="mad-form-panel__subtitle">Driver identity and bilty reference</span>
+            </div>
+          </div>
+
+          <div class="cjr-personal-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-driver-name">Driver name:</label>
                 <input
                   id="igp-driver-name"
                   type="text"
-                  class="igp-input--wide"
                   [(ngModel)]="driverName"
                   name="driverName"
                   placeholder="Driver name"
@@ -184,7 +306,7 @@
               </div>
               <div class="cjr-row">
                 <label for="igp-bilty">Bilty number:</label>
-                <input id="igp-bilty" type="text" class="igp-input--ref" [(ngModel)]="biltyNo" name="biltyNo" />
+                <input id="igp-bilty" type="text" [(ngModel)]="biltyNo" name="biltyNo" />
               </div>
             </div>
             <div class="cjr-personal-col">
@@ -193,7 +315,6 @@
                 <input
                   id="igp-driver-cnic"
                   type="text"
-                  class="igp-input--cnic"
                   [ngModel]="driverCnic"
                   (ngModelChange)="onDriverCnicChange($event)"
                   name="driverCnic"
@@ -210,7 +331,6 @@
                 <input
                   id="igp-driver-phone"
                   type="tel"
-                  class="igp-input--phone"
                   [ngModel]="driverPhone"
                   (ngModelChange)="onDriverPhoneChange($event)"
                   name="driverPhone"
@@ -225,9 +345,23 @@
           </div>
         </section>
 
-        <section id="igp-weighing-section" class="husky-form-section">
-          <div class="cjr-section-title">Weighing &amp; branch</div>
-          <div class="cjr-personal-grid pmm-profile-grid">
+        <section class="mad-form-panel cjr-form-section" id="igp-weighing-section">
+          <div class="mad-form-panel__heading">
+            <span class="mad-form-panel__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v18" />
+                <path d="M5 8h14" />
+                <path d="M7 21h10" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </span>
+            <div class="mad-form-panel__titles">
+              <h2 class="mad-form-panel__title">Weighing &amp; branch</h2>
+              <span class="mad-form-panel__subtitle">Weight and branch location</span>
+            </div>
+          </div>
+
+          <div class="cjr-personal-grid">
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-weight">Weight:</label>
@@ -237,7 +371,6 @@
                     type="number"
                     min="0"
                     step="1"
-                    class="igp-input--amount"
                     [(ngModel)]="weight"
                     name="weight"
                     placeholder="0.00"
@@ -249,7 +382,7 @@
             <div class="cjr-personal-col">
               <div class="cjr-row">
                 <label for="igp-location">Branch:</label>
-                <select id="igp-location" class="igp-input--wide" [(ngModel)]="location" name="location">
+                <select id="igp-location" [(ngModel)]="location" name="location">
                   <option value="">No selection</option>
                   <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
                 </select>
@@ -258,14 +391,30 @@
           </div>
         </section>
 
-        <section id="igp-lines-section" class="husky-form-section igp-lines-section">
-          <div class="igp-lines-heading">
-            <div class="cjr-section-title">Line items</div>
+        <section class="mad-form-panel cjr-form-section igp-lines-panel" id="igp-lines-section">
+          <div class="mad-form-panel__heading mad-section-heading--inline">
+            <div class="mad-section-heading__left">
+              <span class="mad-form-panel__icon mad-form-panel__icon--components" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+              </span>
+              <div class="mad-form-panel__titles">
+                <h2 class="mad-form-panel__title mad-section-heading__title">Line items</h2>
+                <span class="mad-form-panel__subtitle">Items received on this inward gate pass</span>
+              </div>
+            </div>
             <button type="button" class="igp-add-line-btn" (click)="addLine()">
               <span class="igp-add-line-icon" aria-hidden="true">+</span>
               <span class="igp-add-line-label">Add line</span>
             </button>
           </div>
+
           <div class="igp-lines-scroll">
             <table class="igp-lines-table">
               <thead>
@@ -351,39 +500,52 @@
             </table>
           </div>
         </section>
+
+        <section class="mad-form-panel cjr-form-section" id="igp-form-footer-section">
+          <div class="mad-form-panel__heading">
+            <span class="mad-form-panel__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </span>
+            <div class="mad-form-panel__titles">
+              <h2 class="mad-form-panel__title">Document summary</h2>
+              <span class="mad-form-panel__subtitle">Remarks and final notes for this gate pass</span>
+            </div>
+          </div>
+
+          <div class="cjr-row cjr-row--textarea">
+            <label for="igp-remarks">Remarks:</label>
+            <textarea
+              id="igp-remarks"
+              rows="4"
+              [(ngModel)]="remarks"
+              name="remarks"
+              placeholder="Header / document remarks"
+            ></textarea>
+          </div>
+        </section>
       </div>
-    </div>
 
-    <div class="cjr-card scd-form-card husky-footer-card" id="igp-form-footer-section">
-      <div class="husky-footer">
-        <div class="cjr-section-title">Document summary</div>
-
-        <div class="husky-footer-field husky-footer-field--full">
-          <label for="igp-remarks">Remarks</label>
-          <textarea
-            id="igp-remarks"
-            class="husky-footer-recommendations"
-            rows="4"
-            [(ngModel)]="remarks"
-            name="remarks"
-            placeholder="Header / document remarks"
-          ></textarea>
-        </div>
+      <div class="cjr-actions-footer">
+        <button type="button" class="btn-secondary cjr-cancel-btn" (click)="back()" [disabled]="loading || submitting">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+          Cancel
+        </button>
+        <button type="button" class="cjr-submit-btn" (click)="submitForm()" [disabled]="loading || submitting">
+          <ng-container *ngIf="submitting; else igpSubmitIdle">
+            <span class="cjr-submit-spinner" aria-hidden="true"></span>
+            <span>{{ editingId ? 'Updating…' : 'Saving…' }}</span>
+          </ng-container>
+          <ng-template #igpSubmitIdle>
+            <span class="cjr-submit-icon">✓</span>
+            <span>{{ submitButtonLabel }}</span>
+          </ng-template>
+        </button>
       </div>
-    </div>
-
-    <div class="cjr-actions-footer husky-actions-footer">
-      <button type="button" class="btn-secondary" (click)="back()" [disabled]="loading || submitting">Cancel</button>
-      <button type="button" class="cjr-submit-btn" (click)="submitForm()" [disabled]="loading || submitting">
-        <ng-container *ngIf="submitting; else igpSubmitIdle">
-          <span class="cjr-submit-spinner" aria-hidden="true"></span>
-          <span>{{ editingId ? 'Updating…' : 'Saving…' }}</span>
-        </ng-container>
-        <ng-template #igpSubmitIdle>
-          <span class="cjr-submit-icon">✓</span>
-          {{ submitButtonLabel }}
-        </ng-template>
-      </button>
     </div>
   </div>
 </div>

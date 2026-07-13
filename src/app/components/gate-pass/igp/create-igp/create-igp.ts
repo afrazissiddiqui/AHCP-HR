@@ -49,8 +49,7 @@ function numericFieldFromDoc(value: string | undefined): string {
   templateUrl: './create-igp.html',
   styleUrls: [
     '../../../HR-Portal/Application-Form/create-job-requisition/create-job-requisition.css',
-    '../../../Plant-Maintenance/setup-form/plant-maintenance-setup-form.css',
-    '../../../Plant-Maintenance/main-form/husky-form/add-husky-form/add-husky-form.css',
+    '../../../HR-Portal/employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation.css',
     './create-igp.css',
   ],
 })
@@ -58,6 +57,13 @@ export class CreateIgpComponent implements OnInit {
   editingId: string | null = null;
   pageTitle = 'Add IGP';
   submitButtonLabel = 'Save IGP';
+  activeSection = 'igp-form-header-section';
+
+  get pageSubtitle(): string {
+    return this.editingId
+      ? 'Update inward gate pass details, shipment lines, and document summary.'
+      : 'Create a new inward gate pass with partner, logistics, and line items.';
+  }
 
   type = 'Purchase Order';
   documentDate = '';
@@ -204,6 +210,13 @@ export class CreateIgpComponent implements OnInit {
 
   back(): void {
     void this.router.navigateByUrl('/gate-pass/igp');
+  }
+
+  scrollToSection(sectionId: string): void {
+    this.activeSection = sectionId;
+    setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   onBaseDocumentTypeChange(): void {
