@@ -91,6 +91,7 @@
               <td class="table-action-cell application-actions-cell">
                 <div class="action-buttons">
                   <button class="view-btn" (click)="viewDetails(j)" title="View Details">View</button>
+                  <button class="print-btn" type="button" (click)="printRecord(j)" title="Print posted line">Print</button>
                   <button class="delete-btn" (click)="onDelete(j)" title="Delete">Delete</button>
                 </div>
               </td>
@@ -99,99 +100,7 @@
         </table>
       </div>
 
-      <div class="dialog-backdrop" *ngIf="showDetailDialog()" (click)="closeDetailDialog()"></div>
-      <div class="js-detail-modal" *ngIf="showDetailDialog()">
-        <div class="js-modal-header">
-          <h2>AGP<ng-container *ngIf="selectedRow() as row"> — {{ row.referenceNo }}</ng-container></h2>
-          <button type="button" class="js-close-modal" (click)="closeDetailDialog()">×</button>
-        </div>
-        <div class="js-modal-body">
-          <p *ngIf="detailLoading()">Loading details…</p>
-          <ng-container *ngIf="selectedRow() as row">
-          <ng-container *ngIf="!detailLoading()">
-          <div class="js-detail-section">
-            <h3>Header</h3>
-            <div class="js-detail-grid">
-              <div class="js-detail-item"><label>Type:</label> <span>{{ row.type }}</span></div>
-              <div class="js-detail-item"><label>Date:</label> <span>{{ row.submittedDate }}</span></div>
-              <div class="js-detail-item"><label>AGP no.:</label> <span>{{ row.referenceNo }}</span></div>
-              <div class="js-detail-item"><label>Base doc no.:</label> <span>{{ row.baseDocNo }}</span></div>
-              <div class="js-detail-item"><label>BP code:</label> <span>{{ row.businessPartnerCode }}</span></div>
-              <div class="js-detail-item"><label>BP name:</label> <span>{{ row.businessPartnerName }}</span></div>
-              <div class="js-detail-item"><label>Vehicle:</label> <span>{{ row.vehicleNo }}</span></div>
-              <div class="js-detail-item"><label>Reason for movement:</label> <span>{{ row.reasonForMovement }}</span></div>
-              <div class="js-detail-item"><label>Requesting employee:</label> <span>{{ row.requestingEmployee }}</span></div>
-              <div class="js-detail-item"><label>Requesting department:</label> <span>{{ row.requestingDepartment }}</span></div>
-              <div class="js-detail-item"><label>Requested by:</label> <span>{{ row.requestedBy }}</span></div>
-              <div class="js-detail-item"><label>Issued to:</label> <span>{{ row.issuedTo }}</span></div>
-              <div class="js-detail-item"><label>Article out date:</label> <span>{{ row.articleOutDate }}</span></div>
-              <div class="js-detail-item"><label>Article returned date:</label> <span>{{ row.articleReturnedDate }}</span></div>
-              <div class="js-detail-item"><label>Branch:</label> <span>{{ row.location }}</span></div>
-              <div class="js-detail-item"><label>Warehouse:</label> <span>{{ warehouseLabel(row.store) }}</span></div>
-              <div class="js-detail-item"><label>Kanta slip:</label> <span>{{ row.kantaSlip }}</span></div>
-              <div class="js-detail-item"><label>Driver name:</label> <span>{{ row.driverName }}</span></div>
-              <div class="js-detail-item"><label>Driver CNIC:</label> <span>{{ row.driverCnic }}</span></div>
-              <div class="js-detail-item"><label>Driver phone:</label> <span>{{ row.driverPhone }}</span></div>
-              <div class="js-detail-item"><label>Bilty no.:</label> <span>{{ row.biltyNo }}</span></div>
-              <div class="js-detail-item"><label>Weight:</label> <span>{{ row.weight }} KG</span></div>
-              <div class="js-detail-item"><label>Status:</label> <span>{{ row.status }}</span></div>
-              <div class="js-detail-item"><label>Attachment:</label> <span>{{ row.attachmentFileName || '—' }}</span></div>
-              <div class="js-detail-item"><label>HoSC approval:</label> <span>{{ row.headOfSupplyChainApproval ? 'Yes' : 'No' }}</span></div>
-              <div class="js-detail-item"><label>Total qty sent:</label> <span>{{ row.totalQtySent }}</span></div>
-              <div class="js-detail-item"><label>Total qty received:</label> <span>{{ row.totalQtyReceived }}</span></div>
-            </div>
-            <div class="js-detail-full" *ngIf="row.remarks">
-              <label>Remarks:</label>
-              <p>{{ row.remarks }}</p>
-            </div>
-          </div>
-
-          <div class="js-detail-section" *ngIf="row.lines.length">
-            <h3>Line items</h3>
-            <div class="table-scroll">
-              <table class="mountain-table">
-                <thead>
-                  <tr>
-                    <th>Sr.#</th>
-                    <th>Item code</th>
-                    <th>Item name</th>
-                    <th>Batch #</th>
-                    <th>Category</th>
-                    <th>Packing</th>
-                    <th>Quality</th>
-                    <th>UOM</th>
-                    <th>Qty sent</th>
-                    <th>Qty received</th>
-                    <th>Info</th>
-                    <th>Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let ln of row.lines; let idx = index">
-                    <td>{{ idx + 1 }}</td>
-                    <td>{{ ln.itemCode }}</td>
-                    <td>{{ ln.itemName }}</td>
-                    <td>{{ ln.serialNumbers }}</td>
-                    <td>{{ ln.category }}</td>
-                    <td>{{ ln.packingCondition }}</td>
-                    <td>{{ ln.productQuality }}</td>
-                    <td>{{ ln.uom }}</td>
-                    <td>{{ ln.qtySent }}</td>
-                    <td>{{ ln.qtyReceived }}</td>
-                    <td>{{ ln.info }}</td>
-                    <td>{{ ln.remarks }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          </ng-container>
-          </ng-container>
-        </div>
-        <div class="js-modal-footer">
-          <button type="button" class="btn-secondary" (click)="closeDetailDialog()">Close</button>
-        </div>
-      </div>
+      
 
       <div class="table-pagination">
         <div class="pagination-info">
