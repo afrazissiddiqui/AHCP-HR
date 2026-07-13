@@ -6,6 +6,7 @@ import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { HttpClient } from '@angular/common/http';
 import { apiUrl } from '../../../config/api.config';
+import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 
 export interface PostedProductionOrderRecord {
   docEntry?: string | number;
@@ -18,13 +19,28 @@ export interface PostedProductionOrderRecord {
   quantity?: number | string;
   warehouse?: string;
   status?: string;
+  batchNumber?: string;
   [key: string]: unknown;
+}
+
+interface IssueForProductionPayload {
+  DocDate: string;
+  Remarks: string;
+  docentry: number;
+  branch: string;
+  items: Array<{
+    line_num: number;
+    item_code: string;
+    quantity: number;
+    warehouse: string;
+    batch_no: string;
+  }>;
 }
 
 @Component({
   selector: 'app-issue-from-production',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './issue-from-production.html',
   styleUrl: './issue-from-production.css',
 })
@@ -33,8 +49,11 @@ export class IssueFromProductionComponent implements OnInit {
   private readonly alertService = inject(AlertService);
 
   readonly loading = signal(false);
+  readonly submitting = signal(false);
   readonly records = signal<PostedProductionOrderRecord[]>([]);
   readonly searchText = signal('');
+  readonly showDetailDialog = signal(false);
+  readonly selectedRecord = signal<PostedProductionOrderRecord | null>(null);
 
   readonly columns = [
     { key: 'docNum', label: 'Doc No.' },
@@ -76,6 +95,20 @@ export class IssueFromProductionComponent implements OnInit {
     this.loadRecords();
   }
 
+  toggleSidebar(): void {
+    document.body.classList.toggle('sidebar-collapsed');
+  }
+
+  viewRecord(record: PostedProductionOrderRecord): void {
+    this.selectedRecord.set(record);
+    this.showDetailDialog.set(true);
+  }
+
+  closeDetailDialog(): void {
+    this.showDetailDialog.set(false);
+    this.selectedRecord.set(null);
+  }
+
   loadRecords(): void {
     this.loading.set(true);
     this.http
@@ -91,6 +124,52 @@ export class IssueFromProductionComponent implements OnInit {
           void this.alertService.error(
             'Load Failed',
             formatApiErrorMessage(error, 'Failed to load posted production orders.'),
+          );
+        },
+      });
+  }
+
+  submitIssueForProduction(): void {
+    const record = this.selectedRecord();
+    if (!record) {
+      return;
+    }
+
+    const docEntry = this.parseDocEntry(record.docEntry);
+    if (!docEntry) {
+      void this.alertService.warning('Missing production order', 'Select a production order with a valid document entry.');
+      return;
+    }
+
+    const payload: IssueForProductionPayload = {
+      DocDate: this.formatDate(record.docDate) || this.todayIso(),
+      Remarks: 'Issue for Production Order',
+      docentry: docEntry,
+      branch: '1',
+      items: [
+        {
+          line_num: 0,
+          item_code: this.displayValue(record.itemCode) || this.displayValue(record.itemName) || '',
+          quantity: this.parseQuantity(record.quantity),
+          warehouse: this.displayValue(record.warehouse) || 'PSH-WH01',
+          batch_no: this.displayValue(record.batchNumber) || 'A-10',
+        },
+      ],
+    };
+
+    this.submitting.set(true);
+    this.http
+      .post<unknown>(apiUrl('createIssueForProduction'), payload)
+      .pipe(finalize(() => this.submitting.set(false)))
+      .subscribe({
+        next: () => {
+          this.alertService.success('Success', 'Issue for production submitted successfully.');
+          this.closeDetailDialog();
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Submit Failed',
+            formatApiErrorMessage(error, 'Could not issue the selected production order.'),
           );
         },
       });
@@ -201,5 +280,28 @@ export class IssueFromProductionComponent implements OnInit {
       return '';
     }
     return String(value);
+  }
+
+  private parseDocEntry(value: unknown): number | null {
+    const normalized = Number(value);
+    return Number.isFinite(normalized) ? normalized : null;
+  }
+
+  private parseQuantity(value: unknown): number {
+    const normalized = Number(value);
+    return Number.isFinite(normalized) && normalized > 0 ? normalized : 1;
+  }
+
+  private formatDate(value: unknown): string {
+    const text = this.displayValue(value);
+    if (!text) {
+      return '';
+    }
+    const match = text.match(/(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : text;
+  }
+
+  private todayIso(): string {
+    return new Date().toISOString().slice(0, 10);
   }
 }

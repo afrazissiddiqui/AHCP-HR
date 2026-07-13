@@ -1,65 +1,97 @@
-<div class="setup-layout">
-  <div class="setup-content">
-    <div class="setup-body">
-      <div class="setup-intro">
-        <h2>Issue from production</h2>
-        <p>View posted production orders returned from the receipt-from-production API.</p>
-      </div>
+<div class="gate-pass-shell">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
+    <button class="btn-default" type="button" pageToolbarActions (click)="loadRecords()">Refresh</button>
+  </app-page-toolbar>
 
-      <div class="form-panel">
-        <div class="form-panel-head">
-          <div>
-            <h3 class="form-panel-title">Posted production orders</h3>
-            <p class="panel-subtitle">
-              {{ filteredRecords().length }} of {{ totalRecords() }} records visible
-            </p>
-          </div>
-          <div class="panel-actions">
-            <input
-              type="search"
-              class="search-input"
-              [ngModel]="searchText()"
-              (ngModelChange)="searchText.set($event)"
-              name="issue-from-production-search"
-              placeholder="Search records…"
-            />
-            <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadRecords()">
-              {{ loading() ? 'Loading…' : 'Refresh' }}
-            </button>
+  <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
+    <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
+      <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
+        Posted production orders ({{ records().length }})
+      </div>
+    </div>
+
+    <div class="sapMTBSpacer"></div>
+
+    <div class="sapMSearchField">
+      <input
+        type="text"
+        [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)"
+        placeholder="Search production orders..."
+      />
+      <span class="sapUiIcon search-icon">🔍</span>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table class="mountain-table">
+        <thead>
+          <tr>
+            <th>Sr.#</th>
+            @for (column of columns; track column.key) {
+              <th>{{ column.label }}</th>
+            }
+            <th class="application-actions-header">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr>
+              <td colspan="10" class="empty-state">Loading posted production orders…</td>
+            </tr>
+          } @else if (!filteredRecords().length) {
+            <tr>
+              <td colspan="10" class="empty-state">No posted production orders found.</td>
+            </tr>
+          } @else {
+            @for (record of filteredRecords(); track record.docEntry; let index = $index) {
+              <tr>
+                <td>{{ index + 1 }}</td>
+                @for (column of columns; track column.key) {
+                  <td>{{ cellValue(record, column.key) }}</td>
+                }
+                <td class="table-action-cell application-actions-cell">
+                  <div class="action-buttons">
+                    <button class="view-btn" type="button" (click)="viewRecord(record)">View</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="dialog-backdrop" *ngIf="showDetailDialog()" (click)="closeDetailDialog()"></div>
+  <div class="js-detail-modal" *ngIf="showDetailDialog()">
+    <div class="js-modal-header">
+      <h2>Production Order<ng-container *ngIf="selectedRecord() as row"> — {{ row.docNum || row.docEntry }}</ng-container></h2>
+      <button type="button" class="js-close-modal" (click)="closeDetailDialog()">×</button>
+    </div>
+    <div class="js-modal-body">
+      <ng-container *ngIf="selectedRecord() as row">
+        <div class="js-detail-section">
+          <h3>Header</h3>
+          <div class="js-detail-grid">
+            <div class="js-detail-item"><label>Doc No.:</label> <span>{{ row.docNum || '—' }}</span></div>
+            <div class="js-detail-item"><label>Doc Date:</label> <span>{{ row.docDate || '—' }}</span></div>
+            <div class="js-detail-item"><label>Due Date:</label> <span>{{ row.dueDate || '—' }}</span></div>
+            <div class="js-detail-item"><label>Item Code:</label> <span>{{ row.itemCode || '—' }}</span></div>
+            <div class="js-detail-item"><label>Item Name:</label> <span>{{ row.itemName || row.itemDescription || '—' }}</span></div>
+            <div class="js-detail-item"><label>Quantity:</label> <span>{{ row.quantity || '—' }}</span></div>
+            <div class="js-detail-item"><label>Warehouse:</label> <span>{{ row.warehouse || '—' }}</span></div>
+            <div class="js-detail-item"><label>Status:</label> <span>{{ row.status || '—' }}</span></div>
           </div>
         </div>
-
-        @if (loading()) {
-          <div class="panel-message">Loading posted production orders…</div>
-        } @else if (!records().length) {
-          <div class="panel-message">No posted production orders found.</div>
-        } @else if (!filteredRecords().length) {
-          <div class="panel-message">No records match your search.</div>
-        } @else {
-          <div class="table-wrap">
-            <table class="entry-table">
-              <thead>
-                <tr>
-                  <th class="col-sr">SR No.</th>
-                  @for (column of columns; track column.key) {
-                    <th>{{ column.label }}</th>
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                @for (record of filteredRecords(); track record.docEntry; let index = $index) {
-                  <tr>
-                    <td class="col-sr">{{ index + 1 }}</td>
-                    @for (column of columns; track column.key) {
-                      <td>{{ cellValue(record, column.key) }}</td>
-                    }
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      </div>
+      </ng-container>
+    </div>
+    <div class="js-modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeDetailDialog()">Close</button>
+      <button type="button" class="view-btn" [disabled]="submitting()" (click)="submitIssueForProduction()">
+        {{ submitting() ? 'Submitting…' : 'Issue for Production' }}
+      </button>
     </div>
   </div>
 </div>
