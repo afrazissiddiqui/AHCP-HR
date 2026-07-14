@@ -17,9 +17,9 @@
   max-width: 920px;
   background: #f5f7f9;
   border: 1px solid #cfd8dc;
-  border-radius: 12px;
-  padding: 1.5rem 1.5rem 1.25rem;
-  box-shadow: 0 12px 40px rgba(15, 45, 80, 0.08);
+  border-radius: 16px;
+  padding: 1.75rem 1.75rem 1.5rem;
+  box-shadow: 0 12px 40px rgba(15, 45, 80, 0.12);
 }
 
 .login-brand {
@@ -196,7 +196,7 @@
   border: 1px solid var(--us-border);
   border-radius: var(--us-radius-lg);
   box-shadow: var(--us-shadow-sm);
-  padding: 18px 20px 22px;
+  padding: 20px 22px 24px;
   position: relative;
 }
 
@@ -254,16 +254,16 @@
 
 .form-panel-title {
   color: var(--us-text);
-  font-size: 17px;
+  font-size: 1.25rem; /* 20px */
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 4px 0;
 }
 
 .panel-subtitle {
   color: var(--us-muted);
-  font-size: 13px;
+  font-size: 0.95rem; /* ~15px */
   line-height: 1.45;
-  margin: 5px 0 0;
+  margin: 4px 0 0;
 }
 
 /* ─── Mode badge ────────────────────────────────────────────── */
@@ -407,8 +407,9 @@
   color: var(--us-text);
   font-size: 14px;
   padding: 10px 12px;
-  transition: border-color 0.2s var(--us-ease), box-shadow 0.2s var(--us-ease);
+  transition: border-color 0.15s var(--us-ease), box-shadow 0.15s var(--us-ease);
   width: 100%;
+  height: 2.6rem;
 }
 
 .field-input:hover,
@@ -1004,6 +1005,12 @@
   background: var(--us-primary);
   border: 1px solid var(--us-primary);
   color: #fff;
+  height: 2.75rem;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .btn-submit-form:hover:not(:disabled),
