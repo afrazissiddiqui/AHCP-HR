@@ -88,17 +88,20 @@
   gap: 8px;
 }
 
-.view-btn,
-.btn-secondary {
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 6px 10px;
-  background: #ffffff;
-  color: #1f2937;
-  cursor: pointer;
+.mountain-table tr.selected {
+  background: #f1f5f9;
 }
 
-.view-btn:hover,
+.payload-json {
+  margin: 0;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .btn-secondary:hover {
   background: #f8fafc;
 }

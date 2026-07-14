@@ -1,6 +1,6 @@
 <div class="gate-pass-shell">
   <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
-    <button class="btn-default" type="button" pageToolbarActions (click)="loadRecords()">Refresh</button>
+    <button class="btn-default" type="button" pageToolbarActions [disabled]="!selectedRecord()" (click)="addReceiptFromProduction()">Add</button>
   </app-page-toolbar>
 
   <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
@@ -46,15 +46,14 @@
             </tr>
           } @else {
             @for (record of filteredRecords(); track record.docEntry; let index = $index) {
-              <tr>
+              <tr [class.selected]="selectedRecord()?.docEntry === record.docEntry" (click)="selectRecord(record)">
                 <td>{{ index + 1 }}</td>
                 @for (column of columns; track column.key) {
                   <td>{{ cellValue(record, column.key) }}</td>
                 }
                 <td class="table-action-cell application-actions-cell">
                   <div class="action-buttons">
-                    <button class="view-btn" type="button" (click)="addReceiptFromProduction(record)">Add</button>
-                    <button class="btn-secondary" type="button" (click)="viewRecord(record)">View</button>
+                    <button class="btn-secondary" type="button" (click)="viewRecord(record); $event.stopPropagation()">View</button>
                   </div>
                 </td>
               </tr>
@@ -92,6 +91,25 @@
       <button type="button" class="btn-secondary" (click)="closeDetailDialog()">Close</button>
       <button type="button" class="view-btn" [disabled]="submitting()" (click)="submitIssueForProduction()">
         {{ submitting() ? 'Submitting…' : 'Issue for Production' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="dialog-backdrop" *ngIf="payloadDialogOpen()" (click)="payloadDialogOpen.set(false)"></div>
+  <div class="js-detail-modal" *ngIf="payloadDialogOpen()">
+    <div class="js-modal-header">
+      <h2>Issue For Production Payload</h2>
+      <button type="button" class="js-close-modal" (click)="payloadDialogOpen.set(false)">×</button>
+    </div>
+    <div class="js-modal-body">
+      <ng-container *ngIf="issuePayload() as payload">
+        <pre class="payload-json">{{ payload | json }}</pre>
+      </ng-container>
+    </div>
+    <div class="js-modal-footer">
+      <button type="button" class="btn-secondary" (click)="payloadDialogOpen.set(false)">Cancel</button>
+      <button type="button" class="view-btn" [disabled]="submitting()" (click)="submitIssueForProduction()">
+        {{ submitting() ? 'Submitting…' : 'Submit' }}
       </button>
     </div>
   </div>

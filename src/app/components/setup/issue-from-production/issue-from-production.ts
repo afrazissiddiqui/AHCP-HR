@@ -23,18 +23,18 @@ export interface PostedProductionOrderRecord {
   [key: string]: unknown;
 }
 
-interface ReceiptFromProductionApiPayload {
-  docEntry: number;
-  docDate: string;
-  taxDate: string;
-  docDueDate: string;
-  remarks: string;
-  warehouse: string;
-  quantity: number;
-  batchNumber: string;
-  manufacturingDate: string;
+interface IssueForProductionPayload {
+  DocDate: string;
+  Remarks: string;
+  docentry: number;
   branch: string;
-  expiryDate: string;
+  items: Array<{
+    line_num: number;
+    item_code: string;
+    quantity: number;
+    warehouse: string;
+    batch_no: string;
+  }>;
 }
 
 @Component({
@@ -53,7 +53,9 @@ export class IssueFromProductionComponent implements OnInit {
   readonly records = signal<PostedProductionOrderRecord[]>([]);
   readonly searchText = signal('');
   readonly showDetailDialog = signal(false);
+  readonly payloadDialogOpen = signal(false);
   readonly selectedRecord = signal<PostedProductionOrderRecord | null>(null);
+  readonly issuePayload = signal<IssueForProductionPayload | null>(null);
 
   readonly columns = [
     { key: 'docNum', label: 'Doc No.' },
@@ -104,9 +106,34 @@ export class IssueFromProductionComponent implements OnInit {
     this.showDetailDialog.set(true);
   }
 
-  addReceiptFromProduction(record: PostedProductionOrderRecord): void {
+  selectRecord(record: PostedProductionOrderRecord): void {
     this.selectedRecord.set(record);
-    void this.submitIssueForProduction(record);
+  }
+
+  addReceiptFromProduction(): void {
+    const record = this.selectedRecord();
+    if (!record) {
+      void this.alertService.warning('No production order selected', 'Select a production order before clicking Add.');
+      return;
+    }
+
+    this.issuePayload.set({
+      DocDate: this.formatDate(record.docDate) || this.todayIso(),
+      Remarks: 'Issue for Production Order',
+      docentry: this.parseDocEntry(record.docEntry) ?? 0,
+      branch: '1',
+      items: [
+        {
+          line_num: 0,
+          item_code: this.displayValue(record.itemCode) || this.displayValue(record.itemName) || '',
+          quantity: this.parseQuantity(record.quantity),
+          warehouse: this.displayValue(record.warehouse) || 'PSH-WH01',
+          batch_no: this.displayValue(record.batchNumber) || 'A-10',
+        },
+      ],
+    });
+
+    this.payloadDialogOpen.set(true);
   }
 
   closeDetailDialog(): void {
@@ -134,33 +161,27 @@ export class IssueFromProductionComponent implements OnInit {
       });
   }
 
-  submitIssueForProduction(record?: PostedProductionOrderRecord): void {
-    const activeRecord = record ?? this.selectedRecord();
-    if (!activeRecord) {
+  submitIssueForProduction(): void {
+    const payload = this.issuePayload();
+    if (!payload) {
       return;
     }
-
-    const docEntry = this.parseDocEntry(activeRecord.docEntry);
-    if (!docEntry) {
-      void this.alertService.warning('Missing production order', 'Select a production order with a valid document entry.');
-      return;
-    }
-
-    const payload = this.buildReceiptFromProductionPayload(activeRecord);
 
     this.submitting.set(true);
     this.http
-      .post<unknown>(apiUrl('createReceiptFromProduction'), payload)
+      .post<unknown>(apiUrl('createIssueForProduction'), payload)
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: () => {
-          this.alertService.success('Success', 'Receipt from production submitted successfully.');
-          this.closeDetailDialog();
+          this.alertService.success('Success', 'Issue for production submitted successfully.');
+          this.payloadDialogOpen.set(false);
+          this.issuePayload.set(null);
+          this.selectedRecord.set(null);
         },
         error: (error: unknown) => {
           void this.alertService.error(
             'Submit Failed',
-            formatApiErrorMessage(error, 'Could not submit receipt from production.'),
+            formatApiErrorMessage(error, 'Could not submit issue for production.'),
           );
         },
       });
