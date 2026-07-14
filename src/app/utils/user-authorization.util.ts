@@ -357,6 +357,10 @@ function permissionValueToBackend(value: unknown): number {
   return normalizePermissionValue(value) === 1 ? BACKEND_PERMISSION_VALUE_ALLOWED : BACKEND_PERMISSION_VALUE_DENIED;
 }
 
+function resolvePermissionKeyCandidates(moduleSlug: string, action: string): string[] {
+  return resolvePermissionAction(moduleSlug, action).map((candidate) => permissionKeyForModule(moduleSlug, candidate));
+}
+
 function buildModuleAuthorizationObject(
   moduleSlug: string,
   actions: readonly string[],
@@ -365,7 +369,15 @@ function buildModuleAuthorizationObject(
   const payload: UserAuthorizationModule = {};
   for (const action of actions) {
     const key = permissionKeyForModule(moduleSlug, action);
-    payload[key] = normalizePermissionValue(values[key]);
+    const candidates = resolvePermissionKeyCandidates(moduleSlug, action);
+    let normalizedValue = 0;
+    for (const candidate of candidates) {
+      if (candidate in values) {
+        normalizedValue = normalizePermissionValue(values[candidate]);
+        break;
+      }
+    }
+    payload[key] = normalizedValue;
   }
   return payload;
 }

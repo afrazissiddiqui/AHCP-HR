@@ -8,6 +8,7 @@ import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import {
   AUTHORIZATION_MODULE_DEFINITIONS,
   buildAuthorizationTemplate,
+  isPermissionGranted,
   permissionKey,
   updateAllPermissionsInDraft,
   updateModulePermissionsInDraft,
@@ -102,8 +103,7 @@ export class UserSetupComponent implements OnInit {
   }
 
   isPermissionAllowed(moduleSlug: string, action: string): boolean {
-    const key = permissionKey(moduleSlug, action);
-    return this.authorization().some((module) => module[key] === 1);
+    return isPermissionGranted(this.authorization(), moduleSlug, action);
   }
 
   togglePermission(moduleSlug: string, action: string, allowed: boolean): void {
