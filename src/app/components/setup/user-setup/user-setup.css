@@ -1,53 +1,5 @@
 /* User Setup — SAP-style design tokens */
-
-/* Light login-panel wrapper styles (uploaded design) */
-.login-page {
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1.25rem;
-  box-sizing: border-box;
-  font-family: '72', Arial, sans-serif;
-  background: #aed9f3;
-}
-
-.login-panel {
-  width: 100%;
-  max-width: 920px;
-  background: #f5f7f9;
-  border: 1px solid #cfd8dc;
-  border-radius: 16px;
-  padding: 1.75rem 1.75rem 1.5rem;
-  box-shadow: 0 12px 40px rgba(15, 45, 80, 0.12);
-}
-
-.login-brand {
-  text-align: left;
-  margin-bottom: 1rem;
-}
-
-.login-subtitle {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #556b82;
-  line-height: 1.4;
-}
-
-.login-panel .form-panel {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
-
-.login-panel .form-actions {
-  justify-content: flex-end;
-}
-
-.login-panel .form-grid { grid-gap: 12px 16px; }
-
-.form-panel {
+.setup-layout {
   --us-bg: #f5f6f7;
   --us-bg-subtle: #fafafa;
   --us-surface: #fff;
@@ -196,7 +148,7 @@
   border: 1px solid var(--us-border);
   border-radius: var(--us-radius-lg);
   box-shadow: var(--us-shadow-sm);
-  padding: 20px 22px 24px;
+  padding: 18px 20px 22px;
   position: relative;
 }
 
@@ -254,16 +206,16 @@
 
 .form-panel-title {
   color: var(--us-text);
-  font-size: 1.25rem; /* 20px */
+  font-size: 17px;
   font-weight: 700;
-  margin: 0 0 4px 0;
+  margin: 0;
 }
 
 .panel-subtitle {
   color: var(--us-muted);
-  font-size: 0.95rem; /* ~15px */
+  font-size: 13px;
   line-height: 1.45;
-  margin: 4px 0 0;
+  margin: 5px 0 0;
 }
 
 /* ─── Mode badge ────────────────────────────────────────────── */
@@ -407,9 +359,8 @@
   color: var(--us-text);
   font-size: 14px;
   padding: 10px 12px;
-  transition: border-color 0.15s var(--us-ease), box-shadow 0.15s var(--us-ease);
+  transition: border-color 0.2s var(--us-ease), box-shadow 0.2s var(--us-ease);
   width: 100%;
-  height: 2.6rem;
 }
 
 .field-input:hover,
@@ -1005,12 +956,6 @@
   background: var(--us-primary);
   border: 1px solid var(--us-primary);
   color: #fff;
-  height: 2.75rem;
-  border-radius: 8px;
-  padding: 0 16px;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .btn-submit-form:hover:not(:disabled),

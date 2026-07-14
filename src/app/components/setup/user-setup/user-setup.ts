@@ -166,23 +166,17 @@ export class UserSetupComponent implements OnInit {
     }));
 
     if (field.toLowerCase() === 'name') {
-      const updated = this.syncPairedField(
+      this.syncPairedField(
         field,
         ['name', 'Name'],
         ['email', 'Email'],
       );
-      if (updated) {
-        this.alertService.toast('Email auto-filled from selected name', 'success');
-      }
     } else if (field.toLowerCase() === 'email') {
-      const updated = this.syncPairedField(
+      this.syncPairedField(
         field,
         ['email', 'Email'],
         ['name', 'Name'],
       );
-      if (updated) {
-        this.alertService.toast('Name auto-filled from selected email', 'success');
-      }
     }
   }
 
@@ -380,10 +374,10 @@ export class UserSetupComponent implements OnInit {
     sourceField: string,
     sourceKeys: string[],
     targetKeys: string[],
-  ): boolean {
+  ): void {
     const sourceValue = this.fieldValue(sourceField).trim().toLowerCase();
     if (!sourceValue) {
-      return false;
+      return;
     }
 
     const matchedUser = this.users().find((user) =>
@@ -394,7 +388,7 @@ export class UserSetupComponent implements OnInit {
     );
 
     if (!matchedUser) {
-      return false;
+      return;
     }
 
     this.formModel.update((model) => {
@@ -407,7 +401,6 @@ export class UserSetupComponent implements OnInit {
       }
       return nextModel;
     });
-    return true;
   }
 
   private resetForm(): void {
