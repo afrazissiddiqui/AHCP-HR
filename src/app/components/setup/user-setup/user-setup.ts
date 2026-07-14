@@ -29,7 +29,7 @@ type UserFormMode = 'add' | 'edit';
 export class UserSetupComponent implements OnInit {
   private readonly userSetupService = inject(UserSetupService);
   private readonly alertService = inject(AlertService);
-  private readonly editableFallbackColumns = ['name', 'email', 'password', 'is_admin'];
+  private readonly editableFallbackColumns = ['name', 'email', 'password'];
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -42,6 +42,8 @@ export class UserSetupComponent implements OnInit {
   readonly formModel = signal<Record<string, string>>({});
   readonly authorization = signal<UserAuthorizationModule[]>(buildAuthorizationTemplate());
   readonly authDefinitions = AUTHORIZATION_MODULE_DEFINITIONS;
+  readonly nameSuggestions = computed(() => this.buildFieldSuggestions(['name', 'Name'], this.fieldValue('name') || this.fieldValue('Name')));
+  readonly emailSuggestions = computed(() => this.buildFieldSuggestions(['email', 'Email'], this.fieldValue('email') || this.fieldValue('Email')));
   readonly authorizationSummary = computed(() => {
     const authorization = this.authorization();
     let total = 0;
@@ -308,7 +310,7 @@ export class UserSetupComponent implements OnInit {
       discovered.add(key);
     }
 
-    const priority = ['name', 'Name', 'username', 'Username', 'email', 'Email', 'password', 'is_admin', 'isAdmin'];
+    const priority = ['name', 'Name', 'username', 'Username', 'email', 'Email', 'password'];
     const ordered = priority.filter((key) => discovered.has(key));
     const remaining = [...discovered].filter((key) => !priority.includes(key)).sort((a, b) => a.localeCompare(b));
     return [...ordered, ...remaining];
@@ -316,13 +318,48 @@ export class UserSetupComponent implements OnInit {
 
   private isReadOnlyField(field: string): boolean {
     const normalized = field.toLowerCase();
-    return ['id', 'created_at', 'updated_at', 'deleted_at', 'email_verified_at', 'authorization'].includes(normalized);
+    return [
+      'id',
+      'created_at',
+      'updated_at',
+      'deleted_at',
+      'email_verified_at',
+      'authorization',
+      'is_admin',
+      'isadmin',
+    ].includes(normalized);
+  }
+
+  private buildFieldSuggestions(fields: string[], query: string): string[] {
+    const value = query.trim().toLowerCase();
+    if (!value) {
+      return [];
+    }
+
+    const results = new Set<string>();
+    for (const user of this.users()) {
+      for (const field of fields) {
+        const raw = user[field];
+        if (typeof raw !== 'string') {
+          continue;
+        }
+        const text = raw.trim();
+        if (!text) {
+          continue;
+        }
+        if (text.toLowerCase().includes(value)) {
+          results.add(text);
+        }
+      }
+    }
+
+    return [...results].sort((a, b) => a.localeCompare(b));
   }
 
   private resetForm(): void {
     const nextModel: Record<string, string> = {};
     for (const field of this.formFields()) {
-      nextModel[field] = field === 'is_admin' || field === 'isAdmin' ? '0' : '';
+      nextModel[field] = '';
     }
     this.formMode.set('add');
     this.editingUserId.set(null);

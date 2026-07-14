@@ -22,27 +22,30 @@
 
         <div class="form-grid">
           @for (field of formFields(); track trackByColumn($index, field)) {
-            @if (field.toLowerCase() !== 'authorization') {
+            @if (field.toLowerCase() !== 'authorization' && field.toLowerCase() !== 'is_admin' && field.toLowerCase() !== 'isadmin') {
               <label class="field-block">
                 <span class="field-label">{{ columnLabel(field) }}</span>
-                @if (field === 'is_admin' || field === 'isAdmin') {
-                  <select
-                    class="field-input"
-                    [ngModel]="fieldValue(field)"
-                    (ngModelChange)="updateField(field, $event)"
-                    [name]="'user-field-' + field">
-                    <option value="0">No</option>
-                    <option value="1">Yes</option>
-                  </select>
-                } @else {
-                  <input
-                    [type]="field.toLowerCase() === 'password' ? 'password' : 'text'"
-                    class="field-input"
-                    [ngModel]="fieldValue(field)"
-                    (ngModelChange)="updateField(field, $event)"
-                    [name]="'user-field-' + field"
-                    [placeholder]="columnLabel(field)"
-                  />
+                <input
+                  [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'name' || field.toLowerCase() === 'email' ? 'search' : 'text')"
+                  class="field-input"
+                  [attr.list]="field.toLowerCase() === 'name' ? 'name-suggestions' : field.toLowerCase() === 'email' ? 'email-suggestions' : null"
+                  [ngModel]="fieldValue(field)"
+                  (ngModelChange)="updateField(field, $event)"
+                  [name]="'user-field-' + field"
+                  [placeholder]="columnLabel(field)"
+                />
+                @if (field.toLowerCase() === 'name') {
+                  <datalist id="name-suggestions">
+                    @for (suggestion of nameSuggestions(); track $index) {
+                      <option [value]="suggestion">{{ suggestion }}</option>
+                    }
+                  </datalist>
+                } @else if (field.toLowerCase() === 'email') {
+                  <datalist id="email-suggestions">
+                    @for (suggestion of emailSuggestions(); track $index) {
+                      <option [value]="suggestion">{{ suggestion }}</option>
+                    }
+                  </datalist>
                 }
               </label>
             }

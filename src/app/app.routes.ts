@@ -89,7 +89,12 @@ export const routes: Routes = [
     canActivate: [authGuard, requirePermission('job_specification', 'update')],
   },
   ...gatePassRoutes.map((route) =>
-    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+    route.redirectTo
+      ? route
+      : {
+          ...route,
+          canActivate: [...(route.canActivate ?? []), authGuard],
+        }
   ),
   {
     path: 'employee-action',

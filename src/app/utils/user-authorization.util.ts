@@ -67,6 +67,37 @@ const KNOWN_ACTION_SUFFIXES = [
   'upload',
 ] as const;
 
+const KNOWN_ACTION_KEYS = new Set<string>([...KNOWN_ACTION_SUFFIXES, ...Array.from(EXTRA_ACTIONS), 'access']);
+
+const MODULE_SLUG_ALIASES: Record<string, string> = {
+  igp: 'igp_form',
+  ogp: 'ogp_form',
+  agp: 'agp_form',
+};
+
+function canonicalizeModuleSlug(moduleSlug: string): string {
+  const normalized = moduleSlug.trim().toLowerCase();
+  return MODULE_SLUG_ALIASES[normalized] ?? normalized;
+}
+
+function permissionKeyForModule(moduleSlug: string, action: string): string {
+  return `${canonicalizeModuleSlug(moduleSlug)}_${action.trim().toLowerCase()}`;
+}
+
+function isPlainActionPermissionObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record);
+  if (!keys.length) {
+    return false;
+  }
+
+  return keys.every((key) => KNOWN_ACTION_KEYS.has(key.trim().toLowerCase()));
+}
+
 export const AUTHORIZATION_MODULE_DEFINITIONS = [
   {
     slug: 'job_specification',
@@ -219,10 +250,6 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
 ] as const;
-
-function permissionKeyForModule(moduleSlug: string, action: string): string {
-  return `${moduleSlug.trim().toLowerCase()}_${action.trim().toLowerCase()}`;
-}
 
 function humanizeSlug(value: string): string {
   return value
@@ -442,6 +469,18 @@ function normalizeAuthorizationObjects(value: unknown): Record<string, unknown>[
     const nestedModules = Object.values(record).filter((entry) => isModulePermissionObject(entry));
     if (nestedModules.length > 0 && nestedModules.length === Object.keys(record).length) {
       return nestedModules.flatMap((entry) => normalizeAuthorizationObjects(entry));
+    }
+
+    const actionObjects = Object.entries(record).filter(([, value]) => isPlainActionPermissionObject(value));
+    if (actionObjects.length > 0 && actionObjects.length === Object.keys(record).length) {
+      const normalized: Record<string, unknown> = {};
+      for (const [moduleKey, modulePermissions] of actionObjects) {
+        const moduleSlug = canonicalizeModuleSlug(moduleKey);
+        for (const [actionKey, actionValue] of Object.entries(modulePermissions as Record<string, unknown>)) {
+          normalized[permissionKeyForModule(moduleSlug, actionKey)] = actionValue;
+        }
+      }
+      return [normalized];
     }
 
     if (Object.keys(record).some((key) => isPermissionKey(key))) {

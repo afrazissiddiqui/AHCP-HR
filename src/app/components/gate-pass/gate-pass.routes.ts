@@ -6,22 +6,36 @@ import { OgpComponent } from './ogp/ogp';
 import { CreateOgpComponent } from './ogp/create-ogp/create-ogp';
 import { AgpComponent } from './agp/agp';
 import { CreateAgpComponent } from './agp/create-agp/create-agp';
+import { requireAccess, requirePermission } from '../../guards/permission.guard';
 
 export const gatePassRoutes: Routes = [
   {
     path: 'gate-pass',
     component: GatePassShellComponent,
+    canActivate: [
+      requireAccess(
+        {
+          anyOf: [
+            { moduleSlug: 'igp_form', action: 'list' },
+            { moduleSlug: 'ogp_form', action: 'list' },
+            { moduleSlug: 'agp_form', action: 'list' },
+          ],
+        },
+        'igp_form',
+        'list',
+      ),
+    ],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'igp' },
-      { path: 'igp', component: IgpComponent },
-      { path: 'igp/create', component: CreateIgpComponent },
-      { path: 'igp/edit/:id', component: CreateIgpComponent },
-      { path: 'ogp', component: OgpComponent },
-      { path: 'ogp/create', component: CreateOgpComponent },
-      { path: 'ogp/edit/:id', component: CreateOgpComponent },
-      { path: 'agp', component: AgpComponent },
-      { path: 'agp/create', component: CreateAgpComponent },
-      { path: 'agp/edit/:id', component: CreateAgpComponent },
+      { path: 'igp', component: IgpComponent, canActivate: [requirePermission('igp_form', 'list')] },
+      { path: 'igp/create', component: CreateIgpComponent, canActivate: [requirePermission('igp_form', 'add')] },
+      { path: 'igp/edit/:id', component: CreateIgpComponent, canActivate: [requirePermission('igp_form', 'update')] },
+      { path: 'ogp', component: OgpComponent, canActivate: [requirePermission('ogp_form', 'list')] },
+      { path: 'ogp/create', component: CreateOgpComponent, canActivate: [requirePermission('ogp_form', 'add')] },
+      { path: 'ogp/edit/:id', component: CreateOgpComponent, canActivate: [requirePermission('ogp_form', 'update')] },
+      { path: 'agp', component: AgpComponent, canActivate: [requirePermission('agp_form', 'list')] },
+      { path: 'agp/create', component: CreateAgpComponent, canActivate: [requirePermission('agp_form', 'add')] },
+      { path: 'agp/edit/:id', component: CreateAgpComponent, canActivate: [requirePermission('agp_form', 'update')] },
     ],
   },
   { path: 'igp', redirectTo: 'gate-pass/igp', pathMatch: 'full' },
