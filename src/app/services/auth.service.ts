@@ -50,13 +50,28 @@ export class AuthService {
   }
 
   private readSessionUserId(): string | null {
-    return localStorage.getItem(SESSION_USER_ID_KEY) ?? sessionStorage.getItem(SESSION_USER_ID_KEY);
+    try {
+      return localStorage.getItem(SESSION_USER_ID_KEY) ?? sessionStorage.getItem(SESSION_USER_ID_KEY);
+    } catch {
+      return sessionStorage.getItem(SESSION_USER_ID_KEY);
+    }
   }
 
   /** Call after successful sign-in. */
   login(userId?: string): void {
-    sessionStorage.setItem(AUTH_SESSION_KEY, '1');
     const trimmed = userId?.trim() ?? '';
+    try {
+      localStorage.setItem(AUTH_SESSION_KEY, '1');
+      if (trimmed) {
+        localStorage.setItem(SESSION_USER_ID_KEY, trimmed);
+      } else {
+        localStorage.removeItem(SESSION_USER_ID_KEY);
+      }
+    } catch {
+      // ignore localStorage failures and continue with sessionStorage.
+    }
+
+    sessionStorage.setItem(AUTH_SESSION_KEY, '1');
     if (trimmed) {
       sessionStorage.setItem(SESSION_USER_ID_KEY, trimmed);
       this.sessionUserId.set(trimmed);
@@ -72,7 +87,7 @@ export class AuthService {
   }
 
   getSessionUser(): LoginApiUser | null {
-    const raw = sessionStorage.getItem(SESSION_USER_KEY);
+    const raw = localStorage.getItem(SESSION_USER_KEY) ?? sessionStorage.getItem(SESSION_USER_KEY);
     if (!raw) {
       return null;
     }
