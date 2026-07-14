@@ -41,11 +41,16 @@ export class AuthService {
   readonly sessionUserId = signal(this.readSessionUserId());
 
   private readSession(): boolean {
+    // Prefer localStorage so session persists across browser restarts (backend tokens valid 24h)
+    const ls = localStorage.getItem(AUTH_SESSION_KEY);
+    if (ls !== null) {
+      return ls === '1';
+    }
     return sessionStorage.getItem(AUTH_SESSION_KEY) === '1';
   }
 
   private readSessionUserId(): string | null {
-    return sessionStorage.getItem(SESSION_USER_ID_KEY);
+    return localStorage.getItem(SESSION_USER_ID_KEY) ?? sessionStorage.getItem(SESSION_USER_ID_KEY);
   }
 
   /** Call after successful sign-in. */
@@ -79,7 +84,8 @@ export class AuthService {
   }
 
   getAuthToken(): string | null {
-    return sessionStorage.getItem(SESSION_TOKEN_KEY);
+    // Try localStorage first so token survives across tabs/restarts; fallback to sessionStorage
+    return localStorage.getItem(SESSION_TOKEN_KEY) ?? sessionStorage.getItem(SESSION_TOKEN_KEY);
   }
 
   loginWithApi(email: string, password: string): Observable<LoginApiResponse> {
@@ -94,14 +100,27 @@ export class AuthService {
             throw new Error(response?.message || 'Login failed.');
           }
           this.login(response.user.email);
-          sessionStorage.setItem(SESSION_TOKEN_KEY, response.token);
-          sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(response.user));
+          // Persist token and user in localStorage so it remains valid for backend TTL (24h)
+          try {
+            localStorage.setItem(SESSION_TOKEN_KEY, response.token);
+            localStorage.setItem(SESSION_USER_KEY, JSON.stringify(response.user));
+          } catch {
+            // Fallback to sessionStorage if localStorage not available
+            sessionStorage.setItem(SESSION_TOKEN_KEY, response.token);
+            sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(response.user));
+          }
         }),
       );
   }
 
   /** Clears session and opens the login page. */
   logout(): void {
+    // Clear both localStorage and sessionStorage keys to fully sign out
+    localStorage.removeItem(AUTH_SESSION_KEY);
+    localStorage.removeItem(SESSION_USER_ID_KEY);
+    localStorage.removeItem(SESSION_TOKEN_KEY);
+    localStorage.removeItem(SESSION_USER_KEY);
+    localStorage.removeItem(SESSION_AUTHORIZATION_KEY);
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_USER_ID_KEY);
     sessionStorage.removeItem(SESSION_TOKEN_KEY);

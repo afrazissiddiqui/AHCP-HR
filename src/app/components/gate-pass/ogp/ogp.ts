@@ -30,6 +30,7 @@ interface ColumnConfig {
 })
 export class OgpComponent implements OnInit {
   readonly warehouseLabel = gatePassWarehouseLabel;
+  readonly listLoading = signal(true);
   private readonly destroyRef = inject(DestroyRef);
   private readonly shellbarSearch = inject(ShellbarSearchService);
   private readonly document = inject(DOCUMENT);
@@ -52,8 +53,11 @@ export class OgpComponent implements OnInit {
       onSearchChange: () => this.onSearchChange(),
     });
 
+    this.listLoading.set(true);
     this.ogpService.fetchOutwardGatePasses().subscribe({
+      next: () => this.listLoading.set(false),
       error: (error: unknown) => {
+        this.listLoading.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load OGP records.'),
@@ -79,6 +83,10 @@ export class OgpComponent implements OnInit {
 
   get rows(): OgpRecord[] {
     return this.ogpService.records();
+  }
+
+  get visibleColumnCount(): number {
+    return this.columns.filter((col) => col.visible).length;
   }
 
   searchText = '';

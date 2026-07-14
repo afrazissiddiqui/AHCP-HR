@@ -13,7 +13,7 @@
     [readonly]="disabled"
     autocomplete="off"
   />
-  <ul class="gp-item-suggestions" role="listbox" *ngIf="suggestionsOpen && value.trim()">
+  <ul class="gp-item-suggestions" role="listbox" *ngIf="suggestionsOpen && value.trim()" [ngStyle]="suggestionStyle">
     <li *ngIf="loadingSuggestions" class="gp-item-suggestion-empty" role="presentation">
       Loading items…
     </li>

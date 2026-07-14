@@ -45,6 +45,117 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     return this.machineItemService.getAll(SUB_COMPONENT_MACHINE_ITEM_TYPE);
   });
 
+  readonly idSuggestionsOpen = signal(false);
+
+  readonly idSuggestions = computed(() => {
+    // ensure cache is read for the specific item type
+    this.machineItemService.records(SUB_COMPONENT_MACHINE_ITEM_TYPE)();
+    return this.machineItemService.searchByMachineId(this.machineId(), SUB_COMPONENT_MACHINE_ITEM_TYPE);
+  });
+
+  openIdSuggestions(): void {
+    if (this.machineId().trim()) {
+      this.idSuggestionsOpen.set(true);
+    }
+  }
+
+  closeIdSuggestions(): void {
+    this.idSuggestionsOpen.set(false);
+  }
+
+  onIdInputBlur(): void {
+    setTimeout(() => this.closeIdSuggestions(), 150);
+  }
+
+  onMachineIdInput(value: string): void {
+    this.machineId.set(value);
+    this.idSuggestionsOpen.set(value.trim().length > 0);
+  }
+
+  selectMachineFromSuggestion(machine: MachineSearchOption): void {
+    this.closeIdSuggestions();
+    this.populateFromMachine(machine);
+  }
+
+  // --- Name suggestions and keyboard navigation ---
+  readonly nameSuggestionsOpen = signal(false);
+
+  readonly nameSuggestions = computed(() => {
+    this.machineItemService.records(SUB_COMPONENT_MACHINE_ITEM_TYPE)();
+    return this.machineItemService.searchByMachineName(this.machineName(), SUB_COMPONENT_MACHINE_ITEM_TYPE);
+  });
+
+  readonly idActiveIndex = signal<number>(-1);
+  readonly nameActiveIndex = signal<number>(-1);
+
+  openNameSuggestions(): void {
+    if (this.machineName().trim()) {
+      this.nameSuggestionsOpen.set(true);
+      this.closeIdSuggestions();
+    }
+  }
+
+  closeNameSuggestions(): void {
+    this.nameSuggestionsOpen.set(false);
+  }
+
+  onNameInputBlur(): void {
+    setTimeout(() => this.closeNameSuggestions(), 150);
+  }
+
+  onMachineNameInput(value: string): void {
+    this.machineName.set(value);
+    this.nameSuggestionsOpen.set(value.trim().length > 0);
+  }
+
+  onIdKeydown(event: KeyboardEvent): void {
+    const list = this.idSuggestions();
+    if (!list || list.length === 0) {
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      const next = Math.min(this.idActiveIndex() + 1, list.length - 1);
+      this.idActiveIndex.set(next);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      const prev = Math.max(this.idActiveIndex() - 1, 0);
+      this.idActiveIndex.set(prev);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const idx = this.idActiveIndex();
+      if (idx >= 0 && idx < list.length) {
+        this.selectMachineFromSuggestion(list[idx]);
+      }
+    } else if (event.key === 'Escape') {
+      this.closeIdSuggestions();
+    }
+  }
+
+  onNameKeydown(event: KeyboardEvent): void {
+    const list = this.nameSuggestions();
+    if (!list || list.length === 0) {
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      const next = Math.min(this.nameActiveIndex() + 1, list.length - 1);
+      this.nameActiveIndex.set(next);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      const prev = Math.max(this.nameActiveIndex() - 1, 0);
+      this.nameActiveIndex.set(prev);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const idx = this.nameActiveIndex();
+      if (idx >= 0 && idx < list.length) {
+        this.selectMachineFromSuggestion(list[idx]);
+      }
+    } else if (event.key === 'Escape') {
+      this.closeNameSuggestions();
+    }
+  }
+
   ngOnInit(): void {
     this.machineItemService.ensureLoaded(SUB_COMPONENT_MACHINE_ITEM_TYPE).subscribe({ error: () => {} });
     this.subComponentService.fetchMachines().subscribe({ error: () => {} });

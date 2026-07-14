@@ -30,6 +30,7 @@ interface ColumnConfig {
 })
 export class AgpComponent implements OnInit {
   readonly warehouseLabel = gatePassWarehouseLabel;
+  readonly listLoading = signal(true);
   private readonly destroyRef = inject(DestroyRef);
   private readonly shellbarSearch = inject(ShellbarSearchService);
   private readonly document = inject(DOCUMENT);
@@ -52,8 +53,11 @@ export class AgpComponent implements OnInit {
       onSearchChange: () => this.onSearchChange(),
     });
 
+    this.listLoading.set(true);
     this.agpService.fetchArticleGatePasses().subscribe({
+      next: () => this.listLoading.set(false),
       error: (error: unknown) => {
+        this.listLoading.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load AGP records.'),
@@ -79,6 +83,10 @@ export class AgpComponent implements OnInit {
 
   get rows(): AgpRecord[] {
     return this.agpService.records();
+  }
+
+  get visibleColumnCount(): number {
+    return this.columns.filter((col) => col.visible).length;
   }
 
   searchText = '';

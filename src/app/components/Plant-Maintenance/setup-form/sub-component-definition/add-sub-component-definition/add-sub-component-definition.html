@@ -71,36 +71,87 @@
           <div class="cjr-personal-col">
             <div class="cjr-row scd-field-row">
               <label for="scd-machine-id">Machine ID:</label>
-              <div class="scd-field-control">
-                <select
+              <div class="scd-field-control tax-computation-search-wrap">
+                <input
                   id="scd-machine-id"
-                  class="mad-select"
+                  type="search"
+                  role="combobox"
+                  [attr.aria-expanded]="idSuggestionsOpen()"
+                  aria-autocomplete="list"
+                  aria-controls="scd-machine-id-listbox"
                   [ngModel]="machineId()"
-                  (ngModelChange)="onMachineIdChange($event)"
+                  (ngModelChange)="onMachineIdInput($event)"
+                  (focus)="openIdSuggestions()"
+                  (blur)="onIdInputBlur()"
+                  (keydown)="onIdKeydown($event)"
+                  placeholder="Search by ID or name"
+                  autocomplete="off"
                   name="machineId"
+                />
+                <ul
+                  id="scd-machine-id-listbox"
+                  class="tax-computation-suggestions"
+                  role="listbox"
+                  *ngIf="idSuggestionsOpen() && machineId().trim()"
                 >
-                  <option value="">Select machine</option>
-                  <option *ngFor="let machine of machineOptions()" [value]="machine.machineId">
-                    {{ machine.machineId }} — {{ machine.machineName }}
-                  </option>
-                </select>
+                  <li
+                    *ngFor="let machine of idSuggestions(); let idx = index"
+                    role="option"
+                    class="tax-computation-suggestion-item"
+                    [class.tax-computation-suggestion-item--active]="idActiveIndex() === idx"
+                    (mousedown)="selectMachineFromSuggestion(machine)"
+                  >
+                    <span class="tax-computation-suggestion-primary">{{ machine.machineId }} — {{ machine.machineName }}</span>
+                    <span class="tax-computation-suggestion-meta">{{ machine.defaultMachineType }}</span>
+                  </li>
+                  <li
+                    *ngIf="idSuggestions().length === 0"
+                    class="tax-computation-suggestion-empty"
+                    role="presentation"
+                  >
+                    No matching machines
+                  </li>
+                </ul>
               </div>
             </div>
 
             <div class="cjr-row scd-field-row">
               <label for="scd-machine-name">Machine Name:</label>
-              <div
-                class="scd-field-control"
-                [class.scd-field-control--linked]="machineName().trim()"
-              >
+              <div class="scd-field-control tax-computation-search-wrap" [class.scd-field-control--linked]="machineName().trim()">
                 <input
                   id="scd-machine-name"
-                  type="text"
+                  type="search"
+                  role="combobox"
+                  [attr.aria-expanded]="nameSuggestionsOpen()"
+                  aria-autocomplete="list"
+                  aria-controls="scd-machine-name-listbox"
                   [ngModel]="machineName()"
+                  (ngModelChange)="onMachineNameInput($event)"
+                  (focus)="openNameSuggestions()"
+                  (blur)="onNameInputBlur()"
+                  (keydown)="onNameKeydown($event)"
+                  placeholder="Search by name"
+                  autocomplete="off"
                   name="machineName"
-                  placeholder="Auto-populated from Machine ID"
-                  readonly
                 />
+                <ul
+                  id="scd-machine-name-listbox"
+                  class="tax-computation-suggestions"
+                  role="listbox"
+                  *ngIf="nameSuggestionsOpen() && machineName().trim()"
+                >
+                  <li
+                    *ngFor="let machine of nameSuggestions(); let idx = index"
+                    role="option"
+                    class="tax-computation-suggestion-item"
+                    [class.tax-computation-suggestion-item--active]="nameActiveIndex() === idx"
+                    (mousedown)="selectMachineFromSuggestion(machine)"
+                  >
+                    <span class="tax-computation-suggestion-primary">{{ machine.machineId }} — {{ machine.machineName }}</span>
+                    <span class="tax-computation-suggestion-meta">{{ machine.defaultMachineType }}</span>
+                  </li>
+                  <li *ngIf="nameSuggestions().length === 0" class="tax-computation-suggestion-empty" role="presentation">No matching machines</li>
+                </ul>
                 <span class="scd-linked-badge" *ngIf="machineName().trim()" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M20 6L9 17l-5-5" />
