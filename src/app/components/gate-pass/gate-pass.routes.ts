@@ -17,8 +17,14 @@ export const gatePassRoutes: Routes = [
         {
           anyOf: [
             { moduleSlug: 'igp_form', action: 'list' },
+            { moduleSlug: 'igp_form', action: 'add' },
+            { moduleSlug: 'igp_form', action: 'update' },
             { moduleSlug: 'ogp_form', action: 'list' },
+            { moduleSlug: 'ogp_form', action: 'add' },
+            { moduleSlug: 'ogp_form', action: 'update' },
             { moduleSlug: 'agp_form', action: 'list' },
+            { moduleSlug: 'agp_form', action: 'add' },
+            { moduleSlug: 'agp_form', action: 'update' },
           ],
         },
         'igp_form',

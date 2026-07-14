@@ -40,6 +40,8 @@ export class ViewProfileComponent {
   readonly closed = output<void>();
 
   protected readonly bioExpanded = signal(false);
+  protected readonly profileLoading = signal(false);
+  protected readonly profileFetchRequested = signal(false);
 
   protected readonly profileRecord = computed(() =>
     this.applicationFormService.getSignedInUserRecord(this.authService.getSessionUserId())
@@ -75,10 +77,13 @@ export class ViewProfileComponent {
     private readonly authService: AuthService
   ) {
     effect(() => {
-      this.document.documentElement.classList.toggle('profile-drawer-open', this.open());
-      if (!this.open()) {
+      const isOpen = this.open();
+      this.document.documentElement.classList.toggle('profile-drawer-open', isOpen);
+      if (!isOpen) {
         this.bioExpanded.set(false);
+        return;
       }
+      this.loadSignedInUserProfile();
     });
     this.destroyRef.onDestroy(() => {
       this.document.documentElement.classList.remove('profile-drawer-open');
@@ -103,6 +108,36 @@ export class ViewProfileComponent {
 
   protected toggleBio(): void {
     this.bioExpanded.update((v) => !v);
+  }
+
+  private loadSignedInUserProfile(): void {
+    const userId = this.authService.getSessionUserId();
+    if (!userId?.trim()) {
+      return;
+    }
+    if (this.profileRecord()) {
+      return;
+    }
+    if (this.profileFetchRequested()) {
+      return;
+    }
+    if (this.applicationFormService.getApplicationRecords().length > 0) {
+      return;
+    }
+
+    this.profileFetchRequested.set(true);
+    this.profileLoading.set(true);
+
+    this.applicationFormService
+      .fetchEmployeeProfiles()
+      .pipe(
+        take(1),
+        catchError(() => of([])),
+      )
+      .subscribe({
+        next: () => this.profileLoading.set(false),
+        error: () => this.profileLoading.set(false),
+      });
   }
 
   protected managerInitials(record: ApplicationFormRecord): string {

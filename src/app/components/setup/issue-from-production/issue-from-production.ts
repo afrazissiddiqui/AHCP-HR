@@ -333,25 +333,6 @@ export class IssueFromProductionComponent implements OnInit {
     return Number.isFinite(normalized) && normalized > 0 ? normalized : 1;
   }
 
-  buildReceiptFromProductionPayload(record: PostedProductionOrderRecord): ReceiptFromProductionApiPayload {
-    const docDate = this.formatDate(record.docDate) || this.todayIso();
-    const quantity = this.parseQuantity(record.quantity);
-
-    return {
-      docEntry: this.parseDocEntry(record.docEntry) ?? 0,
-      docDate,
-      taxDate: docDate,
-      docDueDate: this.formatDate(record.dueDate) || docDate,
-      remarks: 'Receipt From Production Api hit',
-      warehouse: this.displayValue(record.warehouse) || 'PSH-WH06',
-      quantity,
-      batchNumber: this.displayValue(record.batchNumber) || 'FG250702001',
-      manufacturingDate: docDate,
-      branch: '1',
-      expiryDate: this.addYears(docDate, 2),
-    };
-  }
-
   private formatDate(value: unknown): string {
     const text = this.displayValue(value);
     if (!text) {

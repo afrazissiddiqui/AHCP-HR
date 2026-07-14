@@ -25,6 +25,10 @@
       </header>
 
       <div class="profile-drawer__body">
+        @if (profileLoading()) {
+          <div class="profile-drawer__loading">Loading profile…</div>
+        }
+
         <!-- Left: personal sidebar -->
         <div class="profile-drawer__identity">
           <div class="profile-drawer__name-row">
