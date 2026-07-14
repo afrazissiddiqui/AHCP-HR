@@ -541,6 +541,7 @@
                   <td>
                     <app-gate-pass-item-search-input
                       [inputId]="'agp-item-code-' + i"
+                      [displayMode]="'code'"
                       [value]="line.itemCode"
                       [disabled]="line.deleted"
                       (valueChange)="line.itemCode = $event"
@@ -551,6 +552,7 @@
                   <td>
                     <app-gate-pass-item-search-input
                       [inputId]="'agp-item-name-' + i"
+                      [displayMode]="'name'"
                       [value]="line.itemName"
                       [disabled]="line.deleted"
                       (valueChange)="line.itemName = $event"

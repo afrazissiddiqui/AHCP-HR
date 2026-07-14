@@ -445,6 +445,7 @@
                   <td>
                     <app-gate-pass-item-search-input
                       [inputId]="'igp-item-code-' + i"
+                      [displayMode]="'code'"
                       [value]="line.itemCode"
                       [disabled]="line.deleted"
                       (valueChange)="line.itemCode = $event"
@@ -455,6 +456,7 @@
                   <td>
                     <app-gate-pass-item-search-input
                       [inputId]="'igp-item-name-' + i"
+                      [displayMode]="'name'"
                       [value]="line.itemName"
                       [disabled]="line.deleted"
                       (valueChange)="line.itemName = $event"

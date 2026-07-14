@@ -16,6 +16,7 @@ export class GatePassItemSearchInputComponent {
   @Input() value = '';
   @Input() placeholder = 'Search code or name';
   @Input() inputId = '';
+  @Input() displayMode?: 'code' | 'name';
   @Input() disabled = false;
 
   @Output() valueChange = new EventEmitter<string>();
@@ -52,6 +53,15 @@ export class GatePassItemSearchInputComponent {
     if (this.disabled) {
       return;
     }
+    // Update the visible value immediately so the input shows the selected item
+    // Prefer explicit `displayMode` input; fall back to inputId heuristic
+    const displayValue = (this.displayMode
+      ? this.displayMode === 'code'
+      : String(this.inputId || '').toLowerCase().includes('-code'))
+      ? item.itemCode
+      : item.itemName;
+    this.value = displayValue;
+    this.valueChange.emit(displayValue);
     this.itemSelected.emit(item);
     this.suggestionsOpen = false;
   }

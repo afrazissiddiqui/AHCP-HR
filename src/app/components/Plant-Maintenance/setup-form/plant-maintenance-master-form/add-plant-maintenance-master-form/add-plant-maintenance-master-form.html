@@ -538,6 +538,7 @@
                           <td class="pmm-replacement-table__search-cell">
                             <app-gate-pass-item-search-input
                               [inputId]="'pmm-replacement-item-code-' + ci + '-' + li + '-' + ri"
+                              [displayMode]="'code'"
                               [value]="replacementRow.itemCode"
                               (valueChange)="updateReplacementRow(ci, li, ri, 'itemCode', $event)"
                               (itemSelected)="applyReplacementItemMaster(ci, li, ri, $event)"
@@ -547,6 +548,7 @@
                           <td class="pmm-replacement-table__search-cell">
                             <app-gate-pass-item-search-input
                               [inputId]="'pmm-replacement-item-name-' + ci + '-' + li + '-' + ri"
+                              [displayMode]="'name'"
                               [value]="replacementRow.itemName"
                               (valueChange)="updateReplacementRow(ci, li, ri, 'itemName', $event)"
                               (itemSelected)="applyReplacementItemMaster(ci, li, ri, $event)"
