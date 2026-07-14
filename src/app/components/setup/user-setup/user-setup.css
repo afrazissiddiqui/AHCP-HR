@@ -30,6 +30,57 @@
   min-height: 100vh;
 }
 
+/* ─── Page header ─────────────────────────────────────────────── */
+.page-header {
+  align-items: flex-end;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-title-group {
+  min-width: 0;
+}
+
+.page-eyebrow {
+  color: var(--us-primary);
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.page-title {
+  color: var(--us-text);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.page-stats {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.page-stats-label {
+  color: var(--us-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.page-stats-value {
+  color: var(--us-text);
+  font-size: 22px;
+  font-weight: 700;
+}
+
 /* ─── Layout shell ────────────────────────────────────────────── */
 .setup-content {
   display: flex;
@@ -159,6 +210,35 @@
 
 .form-panel-accent {
   display: none;
+}
+
+.panel-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.users-panel-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.col-action {
+  width: 150px;
+}
+
+.field-required {
+  color: var(--us-danger);
+  margin-left: 4px;
 }
 
 .form-panel--list {

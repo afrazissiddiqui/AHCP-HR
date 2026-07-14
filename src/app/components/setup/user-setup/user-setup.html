@@ -1,190 +1,209 @@
 <div class="setup-layout">
   <div class="setup-content">
     <div class="setup-body">
-      <div class="setup-intro">
-        <h2>User Setup</h2>
-        <p>View all users returned by the user list API.</p>
+      <div class="page-header">
+        <div class="page-title-group">
+          <span class="page-eyebrow">User Setup</span>
+          <h1 class="page-title">Manage user accounts and permissions</h1>
+        </div>
+        <div class="page-stats">
+          <span class="page-stats-label">Registered users</span>
+          <span class="page-stats-value">{{ totalUsers() }}</span>
+        </div>
       </div>
 
-      <div class="form-panel">
-        <div class="form-panel-head">
-          <div>
-            <h3 class="form-panel-title">{{ formTitle() }}</h3>
-            <p class="panel-subtitle">
-              @if (formMode() === 'edit') {
-                Update the selected user record.
-              } @else {
-                Enter user details to create a new user.
-              }
-            </p>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          @for (field of formFields(); track trackByColumn($index, field)) {
-            @if (field.toLowerCase() !== 'authorization' && field.toLowerCase() !== 'is_admin' && field.toLowerCase() !== 'isadmin') {
-              <label class="field-block">
-                <span class="field-label">{{ columnLabel(field) }}</span>
-                <input
-                  [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'name' || field.toLowerCase() === 'email' ? 'search' : 'text')"
-                  class="field-input"
-                  [attr.list]="field.toLowerCase() === 'name' ? 'name-suggestions' : field.toLowerCase() === 'email' ? 'email-suggestions' : null"
-                  [ngModel]="fieldValue(field)"
-                  (ngModelChange)="updateField(field, $event)"
-                  [name]="'user-field-' + field"
-                  [placeholder]="columnLabel(field)"
-                />
-                @if (field.toLowerCase() === 'name') {
-                  <datalist id="name-suggestions">
-                    @for (suggestion of nameSuggestions(); track $index) {
-                      <option [value]="suggestion">{{ suggestion }}</option>
-                    }
-                  </datalist>
-                } @else if (field.toLowerCase() === 'email') {
-                  <datalist id="email-suggestions">
-                    @for (suggestion of emailSuggestions(); track $index) {
-                      <option [value]="suggestion">{{ suggestion }}</option>
-                    }
-                  </datalist>
-                }
-              </label>
-            }
-          }
-        </div>
-
-        <div class="form-auth-section">
-          <div class="form-auth-head">
+      <div class="user-setup-workspace">
+        <section class="form-panel form-panel--editor">
+          <div class="form-panel-head">
             <div>
-              <h3 class="form-panel-title">Permissions</h3>
-              <p class="form-auth-subtitle">
-                Configure the user authorization payload. Each permission is sent as part of the saved user record.
-              </p>
+              <p class="form-panel-eyebrow">Add New User</p>
+              <h2 class="form-panel-title">{{ formTitle() }}</h2>
+              <p class="panel-subtitle">Manage account details and module access.</p>
             </div>
-            <div class="form-auth-summary-chip">
-              <div class="form-auth-ring" [style.--progress]="authorizationProgress()">{{ authorizationProgress() }}</div>
-              <div class="form-auth-summary-text">
-                <span class="form-auth-summary-count">{{ authorizationSummary().granted }} / {{ authorizationSummary().total }}</span>
-                <span class="form-auth-summary-label">Granted</span>
+            </div>
+
+          <div class="form-section">
+            <div class="form-section-head">
+              <h3 class="form-section-title">Account details</h3>
+            </div>
+            <div class="form-grid">
+              @for (field of formFields(); track trackByColumn($index, field)) {
+                @if (field.toLowerCase() !== 'authorization' && field.toLowerCase() !== 'is_admin' && field.toLowerCase() !== 'isadmin') {
+                  <label class="field-block">
+                    <span class="field-label">{{ columnLabel(field) }}<span class="field-required">*</span></span>
+                    <input
+                      [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'email' ? 'email' : 'text')"
+                      class="field-input"
+                      [attr.list]="field.toLowerCase() === 'name' ? 'name-suggestions' : field.toLowerCase() === 'email' ? 'email-suggestions' : null"
+                      [ngModel]="fieldValue(field)"
+                      (ngModelChange)="updateField(field, $event)"
+                      [name]="'user-field-' + field"
+                      [placeholder]="columnLabel(field)"
+                    />
+                    @if (field.toLowerCase() === 'name') {
+                      <datalist id="name-suggestions">
+                        @for (suggestion of nameSuggestions(); track $index) {
+                          <option [value]="suggestion">{{ suggestion }}</option>
+                        }
+                      </datalist>
+                    } @else if (field.toLowerCase() === 'email') {
+                      <datalist id="email-suggestions">
+                        @for (suggestion of emailSuggestions(); track $index) {
+                          <option [value]="suggestion">{{ suggestion }}</option>
+                        }
+                      </datalist>
+                    }
+                  </label>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="form-section form-section--permissions">
+            <div class="form-auth-head">
+              <div>
+                <h3 class="form-section-title">Form permissions</h3>
+                <p class="form-auth-subtitle">Enable only the actions this user needs. Each permission covers the module's list page and related form screens.</p>
+              </div>
+              <div class="form-auth-summary-chip">
+                <div class="form-auth-ring" [style.--progress]="authorizationProgress()">{{ authorizationProgress() }}</div>
+                <div class="form-auth-summary-text">
+                  <span class="form-auth-summary-count">{{ authorizationSummary().granted }} / {{ authorizationSummary().total }}</span>
+                  <span class="form-auth-summary-label">Granted</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="form-auth-toolbar">
-            <div class="form-auth-toolbar-row">
-              <button type="button" class="btn-bulk btn-bulk--allow" (click)="setAllPermissions(true)">Allow all</button>
-              <button type="button" class="btn-bulk btn-bulk--deny" (click)="setAllPermissions(false)">Deny all</button>
+            <div class="form-auth-toolbar">
+              <div class="form-auth-toolbar-row">
+                <button type="button" class="btn-bulk btn-bulk--allow" (click)="setAllPermissions(true)">Allow all</button>
+                <button type="button" class="btn-bulk btn-bulk--deny" (click)="setAllPermissions(false)">Deny all</button>
+              </div>
             </div>
-          </div>
 
-          <div class="form-module-list">
-            @for (module of authDefinitions; track trackByColumn($index, module.slug)) {
-              <div class="form-module-card">
-                <div class="form-module-card-head">
-                  <div class="form-module-card-brand">
-                    <span class="form-module-icon">{{ module.slug.charAt(0).toUpperCase() }}</span>
-                    <div class="form-module-card-title">
-                      <h5>{{ module.name }}</h5>
-                      <span class="form-module-card-meta">{{ module.actions.length }} actions</span>
+            <div class="form-module-list">
+              @for (module of authDefinitions; track trackByColumn($index, module.slug)) {
+                <div class="form-module-card">
+                  <div class="form-module-card-head">
+                    <div class="form-module-card-brand">
+                      <span class="form-module-icon">{{ module.slug.charAt(0).toUpperCase() }}</span>
+                      <div class="form-module-card-title">
+                        <h5>{{ module.name }}</h5>
+                        <span class="form-module-card-meta">{{ module.actions.length }} actions</span>
+                      </div>
+                    </div>
+                    <div class="form-module-card-actions">
+                      <button type="button" class="btn-module-bulk btn-module-bulk--allow" (click)="setModulePermissions(module.slug, true)">Allow</button>
+                      <button type="button" class="btn-module-bulk btn-module-bulk--deny" (click)="setModulePermissions(module.slug, false)">Deny</button>
                     </div>
                   </div>
-                  <div class="form-module-card-actions">
-                    <button type="button" class="btn-module-bulk btn-module-bulk--allow" (click)="setModulePermissions(module.slug, true)">Allow</button>
-                    <button type="button" class="btn-module-bulk btn-module-bulk--deny" (click)="setModulePermissions(module.slug, false)">Deny</button>
+
+                  <div class="permission-toggle-grid">
+                    @for (action of module.actions; track trackByColumn($index, action)) {
+                      <label class="permission-toggle {{ isPermissionAllowed(module.slug, action) ? 'permission-toggle--allowed' : 'permission-toggle--denied' }}">
+                        <span class="permission-toggle-label">{{ action }}</span>
+                        <span class="permission-toggle-switch">
+                          <input
+                            class="permission-toggle-input"
+                            type="checkbox"
+                            [checked]="isPermissionAllowed(module.slug, action)"
+                            (change)="togglePermission(module.slug, action, $event.target.checked)"
+                          />
+                          <span class="permission-toggle-track"></span>
+                          <span class="permission-toggle-status">
+                            {{ isPermissionAllowed(module.slug, action) ? 'Allowed' : 'Denied' }}
+                          </span>
+                        </span>
+                      </label>
+                    }
                   </div>
                 </div>
+              }
+            </div>
+          </div>
 
-                <div class="permission-toggle-grid">
-                  @for (action of module.actions; track trackByColumn($index, action)) {
-                    <label class="permission-toggle {{ isPermissionAllowed(module.slug, action) ? 'permission-toggle--allowed' : 'permission-toggle--denied' }}">
-                      <span class="permission-toggle-label">{{ action }}</span>
-                      <span class="permission-toggle-switch">
-                        <input
-                          class="permission-toggle-input"
-                          type="checkbox"
-                          [checked]="isPermissionAllowed(module.slug, action)"
-                          (change)="togglePermission(module.slug, action, $event.target.checked)"
-                        />
-                        <span class="permission-toggle-track"></span>
-                        <span class="permission-toggle-status">
-                          {{ isPermissionAllowed(module.slug, action) ? 'Allowed' : 'Denied' }}
-                        </span>
-                      </span>
-                    </label>
-                  }
-                </div>
-              </div>
+          <div class="form-actions">
+            <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitUser()">
+              {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}
+            </button>
+            @if (formMode() === 'edit') {
+              <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
             }
           </div>
-        </div>
+        </section>
 
-        <div class="form-actions">
-          <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitUser()">
-            {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}
-          </button>
-          @if (formMode() === 'edit') {
-            <button type="button" class="btn-secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
-          }
-        </div>
-      </div>
-
-      <div class="form-panel">
-        <div class="form-panel-head">
-          <div>
-            <h3 class="form-panel-title">Users</h3>
-            <p class="panel-subtitle">Total users: {{ totalUsers() }}</p>
+        <section class="form-panel form-panel--list">
+          <div class="form-panel-head users-panel-head">
+            <div>
+              <h3 class="form-panel-title">Directory</h3>
+              <p class="panel-subtitle">{{ filteredUsers().length }} visible entries</p>
+            </div>
+            <div class="users-panel-actions">
+              <button type="button" class="btn-add-user" (click)="startAddUser()">Add user</button>
+              <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">Refresh</button>
+            </div>
           </div>
-          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadUsers()">
-            {{ loading() ? 'Loading…' : 'Refresh' }}
-          </button>
-        </div>
 
-        @if (loading()) {
-          <div class="panel-message">Loading users…</div>
-        } @else if (!users().length) {
-          <div class="panel-message">No users found.</div>
-        } @else {
-          <div class="table-wrap">
-            <table class="entry-table">
-              <thead>
-                <tr>
-                  <th class="col-sr">SR No.</th>
-                  @for (column of columns(); track trackByColumn($index, column)) {
-                    @if (column.toLowerCase() !== 'authorization') {
-                      <th>{{ columnLabel(column) }}</th>
-                    }
-                  }
-                  <th class="col-action">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (user of users(); track $index; let index = $index) {
-                  <tr>
-                    <td class="col-sr">{{ index + 1 }}</td>
-                    @for (column of columns(); track trackByColumn($index, column)) {
-                      @if (column.toLowerCase() !== 'authorization') {
-                        <td>{{ cellValue(user, column) }}</td>
+          <div class="panel-toolbar">
+            <div class="search-field">
+              <span class="search-field-icon">🔍</span>
+              <input
+                type="search"
+                [ngModel]="searchText()"
+                (ngModelChange)="searchText.set($event)"
+                class="search-input"
+                placeholder="Search users..."
+              />
+            </div>
+          </div>
+
+          @if (loading()) {
+            <div class="panel-state panel-state--loading">
+              <div class="panel-state-spinner"></div>
+              <span class="panel-state-hint">Loading users…</span>
+            </div>
+          } @else if (!filteredUsers().length) {
+            <div class="panel-state panel-state--empty">
+              <span class="panel-state-hint">No users found.</span>
+            </div>
+          } @else {
+            <div class="table-card">
+              <div class="table-wrap">
+                <table class="entry-table">
+                  <thead>
+                    <tr>
+                      <th class="col-sr">ID</th>
+                      @for (column of columns(); track trackByColumn($index, column)) {
+                        @if (column.toLowerCase() !== 'authorization') {
+                          <th>{{ columnLabel(column) }}</th>
+                        }
                       }
+                      <th class="col-action">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (user of filteredUsers(); track $index; let index = $index) {
+                      <tr>
+                        <td class="col-sr">{{ index + 1 }}</td>
+                        @for (column of columns(); track trackByColumn($index, column)) {
+                          @if (column.toLowerCase() !== 'authorization') {
+                            <td>{{ cellValue(user, column) }}</td>
+                          }
+                        }
+                        <td class="col-action">
+                          <div class="action-buttons">
+                            <button type="button" class="btn-edit" [disabled]="saving() || deleting()" (click)="startEdit(user)">Edit</button>
+                            <button type="button" class="btn-delete" [disabled]="saving() || deleting()" (click)="deleteUser(user)">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
                     }
-                    <td class="col-action">
-                      <div class="action-buttons">
-                        <button type="button" class="btn-edit" [disabled]="saving() || deleting()" (click)="startEdit(user)">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-delete"
-                          [disabled]="saving() || deleting()"
-                          (click)="deleteUser(user)">
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </section>
       </div>
     </div>
   </div>

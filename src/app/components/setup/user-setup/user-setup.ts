@@ -64,6 +64,26 @@ export class UserSetupComponent implements OnInit {
     const summary = this.authorizationSummary();
     return summary.total ? `${Math.round((summary.granted / summary.total) * 100)}%` : '0%';
   });
+  readonly searchText = signal('');
+  readonly filteredUsers = computed(() => {
+    const query = this.searchText().trim().toLowerCase();
+    if (!query) {
+      return this.users();
+    }
+
+    return this.users().filter((user) =>
+      Object.values(user).some((value) => {
+        if (typeof value === 'string') {
+          return value.toLowerCase().includes(query);
+        }
+        if (typeof value === 'number') {
+          return String(value).includes(query);
+        }
+        return false;
+      }),
+    );
+  });
+
   readonly totalUsers = computed(() => this.users().length);
 
   ngOnInit(): void {
@@ -235,6 +255,10 @@ export class UserSetupComponent implements OnInit {
     this.editingUserId.set(userId);
     this.formModel.set(nextModel);
     this.authorization.set(buildAuthorizationTemplate(user['authorization'] ?? user['Authorization'] ?? []));
+  }
+
+  startAddUser(): void {
+    this.resetForm();
   }
 
   cancelEdit(): void {
