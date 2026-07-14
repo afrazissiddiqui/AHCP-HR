@@ -222,18 +222,47 @@ export class IssueFromProductionComponent implements OnInit {
   }
 
   private mapRecord(item: Record<string, unknown>): PostedProductionOrderRecord {
+    const lines = this.extractLines(item);
+    const firstLine = lines[0] ?? null;
+
     return {
       docEntry: this.pickValue(item, ['docEntry', 'DocEntry', 'id', 'Id']),
       docNum: this.pickValue(item, ['docNum', 'DocNum', 'number', 'Number']),
       docDate: this.pickText(item, ['docDate', 'DocDate', 'date', 'Date']),
       dueDate: this.pickText(item, ['dueDate', 'DocDueDate', 'docDueDate', 'DueDate']),
-      itemCode: this.pickText(item, ['itemCode', 'ItemCode', 'item_code', 'Item']),
-      itemName: this.pickText(item, ['itemName', 'ItemName', 'item_name', 'Dscription', 'itemDescription', 'ItemDescription']),
-      itemDescription: this.pickText(item, ['itemDescription', 'ItemDescription', 'description', 'Dscription']),
-      quantity: this.pickNumber(item, ['quantity', 'Quantity', 'qty', 'Qty']),
-      warehouse: this.pickText(item, ['warehouse', 'Warehouse', 'WhsCode']),
+      itemCode:
+        this.pickText(item, ['itemCode', 'ItemCode', 'item_code', 'Item']) ||
+        this.pickText(firstLine ?? {}, ['ItemCode', 'itemCode', 'item_code', 'Item']),
+      itemName:
+        this.pickText(item, ['itemName', 'ItemName', 'item_name', 'Dscription', 'itemDescription', 'ItemDescription']) ||
+        this.pickText(firstLine ?? {}, ['Dscription', 'itemDescription', 'ItemDescription', 'itemName', 'ItemName']),
+      itemDescription:
+        this.pickText(item, ['itemDescription', 'ItemDescription', 'description', 'Dscription']) ||
+        this.pickText(firstLine ?? {}, ['Dscription', 'itemDescription', 'ItemDescription', 'description']),
+      quantity:
+        this.pickNumber(item, ['quantity', 'Quantity', 'qty', 'Qty']) ||
+        this.pickNumber(firstLine ?? {}, ['Quantity', 'quantity', 'qty', 'Qty']),
+      warehouse:
+        this.pickText(item, ['warehouse', 'Warehouse', 'WhsCode']) ||
+        this.pickText(firstLine ?? {}, ['WhsCode', 'warehouse', 'Warehouse']),
       status: this.pickText(item, ['status', 'Status', 'docStatus', 'DocStatus']),
+      batchNumber:
+        this.pickText(item, ['batchNumber', 'BatchNumber', 'batchNum', 'BatchNum']) ||
+        this.pickText(firstLine ?? {}, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']),
     };
+  }
+
+  private extractLines(item: Record<string, unknown>): Record<string, unknown>[] {
+    const candidates = ['DocumentLines', 'documentLines', 'Lines', 'lines', 'items', 'Items'];
+
+    for (const key of candidates) {
+      const value = item[key];
+      if (Array.isArray(value)) {
+        return value.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
+      }
+    }
+
+    return [];
   }
 
   private pickText(source: Record<string, unknown>, keys: string[]): string {
