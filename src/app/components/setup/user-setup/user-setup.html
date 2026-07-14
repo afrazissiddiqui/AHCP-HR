@@ -49,6 +49,71 @@
           }
         </div>
 
+        <div class="form-auth-section">
+          <div class="form-auth-head">
+            <div>
+              <h3 class="form-panel-title">Permissions</h3>
+              <p class="form-auth-subtitle">
+                Configure the user authorization payload. Each permission is sent as part of the saved user record.
+              </p>
+            </div>
+            <div class="form-auth-summary-chip">
+              <div class="form-auth-ring" [style.--progress]="authorizationProgress()">{{ authorizationProgress() }}</div>
+              <div class="form-auth-summary-text">
+                <span class="form-auth-summary-count">{{ authorizationSummary().granted }} / {{ authorizationSummary().total }}</span>
+                <span class="form-auth-summary-label">Granted</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-auth-toolbar">
+            <div class="form-auth-toolbar-row">
+              <button type="button" class="btn-bulk btn-bulk--allow" (click)="setAllPermissions(true)">Allow all</button>
+              <button type="button" class="btn-bulk btn-bulk--deny" (click)="setAllPermissions(false)">Deny all</button>
+            </div>
+          </div>
+
+          <div class="form-module-list">
+            @for (module of authDefinitions; track trackByColumn($index, module.slug)) {
+              <div class="form-module-card">
+                <div class="form-module-card-head">
+                  <div class="form-module-card-brand">
+                    <span class="form-module-icon">{{ module.slug.charAt(0).toUpperCase() }}</span>
+                    <div class="form-module-card-title">
+                      <h5>{{ module.name }}</h5>
+                      <span class="form-module-card-meta">{{ module.actions.length }} actions</span>
+                    </div>
+                  </div>
+                  <div class="form-module-card-actions">
+                    <button type="button" class="btn-module-bulk btn-module-bulk--allow" (click)="setModulePermissions(module.slug, true)">Allow</button>
+                    <button type="button" class="btn-module-bulk btn-module-bulk--deny" (click)="setModulePermissions(module.slug, false)">Deny</button>
+                  </div>
+                </div>
+
+                <div class="permission-toggle-grid">
+                  @for (action of module.actions; track trackByColumn($index, action)) {
+                    <label class="permission-toggle {{ isPermissionAllowed(module.slug, action) ? 'permission-toggle--allowed' : 'permission-toggle--denied' }}">
+                      <span class="permission-toggle-label">{{ action }}</span>
+                      <span class="permission-toggle-switch">
+                        <input
+                          class="permission-toggle-input"
+                          type="checkbox"
+                          [checked]="isPermissionAllowed(module.slug, action)"
+                          (change)="togglePermission(module.slug, action, $event.target.checked)"
+                        />
+                        <span class="permission-toggle-track"></span>
+                        <span class="permission-toggle-status">
+                          {{ isPermissionAllowed(module.slug, action) ? 'Allowed' : 'Denied' }}
+                        </span>
+                      </span>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
         <div class="form-actions">
           <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitUser()">
             {{ saving() ? 'Saving…' : formMode() === 'edit' ? 'Update User' : 'Add User' }}

@@ -5,6 +5,15 @@ import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import { UserListItem, UserSetupPayload, UserSetupService } from '../../../services/user-setup.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
+import {
+  AUTHORIZATION_MODULE_DEFINITIONS,
+  buildAuthorizationTemplate,
+  permissionKey,
+  updateAllPermissionsInDraft,
+  updateModulePermissionsInDraft,
+  updatePermissionInDraft,
+  UserAuthorizationModule,
+} from '../../../utils/user-authorization.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
 
 type UserFormMode = 'add' | 'edit';
@@ -30,6 +39,28 @@ export class UserSetupComponent implements OnInit {
   readonly editingUserId = signal<string | number | null>(null);
   readonly formFields = signal<string[]>([]);
   readonly formModel = signal<Record<string, string>>({});
+  readonly authorization = signal<UserAuthorizationModule[]>(buildAuthorizationTemplate());
+  readonly authDefinitions = AUTHORIZATION_MODULE_DEFINITIONS;
+  readonly authorizationSummary = computed(() => {
+    const authorization = this.authorization();
+    let total = 0;
+    let granted = 0;
+
+    for (const module of authorization) {
+      for (const value of Object.values(module)) {
+        total += 1;
+        if (value === 1) {
+          granted += 1;
+        }
+      }
+    }
+
+    return { total, granted };
+  });
+  readonly authorizationProgress = computed(() => {
+    const summary = this.authorizationSummary();
+    return summary.total ? `${Math.round((summary.granted / summary.total) * 100)}%` : '0%';
+  });
   readonly totalUsers = computed(() => this.users().length);
 
   ngOnInit(): void {
@@ -68,6 +99,24 @@ export class UserSetupComponent implements OnInit {
       .replace(/\s+/g, ' ')
       .trim()
       .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  isPermissionAllowed(moduleSlug: string, action: string): boolean {
+    const key = permissionKey(moduleSlug, action);
+    return this.authorization().some((module) => module[key] === 1);
+  }
+
+  togglePermission(moduleSlug: string, action: string, allowed: boolean): void {
+    const key = permissionKey(moduleSlug, action);
+    this.authorization.set(updatePermissionInDraft(this.authorization(), key, allowed ? 1 : 0));
+  }
+
+  setModulePermissions(moduleSlug: string, allowed: boolean): void {
+    this.authorization.set(updateModulePermissionsInDraft(this.authorization(), moduleSlug, allowed));
+  }
+
+  setAllPermissions(allowed: boolean): void {
+    this.authorization.set(updateAllPermissionsInDraft(this.authorization(), allowed));
   }
 
   cellValue(user: UserListItem, column: string): string {
@@ -169,6 +218,7 @@ export class UserSetupComponent implements OnInit {
     this.formMode.set('edit');
     this.editingUserId.set(userId);
     this.formModel.set(nextModel);
+    this.authorization.set(buildAuthorizationTemplate(user['authorization'] ?? user['Authorization'] ?? []));
   }
 
   cancelEdit(): void {
@@ -277,6 +327,7 @@ export class UserSetupComponent implements OnInit {
     this.formMode.set('add');
     this.editingUserId.set(null);
     this.formModel.set(nextModel);
+    this.authorization.set(buildAuthorizationTemplate());
   }
 
   private buildSubmitPayload(): UserSetupPayload {
@@ -294,7 +345,7 @@ export class UserSetupComponent implements OnInit {
     const payload: UserSetupPayload = {
       name: read('name', 'Name'),
       email: read('email', 'Email'),
-      authorization: [],
+      authorization: this.authorization(),
     };
 
     const password = read('password');

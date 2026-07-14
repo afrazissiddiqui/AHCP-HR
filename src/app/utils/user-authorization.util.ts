@@ -296,6 +296,12 @@ function resolveCrudBucket(actionKey: string): CrudBucket {
   return 'other';
 }
 
+const BACKEND_PERMISSION_VALUE_ALLOWED = 0;
+const BACKEND_PERMISSION_VALUE_DENIED = 1;
+
+/**
+ * Internal permission encoding used by the frontend: `1` = allowed, `0` = denied.
+ */
 function normalizePermissionValue(value: unknown): number {
   if (value === true) {
     return 1;
@@ -314,6 +320,41 @@ function normalizePermissionValue(value: unknown): number {
     }
   }
   return 0;
+}
+
+function normalizeBackendPermissionValue(value: unknown): number {
+  if (value === true) {
+    return 1;
+  }
+  if (value === false) {
+    return 0;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value === BACKEND_PERMISSION_VALUE_ALLOWED) {
+      return 1;
+    }
+    if (value === BACKEND_PERMISSION_VALUE_DENIED) {
+      return 0;
+    }
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+      return 1;
+    }
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+      return 0;
+    }
+    const parsed = Number.parseInt(normalized, 10);
+    if (Number.isFinite(parsed)) {
+      return parsed === BACKEND_PERMISSION_VALUE_ALLOWED ? 1 : 0;
+    }
+  }
+  return 0;
+}
+
+function permissionValueToBackend(value: unknown): number {
+  return normalizePermissionValue(value) === 1 ? BACKEND_PERMISSION_VALUE_ALLOWED : BACKEND_PERMISSION_VALUE_DENIED;
 }
 
 function buildModuleAuthorizationObject(
@@ -447,7 +488,7 @@ export function buildAuthorizationTemplate(...sources: unknown[]): UserAuthoriza
       for (const [key, permissionValue] of entries) {
         const { moduleSlug } = splitPermissionKey(key);
         const module = grouped.get(moduleSlug) ?? {};
-        module[key] = normalizePermissionValue(permissionValue);
+        module[key] = normalizeBackendPermissionValue(permissionValue);
         grouped.set(moduleSlug, module);
       }
 
@@ -493,7 +534,7 @@ export function authorizationToApiPayload(modules: UserAuthorizationModule[]): U
       }
       const { moduleSlug } = splitPermissionKey(key);
       const bucket = merged.get(moduleSlug) ?? {};
-      bucket[key] = normalizePermissionValue(value);
+      bucket[key] = permissionValueToBackend(value);
       merged.set(moduleSlug, bucket);
     }
   }
@@ -535,7 +576,7 @@ export function parseUserAuthorization(value: unknown): UserAuthorizationSummary
         continue;
       }
       const { moduleSlug, moduleName, actionKey, actionLabel } = splitPermissionKey(key);
-      const numericValue = normalizePermissionValue(permissionValue);
+      const numericValue = normalizeBackendPermissionValue(permissionValue);
       const bucket = resolveCrudBucket(actionKey);
       const row = moduleMap.get(moduleSlug) ?? emptyModuleRow(moduleSlug, moduleName);
 

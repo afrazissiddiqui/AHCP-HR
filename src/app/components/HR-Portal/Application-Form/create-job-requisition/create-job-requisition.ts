@@ -61,6 +61,9 @@ const ATTACHMENT_FIELD_OPTIONS = [
 const DEFAULT_ATTACHMENT_ROWS: AttachmentRow[] = [{ type: '', fileName: '', fileUrl: '', file: null }];
 
 const WORK_GRADE_LEVEL_OPTIONS = [
+  'WL 1A',
+  'WL 1W',
+  'WL 1S',
   'WL 5',
   'WL 4',
   'WL 3B',
@@ -69,7 +72,9 @@ const WORK_GRADE_LEVEL_OPTIONS = [
   'WL 2B',
   'WL 2A',
   'WL 1D',
-  'WL 1B–1C',
+  'WL 1B',
+  'WL 1C',
+
 ] as const;
 
 const BASE_MANDATORY_FIELDS = [
