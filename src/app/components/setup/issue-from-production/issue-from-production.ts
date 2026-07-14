@@ -23,18 +23,18 @@ export interface PostedProductionOrderRecord {
   [key: string]: unknown;
 }
 
-interface IssueForProductionPayload {
-  DocDate: string;
-  Remarks: string;
-  docentry: number;
+interface ReceiptFromProductionApiPayload {
+  docEntry: number;
+  docDate: string;
+  taxDate: string;
+  docDueDate: string;
+  remarks: string;
+  warehouse: string;
+  quantity: number;
+  batchNumber: string;
+  manufacturingDate: string;
   branch: string;
-  items: Array<{
-    line_num: number;
-    item_code: string;
-    quantity: number;
-    warehouse: string;
-    batch_no: string;
-  }>;
+  expiryDate: string;
 }
 
 @Component({
@@ -104,6 +104,11 @@ export class IssueFromProductionComponent implements OnInit {
     this.showDetailDialog.set(true);
   }
 
+  addReceiptFromProduction(record: PostedProductionOrderRecord): void {
+    this.selectedRecord.set(record);
+    void this.submitIssueForProduction(record);
+  }
+
   closeDetailDialog(): void {
     this.showDetailDialog.set(false);
     this.selectedRecord.set(null);
@@ -129,47 +134,33 @@ export class IssueFromProductionComponent implements OnInit {
       });
   }
 
-  submitIssueForProduction(): void {
-    const record = this.selectedRecord();
-    if (!record) {
+  submitIssueForProduction(record?: PostedProductionOrderRecord): void {
+    const activeRecord = record ?? this.selectedRecord();
+    if (!activeRecord) {
       return;
     }
 
-    const docEntry = this.parseDocEntry(record.docEntry);
+    const docEntry = this.parseDocEntry(activeRecord.docEntry);
     if (!docEntry) {
       void this.alertService.warning('Missing production order', 'Select a production order with a valid document entry.');
       return;
     }
 
-    const payload: IssueForProductionPayload = {
-      DocDate: this.formatDate(record.docDate) || this.todayIso(),
-      Remarks: 'Issue for Production Order',
-      docentry: docEntry,
-      branch: '1',
-      items: [
-        {
-          line_num: 0,
-          item_code: this.displayValue(record.itemCode) || this.displayValue(record.itemName) || '',
-          quantity: this.parseQuantity(record.quantity),
-          warehouse: this.displayValue(record.warehouse) || 'PSH-WH01',
-          batch_no: this.displayValue(record.batchNumber) || 'A-10',
-        },
-      ],
-    };
+    const payload = this.buildReceiptFromProductionPayload(activeRecord);
 
     this.submitting.set(true);
     this.http
-      .post<unknown>(apiUrl('createIssueForProduction'), payload)
+      .post<unknown>(apiUrl('createReceiptFromProduction'), payload)
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: () => {
-          this.alertService.success('Success', 'Issue for production submitted successfully.');
+          this.alertService.success('Success', 'Receipt from production submitted successfully.');
           this.closeDetailDialog();
         },
         error: (error: unknown) => {
           void this.alertService.error(
             'Submit Failed',
-            formatApiErrorMessage(error, 'Could not issue the selected production order.'),
+            formatApiErrorMessage(error, 'Could not submit receipt from production.'),
           );
         },
       });
@@ -321,6 +312,25 @@ export class IssueFromProductionComponent implements OnInit {
     return Number.isFinite(normalized) && normalized > 0 ? normalized : 1;
   }
 
+  buildReceiptFromProductionPayload(record: PostedProductionOrderRecord): ReceiptFromProductionApiPayload {
+    const docDate = this.formatDate(record.docDate) || this.todayIso();
+    const quantity = this.parseQuantity(record.quantity);
+
+    return {
+      docEntry: this.parseDocEntry(record.docEntry) ?? 0,
+      docDate,
+      taxDate: docDate,
+      docDueDate: this.formatDate(record.dueDate) || docDate,
+      remarks: 'Receipt From Production Api hit',
+      warehouse: this.displayValue(record.warehouse) || 'PSH-WH06',
+      quantity,
+      batchNumber: this.displayValue(record.batchNumber) || 'FG250702001',
+      manufacturingDate: docDate,
+      branch: '1',
+      expiryDate: this.addYears(docDate, 2),
+    };
+  }
+
   private formatDate(value: unknown): string {
     const text = this.displayValue(value);
     if (!text) {
@@ -328,6 +338,17 @@ export class IssueFromProductionComponent implements OnInit {
     }
     const match = text.match(/(\d{4}-\d{2}-\d{2})/);
     return match ? match[1] : text;
+  }
+
+  private addYears(value: string, years: number): string {
+    const [year, month, day] = value.split('-').map((part) => Number.parseInt(part, 10));
+    if (![year, month, day].every((part) => Number.isFinite(part))) {
+      return value;
+    }
+
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCFullYear(date.getUTCFullYear() + years);
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
   }
 
   private todayIso(): string {

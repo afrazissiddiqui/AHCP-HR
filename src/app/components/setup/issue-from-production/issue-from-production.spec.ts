@@ -25,6 +25,36 @@ describe('IssueFromProductionComponent', () => {
     component = fixture.componentInstance;
   });
 
+  it('builds the receipt-from-production payload using the selected production order values', () => {
+    const record = {
+      docEntry: 17,
+      docDate: '2026-07-02',
+      itemCode: 'FG-001',
+      itemName: 'Finished Goods',
+      quantity: 1,
+      warehouse: 'PSH-WH06',
+      batchNumber: 'FG250702001',
+    };
+
+    const payload = (component as unknown as {
+      buildReceiptFromProductionPayload(record: Record<string, unknown>): Record<string, unknown>;
+    }).buildReceiptFromProductionPayload(record);
+
+    expect(payload).toEqual(
+      jasmine.objectContaining({
+        docEntry: 17,
+        docDate: '2026-07-02',
+        taxDate: '2026-07-02',
+        docDueDate: '2026-07-02',
+        remarks: 'Receipt From Production Api hit',
+        warehouse: 'PSH-WH06',
+        quantity: 1,
+        batchNumber: 'FG250702001',
+        branch: '1',
+      }),
+    );
+  });
+
   it('maps line-item fields from receipt_from_production responses into the table rows', () => {
     const response = {
       data: [
