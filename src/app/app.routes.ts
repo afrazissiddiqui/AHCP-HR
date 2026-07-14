@@ -243,7 +243,7 @@ export const routes: Routes = [
   {
     path: 'setup/issue-from-production',
     component: IssueFromProductionComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('good_issue_form', 'list')],
   },
   {
     path: 'termination',

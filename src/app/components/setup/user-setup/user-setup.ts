@@ -164,6 +164,26 @@ export class UserSetupComponent implements OnInit {
       ...model,
       [field]: value,
     }));
+
+    if (field.toLowerCase() === 'name') {
+      const updated = this.syncPairedField(
+        field,
+        ['name', 'Name'],
+        ['email', 'Email'],
+      );
+      if (updated) {
+        this.alertService.toast('Email auto-filled from selected name', 'success');
+      }
+    } else if (field.toLowerCase() === 'email') {
+      const updated = this.syncPairedField(
+        field,
+        ['email', 'Email'],
+        ['name', 'Name'],
+      );
+      if (updated) {
+        this.alertService.toast('Name auto-filled from selected email', 'success');
+      }
+    }
   }
 
   formTitle(): string {
@@ -354,6 +374,40 @@ export class UserSetupComponent implements OnInit {
     }
 
     return [...results].sort((a, b) => a.localeCompare(b));
+  }
+
+  private syncPairedField(
+    sourceField: string,
+    sourceKeys: string[],
+    targetKeys: string[],
+  ): boolean {
+    const sourceValue = this.fieldValue(sourceField).trim().toLowerCase();
+    if (!sourceValue) {
+      return false;
+    }
+
+    const matchedUser = this.users().find((user) =>
+      sourceKeys.some((key) => {
+        const raw = user[key];
+        return typeof raw === 'string' && raw.trim().toLowerCase() === sourceValue;
+      }),
+    );
+
+    if (!matchedUser) {
+      return false;
+    }
+
+    this.formModel.update((model) => {
+      const nextModel = { ...model };
+      for (const targetKey of targetKeys) {
+        const raw = matchedUser[targetKey];
+        if (typeof raw === 'string') {
+          nextModel[targetKey] = raw.trim();
+        }
+      }
+      return nextModel;
+    });
+    return true;
   }
 
   private resetForm(): void {

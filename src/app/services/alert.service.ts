@@ -58,6 +58,19 @@ export class AlertService {
     });
   }
 
+  toast(message: string, icon: 'success' | 'info' | 'warning' | 'error' = 'success'): void {
+    void Swal.fire({
+      title: message,
+      icon: icon,
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+      confirmButtonColor: '#0052cc',
+    });
+  }
+
   confirm(title: string, message: string): Promise<any> {
     return Swal.fire({
       title: title,
