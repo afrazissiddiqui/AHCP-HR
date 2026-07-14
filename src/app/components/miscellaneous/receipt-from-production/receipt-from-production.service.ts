@@ -31,6 +31,18 @@ export interface CreateReceiptFromProductionResponse {
   data?: Record<string, unknown>;
 }
 
+export interface ProductionOrderItem {
+  lineNum: string;
+  itemCode: string;
+  itemDescription: string;
+  quantity: number;
+  warehouse: string;
+  batchNumber: string;
+  manufacturingDate: string;
+  expiryDate: string;
+  baseLine: string;
+}
+
 export interface ProductionOrderRecord {
   docEntry: string;
   docNum: string;
@@ -45,6 +57,7 @@ export interface ProductionOrderRecord {
   status: string;
   warehouse: string;
   batchNumber: string;
+  items?: ProductionOrderItem[];
 }
 
 export interface ReceiptFromProductionListLineItem {
@@ -126,6 +139,12 @@ export class ReceiptFromProductionService {
     );
   }
 
+  getProductionOrderDetails(docEntry: string): Observable<ProductionOrderItem[]> {
+    return this.http
+      .get<unknown>(apiUrl(`production_orders/${encodeURIComponent(docEntry)}/items`))
+      .pipe(map((response) => this.parseProductionOrderItems(response)));
+  }
+
   create(
     payload: CreateReceiptFromProductionPayload,
   ): Observable<CreateReceiptFromProductionResponse> {
@@ -133,6 +152,27 @@ export class ReceiptFromProductionService {
       apiUrl('createReceiptFromProduction'),
       payload,
     );
+  }
+
+  private parseProductionOrderItems(response: unknown): ProductionOrderItem[] {
+    const data = this.extractDataArray(response, ['production_order_items', 'items', 'data']);
+    return data
+      .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+      .map((item) => this.mapProductionOrderItem(item));
+  }
+
+  private mapProductionOrderItem(item: Record<string, unknown>): ProductionOrderItem {
+    return {
+      lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
+      itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
+      itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
+      quantity: this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']) ?? 0,
+      warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse']),
+      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']),
+      manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
+      expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
+      baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
+    };
   }
 
   private parseProductionOrders(response: unknown): ProductionOrderRecord[] {

@@ -1,40 +1,56 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
-import { HttpClient } from '@angular/common/http';
-import { apiUrl } from '../../../config/api.config';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
+import { ReceiptFromProductionService } from '../../miscellaneous/receipt-from-production/receipt-from-production.service';
 
-export interface PostedProductionOrderRecord {
-  docEntry?: string | number;
-  docNum?: string | number;
-  docDate?: string;
-  dueDate?: string;
-  itemCode?: string;
-  itemName?: string;
-  itemDescription?: string;
-  quantity?: number | string;
-  warehouse?: string;
-  status?: string;
-  batchNumber?: string;
-  [key: string]: unknown;
+interface ProductionOrderItem {
+  lineNum: string;
+  itemCode: string;
+  itemDescription: string;
+  quantity: number;
+  warehouse: string;
+  batchNumber: string;
+  manufacturingDate: string;
+  expiryDate: string;
+  baseLine: string;
 }
 
-interface IssueForProductionPayload {
-  DocDate: string;
-  Remarks: string;
-  docentry: number;
-  branch: string;
-  items: Array<{
-    line_num: number;
-    item_code: string;
-    quantity: number;
-    warehouse: string;
-    batch_no: string;
-  }>;
+interface ProductionOrderRecord {
+  docEntry: string;
+  docNum: string;
+  postDate: string;
+  dueDate: string;
+  warehouse: string;
+  status: string;
+  items: ProductionOrderItem[];
+}
+
+interface IssueForProductionHeader {
+  baseProductionOrderDocEntry: string;
+  baseProductionOrderDocNum: string;
+  branchId: string;
+  branchName: string;
+  remarks: string;
+  documentDate: string;
+  postingDate: string;
+  dueDate: string;
+}
+
+interface IssueForProductionLine {
+  itemCode: string;
+  itemDescription: string;
+  warehouse: string;
+  quantity: number | null;
+  batchNumber: string;
+  manufacturingDate: string;
+  expiryDate: string;
+  baseEntry: string;
+  baseLine: string;
 }
 
 @Component({
@@ -42,315 +58,411 @@ interface IssueForProductionPayload {
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './issue-from-production.html',
-  styleUrl: './issue-from-production.css',
+  styleUrls: ['../../miscellaneous/miscellaneous-form.css', './issue-from-production.css'],
 })
 export class IssueFromProductionComponent implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly receiptFromProductionService = inject(ReceiptFromProductionService);
   private readonly alertService = inject(AlertService);
 
-  readonly loading = signal(false);
-  readonly submitting = signal(false);
-  readonly records = signal<PostedProductionOrderRecord[]>([]);
-  readonly searchText = signal('');
-  readonly showDetailDialog = signal(false);
-  readonly payloadDialogOpen = signal(false);
-  readonly selectedRecord = signal<PostedProductionOrderRecord | null>(null);
-  readonly issuePayload = signal<IssueForProductionPayload | null>(null);
+  readonly productionOrders = signal<ProductionOrderRecord[]>([]);
+  readonly productionOrdersLoading = signal(false);
+  readonly productionOrdersError = signal<string | null>(null);
+  readonly productionOrderDialogOpen = signal(false);
+  readonly productionOrderItemsDialogOpen = signal(false);
+  readonly selectedProductionOrder = signal<ProductionOrderRecord | null>(null);
+  readonly selectedProductionOrderItemKeys = signal<Set<string>>(new Set());
+  readonly productionOrderSearchText = signal('');
 
-  readonly columns = [
-    { key: 'docNum', label: 'Doc No.' },
-    { key: 'docDate', label: 'Doc Date' },
-    { key: 'itemCode', label: 'Item Code' },
-    { key: 'itemName', label: 'Item Name' },
-    { key: 'quantity', label: 'Quantity' },
-    { key: 'warehouse', label: 'Warehouse' },
-    { key: 'status', label: 'Status' },
-  ] as const;
+  readonly branchOptions = signal([
+    { code: '1', name: 'AHCP_Peshawar' },
+    { code: '2', name: 'AHCP_HO' },
+    { code: '3', name: 'AHCP_Faisalabad' },
+  ]);
 
-  readonly totalRecords = computed(() => this.records().length);
+  readonly headerForm = signal<IssueForProductionHeader>(this.createEmptyHeader());
+  readonly contentLines = signal<IssueForProductionLine[]>([this.createEmptyLine()]);
+  readonly saving = signal(false);
 
-  readonly filteredRecords = computed(() => {
-    const query = this.searchText().trim().toLowerCase();
+  readonly filteredProductionOrders = computed(() => {
+    const query = this.productionOrderSearchText().trim().toLowerCase();
     if (!query) {
-      return this.records();
+      return this.productionOrders();
     }
 
-    return this.records().filter((record) => {
+    return this.productionOrders().filter((order) => {
       const searchable = [
-        this.displayValue(record.docNum),
-        this.displayValue(record.docDate),
-        this.displayValue(record.itemCode),
-        this.displayValue(record.itemName),
-        this.displayValue(record.itemDescription),
-        this.displayValue(record.quantity),
-        this.displayValue(record.warehouse),
-        this.displayValue(record.status),
+        order.docNum,
+        order.postDate,
+        order.dueDate,
+        order.warehouse,
+        order.status,
+        ...order.items.map((item) => `${item.itemCode} ${item.itemDescription}`),
       ]
         .join(' ')
         .toLowerCase();
-
       return searchable.includes(query);
     });
   });
 
+  readonly productionOrderItems = computed(() => this.selectedProductionOrder()?.items ?? []);
+
+  readonly selectedProductionOrderItems = computed(() => {
+    const keys = this.selectedProductionOrderItemKeys();
+    return this.productionOrderItems().filter((item) => keys.has(this.orderItemKey(item)));
+  });
+
   ngOnInit(): void {
-    this.loadRecords();
+    this.loadProductionOrders();
   }
 
   toggleSidebar(): void {
     document.body.classList.toggle('sidebar-collapsed');
   }
 
-  viewRecord(record: PostedProductionOrderRecord): void {
-    this.selectedRecord.set(record);
-    this.showDetailDialog.set(true);
+  openProductionOrderDialog(): void {
+    this.productionOrderDialogOpen.set(true);
+    this.productionOrderSearchText.set('');
+    this.productionOrdersLoading.set(true);
+    this.productionOrdersError.set(null);
+
+    this.receiptFromProductionService
+      .listProductionOrders()
+      .pipe(finalize(() => this.productionOrdersLoading.set(false)))
+      .subscribe({
+        next: (orders) => {
+          this.productionOrders.set(orders as ProductionOrderRecord[]);
+        },
+        error: (error: unknown) => {
+          this.productionOrders.set([]);
+          this.productionOrdersError.set('Could not load production orders.');
+          void this.alertService.error('Load Failed', formatApiErrorMessage(error, 'Could not load production orders.'));
+        },
+      });
   }
 
-  selectRecord(record: PostedProductionOrderRecord): void {
-    this.selectedRecord.set(record);
+  closeProductionOrderDialog(): void {
+    this.productionOrderDialogOpen.set(false);
   }
 
-  addReceiptFromProduction(): void {
-    const record = this.selectedRecord();
-    if (!record) {
-      void this.alertService.warning('No production order selected', 'Select a production order before clicking Add.');
+  chooseProductionOrder(order: ProductionOrderRecord): void {
+    this.selectedProductionOrder.set(order);
+    this.productionOrderDialogOpen.set(false);
+    this.selectedProductionOrderItemKeys.set(new Set());
+    this.productionOrderItemsDialogOpen.set(true);
+  }
+
+  closeProductionOrderItemsDialog(): void {
+    this.productionOrderItemsDialogOpen.set(false);
+    this.selectedProductionOrderItemKeys.set(new Set());
+  }
+
+  toggleProductionOrderItem(item: ProductionOrderItem): void {
+    const key = this.orderItemKey(item);
+    this.selectedProductionOrderItemKeys.update((set) => {
+      const next = new Set(set);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  isProductionOrderItemSelected(item: ProductionOrderItem): boolean {
+    return this.selectedProductionOrderItemKeys().has(this.orderItemKey(item));
+  }
+
+  applySelectedProductionOrderItems(): void {
+    const order = this.selectedProductionOrder();
+    const selectedItems = this.selectedProductionOrderItems();
+    if (!order || selectedItems.length === 0) {
+      void this.alertService.warning('No items selected', 'Select at least one production order item before adding.');
       return;
     }
 
-    this.issuePayload.set({
-      DocDate: this.formatDate(record.docDate) || this.todayIso(),
-      Remarks: 'Issue for Production Order',
-      docentry: this.parseDocEntry(record.docEntry) ?? 0,
-      branch: '1',
-      items: [
-        {
-          line_num: 0,
-          item_code: this.displayValue(record.itemCode) || this.displayValue(record.itemName) || '',
-          quantity: this.parseQuantity(record.quantity),
-          warehouse: this.displayValue(record.warehouse) || 'PSH-WH01',
-          batch_no: this.displayValue(record.batchNumber) || 'A-10',
-        },
-      ],
-    });
+    this.headerForm.update((state) => ({
+      ...state,
+      baseProductionOrderDocEntry: order.docEntry,
+      baseProductionOrderDocNum: order.docNum,
+      documentDate: order.postDate || state.documentDate,
+      postingDate: order.postDate || state.postingDate,
+      dueDate: order.dueDate || state.dueDate,
+    }));
 
-    this.payloadDialogOpen.set(true);
+    this.contentLines.set(
+      selectedItems.map((item, index) => ({
+        ...this.createEmptyLine(),
+        itemCode: item.itemCode,
+        itemDescription: item.itemDescription,
+        warehouse: item.warehouse,
+        quantity: item.quantity || null,
+        batchNumber: item.batchNumber,
+        manufacturingDate: item.manufacturingDate,
+        expiryDate: item.expiryDate,
+        baseEntry: order.docEntry,
+        baseLine: item.baseLine || String(index),
+      })),
+    );
+
+    this.productionOrderItemsDialogOpen.set(false);
+    this.selectedProductionOrderItemKeys.set(new Set());
   }
 
-  closeDetailDialog(): void {
-    this.showDetailDialog.set(false);
-    this.selectedRecord.set(null);
+  addContentLine(): void {
+    this.contentLines.update((lines) => [...lines, this.createEmptyLine()]);
   }
 
-  loadRecords(): void {
-    this.loading.set(true);
-    this.http
-      .get<unknown>(apiUrl('receipt_from_production'))
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (response) => {
-          const items = this.extractRecords(response);
-          this.records.set(items);
-        },
-        error: (error: unknown) => {
-          this.records.set([]);
-          void this.alertService.error(
-            'Load Failed',
-            formatApiErrorMessage(error, 'Failed to load posted production orders.'),
-          );
-        },
-      });
+  deleteContentLine(index: number): void {
+    this.contentLines.update((lines) => lines.filter((_, i) => i !== index));
+  }
+
+  updateHeaderField(field: keyof IssueForProductionHeader, value: string): void {
+    this.headerForm.update((state) => ({ ...state, [field]: value }));
+  }
+
+  updateContentLine(index: number, field: keyof IssueForProductionLine, value: string): void {
+    this.contentLines.update((rows) =>
+      rows.map((row, rowIndex) => {
+        if (rowIndex !== index) {
+          return row;
+        }
+        if (field === 'quantity') {
+          const quantity = value === '' ? null : Number(value);
+          return { ...row, quantity: Number.isNaN(quantity) ? null : quantity };
+        }
+        return { ...row, [field]: value };
+      }),
+    );
   }
 
   submitIssueForProduction(): void {
-    const payload = this.issuePayload();
-    if (!payload) {
+    if (this.saving()) {
       return;
     }
 
-    this.submitting.set(true);
-    this.http
-      .post<unknown>(apiUrl('createIssueForProduction'), payload)
-      .pipe(finalize(() => this.submitting.set(false)))
+    const header = this.headerForm();
+    const lines = this.contentLines().filter((line) => line.itemCode.trim());
+
+    if (!header.baseProductionOrderDocEntry.trim()) {
+      this.alertService.validation('Select a production order before submitting.');
+      return;
+    }
+
+    if (!header.documentDate.trim()) {
+      this.alertService.validation('Document Date is required.');
+      return;
+    }
+
+    if (!header.postingDate.trim()) {
+      this.alertService.validation('Posting Date is required.');
+      return;
+    }
+
+    if (!header.dueDate.trim()) {
+      this.alertService.validation('Due Date is required.');
+      return;
+    }
+
+    if (lines.length === 0) {
+      this.alertService.validation('At least one row item is required.');
+      return;
+    }
+
+    if (lines.some((line) => !line.warehouse.trim())) {
+      this.alertService.validation('Warehouse is required for every row.');
+      return;
+    }
+
+    if (lines.some((line) => line.quantity == null || line.quantity <= 0)) {
+      this.alertService.validation('Quantity is required for every row.');
+      return;
+    }
+
+    const payload = {
+      DocDate: header.documentDate.trim(),
+      Remarks: header.remarks.trim(),
+      docentry: Number(header.baseProductionOrderDocEntry.trim()) || 0,
+      branch: header.branchId.trim(),
+      items: lines.map((line, index) => ({
+        line_num: index,
+        item_code: line.itemCode.trim(),
+        quantity: line.quantity ?? 0,
+        warehouse: line.warehouse.trim(),
+        batch_no: line.batchNumber.trim(),
+      })),
+    };
+
+    this.saving.set(true);
+    this.receiptFromProductionService
+      .create(payload as any)
+      .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          this.alertService.success('Success', 'Issue for production submitted successfully.');
-          this.payloadDialogOpen.set(false);
-          this.issuePayload.set(null);
-          this.selectedRecord.set(null);
+          void this.alertService.success('Success', 'Issue for production submitted successfully.');
+          void this.router.navigate(['/miscellaneous/good-issue']);
         },
         error: (error: unknown) => {
-          void this.alertService.error(
-            'Submit Failed',
-            formatApiErrorMessage(error, 'Could not submit issue for production.'),
-          );
+          void this.alertService.error('Submit Failed', formatApiErrorMessage(error, 'Could not submit issue for production.'));
         },
       });
   }
 
-  cellValue(record: PostedProductionOrderRecord, key: string): string {
-    const value = record[key as keyof PostedProductionOrderRecord];
-    if (value === null || value === undefined || value === '') {
-      return '—';
-    }
+  private loadProductionOrders(): void {
+    this.productionOrdersLoading.set(true);
+    this.productionOrdersError.set(null);
 
-    if (key === 'quantity') {
-      const normalized = Number(value);
-      return Number.isFinite(normalized) ? normalized.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(value);
-    }
-
-    return String(value);
+    this.receiptFromProductionService
+      .listProductionOrders()
+      .pipe(finalize(() => this.productionOrdersLoading.set(false)))
+      .subscribe({
+        next: (orders) => {
+          this.productionOrders.set(orders as ProductionOrderRecord[]);
+        },
+        error: (error: unknown) => {
+          this.productionOrders.set([]);
+          this.productionOrdersError.set('Could not load production orders.');
+          void this.alertService.error('Load Failed', formatApiErrorMessage(error, 'Could not load production orders.'));
+        },
+      });
   }
 
-  private extractRecords(response: unknown): PostedProductionOrderRecord[] {
-    if (!response) {
-      return [];
-    }
+  private parseProductionOrders(response: unknown): ProductionOrderRecord[] {
+    const items = this.extractDataArray(response, ['production_orders', 'production_order', 'data']);
+    return items
+      .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+      .map((item) => {
+        const lines = this.extractLines(item);
+        const parsedItems = lines.length > 0 ? lines.map((line) => this.mapProductionOrderItem(line)) : [this.mapProductionOrderItem(item)];
 
+        return {
+          docEntry: this.pickString(item, ['DocEntry', 'docEntry', 'id', 'Id']),
+          docNum: this.pickString(item, ['DocNum', 'docNum', 'number', 'Number']),
+          postDate: this.pickDate(item, ['PostDate', 'docDate', 'DocDate']),
+          dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
+          warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']),
+          status: this.pickString(item, ['Status', 'status', 'docStatus', 'DocStatus']),
+          items: parsedItems,
+        };
+      });
+  }
+
+  private mapProductionOrderItem(item: Record<string, unknown>): ProductionOrderItem {
+    return {
+      lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
+      itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
+      itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
+      quantity: this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']) ?? 0,
+      warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse']),
+      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']),
+      manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
+      expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
+      baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
+    };
+  }
+
+  private extractDataArray(response: unknown, wrapperKeys: string[]): unknown[] {
     if (Array.isArray(response)) {
-      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object').map((item) => this.mapRecord(item));
+      return response;
     }
-
-    if (typeof response !== 'object') {
+    if (!response || typeof response !== 'object') {
       return [];
     }
 
     const root = response as Record<string, unknown>;
-    const candidates = ['data', 'items', 'results', 'records', 'list', 'receipt_from_production', 'receipts_from_production'];
-
-    for (const key of candidates) {
-      const value = root[key];
-      if (Array.isArray(value)) {
-        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object').map((item) => this.mapRecord(item));
+    for (const key of wrapperKeys) {
+      const wrapper = root[key];
+      if (Array.isArray(wrapper)) {
+        return wrapper;
       }
-      if (value && typeof value === 'object') {
-        const nested = this.extractRecords(value);
-        if (nested.length) {
-          return nested;
+      if (wrapper && typeof wrapper === 'object') {
+        const nested = wrapper as Record<string, unknown>;
+        if (Array.isArray(nested['data'])) {
+          return nested['data'] as unknown[];
         }
       }
     }
 
-    return [this.mapRecord(root)];
-  }
+    if (Array.isArray(root['data'])) {
+      return root['data'] as unknown[];
+    }
 
-  private mapRecord(item: Record<string, unknown>): PostedProductionOrderRecord {
-    const lines = this.extractLines(item);
-    const firstLine = lines[0] ?? null;
-
-    return {
-      docEntry: this.pickValue(item, ['docEntry', 'DocEntry', 'id', 'Id']),
-      docNum: this.pickValue(item, ['docNum', 'DocNum', 'number', 'Number']),
-      docDate: this.pickText(item, ['docDate', 'DocDate', 'date', 'Date']),
-      dueDate: this.pickText(item, ['dueDate', 'DocDueDate', 'docDueDate', 'DueDate']),
-      itemCode:
-        this.pickText(item, ['itemCode', 'ItemCode', 'item_code', 'Item']) ||
-        this.pickText(firstLine ?? {}, ['ItemCode', 'itemCode', 'item_code', 'Item']),
-      itemName:
-        this.pickText(item, ['itemName', 'ItemName', 'item_name', 'Dscription', 'itemDescription', 'ItemDescription']) ||
-        this.pickText(firstLine ?? {}, ['Dscription', 'itemDescription', 'ItemDescription', 'itemName', 'ItemName']),
-      itemDescription:
-        this.pickText(item, ['itemDescription', 'ItemDescription', 'description', 'Dscription']) ||
-        this.pickText(firstLine ?? {}, ['Dscription', 'itemDescription', 'ItemDescription', 'description']),
-      quantity:
-        this.pickNumber(item, ['quantity', 'Quantity', 'qty', 'Qty']) ||
-        this.pickNumber(firstLine ?? {}, ['Quantity', 'quantity', 'qty', 'Qty']),
-      warehouse:
-        this.pickText(item, ['warehouse', 'Warehouse', 'WhsCode']) ||
-        this.pickText(firstLine ?? {}, ['WhsCode', 'warehouse', 'Warehouse']),
-      status: this.pickText(item, ['status', 'Status', 'docStatus', 'DocStatus']),
-      batchNumber:
-        this.pickText(item, ['batchNumber', 'BatchNumber', 'batchNum', 'BatchNum']) ||
-        this.pickText(firstLine ?? {}, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']),
-    };
+    return [];
   }
 
   private extractLines(item: Record<string, unknown>): Record<string, unknown>[] {
     const candidates = ['DocumentLines', 'documentLines', 'Lines', 'lines', 'items', 'Items'];
-
     for (const key of candidates) {
       const value = item[key];
       if (Array.isArray(value)) {
         return value.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
       }
     }
-
     return [];
   }
 
-  private pickText(source: Record<string, unknown>, keys: string[]): string {
+  private createEmptyHeader(): IssueForProductionHeader {
+    const today = this.todayIso();
+    return {
+      baseProductionOrderDocEntry: '',
+      baseProductionOrderDocNum: '',
+      branchId: '1',
+      branchName: 'AHCP_Peshawar',
+      remarks: 'Issue for Production Order',
+      documentDate: today,
+      postingDate: today,
+      dueDate: today,
+    };
+  }
+
+  private createEmptyLine(): IssueForProductionLine {
+    return {
+      itemCode: '',
+      itemDescription: '',
+      warehouse: '',
+      quantity: null,
+      batchNumber: '',
+      manufacturingDate: '',
+      expiryDate: '',
+      baseEntry: '',
+      baseLine: '0',
+    };
+  }
+
+  orderItemKey(item: ProductionOrderItem): string {
+    return `${item.baseLine}:${item.itemCode}`;
+  }
+
+  private pickString(source: Record<string, unknown>, keys: string[]): string {
     for (const key of keys) {
       const value = source[key];
-      if (value === null || value === undefined || value === '') {
+      if (value === undefined || value === null) {
         continue;
       }
       const text = String(value).trim();
-      if (text) {
+      if (text !== '') {
         return text;
       }
     }
     return '';
   }
 
-  private pickNumber(source: Record<string, unknown>, keys: string[]): number | string {
+  private pickNumber(source: Record<string, unknown>, keys: string[]): number {
     for (const key of keys) {
       const value = source[key];
-      if (value === null || value === undefined || value === '') {
-        continue;
-      }
-      const parsed = Number(value);
+      const parsed = Number(String(value ?? ''));
       if (!Number.isNaN(parsed)) {
         return parsed;
       }
     }
-    return '';
+    return 0;
   }
 
-  private pickValue(source: Record<string, unknown>, keys: string[]): string | number {
-    for (const key of keys) {
-      const value = source[key];
-      if (value === null || value === undefined || value === '') {
-        continue;
-      }
-      return String(value);
-    }
-    return '';
-  }
-
-  private displayValue(value: unknown): string {
-    if (value === null || value === undefined || value === '') {
-      return '';
-    }
-    return String(value);
-  }
-
-  private parseDocEntry(value: unknown): number | null {
-    const normalized = Number(value);
-    return Number.isFinite(normalized) ? normalized : null;
-  }
-
-  private parseQuantity(value: unknown): number {
-    const normalized = Number(value);
-    return Number.isFinite(normalized) && normalized > 0 ? normalized : 1;
-  }
-
-  private formatDate(value: unknown): string {
-    const text = this.displayValue(value);
-    if (!text) {
-      return '';
-    }
-    const match = text.match(/(\d{4}-\d{2}-\d{2})/);
-    return match ? match[1] : text;
-  }
-
-  private addYears(value: string, years: number): string {
-    const [year, month, day] = value.split('-').map((part) => Number.parseInt(part, 10));
-    if (![year, month, day].every((part) => Number.isFinite(part))) {
-      return value;
-    }
-
-    const date = new Date(Date.UTC(year, month - 1, day));
-    date.setUTCFullYear(date.getUTCFullYear() + years);
-    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+  private pickDate(source: Record<string, unknown>, keys: string[]): string {
+    const raw = this.pickString(source, keys);
+    const match = raw.match(/(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : raw;
   }
 
   private todayIso(): string {
