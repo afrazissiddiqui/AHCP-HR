@@ -65,6 +65,7 @@ export class UserSetupComponent implements OnInit {
     return summary.total ? `${Math.round((summary.granted / summary.total) * 100)}%` : '0%';
   });
   readonly searchText = signal('');
+  readonly permissionSearchText = signal('');
   readonly filteredUsers = computed(() => {
     const query = this.searchText().trim().toLowerCase();
     if (!query) {
@@ -85,6 +86,17 @@ export class UserSetupComponent implements OnInit {
   });
 
   readonly totalUsers = computed(() => this.users().length);
+  readonly filteredAuthDefinitions = computed(() => {
+    const query = this.permissionSearchText().trim().toLowerCase();
+    if (!query) {
+      return this.authDefinitions;
+    }
+
+    return this.authDefinitions.filter((module) => {
+      const haystack = `${module.name} ${module.slug} ${module.actions.join(' ')}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  });
 
   ngOnInit(): void {
     this.loadUsers();

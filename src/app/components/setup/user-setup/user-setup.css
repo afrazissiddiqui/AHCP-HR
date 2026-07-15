@@ -584,6 +584,10 @@
   padding: 12px;
 }
 
+.form-auth-toolbar .search-field {
+  width: 100%;
+}
+
 .form-auth-toolbar-row {
   align-items: center;
   display: flex;

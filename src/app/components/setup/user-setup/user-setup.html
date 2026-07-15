@@ -79,10 +79,20 @@
                 <button type="button" class="btn-bulk btn-bulk--allow" (click)="setAllPermissions(true)">Allow all</button>
                 <button type="button" class="btn-bulk btn-bulk--deny" (click)="setAllPermissions(false)">Deny all</button>
               </div>
+              <div class="search-field">
+                <span class="search-field-icon">🔍</span>
+                <input
+                  type="search"
+                  [ngModel]="permissionSearchText()"
+                  (ngModelChange)="permissionSearchText.set($event)"
+                  class="search-input"
+                  placeholder="Search permissions..."
+                />
+              </div>
             </div>
 
             <div class="form-module-list">
-              @for (module of authDefinitions; track trackByColumn($index, module.slug)) {
+              @for (module of filteredAuthDefinitions(); track trackByColumn($index, module.slug)) {
                 <div class="form-module-card">
                   <div class="form-module-card-head">
                     <div class="form-module-card-brand">

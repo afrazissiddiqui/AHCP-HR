@@ -73,6 +73,14 @@ const MODULE_SLUG_ALIASES: Record<string, string> = {
   igp: 'igp_form',
   ogp: 'ogp_form',
   agp: 'agp_form',
+  kpi: 'kpi_setup_form',
+  'kpi_setup': 'kpi_setup_form',
+  'kpi-setup': 'kpi_setup_form',
+  itr: 'itr_form',
+  'itr_setup': 'kpi_setup_form',
+  'itr-setup': 'kpi_setup_form',
+  itr_setup_form: 'kpi_setup_form',
+  'itr-setup-form': 'kpi_setup_form',
 };
 
 function canonicalizeModuleSlug(moduleSlug: string): string {
@@ -80,8 +88,23 @@ function canonicalizeModuleSlug(moduleSlug: string): string {
   return MODULE_SLUG_ALIASES[normalized] ?? normalized;
 }
 
+const PERMISSION_KEY_OVERRIDES: Record<string, string> = {
+  itr_setup_form_add: 'ITR_Setup_Form_add',
+  itr_setup_form_list: 'ITR_Setup_Form_list',
+  itr_setup_form_view: 'ITR_Setup_Form_view',
+  itr_setup_form_update: 'ITR_Setup_Form_update',
+  itr_setup_form_delete: 'ITR_Setup_Form_delete',
+  kpi_setup_form_add: 'ITR_Setup_Form_add',
+  kpi_setup_form_list: 'KPI_Setup_form_list',
+  kpi_setup_form_view: 'KPI_Setup_form_view',
+  kpi_setup_form_update: 'KPI_Setup_form_update',
+  kpi_setup_form_delete: 'KPI_Setup_form_delete',
+};
+
 function permissionKeyForModule(moduleSlug: string, action: string): string {
-  return `${canonicalizeModuleSlug(moduleSlug)}_${action.trim().toLowerCase()}`;
+  const canonicalSlug = canonicalizeModuleSlug(moduleSlug);
+  const baseKey = `${canonicalSlug}_${action.trim().toLowerCase()}`;
+  return PERMISSION_KEY_OVERRIDES[baseKey] ?? baseKey;
 }
 
 function isPlainActionPermissionObject(value: unknown): value is Record<string, unknown> {
@@ -230,6 +253,11 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
+    slug: 'kpi_setup_form',
+    name: 'KPI Setup Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
     slug: 'good_receipt_note_form',
     name: 'Good Receipt Note Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
@@ -281,7 +309,7 @@ function splitPermissionKey(key: string): { moduleSlug: string; moduleName: stri
   for (const actionKey of KNOWN_ACTION_SUFFIXES) {
     const suffix = `_${actionKey}`;
     if (normalized.endsWith(suffix)) {
-      const moduleSlug = normalized.slice(0, -suffix.length);
+      const moduleSlug = canonicalizeModuleSlug(normalized.slice(0, -suffix.length));
       if (moduleSlug) {
         return {
           moduleSlug,
@@ -296,15 +324,15 @@ function splitPermissionKey(key: string): { moduleSlug: string; moduleName: stri
   const parts = normalized.split('_').filter(Boolean);
   if (parts.length < 2) {
     return {
-      moduleSlug: normalized,
-      moduleName: humanizeSlug(normalized),
+      moduleSlug: canonicalizeModuleSlug(normalized),
+      moduleName: humanizeSlug(canonicalizeModuleSlug(normalized)),
       actionKey: normalized,
       actionLabel: 'Access',
     };
   }
 
   const actionKey = parts[parts.length - 1];
-  const moduleSlug = parts.slice(0, -1).join('_');
+  const moduleSlug = canonicalizeModuleSlug(parts.slice(0, -1).join('_'));
   return {
     moduleSlug,
     moduleName: humanizeSlug(moduleSlug),

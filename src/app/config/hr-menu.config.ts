@@ -118,6 +118,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         value: 'setup/kpi-setup',
         icon: 'bar-chart',
         route: '/setup/kpi-setup',
+        access: { moduleSlug: 'itr_setup_form', action: 'add' },
       },
       {
         label: 'Overtime List',
