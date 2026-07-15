@@ -2187,11 +2187,51 @@ export class ApplicationFormService {
   }
 
   /** Profile for the signed-in user when a matching employee application record exists. */
-  getSignedInUserRecord(sessionUserId: string | null): ApplicationFormRecord | undefined {
-    if (!sessionUserId?.trim()) {
+  getSignedInUserRecord(sessionUserId: string | null, sessionUserName?: string | null): ApplicationFormRecord | undefined {
+    const normalizedUserId = sessionUserId?.trim() ?? '';
+    const normalizedUserName = sessionUserName?.trim() ?? '';
+
+    if (!normalizedUserId && !normalizedUserName) {
       return undefined;
     }
-    return this.findRecordByLoginUserId(sessionUserId);
+
+    if (normalizedUserId) {
+      const directMatch = this.findRecordByLoginUserId(normalizedUserId);
+      if (directMatch) {
+        return directMatch;
+      }
+    }
+
+    if (normalizedUserName) {
+      return this.findRecordBySessionUserName(normalizedUserName);
+    }
+
+    return undefined;
+  }
+
+  private findRecordBySessionUserName(userName: string): ApplicationFormRecord | undefined {
+    const normalized = userName.trim().toLowerCase();
+    if (!normalized) {
+      return undefined;
+    }
+
+    return this.applicationRecords().find((record) => {
+      const employeeName = record.EmployeeName?.trim().toLowerCase() ?? '';
+      const detailName = record.detail?.personalInfo?.personName?.trim().toLowerCase() ?? '';
+      const loginName = record.detail?.loginDetails?.employeeName?.trim().toLowerCase() ?? '';
+      const loginUserId = record.detail?.loginDetails?.userId?.trim().toLowerCase() ?? '';
+      const topLevelUserId = record.userId?.trim().toLowerCase() ?? '';
+      const employeeCode = record.EmployeeCode?.trim().toLowerCase() ?? '';
+
+      return (
+        employeeName === normalized ||
+        detailName === normalized ||
+        loginName === normalized ||
+        loginUserId === normalized ||
+        topLevelUserId === normalized ||
+        employeeCode === normalized
+      );
+    });
   }
 
   updateLoginPassword(sessionUserId: string, newPassword: string): boolean {

@@ -23,7 +23,10 @@ export class ProfilePageComponent {
   protected readonly confirmPassword = signal('');
 
   protected readonly profileRecord = computed(() =>
-    this.applicationFormService.getSignedInUserRecord(this.authService.getSessionUserId())
+    this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId(),
+      this.authService.getSessionUser()?.name ?? null,
+    )
   );
 
   protected readonly displaySalary = computed(() => {

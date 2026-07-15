@@ -44,7 +44,10 @@ export class ViewProfileComponent {
   protected readonly profileFetchRequested = signal(false);
 
   protected readonly profileRecord = computed(() =>
-    this.applicationFormService.getSignedInUserRecord(this.authService.getSessionUserId())
+    this.applicationFormService.getSignedInUserRecord(
+      this.authService.getSessionUserId(),
+      this.authService.getSessionUser()?.name ?? null,
+    )
   );
 
   protected readonly spotlight = computed(() => {
