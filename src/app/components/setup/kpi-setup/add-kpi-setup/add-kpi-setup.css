@@ -90,25 +90,26 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .field-group label {
   font-weight: 600;
   color: #234;
+  font-size: 13px;
 }
 
 .field-group input,
 .field-group textarea {
   border: 1px solid #d8e1f0;
-  border-radius: 12px;
-  padding: 11px 12px;
+  border-radius: 10px;
+  padding: 8px 10px;
   font: inherit;
   background: #fff;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -123,7 +124,7 @@
 
 .field-group textarea {
   resize: vertical;
-  min-height: 92px;
+  min-height: 76px;
 }
 
 .full-width {
@@ -172,18 +173,18 @@
 }
 
 .kpi-section {
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .kpi-section-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
-  padding: 14px 16px;
+  margin-bottom: 10px;
+  padding: 10px 14px;
   background: #f8fbff;
   border: 1px solid #e8f0ff;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 .kpi-section-head h4 {
@@ -193,22 +194,22 @@
 
 .kpi-list {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .kpi-card {
   border: 1px solid #e8eefb;
-  border-radius: 18px;
-  padding: 18px;
+  border-radius: 14px;
+  padding: 12px 14px;
   background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
 }
 
 .card-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .card-actions strong {
