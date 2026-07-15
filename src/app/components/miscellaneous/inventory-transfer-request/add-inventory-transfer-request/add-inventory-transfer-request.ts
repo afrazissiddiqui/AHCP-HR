@@ -143,31 +143,16 @@ export class AddInventoryTransferRequest implements OnInit {
     }
 
     const fromWarehouse = this.headerForm().fromWarehouse.trim();
-    const validItems = items.filter((item) => this.findBatchForWarehouse(item, fromWarehouse));
-    const invalidItems = items.filter((item) => !this.findBatchForWarehouse(item, fromWarehouse));
-
-    if (invalidItems.length > 0) {
-      const codes = invalidItems.map((item) => item.itemCode).join(', ');
-      this.alertService.validation(
-        fromWarehouse
-          ? `No batch found for: ${codes} in warehouse ${fromWarehouse}. Those items were not added.`
-          : `Select From Warehouse first. Items not added: ${codes}.`,
-      );
-    }
-
-    if (validItems.length === 0) {
-      if (items.length > 0 && !fromWarehouse) {
-        this.itemPickerRowIndex.set(null);
-        return;
-      }
-      this.removeRow(index);
+    if (items.length > 0 && !fromWarehouse) {
+      const codes = items.map((item) => item.itemCode).join(', ');
+      this.alertService.validation(`Select From Warehouse first. Items not added: ${codes}.`);
       this.itemPickerRowIndex.set(null);
       return;
     }
 
     this.contentLines.update((rows) => {
       const updated = [...rows];
-      const first = validItems[0];
+      const first = items[0];
       const firstBatch = this.findBatchForWarehouse(first, fromWarehouse);
       updated[index] = {
         ...updated[index],
@@ -180,7 +165,7 @@ export class AddInventoryTransferRequest implements OnInit {
         baseLine: updated[index]?.baseLine || '',
       };
 
-      const extras = validItems.slice(1).map((item) => {
+      const extras = items.slice(1).map((item) => {
         const batch = this.findBatchForWarehouse(item, fromWarehouse);
         return {
           ...createEmptyInventoryTransferLine(fromWarehouse, this.headerForm().toWarehouse),
@@ -280,12 +265,6 @@ export class AddInventoryTransferRequest implements OnInit {
     const missingWarehouse = lines.some((line) => !line.fromWarehouse.trim() || !line.toWarehouse.trim());
     if (missingWarehouse) {
       this.alertService.validation('From Warehouse and To Warehouse are required for every line item.');
-      return;
-    }
-
-    const missingBatch = lines.some((line) => !line.batchNumber.trim());
-    if (missingBatch) {
-      this.alertService.validation('Batch Number is required for every line item.');
       return;
     }
 
