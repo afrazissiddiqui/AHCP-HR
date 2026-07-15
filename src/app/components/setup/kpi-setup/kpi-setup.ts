@@ -11,7 +11,7 @@ import { formatApiErrorMessage } from '../../../utils/api-error.util';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './kpi-setup.html',
-  styleUrl: './kpi-setup.css',
+  styleUrls: ['./kpi-setup.css'],
 })
 export class KpiSetupComponent implements OnInit {
   private readonly alertService = inject(AlertService);
