@@ -926,7 +926,7 @@ export interface ItrFormApiResponse {
   data?: Record<string, unknown>;
 }
 
-const ITR_FORM_LIST_URL = apiUrl('itr-form-list');
+const ITR_FORM_LIST_URL = apiUrl('inventory_transfer_request');
 const ITR_FORM_ADD_URL = apiUrl('itr-form-add');
 const ITR_FORM_DETAIL_URL = apiUrl('itr-form-detail');
 const ITR_FORM_UPDATE_URL = apiUrl('itr-form-update');
@@ -1631,7 +1631,11 @@ export class ItrFormService {
 
   fetchItrForms(): Observable<ItrFormRecord[]> {
     return this.http.get<unknown>(ITR_FORM_LIST_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => mapApiItemToRecord(item))),
+      map((response) => {
+        const items = this.extractApiItems(response);
+        const records = items.length > 0 ? items.map((item) => mapApiItemToRecord(item)) : [];
+        return records;
+      }),
       tap((records) => this._records.set(records)),
     );
   }
@@ -1728,6 +1732,8 @@ export class ItrFormService {
       'itrForms',
       'itrFormList',
       'itr_form_list',
+      'inventory_transfer_request',
+      'inventory_transfer_requests',
     ];
 
     for (const key of arrayKeys) {
