@@ -134,14 +134,14 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
       },
     ],
   },
-  { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
-  { label: 'Development', value: 'development', icon: 'learning-assistant' },
-  { label: 'Goals', value: 'goals', icon: 'goal' },
+  // { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
+  // { label: 'Development', value: 'development', icon: 'learning-assistant' },
+  // { label: 'Goals', value: 'goals', icon: 'goal' },
   
-  { label: 'Learning', value: 'learning', icon: 'learning-assistant' },
-  { label: 'Org Chart', value: 'org-chart', icon: 'org-chart' },
-  { label: 'Quality Control', value: 'quality-control', icon: 'performance', externalUrl: 'http://alhafiz.vdc.services:8092/dashboard' },
-  { label: 'Succession', value: 'succession', icon: 'family-care' },
+  // { label: 'Learning', value: 'learning', icon: 'learning-assistant' },
+  // { label: 'Org Chart', value: 'org-chart', icon: 'org-chart' },
+  { label: 'Quality Control', value: 'quality-control', icon: 'performance', externalUrl: 'http://alhafiz.vdc.services:8082/dashboard' },
+  // { label: 'Succession', value: 'succession', icon: 'family-care' },
 ];
 
 /** Flat list of menu entries that have a route (for dashboard action bar, etc.). */
