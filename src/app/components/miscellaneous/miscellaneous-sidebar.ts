@@ -28,6 +28,11 @@ export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
         route: '/miscellaneous/inventory-transfer',
       },
       {
+        id: 'miscellaneous-inventory-transfer-request',
+        label: 'Inventory transfer Request',
+        route: '/miscellaneous/inventory-transfer-request',
+      },
+      {
         id: 'miscellaneous-receipt-from-production',
         label: 'Receipt From Production',
         route: '/miscellaneous/receipt-from-production',
@@ -54,6 +59,9 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   }
   if (url.includes('/miscellaneous/delivery')) {
     return 'miscellaneous-delivery';
+  }
+  if (url.includes('/miscellaneous/inventory-transfer-request')) {
+    return 'miscellaneous-inventory-transfer-request';
   }
   if (url.includes('/miscellaneous/inventory-transfer')) {
     return 'miscellaneous-inventory-transfer';

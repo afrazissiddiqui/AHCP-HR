@@ -7,6 +7,8 @@ import { GoodReceipt } from './good-receipt/good-receipt';
 import { AddGoodReceipt } from './good-receipt/add-good-receipt/add-good-receipt';
 import { InventoryTransfer } from './inventory-transfer/inventory-transfer';
 import { AddInventoryTransfer } from './inventory-transfer/add-inventory-transfer/add-inventory-transfer';
+import { InventoryTransferRequest } from './inventory-transfer-request/inventory-transfer-request';
+import { AddInventoryTransferRequest } from './inventory-transfer-request/add-inventory-transfer-request/add-inventory-transfer-request';
 import { MiscellaneousPageComponent } from './miscellaneous-page';
 import { MiscellaneousShellComponent } from './miscellaneous-shell';
 import { ReceiptFromProduction } from './receipt-from-production/receipt-from-production';
@@ -78,6 +80,21 @@ export const miscellaneousRoutes: Routes = [
         path: 'inventory-transfer/edit/:id',
         component: AddInventoryTransfer,
         data: { title: 'Edit Inventory Transfer' },
+      },
+      {
+        path: 'inventory-transfer-request',
+        component: InventoryTransferRequest,
+        data: { title: 'Inventory Transfer Request' },
+      },
+      {
+        path: 'inventory-transfer-request/create',
+        component: AddInventoryTransferRequest,
+        data: { title: 'Add Inventory Transfer Request' },
+      },
+      {
+        path: 'inventory-transfer-request/edit/:id',
+        component: AddInventoryTransferRequest,
+        data: { title: 'Edit Inventory Transfer Request' },
       },
       {
         path: 'good-issue',
