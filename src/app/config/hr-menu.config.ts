@@ -114,6 +114,12 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         access: { moduleSlug: 'workstation_form', action: 'list' },
       },
       {
+        label: 'KPI Setup',
+        value: 'setup/kpi-setup',
+        icon: 'bar-chart',
+        route: '/setup/kpi-setup',
+      },
+      {
         label: 'Overtime List',
         value: 'setup/overtime-list',
         icon: 'time-entry-request',

@@ -55,6 +55,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/leave-types': 'Leave Types',
   'setup/user-setup': 'User Setup',
   'setup/workstation': 'Workstation',
+  'setup/kpi-setup': 'KPI Setup',
   'setup/overtime-list': 'Overtime List',
   'setup/issue-from-production': 'Issue From Production',
   'plant-maintenance/main-form': 'Main Form',
