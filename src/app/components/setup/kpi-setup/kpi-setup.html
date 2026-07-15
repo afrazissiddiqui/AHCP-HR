@@ -1,26 +1,43 @@
 <div class="setup-layout">
   <div class="setup-content">
     <div class="setup-body">
-      <div class="setup-intro">
-        <h2>KPI Setup</h2>
-        <p>Browse and manage available KPI definitions.</p>
-      </div>
+      <section class="setup-hero">
+        <div class="setup-hero__content">
+          <span class="hero-badge">HR Operations</span>
+          <h2>KPI Setup</h2>
+          <p>Review and manage KPI definitions in a clear, structured workspace built for faster oversight.</p>
+        </div>
 
-      <div class="form-panel">
+        <div class="setup-hero__stats" aria-label="KPI summary">
+          <div class="stat-card">
+            <span class="stat-card__label">Definitions</span>
+            <strong class="stat-card__value">{{ kpis().length || 0 }}</strong>
+          </div>
+          <div class="stat-card stat-card--accent">
+            <span class="stat-card__label">Status</span>
+            <strong class="stat-card__value">Live</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-panel">
         <div class="form-panel-head">
           <div>
             <h3 class="form-panel-title">Available KPI Setup</h3>
-            <p class="panel-subtitle">Review all KPI definitions from the system API.</p>
+            <p class="panel-subtitle">Review every KPI definition from the system API in a polished table view.</p>
           </div>
           <button type="button" class="btn-refresh" [disabled]="loading()" (click)="goToAddKpi()">
             {{ loading() ? 'Loading…' : 'Add KPI' }}
           </button>
         </div>
 
-        <div *ngIf="loading()" class="panel-message">Loading KPI list…</div>
-        <div *ngIf="!loading() && !kpis().length" class="panel-message">No KPI definitions found.</div>
+        <div *ngIf="loading()" class="panel-message panel-message--loading">Loading KPI list…</div>
+        <div *ngIf="!loading() && !kpis().length" class="panel-message panel-message--empty">
+          <span class="message-badge">No records yet</span>
+          <span>No KPI definitions found.</span>
+        </div>
 
-        <div *ngIf="!loading() && kpis().length" class="table-wrap">
+        <div *ngIf="!loading() && kpis().length" class="table-shell">
           <table class="entry-table">
             <thead>
               <tr>
@@ -37,12 +54,14 @@
                 <td>{{ displayValue(item.name) }}</td>
                 <td>{{ displayValue(item.code) }}</td>
                 <td>{{ displayValue(item.description) }}</td>
-                <td>{{ displayValue(item.status) }}</td>
+                <td>
+                  <span class="status-pill">{{ displayValue(item.status) }}</span>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </div>
