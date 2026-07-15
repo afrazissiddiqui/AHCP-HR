@@ -29,6 +29,10 @@ export class KpiSetupService {
     );
   }
 
+  createKpi(payload: Record<string, unknown>): Observable<unknown> {
+    return this.http.post<unknown>(apiUrl('kpi-add'), payload);
+  }
+
   private extractApiItems(response: unknown): Record<string, unknown>[] {
     if (!response) {
       return [];

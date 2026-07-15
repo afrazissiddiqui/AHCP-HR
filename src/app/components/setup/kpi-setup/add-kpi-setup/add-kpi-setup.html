@@ -1,0 +1,86 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div class="setup-body">
+      <div class="setup-intro">
+        <h2>Add KPI</h2>
+        <p>Create a KPI setup entry using the provided department and KPI definition structure.</p>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <div>
+            <h3 class="form-panel-title">KPI Setup Details</h3>
+            <p class="panel-subtitle">Enter the header values and KPI definition rows for the new setup.</p>
+          </div>
+          <div class="button-group">
+            <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+            <button type="button" class="btn-primary" [disabled]="loading()" (click)="saveKpi()">
+              {{ loading() ? 'Saving…' : 'Save KPI' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field-group">
+            <label>Department</label>
+            <input type="text" [(ngModel)]="department" />
+          </div>
+          <div class="field-group">
+            <label>Employment Nature</label>
+            <input type="text" [(ngModel)]="employmentNature" />
+          </div>
+          <div class="field-group">
+            <label>Work Level</label>
+            <input type="text" [(ngModel)]="workLevel" />
+          </div>
+          <div class="field-group">
+            <label>Employment Category</label>
+            <input type="text" [(ngModel)]="employmentCategory" />
+          </div>
+          <div class="field-group">
+            <label>Employment Status</label>
+            <input type="text" [(ngModel)]="employmentStatus" />
+          </div>
+          <div class="field-group">
+            <label>Designation</label>
+            <input type="text" [(ngModel)]="designation" />
+          </div>
+        </div>
+
+        <div class="kpi-section">
+          <div class="kpi-section-head">
+            <h4>KPI Rows</h4>
+            <button type="button" class="btn-secondary" (click)="addKpiRow()">Add Row</button>
+          </div>
+
+          <div class="kpi-list">
+            <div class="kpi-card" *ngFor="let item of kpiRows; let index = index">
+              <div class="card-actions">
+                <strong>KPI {{ index + 1 }}</strong>
+                <button type="button" class="btn-link" (click)="removeKpiRow(index)" *ngIf="kpiRows.length > 1">Remove</button>
+              </div>
+              <div class="form-grid">
+                <div class="field-group full-width">
+                  <label>KPI</label>
+                  <input type="text" [(ngModel)]="kpiRows[index].kpi" />
+                </div>
+                <div class="field-group">
+                  <label>Weight</label>
+                  <input type="text" [(ngModel)]="kpiRows[index].weight" />
+                </div>
+                <div class="field-group">
+                  <label>Weight Percentage</label>
+                  <input type="text" [(ngModel)]="kpiRows[index].weight_percentage" />
+                </div>
+                <div class="field-group full-width">
+                  <label>Definition / Measurement</label>
+                  <textarea rows="3" [(ngModel)]="kpiRows[index].defination_measurement"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

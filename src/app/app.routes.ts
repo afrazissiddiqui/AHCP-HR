@@ -36,6 +36,7 @@ import { WorkstationComponent } from './components/setup/workstation/workstation
 import { OvertimeListComponent } from './components/setup/overtime-list/overtime-list';
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
 import { KpiSetupComponent } from './components/setup/kpi-setup/kpi-setup';
+import { AddKpiSetupComponent } from './components/setup/kpi-setup/add-kpi-setup/add-kpi-setup';
 
 export const routes: Routes = [
   {
@@ -235,6 +236,11 @@ export const routes: Routes = [
     path: 'setup/workstation',
     component: WorkstationComponent,
     canActivate: [authGuard, requirePermission('workstation_form', 'list')],
+  },
+  {
+    path: 'setup/kpi-setup/add',
+    component: AddKpiSetupComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'setup/kpi-setup',

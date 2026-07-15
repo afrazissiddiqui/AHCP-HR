@@ -12,8 +12,8 @@
             <h3 class="form-panel-title">Available KPI Setup</h3>
             <p class="panel-subtitle">Review all KPI definitions from the system API.</p>
           </div>
-          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadKpiList()">
-            {{ loading() ? 'Loading…' : 'Refresh' }}
+          <button type="button" class="btn-refresh" [disabled]="loading()" (click)="goToAddKpi()">
+            {{ loading() ? 'Loading…' : 'Add KPI' }}
           </button>
         </div>
 
