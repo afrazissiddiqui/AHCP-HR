@@ -106,8 +106,6 @@
         </table>
       </div>
 
-      
-
       <div class="table-pagination">
         <div class="pagination-info">
           Showing {{ filteredList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to
@@ -127,5 +125,111 @@
             <option *ngFor="let size of pageSizeOptions" [value]="size">Show {{ size }}</option>
           </select>
         </div>
+      </div>
+    </div>
+
+    <div class="dialog-backdrop" *ngIf="showDetailDialog()" (click)="closeDetailDialog()"></div>
+    <div class="js-detail-modal" *ngIf="showDetailDialog()">
+      <div class="js-modal-header">
+        <h2>AGP details</h2>
+        <button type="button" class="js-close-modal" (click)="closeDetailDialog()" aria-label="Close">×</button>
+      </div>
+      <div class="js-modal-body">
+        <div *ngIf="detailLoading()" class="igp-detail-skeleton-table">
+          <div class="igp-skeleton igp-skeleton--section-title"></div>
+          <div class="js-detail-grid">
+            <div class="js-detail-item" *ngFor="let item of skeletonDetailFields">
+              <span class="igp-skeleton igp-skeleton--label"></span>
+              <span class="igp-skeleton igp-skeleton--value"></span>
+            </div>
+          </div>
+          <div class="igp-skeleton igp-skeleton--remarks"></div>
+        </div>
+
+        <ng-container *ngIf="!detailLoading() && selectedRow()">
+          <section class="js-detail-section">
+            <h3>Basic information</h3>
+            <div class="js-detail-grid">
+              <div class="js-detail-item">
+                <label>AGP no.</label>
+                <span>{{ selectedRow()?.referenceNo || '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Date</label>
+                <span>{{ selectedRow()?.submittedDate || '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Type</label>
+                <span>{{ selectedRow()?.type || '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Business partner</label>
+                <span>{{ selectedRow()?.businessPartnerName || '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Requesting department</label>
+                <span>{{ selectedRow()?.requestingDepartment || '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Vehicle no.</label>
+                <span>{{ selectedRow()?.vehicleNo || '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Status</label>
+                <span>{{ selectedRow()?.status || '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Total qty sent</label>
+                <span>{{ selectedRow()?.totalQtySent ?? '—' }}</span>
+              </div>
+              <div class="js-detail-item">
+                <label>Total qty received</label>
+                <span>{{ selectedRow()?.totalQtyReceived ?? '—' }}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="js-detail-section" *ngIf="selectedRow()?.lines?.length">
+            <h3>Line items</h3>
+            <table class="mountain-table">
+              <thead>
+                <tr>
+                  <th>Sr.#</th>
+                  <th>Item code</th>
+                  <th>Item name</th>
+                  <th>Serial no.</th>
+                  <th>Category</th>
+                  <th>Packing</th>
+                  <th>Quality</th>
+                  <th>Qty sent</th>
+                  <th>Qty received</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let line of selectedRow()?.lines ?? []; let index = index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ line.itemCode || '—' }}</td>
+                  <td>{{ line.itemName || '—' }}</td>
+                  <td>{{ line.serialNumbers || '—' }}</td>
+                  <td>{{ line.category || '—' }}</td>
+                  <td>{{ line.packingCondition || '—' }}</td>
+                  <td>{{ line.productQuality || '—' }}</td>
+                  <td>{{ line.qtySent || '—' }}</td>
+                  <td>{{ line.qtyReceived || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="js-detail-section" *ngIf="selectedRow()?.remarks">
+            <h3>Remarks</h3>
+            <div class="js-detail-full">
+              <p>{{ selectedRow()?.remarks }}</p>
+            </div>
+          </section>
+        </ng-container>
+      </div>
+      <div class="js-modal-footer">
+        <button type="button" class="btn-default" (click)="closeDetailDialog()">Close</button>
       </div>
     </div>

@@ -83,4 +83,27 @@ describe('IgpComponent', () => {
     expect(markup).toContain('Widget');
     expect(markup).toContain('Line items');
   });
+
+  it('opens the detail modal when View is clicked', () => {
+    const record = {
+      Id: 101,
+      referenceNo: 'IGP-001',
+      businessPartnerName: 'ABC Traders',
+      department: 'Stores',
+      status: 'Posted',
+      submittedDate: '2026-07-14',
+      type: 'Inward',
+      vehicleNo: 'ABC-123',
+      location: 'Lahore',
+      totalQty: 25,
+      remarks: 'Ready for dispatch',
+      lines: [],
+    } as unknown as IgpRecord;
+
+    component.viewDetails(record);
+    fixture.detectChanges();
+
+    expect(component.showDetailDialog()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('IGP details');
+  });
 });

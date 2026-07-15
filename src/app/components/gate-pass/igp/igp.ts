@@ -127,7 +127,7 @@ export class IgpComponent implements OnInit {
     }
 
     this.showDetailDialog.set(true);
-    this.selectedRow.set(null);
+    this.selectedRow.set(record);
     this.detailLoading.set(true);
 
     this.igpService.fetchInwardGatePassDetail(record.Id).subscribe({
@@ -136,8 +136,8 @@ export class IgpComponent implements OnInit {
         this.detailLoading.set(false);
       },
       error: (error: unknown) => {
+        this.selectedRow.set(record);
         this.detailLoading.set(false);
-        this.showDetailDialog.set(false);
         this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load IGP details.'),
