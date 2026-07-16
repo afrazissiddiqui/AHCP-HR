@@ -70,7 +70,7 @@ export class CreateAgpComponent implements OnInit {
   }
 
   readonly agpType = AGP_TYPE;
-  type = 'Stand Alone Documents';
+  type = 'Purchase Order';
   documentDate = '';
   businessPartnerCode = '';
   baseDocNo = '';
@@ -106,7 +106,7 @@ export class CreateAgpComponent implements OnInit {
   showBaseDocModal = false;
 
   departmentOptions: string[] = [];
-  readonly typeOptions = ['Stand Alone Documents'] as const;
+  readonly typeOptions = ['Purchase Order', 'Stand Alone Documents'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 
@@ -148,7 +148,6 @@ export class CreateAgpComponent implements OnInit {
     this.pageTitle = 'Update AGP';
     this.submitButtonLabel = 'Update AGP';
     this.loading = true;
-    this.type = 'Stand Alone Documents';
 
     this.agpService
       .fetchArticleGatePassDetail(editId)
