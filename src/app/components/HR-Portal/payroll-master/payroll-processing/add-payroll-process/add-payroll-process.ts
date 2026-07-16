@@ -102,6 +102,8 @@ export type PayrollColumnTone =
   | 'bonuses'
   | 'providentFund'
   | 'socialSecurity'
+  | 'eobi'
+  | 'other'
   | 'loan'
   | 'final'
   | 'approval';
@@ -196,6 +198,8 @@ export class AddPayrollProcessComponent implements OnInit {
     { id: 'bonuses', label: 'Bonuses', tone: 'bonuses' },
     { id: 'providentFund', label: 'Provident Fund', tone: 'providentFund' },
     { id: 'socialSecurity', label: 'Social Security', tone: 'socialSecurity' },
+    { id: 'eobi', label: 'EOBI', tone: 'eobi' },
+    { id: 'other', label: 'Other', tone: 'other' },
     { id: 'loan', label: 'Loan Adjustment', tone: 'loan' },
     { id: 'final', label: 'Final Totals', tone: 'final' },
     { id: 'approval', label: 'Approval', tone: 'approval' },
@@ -217,6 +221,9 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'providentFund', label: 'P.Fund (Employee)', groupId: 'providentFund', type: 'readonly', minWidth: 152 },
     { key: 'socialSecurityPunjab', label: 'Punjab', groupId: 'socialSecurity', type: 'readonly', minWidth: 145 },
     { key: 'socialSecurityKpk', label: 'KPK', groupId: 'socialSecurity', type: 'readonly', minWidth: 145 },
+    { key: 'eobiEmployer', label: 'EOBI (Employer)', groupId: 'eobi', type: 'readonly', minWidth: 152 },
+    { key: 'eobiEmployee', label: 'EOBI (Employee)', groupId: 'eobi', type: 'readonly', minWidth: 152 },
+    { key: 'arrears', label: 'Arrears', groupId: 'other', type: 'currency', minWidth: 145 },
     { key: 'loanAdjustment', label: 'Loan Adjustment', groupId: 'loan', type: 'currency', minWidth: 158 },
     { key: 'loanAdvForm', label: 'Loan Adv Form', groupId: 'loan', type: 'currency', minWidth: 152 },
     { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },

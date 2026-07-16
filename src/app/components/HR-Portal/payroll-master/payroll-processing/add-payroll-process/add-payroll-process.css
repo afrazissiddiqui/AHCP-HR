@@ -528,6 +528,14 @@
   border-right-color: #d4736e;
 }
 
+.comp-section-end--eobi {
+  border-right-color: #c97d2b;
+}
+
+.comp-section-end--other {
+  border-right-color: #8b5fbf;
+}
+
 .comp-section-end--deductions {
   border-right-color: #c96464;
 }
@@ -569,6 +577,16 @@
 .tone-social-security {
   background: #f5c9c5;
   border-top-color: #d4736e;
+}
+
+.tone-eobi {
+  background: #f7d8b2;
+  border-top-color: #c97d2b;
+}
+
+.tone-other {
+  background: #e8d8f0;
+  border-top-color: #8b5fbf;
 }
 
 .tone-deductions {
