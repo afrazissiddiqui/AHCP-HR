@@ -297,6 +297,17 @@ export class CreateIgpComponent implements OnInit {
     this.itemMasterService.applyToLine(line, item);
   }
 
+  private hydrateLinesFromItemMaster(): void {
+    this.itemMasterService.ensureLoaded().subscribe(() => {
+      this.lines = this.lines.map((line) => {
+        if (!line.deleted) {
+          this.itemMasterService.applyCatalogDefaultsToLine(line);
+        }
+        return line;
+      });
+    });
+  }
+
   applyBusinessPartner(partner: GatePassBusinessPartner): void {
     this.businessPartnerCode = partner.code;
     this.businessPartnerName = partner.name;
@@ -325,14 +336,34 @@ export class CreateIgpComponent implements OnInit {
     if (this.editingId) {
       return;
     }
-    this.baseDocNo = '';
+
+    this.clearBaseDocumentDerivedFields();
   }
 
   clearBaseDocumentSelection(): void {
     if (this.editingId) {
       return;
     }
+
+    this.clearBaseDocumentDerivedFields();
+  }
+
+  private clearBaseDocumentDerivedFields(): void {
     this.baseDocNo = '';
+    this.businessPartnerCode = '';
+    this.businessPartnerName = '';
+    this.vehicleNo = '';
+    this.fromUnit = '';
+    this.kantaSlip = '';
+    this.biltyNo = '';
+    this.store = '';
+    this.driverName = '';
+    this.driverCnic = '';
+    this.driverPhone = '';
+    this.weight = '';
+    this.location = '';
+    this.remarks = '';
+    this.lines = [];
   }
 
   openBaseDocumentModal(): void {
@@ -385,6 +416,7 @@ export class CreateIgpComponent implements OnInit {
         remarks: l.remarks ?? '',
         deleted: false,
       })) ?? [];
+    this.hydrateLinesFromItemMaster();
   }
 
   submitForm(): void {
@@ -456,6 +488,7 @@ export class CreateIgpComponent implements OnInit {
     this.employee = emptyIfDash(record.employee);
     this.remarks = emptyIfDash(record.remarks ?? '');
     this.lines = record.lines.length ? record.lines.map((line) => ({ ...line })) : [];
+    this.hydrateLinesFromItemMaster();
   }
 
   private buildPayload(): IgpAddPayload {

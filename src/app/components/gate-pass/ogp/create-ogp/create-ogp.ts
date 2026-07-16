@@ -328,14 +328,34 @@ export class CreateOgpComponent implements OnInit {
     if (this.editingId) {
       return;
     }
-    this.baseDocNo = '';
+
+    this.clearBaseDocumentDerivedFields();
   }
 
   clearBaseDocumentSelection(): void {
     if (this.editingId) {
       return;
     }
+
+    this.clearBaseDocumentDerivedFields();
+  }
+
+  private clearBaseDocumentDerivedFields(): void {
     this.baseDocNo = '';
+    this.businessPartnerCode = '';
+    this.businessPartnerName = '';
+    this.vehicleNo = '';
+    this.fromUnit = '';
+    this.kantaSlip = '';
+    this.biltyNo = '';
+    this.store = '';
+    this.driverName = '';
+    this.driverCnic = '';
+    this.driverPhone = '';
+    this.weight = '';
+    this.location = '';
+    this.remarks = '';
+    this.lines = [];
   }
 
   openBaseDocumentModal(): void {

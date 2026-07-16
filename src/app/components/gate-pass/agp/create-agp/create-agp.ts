@@ -348,14 +348,42 @@ export class CreateAgpComponent implements OnInit {
     if (this.editingId) {
       return;
     }
-    this.baseDocNo = '';
+
+    this.clearBaseDocumentDerivedFields();
   }
 
   clearBaseDocumentSelection(): void {
     if (this.editingId) {
       return;
     }
+
+    this.clearBaseDocumentDerivedFields();
+  }
+
+  private clearBaseDocumentDerivedFields(): void {
     this.baseDocNo = '';
+    this.businessPartnerCode = '';
+    this.businessPartnerName = '';
+    this.vehicleNo = '';
+    this.reasonForMovement = '';
+    this.requestingEmployee = '';
+    this.requestingDepartment = '';
+    this.requestedBy = '';
+    this.issuedTo = '';
+    this.articleOutDate = '';
+    this.articleReturnedDate = '';
+    this.location = '';
+    this.store = '';
+    this.kantaSlip = '';
+    this.driverName = '';
+    this.driverCnic = '';
+    this.driverPhone = '';
+    this.biltyNo = '';
+    this.weight = '';
+    this.attachmentFileName = '';
+    this.headOfSupplyChainApproval = false;
+    this.remarks = '';
+    this.lines = [];
   }
 
   openBaseDocumentModal(): void {

@@ -30,6 +30,29 @@ export interface GatePassLineItemFields {
   uom?: string;
 }
 
+function pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
+  for (const source of sources) {
+    for (const key of keys) {
+      const value = source[key];
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        return String(value).trim();
+      }
+    }
+  }
+  return '';
+}
+
+export function mapGatePassItemRecord(item: Record<string, unknown>): GatePassItemMaster {
+  return {
+    itemCode: pickString([item], ['itemCode', 'item_code', 'ItemCode', 'code', 'Code']),
+    itemName: pickString([item], ['itemName', 'item_name', 'ItemName', 'name', 'Name', 'description']),
+    category: pickString([item], ['category', 'Category']),
+    packingCondition: pickString([item], ['packingCondition', 'packing_condition', 'PackingCondition']),
+    productQuality: pickString([item], ['productQuality', 'product_quality', 'ProductQuality']),
+    uom: pickString([item], ['uom', 'UOM', 'Uom', 'uomCode', 'UOMCode', 'unit', 'Unit']),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class GatePassItemMasterService {
   private readonly http = inject(HttpClient);
@@ -105,6 +128,46 @@ export class GatePassItemMasterService {
     }
   }
 
+  applyCatalogDefaultsToLine(line: GatePassLineItemFields): void {
+    const match = this.findMatchingCatalogItem(line);
+    if (!match) {
+      return;
+    }
+
+    if ((line.category ?? '').trim() === '') {
+      line.category = match.category;
+    }
+    if ((line.packingCondition ?? '').trim() === '') {
+      line.packingCondition = match.packingCondition;
+    }
+    if ((line.productQuality ?? '').trim() === '') {
+      line.productQuality = match.productQuality;
+    }
+    if ((line.uom ?? '').trim() === '') {
+      line.uom = match.uom;
+    }
+  }
+
+  private findMatchingCatalogItem(line: GatePassLineItemFields): GatePassItemMaster | undefined {
+    const itemCode = line.itemCode?.trim().toLowerCase();
+    const itemName = line.itemName?.trim().toLowerCase();
+
+    if (!itemCode && !itemName) {
+      return undefined;
+    }
+
+    return this.catalog().find((item) => {
+      const catalogCode = item.itemCode.toLowerCase();
+      const catalogName = item.itemName.toLowerCase();
+
+      if (itemCode && (catalogCode === itemCode || catalogCode.includes(itemCode))) {
+        return true;
+      }
+
+      return Boolean(itemName && (catalogName === itemName || catalogName.includes(itemName)));
+    });
+  }
+
   private extractApiItems(response: unknown): Array<Record<string, unknown>> {
     if (!response) {
       return [];
@@ -144,25 +207,6 @@ export class GatePassItemMasterService {
   }
 
   private mapItem(item: Record<string, unknown>): GatePassItemMaster {
-    return {
-      itemCode: this.pickString([item], ['itemCode', 'item_code', 'ItemCode', 'code', 'Code']),
-      itemName: this.pickString([item], ['itemName', 'item_name', 'ItemName', 'name', 'Name', 'description']),
-      category: this.pickString([item], ['category', 'Category']),
-      packingCondition: this.pickString([item], ['packingCondition', 'packing_condition', 'PackingCondition']),
-      productQuality: this.pickString([item], ['productQuality', 'product_quality', 'ProductQuality']),
-      uom: this.pickString([item], ['uom', 'UOM', 'Uom', 'unit']),
-    };
-  }
-
-  private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {
-    for (const source of sources) {
-      for (const key of keys) {
-        const value = source[key];
-        if (value !== undefined && value !== null && String(value).trim() !== '') {
-          return String(value).trim();
-        }
-      }
-    }
-    return '';
+    return mapGatePassItemRecord(item);
   }
 }
