@@ -85,6 +85,8 @@ export interface PayrollProcessRow {
   overtime: number;
   providentFund: number;
   providentFundEmployer: number;
+  socialSecurityPunjab: number;
+  socialSecurityKpk: number;
   gratuity: number;
   eobiEmployee: number;
   eobiEmployer: number;
@@ -94,7 +96,15 @@ export interface PayrollProcessRow {
   approved: boolean;
 }
 
-export type PayrollColumnTone = 'salary' | 'allowances' | 'bonuses' | 'providentFund' | 'loan' | 'final' | 'approval';
+export type PayrollColumnTone =
+  | 'salary'
+  | 'allowances'
+  | 'bonuses'
+  | 'providentFund'
+  | 'socialSecurity'
+  | 'loan'
+  | 'final'
+  | 'approval';
 
 export type PayrollColumnType = 'currency' | 'readonly' | 'readonly-pill' | 'approval';
 
@@ -185,6 +195,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { id: 'allowances', label: 'Allowances', tone: 'allowances' },
     { id: 'bonuses', label: 'Bonuses', tone: 'bonuses' },
     { id: 'providentFund', label: 'Provident Fund', tone: 'providentFund' },
+    { id: 'socialSecurity', label: 'Social Security', tone: 'socialSecurity' },
     { id: 'loan', label: 'Loan Adjustment', tone: 'loan' },
     { id: 'final', label: 'Final Totals', tone: 'final' },
     { id: 'approval', label: 'Approval', tone: 'approval' },
@@ -204,6 +215,8 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'readonly', minWidth: 145 },
     { key: 'providentFundEmployer', label: 'P.Fund (Employer)', groupId: 'providentFund', type: 'readonly', minWidth: 152 },
     { key: 'providentFund', label: 'P.Fund (Employee)', groupId: 'providentFund', type: 'readonly', minWidth: 152 },
+    { key: 'socialSecurityPunjab', label: 'Punjab', groupId: 'socialSecurity', type: 'readonly', minWidth: 145 },
+    { key: 'socialSecurityKpk', label: 'KPK', groupId: 'socialSecurity', type: 'readonly', minWidth: 145 },
     { key: 'loanAdjustment', label: 'Loan Adjustment', groupId: 'loan', type: 'currency', minWidth: 158 },
     { key: 'loanAdvForm', label: 'Loan Adv Form', groupId: 'loan', type: 'currency', minWidth: 152 },
     { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
@@ -281,6 +294,8 @@ export class AddPayrollProcessComponent implements OnInit {
       overtime: 0,
       providentFund: 0,
       providentFundEmployer: 0,
+      socialSecurityPunjab: 0,
+      socialSecurityKpk: 0,
       gratuity: 0,
       eobiEmployee: 0,
       eobiEmployer: 0,
@@ -309,6 +324,8 @@ export class AddPayrollProcessComponent implements OnInit {
       totals.overtime += row.overtime;
       totals.providentFund += row.providentFund;
       totals.providentFundEmployer += row.providentFundEmployer;
+      totals.socialSecurityPunjab += row.socialSecurityPunjab;
+      totals.socialSecurityKpk += row.socialSecurityKpk;
       totals.gratuity += row.gratuity;
       totals.eobiEmployee += row.eobiEmployee;
       totals.eobiEmployer += row.eobiEmployer;
@@ -987,6 +1004,8 @@ export class AddPayrollProcessComponent implements OnInit {
       overtime: 0,
       providentFund: 0,
       providentFundEmployer: 0,
+      socialSecurityPunjab: 0,
+      socialSecurityKpk: 0,
       gratuity: 0,
       eobiEmployee: 0,
       eobiEmployer: 0,
@@ -1051,6 +1070,8 @@ export class AddPayrollProcessComponent implements OnInit {
       overtime: 0,
       providentFund: 0,
       providentFundEmployer: 0,
+      socialSecurityPunjab: 0,
+      socialSecurityKpk: 0,
       gratuity: 0,
       eobiEmployee: 0,
       eobiEmployer: 0,
@@ -1104,6 +1125,8 @@ export class AddPayrollProcessComponent implements OnInit {
       overtime,
       providentFund,
       providentFundEmployer: providentFund,
+      socialSecurityPunjab: 0,
+      socialSecurityKpk: 0,
       yearsOfService,
       gratuity,
       eobiEmployee,
