@@ -1,4 +1,4 @@
-import { AccessRequirement } from '../utils/access-requirement.util';
+  import { AccessRequirement } from '../utils/access-requirement.util';
 
 export interface HrMenuOption {
   label: string;
