@@ -51,6 +51,7 @@ export class GatePassItemSearchInputComponent {
   onBlur(): void {
     setTimeout(() => {
       this.suggestionsOpen = false;
+      this.stopTrackingPosition();
     }, 150);
   }
 
@@ -70,6 +71,7 @@ export class GatePassItemSearchInputComponent {
     this.itemSelected.emit(item);
     this.suggestionsOpen = false;
     this.suggestionStyle = null;
+    this.stopTrackingPosition();
   }
 
   private refreshSuggestions(query: string): void {
@@ -77,24 +79,31 @@ export class GatePassItemSearchInputComponent {
       this.suggestions = [];
       this.suggestionsOpen = false;
       this.loadingSuggestions = false;
+      this.stopTrackingPosition();
       return;
     }
 
     this.suggestionsOpen = true;
     this.loadingSuggestions = true;
-    // ensure suggestion position is tracked while open
+    this.updateSuggestionPosition();
     window.addEventListener('scroll', this.onWindowChange, true);
     window.addEventListener('resize', this.onWindowChange);
     this.itemMaster.ensureLoaded().subscribe({
       next: () => {
         this.suggestions = this.itemMaster.search(query);
         this.loadingSuggestions = false;
+        this.updateSuggestionPosition();
       },
       error: () => {
         this.suggestions = [];
         this.loadingSuggestions = false;
       },
     });
+  }
+
+  private stopTrackingPosition(): void {
+    window.removeEventListener('scroll', this.onWindowChange, true);
+    window.removeEventListener('resize', this.onWindowChange);
   }
 
   private updateSuggestionPosition(): void {
@@ -128,8 +137,7 @@ export class GatePassItemSearchInputComponent {
   // Provide a simple removal method bound to window unload to be safe
   constructor() {
     window.addEventListener('beforeunload', () => {
-      window.removeEventListener('scroll', this.onWindowChange, true);
-      window.removeEventListener('resize', this.onWindowChange);
+      this.stopTrackingPosition();
     });
   }
 }

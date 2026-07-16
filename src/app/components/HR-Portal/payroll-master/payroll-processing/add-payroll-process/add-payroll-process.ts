@@ -84,6 +84,7 @@ export interface PayrollProcessRow {
   overtimeHours: number;
   overtime: number;
   providentFund: number;
+  providentFundEmployer: number;
   gratuity: number;
   eobiEmployee: number;
   eobiEmployer: number;
@@ -93,14 +94,7 @@ export interface PayrollProcessRow {
   approved: boolean;
 }
 
-export type PayrollColumnTone =
-  | 'salary'
-  | 'allowances'
-  | 'bonuses'
-  | 'deductions'
-  | 'loan'
-  | 'final'
-  | 'approval';
+export type PayrollColumnTone = 'salary' | 'allowances' | 'bonuses' | 'providentFund' | 'loan' | 'final' | 'approval';
 
 export type PayrollColumnType = 'currency' | 'readonly' | 'readonly-pill' | 'approval';
 
@@ -190,7 +184,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { id: 'salary', label: 'Basic Salary', tone: 'salary' },
     { id: 'allowances', label: 'Allowances', tone: 'allowances' },
     { id: 'bonuses', label: 'Bonuses', tone: 'bonuses' },
-    { id: 'deductions', label: 'Deduction', tone: 'deductions' },
+    { id: 'providentFund', label: 'Provident Fund', tone: 'providentFund' },
     { id: 'loan', label: 'Loan Adjustment', tone: 'loan' },
     { id: 'final', label: 'Final Totals', tone: 'final' },
     { id: 'approval', label: 'Approval', tone: 'approval' },
@@ -208,11 +202,8 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'bonus', label: 'Bonus', groupId: 'bonuses', type: 'currency', minWidth: 145 },
     { key: 'overtimeHours', label: 'OT Hours', groupId: 'bonuses', type: 'currency', minWidth: 96 },
     { key: 'overtime', label: 'Overtime', groupId: 'bonuses', type: 'readonly', minWidth: 145 },
-    { key: 'providentFund', label: 'Provident Fund', groupId: 'deductions', type: 'readonly', minWidth: 152 },
-    { key: 'gratuity', label: 'Gratuity', groupId: 'deductions', type: 'readonly', minWidth: 172 },
-    { key: 'eobiEmployee', label: 'EOBI (Employee)', groupId: 'deductions', type: 'readonly', minWidth: 152 },
-    { key: 'eobiEmployer', label: 'EOBI (Employer)', groupId: 'deductions', type: 'readonly', minWidth: 152 },
-    { key: 'arrears', label: 'Arrears', groupId: 'deductions', type: 'currency', minWidth: 145 },
+    { key: 'providentFundEmployer', label: 'P.Fund (Employer)', groupId: 'providentFund', type: 'readonly', minWidth: 152 },
+    { key: 'providentFund', label: 'P.Fund (Employee)', groupId: 'providentFund', type: 'readonly', minWidth: 152 },
     { key: 'loanAdjustment', label: 'Loan Adjustment', groupId: 'loan', type: 'currency', minWidth: 158 },
     { key: 'loanAdvForm', label: 'Loan Adv Form', groupId: 'loan', type: 'currency', minWidth: 152 },
     { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
@@ -289,6 +280,7 @@ export class AddPayrollProcessComponent implements OnInit {
       overtimeHours: 0,
       overtime: 0,
       providentFund: 0,
+      providentFundEmployer: 0,
       gratuity: 0,
       eobiEmployee: 0,
       eobiEmployer: 0,
@@ -316,6 +308,7 @@ export class AddPayrollProcessComponent implements OnInit {
       totals.overtimeHours += row.overtimeHours;
       totals.overtime += row.overtime;
       totals.providentFund += row.providentFund;
+      totals.providentFundEmployer += row.providentFundEmployer;
       totals.gratuity += row.gratuity;
       totals.eobiEmployee += row.eobiEmployee;
       totals.eobiEmployer += row.eobiEmployer;
@@ -627,6 +620,9 @@ export class AddPayrollProcessComponent implements OnInit {
     }
     if (column.key === 'finalGrossSalary') {
       return this.groupTotals().finalGrossSalary;
+    }
+    if (column.key === 'providentFundEmployer') {
+      return this.groupTotals().providentFundEmployer;
     }
     const totals = this.groupTotals();
     return totals[column.key as keyof typeof totals] ?? 0;
@@ -990,6 +986,7 @@ export class AddPayrollProcessComponent implements OnInit {
       overtimeHours: 0,
       overtime: 0,
       providentFund: 0,
+      providentFundEmployer: 0,
       gratuity: 0,
       eobiEmployee: 0,
       eobiEmployer: 0,
@@ -1053,6 +1050,7 @@ export class AddPayrollProcessComponent implements OnInit {
       overtimeHours: 0,
       overtime: 0,
       providentFund: 0,
+      providentFundEmployer: 0,
       gratuity: 0,
       eobiEmployee: 0,
       eobiEmployer: 0,
@@ -1105,6 +1103,7 @@ export class AddPayrollProcessComponent implements OnInit {
       overtimeHours,
       overtime,
       providentFund,
+      providentFundEmployer: providentFund,
       yearsOfService,
       gratuity,
       eobiEmployee,
