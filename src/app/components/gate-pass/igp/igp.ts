@@ -146,6 +146,15 @@ export class IgpComponent implements OnInit {
     });
   }
 
+  onUpdate(record: IgpRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing IGP id.');
+      return;
+    }
+
+    void this.router.navigate(['/gate-pass/igp/edit', record.Id]);
+  }
+
   async onDelete(record: IgpRecord): Promise<void> {
     const result = await this.alertService.confirm(
       'Delete IGP?',

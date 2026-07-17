@@ -11,6 +11,8 @@ import { Router } from '@angular/router';
 describe('IgpComponent', () => {
   let component: IgpComponent;
   let fixture: ComponentFixture<IgpComponent>;
+  let router: Router;
+  let navigatedRoute: unknown[] | null = null;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -26,7 +28,16 @@ describe('IgpComponent', () => {
             removeIgpRecord: () => undefined,
           },
         },
-        { provide: Router, useValue: { navigateByUrl: () => Promise.resolve(true) } },
+        {
+          provide: Router,
+          useValue: {
+            navigateByUrl: () => Promise.resolve(true),
+            navigate: (commands: unknown[]) => {
+              navigatedRoute = commands;
+              return Promise.resolve(true);
+            },
+          },
+        },
         { provide: GatePassLayoutService, useValue: { toggleSidebar: () => undefined } },
         {
           provide: AlertService,
@@ -44,6 +55,7 @@ describe('IgpComponent', () => {
 
     fixture = TestBed.createComponent(IgpComponent);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
@@ -105,5 +117,16 @@ describe('IgpComponent', () => {
 
     expect(component.showDetailDialog()).toBe(true);
     expect(fixture.nativeElement.textContent).toContain('IGP details');
+  });
+
+  it('navigates to the edit screen when Update is clicked', () => {
+    const record = {
+      Id: 101,
+      referenceNo: 'IGP-001',
+    } as unknown as IgpRecord;
+
+    component.onUpdate(record);
+
+    expect(navigatedRoute).toEqual(['/gate-pass/igp/edit', 101]);
   });
 });

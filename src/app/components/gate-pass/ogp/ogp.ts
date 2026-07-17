@@ -140,6 +140,15 @@ export class OgpComponent implements OnInit {
     });
   }
 
+  onUpdate(record: OgpRecord): void {
+    if (!record.Id) {
+      this.alertService.warning('Update', 'Unable to update this row: missing OGP id.');
+      return;
+    }
+
+    void this.router.navigate(['/gate-pass/ogp/edit', record.Id]);
+  }
+
   async onDelete(record: OgpRecord): Promise<void> {
     const result = await this.alertService.confirm(
       'Delete OGP?',

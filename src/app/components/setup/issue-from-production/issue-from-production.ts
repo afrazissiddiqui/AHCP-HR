@@ -375,13 +375,38 @@ export class IssueFromProductionComponent implements OnInit {
       lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
       itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
       itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
-      quantity: this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']) ?? 0,
-      warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse']),
-      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']),
+      quantity: this.pickProductionOrderItemQuantity(item),
+      warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']),
+      batchNumber: this.pickProductionOrderItemBatchNumber(item),
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
       baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
     };
+  }
+
+  private pickProductionOrderItemQuantity(item: Record<string, unknown>): number {
+    const quantity = this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty', 'IssuedQty', 'IssuedQty', 'PlannedQty', 'PlannedQty']);
+    if (quantity > 0) {
+      return quantity;
+    }
+
+    const firstBatch = this.pickFirstBatch(item);
+    return firstBatch ? this.pickNumber(firstBatch, ['Quantity', 'quantity', 'Qty', 'qty']) : 0;
+  }
+
+  private pickProductionOrderItemBatchNumber(item: Record<string, unknown>): string {
+    const batchNumber = this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']);
+    if (batchNumber) {
+      return batchNumber;
+    }
+
+    const firstBatch = this.pickFirstBatch(item);
+    return firstBatch ? this.pickString(firstBatch, ['BatchNo', 'BatchNum', 'batchNum', 'batch_number']) : '';
+  }
+
+  private pickFirstBatch(item: Record<string, unknown>): Record<string, unknown> | null {
+    const batches = this.pickArray(item, ['batches', 'Batches']);
+    return batches.find((batch): batch is Record<string, unknown> => !!batch && typeof batch === 'object') ?? null;
   }
 
   private extractDataArray(response: unknown, wrapperKeys: string[]): unknown[] {
