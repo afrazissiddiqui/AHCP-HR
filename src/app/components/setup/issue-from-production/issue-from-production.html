@@ -216,52 +216,56 @@
         <button type="button" class="sir-modal-close" (click)="closeProductionOrderItemsDialog()">×</button>
       </div>
       <div class="sir-modal-body">
-        <div class="sir-detail-section">
-          <h3>Production Order</h3>
-          <div class="sir-detail-grid">
-            <div class="js-detail-item"><label>PO No.:</label> <span>{{ selectedProductionOrder()?.docNum || '—' }}</span></div>
-            <div class="js-detail-item"><label>Post Date:</label> <span>{{ selectedProductionOrder()?.postDate || '—' }}</span></div>
-            <div class="js-detail-item"><label>Due Date:</label> <span>{{ selectedProductionOrder()?.dueDate || '—' }}</span></div>
-            <div class="js-detail-item"><label>Warehouse:</label> <span>{{ selectedProductionOrder()?.warehouse || '—' }}</span></div>
+        @if (productionOrderItemsLoading()) {
+          <p class="sir-modal-status-text">Loading production order items…</p>
+        } @else {
+          <div class="sir-detail-section">
+            <h3>Production Order</h3>
+            <div class="sir-detail-grid">
+              <div class="js-detail-item"><label>PO No.:</label> <span>{{ selectedProductionOrder()?.docNum || '—' }}</span></div>
+              <div class="js-detail-item"><label>Post Date:</label> <span>{{ selectedProductionOrder()?.postDate || '—' }}</span></div>
+              <div class="js-detail-item"><label>Due Date:</label> <span>{{ selectedProductionOrder()?.dueDate || '—' }}</span></div>
+              <div class="js-detail-item"><label>Warehouse:</label> <span>{{ selectedProductionOrder()?.warehouse || '—' }}</span></div>
+            </div>
           </div>
-        </div>
 
-        <div class="sir-data-table-wrapper">
-          <table class="sir-modal-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Item Code</th>
-                <th>Description</th>
-                <th>Qty</th>
-                <th>Warehouse</th>
-                <th>Batch No.</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of productionOrderItems(); track orderItemKey(item)) {
-                <tr
-                  class="sir-modal-row"
-                  [class.sir-modal-row--selected]="isProductionOrderItemSelected(item)"
-                  (click)="toggleProductionOrderItem(item)"
-                >
-                  <td>
-                    <input type="checkbox" [checked]="isProductionOrderItemSelected(item)" readonly />
-                  </td>
-                  <td>{{ item.itemCode }}</td>
-                  <td>{{ item.itemDescription }}</td>
-                  <td>{{ item.quantity }}</td>
-                  <td>{{ item.warehouse }}</td>
-                  <td>{{ item.batchNumber }}</td>
-                </tr>
-              } @empty {
+          <div class="sir-data-table-wrapper">
+            <table class="sir-modal-table">
+              <thead>
                 <tr>
-                  <td colspan="6" class="sir-modal-empty">No items available for this production order.</td>
+                  <th></th>
+                  <th>Item Code</th>
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Warehouse</th>
+                  <th>Batch No.</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                @for (item of productionOrderItems(); track orderItemKey(item)) {
+                  <tr
+                    class="sir-modal-row"
+                    [class.sir-modal-row--selected]="isProductionOrderItemSelected(item)"
+                    (click)="toggleProductionOrderItem(item)"
+                  >
+                    <td>
+                      <input type="checkbox" [checked]="isProductionOrderItemSelected(item)" readonly />
+                    </td>
+                    <td>{{ item.itemCode }}</td>
+                    <td>{{ item.itemDescription }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.warehouse }}</td>
+                    <td>{{ item.batchNumber }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="sir-modal-empty">No items available for this production order.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
       <div class="sir-modal-footer sir-modal-footer--split">
         <button type="button" class="sir-secondary-button" (click)="closeProductionOrderItemsDialog()">Cancel</button>

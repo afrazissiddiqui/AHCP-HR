@@ -70,6 +70,7 @@ export class IssueFromProductionComponent implements OnInit {
   readonly productionOrdersError = signal<string | null>(null);
   readonly productionOrderDialogOpen = signal(false);
   readonly productionOrderItemsDialogOpen = signal(false);
+  readonly productionOrderItemsLoading = signal(false);
   readonly selectedProductionOrder = signal<ProductionOrderRecord | null>(null);
   readonly selectedProductionOrderItemKeys = signal<Set<string>>(new Set());
   readonly productionOrderSearchText = signal('');
@@ -146,10 +147,31 @@ export class IssueFromProductionComponent implements OnInit {
   }
 
   chooseProductionOrder(order: ProductionOrderRecord): void {
-    this.selectedProductionOrder.set(order);
     this.productionOrderDialogOpen.set(false);
+    this.selectedProductionOrder.set(order);
     this.selectedProductionOrderItemKeys.set(new Set());
-    this.productionOrderItemsDialogOpen.set(true);
+
+    if (order.items?.length) {
+      this.productionOrderItemsDialogOpen.set(true);
+      return;
+    }
+
+    this.productionOrderItemsLoading.set(true);
+    this.receiptFromProductionService
+      .getProductionOrderDetails(order.docEntry)
+      .pipe(finalize(() => this.productionOrderItemsLoading.set(false)))
+      .subscribe({
+        next: (items) => {
+          this.selectedProductionOrder.set({ ...order, items });
+          this.productionOrderItemsDialogOpen.set(true);
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Load Failed',
+            formatApiErrorMessage(error, 'Could not load production order items.'),
+          );
+        },
+      });
   }
 
   closeProductionOrderItemsDialog(): void {
