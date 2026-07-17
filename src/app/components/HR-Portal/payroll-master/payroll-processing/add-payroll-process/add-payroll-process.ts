@@ -158,6 +158,7 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly pageSizeOptions = [10, 25, 50, 100];
   readonly remarks = signal('');
   readonly fuelPriceAdjust = signal(0);
+  readonly minimumWageAdjust = signal(0);
   readonly searchText = signal('');
   readonly selectedMonth = signal(new Date().getMonth() + 1);
   readonly selectedYear = signal(new Date().getFullYear());
@@ -392,6 +393,17 @@ export class AddPayrollProcessComponent implements OnInit {
 
   onFuelPriceAdjustChange(value: string | number): void {
     this.fuelPriceAdjust.set(this.parseAmount(value));
+    this.rowCache.update((cache) => {
+      const next = new Map(cache);
+      for (const [id, row] of next) {
+        next.set(id, this.recalculateRow(row));
+      }
+      return next;
+    });
+  }
+
+  onMinimumWageAdjustChange(value: string | number): void {
+    this.minimumWageAdjust.set(this.parseAmount(value));
     this.rowCache.update((cache) => {
       const next = new Map(cache);
       for (const [id, row] of next) {
@@ -1111,13 +1123,17 @@ export class AddPayrollProcessComponent implements OnInit {
 
     const yearsOfService = computeYearsOfService(row.dateOfJoining);
     const gratuity = computeGratuity(grossSalary, yearsOfService);
-    const minimumWage = this.payrollSetupService.minimumWage();
+    const minimumWage = this.minimumWageAdjust();
     const eobiEmployee = row.eobiApplicable
       ? computeEobiEmployeeContribution(minimumWage)
       : 0;
     const eobiEmployer = row.eobiApplicable
       ? computeEobiEmployerContribution(minimumWage)
       : 0;
+
+    // Social Security calculation based on branch
+    const socialSecurityPunjab = this.calculateSocialSecurityPunjab(minimumWage, row.location);
+    const socialSecurityKpk = this.calculateSocialSecurityKpk(minimumWage, row.location);
 
     return {
       ...row,
@@ -1132,13 +1148,29 @@ export class AddPayrollProcessComponent implements OnInit {
       overtime,
       providentFund,
       providentFundEmployer: providentFund,
-      socialSecurityPunjab: 0,
-      socialSecurityKpk: 0,
+      socialSecurityPunjab,
+      socialSecurityKpk,
       yearsOfService,
       gratuity,
       eobiEmployee,
       eobiEmployer,
     };
+  }
+
+  private calculateSocialSecurityPunjab(minimumWage: number, location: string): number {
+    // AHCP_HO and AHCP_FSD are Punjab: (Minimum wage * 1.4) * 0.06
+    if (['AHCP_HO', 'AHCP_FSD'].some((branch) => location?.includes(branch))) {
+      return this.parseAmount((minimumWage * 1.4) * 0.06);
+    }
+    return 0;
+  }
+
+  private calculateSocialSecurityKpk(minimumWage: number, location: string): number {
+    // AHCP_Peshawar is KPK: (Minimum wage * 1.6) * 0.06
+    if (location?.includes('AHCP_Peshawar')) {
+      return this.parseAmount((minimumWage * 1.6) * 0.06);
+    }
+    return 0;
   }
 
   /** Reads application-form Fuel Limit (liters), tolerating formatted API values. */

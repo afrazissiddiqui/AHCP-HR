@@ -48,15 +48,12 @@
               </select>
             </div>
             <div class="sir-field-row">
-              <label>Doc Date:</label>
+              <label>Posting Date:</label>
               <input type="date" [ngModel]="headerForm().documentDate" (ngModelChange)="updateHeaderField('documentDate', $event)">
             </div>
           </div>
           <div class="sir-form-column">
-            <div class="sir-field-row">
-              <label>Tax Date:</label>
-              <input type="date" [ngModel]="headerForm().postingDate" (ngModelChange)="updateHeaderField('postingDate', $event)">
-            </div>
+            
             <div class="sir-field-row">
               <label>Due Date:</label>
               <input type="date" [ngModel]="headerForm().dueDate" (ngModelChange)="updateHeaderField('dueDate', $event)">
