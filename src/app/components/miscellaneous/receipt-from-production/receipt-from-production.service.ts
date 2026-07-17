@@ -46,6 +46,8 @@ export interface ProductionOrderItem {
 export interface ProductionOrderRecord {
   docEntry: string;
   docNum: string;
+  seriesName: string;
+  orderType: string;
   itemCode: string;
   itemDescription: string;
   plannedQty: number;
@@ -56,6 +58,7 @@ export interface ProductionOrderRecord {
   startDate: string;
   status: string;
   warehouse: string;
+  branch: string;
   batchNumber: string;
   items?: ProductionOrderItem[];
 }
@@ -189,6 +192,8 @@ export class ReceiptFromProductionService {
         return {
           docEntry: this.pickString(item, ['DocEntry', 'docEntry']),
           docNum: this.pickString(item, ['DocNum', 'docNum']),
+          seriesName: this.pickString(item, ['SeriesName', 'seriesName', 'Series']),
+          orderType: this.pickString(item, ['Type', 'type', 'OrderType', 'orderType', 'DocumentType', 'docType']),
           itemCode: this.pickString(item, ['ItemCode', 'itemCode']),
           itemDescription: this.pickString(item, ['ProdName', 'itemDescription', 'Dscription']),
           plannedQty,
@@ -199,6 +204,7 @@ export class ReceiptFromProductionService {
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
           status: this.pickString(item, ['Status', 'status']),
           warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']),
+          branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
           batchNumber: this.pickProductionOrderBatchNumber(item),
         };
       });

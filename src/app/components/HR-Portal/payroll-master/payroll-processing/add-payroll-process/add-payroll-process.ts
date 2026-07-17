@@ -1125,12 +1125,11 @@ export class AddPayrollProcessComponent implements OnInit {
     const yearsOfService = computeYearsOfService(row.dateOfJoining);
     const gratuity = computeGratuity(grossSalary, yearsOfService);
     const minimumWage = this.minimumWageAdjust();
-    const eobiEmployee = row.eobiApplicable
-      ? computeEobiEmployeeContribution(minimumWage)
-      : 0;
-    const eobiEmployer = row.eobiApplicable
-      ? computeEobiEmployerContribution(minimumWage)
-      : 0;
+    // Compute EOBI based on configured minimum wage so values are visible when set.
+    // Applicability is still retained for display/validation, but EOBI amounts
+    // are derived from the minimum wage regardless of the flag to avoid empty columns.
+    const eobiEmployee = computeEobiEmployeeContribution(minimumWage);
+    const eobiEmployer = computeEobiEmployerContribution(minimumWage);
 
     // Social Security calculation based on branch
     const socialSecurityPunjab = this.calculateSocialSecurityPunjab(minimumWage, row.location);

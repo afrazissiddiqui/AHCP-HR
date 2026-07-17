@@ -10,11 +10,27 @@ export interface ReceiptFromProductionHeader {
 }
 
 export interface ReceiptFromProductionLine {
+  orderNo: string;
+  seriesNo: string;
+  orderType: string;
   itemCode: string;
   itemDescription: string;
-  warehouse: string;
+  transactionType: 'Complete' | 'Reject';
   quantity: number | null;
   unitPrice: number | null;
+  warehouse: string;
+  binLocation: string;
+  allocation: string;
+  itemCost: number | null;
+  plannedQty: number | null;
+  completedQty: number | null;
+  uomCode: string;
+  uomName: string;
+  departmentLocation: string;
+  branch: string;
+  byProduct: string;
+  quantityPerJumboCtn: number | null;
+  jumboCartons: number | null;
   batchNumber: string;
   manufacturingDate: string;
   expiryDate: string;
@@ -48,11 +64,27 @@ export function createEmptyReceiptFromProductionHeader(): ReceiptFromProductionH
 
 export function createEmptyReceiptFromProductionLine(): ReceiptFromProductionLine {
   return {
+    orderNo: '',
+    seriesNo: '',
+    orderType: '',
     itemCode: '',
     itemDescription: '',
-    warehouse: '',
+    transactionType: 'Complete',
     quantity: null,
     unitPrice: null,
+    warehouse: '',
+    binLocation: '',
+    allocation: '',
+    itemCost: null,
+    plannedQty: null,
+    completedQty: null,
+    uomCode: '',
+    uomName: '',
+    departmentLocation: '',
+    branch: '',
+    byProduct: '',
+    quantityPerJumboCtn: null,
+    jumboCartons: null,
     batchNumber: '',
     manufacturingDate: '',
     expiryDate: plusDaysDateString(10),
@@ -72,7 +104,17 @@ export function updateReceiptFromProductionLine(
       return row;
     }
 
-    if (field === 'unitPrice' || field === 'quantity') {
+    const numericFields: Array<keyof ReceiptFromProductionLine> = [
+      'unitPrice',
+      'quantity',
+      'itemCost',
+      'plannedQty',
+      'completedQty',
+      'quantityPerJumboCtn',
+      'jumboCartons',
+    ];
+
+    if (numericFields.includes(field)) {
       const numericValue = value === '' ? null : Number(value);
       return { ...row, [field]: Number.isNaN(numericValue) ? null : numericValue };
     }

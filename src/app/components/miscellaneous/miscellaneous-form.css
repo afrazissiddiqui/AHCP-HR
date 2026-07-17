@@ -661,6 +661,76 @@
   max-width: 72px;
 }
 
+.sir-col-uom-name {
+  width: 120px;
+  min-width: 112px;
+}
+
+.sir-col-dept-loc {
+  width: 160px;
+  min-width: 148px;
+}
+
+.sir-col-branch {
+  width: 120px;
+  min-width: 112px;
+}
+
+.sir-col-order-no {
+  width: 100px;
+  min-width: 96px;
+}
+
+.sir-col-series-no {
+  width: 100px;
+  min-width: 96px;
+}
+
+.sir-col-type {
+  width: 96px;
+  min-width: 92px;
+}
+
+.sir-col-trans-type {
+  width: 100px;
+  min-width: 96px;
+}
+
+.sir-col-bin {
+  width: 110px;
+  min-width: 100px;
+}
+
+.sir-col-allocation {
+  width: 110px;
+  min-width: 100px;
+}
+
+.sir-col-cost {
+  width: 100px;
+  min-width: 96px;
+}
+
+.sir-col-planned {
+  width: 96px;
+  min-width: 92px;
+}
+
+.sir-col-completed {
+  width: 96px;
+  min-width: 92px;
+}
+
+.sir-col-qty-jumbo {
+  width: 130px;
+  min-width: 120px;
+}
+
+.sir-col-jumbo-count {
+  width: 130px;
+  min-width: 120px;
+}
+
 .sir-col-price {
   width: 96px;
   min-width: 88px;
