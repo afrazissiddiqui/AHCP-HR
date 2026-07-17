@@ -44,6 +44,7 @@ import {
   computeProvidentFund,
   computeYearsOfService,
 } from '../../payroll-setup/payroll-setup.service';
+import { resolveBranchCode } from '../../../../setup/gl-account-determination/gl-account-branch.options';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   buildPaginationFooterItems,
@@ -1067,7 +1068,7 @@ export class AddPayrollProcessComponent implements OnInit {
       employmentNature: record.EmployeeNature,
       employmentType: record.EmploymentType,
       jobTitle: detail?.personalInfo.designation ?? record.Designation,
-      location: detail?.personalInfo.branchLocation ?? '',
+      location: resolveBranchCode(detail?.personalInfo.branchLocation ?? ''),
       workGradeLevel: detail?.personalInfo.workGradeLevel ?? '',
       dateOfJoining: remuneration?.dateOfJoining ?? '',
       yearsOfService: 0,
@@ -1158,16 +1159,18 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   private calculateSocialSecurityPunjab(minimumWage: number, location: string): number {
+    const branchCode = resolveBranchCode(location || '');
     // AHCP_HO and AHCP_FSD are Punjab: (Minimum wage * 1.4) * 0.06
-    if (['AHCP_HO', 'AHCP_FSD'].some((branch) => location?.includes(branch))) {
+    if (['01', '03'].includes(branchCode)) {
       return this.parseAmount((minimumWage * 1.4) * 0.06);
     }
     return 0;
   }
 
   private calculateSocialSecurityKpk(minimumWage: number, location: string): number {
+    const branchCode = resolveBranchCode(location || '');
     // AHCP_Peshawar is KPK: (Minimum wage * 1.6) * 0.06
-    if (location?.includes('AHCP_Peshawar')) {
+    if (branchCode === '02') {
       return this.parseAmount((minimumWage * 1.6) * 0.06);
     }
     return 0;
