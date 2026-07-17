@@ -189,6 +189,8 @@ export class ReceiptFromProductionService {
         const receiptQty = this.pickNumber(item, ['qty', 'receiptQty', 'Quantity', 'quantity']);
         const remainingQty = Math.max(plannedQty - completedQty, 0);
 
+        const items = this.extractOrderItems(item).map((line) => this.mapProductionOrderItem(line));
+
         return {
           docEntry: this.pickString(item, ['DocEntry', 'docEntry']),
           docNum: this.pickString(item, ['DocNum', 'docNum']),
@@ -203,11 +205,23 @@ export class ReceiptFromProductionService {
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
           status: this.pickString(item, ['Status', 'status']),
-          warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']),
+          warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode', 'wareHouse']),
           branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
           batchNumber: this.pickProductionOrderBatchNumber(item),
+          items,
         };
       });
+  }
+
+  private extractOrderItems(item: Record<string, unknown>): Record<string, unknown>[] {
+    const candidates = ['items', 'Items', 'DocumentLines', 'Lines', 'documentLines'];
+    for (const key of candidates) {
+      const value = item[key];
+      if (Array.isArray(value)) {
+        return value.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
+      }
+    }
+    return [];
   }
 
   private pickProductionOrderBatchNumber(item: Record<string, unknown>): string {
