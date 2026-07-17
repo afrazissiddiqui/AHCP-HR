@@ -47,7 +47,7 @@
           <thead>
             <tr>
               <th class="col-sr">Sr#</th>
-              <th [hidden]="!isColumnVisible('docNum')">Receipt No</th>
+              <th [hidden]="!isColumnVisible('docNum')">Document #</th>
               <th [hidden]="!isColumnVisible('docDate')">Posting Date</th>
               <th [hidden]="!isColumnVisible('seriesName')">Series</th>
               <th [hidden]="!isColumnVisible('branch')">Branch</th>
@@ -61,7 +61,7 @@
             @for (row of paginatedReceipts(); let idx = $index; track row.docEntry || row.docNum) {
               <tr>
                 <td class="col-sr">{{ ((currentPage() - 1) * pageSize) + idx + 1 }}</td>
-                <td [hidden]="!isColumnVisible('docNum')">{{ row.docNum }}</td>
+                <td [hidden]="!isColumnVisible('docNum')">{{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) || '—' }}</td>
                 <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate }}</td>
                 <td [hidden]="!isColumnVisible('seriesName')">{{ row.seriesName }}</td>
                 <td [hidden]="!isColumnVisible('branch')">{{ row.branch }}</td>
@@ -112,13 +112,13 @@
   <div class="misc-dialog-backdrop" (click)="closeDetailDialog()"></div>
   <div class="misc-detail-dialog" (click)="$event.stopPropagation()">
     <div class="misc-dialog-header">
-      <h3>Receipt #{{ row.docNum }}</h3>
+        <h3>Document {{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) }}</h3>
       <button type="button" class="misc-dialog-close" (click)="closeDetailDialog()">&times;</button>
     </div>
 
     <div class="misc-detail-body">
       <div class="misc-detail-grid">
-        <div class="misc-detail-field"><label>Receipt No</label><div>{{ row.docNum || '—' }}</div></div>
+      <div class="misc-detail-field"><label>Document #</label><div>{{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) || '—' }}</div></div>
         <div class="misc-detail-field"><label>Doc Entry</label><div>{{ row.docEntry || '—' }}</div></div>
         <div class="misc-detail-field"><label>Posting Date</label><div>{{ row.docDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Due Date</label><div>{{ row.docDueDate || '—' }}</div></div>

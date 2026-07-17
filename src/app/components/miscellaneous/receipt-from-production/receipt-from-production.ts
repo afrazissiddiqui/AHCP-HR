@@ -53,7 +53,7 @@ export class ReceiptFromProduction implements OnInit {
   readonly stickerData = signal<ProductionStickerData | null>(null);
   readonly receipts = signal<ReceiptFromProductionListItem[]>([]);
   readonly columns = signal<ReceiptColumn[]>([
-    { key: 'docNum', label: 'Receipt No', visible: true },
+    { key: 'docNum', label: 'Document #', visible: true },
     { key: 'docDate', label: 'Posting Date', visible: true },
     { key: 'seriesName', label: 'Series', visible: true },
     { key: 'branch', label: 'Branch', visible: true },
