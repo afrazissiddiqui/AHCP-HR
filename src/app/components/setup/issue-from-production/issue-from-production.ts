@@ -406,7 +406,7 @@ export class IssueFromProductionComponent implements OnInit {
 
   private pickFirstBatch(item: Record<string, unknown>): Record<string, unknown> | null {
     const batches = this.pickArray(item, ['batches', 'Batches']);
-    return batches.find((batch): batch is Record<string, unknown> => !!batch && typeof batch === 'object') ?? null;
+    return batches.find((batch): batch is Record<string, unknown> => !!batch && typeof batch === 'object' && !Array.isArray(batch)) ?? null;
   }
 
   private extractDataArray(response: unknown, wrapperKeys: string[]): unknown[] {
@@ -444,6 +444,16 @@ export class IssueFromProductionComponent implements OnInit {
       const value = item[key];
       if (Array.isArray(value)) {
         return value.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
+      }
+    }
+    return [];
+  }
+
+  private pickArray(source: Record<string, unknown>, keys: string[]): unknown[] {
+    for (const key of keys) {
+      const value = source[key];
+      if (Array.isArray(value)) {
+        return value;
       }
     }
     return [];
