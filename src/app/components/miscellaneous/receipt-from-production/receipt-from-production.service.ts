@@ -177,14 +177,43 @@ export class ReceiptFromProductionService {
     const firstBatch = this.pickFirstBatch(item);
     return {
       lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
-      itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
-      itemDescription: this.pickString(item, ['ItemName', 'itemName', 'Dscription', 'itemDescription', 'ProdName']),
+      itemCode: this.pickString(item, [
+        'ItemCode',
+        'itemCode',
+        'Item',
+        'ProductCode',
+        'ProdCode',
+        'Product',
+      ]),
+      itemDescription: this.pickString(item, [
+        'ItemName',
+        'itemName',
+        'ProdName',
+        'ProductName',
+        'Dscription',
+        'itemDescription',
+        'Name',
+      ]),
       quantity: this.pickProductionOrderItemQuantity(item),
       warehouse:
-        this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) ||
-        (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) : ''),
-      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) ||
-        (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) : ''),
+        this.pickString(item, [
+          'WhsCode',
+          'warehouse',
+          'Warehouse',
+          'wareHouse',
+          'Whs',
+          'WarehouseCode',
+        ]) || (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) : ''),
+      batchNumber:
+        this.pickString(item, [
+          'BatchNum',
+          'batchNum',
+          'batchNumber',
+          'batch_number',
+          'BatchNo',
+          'Batch',
+          'U_BatchNum',
+        ]) || (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) : ''),
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
       baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
@@ -232,7 +261,7 @@ export class ReceiptFromProductionService {
           seriesName: this.pickString(item, ['SeriesName', 'seriesName', 'Series']),
           orderType: this.pickString(item, ['Type', 'type', 'OrderType', 'orderType', 'DocumentType', 'docType']),
           itemCode: this.pickString(item, ['ItemCode', 'itemCode']),
-          itemDescription: this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'itemDescription', 'Dscription']),
+          itemDescription: this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'itemDescription', 'Dscription', 'Name']),
           plannedQty,
           completedQty,
           receiptQty: receiptQty > 0 ? receiptQty : remainingQty,
@@ -240,7 +269,7 @@ export class ReceiptFromProductionService {
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
           status: this.pickString(item, ['Status', 'status']),
-          warehouse: this.pickString(item, ['wareHouse', 'Warehouse', 'warehouse', 'WhsCode']),
+          warehouse: this.pickString(item, ['wareHouse', 'Warehouse', 'warehouse', 'WhsCode', 'Whs', 'WarehouseCode']),
           branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
           batchNumber: this.pickProductionOrderBatchNumber(item),
           items,
@@ -256,16 +285,24 @@ export class ReceiptFromProductionService {
         return value.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
       }
     }
+    // Sometimes APIs return a single object rather than an array for a single line
+    const singleCandidates = ['item', 'Item', 'line', 'Line', 'DocumentLine'];
+    for (const key of singleCandidates) {
+      const value = item[key];
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return [value as Record<string, unknown>];
+      }
+    }
     return [];
   }
 
   private hasProductionOrderItemFields(item: Record<string, unknown>): boolean {
     return (
-      this.pickString(item, ['ItemCode', 'itemCode']) !== '' ||
-      this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'itemDescription', 'Dscription']) !== '' ||
-      this.pickNumber(item, ['PlannedQty', 'plannedQty', 'Quantity', 'quantity', 'Qty', 'qty']) > 0 ||
-      this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) !== '' ||
-      this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) !== ''
+      this.pickString(item, ['ItemCode', 'itemCode', 'ProductCode', 'ProdCode', 'Item', 'Product']) !== '' ||
+      this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'itemDescription', 'Dscription', 'Name']) !== '' ||
+      this.pickNumber(item, ['PlannedQty', 'plannedQty', 'Quantity', 'quantity', 'Qty', 'qty', 'OpenQty']) > 0 ||
+      this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse', 'Whs', 'WarehouseCode']) !== '' ||
+      this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo', 'Batch', 'U_BatchNum']) !== ''
     );
   }
 
