@@ -319,7 +319,7 @@ export class IssueFromProductionComponent implements OnInit {
 
     this.saving.set(true);
     this.receiptFromProductionService
-      .create(payload as any)
+      .createIssueForProduction(payload as Record<string, unknown>)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {

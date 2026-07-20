@@ -157,6 +157,15 @@ export class ReceiptFromProductionService {
     );
   }
 
+  createIssueForProduction(
+    payload: Record<string, unknown>,
+  ): Observable<CreateReceiptFromProductionResponse> {
+    return this.http.post<CreateReceiptFromProductionResponse>(
+      apiUrl('createIssueForProduction'),
+      payload,
+    );
+  }
+
   private parseProductionOrderItems(response: unknown): ProductionOrderItem[] {
     const data = this.extractDataArray(response, ['production_order_items', 'items', 'data']);
     return data
@@ -170,17 +179,32 @@ export class ReceiptFromProductionService {
       lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
       itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
       itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
-      quantity: this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']) ??
-        (firstBatch ? this.pickNumber(firstBatch, ['Quantity', 'quantity', 'Qty', 'qty']) : 0),
+      quantity: this.pickProductionOrderItemQuantity(item),
       warehouse:
-        this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse']) ||
-        (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse']) : ''),
-      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']) ||
-        (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']) : ''),
+        this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) ||
+        (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) : ''),
+      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) ||
+        (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) : ''),
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
       baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
     };
+  }
+
+  private pickProductionOrderItemQuantity(item: Record<string, unknown>): number {
+    const quantity = this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']);
+    if (quantity > 0) {
+      return quantity;
+    }
+
+    const plannedQty = this.pickNumber(item, ['PlannedQty', 'plannedQty']);
+    const completedQty = this.pickNumber(item, ['CmpltQty', 'completedQty', 'CompletedQty', 'completeQty']);
+    if (plannedQty > 0 || completedQty > 0) {
+      return Math.max(plannedQty - completedQty, 0);
+    }
+
+    const firstBatch = this.pickFirstBatch(item);
+    return firstBatch ? this.pickNumber(firstBatch, ['Quantity', 'quantity', 'Qty', 'qty', 'PlannedQty', 'plannedQty']) : 0;
   }
 
   private parseProductionOrders(response: unknown): ProductionOrderRecord[] {
@@ -194,7 +218,13 @@ export class ReceiptFromProductionService {
         const receiptQty = this.pickNumber(item, ['qty', 'receiptQty', 'Quantity', 'quantity']);
         const remainingQty = Math.max(plannedQty - completedQty, 0);
 
-        const items = this.extractOrderItems(item).map((line) => this.mapProductionOrderItem(line));
+        const orderLines = this.extractOrderItems(item);
+        const items =
+          orderLines.length > 0
+            ? orderLines.map((line) => this.mapProductionOrderItem(line))
+            : this.hasProductionOrderItemFields(item)
+              ? [this.mapProductionOrderItem(item)]
+              : [];
 
         return {
           docEntry: this.pickString(item, ['DocEntry', 'docEntry']),
@@ -227,6 +257,16 @@ export class ReceiptFromProductionService {
       }
     }
     return [];
+  }
+
+  private hasProductionOrderItemFields(item: Record<string, unknown>): boolean {
+    return (
+      this.pickString(item, ['ItemCode', 'itemCode']) !== '' ||
+      this.pickString(item, ['ProdName', 'itemDescription', 'Dscription', 'ItemName']) !== '' ||
+      this.pickNumber(item, ['PlannedQty', 'plannedQty', 'Quantity', 'quantity', 'Qty', 'qty']) > 0 ||
+      this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) !== '' ||
+      this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) !== ''
+    );
   }
 
   private pickProductionOrderBatchNumber(item: Record<string, unknown>): string {
