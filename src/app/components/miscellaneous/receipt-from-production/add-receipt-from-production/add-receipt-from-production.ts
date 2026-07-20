@@ -159,7 +159,7 @@ export class AddReceiptFromProduction implements OnInit {
 
   applyProductionOrder(order: ProductionOrderRecord): void {
     const docDate = order.postDate || order.startDate;
-    const warehouse = (order.warehouse || '').trim();
+    const fallbackWarehouse = (order.warehouse || '').trim();
 
     this.headerForm.update((state) => ({
       ...state,
@@ -170,37 +170,70 @@ export class AddReceiptFromProduction implements OnInit {
       baseProductionOrderDocNum: order.docNum,
     }));
 
-    this.contentLines.set([
-      {
-        ...createEmptyReceiptFromProductionLine(),
-        orderNo: order.docNum,
-        seriesNo: order.seriesName,
-        orderType: order.orderType,
-        itemCode: order.itemCode,
-        itemDescription: order.itemDescription,
-        transactionType: 'Complete',
-        quantity: order.receiptQty > 0 ? order.receiptQty : null,
-        unitPrice: null,
-        warehouse,
-        binLocation: '',
-        allocation: '',
-        itemCost: null,
-        plannedQty: order.plannedQty || null,
-        completedQty: order.completedQty || null,
-        uomCode: '',
-        uomName: '',
-        departmentLocation: '',
-        branch: order.branch || '',
-        byProduct: '',
-        quantityPerJumboCtn: null,
-        jumboCartons: null,
-        manufacturingDate: docDate,
-        batchNumber: order.batchNumber.trim(),
-        baseEntry: order.docEntry,
-        baseLine: '0',
-      },
-    ]);
+    const orderLines = (order.items ?? []).filter((item) => (item.itemCode ?? '').trim());
+    const nextLines: ReceiptFromProductionLine[] =
+      orderLines.length > 0
+        ? orderLines.map((item, index): ReceiptFromProductionLine => ({
+            ...createEmptyReceiptFromProductionLine(),
+            orderNo: order.docNum,
+            seriesNo: order.seriesName,
+            orderType: order.orderType,
+            itemCode: (item.itemCode || order.itemCode || '').trim(),
+            itemDescription: (item.itemDescription || order.itemDescription || '').trim(),
+            transactionType: 'Complete' as ReceiptFromProductionLine['transactionType'],
+            quantity: item.quantity > 0 ? item.quantity : order.receiptQty > 0 ? order.receiptQty : null,
+            unitPrice: null,
+            warehouse: ((item.warehouse || fallbackWarehouse) ?? '').trim(),
+            binLocation: '',
+            allocation: '',
+            itemCost: null,
+            plannedQty: order.plannedQty || null,
+            completedQty: order.completedQty || null,
+            uomCode: '',
+            uomName: '',
+            departmentLocation: '',
+            branch: order.branch || '',
+            byProduct: '',
+            quantityPerJumboCtn: null,
+            jumboCartons: null,
+            manufacturingDate: item.manufacturingDate || docDate,
+            batchNumber: (item.batchNumber || order.batchNumber || '').trim(),
+            expiryDate: item.expiryDate || '',
+            baseEntry: order.docEntry,
+            baseLine: item.baseLine || String(index),
+          }))
+        : [
+            {
+              ...createEmptyReceiptFromProductionLine(),
+              orderNo: order.docNum,
+              seriesNo: order.seriesName,
+              orderType: order.orderType,
+              itemCode: (order.itemCode || '').trim(),
+              itemDescription: (order.itemDescription || '').trim(),
+              transactionType: 'Complete' as ReceiptFromProductionLine['transactionType'],
+              quantity: order.receiptQty > 0 ? order.receiptQty : null,
+              unitPrice: null,
+              warehouse: fallbackWarehouse,
+              binLocation: '',
+              allocation: '',
+              itemCost: null,
+              plannedQty: order.plannedQty || null,
+              completedQty: order.completedQty || null,
+              uomCode: '',
+              uomName: '',
+              departmentLocation: '',
+              branch: order.branch || '',
+              byProduct: '',
+              quantityPerJumboCtn: null,
+              jumboCartons: null,
+              manufacturingDate: docDate,
+              batchNumber: (order.batchNumber || '').trim(),
+              baseEntry: order.docEntry,
+              baseLine: '0',
+            } as ReceiptFromProductionLine,
+          ];
 
+    this.contentLines.set(nextLines);
     this.closeProductionOrderDialog();
   }
 

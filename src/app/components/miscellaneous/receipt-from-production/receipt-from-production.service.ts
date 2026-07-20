@@ -100,23 +100,23 @@ export function buildCreateReceiptFromProductionPayload(
   header: ReceiptFromProductionHeader,
   lines: ReceiptFromProductionLine[],
 ): CreateReceiptFromProductionPayload {
-  const validLines = lines.filter((line) => line.itemCode.trim());
+  const validLines = lines.filter((line) => (line.itemCode ?? '').trim());
   const line = validLines[0];
-  const baseDocEntry = header.baseProductionOrderDocEntry?.trim();
-  const docEntry = Number.parseInt(baseDocEntry || line?.baseEntry?.trim() || '', 10);
+  const baseDocEntry = (header.baseProductionOrderDocEntry ?? '').trim();
+  const docEntry = Number.parseInt(baseDocEntry || (line?.baseEntry ?? '').trim() || '', 10);
 
   return {
     docEntry: Number.isFinite(docEntry) ? docEntry : 0,
-    docDate: header.documentDate.trim(),
-    taxDate: header.postingDate.trim(),
-    docDueDate: header.dueDate.trim(),
-    remarks: header.remarks.trim(),
-    warehouse: line?.warehouse.trim() ?? '',
+    docDate: (header.documentDate ?? '').trim(),
+    taxDate: (header.postingDate ?? '').trim(),
+    docDueDate: (header.dueDate ?? '').trim(),
+    remarks: (header.remarks ?? '').trim(),
+    warehouse: ((line?.warehouse ?? '') as string).trim(),
     quantity: line?.quantity ?? 0,
-    batchNumber: line?.batchNumber.trim() ?? '',
-    manufacturingDate: line?.manufacturingDate.trim() ?? '',
-    branch: header.branchId.trim(),
-    expiryDate: line?.expiryDate.trim() ?? '',
+    batchNumber: ((line?.batchNumber ?? '') as string).trim(),
+    manufacturingDate: ((line?.manufacturingDate ?? '') as string).trim(),
+    branch: (header.branchId ?? '').trim(),
+    expiryDate: ((line?.expiryDate ?? '') as string).trim(),
   };
 }
 
