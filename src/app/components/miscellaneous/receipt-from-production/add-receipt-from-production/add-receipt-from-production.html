@@ -73,7 +73,8 @@
                   <th class="sir-col-order-no">Order No.</th>
                   <th class="sir-col-series-no">Series No.</th>
                   <th class="sir-col-type">Type</th>
-                  <th class="sir-col-item-name">Item Description</th>
+                  <th class="sir-col-item-code">Item Code</th>
+                  <th class="sir-col-item-name">Item Name</th>
                   <th class="sir-col-trans-type">Trans. Type</th>
                   <th class="sir-col-qty">Quantity</th>
                   <th class="sir-col-price">Unit Price</th>
@@ -109,8 +110,11 @@
                     <td class="sir-col-type">
                       <input type="text" class="sir-table-input" readonly [ngModel]="line.orderType" />
                     </td>
+                    <td class="sir-col-item-code">
+                      <input type="text" class="sir-table-input" readonly [ngModel]="line.itemCode" (ngModelChange)="updateContentLine($index, 'itemCode', $event)" />
+                    </td>
                     <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
+                      <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" (ngModelChange)="updateContentLine($index, 'itemDescription', $event)" />
                     </td>
                     <td class="sir-col-trans-type">
                       <select class="sir-table-input" [ngModel]="line.transactionType" (ngModelChange)="updateContentLine($index, 'transactionType', $event)">
