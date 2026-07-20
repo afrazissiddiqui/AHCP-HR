@@ -26,6 +26,7 @@ interface ProductionOrderRecord {
   postDate: string;
   dueDate: string;
   warehouse: string;
+  batchNumber: string;
   status: string;
   items: ProductionOrderItem[];
 }
@@ -218,9 +219,9 @@ export class IssueFromProductionComponent implements OnInit {
         ...this.createEmptyLine(),
         itemCode: item.itemCode,
         itemDescription: item.itemDescription,
-        warehouse: item.warehouse,
-        quantity: item.quantity || null,
-        batchNumber: item.batchNumber,
+        warehouse: item.warehouse || order.warehouse,
+        quantity: item.quantity ?? null,
+        batchNumber: item.batchNumber || order.batchNumber || '',
         manufacturingDate: item.manufacturingDate,
         expiryDate: item.expiryDate,
         baseEntry: order.docEntry,
@@ -364,6 +365,7 @@ export class IssueFromProductionComponent implements OnInit {
           postDate: this.pickDate(item, ['PostDate', 'docDate', 'DocDate']),
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
           warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']),
+          batchNumber: this.pickProductionOrderItemBatchNumber(item),
           status: this.pickString(item, ['Status', 'status', 'docStatus', 'DocStatus']),
           items: parsedItems,
         };

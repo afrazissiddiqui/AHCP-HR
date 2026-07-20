@@ -165,13 +165,18 @@ export class ReceiptFromProductionService {
   }
 
   private mapProductionOrderItem(item: Record<string, unknown>): ProductionOrderItem {
+    const firstBatch = this.pickFirstBatch(item);
     return {
       lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
       itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
       itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
-      quantity: this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']) ?? 0,
-      warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse']),
-      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']),
+      quantity: this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']) ??
+        (firstBatch ? this.pickNumber(firstBatch, ['Quantity', 'quantity', 'Qty', 'qty']) : 0),
+      warehouse:
+        this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse']) ||
+        (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse']) : ''),
+      batchNumber: this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']) ||
+        (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']) : ''),
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
       baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
@@ -237,6 +242,16 @@ export class ReceiptFromProductionService {
     }
 
     return this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number']);
+  }
+
+  private pickFirstBatch(item: Record<string, unknown>): Record<string, unknown> | null {
+    const batches = this.pickArray(item, ['batches', 'Batches']);
+    return (
+      batches.find(
+        (batch): batch is Record<string, unknown> =>
+          !!batch && typeof batch === 'object' && !Array.isArray(batch),
+      ) ?? null
+    );
   }
 
   private parseReceipts(
