@@ -358,22 +358,23 @@ export class IssueFromProductionComponent implements OnInit {
       .map((item) => {
         const lines = this.extractLines(item);
         const parsedItems = lines.length > 0 ? lines.map((line) => this.mapProductionOrderItem(line)) : [this.mapProductionOrderItem(item)];
+        const orderWarehouse = this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']);
+        const orderBatchNumber = this.pickProductionOrderItemBatchNumber(item);
+        const items = parsedItems.map((line) => ({
+          ...line,
+          warehouse: line.warehouse || orderWarehouse || parsedItems[0]?.warehouse || '',
+          batchNumber: line.batchNumber || orderBatchNumber || parsedItems[0]?.batchNumber || '',
+        }));
 
         return {
           docEntry: this.pickString(item, ['DocEntry', 'docEntry', 'id', 'Id']),
           docNum: this.pickString(item, ['DocNum', 'docNum', 'number', 'Number']),
           postDate: this.pickDate(item, ['PostDate', 'docDate', 'DocDate']),
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
-          warehouse:
-            this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']) ||
-            parsedItems[0]?.warehouse ||
-            '',
-          batchNumber:
-            this.pickProductionOrderItemBatchNumber(item) ||
-            parsedItems[0]?.batchNumber ||
-            '',
+          warehouse: orderWarehouse || items[0]?.warehouse || '',
+          batchNumber: orderBatchNumber || items[0]?.batchNumber || '',
           status: this.pickString(item, ['Status', 'status', 'docStatus', 'DocStatus']),
-          items: parsedItems,
+          items,
         };
       });
   }
