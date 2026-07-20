@@ -178,7 +178,7 @@ export class ReceiptFromProductionService {
     return {
       lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
       itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
-      itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
+      itemDescription: this.pickString(item, ['ItemName', 'itemName', 'Dscription', 'itemDescription', 'ProdName']),
       quantity: this.pickProductionOrderItemQuantity(item),
       warehouse:
         this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) ||
@@ -232,7 +232,7 @@ export class ReceiptFromProductionService {
           seriesName: this.pickString(item, ['SeriesName', 'seriesName', 'Series']),
           orderType: this.pickString(item, ['Type', 'type', 'OrderType', 'orderType', 'DocumentType', 'docType']),
           itemCode: this.pickString(item, ['ItemCode', 'itemCode']),
-          itemDescription: this.pickString(item, ['ProdName', 'itemDescription', 'Dscription']),
+          itemDescription: this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'itemDescription', 'Dscription']),
           plannedQty,
           completedQty,
           receiptQty: receiptQty > 0 ? receiptQty : remainingQty,
@@ -240,7 +240,7 @@ export class ReceiptFromProductionService {
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
           status: this.pickString(item, ['Status', 'status']),
-          warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode', 'wareHouse']),
+          warehouse: this.pickString(item, ['wareHouse', 'Warehouse', 'warehouse', 'WhsCode']),
           branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
           batchNumber: this.pickProductionOrderBatchNumber(item),
           items,
@@ -262,7 +262,7 @@ export class ReceiptFromProductionService {
   private hasProductionOrderItemFields(item: Record<string, unknown>): boolean {
     return (
       this.pickString(item, ['ItemCode', 'itemCode']) !== '' ||
-      this.pickString(item, ['ProdName', 'itemDescription', 'Dscription', 'ItemName']) !== '' ||
+      this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'itemDescription', 'Dscription']) !== '' ||
       this.pickNumber(item, ['PlannedQty', 'plannedQty', 'Quantity', 'quantity', 'Qty', 'qty']) > 0 ||
       this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) !== '' ||
       this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) !== ''
