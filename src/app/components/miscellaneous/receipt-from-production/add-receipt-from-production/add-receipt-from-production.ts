@@ -158,6 +158,13 @@ export class AddReceiptFromProduction implements OnInit {
   }
 
   applyProductionOrder(order: ProductionOrderRecord): void {
+    // Debug: log selected production order to inspect header vs lines
+    try {
+      // eslint-disable-next-line no-console
+      console.debug('[ReceiptFromProduction] applyProductionOrder', JSON.stringify(order));
+    } catch (e) {
+      // ignore
+    }
     const docDate = order.postDate || order.startDate;
     const fallbackWarehouse = (order.warehouse || '').trim();
 
