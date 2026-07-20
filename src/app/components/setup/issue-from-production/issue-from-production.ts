@@ -364,8 +364,14 @@ export class IssueFromProductionComponent implements OnInit {
           docNum: this.pickString(item, ['DocNum', 'docNum', 'number', 'Number']),
           postDate: this.pickDate(item, ['PostDate', 'docDate', 'DocDate']),
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
-          warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']),
-          batchNumber: this.pickProductionOrderItemBatchNumber(item),
+          warehouse:
+            this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode']) ||
+            parsedItems[0]?.warehouse ||
+            '',
+          batchNumber:
+            this.pickProductionOrderItemBatchNumber(item) ||
+            parsedItems[0]?.batchNumber ||
+            '',
           status: this.pickString(item, ['Status', 'status', 'docStatus', 'DocStatus']),
           items: parsedItems,
         };
@@ -373,12 +379,15 @@ export class IssueFromProductionComponent implements OnInit {
   }
 
   private mapProductionOrderItem(item: Record<string, unknown>): ProductionOrderItem {
+    const firstBatch = this.pickFirstBatch(item);
     return {
       lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
       itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
       itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
       quantity: this.pickProductionOrderItemQuantity(item),
-      warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']),
+      warehouse:
+        this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) ||
+        (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) : ''),
       batchNumber: this.pickProductionOrderItemBatchNumber(item),
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
