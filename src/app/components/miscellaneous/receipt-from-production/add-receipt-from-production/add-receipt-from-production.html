@@ -163,6 +163,10 @@
                   <th>Due Date</th>
                   <th>Warehouse</th>
                   <th>Status</th>
+                  <th>Planned Qty</th>
+                  <th>Completed Qty</th>
+                  <th>Remaining Qty</th>
+                  <th>No. of Jumbo Cartons</th>
                   <th>Items</th>
                 </tr>
               </thead>
@@ -176,11 +180,15 @@
                     <td>{{ order.dueDate }}</td>
                     <td>{{ order.warehouse }}</td>
                     <td>{{ order.status }}</td>
+                    <td>{{ formatQuantity(order.plannedQty) }}</td>
+                    <td>{{ formatQuantity(order.completedQty) }}</td>
+                    <td>{{ formatQuantity(order.plannedQty - order.completedQty) }}</td>
+                    <td>{{ formatQuantity(order.items?.[0]?.jumboCartons ?? null) }}</td>
                     <td>{{ order.items?.length ?? 0 }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="6" class="sir-modal-empty">No production orders found.</td>
+                    <td colspan="12" class="sir-modal-empty">No production orders found.</td>
                   </tr>
                 }
               </tbody>

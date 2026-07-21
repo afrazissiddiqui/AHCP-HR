@@ -37,18 +37,86 @@ describe('ReceiptFromProductionService', () => {
 
     service.listProductionOrders().subscribe((orders) => {
       expect(orders.length).toBe(1);
-      expect(orders[0].items).toEqual(
-        jasmine.arrayContaining([
-          jasmine.objectContaining({
-            itemCode: 'FG-Own-P-00000001',
-            itemDescription: 'Own Flint - Preform 15 Gram',
-            quantity: 4364363,
-          }),
-        ]),
+      expect(orders[0].items).toBeDefined();
+      const matchedItem = orders[0].items?.find(
+        (item) =>
+          item.itemCode === 'FG-Own-P-00000001' &&
+          item.itemDescription === 'Own Flint - Preform 15 Gram' &&
+          item.quantity === 4364363,
       );
+      expect(matchedItem).toBeDefined();
     });
 
     const req = httpMock.expectOne((request) => request.url.includes('production_orders'));
+    expect(req.request.method).toBe('GET');
+    req.flush(response);
+  });
+
+  it('maps U_NoJC from production order rows into the parsed item', () => {
+    const response = {
+      data: [
+        {
+          DocEntry: '18',
+          DocNum: '2',
+          ItemCode: 'FG-Own-P-00000002',
+          ItemName: 'Own Flint - Preform 20 Gram',
+          U_NoJC: '12000',
+        },
+      ],
+    };
+
+    service.listProductionOrders().subscribe((orders) => {
+      expect(orders[0].items?.[0].jumboCartons).toBe(12000);
+    });
+
+    const req = httpMock.expectOne((request) => request.url.includes('production_orders'));
+    expect(req.request.method).toBe('GET');
+    req.flush(response);
+  });
+
+  it('uses the parent order U_NoJC value when line items do not carry it', () => {
+    const response = {
+      data: [
+        {
+          DocEntry: '19',
+          DocNum: '3',
+          ItemCode: 'FG-Own-P-00000003',
+          ItemName: 'Own Flint - Preform 30 Gram',
+          U_NoJC: '9',
+          items: [
+            {
+              ItemCode: 'FG-Own-P-00000003',
+              ItemName: 'Own Flint - Preform 30 Gram',
+              Quantity: '5',
+            },
+          ],
+        },
+      ],
+    };
+
+    service.listProductionOrders().subscribe((orders) => {
+      expect(orders[0].items?.[0].jumboCartons).toBe(9);
+    });
+
+    const req = httpMock.expectOne((request) => request.url.includes('production_orders'));
+    expect(req.request.method).toBe('GET');
+    req.flush(response);
+  });
+
+  it('maps receipt branch ids to friendly labels', () => {
+    const response = {
+      data: [
+        { DocEntry: '1', DocNum: 'R-1', branch: '1', items: [] },
+        { DocEntry: '2', DocNum: 'R-2', branch: '2', items: [] },
+        { DocEntry: '3', DocNum: 'R-3', branch: '3', items: [] },
+      ],
+    };
+
+    service.list().subscribe((rows) => {
+      expect(rows.map((row) => row.branch)).toEqual(['Peshawar', 'HeadOffice', 'Faisalabad']);
+    });
+
+    const req = httpMock.expectOne((request) => request.url.includes('receipt_from_production'));
     expect(req.request.method).toBe('GET');
     req.flush(response);
   });

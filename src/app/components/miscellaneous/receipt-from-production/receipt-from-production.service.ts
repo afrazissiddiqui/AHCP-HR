@@ -7,6 +7,29 @@ import {
   ReceiptFromProductionLine,
 } from './receipt-from-production.model';
 
+function mapReceiptBranchLabel(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  switch (trimmed.toLowerCase()) {
+    case '1':
+    case 'peshawar':
+      return 'Peshawar';
+    case '2':
+    case 'ho':
+    case 'head office':
+    case 'headoffice':
+      return 'HeadOffice';
+    case '3':
+    case 'faisalabad':
+      return 'Faisalabad';
+    default:
+      return trimmed;
+  }
+}
+
 export interface CreateReceiptFromProductionPayload {
   docEntry: number;
   docDate: string;
@@ -43,6 +66,7 @@ export interface ProductionOrderItem {
   itemCode: string;
   itemDescription: string;
   quantity: number;
+  jumboCartons: number;
   warehouse: string;
   batchNumber: string;
   manufacturingDate: string;
@@ -194,50 +218,35 @@ export class ReceiptFromProductionService {
       .map((item) => this.mapProductionOrderItem(item));
   }
 
-  private mapProductionOrderItem(item: Record<string, unknown>): ProductionOrderItem {
+  private mapProductionOrderItem(item: Record<string, unknown>, fallbackItem?: Record<string, unknown>): ProductionOrderItem {
     const firstBatch = this.pickFirstBatch(item);
+    const fallback = fallbackItem ?? {};
+    const itemCode = this.pickString(item, ['ItemCode', 'itemCode', 'Item', 'ProductCode', 'ProdCode', 'Product']) || this.pickString(fallback, ['ItemCode', 'itemCode', 'Item', 'ProductCode', 'ProdCode', 'Product']);
+    const itemDescription = this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'Dscription', 'itemDescription', 'Name']) || this.pickString(fallback, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'Dscription', 'itemDescription', 'Name']);
+    const lineQuantity = this.pickProductionOrderItemQuantity(item);
+    const fallbackQuantity = this.pickProductionOrderItemQuantity(fallback);
+    const quantity = lineQuantity > 0 ? lineQuantity : fallbackQuantity;
+    const lineJumboCartons = this.pickNumber(item, ['U_NoJC', 'NoJC', 'numJumboCartons', 'jumboCartons', 'U_NoJc']);
+    const fallbackJumboCartons = this.pickNumber(fallback, ['U_NoJC', 'NoJC', 'numJumboCartons', 'jumboCartons', 'U_NoJc']);
+    const jumboCartons = lineJumboCartons > 0 ? lineJumboCartons : fallbackJumboCartons;
+
     return {
-      lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
-      itemCode: this.pickString(item, [
-        'ItemCode',
-        'itemCode',
-        'Item',
-        'ProductCode',
-        'ProdCode',
-        'Product',
-      ]),
-      itemDescription: this.pickString(item, [
-        'ItemName',
-        'itemName',
-        'ProdName',
-        'ProductName',
-        'Dscription',
-        'itemDescription',
-        'Name',
-      ]),
-      quantity: this.pickProductionOrderItemQuantity(item),
+      lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']) || this.pickString(fallback, ['LineNum', 'lineNum', 'DocLine', 'docLine']),
+      itemCode,
+      itemDescription,
+      quantity,
+      jumboCartons,
       warehouse:
-        this.pickString(item, [
-          'WhsCode',
-          'warehouse',
-          'Warehouse',
-          'wareHouse',
-          'Whs',
-          'WarehouseCode',
-        ]) || (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) : ''),
+        this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse', 'Whs', 'WarehouseCode']) ||
+        this.pickString(fallback, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse', 'Whs', 'WarehouseCode']) ||
+        (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) : ''),
       batchNumber:
-        this.pickString(item, [
-          'BatchNum',
-          'batchNum',
-          'batchNumber',
-          'batch_number',
-          'BatchNo',
-          'Batch',
-          'U_BatchNum',
-        ]) || (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) : ''),
-      manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
-      expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
-      baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
+        this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo', 'Batch', 'U_BatchNum']) ||
+        this.pickString(fallback, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo', 'Batch', 'U_BatchNum']) ||
+        (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) : ''),
+      manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']) || this.pickDate(fallback, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
+      expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']) || this.pickDate(fallback, ['ExpiryDate', 'expiry_date', 'expiryDate']),
+      baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || this.pickString(fallback, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
     };
   }
 
@@ -272,7 +281,7 @@ export class ReceiptFromProductionService {
         const orderLines = this.extractOrderItems(item);
         const items =
           orderLines.length > 0
-            ? orderLines.map((line) => this.mapProductionOrderItem(line))
+            ? orderLines.map((line) => this.mapProductionOrderItem(line, item))
             : this.hasProductionOrderItemFields(item)
               ? [this.mapProductionOrderItem(item)]
               : [];
@@ -326,7 +335,8 @@ export class ReceiptFromProductionService {
       this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'itemDescription', 'Dscription', 'Name']) !== '' ||
       this.pickNumber(item, ['PlannedQty', 'plannedQty', 'Quantity', 'quantity', 'Qty', 'qty', 'OpenQty']) > 0 ||
       this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse', 'Whs', 'WarehouseCode']) !== '' ||
-      this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo', 'Batch', 'U_BatchNum']) !== ''
+      this.pickString(item, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo', 'Batch', 'U_BatchNum']) !== '' ||
+      this.pickNumber(item, ['U_NoJC', 'NoJC', 'numJumboCartons', 'jumboCartons', 'U_NoJc']) > 0
     );
   }
 
@@ -405,7 +415,7 @@ export class ReceiptFromProductionService {
           docDate: this.pickDate(item, ['DocDate', 'docDate']),
           docDueDate: this.pickDate(item, ['DocDueDate', 'docDueDate']),
           seriesName: this.pickString(item, ['SeriesName', 'seriesName', 'Series']),
-          branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
+          branch: mapReceiptBranchLabel(this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId'])),
           warehouse:
             this.pickString(item, ['WhsCode', 'warehouse', 'Filler']) || firstLine?.warehouse || '',
           remarks: this.pickString(item, ['Comments', 'Remarks', 'remarks']),

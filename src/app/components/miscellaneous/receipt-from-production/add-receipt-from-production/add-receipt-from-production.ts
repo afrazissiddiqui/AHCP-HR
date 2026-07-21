@@ -76,6 +76,17 @@ export class AddReceiptFromProduction implements OnInit {
     return branch?.name ?? branchId ?? '';
   }
 
+  formatQuantity(value: number | null | undefined): string {
+    if (value == null || Number.isNaN(value)) {
+      return '—';
+    }
+
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 3,
+    });
+  }
+
   addContentLine(): void {
     this.contentLines.update((rows) => [...rows, createEmptyReceiptFromProductionLine()]);
   }
@@ -163,6 +174,7 @@ export class AddReceiptFromProduction implements OnInit {
     nextLine.warehouse = defaultWarehouse || order.warehouse || nextLine.warehouse;
     nextLine.batchNumber = order.batchNumber || nextLine.batchNumber;
     nextLine.quantity = order.receiptQty > 0 ? order.receiptQty : (firstItem?.quantity ?? null);
+    nextLine.jumboCartons = firstItem?.jumboCartons ?? null;
     nextLine.manufacturingDate = firstItem?.manufacturingDate || '';
     nextLine.expiryDate = firstItem?.expiryDate || '';
     nextLine.baseEntry = order.docEntry;
