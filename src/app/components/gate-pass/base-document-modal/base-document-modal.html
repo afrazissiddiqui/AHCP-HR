@@ -30,18 +30,22 @@
           <thead>
             <tr>
               <th>Document no.</th>
+              <th>Branch</th>
+              <th>Date</th>
+              <th>DocDate</th>
               <th>Title</th>
               <th>Partner</th>
-              <th>Date</th>
               <th class="gp-bdm-col-action"></th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let row of skeletonRows">
               <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--md" aria-hidden="true"></span></td>
-              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--lg" aria-hidden="true"></span></td>
-              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--lg" aria-hidden="true"></span></td>
               <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--sm" aria-hidden="true"></span></td>
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--sm" aria-hidden="true"></span></td>
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--lg" aria-hidden="true"></span></td>
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--lg" aria-hidden="true"></span></td>
+              <td><span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--lg" aria-hidden="true"></span></td>
               <td class="gp-bdm-col-action">
                 <span class="gp-bdm-skeleton-block gp-bdm-skeleton-block--btn" aria-hidden="true"></span>
               </td>
@@ -60,18 +64,22 @@
         <thead>
           <tr>
             <th>Document no.</th>
+            <th>Branch</th>
+            <th>Date</th>
+            <th>Document Date</th>
             <th>Title</th>
             <th>Partner</th>
-            <th>Date</th>
             <th class="gp-bdm-col-action"></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let doc of paginatedDocuments()">
             <td>{{ doc.number }}</td>
+            <td>{{ getBplLabel(doc.bplId) }}</td>
+            <td>{{ displayDateSlash(doc.date) }}</td>
+            <td>{{ displayDateSlash(doc.docDate || doc.date) }}</td>
             <td>{{ doc.title }}</td>
             <td>{{ doc.businessPartnerName || doc.partner || '—' }}</td>
-            <td>{{ doc.date || '—' }}</td>
             <td class="gp-bdm-col-action">
               <button type="button" class="gp-bdm-select-btn" (click)="select(doc)">Select</button>
             </td>

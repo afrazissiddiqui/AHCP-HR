@@ -19,6 +19,13 @@ export interface CreateReceiptFromProductionPayload {
   manufacturingDate: string;
   branch: string;
   expiryDate: string;
+  items?: Array<{
+    line_num: number;
+    item_code: string;
+    quantity: number;
+    warehouse: string;
+    batch_no: string;
+  }>;
 }
 
 export interface CreateReceiptFromProductionResponse {
@@ -60,6 +67,8 @@ export interface ProductionOrderRecord {
   warehouse: string;
   branch: string;
   batchNumber: string;
+  customerCode: string;
+  customerName: string;
   items?: ProductionOrderItem[];
 }
 
@@ -105,18 +114,30 @@ export function buildCreateReceiptFromProductionPayload(
   const baseDocEntry = (header.baseProductionOrderDocEntry ?? '').trim();
   const docEntry = Number.parseInt(baseDocEntry || (line?.baseEntry ?? '').trim() || '', 10);
 
+  const normalizedLines = validLines.map((row, index) => ({
+    line_num: index,
+    item_code: (row.itemCode ?? '').trim(),
+    quantity: row.quantity ?? 0,
+    warehouse: ((row.warehouse ?? '') as string).trim(),
+    batch_no: ((row.batchNumber ?? '') as string).trim(),
+  }));
+
+  const headerWarehouse = ((header as ReceiptFromProductionHeader & { warehouse?: string }).warehouse ?? '').trim();
+  const lineWarehouse = ((line?.warehouse ?? '') as string).trim();
+
   return {
     docEntry: Number.isFinite(docEntry) ? docEntry : 0,
     docDate: (header.documentDate ?? '').trim(),
     taxDate: (header.postingDate ?? '').trim(),
     docDueDate: (header.dueDate ?? '').trim(),
     remarks: (header.remarks ?? '').trim(),
-    warehouse: ((line?.warehouse ?? '') as string).trim(),
+    warehouse: lineWarehouse || headerWarehouse,
     quantity: line?.quantity ?? 0,
     batchNumber: ((line?.batchNumber ?? '') as string).trim(),
     manufacturingDate: ((line?.manufacturingDate ?? '') as string).trim(),
     branch: (header.branchId ?? '').trim(),
     expiryDate: ((line?.expiryDate ?? '') as string).trim(),
+    items: normalizedLines,
   };
 }
 
@@ -246,6 +267,7 @@ export class ReceiptFromProductionService {
         const completedQty = this.pickNumber(item, ['CmpltQty', 'completedQty']);
         const receiptQty = this.pickNumber(item, ['qty', 'receiptQty', 'Quantity', 'quantity']);
         const remainingQty = Math.max(plannedQty - completedQty, 0);
+        const orderQuantity = receiptQty > 0 ? receiptQty : remainingQty;
 
         const orderLines = this.extractOrderItems(item);
         const items =
@@ -264,7 +286,7 @@ export class ReceiptFromProductionService {
           itemDescription: this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'itemDescription', 'Dscription', 'Name']),
           plannedQty,
           completedQty,
-          receiptQty: receiptQty > 0 ? receiptQty : remainingQty,
+          receiptQty: orderQuantity,
           postDate: this.pickDate(item, ['PostDate', 'docDate', 'DocDate']),
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
@@ -272,6 +294,8 @@ export class ReceiptFromProductionService {
           warehouse: this.pickString(item, ['wareHouse', 'Warehouse', 'warehouse', 'WhsCode', 'Whs', 'WarehouseCode']),
           branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
           batchNumber: this.pickProductionOrderBatchNumber(item),
+          customerCode: this.pickString(item, ['CardCode', 'cardCode']),
+          customerName: this.pickString(item, ['CardName', 'cardName']),
           items,
         };
       });

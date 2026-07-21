@@ -3,6 +3,8 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { GatePassModule, OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documents.service';
+import { resolveGatePassLocationFromBplId } from '../gate-pass-location.options';
+import { displayDateSlash } from '../../../utils/date-format.util';
 
 @Component({
   selector: 'app-base-document-modal',
@@ -43,7 +45,9 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
         doc.businessPartnerName,
         doc.partner,
         doc.businessPartnerCode,
+        doc.bplId,
         doc.date,
+        doc.docDate,
       ]
         .filter((value) => value != null && value !== '')
         .join(' ')
@@ -64,6 +68,7 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
   readonly pages = computed(() => Array.from({ length: this.totalPages() }, (_, index) => index + 1));
 
   Math = Math;
+  readonly displayDateSlash = displayDateSlash;
   private loadSubscription?: Subscription;
 
   ngOnDestroy(): void {
@@ -115,6 +120,10 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     this.close();
   }
 
+  getBplLabel(bplId?: string): string {
+    return resolveGatePassLocationFromBplId(bplId) || bplId?.trim() || '—';
+  }
+
   private cancelLoad(): void {
     this.loadSubscription?.unsubscribe();
     this.loadSubscription = undefined;
@@ -137,7 +146,7 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
         .pipe(finalize(() => this.loading.set(false)))
         .subscribe({
           next: (documents) => {
-            this.documents.set(documents);
+            this.documents.set(this.filterOpenDocuments(documents));
           },
           error: () => {
             this.documents.set([]);
@@ -147,7 +156,11 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     }
 
     this.loading.set(false);
-    this.documents.set(this.openBaseDocuments.listOpenByType(this.gatePassModule, this.documentType));
+    this.documents.set(this.filterOpenDocuments(this.openBaseDocuments.listOpenByType(this.gatePassModule, this.documentType)));
+  }
+
+  private filterOpenDocuments(documents: OpenBaseDocument[]): OpenBaseDocument[] {
+    return documents.filter((doc) => doc.status === undefined || doc.status === 'O');
   }
 
   private getApiFetch$(): Observable<OpenBaseDocument[]> | null {

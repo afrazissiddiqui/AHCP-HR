@@ -1,14 +1,6 @@
 export const GATE_PASS_LOCATION_OPTIONS = ['FSD', 'PSH', 'Head Office'] as const;
 
-/** SAP BPLId → Location (1 Peshawar, 2 HO, 3 Faisalabad). */
-const BPL_ID_TO_LOCATION: Record<string, (typeof GATE_PASS_LOCATION_OPTIONS)[number]> = {
-  '1': 'PSH',
-  '2': 'Head Office',
-  '3': 'FSD',
-};
-
 const LOCATION_ALIASES: Record<string, (typeof GATE_PASS_LOCATION_OPTIONS)[number]> = {
-  ...BPL_ID_TO_LOCATION,
   fsd: 'FSD',
   faisalabad: 'FSD',
   'faisalabad plant': 'FSD',
@@ -44,5 +36,16 @@ export function resolveGatePassLocationFromBplId(value: string | number | undefi
   if (value === undefined || value === null) {
     return '';
   }
-  return resolveGatePassLocation(String(value).trim());
+
+  const id = Number(String(value).trim());
+  switch (id) {
+    case 1:
+      return 'Peshawar';
+    case 2:
+      return 'HO';
+    case 3:
+      return 'Faisalabad';
+    default:
+      return '';
+  }
 }

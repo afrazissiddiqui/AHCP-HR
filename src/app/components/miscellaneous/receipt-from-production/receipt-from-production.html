@@ -1,11 +1,11 @@
 <div class="miscellaneous-content">
   <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
-    <button class="btn-default" pageToolbarActions (click)="onAddNew()">Add Receipt From Production</button>
+    <button class="btn-default" pageToolbarActions (click)="onAddNewReceipt()">Add Receipt from Production</button>
   </app-page-toolbar>
 
   <div class="misc-list-container">
     <div class="misc-list-toolbar">
-      <div class="misc-list-title">Receipt From Production ({{ filteredReceipts().length }} ) · Selected (0)</div>
+      <div class="misc-list-title">Receipt from production ({{ filteredRows().length }} ) · Selected (0)</div>
       <div class="misc-toolbar-right">
         <div class="misc-search-box">
           <input type="text" class="misc-search-input" placeholder="Search..." [ngModel]="searchText()" (ngModelChange)="onSearchChange($event)" />
@@ -39,7 +39,7 @@
     } @else if (loadError()) {
       <div class="misc-empty-state">
         {{ loadError() }}
-        <button type="button" class="btn-primary" (click)="loadReceipts()">Retry</button>
+        <button type="button" class="btn-primary" (click)="loadRows()">Retry</button>
       </div>
     } @else {
       <div class="misc-table-wrapper">
@@ -47,25 +47,23 @@
           <thead>
             <tr>
               <th class="col-sr">Sr#</th>
-              <th [hidden]="!isColumnVisible('docNum')">Document #</th>
+              <th [hidden]="!isColumnVisible('docNum')">Receipt No</th>
               <th [hidden]="!isColumnVisible('docDate')">Posting Date</th>
-              <th [hidden]="!isColumnVisible('seriesName')">Series</th>
-              <th [hidden]="!isColumnVisible('branch')">Branch</th>
               <th [hidden]="!isColumnVisible('warehouse')">Warehouse</th>
+              <th [hidden]="!isColumnVisible('branch')">Branch</th>
               <th [hidden]="!isColumnVisible('itemCount')">Items</th>
               <th [hidden]="!isColumnVisible('status')">Status</th>
               <th class="col-action">Action</th>
             </tr>
           </thead>
           <tbody>
-            @for (row of paginatedReceipts(); let idx = $index; track row.docEntry || row.docNum) {
+            @for (row of paginatedRows(); let idx = $index; track row.docEntry || row.docNum) {
               <tr>
                 <td class="col-sr">{{ ((currentPage() - 1) * pageSize) + idx + 1 }}</td>
-                <td [hidden]="!isColumnVisible('docNum')">{{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) || '—' }}</td>
+                <td [hidden]="!isColumnVisible('docNum')">{{ row.docNum }}</td>
                 <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate }}</td>
-                <td [hidden]="!isColumnVisible('seriesName')">{{ row.seriesName }}</td>
-                <td [hidden]="!isColumnVisible('branch')">{{ row.branch }}</td>
                 <td [hidden]="!isColumnVisible('warehouse')">{{ row.warehouse }}</td>
+                <td [hidden]="!isColumnVisible('branch')">{{ row.branch }}</td>
                 <td [hidden]="!isColumnVisible('itemCount')" style="text-align: center;">{{ row.itemCount }}</td>
                 <td [hidden]="!isColumnVisible('status')">
                   <span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">
@@ -78,15 +76,12 @@
                       <span class="btn-details-icon" aria-hidden="true">◎</span>
                       Details
                     </button>
-                    <button type="button" class="btn-sticker" (click)="openSticker(row)" title="Open production sticker">
-                      Sticker
-                    </button>
                   </div>
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="9" class="misc-empty-state">No receipt from production records found</td>
+                <td colspan="8" class="misc-empty-state">No receipt from production records found</td>
               </tr>
             }
           </tbody>
@@ -95,8 +90,8 @@
 
       <div class="misc-pagination">
         <div class="misc-pagination-info">
-          Showing {{ filteredReceipts().length ? ((currentPage() - 1) * pageSize) + 1 : 0 }} to
-          {{ paginationEnd() }} of {{ filteredReceipts().length }}
+          Showing {{ filteredRows().length ? ((currentPage() - 1) * pageSize) + 1 : 0 }} to
+          {{ paginationEnd() }} of {{ filteredRows().length }}
         </div>
         <div class="misc-pagination-controls">
           <button type="button" class="btn-default" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
@@ -112,25 +107,20 @@
   <div class="misc-dialog-backdrop" (click)="closeDetailDialog()"></div>
   <div class="misc-detail-dialog" (click)="$event.stopPropagation()">
     <div class="misc-dialog-header">
-        <h3>Document {{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) }}</h3>
+      <h3>Receipt from production #{{ row.docNum }}</h3>
       <button type="button" class="misc-dialog-close" (click)="closeDetailDialog()">&times;</button>
     </div>
 
     <div class="misc-detail-body">
       <div class="misc-detail-grid">
-      <div class="misc-detail-field"><label>Document #</label><div>{{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) || '—' }}</div></div>
+        <div class="misc-detail-field"><label>Receipt No</label><div>{{ row.docNum || '—' }}</div></div>
         <div class="misc-detail-field"><label>Doc Entry</label><div>{{ row.docEntry || '—' }}</div></div>
         <div class="misc-detail-field"><label>Posting Date</label><div>{{ row.docDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Due Date</label><div>{{ row.docDueDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Status</label><div><span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">{{ statusLabel(row.status) }}</span></div></div>
         <div class="misc-detail-field"><label>Series</label><div>{{ row.seriesName || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Branch</label><div>{{ row.branch || '—' }}</div></div>
         <div class="misc-detail-field"><label>Warehouse</label><div>{{ row.warehouse || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Customer Code</label><div>{{ row.customerCode || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Customer Name</label><div>{{ row.customerName || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Driver</label><div>{{ row.driverName || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Vehicle No</label><div>{{ row.vehicleNo || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Transporter</label><div>{{ row.transporterName || '—' }}</div></div>
+        <div class="misc-detail-field"><label>Branch</label><div>{{ row.branch || '—' }}</div></div>
         <div class="misc-detail-field misc-detail-field--full"><label>Remarks</label><div>{{ row.remarks || '—' }}</div></div>
       </div>
 
@@ -162,74 +152,6 @@
 
     <div class="misc-detail-footer">
       <button type="button" class="btn-default" (click)="closeDetailDialog()">Close</button>
-      <button type="button" class="btn-primary" (click)="openSticker(row)">Sticker</button>
-    </div>
-  </div>
-}
-
-@if (showStickerDialog() && stickerData(); as sticker) {
-  <div class="misc-dialog-backdrop sticker-dialog-backdrop no-print" (click)="closeStickerDialog()"></div>
-  <div class="sticker-dialog" (click)="$event.stopPropagation()">
-    <div class="sticker-dialog-header no-print">
-      <h3>Sticker</h3>
-      <button type="button" class="misc-dialog-close" (click)="closeStickerDialog()">&times;</button>
-    </div>
-    <div class="sticker-dialog-body">
-      <div class="production-sticker">
-        <div class="production-sticker__title">
-          <span class="production-sticker__title-line"></span>
-          <span class="production-sticker__title-text">PRODUCTION STICKER</span>
-          <span class="production-sticker__title-line"></span>
-        </div>
-
-        <div class="production-sticker__id">{{ sticker.stickerId }}</div>
-
-        <div class="production-sticker__body">
-          <div class="production-sticker__grid">
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Product Description</div>
-              <div class="production-sticker__value">{{ sticker.productDescription }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Colour</div>
-              <div class="production-sticker__value">{{ sticker.colour }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Machine</div>
-              <div class="production-sticker__value">{{ sticker.machine }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Material</div>
-              <div class="production-sticker__value">{{ sticker.material }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Production Date &amp; Time</div>
-              <div class="production-sticker__value">{{ sticker.productionDateTime }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Shift</div>
-              <div class="production-sticker__value">{{ sticker.shift }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Quantity (PCS)</div>
-              <div class="production-sticker__value">{{ sticker.quantity }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Best Before</div>
-              <div class="production-sticker__value">{{ sticker.bestBefore }}</div>
-              <div class="production-sticker__note">{{ sticker.bestBeforeNote }}</div>
-            </div>
-          </div>
-
-          <div class="production-sticker__qr">
-            <img [src]="sticker.qrImageUrl" [alt]="sticker.stickerId" />
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="sticker-dialog-footer no-print">
-      <button type="button" class="btn-default" (click)="closeStickerDialog()">Close</button>
-      <button type="button" class="btn-primary" (click)="printSticker()">Print</button>
     </div>
   </div>
 }

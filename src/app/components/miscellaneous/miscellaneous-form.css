@@ -393,6 +393,7 @@
 .sir-field-row input,
 .sir-field-row select,
 .sir-field-row textarea,
+.sir-field-row ui5-select.sapqc-form-select,
 .sir-table-input {
   width: 100%;
   color: var(--sir-text);

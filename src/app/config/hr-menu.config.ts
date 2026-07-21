@@ -141,7 +141,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   
   // { label: 'Learning', value: 'learning', icon: 'learning-assistant' },
   // { label: 'Org Chart', value: 'org-chart', icon: 'org-chart' },
-  { label: 'Quality Control', value: 'quality-control', icon: 'performance', externalUrl: 'http://alhafiz.vdc.services:8092/dashboard' },
+  { label: 'Quality Control', value: 'quality-control', icon: 'performance', externalUrl: 'http://alhafiz.vdc.services:8082/dashboard' },
   // { label: 'Succession', value: 'succession', icon: 'family-care' },
 ];
 

@@ -189,6 +189,7 @@
                 <app-gate-pass-business-partner-search-input
                   inputId="ogp-bp-code"
                   [value]="businessPartnerCode"
+                  [disabled]="!!baseDocNo"
                   (valueChange)="businessPartnerCode = $event"
                   (partnerSelected)="applyBusinessPartner($event)"
                   placeholder="Search code or name"
@@ -200,6 +201,7 @@
                 <app-gate-pass-business-partner-search-input
                   inputId="ogp-bp-name"
                   [value]="businessPartnerName"
+                  [disabled]="!!baseDocNo"
                   (valueChange)="businessPartnerName = $event"
                   (partnerSelected)="applyBusinessPartner($event)"
                   placeholder="Search code or name"
@@ -229,6 +231,7 @@
                   [(ngModel)]="employee"
                   name="employee"
                   placeholder="Employee name or code"
+                  [readonly]="!!baseDocNo"
                 />
               </div>
             </div>

@@ -34,7 +34,7 @@ export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
       },
       {
         id: 'miscellaneous-receipt-from-production',
-        label: 'Receipt From Production',
+        label: 'Receipt from production',
         route: '/miscellaneous/receipt-from-production',
       },
       {
@@ -54,9 +54,6 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   if (url.includes('/miscellaneous/sample-inspection-request')) {
     return 'miscellaneous-sample-inspection-request';
   }
-  if (url.includes('/miscellaneous/receipt-from-production')) {
-    return 'miscellaneous-receipt-from-production';
-  }
   if (url.includes('/miscellaneous/delivery')) {
     return 'miscellaneous-delivery';
   }
@@ -65,6 +62,9 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   }
   if (url.includes('/miscellaneous/inventory-transfer')) {
     return 'miscellaneous-inventory-transfer';
+  }
+  if (url.includes('/miscellaneous/receipt-from-production')) {
+    return 'miscellaneous-receipt-from-production';
   }
   if (url.includes('/miscellaneous/good-issue')) {
     return 'miscellaneous-good-issue';
