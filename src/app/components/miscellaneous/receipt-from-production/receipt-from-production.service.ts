@@ -61,6 +61,11 @@ export interface CreateReceiptFromProductionResponse {
   data?: Record<string, unknown>;
 }
 
+export interface ProductionOrderBatch {
+  batchNo: string;
+  quantity: number;
+}
+
 export interface ProductionOrderItem {
   lineNum: string;
   itemCode: string;
@@ -72,6 +77,7 @@ export interface ProductionOrderItem {
   manufacturingDate: string;
   expiryDate: string;
   baseLine: string;
+  batches?: ProductionOrderBatch[];
 }
 
 export interface ProductionOrderRecord {
@@ -247,6 +253,7 @@ export class ReceiptFromProductionService {
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']) || this.pickDate(fallback, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']) || this.pickDate(fallback, ['ExpiryDate', 'expiry_date', 'expiryDate']),
       baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || this.pickString(fallback, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
+      batches: this.pickAvailableBatches(item),
     };
   }
 
@@ -363,6 +370,17 @@ export class ReceiptFromProductionService {
           !!batch && typeof batch === 'object' && !Array.isArray(batch),
       ) ?? null
     );
+  }
+
+  private pickAvailableBatches(item: Record<string, unknown>): Array<{ batchNo: string; quantity: number }> {
+    const batchEntries = this.pickArray(item, ['batches', 'Batches']);
+    return batchEntries
+      .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+      .map((entry) => ({
+        batchNo: this.pickString(entry, ['BatchNo', 'batchNo', 'batchNumber', 'batch_number', 'BatchNum', 'batchNum', 'Batch']),
+        quantity: this.pickNumber(entry, ['Quantity', 'quantity', 'Qty', 'qty', 'AvailableQty', 'availableQty']),
+      }))
+      .filter((entry) => entry.batchNo.trim() !== '');
   }
 
   private parseReceipts(

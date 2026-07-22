@@ -7,6 +7,13 @@ import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { ReceiptFromProductionService } from '../../miscellaneous/receipt-from-production/receipt-from-production.service';
+import { WarehouseOption, WarehouseService } from '../../../services/warehouse.service';
+
+interface ProductionOrderBatch {
+  batchNo: string;
+  quantity: number;
+  issueQuantity?: number | null;
+}
 
 interface ProductionOrderItem {
   lineNum: string;
@@ -18,6 +25,7 @@ interface ProductionOrderItem {
   manufacturingDate: string;
   expiryDate: string;
   baseLine: string;
+  batches: ProductionOrderBatch[];
 }
 
 interface ProductionOrderRecord {
@@ -26,6 +34,7 @@ interface ProductionOrderRecord {
   postDate: string;
   dueDate: string;
   warehouse: string;
+  branch: string;
   batchNumber: string;
   status: string;
   items: ProductionOrderItem[];
@@ -52,6 +61,7 @@ interface IssueForProductionLine {
   expiryDate: string;
   baseEntry: string;
   baseLine: string;
+  availableBatches: ProductionOrderBatch[];
 }
 
 @Component({
@@ -65,15 +75,18 @@ export class IssueFromProductionComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly receiptFromProductionService = inject(ReceiptFromProductionService);
   private readonly alertService = inject(AlertService);
+  private readonly warehouseService = inject(WarehouseService);
 
   readonly productionOrders = signal<ProductionOrderRecord[]>([]);
   readonly productionOrdersLoading = signal(false);
   readonly productionOrdersError = signal<string | null>(null);
   readonly productionOrderDialogOpen = signal(false);
   readonly productionOrderItemsDialogOpen = signal(false);
+  readonly batchSelectionDialogOpen = signal(false);
   readonly productionOrderItemsLoading = signal(false);
   readonly selectedProductionOrder = signal<ProductionOrderRecord | null>(null);
   readonly selectedProductionOrderItemKeys = signal<Set<string>>(new Set());
+  readonly activeBatchSelectionLineIndex = signal<number | null>(null);
   readonly productionOrderSearchText = signal('');
 
   readonly branchOptions = signal([
@@ -81,6 +94,7 @@ export class IssueFromProductionComponent implements OnInit {
     { code: '2', name: 'AHCP_HO' },
     { code: '3', name: 'AHCP_Faisalabad' },
   ]);
+  readonly warehouseOptions = signal<WarehouseOption[]>([]);
 
   readonly headerForm = signal<IssueForProductionHeader>(this.createEmptyHeader());
   readonly contentLines = signal<IssueForProductionLine[]>([this.createEmptyLine()]);
@@ -114,8 +128,22 @@ export class IssueFromProductionComponent implements OnInit {
     return this.productionOrderItems().filter((item) => keys.has(this.orderItemKey(item)));
   });
 
+  readonly isAllProductionOrderItemsSelected = computed(() => {
+    const items = this.productionOrderItems();
+    if (items.length === 0) {
+      return false;
+    }
+
+    const keys = this.selectedProductionOrderItemKeys();
+    return items.every((item) => keys.has(this.orderItemKey(item)));
+  });
+
   ngOnInit(): void {
     this.loadProductionOrders();
+    this.warehouseService.ensureLoaded().subscribe({
+      next: (warehouses) => this.warehouseOptions.set(warehouses),
+      error: () => this.warehouseOptions.set([]),
+    });
   }
 
   toggleSidebar(): void {
@@ -133,7 +161,7 @@ export class IssueFromProductionComponent implements OnInit {
       .pipe(finalize(() => this.productionOrdersLoading.set(false)))
       .subscribe({
         next: (orders) => {
-          this.productionOrders.set(orders as ProductionOrderRecord[]);
+          this.productionOrders.set(orders as unknown as ProductionOrderRecord[]);
         },
         error: (error: unknown) => {
           this.productionOrders.set([]);
@@ -152,6 +180,13 @@ export class IssueFromProductionComponent implements OnInit {
     this.selectedProductionOrder.set(order);
     this.selectedProductionOrderItemKeys.set(new Set());
 
+    const branchId = this.normalizeBranchId(order.branch);
+    this.headerForm.update((state) => ({
+      ...state,
+      branchId,
+      branchName: this.getBranchDisplayName(branchId),
+    }));
+
     if (order.items?.length) {
       this.productionOrderItemsDialogOpen.set(true);
       return;
@@ -163,7 +198,7 @@ export class IssueFromProductionComponent implements OnInit {
       .pipe(finalize(() => this.productionOrderItemsLoading.set(false)))
       .subscribe({
         next: (items) => {
-          this.selectedProductionOrder.set({ ...order, items });
+          this.selectedProductionOrder.set({ ...order, items: items as unknown as ProductionOrderItem[] });
           this.productionOrderItemsDialogOpen.set(true);
         },
         error: (error: unknown) => {
@@ -180,6 +215,11 @@ export class IssueFromProductionComponent implements OnInit {
     this.selectedProductionOrderItemKeys.set(new Set());
   }
 
+  closeBatchSelectionDialog(): void {
+    this.batchSelectionDialogOpen.set(false);
+    this.selectedProductionOrderItemKeys.set(new Set());
+  }
+
   toggleProductionOrderItem(item: ProductionOrderItem): void {
     const key = this.orderItemKey(item);
     this.selectedProductionOrderItemKeys.update((set) => {
@@ -191,6 +231,20 @@ export class IssueFromProductionComponent implements OnInit {
       }
       return next;
     });
+  }
+
+  toggleSelectAllProductionOrderItems(): void {
+    const items = this.productionOrderItems();
+    if (items.length === 0) {
+      return;
+    }
+
+    if (this.isAllProductionOrderItemsSelected()) {
+      this.selectedProductionOrderItemKeys.set(new Set());
+      return;
+    }
+
+    this.selectedProductionOrderItemKeys.set(new Set(items.map((item) => this.orderItemKey(item))));
   }
 
   isProductionOrderItemSelected(item: ProductionOrderItem): boolean {
@@ -205,6 +259,10 @@ export class IssueFromProductionComponent implements OnInit {
       return;
     }
 
+    const branchId = this.normalizeBranchId(order.branch);
+    const branchName = this.getBranchDisplayName(branchId);
+    const branchWarehouse = this.resolveDefaultWarehouseForBranch(branchId);
+
     this.headerForm.update((state) => ({
       ...state,
       baseProductionOrderDocEntry: order.docEntry,
@@ -212,6 +270,8 @@ export class IssueFromProductionComponent implements OnInit {
       documentDate: order.postDate || state.documentDate,
       postingDate: order.postDate || state.postingDate,
       dueDate: order.dueDate || state.dueDate,
+      branchId,
+      branchName,
     }));
 
     this.contentLines.set(
@@ -219,18 +279,205 @@ export class IssueFromProductionComponent implements OnInit {
         ...this.createEmptyLine(),
         itemCode: item.itemCode,
         itemDescription: item.itemDescription,
-        warehouse: item.warehouse || order.warehouse,
+        warehouse: branchWarehouse || item.warehouse || order.warehouse,
         quantity: item.quantity ?? null,
-        batchNumber: item.batchNumber || order.batchNumber || '',
+        batchNumber: item.batches?.[0]?.batchNo || item.batchNumber || order.batchNumber || '',
         manufacturingDate: item.manufacturingDate,
         expiryDate: item.expiryDate,
         baseEntry: order.docEntry,
         baseLine: item.baseLine || String(index),
+        availableBatches: item.batches ?? [],
       })),
     );
 
+    this.activeBatchSelectionLineIndex.set(0);
     this.productionOrderItemsDialogOpen.set(false);
     this.selectedProductionOrderItemKeys.set(new Set());
+  }
+
+  openBatchSelectionDialog(): void {
+    const lines = this.contentLines().filter((line) => line.itemCode.trim());
+    if (lines.length === 0) {
+      void this.alertService.warning('No items added', 'Add at least one selected item before opening batch selection.');
+      return;
+    }
+
+    this.activeBatchSelectionLineIndex.set(0);
+    this.batchSelectionDialogOpen.set(true);
+  }
+
+  selectBatchSelectionLine(index: number): void {
+    this.activeBatchSelectionLineIndex.set(index);
+  }
+
+  selectBatchForActiveLine(batch: ProductionOrderBatch): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    this.contentLines.update((rows) =>
+      rows.map((row, rowIndex) => {
+        if (rowIndex !== index) {
+          return row;
+        }
+
+        const updatedBatches = row.availableBatches.map((availableBatch) => {
+          if (availableBatch.batchNo !== batch.batchNo) {
+            return availableBatch;
+          }
+          return { ...availableBatch, issueQuantity: availableBatch.issueQuantity ?? row.quantity ?? 0 };
+        });
+
+        return {
+          ...row,
+          batchNumber: batch.batchNo,
+          availableBatches: updatedBatches,
+        };
+      }),
+    );
+  }
+
+  updateBatchIssueQuantity(batch: ProductionOrderBatch, value: string): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    const row = this.contentLines()[index];
+    if (!row) {
+      return;
+    }
+
+    const quantity = value === '' ? null : Number(value);
+    const itemQuantity = row.quantity ?? 0;
+    const normalizedQuantity = Number.isNaN(quantity) ? null : quantity;
+
+    if (normalizedQuantity == null) {
+      this.contentLines.update((rows) =>
+        rows.map((r, rowIndex) => {
+          if (rowIndex !== index) {
+            return r;
+          }
+
+          const updatedBatches = r.availableBatches.map((availableBatch) => {
+            if (availableBatch.batchNo !== batch.batchNo) {
+              return availableBatch;
+            }
+            return { ...availableBatch, issueQuantity: null };
+          });
+
+          return {
+            ...r,
+            availableBatches: updatedBatches,
+          };
+        }),
+      );
+      return;
+    }
+
+    const sumOfOtherBatches = row.availableBatches.reduce((sum, b) => {
+      if (b.batchNo === batch.batchNo) {
+        return sum;
+      }
+      return sum + (b.issueQuantity ?? 0);
+    }, 0);
+
+    const remainingAvailable = itemQuantity - sumOfOtherBatches;
+    const clampedQuantity = Math.min(normalizedQuantity, Math.max(remainingAvailable, 0));
+
+    this.contentLines.update((rows) =>
+      rows.map((r, rowIndex) => {
+        if (rowIndex !== index) {
+          return r;
+        }
+
+        const updatedBatches = r.availableBatches.map((availableBatch) => {
+          if (availableBatch.batchNo !== batch.batchNo) {
+            return availableBatch;
+          }
+          return { ...availableBatch, issueQuantity: clampedQuantity };
+        });
+
+        return {
+          ...r,
+          availableBatches: updatedBatches,
+        };
+      }),
+    );
+  }
+
+  getActiveBatchSelectionLine(): IssueForProductionLine | null {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return null;
+    }
+
+    return this.contentLines()[index] ?? null;
+  }
+
+  getMaxAvailableForBatch(batch: ProductionOrderBatch, line: IssueForProductionLine): number {
+    // Max is: Item's total quantity minus other batches' issue quantities
+    // The total of all Issue Qty across all batches cannot exceed the item's Qty
+    const itemQuantity = line.quantity ?? 0;
+    const sumOfOtherBatches = line.availableBatches.reduce((sum, b) => {
+      if (b.batchNo === batch.batchNo) {
+        return sum;
+      }
+      return sum + (b.issueQuantity ?? 0);
+    }, 0);
+    const remainingForItem = itemQuantity - sumOfOtherBatches;
+    return Math.max(remainingForItem, 0);
+  }
+
+  validateBatchIssueQuantity(batch: ProductionOrderBatch, line: IssueForProductionLine): void {
+    const maxAvailable = this.getMaxAvailableForBatch(batch, line);
+    const currentValue = batch.issueQuantity ?? 0;
+    if (currentValue > maxAvailable) {
+      const index = this.activeBatchSelectionLineIndex();
+      if (index !== null) {
+        this.contentLines.update((rows) =>
+          rows.map((r, rowIndex) => {
+            if (rowIndex !== index) {
+              return r;
+            }
+            const updatedBatches = r.availableBatches.map((availableBatch) => {
+              if (availableBatch.batchNo !== batch.batchNo) {
+                return availableBatch;
+              }
+              return { ...availableBatch, issueQuantity: maxAvailable };
+            });
+            return {
+              ...r,
+              availableBatches: updatedBatches,
+            };
+          }),
+        );
+      }
+    }
+  }
+
+  onBatchIssueQuantityInput(batch: ProductionOrderBatch, line: IssueForProductionLine, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const maxAvailable = this.getMaxAvailableForBatch(batch, line);
+    const currentValue = Number(input.value);
+
+    if (Number.isNaN(currentValue) || currentValue < 0) {
+      input.value = (batch.issueQuantity ?? 0).toString();
+      return;
+    }
+
+    if (currentValue > maxAvailable) {
+      input.value = maxAvailable.toString();
+      this.updateBatchIssueQuantity(batch, maxAvailable.toString());
+    }
+  }
+
+  confirmSelectedProductionOrderItems(): void {
+    this.batchSelectionDialogOpen.set(false);
+    this.activeBatchSelectionLineIndex.set(null);
+    this.selectedProductionOrderItemKeys.set(new Set());
+    this.submitIssueForProduction(false);
   }
 
   addContentLine(): void {
@@ -260,7 +507,7 @@ export class IssueFromProductionComponent implements OnInit {
     );
   }
 
-  submitIssueForProduction(): void {
+  submitIssueForProduction(shouldOpenBatchModal = true): void {
     if (this.saving()) {
       return;
     }
@@ -303,6 +550,11 @@ export class IssueFromProductionComponent implements OnInit {
       return;
     }
 
+    if (shouldOpenBatchModal && !this.batchSelectionDialogOpen()) {
+      this.openBatchSelectionDialog();
+      return;
+    }
+
     const payload = {
       DocDate: header.documentDate.trim(),
       Remarks: header.remarks.trim(),
@@ -341,7 +593,7 @@ export class IssueFromProductionComponent implements OnInit {
       .pipe(finalize(() => this.productionOrdersLoading.set(false)))
       .subscribe({
         next: (orders) => {
-          this.productionOrders.set(orders as ProductionOrderRecord[]);
+          this.productionOrders.set(orders as unknown as ProductionOrderRecord[]);
         },
         error: (error: unknown) => {
           this.productionOrders.set([]);
@@ -372,6 +624,7 @@ export class IssueFromProductionComponent implements OnInit {
           postDate: this.pickDate(item, ['PostDate', 'docDate', 'DocDate']),
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
           warehouse: orderWarehouse || items[0]?.warehouse || '',
+          branch: this.pickString(item, ['BPLId', 'BPLName', 'branch', 'Branch', 'branchId', 'branchName']),
           batchNumber: orderBatchNumber || items[0]?.batchNumber || '',
           status: this.pickString(item, ['Status', 'status', 'docStatus', 'DocStatus']),
           items,
@@ -393,6 +646,7 @@ export class IssueFromProductionComponent implements OnInit {
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
       baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
+      batches: this.pickAvailableBatches(item),
     };
   }
 
@@ -414,6 +668,17 @@ export class IssueFromProductionComponent implements OnInit {
 
     const firstBatch = this.pickFirstBatch(item);
     return firstBatch ? this.pickString(firstBatch, ['BatchNo', 'BatchNum', 'batchNum', 'batch_number']) : '';
+  }
+
+  private pickAvailableBatches(item: Record<string, unknown>): ProductionOrderBatch[] {
+    const batchEntries = this.pickArray(item, ['batches', 'Batches']);
+    return batchEntries
+      .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+      .map((entry) => ({
+        batchNo: this.pickString(entry, ['BatchNo', 'batchNo', 'BatchNum', 'batchNum', 'batch_number', 'Batch']),
+        quantity: this.pickNumber(entry, ['Quantity', 'quantity', 'Qty', 'qty', 'AvailableQty', 'availableQty']),
+      }))
+      .filter((entry) => entry.batchNo.trim() !== '');
   }
 
   private pickFirstBatch(item: Record<string, unknown>): Record<string, unknown> | null {
@@ -476,8 +741,8 @@ export class IssueFromProductionComponent implements OnInit {
     return {
       baseProductionOrderDocEntry: '',
       baseProductionOrderDocNum: '',
-      branchId: '1',
-      branchName: 'AHCP_Peshawar',
+      branchId: '',
+      branchName: '',
       remarks: 'Issue for Production Order',
       documentDate: today,
       postingDate: today,
@@ -489,13 +754,14 @@ export class IssueFromProductionComponent implements OnInit {
     return {
       itemCode: '',
       itemDescription: '',
-      warehouse: '',
+      warehouse: this.resolveDefaultWarehouseForBranch(this.headerForm().branchId),
       quantity: null,
       batchNumber: '',
       manufacturingDate: '',
       expiryDate: '',
       baseEntry: '',
       baseLine: '0',
+      availableBatches: [],
     };
   }
 
@@ -526,6 +792,48 @@ export class IssueFromProductionComponent implements OnInit {
       }
     }
     return 0;
+  }
+
+  private normalizeBranchId(branch: string | undefined): string {
+    const normalizedBranch = (branch ?? '').trim().toLowerCase();
+
+    if (normalizedBranch === '1' || normalizedBranch === 'peshawar' || normalizedBranch === 'ahcp_peshawar') {
+      return '1';
+    }
+
+    if (normalizedBranch === '2' || normalizedBranch === 'faisalabad' || normalizedBranch === 'ahcp_faisalabad' || normalizedBranch === '3') {
+      return '2';
+    }
+
+    return '';
+  }
+
+  getBranchDisplayName(branchId: string | undefined): string {
+    const normalizedBranchId = this.normalizeBranchId(branchId);
+
+    if (normalizedBranchId === '1') {
+      return 'AHCP_Peshawar';
+    }
+
+    if (normalizedBranchId === '2') {
+      return 'AHCP_Faisalabad';
+    }
+
+    return branchId?.trim() || '';
+  }
+
+  private resolveDefaultWarehouseForBranch(branchId: string): string {
+    const normalizedBranchId = this.normalizeBranchId(branchId);
+
+    if (normalizedBranchId === '2') {
+      return 'FSD-WH03';
+    }
+
+    if (normalizedBranchId === '1') {
+      return 'PSH-WH03';
+    }
+
+    return '';
   }
 
   private pickDate(source: Record<string, unknown>, keys: string[]): string {
