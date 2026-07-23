@@ -1,4 +1,6 @@
 <div class="sir-page">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()"></app-page-toolbar>
+
   <header class="sir-page-header">
     <div class="sir-page-titlebar">
       <button type="button" class="sir-back-button" (click)="layout.backToModuleHome()" title="Back" aria-label="Back">
@@ -12,20 +14,8 @@
     <div class="sir-card">
       <nav class="sir-section-nav">
         <ul class="sir-section-nav-list">
-          <li
-            class="sir-section-nav-item"
-            [class.sir-section-nav-item--active]="activeSection() === 'header'"
-            (click)="scrollTo('header')"
-          >
-            Header Info
-          </li>
-          <li
-            class="sir-section-nav-item"
-            [class.sir-section-nav-item--active]="activeSection() === 'items'"
-            (click)="scrollTo('items')"
-          >
-            Row Level Info
-          </li>
+          <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'header'" (click)="scrollTo('header')">Header Info</li>
+          <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'items'" (click)="scrollTo('items')">Row Level Info</li>
         </ul>
       </nav>
 
@@ -33,30 +23,33 @@
         <div class="sir-form-grid">
           <div class="sir-form-column">
             <div class="sir-field-row">
-              <label>Base Production Order No.:</label>
+              <label>Production Order:</label>
               <div class="sir-input-group">
-                <input type="text" style="flex: 1" [ngModel]="headerForm().baseProductionOrderDocNum" readonly>
-                <button type="button" class="sir-inline-button" (click)="openProductionOrderDialog()">Copy From PO</button>
+                <input type="text" [ngModel]="headerForm().baseProductionOrderDocNum" readonly />
+                <button type="button" class="sir-inline-button" (click)="openProductionOrderDialog()">Copy From Order</button>
               </div>
             </div>
             <div class="sir-field-row">
               <label>Branch:</label>
-              <select [ngModel]="headerForm().branchId" (ngModelChange)="updateBranch($event)">
-                @for (branch of branchOptions(); track branch.code) {
-                  <option [value]="branch.code">{{ branch.name }}</option>
-                }
-              </select>
-            </div>
-            <div class="sir-field-row">
-              <label>Posting Date:</label>
-              <input type="date" [ngModel]="headerForm().documentDate" (ngModelChange)="updateHeaderField('documentDate', $event)">
+              <input type="text" [ngModel]="getBranchDisplayName(headerForm().branchId)" readonly />
             </div>
           </div>
           <div class="sir-form-column">
-            
+            <div class="sir-field-row">
+              <label>Document Date:</label>
+              <input type="date" [ngModel]="headerForm().documentDate" (ngModelChange)="updateHeaderField('documentDate', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Posting Date:</label>
+              <input type="date" [ngModel]="headerForm().postingDate" (ngModelChange)="updateHeaderField('postingDate', $event)">
+            </div>
             <div class="sir-field-row">
               <label>Due Date:</label>
               <input type="date" [ngModel]="headerForm().dueDate" (ngModelChange)="updateHeaderField('dueDate', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Remarks:</label>
+              <input type="text" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" placeholder="Receipt from production">
             </div>
           </div>
         </div>
@@ -70,28 +63,12 @@
               <thead>
                 <tr>
                   <th class="sir-col-sr">Sr. No</th>
-                  <th class="sir-col-order-no">Order No.</th>
-                  <th class="sir-col-series-no">Series No.</th>
-                  <th class="sir-col-type">Type</th>
-                  <th class="sir-col-item-name">Item Description</th>
-                  <th class="sir-col-trans-type">Trans. Type</th>
+                  <th class="sir-col-item-code">Item Code</th>
+                  <th class="sir-col-item-name">Item Name</th>
                   <th class="sir-col-qty">Quantity</th>
-                  <th class="sir-col-price">Unit Price</th>
                   <th class="sir-col-warehouse">Warehouse</th>
-                  <th class="sir-col-bin">Bin Location</th>
-                  <th class="sir-col-allocation">Allocation</th>
-                  <th class="sir-col-cost">Item Cost</th>
-                  <th class="sir-col-planned">Planned</th>
-                  <th class="sir-col-completed">Completed</th>
-                  <th class="sir-col-uom">UOM Code</th>
-                  <th class="sir-col-uom-name">UOM Name</th>
-                  <th class="sir-col-dept-loc">Department & location</th>
-                  <th class="sir-col-branch">Branch</th>
-                  <th class="sir-col-by-product">By-Product</th>
-                  <th class="sir-col-qty-jumbo">Quantity per Jumbo Cartern</th>
-                  <th class="sir-col-jumbo-count">No. of Jumbo Cartern.</th>
-                  <th class="sir-col-batch">Batch Number</th>
-                  <th class="sir-col-date">Mfg Date</th>
+                  <th class="sir-col-batch">Batch</th>
+                  <th class="sir-col-date">Manufacturing Date</th>
                   <th class="sir-col-date">Expiry Date</th>
                   <th class="sir-col-actions">Action</th>
                 </tr>
@@ -100,86 +77,36 @@
                 @for (line of contentLines(); track $index) {
                   <tr>
                     <td class="sir-col-sr">{{ $index + 1 }}</td>
-                    <td class="sir-col-order-no">
-                      <input type="text" class="sir-table-input" readonly [ngModel]="line.orderNo" />
-                    </td>
-                    <td class="sir-col-series-no">
-                      <input type="text" class="sir-table-input" readonly [ngModel]="line.seriesNo" />
-                    </td>
-                    <td class="sir-col-type">
-                      <input type="text" class="sir-table-input" readonly [ngModel]="line.orderType" />
+                    <td class="sir-col-item-code">
+                      <input type="text" class="sir-table-input" [ngModel]="line.itemCode" (ngModelChange)="updateContentLine($index, 'itemCode', $event)" />
                     </td>
                     <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
-                    </td>
-                    <td class="sir-col-trans-type">
-                      <select class="sir-table-input" [ngModel]="line.transactionType" (ngModelChange)="updateContentLine($index, 'transactionType', $event)">
-                        <option value="Complete">Complete</option>
-                        <option value="Reject">Reject</option>
-                      </select>
+                      <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" (ngModelChange)="updateContentLine($index, 'itemDescription', $event)" />
                     </td>
                     <td class="sir-col-qty">
-                      <input type="number" class="sir-table-input" min="1" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)">
-                    </td>
-                    <td class="sir-col-price">
-                      <input type="number" class="sir-table-input" [ngModel]="line.unitPrice" (ngModelChange)="updateContentLine($index, 'unitPrice', $event)">
+                      <input type="number" class="sir-table-input" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)" />
                     </td>
                     <td class="sir-col-warehouse">
-                      <app-warehouse-search-select
-                        [compact]="true"
-                        [warehouseCode]="line.warehouse"
-                        (warehouseCodeChange)="updateContentLine($index, 'warehouse', $event)"
-                      />
-                    </td>
-                    <td class="sir-col-bin">
-                      <input type="text" class="sir-table-input" [ngModel]="line.binLocation" (ngModelChange)="updateContentLine($index, 'binLocation', $event)">
-                    </td>
-                    <td class="sir-col-allocation">
-                      <input type="text" class="sir-table-input" [ngModel]="line.allocation" (ngModelChange)="updateContentLine($index, 'allocation', $event)">
-                    </td>
-                    <td class="sir-col-cost">
-                      <input type="number" class="sir-table-input" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine($index, 'itemCost', $event)">
-                    </td>
-                    <td class="sir-col-planned">
-                      <input type="number" class="sir-table-input" [ngModel]="line.plannedQty" (ngModelChange)="updateContentLine($index, 'plannedQty', $event)">
-                    </td>
-                    <td class="sir-col-completed">
-                      <input type="number" class="sir-table-input" [ngModel]="line.completedQty" (ngModelChange)="updateContentLine($index, 'completedQty', $event)">
-                    </td>
-                    <td class="sir-col-uom">
-                      <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine($index, 'uomCode', $event)">
-                    </td>
-                    <td class="sir-col-uom-name">
-                      <input type="text" class="sir-table-input" [ngModel]="line.uomName" (ngModelChange)="updateContentLine($index, 'uomName', $event)">
-                    </td>
-                    <td class="sir-col-dept-loc">
-                      <input type="text" class="sir-table-input" [ngModel]="line.departmentLocation" (ngModelChange)="updateContentLine($index, 'departmentLocation', $event)">
-                    </td>
-                    <td class="sir-col-branch">
-                      <input type="text" class="sir-table-input" [ngModel]="line.branch" (ngModelChange)="updateContentLine($index, 'branch', $event)">
-                    </td>
-                    <td class="sir-col-by-product">
-                      <input type="text" class="sir-table-input" [ngModel]="line.byProduct" (ngModelChange)="updateContentLine($index, 'byProduct', $event)">
-                    </td>
-                    <td class="sir-col-qty-jumbo">
-                      <input type="number" class="sir-table-input" [ngModel]="line.quantityPerJumboCtn" (ngModelChange)="updateContentLine($index, 'quantityPerJumboCtn', $event)">
-                    </td>
-                    <td class="sir-col-jumbo-count">
-                      <input type="number" class="sir-table-input" [ngModel]="line.jumboCartons" (ngModelChange)="updateContentLine($index, 'jumboCartons', $event)">
+                      <select class="sir-table-input" [ngModel]="line.warehouse" (ngModelChange)="updateContentLine($index, 'warehouse', $event)">
+                        <option value="">Select warehouse</option>
+                        @for (option of warehouseOptions(); track option.warehouseCode) {
+                          <option [value]="option.warehouseCode">{{ option.warehouseCode }} - {{ option.warehouseName }}</option>
+                        }
+                      </select>
                     </td>
                     <td class="sir-col-batch">
-                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)">
+                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)" />
                     </td>
                     <td class="sir-col-date">
-                      <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)">
+                      <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)" />
                     </td>
                     <td class="sir-col-date">
-                      <input type="date" class="sir-table-input" [ngModel]="line.expiryDate" (ngModelChange)="updateContentLine($index, 'expiryDate', $event)">
+                      <input type="date" class="sir-table-input" [ngModel]="line.expiryDate" (ngModelChange)="updateContentLine($index, 'expiryDate', $event)" />
                     </td>
                     <td class="sir-col-actions">
-                      <div class="sir-row-action-buttons" data-ui5-compact-size>
-                        <ui5-button design="Transparent" icon="add" accessible-name="Add row" (click)="addContentLine()"></ui5-button>
-                        <ui5-button design="Negative" icon="delete" accessible-name="Delete row" [disabled]="contentLines().length <= 1" (click)="deleteContentLine($index)"></ui5-button>
+                      <div class="sir-row-action-buttons">
+                        <button type="button" class="sir-inline-button" (click)="addContentLine()">Add</button>
+                        <button type="button" class="sir-inline-button" [disabled]="contentLines().length <= 1" (click)="deleteContentLine($index)">Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -196,16 +123,6 @@
             <label>Submitted By:</label>
             <input type="text" [ngModel]="submittedBy()" readonly />
           </div>
-          <div class="sir-field-row">
-            <label>Remarks:</label>
-            <input type="text" placeholder="Document level remarks" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" />
-          </div>
-        </div>
-        <div class="sir-footer-grid sir-footer-grid--totals">
-          <div class="sir-field-row">
-            <label>Total Amount:</label>
-            <input type="text" class="sir-input--amount" [value]="formatAmount(totalAmount())" readonly>
-          </div>
         </div>
         <div class="sir-form-actions">
           <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="save()">
@@ -217,17 +134,11 @@
   </div>
 </div>
 
-<app-oitm-item-picker-dialog
-  [open]="itemPickerOpen()"
-  (openChange)="itemPickerOpen.set($event)"
-  (selected)="onItemsSelected($event)"
-/>
-
 @if (productionOrderDialogOpen()) {
   <div class="sir-modal-overlay" (click)="closeProductionOrderDialog()">
     <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
       <div class="sir-modal-header">
-        <h2>Copy From Production Order</h2>
+        <h2>Select Production Order</h2>
         <button type="button" class="sir-modal-close" (click)="closeProductionOrderDialog()">×</button>
       </div>
 
@@ -241,52 +152,45 @@
             <table class="sir-modal-table">
               <thead>
                 <tr>
-                  <th>PO No.</th>
-                  <th>Item Code</th>
-                  <th>Item Name</th>
-                  <th>Post Date</th>
+                  <th>Order No.</th>
+                  <th>Card Code</th>
+                  <th>Card Name</th>
+                  <th>Posting Date</th>
                   <th>Due Date</th>
                   <th>Warehouse</th>
-                  <th>Qty</th>
                   <th>Status</th>
+                  <th>Planned Qty</th>
+                  <th>Completed Qty</th>
+                  <th>Remaining Qty</th>
+                  <th>No. of Jumbo Cartons</th>
+                  <th>Items</th>
                 </tr>
               </thead>
               <tbody>
                 @for (order of productionOrders(); track order.docEntry) {
-                  <tr
-                    class="sir-modal-row"
-                    [class.sir-modal-row--selected]="selectedProductionOrder()?.docEntry === order.docEntry"
-                    (click)="chooseProductionOrder(order)"
-                    (dblclick)="applyProductionOrder(order)"
-                  >
+                  <tr class="sir-modal-row" (click)="chooseProductionOrder(order)">
                     <td>{{ order.docNum }}</td>
-                    <td>{{ order.itemCode }}</td>
-                    <td>{{ order.itemDescription }}</td>
+                    <td>{{ order.customerCode }}</td>
+                    <td>{{ order.customerName }}</td>
                     <td>{{ order.postDate }}</td>
                     <td>{{ order.dueDate }}</td>
                     <td>{{ order.warehouse }}</td>
-                    <td>{{ order.receiptQty }}</td>
                     <td>{{ order.status }}</td>
+                    <td>{{ formatQuantity(order.plannedQty) }}</td>
+                    <td>{{ formatQuantity(order.completedQty) }}</td>
+                    <td>{{ formatQuantity(order.plannedQty - order.completedQty) }}</td>
+                    <td>{{ formatQuantity(order.items?.[0]?.jumboCartons ?? null) }}</td>
+                    <td>{{ order.items?.length ?? 0 }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="8" class="sir-modal-empty">No production orders found.</td>
+                    <td colspan="12" class="sir-modal-empty">No production orders found.</td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
         }
-      </div>
-
-      <div class="sir-modal-footer sir-modal-footer--split">
-        <span class="sir-modal-selection-count">
-          Selected: {{ selectedProductionOrder()?.docNum || 'None' }}
-        </span>
-        <div class="sir-modal-footer-actions">
-          <button type="button" class="sir-secondary-button" (click)="closeProductionOrderDialog()">Cancel</button>
-          <button type="button" class="sir-primary-button" [disabled]="!selectedProductionOrder()" (click)="copyFromProductionOrder()">Copy From PO</button>
-        </div>
       </div>
     </div>
   </div>

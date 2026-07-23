@@ -23,9 +23,12 @@ export interface BaseDocLinePayload {
 /** A base document that is still open and can be linked to a gate pass. */
 export interface OpenBaseDocument {
   number: string;
+  docNum?: string;
   title: string;
   partner?: string;
   date?: string;
+  docDate?: string;
+  bplId?: string;
   businessPartnerCode?: string;
   businessPartnerName?: string;
   vehicleNo?: string;
@@ -37,6 +40,7 @@ export interface OpenBaseDocument {
   freight?: string;
   weightMachineName?: string;
   weight?: string;
+  status?: string;
   location?: string;
   referenceNo?: string;
   remarks?: string;
@@ -903,8 +907,37 @@ export class OpenBaseDocumentsService {
       businessPartnerName ||
       number;
 
+    const docNum = this.pickString(sources, [
+      'docNum',
+      'DocNum',
+      'baseDocNo',
+      'base_doc_no',
+      'poNumber',
+      'po_number',
+      'srrNumber',
+      'srr_number',
+      'requestNo',
+      'request_no',
+      'salesReturnRequestNo',
+      'sales_return_request_no',
+      'returnRequestNo',
+      'return_request_no',
+      'deliveryNo',
+      'delivery_no',
+      'deliveryNumber',
+      'delivery_number',
+      'soNumber',
+      'so_number',
+      'salesOrderNo',
+      'sales_order_no',
+      'number',
+      'documentNo',
+      'document_no',
+    ]);
+
     return {
       number,
+      docNum: docNum || number,
       title,
       partner: businessPartnerName,
       date: this.normalizeApiDate(
@@ -923,6 +956,21 @@ export class OpenBaseDocumentsService {
           'DocDate',
         ]),
       ),
+      docDate: this.pickString(sources, [
+        'DocDate',
+        'docDate',
+        'documentDate',
+        'document_date',
+        'poDate',
+        'po_date',
+        'returnDate',
+        'return_date',
+        'deliveryDate',
+        'delivery_date',
+        'soDate',
+        'so_date',
+      ]),
+      bplId: this.pickString(sources, ['BPLId', 'BPLID', 'bplId', 'bpl_id']),
       businessPartnerCode: this.pickString(sources, [
         'businessPartnerCode',
         'business_partner_code',
@@ -981,9 +1029,12 @@ export class OpenBaseDocumentsService {
         'driverName',
         'driver_name',
         'DriverName',
+        'driver',
+        'Driver',
         'transporterName',
         'transporter_name',
         'U_TransporterName',
+        'U_DriverName',
       ]),
       driverCnic: this.pickString(sources, [
         'driverCnic',
@@ -1000,6 +1051,7 @@ export class OpenBaseDocumentsService {
         'transporter_phone',
       ]),
       transporterName: this.pickString(sources, ['transporterName', 'transporter_name', 'U_TransporterName']),
+      status: this.pickString(sources, ['DocStatus', 'docStatus', 'status']),
       lines: this.mapDocumentLines(item),
     };
   }

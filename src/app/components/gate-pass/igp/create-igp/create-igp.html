@@ -130,10 +130,14 @@
 
           <div class="cjr-personal-grid">
             <div class="cjr-personal-col">
-              <div class="cjr-row">
-                <label for="igp-type">Type:</label>
+              <div class="cjr-row" [class.igp-required-row--error]="isRequiredFieldInvalid('type')">
+                <label for="igp-type" class="igp-required-label" [class.igp-required-label--error]="isRequiredFieldInvalid('type')">
+                  Type <span class="igp-required-mark">*</span>
+                </label>
                 <select
                   id="igp-type"
+                  class="igp-required-control"
+                  [class.igp-required-control--error]="isRequiredFieldInvalid('type')"
                   [(ngModel)]="type"
                   (ngModelChange)="onBaseDocumentTypeChange()"
                   [disabled]="!!editingId"
@@ -143,9 +147,18 @@
                 </select>
               </div>
 
-              <div class="cjr-row">
-                <label for="igp-date">Date:</label>
-                <input id="igp-date" type="date" [(ngModel)]="documentDate" name="documentDate" />
+              <div class="cjr-row" [class.igp-required-row--error]="isRequiredFieldInvalid('documentDate')">
+                <label for="igp-date" class="igp-required-label" [class.igp-required-label--error]="isRequiredFieldInvalid('documentDate')">
+                  Date <span class="igp-required-mark">*</span>
+                </label>
+                <input
+                  id="igp-date"
+                  class="igp-required-control"
+                  [class.igp-required-control--error]="isRequiredFieldInvalid('documentDate')"
+                  type="date"
+                  [(ngModel)]="documentDate"
+                  name="documentDate"
+                />
               </div>
 
               <div class="cjr-row">
@@ -189,21 +202,27 @@
                 <app-gate-pass-business-partner-search-input
                   inputId="igp-bp-code"
                   [value]="businessPartnerCode"
+                  [disabled]="!!baseDocNo"
                   (valueChange)="businessPartnerCode = $event"
                   (partnerSelected)="applyBusinessPartner($event)"
                   placeholder="Search code or name"
                 />
               </div>
 
-              <div class="cjr-row">
-                <label for="igp-bp-name">Business partner name:</label>
-                <app-gate-pass-business-partner-search-input
-                  inputId="igp-bp-name"
-                  [value]="businessPartnerName"
-                  (valueChange)="businessPartnerName = $event"
-                  (partnerSelected)="applyBusinessPartner($event)"
-                  placeholder="Search code or name"
-                />
+              <div class="cjr-row" [class.igp-required-row--error]="isRequiredFieldInvalid('businessPartnerName')">
+                <label class="igp-required-label" [class.igp-required-label--error]="isRequiredFieldInvalid('businessPartnerName')">
+                  Business partner name <span class="igp-required-mark">*</span>
+                </label>
+                <div class="igp-required-control igp-required-control--wrapper" [class.igp-required-control--error]="isRequiredFieldInvalid('businessPartnerName')">
+                  <app-gate-pass-business-partner-search-input
+                    inputId="igp-bp-name"
+                    [value]="businessPartnerName"
+                    [disabled]="!!baseDocNo"
+                    (valueChange)="businessPartnerName = $event"
+                    (partnerSelected)="applyBusinessPartner($event)"
+                    placeholder="Search code or name"
+                  />
+                </div>
               </div>
             </div>
 
@@ -213,9 +232,17 @@
                 <input id="igp-vehicle" type="text" [(ngModel)]="vehicleNo" name="vehicleNo" />
               </div>
 
-              <div class="cjr-row">
-                <label for="igp-department">Department:</label>
-                <select id="igp-department" [(ngModel)]="department" name="department">
+              <div class="cjr-row" [class.igp-required-row--error]="isRequiredFieldInvalid('department')">
+                <label for="igp-department" class="igp-required-label" [class.igp-required-label--error]="isRequiredFieldInvalid('department')">
+                  Department <span class="igp-required-mark">*</span>
+                </label>
+                <select
+                  id="igp-department"
+                  class="igp-required-control"
+                  [class.igp-required-control--error]="isRequiredFieldInvalid('department')"
+                  [(ngModel)]="department"
+                  name="department"
+                >
                   <option value="">No selection</option>
                   <option *ngFor="let d of departmentOptions" [value]="d">{{ d }}</option>
                 </select>
@@ -229,6 +256,7 @@
                   [(ngModel)]="employee"
                   name="employee"
                   placeholder="Employee name or code"
+                  [readonly]="!!baseDocNo"
                 />
               </div>
             </div>
@@ -391,7 +419,7 @@
           </div>
         </section>
 
-        <section class="mad-form-panel cjr-form-section igp-lines-panel" id="igp-lines-section">
+        <section class="mad-form-panel cjr-form-section igp-lines-panel" id="igp-lines-section" [class.igp-form-section--error]="isLineItemsInvalid()">
           <div class="mad-form-panel__heading mad-section-heading--inline">
             <div class="mad-section-heading__left">
               <span class="mad-form-panel__icon mad-form-panel__icon--components" aria-hidden="true">
@@ -405,7 +433,9 @@
                 </svg>
               </span>
               <div class="mad-form-panel__titles">
-                <h2 class="mad-form-panel__title mad-section-heading__title">Line items</h2>
+                <h2 class="mad-form-panel__title mad-section-heading__title igp-required-label" [class.igp-required-label--error]="isLineItemsInvalid()">
+                  Line items <span class="igp-required-mark">*</span>
+                </h2>
                 <span class="mad-form-panel__subtitle">Items received on this inward gate pass</span>
               </div>
             </div>

@@ -1,14 +1,6 @@
 <div class="sir-page">
   <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
-    <button
-      class="sir-primary-button"
-      type="button"
-      pageToolbarActions
-      [disabled]="saving()"
-      (click)="submitIssueForProduction()"
-    >
-      {{ saving() ? 'Submitting…' : 'Issue for Production' }}
-    </button>
+    <span pageToolbarActions></span>
   </app-page-toolbar>
 
   <div class="sir-page-content">
@@ -38,11 +30,7 @@
             </div>
             <div class="sir-field-row">
               <label>Branch:</label>
-              <select [ngModel]="headerForm().branchId" (ngModelChange)="updateHeaderField('branchId', $event)">
-                @for (branch of branchOptions(); track branch.code) {
-                  <option [value]="branch.code">{{ branch.name }}</option>
-                }
-              </select>
+              <input type="text" [ngModel]="headerForm().branchName || getBranchDisplayName(headerForm().branchId)" readonly />
             </div>
           </div>
 
@@ -75,7 +63,6 @@
                   <th class="sir-col-item-name">Item Name</th>
                   <th class="sir-col-warehouse">Warehouse</th>
                   <th class="sir-col-qty">Quantity</th>
-                  <th class="sir-col-batch">Batch Number</th>
                   <th class="sir-col-date">Mfg Date</th>
                   <th class="sir-col-date">Expiry Date</th>
                   <th class="sir-col-actions">Action</th>
@@ -92,13 +79,15 @@
                       <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" readonly />
                     </td>
                     <td class="sir-col-warehouse">
-                      <input type="text" class="sir-table-input" [ngModel]="line.warehouse" (ngModelChange)="updateContentLine($index, 'warehouse', $event)" />
+                      <select class="sir-table-input" [ngModel]="line.warehouse" (ngModelChange)="updateContentLine($index, 'warehouse', $event)">
+                        <option value="">Select warehouse</option>
+                        @for (warehouse of warehouseOptions(); track warehouse.warehouseCode) {
+                          <option [value]="warehouse.warehouseCode">{{ warehouse.warehouseCode }} — {{ warehouse.warehouseName }}</option>
+                        }
+                      </select>
                     </td>
                     <td class="sir-col-qty">
                       <input type="number" class="sir-table-input" min="0" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)" />
-                    </td>
-                    <td class="sir-col-batch">
-                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)" />
                     </td>
                     <td class="sir-col-date">
                       <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)" />
@@ -135,8 +124,8 @@
             </div>
           </div>
         </div>
-        <div class="sir-form-actions">
-          <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="submitIssueForProduction()">
+              <div class="sir-form-actions">
+          <button type="button" class="sir-primary-button" [disabled]="saving() || !contentLines().some((line) => line.itemCode.trim())" (click)="submitIssueForProduction()">
             {{ saving() ? 'Submitting…' : 'Issue for Production' }}
           </button>
         </div>
@@ -233,12 +222,16 @@
             <table class="sir-modal-table">
               <thead>
                 <tr>
-                  <th></th>
+                  <th>
+                    <label class="sir-select-all-label">
+                      <input type="checkbox" [checked]="isAllProductionOrderItemsSelected()" (change)="toggleSelectAllProductionOrderItems()" />
+                      <span></span>
+                    </label>
+                  </th>
                   <th>Item Code</th>
                   <th>Description</th>
                   <th>Qty</th>
                   <th>Warehouse</th>
-                  <th>Batch No.</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,11 +248,10 @@
                     <td>{{ item.itemDescription }}</td>
                     <td>{{ item.quantity }}</td>
                     <td>{{ item.warehouse }}</td>
-                    <td>{{ item.batchNumber }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="6" class="sir-modal-empty">No items available for this production order.</td>
+                    <td colspan="5" class="sir-modal-empty">No items available for this production order.</td>
                   </tr>
                 }
               </tbody>
@@ -275,6 +267,119 @@
           [disabled]="selectedProductionOrderItems().length === 0"
           (click)="applySelectedProductionOrderItems()"
         >
+          Continue
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (batchSelectionDialogOpen()) {
+  <div class="sir-modal-overlay" (click)="closeBatchSelectionDialog()">
+    <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
+      <div class="sir-modal-header">
+        <h2>Available Batches</h2>
+        <button type="button" class="sir-modal-close" (click)="closeBatchSelectionDialog()">×</button>
+      </div>
+      <div class="sir-modal-body">
+        <div class="sir-detail-section">
+          <h3>Select batch for each item</h3>
+          <div class="sir-batch-modal-scroll sir-batch-modal-scroll--compact">
+            <div class="sir-data-table-wrapper">
+              <table class="sir-modal-table">
+                <thead>
+                  <tr>
+                    <th>Item Code</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Warehouse</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of contentLines(); track $index) {
+                    <tr
+                      class="sir-modal-row"
+                      [class.sir-modal-row--selected]="activeBatchSelectionLineIndex() === $index"
+                      [class.sir-modal-row--completed]="isBatchSelectionComplete(line)"
+                      [class.sir-modal-row--incomplete]="!isBatchSelectionComplete(line)"
+                      (click)="selectBatchSelectionLine($index)"
+                    >
+                      <td>{{ line.itemCode || 'Row ' + ($index + 1) }}</td>
+                      <td>{{ line.itemDescription }}</td>
+                      <td>{{ line.quantity ?? '—' }}</td>
+                      <td>{{ line.warehouse || '—' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="4" class="sir-modal-empty">No items available for batch selection.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        @if (getActiveBatchSelectionLine(); as activeLine) {
+          <div class="sir-detail-section">
+            <h3>{{ activeLine.itemCode }}</h3>
+            <p class="sir-modal-status-text">{{ activeLine.itemDescription }}</p>
+            <div class="sir-batch-info">
+              <span class="sir-batch-info-item">
+                <strong>Required Qty:</strong> {{ activeLine.requiredQuantity }}
+              </span>
+              <span class="sir-batch-info-item">
+                <strong>Already Issued Quantity:</strong> {{ getAlreadyIssuedQuantity(activeLine) }}
+              </span>
+              <span class="sir-batch-info-item" [class.sir-batch-info-item--remaining-zero]="getRemainingRequiredQuantity(activeLine) === 0">
+                <strong>Remaining Required:</strong> {{ getRemainingRequiredQuantity(activeLine) }}
+              </span>
+            </div>
+            <div class="sir-batch-modal-scroll">
+              <div class="sir-data-table-wrapper">
+                <table class="sir-modal-table">
+                  <thead>
+                    <tr>
+                      <th>Batch No.</th>
+                      <th>Available Qty</th>
+                      <th>Issue Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (batch of activeLine.availableBatches; track batch.batchNo) {
+                      <tr class="sir-modal-row" [class.sir-modal-row--selected]="activeLine.batchNumber === batch.batchNo" (click)="selectBatchForActiveLine(batch)">
+                        <td>{{ batch.batchNo }}</td>
+                        <td>{{ batch.quantity }}</td> 
+                        <td>
+                          <input
+                            type="number"
+                            class="sir-table-input"
+                            [ngModel]="batch.issueQuantity ?? 0"
+                            (ngModelChange)="updateBatchIssueQuantity(batch, $event)"
+                            (input)="onBatchIssueQuantityInput(batch, activeLine, $event)"
+                            (blur)="validateBatchIssueQuantity(batch, activeLine)"
+                            min="0"
+                            [max]="getMaxAvailableForBatch(batch, activeLine)"
+                            [title]="'Max: min(Available='+batch.quantity+', Remaining Required='+getRemainingRequiredQuantity(activeLine)+')'"
+                            [disabled]="activeLine.batchNumber !== batch.batchNo"
+                          />
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="3" class="sir-modal-empty">No batch information available for this item.</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="sir-modal-footer sir-modal-footer--split">
+        <button type="button" class="sir-secondary-button" (click)="closeBatchSelectionDialog()">Cancel</button>
+        <button type="button" class="sir-primary-button" (click)="confirmSelectedProductionOrderItems()">
           Add Selected Items
         </button>
       </div>
