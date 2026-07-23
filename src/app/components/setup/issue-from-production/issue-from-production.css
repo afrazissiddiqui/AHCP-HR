@@ -226,6 +226,14 @@
   max-height: 240px;
 }
 
+.sir-modal-row--completed {
+  background: #ecfdf5;
+}
+
+.sir-modal-row--incomplete {
+  background: #fee2e2;
+}
+
 .sir-table-input {
   width: 100%;
   min-height: 38px;

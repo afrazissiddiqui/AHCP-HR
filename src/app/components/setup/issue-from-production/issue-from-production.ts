@@ -430,6 +430,15 @@ export class IssueFromProductionComponent implements OnInit {
     return Math.max(remainingForItem, 0);
   }
 
+  isBatchSelectionComplete(line: IssueForProductionLine): boolean {
+    return line.availableBatches.some((batch) => (batch.issueQuantity ?? 0) > 0);
+  }
+
+  areAllBatchSelectionsComplete(): boolean {
+    const lines = this.contentLines().filter((line) => line.itemCode.trim());
+    return lines.length > 0 && lines.every((line) => this.isBatchSelectionComplete(line));
+  }
+
   validateBatchIssueQuantity(batch: ProductionOrderBatch, line: IssueForProductionLine): void {
     const maxAvailable = this.getMaxAvailableForBatch(batch, line);
     const currentValue = batch.issueQuantity ?? 0;

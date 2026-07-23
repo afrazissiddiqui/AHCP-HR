@@ -138,6 +138,48 @@ describe('IssueFromProductionComponent', () => {
     expect(component.contentLines()[0].availableBatches[0].issueQuantity).toBe(4);
   });
 
+  it('marks a batch selection line as complete when one batch has issue quantity', () => {
+    component.contentLines.set([
+      {
+        itemCode: 'FG-001',
+        itemDescription: 'Finished Goods A',
+        warehouse: 'FSD-WH03',
+        quantity: 2,
+        batchNumber: 'B-100',
+        manufacturingDate: '',
+        expiryDate: '',
+        baseEntry: '17',
+        baseLine: '1',
+        availableBatches: [{ batchNo: 'B-100', quantity: 5, issueQuantity: 1 }],
+      },
+      {
+        itemCode: 'FG-002',
+        itemDescription: 'Finished Goods B',
+        warehouse: 'FSD-WH03',
+        quantity: 3,
+        batchNumber: 'B-200',
+        manufacturingDate: '',
+        expiryDate: '',
+        baseEntry: '17',
+        baseLine: '2',
+        availableBatches: [{ batchNo: 'B-200', quantity: 3, issueQuantity: null }],
+      },
+    ]);
+
+    expect((component as any).isBatchSelectionComplete(component.contentLines()[0])).toBeTrue();
+    expect((component as any).isBatchSelectionComplete(component.contentLines()[1])).toBeFalse();
+    expect((component as any).areAllBatchSelectionsComplete()).toBeFalse();
+
+    component.contentLines.update((lines) =>
+      lines.map((line) => ({
+        ...line,
+        availableBatches: line.availableBatches.map((batch) => ({ ...batch, issueQuantity: 1 })),
+      })),
+    );
+
+    expect((component as any).areAllBatchSelectionsComplete()).toBeTrue();
+  });
+
   it('builds the receipt-from-production payload using the selected production order values', () => {
     const record = {
       docEntry: 17,

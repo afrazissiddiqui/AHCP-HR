@@ -91,6 +91,7 @@ export class CreateIgpComponent implements OnInit {
   showBaseDocModal = false;
   loading = false;
   submitting = false;
+  submitted = false;
 
   readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
@@ -278,6 +279,29 @@ export class CreateIgpComponent implements OnInit {
     return !!this.editingId || this.type === 'Stand Alone Documents';
   }
 
+  isRequiredFieldInvalid(field: 'type' | 'documentDate' | 'department' | 'businessPartnerName'): boolean {
+    if (!this.submitted) {
+      return false;
+    }
+
+    switch (field) {
+      case 'type':
+        return !this.type?.trim();
+      case 'documentDate':
+        return !this.documentDate?.trim();
+      case 'department':
+        return !this.department?.trim();
+      case 'businessPartnerName':
+        return !this.businessPartnerName?.trim();
+      default:
+        return false;
+    }
+  }
+
+  isLineItemsInvalid(): boolean {
+    return this.submitted && !this.lines.some((line) => !line.deleted);
+  }
+
   trackByIndex(index: number): number {
     return index;
   }
@@ -400,7 +424,8 @@ export class CreateIgpComponent implements OnInit {
     this.driverCnic = formatGatePassCnic((doc.driverCnic ?? doc.transporterCnic)?.trim() ?? '');
     this.driverPhone = formatGatePassPhoneDigits((doc.driverPhone ?? doc.transporterPhone)?.trim() ?? '');
     this.weight = numericFieldFromDoc(doc.weight);
-    this.location = resolveGatePassLocation(doc.location) || doc.location?.trim() || '';
+    const resolvedLocation = resolveGatePassLocation(doc.location) || resolveGatePassLocation(doc.bplId);
+    this.location = resolvedLocation || doc.location?.trim() || '';
     this.remarks = doc.remarks?.trim() ?? '';
     this.lines =
       doc.lines?.map((l) => ({
@@ -424,8 +449,10 @@ export class CreateIgpComponent implements OnInit {
       return;
     }
 
+    this.submitted = true;
+
     if (!this.type?.trim() || !this.documentDate?.trim() || !this.department?.trim() || !this.businessPartnerName?.trim()) {
-      void this.alertService.validation('Please ensure Type, Date, Department, and Business partner name are filled.');
+      void this.alertService.validation('Please fill in all required fields marked with *.');
       return;
     }
 

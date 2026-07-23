@@ -33,10 +33,6 @@
               <label>Branch:</label>
               <input type="text" [ngModel]="getBranchDisplayName(headerForm().branchId)" readonly />
             </div>
-            <div class="sir-field-row">
-              <label>Warehouse:</label>
-              <input type="text" [ngModel]="headerForm().warehouse || ''" (ngModelChange)="updateHeaderField('warehouse', $event)" placeholder="PSH-WH03" />
-            </div>
           </div>
           <div class="sir-form-column">
             <div class="sir-field-row">

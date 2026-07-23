@@ -1029,9 +1029,12 @@ export class OpenBaseDocumentsService {
         'driverName',
         'driver_name',
         'DriverName',
+        'driver',
+        'Driver',
         'transporterName',
         'transporter_name',
         'U_TransporterName',
+        'U_DriverName',
       ]),
       driverCnic: this.pickString(sources, [
         'driverCnic',

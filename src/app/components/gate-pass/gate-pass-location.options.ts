@@ -4,9 +4,11 @@ const LOCATION_ALIASES: Record<string, (typeof GATE_PASS_LOCATION_OPTIONS)[numbe
   fsd: 'FSD',
   faisalabad: 'FSD',
   'faisalabad plant': 'FSD',
+  ahcp_faisalabad: 'FSD',
   psh: 'PSH',
   peshawar: 'PSH',
   'peshawar plant': 'PSH',
+  ahcp_peshawar: 'PSH',
   'head office': 'Head Office',
   headoffice: 'Head Office',
   ho: 'Head Office',
@@ -28,6 +30,11 @@ export function resolveGatePassLocation(value: string | undefined | null): strin
     return exact;
   }
 
+  const numericBplMatch = resolveGatePassLocationFromBplId(trimmed);
+  if (numericBplMatch) {
+    return numericBplMatch;
+  }
+
   return LOCATION_ALIASES[trimmed.toLowerCase()] ?? '';
 }
 
@@ -37,15 +44,35 @@ export function resolveGatePassLocationFromBplId(value: string | number | undefi
     return '';
   }
 
-  const id = Number(String(value).trim());
-  switch (id) {
-    case 1:
-      return 'Peshawar';
-    case 2:
-      return 'HO';
-    case 3:
-      return 'Faisalabad';
-    default:
-      return '';
+  const raw = String(value).trim();
+  if (!raw) {
+    return '';
   }
+
+  const id = Number(raw);
+  if (Number.isFinite(id)) {
+    switch (id) {
+      case 1:
+        return 'PSH';
+      case 2:
+        return 'Head Office';
+      case 3:
+        return 'FSD';
+      default:
+        return '';
+    }
+  }
+
+  const normalized = raw.toLowerCase();
+  if (normalized.includes('peshawar') || normalized.includes('ahcp_peshawar')) {
+    return 'PSH';
+  }
+  if (normalized.includes('faisalabad') || normalized.includes('ahcp_faisalabad')) {
+    return 'FSD';
+  }
+  if (normalized.includes('head office') || normalized.includes('ho')) {
+    return 'Head Office';
+  }
+
+  return '';
 }

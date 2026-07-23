@@ -300,6 +300,8 @@
                     <tr
                       class="sir-modal-row"
                       [class.sir-modal-row--selected]="activeBatchSelectionLineIndex() === $index"
+                      [class.sir-modal-row--completed]="isBatchSelectionComplete(line)"
+                      [class.sir-modal-row--incomplete]="!isBatchSelectionComplete(line)"
                       (click)="selectBatchSelectionLine($index)"
                     >
                       <td>{{ line.itemCode || 'Row ' + ($index + 1) }}</td>
@@ -348,6 +350,7 @@
                             min="0"
                             [max]="getMaxAvailableForBatch(batch, activeLine)"
                             [title]="'Max available: ' + getMaxAvailableForBatch(batch, activeLine)"
+                            [disabled]="activeLine.batchNumber !== batch.batchNo"
                           />
                         </td>
                       </tr>
@@ -365,7 +368,9 @@
       </div>
       <div class="sir-modal-footer sir-modal-footer--split">
         <button type="button" class="sir-secondary-button" (click)="closeBatchSelectionDialog()">Cancel</button>
-        <button type="button" class="sir-primary-button" (click)="confirmSelectedProductionOrderItems()">Add Selected Items</button>
+        <button type="button" class="sir-primary-button" (click)="confirmSelectedProductionOrderItems()">
+          Add Selected Items
+        </button>
       </div>
     </div>
   </div>
