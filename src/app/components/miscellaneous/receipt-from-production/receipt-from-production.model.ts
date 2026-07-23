@@ -1,6 +1,7 @@
 export interface ReceiptFromProductionHeader {
   branchId: string;
   branchName: string;
+  warehouse?: string;
   remarks: string;
   postingDate: string;
   documentDate: string;
@@ -53,6 +54,7 @@ export function createEmptyReceiptFromProductionHeader(): ReceiptFromProductionH
   return {
     branchId: '2',
     branchName: 'AHCP_HO',
+    warehouse: '',
     remarks: '',
     postingDate: today,
     documentDate: today,

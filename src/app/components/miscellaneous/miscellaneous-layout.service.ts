@@ -6,7 +6,6 @@ export function isMiscellaneousFormRoute(url: string): boolean {
   const path = url.split('?')[0].split('#')[0];
   return (
     /\/miscellaneous\/good-receipt-note\/(create|edit)(\/|$)/.test(path) ||
-    /\/miscellaneous\/receipt-from-production\/create(\/|$)/.test(path) ||
     /\/miscellaneous\/delivery\/(create|edit)(\/|$)/.test(path) ||
     /\/miscellaneous\/inventory-transfer\/(create|edit)(\/|$)/.test(path) ||
     /\/miscellaneous\/inventory-transfer-request\/(create|edit)(\/|$)/.test(path) ||

@@ -43,6 +43,15 @@ function gatePassSubmittedTimestamp(raw: string | number | null | undefined): nu
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function gatePassRecordOrderValue(record: { Id: number; submittedDate: string }): number {
+  const timestamp = gatePassSubmittedTimestamp(record.submittedDate);
+  if (timestamp) {
+    return timestamp;
+  }
+
+  return record.Id || 0;
+}
+
 export function compareGatePassListRecords<T extends { Id: number; submittedDate: string }>(
   a: T,
   b: T,
@@ -57,6 +66,10 @@ export function compareGatePassListRecords<T extends { Id: number; submittedDate
     if (dateDiff !== 0) {
       return dateDiff * factor;
     }
+    return (a.Id - b.Id) * factor;
+  }
+
+  if (column === 'Id') {
     return (a.Id - b.Id) * factor;
   }
 
