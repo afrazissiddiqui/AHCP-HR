@@ -22,6 +22,11 @@ import {
   InventoryTransferService,
 } from '../inventory-transfer.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
+import { resolveBranchNameFromBplId } from '../../../../utils/branch-name.util';
+
+export function resolveInventoryTransferBranchName(value: string | number | undefined | null): string {
+  return resolveBranchNameFromBplId(value);
+}
 
 @Component({
   selector: 'app-add-inventory-transfer',
@@ -57,16 +62,193 @@ export class AddInventoryTransfer implements OnInit {
     this.editingId() ? 'Edit Inventory Transfer' : 'Add Inventory Transfer',
   );
 
+  readonly branchOptions = signal([
+    { code: '1', name: 'AHCP_Peshawar' },
+    { code: '2', name: 'AHCP_HO' },
+    { code: '3', name: 'AHCP_Faisalabad' },
+  ]);
+  readonly selectedBranchCode = signal('');
+  readonly inventoryTransferUomMap = signal<Record<string, string>>({});
+
   readonly headerForm = signal<InventoryTransferHeader>(createEmptyInventoryTransferHeader());
   readonly contentLines = signal<InventoryTransferLine[]>([createEmptyInventoryTransferLine()]);
 
   ngOnInit(): void {
     this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
     this.warehouseService.ensureLoaded().subscribe({ error: () => undefined });
+    this.inventoryTransferService.list().subscribe({
+      next: (transfers) => {
+        const uomMap = transfers.reduce<Record<string, string>>((acc, transfer) => {
+          transfer.items.forEach((line) => {
+            const itemCode = line.itemCode?.trim().toLowerCase();
+            const uomCode = line.uomCode?.trim();
+            if (itemCode && uomCode) {
+              acc[itemCode] = uomCode;
+            }
+          });
+          return acc;
+        }, {});
+        this.inventoryTransferUomMap.set(uomMap);
+      },
+      error: () => this.inventoryTransferUomMap.set({}),
+    });
   }
 
   updateHeaderField(field: keyof InventoryTransferHeader, value: string): void {
+    if (field === 'postingDate') {
+      this.headerForm.update((state) => ({ ...state, postingDate: value, taxDate: value }));
+      return;
+    }
+
+    if (field === 'fromWarehouse') {
+      const selectedCode = value.trim();
+      const matchedWarehouse = this.warehouseService
+        .getCatalog()
+        .find((warehouse) =>
+          warehouse.warehouseCode.trim().toLowerCase() === selectedCode.toLowerCase(),
+        );
+      const branchName = this.resolveBranchFromWarehouseSelection(selectedCode, matchedWarehouse);
+
+      this.headerForm.update((state) => ({
+        ...state,
+        fromWarehouse: value,
+        fromBranch: branchName || state.fromBranch,
+      }));
+      return;
+    }
+
+    if (field === 'fromBranch') {
+      const branchName = resolveInventoryTransferBranchName(value.trim()) || value;
+      this.headerForm.update((state) => ({ ...state, fromBranch: branchName }));
+      this.selectedBranchCode.set(this.resolveBranchCode(value));
+      this.applyBranchWarehouses(this.selectedBranchCode());
+      return;
+    }
+
     this.headerForm.update((state) => ({ ...state, [field]: value }));
+  }
+
+  selectBranch(value: string): void {
+    const branchCode = this.resolveBranchCode(value);
+    const branchOption = this.branchOptions().find((option) => option.code === branchCode);
+    const branchName = branchOption?.name || resolveInventoryTransferBranchName(value) || value;
+
+    this.selectedBranchCode.set(branchCode);
+    this.headerForm.update((state) => ({ ...state, fromBranch: branchName }));
+    this.applyBranchWarehouses(branchCode);
+  }
+
+
+  private resolveBranchCode(value: string): string {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) {
+      return '';
+    }
+
+    const directMatch = this.branchOptions().find((option) => option.code === normalized);
+    if (directMatch) {
+      return directMatch.code;
+    }
+
+    const branchNameMatch = this.branchOptions().find((option) =>
+      option.name.toLowerCase() === normalized || option.name.toLowerCase().includes(normalized),
+    );
+    if (branchNameMatch) {
+      return branchNameMatch.code;
+    }
+
+    if (normalized.includes('peshawar') || normalized.includes('psh')) {
+      return '1';
+    }
+    if (normalized.includes('ho') || normalized.includes('head office') || normalized.includes('headoffice')) {
+      return '2';
+    }
+    if (normalized.includes('faisalabad') || normalized.includes('fsd')) {
+      return '3';
+    }
+
+    return '';
+  }
+
+  private resolveBranchCodeFromWarehouse(fromWarehouse: string, toWarehouse: string): string {
+    const warehouseCandidates = [fromWarehouse, toWarehouse]
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+
+    for (const warehouse of warehouseCandidates) {
+      if (warehouse.includes('peshawar') || warehouse.includes('psh')) {
+        return '1';
+      }
+      if (warehouse.includes('ho') || warehouse.includes('head office') || warehouse.includes('headoffice')) {
+        return '2';
+      }
+      if (warehouse.includes('faisalabad') || warehouse.includes('fsd')) {
+        return '3';
+      }
+    }
+
+    return '';
+  }
+
+  private applyBranchWarehouses(branchCode: string): void {
+    const warehouseCodes = this.resolveBranchWarehouseCodes(branchCode);
+    if (warehouseCodes.length === 0) {
+      return;
+    }
+
+    const fromWarehouse = warehouseCodes[0] ?? '';
+    const toWarehouse = warehouseCodes[1] ?? fromWarehouse;
+
+    this.headerForm.update((state) => ({
+      ...state,
+      fromWarehouse: fromWarehouse || state.fromWarehouse,
+      toWarehouse: toWarehouse || state.toWarehouse,
+    }));
+  }
+
+  private resolveBranchWarehouseCodes(branchCode: string): string[] {
+    const catalog = this.warehouseService.getCatalog();
+    const branchPatterns: Record<string, string[]> = {
+      '1': ['peshawar', 'psh', 'ahcp peshawar', 'psh-wh'],
+      '2': ['ho', 'head office', 'headoffice', 'head-office', 'general warehouse ho'],
+      '3': ['faisalabad', 'fsd', 'ahcp faisalabad', 'fsd-wh'],
+    };
+
+    const branchKeywords = branchPatterns[branchCode] ?? [];
+    const matchedWarehouses = catalog.filter((warehouse) => {
+      const label = `${warehouse.warehouseCode} ${warehouse.warehouseName}`.toLowerCase();
+      return branchKeywords.some((keyword) => label.includes(keyword));
+    });
+
+    if (matchedWarehouses.length > 0) {
+      return matchedWarehouses.slice(0, 2).map((warehouse) => warehouse.warehouseCode);
+    }
+
+    const fallbackCodes: Record<string, string[]> = {
+      '1': ['PSH-WH01', 'PSH-WH02'],
+      '2': ['01', '02'],
+      '3': ['FSD-WH01', 'FSD-WH02'],
+    };
+
+    return fallbackCodes[branchCode] ?? [];
+  }
+
+  private resolveBranchFromWarehouseSelection(
+    value: string,
+    matchedWarehouse?: { warehouseCode: string; warehouseName: string } | null,
+  ): string {
+    const candidates = [value, matchedWarehouse?.warehouseCode ?? '', matchedWarehouse?.warehouseName ?? '']
+      .map((candidate) => candidate.trim())
+      .filter(Boolean);
+
+    for (const candidate of candidates) {
+      const resolved = resolveInventoryTransferBranchName(candidate);
+      if (resolved) {
+        return resolved;
+      }
+    }
+
+    return '';
   }
 
   addContentLine(): void {
@@ -153,7 +335,9 @@ export class AddInventoryTransfer implements OnInit {
 
     this.inventoryTransferService.listRequests().subscribe({
       next: (requests) => {
-        this.itrRequests.set(requests);
+        this.itrRequests.set(
+          requests.filter((request) => request.docStatus.trim().toUpperCase() === 'O'),
+        );
         this.itrRequestsLoading.set(false);
       },
       error: () => {
@@ -173,39 +357,81 @@ export class AddInventoryTransfer implements OnInit {
     this.selectedItrRequest.set(request);
   }
 
-  copyFromItrRequest(): void {
+  async copyFromItrRequest(): Promise<void> {
     const request = this.selectedItrRequest();
     if (!request) {
       return;
     }
+
+    const currentBranchCode = this.selectedBranchCode();
+    const requestBranchCode = this.resolveBranchCodeFromWarehouse(request.fromWarehouse, request.toWarehouse);
+
+    if (currentBranchCode && requestBranchCode && currentBranchCode !== requestBranchCode) {
+      const result = await this.alertService.confirm(
+        'Branch mismatch',
+        'This ITR belongs to a different branch. Do you want to continue and use the same branch selection?',
+      );
+
+      if (!result?.isConfirmed) {
+        return;
+      }
+    }
+
     this.applyItrRequest(request);
   }
 
   applyItrRequest(request: InventoryTransferRequestRecord): void {
+
     const firstLine = request.items[0];
+
+    // determine branch code from warehouses and resolve branch name
+    const requestBranchCode = this.resolveBranchCodeFromWarehouse(request.fromWarehouse, request.toWarehouse);
+    const requestBranchName = resolveInventoryTransferBranchName(requestBranchCode) || '';
 
     this.headerForm.update((state) => ({
       ...state,
       docDate: request.docDate || state.docDate,
+      postingDate: request.taxDate || request.docDate || state.postingDate,
       taxDate: request.taxDate || request.docDate || state.taxDate,
       fromWarehouse: request.fromWarehouse || firstLine?.fromWarehouse || state.fromWarehouse,
       toWarehouse: request.toWarehouse || firstLine?.toWarehouse || state.toWarehouse,
+      fromBranch: requestBranchName || state.fromBranch,
       baseItrDocEntry: request.docEntry,
       baseItrDocNum: request.docNum,
     }));
 
+    // set selected branch code so warehouse selectors filter correctly
+    if (requestBranchCode) {
+      this.selectedBranchCode.set(requestBranchCode);
+    }
+
     this.contentLines.set(
       request.items.length > 0
-        ? request.items.map((line) => ({
-            itemCode: line.itemCode,
-            itemDescription: line.itemDescription,
-            quantity: line.quantity,
-            fromWarehouse: line.fromWarehouse,
-            toWarehouse: line.toWarehouse,
-            batchNumber: line.batchNumber,
-            baseEntry: line.docEntry,
-            baseLine: line.lineNum,
-          }))
+        ? request.items.map((line) => {
+            const lineUomCode = line.uomCode.trim() || this.resolveUomCodeForItem(line.itemCode, line.uomName || '');
+            const lineUomName = line.uomName.trim() || lineUomCode;
+            const lineBranchCode = this.resolveBranchCodeFromWarehouse(line.fromWarehouse, line.toWarehouse);
+            const lineToBranchName = resolveInventoryTransferBranchName(lineBranchCode) || '';
+
+            return {
+              itemCode: line.itemCode,
+              itemDescription: line.itemDescription,
+              itemCost: '',
+              uomCode: lineUomCode,
+              uomName: lineUomName,
+              distrRule: '',
+              fromWarehouse: line.fromWarehouse,
+              fromBinLocation: '',
+              toWarehouse: line.toWarehouse,
+              toBinLocation: '',
+              firstToBinLocation: '',
+              toBranch: lineToBranchName,
+              quantity: line.quantity,
+              batchNumber: line.batchNumber,
+              baseEntry: line.docEntry,
+              baseLine: line.lineNum,
+            };
+          })
         : [
             createEmptyInventoryTransferLine(request.fromWarehouse, request.toWarehouse),
           ].map((line) => ({
@@ -250,10 +476,13 @@ export class AddInventoryTransfer implements OnInit {
       const updated = [...rows];
       const first = validItems[0];
       const firstBatch = this.findBatchForWarehouse(first, fromWarehouse);
+      const firstUomCode = this.resolveUomCodeForItem(first.itemCode, first.uom || '');
       updated[index] = {
         ...updated[index],
         itemCode: first.itemCode,
         itemDescription: first.itemName,
+        uomCode: firstUomCode,
+        uomName: firstUomCode,
         fromWarehouse: updated[index]?.fromWarehouse || fromWarehouse,
         toWarehouse: updated[index]?.toWarehouse || this.headerForm().toWarehouse,
         batchNumber: firstBatch?.batchNumber || '',
@@ -263,10 +492,13 @@ export class AddInventoryTransfer implements OnInit {
 
       const extras = validItems.slice(1).map((item) => {
         const batch = this.findBatchForWarehouse(item, fromWarehouse);
+        const uomCode = this.resolveUomCodeForItem(item.itemCode, item.uom || '');
         return {
           ...createEmptyInventoryTransferLine(fromWarehouse, this.headerForm().toWarehouse),
           itemCode: item.itemCode,
           itemDescription: item.itemName,
+          uomCode,
+          uomName: uomCode,
           batchNumber: batch?.batchNumber || '',
         };
       });
@@ -275,6 +507,20 @@ export class AddInventoryTransfer implements OnInit {
     });
 
     this.itemPickerRowIndex.set(null);
+  }
+
+  private resolveUomCodeForItem(itemCode: string, fallback = ''): string {
+    const normalized = itemCode.trim().toLowerCase();
+    if (!normalized) {
+      return fallback;
+    }
+
+    const fromApi = this.inventoryTransferUomMap()[normalized];
+    if (fromApi?.trim()) {
+      return fromApi.trim();
+    }
+
+    return fallback;
   }
 
   private findBatchForWarehouse(item: OitmItem | undefined, warehouseValue: string) {
@@ -374,6 +620,12 @@ export class AddInventoryTransfer implements OnInit {
     const missingBatch = lines.some((line) => !line.batchNumber.trim());
     if (missingBatch) {
       this.alertService.validation('Batch Number is required for every line item.');
+      return;
+    }
+
+    const missingUomCode = lines.some((line) => !line.uomCode.trim());
+    if (missingUomCode) {
+      this.alertService.validation('UoM Code is required for every line item.');
       return;
     }
 

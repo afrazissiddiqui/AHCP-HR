@@ -6,6 +6,11 @@ import {
   ReceiptFromProductionHeader,
   ReceiptFromProductionLine,
 } from './receipt-from-production.model';
+import { resolveBranchNameFromBplId } from '../../../utils/branch-name.util';
+
+function normalizeBranchName(value: string | number | undefined | null): string {
+  return resolveBranchNameFromBplId(value);
+}
 
 export interface CreateReceiptFromProductionPayload {
   docEntry: number;
@@ -206,7 +211,7 @@ export class ReceiptFromProductionService {
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
           status: this.pickString(item, ['Status', 'status']),
           warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode', 'wareHouse']),
-          branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
+          branch: normalizeBranchName(this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId'])),
           batchNumber: this.pickProductionOrderBatchNumber(item),
           items,
         };
@@ -289,7 +294,7 @@ export class ReceiptFromProductionService {
           docDate: this.pickDate(item, ['DocDate', 'docDate']),
           docDueDate: this.pickDate(item, ['DocDueDate', 'docDueDate']),
           seriesName: this.pickString(item, ['SeriesName', 'seriesName', 'Series']),
-          branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
+          branch: normalizeBranchName(this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId'])),
           warehouse:
             this.pickString(item, ['WhsCode', 'warehouse', 'Filler']) || firstLine?.warehouse || '',
           remarks: this.pickString(item, ['Comments', 'Remarks', 'remarks']),
@@ -369,7 +374,14 @@ export class ReceiptFromProductionService {
   private pickNumber(source: Record<string, unknown>, keys: string[]): number {
     for (const key of keys) {
       const value = source[key];
-      const parsed = Number(this.cleanSapText(value));
+      if (value === undefined || value === null) {
+        continue;
+      }
+      const text = this.cleanSapText(value);
+      if (text === '') {
+        continue;
+      }
+      const parsed = Number(text);
       if (!Number.isNaN(parsed)) {
         return parsed;
       }

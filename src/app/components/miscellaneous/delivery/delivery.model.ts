@@ -9,7 +9,6 @@ export interface DeliveryHeader {
   postingDate: string;
   documentDate: string;
   localCurrency: string;
-  salesEmployee: string;
   remarks: string;
   baseSalesOrderNumber: string;
   baseSalesOrderDocEntry: string;
@@ -18,6 +17,12 @@ export interface DeliveryHeader {
   driver: string;
   vehicleNumber: string;
   trackingNumber: string;
+  builtyNo: string;
+  driverNo: string;
+  driverName: string;
+  vehicleNo: string;
+  transporterName: string;
+  igpDateCus: string;
 }
 
 export interface DeliveryLine {
@@ -31,6 +36,17 @@ export interface DeliveryLine {
   unitPrice: number | null;
   batchSerialNumber: string;
   taxCode: string;
+  bpCatalogNo: string;
+  discountPercent: number | null;
+  binLocation: string;
+  cogsDepartment: string;
+  country: string;
+  branch: string;
+  blanketAgreementNo: string;
+  standardItemIdentification: string;
+  commodityClassification: string;
+  qtyPerJumboCarton: number | null;
+  jumboCartonsCount: number | null;
 }
 
 function todayDateString(): string {
@@ -50,7 +66,6 @@ export function createEmptyDeliveryHeader(): DeliveryHeader {
     postingDate: today,
     documentDate: today,
     localCurrency: 'PKR',
-    salesEmployee: '',
     remarks: '',
     baseSalesOrderNumber: '',
     baseSalesOrderDocEntry: '',
@@ -59,6 +74,12 @@ export function createEmptyDeliveryHeader(): DeliveryHeader {
     driver: '',
     vehicleNumber: '',
     trackingNumber: '',
+    builtyNo: '',
+    driverNo: '',
+    driverName: '',
+    vehicleNo: '',
+    transporterName: '',
+    igpDateCus: '',
   };
 }
 
@@ -74,6 +95,17 @@ export function createEmptyDeliveryLine(): DeliveryLine {
     unitPrice: null,
     batchSerialNumber: '',
     taxCode: '',
+    bpCatalogNo: '',
+    discountPercent: null,
+    binLocation: '',
+    cogsDepartment: '',
+    country: '',
+    branch: '',
+    blanketAgreementNo: '',
+    standardItemIdentification: '',
+    commodityClassification: '',
+    qtyPerJumboCarton: null,
+    jumboCartonsCount: null,
   };
 }
 
@@ -88,9 +120,34 @@ export function updateDeliveryLine(
       return row;
     }
 
-    if (field === 'quantity' || field === 'unitPrice') {
+    // Numeric fields: convert to number or null
+    if (
+      field === 'quantity' ||
+      field === 'unitPrice' ||
+      field === 'discountPercent' ||
+      field === 'qtyPerJumboCarton' ||
+      field === 'jumboCartonsCount'
+    ) {
       const numericValue = value === '' ? null : Number(value);
-      return { ...row, [field]: Number.isNaN(numericValue) ? null : numericValue };
+      const normalized = Number.isNaN(numericValue) ? null : numericValue;
+
+      const updatedRow: DeliveryLine = { ...row, [field]: normalized } as DeliveryLine;
+
+      // If updating one of the jumbo-carton fields, and both are present (>0),
+      // set `quantity` to their product.
+      if (field === 'qtyPerJumboCarton' || field === 'jumboCartonsCount') {
+        const per = field === 'qtyPerJumboCarton' ? normalized : row.qtyPerJumboCarton;
+        const count = field === 'jumboCartonsCount' ? normalized : row.jumboCartonsCount;
+
+        const perNum = per ?? null;
+        const countNum = count ?? null;
+
+        if (perNum && countNum && perNum > 0 && countNum > 0) {
+          updatedRow.quantity = perNum * countNum;
+        }
+      }
+
+      return updatedRow;
     }
 
     return { ...row, [field]: value };

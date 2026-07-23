@@ -10,6 +10,7 @@ import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
 import { WarehouseSearchSelectComponent } from '../../warehouse-search-select';
+import { resolveBranchNameFromBplId } from '../../../../utils/branch-name.util';
 import {
   DeliveryHeader,
   DeliveryLine,
@@ -42,12 +43,14 @@ export class AddDelivery {
   private readonly salesOrderService = inject(SalesOrderService);
   protected readonly layout = inject(MiscellaneousLayoutService);
   readonly saving = signal(false);
-  readonly activeSection = signal<'header' | 'items' | 'footer'>('header');
+  readonly activeSection = signal<'header' | 'logistics' | 'items' | 'footer'>('header');
   readonly itemPickerOpen = signal(false);
   readonly itemPickerRowIndex = signal<number | null>(null);
   readonly submittedBy = signal(this.authService.getSessionUser()?.name ?? '');
   readonly salesOrderDialogOpen = signal(false);
   readonly salesOrders = signal<SalesOrderRecord[]>([]);
+  readonly salesOrderSearchQuery = signal('');
+  readonly salesOrderSearchResults = signal<SalesOrderRecord[]>([]);
   readonly salesOrdersLoading = signal(false);
   readonly salesOrdersError = signal<string | null>(null);
   readonly selectedSalesOrder = signal<SalesOrderRecord | null>(null);
@@ -56,6 +59,13 @@ export class AddDelivery {
     { code: '1', name: 'AHCP_Peshawar' },
     { code: '2', name: 'AHCP_HO' },
     { code: '3', name: 'AHCP_Faisalabad' },
+  ]);
+
+  readonly taxCodeOptions = signal([
+    'EX',
+    'SR',
+    'Z0',
+    'Z1',
   ]);
 
   readonly deliveryMethodOptions = signal([
@@ -76,7 +86,7 @@ export class AddDelivery {
 
   readonly totals = computed(() => ({
     totalAmount: this.contentLines()
-      .map((line) => (line.quantity ?? 0) * (line.unitPrice ?? 0))
+      .map((line) => this.computeLineQuantity(line) * (line.unitPrice ?? 0))
       .reduce((sum, amount) => sum + amount, 0),
   }));
 
@@ -112,6 +122,47 @@ export class AddDelivery {
     this.contentLines.update((rows) => updateDeliveryLine(rows, index, field, value));
   }
 
+  private resolveBranchFromWarehouseCode(value: string): { code: string; name: string } | null {
+    const raw = value.trim();
+    if (!raw) {
+      return null;
+    }
+
+    const normalized = raw.toLowerCase();
+    const branchMap: Record<string, { code: string; name: string }> = {
+      '1': { code: '1', name: 'AHCP_Peshawar' },
+      '2': { code: '2', name: 'AHCP_HO' },
+      '3': { code: '3', name: 'AHCP_Faisalabad' },
+      psh: { code: '1', name: 'AHCP_Peshawar' },
+      peshawar: { code: '1', name: 'AHCP_Peshawar' },
+      ho: { code: '2', name: 'AHCP_HO' },
+      'head office': { code: '2', name: 'AHCP_HO' },
+      fsd: { code: '3', name: 'AHCP_Faisalabad' },
+      faisalabad: { code: '3', name: 'AHCP_Faisalabad' },
+    };
+
+    if (branchMap[normalized]) {
+      return branchMap[normalized];
+    }
+
+    const prefix = normalized.split(/[-_\s]/, 1)[0];
+    if (prefix && branchMap[prefix]) {
+      return branchMap[prefix];
+    }
+
+    if (normalized.includes('psh')) {
+      return branchMap['psh'];
+    }
+    if (normalized.includes('fsd') || normalized.includes('faisalabad')) {
+      return branchMap['fsd'];
+    }
+    if (normalized.includes('ho') || normalized.includes('head office')) {
+      return branchMap['ho'];
+    }
+
+    return null;
+  }
+
   batchOptionsForLine(line: DeliveryLine): string[] {
     if (!line.itemCode.trim()) {
       return [];
@@ -144,10 +195,23 @@ export class AddDelivery {
   }
 
   calculateLineTotal(line: DeliveryLine): number {
-    return (line.quantity ?? 0) * (line.unitPrice ?? 0);
+    return this.computeLineQuantity(line) * (line.unitPrice ?? 0);
   }
 
-  scrollTo(section: 'header' | 'items' | 'footer'): void {
+  computeLineQuantity(line: DeliveryLine): number {
+    const per = line.qtyPerJumboCarton ?? 0;
+    const count = line.jumboCartonsCount ?? 0;
+    if (per > 0 && count > 0) {
+      return per * count;
+    }
+    return line.quantity ?? 0;
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  scrollTo(section: 'header' | 'logistics' | 'items' | 'footer'): void {
     this.activeSection.set(section);
     document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
   }
@@ -190,18 +254,46 @@ export class AddDelivery {
     this.salesOrderDialogOpen.set(true);
     this.salesOrdersLoading.set(true);
     this.salesOrdersError.set(null);
+    this.salesOrderSearchQuery.set('');
 
     this.salesOrderService.list().subscribe({
       next: (orders) => {
         this.salesOrders.set(orders);
+        this.salesOrderSearchResults.set(orders);
         this.salesOrdersLoading.set(false);
       },
       error: () => {
         this.salesOrders.set([]);
+        this.salesOrderSearchResults.set([]);
         this.salesOrdersLoading.set(false);
         this.salesOrdersError.set('Could not load sales orders.');
       },
     });
+  }
+
+  searchSalesOrders(): void {
+    const query = this.salesOrderSearchQuery().trim().toLowerCase();
+    if (!query) {
+      this.salesOrderSearchResults.set(this.salesOrders());
+      return;
+    }
+
+    this.salesOrderSearchResults.set(
+      this.salesOrders().filter((order) => {
+        const haystack = [
+          order.docNum,
+          order.cardCode,
+          order.cardName,
+          order.branchId,
+          order.customerPoNo,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return haystack.includes(query);
+      }),
+    );
   }
 
   closeSalesOrderDialog(): void {
@@ -225,6 +317,7 @@ export class AddDelivery {
     this.headerForm.update((state) => ({
       ...state,
       branchId: order.branchId || state.branchId,
+      branchName: resolveBranchNameFromBplId(order.branchId) || state.branchName,
       customer: order.cardCode,
       customerName: order.cardName,
       customerRefNo: order.customerPoNo || state.customerRefNo,
@@ -240,6 +333,7 @@ export class AddDelivery {
     this.contentLines.set(
       order.items.length > 0
         ? order.items.map((line) => ({
+            ...createEmptyDeliveryLine(),
             itemCode: line.itemCode,
             itemDescription: line.itemDescription,
             baseDocEntry: line.docEntry || order.docEntry,
@@ -250,6 +344,9 @@ export class AddDelivery {
             unitPrice: line.unitPrice,
             batchSerialNumber: '',
             taxCode: '',
+            qtyPerJumboCarton: (line as any).qtyPerJumboCarton ?? null,
+            jumboCartonsCount: (line as any).jumboCartonsCount ?? null,
+            branch: resolveBranchNameFromBplId(order.branchId) || '',
           }))
         : [createEmptyDeliveryLine()],
     );

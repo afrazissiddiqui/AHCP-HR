@@ -2,12 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { GoodReceiptListItem, GoodReceiptService } from './good-receipt.service';
 import { MiscellaneousLayoutService } from '../miscellaneous-layout.service';
 
 interface GoodReceiptColumn {
-  key: 'docNum' | 'docDate' | 'seriesName' | 'branch' | 'warehouse' | 'itemCount' | 'status';
+  key: 'docNum' | 'docDate' | 'seriesName' | 'warehouse' | 'itemCount' | 'status';
   label: string;
   visible: boolean;
 }
@@ -15,9 +14,9 @@ interface GoodReceiptColumn {
 @Component({
   selector: 'app-good-receipt',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageToolbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './good-receipt.html',
-  styleUrls: ['../miscellaneous-list.css'],
+  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
 })
 export class GoodReceipt implements OnInit {
   private readonly router = inject(Router);
@@ -36,7 +35,6 @@ export class GoodReceipt implements OnInit {
     { key: 'docNum', label: 'Receipt No', visible: true },
     { key: 'docDate', label: 'Posting Date', visible: true },
     { key: 'seriesName', label: 'Series', visible: true },
-    { key: 'branch', label: 'Branch', visible: true },
     { key: 'warehouse', label: 'Warehouse', visible: true },
     { key: 'itemCount', label: 'Items', visible: true },
     { key: 'status', label: 'Status', visible: true },
@@ -52,7 +50,6 @@ export class GoodReceipt implements OnInit {
       (row) =>
         row.docNum.toLowerCase().includes(term) ||
         row.seriesName.toLowerCase().includes(term) ||
-        row.branch.toLowerCase().includes(term) ||
         row.warehouse.toLowerCase().includes(term) ||
         row.status.toLowerCase().includes(term),
     );

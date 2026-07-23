@@ -58,7 +58,7 @@ interface IssueForProductionLine {
   standalone: true,
   imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './issue-from-production.html',
-  styleUrls: ['../../miscellaneous/miscellaneous-form.css', './issue-from-production.css'],
+  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css', '../../miscellaneous/miscellaneous-form.css', './issue-from-production.css'],
 })
 export class IssueFromProductionComponent implements OnInit {
   private readonly router = inject(Router);

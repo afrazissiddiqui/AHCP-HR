@@ -5,7 +5,7 @@
         <span class="sir-back-icon">❮</span>
       </button>
 
-      <h1 class="sir-page-title" title="Receipt From Production List">Receipt From Production List</h1>
+      <h1 class="sir-page-title" title="Issue From Production List">Issue From Production List</h1>
     </div>
 
     <button type="button" class="sir-primary-button" (click)="onAddNew()">Add New</button>
@@ -14,7 +14,7 @@
   <div class="sir-page-content">
     <div class="sir-card">
       <div class="sir-toolbar">
-        <div class="sir-toolbar-title">Receipt From Production ({{ filteredReceipts().length }}) · Selected (0)</div>
+        <div class="sir-toolbar-title">Issue From Production ({{ filteredIssues().length }}) · Selected (0)</div>
         <div class="sir-toolbar-spacer"></div>
 
         <div class="sir-search-field">
@@ -57,37 +57,35 @@
       @if (loadError()) {
         <div class="sir-error-banner">
           <p>{{ loadError() }}</p>
-          <button type="button" class="sir-primary-button" (click)="loadReceipts()">Retry</button>
+          <button type="button" class="sir-primary-button" (click)="loadIssues()">Retry</button>
         </div>
       }
 
       <div class="sir-table-card">
         @if (loading()) {
-          <p class="sir-loading">Loading receipt from production records…</p>
+          <p class="sir-loading">Loading issue from production records…</p>
         } @else {
           <div class="sir-data-table-sticky-container">
             <div class="sir-data-table-wrapper">
               <table class="sir-data-table sir-data-table--row-level">
                 <thead>
                   <tr>
-                    <th [hidden]="!isColumnVisible('docNum')">Document #</th>
+                    <th [hidden]="!isColumnVisible('docNum')">Issue No</th>
                     <th [hidden]="!isColumnVisible('docDate')">Posting Date</th>
-                    <th [hidden]="!isColumnVisible('seriesName')">Series</th>
-                    <th [hidden]="!isColumnVisible('branch')">Branch</th>
-                    <th [hidden]="!isColumnVisible('warehouse')">Warehouse</th>
+                    <th [hidden]="!isColumnVisible('fromWarehouse')">From Warehouse</th>
+                    <th [hidden]="!isColumnVisible('issuedTo')">Issued To</th>
                     <th [hidden]="!isColumnVisible('itemCount')">Items</th>
                     <th [hidden]="!isColumnVisible('status')">Status</th>
                     <th class="sir-col-action">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (row of paginatedReceipts(); let idx = $index; track row.docEntry || row.docNum) {
+                  @for (row of paginatedIssues(); let idx = $index; track row.docEntry || row.docNum) {
                     <tr class="sir-data-row">
-                      <td [hidden]="!isColumnVisible('docNum')">{{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) || '—' }}</td>
+                      <td [hidden]="!isColumnVisible('docNum')">{{ row.docNum }}</td>
                       <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate }}</td>
-                      <td [hidden]="!isColumnVisible('seriesName')">{{ row.seriesName }}</td>
-                      <td [hidden]="!isColumnVisible('branch')">{{ row.branch }}</td>
-                      <td [hidden]="!isColumnVisible('warehouse')">{{ row.warehouse }}</td>
+                      <td [hidden]="!isColumnVisible('fromWarehouse')">{{ row.fromWarehouse }}</td>
+                      <td [hidden]="!isColumnVisible('issuedTo')">{{ row.issuedTo }}</td>
                       <td [hidden]="!isColumnVisible('itemCount')" style="text-align: center;">{{ row.itemCount }}</td>
                       <td [hidden]="!isColumnVisible('status')">
                         <span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">
@@ -97,13 +95,12 @@
                       <td class="sir-col-action">
                         <div class="sir-row-actions">
                           <button type="button" class="sir-action-button sir-action-button-secondary" (click)="viewDetails(row)">View</button>
-                          <button type="button" class="sir-action-button sir-action-button-secondary" (click)="openSticker(row)">Sticker</button>
                         </div>
                       </td>
                     </tr>
                   } @empty {
                     <tr>
-                      <td colspan="9" class="sir-empty-state">No receipt from production records found</td>
+                      <td colspan="8" class="sir-empty-state">No issue from production records found</td>
                     </tr>
                   }
                 </tbody>
@@ -113,8 +110,8 @@
 
           <div class="sir-pagination">
             <div class="sir-pagination-info">
-              Showing {{ filteredReceipts().length ? ((currentPage() - 1) * pageSize) + 1 : 0 }} to
-              {{ paginationEnd() }} of {{ filteredReceipts().length }} entries
+              Showing {{ filteredIssues().length ? ((currentPage() - 1) * pageSize) + 1 : 0 }} to
+              {{ paginationEnd() }} of {{ filteredIssues().length }} entries
             </div>
 
             <div class="sir-pagination-controls">
@@ -135,25 +132,21 @@
   <div class="misc-dialog-backdrop" (click)="closeDetailDialog()"></div>
   <div class="misc-detail-dialog" (click)="$event.stopPropagation()">
     <div class="misc-dialog-header">
-        <h3>Document {{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) }}</h3>
-      <button type="button" class="misc-dialog-close" (click)="closeDetailDialog()">&times;</button>
+      <h3>Issue From Production #{{ row.docNum }}</h3>
+      <button type="button" class="misc-dialog-close" (click)="closeDetailDialog()">×</button>
     </div>
 
     <div class="misc-detail-body">
       <div class="misc-detail-grid">
-      <div class="misc-detail-field"><label>Document #</label><div>{{ (row.seriesName ? (row.seriesName + '-' + row.docNum) : row.docNum) || '—' }}</div></div>
+        <div class="misc-detail-field"><label>Issue No</label><div>{{ row.docNum || '—' }}</div></div>
         <div class="misc-detail-field"><label>Doc Entry</label><div>{{ row.docEntry || '—' }}</div></div>
         <div class="misc-detail-field"><label>Posting Date</label><div>{{ row.docDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Due Date</label><div>{{ row.docDueDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Status</label><div><span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">{{ statusLabel(row.status) }}</span></div></div>
         <div class="misc-detail-field"><label>Series</label><div>{{ row.seriesName || '—' }}</div></div>
+        <div class="misc-detail-field"><label>From Warehouse</label><div>{{ row.fromWarehouse || '—' }}</div></div>
+        <div class="misc-detail-field"><label>Issued To</label><div>{{ row.issuedTo || '—' }}</div></div>
         <div class="misc-detail-field"><label>Branch</label><div>{{ row.branch || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Warehouse</label><div>{{ row.warehouse || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Customer Code</label><div>{{ row.customerCode || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Customer Name</label><div>{{ row.customerName || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Driver</label><div>{{ row.driverName || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Vehicle No</label><div>{{ row.vehicleNo || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Transporter</label><div>{{ row.transporterName || '—' }}</div></div>
         <div class="misc-detail-field misc-detail-field--full"><label>Remarks</label><div>{{ row.remarks || '—' }}</div></div>
       </div>
 
@@ -185,74 +178,6 @@
 
     <div class="misc-detail-footer">
       <button type="button" class="btn-default" (click)="closeDetailDialog()">Close</button>
-      <button type="button" class="btn-primary" (click)="openSticker(row)">Sticker</button>
-    </div>
-  </div>
-}
-
-@if (showStickerDialog() && stickerData(); as sticker) {
-  <div class="misc-dialog-backdrop sticker-dialog-backdrop no-print" (click)="closeStickerDialog()"></div>
-  <div class="sticker-dialog" (click)="$event.stopPropagation()">
-    <div class="sticker-dialog-header no-print">
-      <h3>Sticker</h3>
-      <button type="button" class="misc-dialog-close" (click)="closeStickerDialog()">&times;</button>
-    </div>
-    <div class="sticker-dialog-body">
-      <div class="production-sticker">
-        <div class="production-sticker__title">
-          <span class="production-sticker__title-line"></span>
-          <span class="production-sticker__title-text">PRODUCTION STICKER</span>
-          <span class="production-sticker__title-line"></span>
-        </div>
-
-        <div class="production-sticker__id">{{ sticker.stickerId }}</div>
-
-        <div class="production-sticker__body">
-          <div class="production-sticker__grid">
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Product Description</div>
-              <div class="production-sticker__value">{{ sticker.productDescription }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Colour</div>
-              <div class="production-sticker__value">{{ sticker.colour }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Machine</div>
-              <div class="production-sticker__value">{{ sticker.machine }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Material</div>
-              <div class="production-sticker__value">{{ sticker.material }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Production Date &amp; Time</div>
-              <div class="production-sticker__value">{{ sticker.productionDateTime }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Shift</div>
-              <div class="production-sticker__value">{{ sticker.shift }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Quantity (PCS)</div>
-              <div class="production-sticker__value">{{ sticker.quantity }}</div>
-            </div>
-            <div class="production-sticker__cell">
-              <div class="production-sticker__label">Best Before</div>
-              <div class="production-sticker__value">{{ sticker.bestBefore }}</div>
-              <div class="production-sticker__note">{{ sticker.bestBeforeNote }}</div>
-            </div>
-          </div>
-
-          <div class="production-sticker__qr">
-            <img [src]="sticker.qrImageUrl" [alt]="sticker.stickerId" />
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="sticker-dialog-footer no-print">
-      <button type="button" class="btn-default" (click)="closeStickerDialog()">Close</button>
-      <button type="button" class="btn-primary" (click)="printSticker()">Print</button>
     </div>
   </div>
 }

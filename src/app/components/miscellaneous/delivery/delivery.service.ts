@@ -25,6 +25,12 @@ export interface CreateDeliveryPayload {
   taxDate: string;
   docDueDate: string;
   remarks: string;
+  U_BuiltyNo?: string;
+  U_DriverNo?: string;
+  U_DriverName?: string;
+  U_VehicleNo?: string;
+  U_TransporterName?: string;
+  U_IGP_DATE_CUS?: string;
   items: CreateDeliveryItemPayload[];
 }
 
@@ -45,7 +51,7 @@ export interface DeliveryListLineItem {
   unitPrice: number;
   warehouse: string;
   lineTotal: number;
-  batchNumber: string;
+  batchNumbers: string[];
 }
 
 export interface DeliveryListItem {
@@ -81,6 +87,12 @@ export function buildCreateDeliveryPayload(
     taxDate: header.postingDate.trim(),
     docDueDate: header.documentDate.trim(),
     remarks: header.remarks.trim(),
+    U_BuiltyNo: header.builtyNo.trim() || undefined,
+    U_DriverNo: header.driverNo.trim() || undefined,
+    U_DriverName: header.driverName.trim() || undefined,
+    U_VehicleNo: header.vehicleNo.trim() || undefined,
+    U_TransporterName: header.transporterName.trim() || undefined,
+    U_IGP_DATE_CUS: header.igpDateCus.trim() || undefined,
     items: lines
       .filter((line) => line.itemCode.trim())
       .map((line) => {
@@ -134,10 +146,17 @@ export class DeliveryService {
         const lines = this.pickArray(item, ['items', 'lines', 'DocumentLines'])
           .filter((line): line is Record<string, unknown> => !!line && typeof line === 'object')
           .map((line) => {
-            const batches = this.pickArray(line, ['batches']);
-            const firstBatch =
-              batches.find((batch): batch is Record<string, unknown> => !!batch && typeof batch === 'object') ??
-              null;
+            const rawBatches = this.pickArray(line, ['batches', 'BatchNumbers', 'batchNumbers']);
+            const batchNumbersFromArray = rawBatches.flatMap((batch) => {
+              if (typeof batch === 'string') {
+                return [batch];
+              }
+              if (batch && typeof batch === 'object' && !Array.isArray(batch)) {
+                return [this.pickString(batch as Record<string, unknown>, ['batchNumber', 'BatchNum', 'batch_number'])];
+              }
+              return [];
+            });
+            const batchNumberFromLine = this.pickString(line, ['batchNumber', 'BatchNum', 'batch_number']);
 
             return {
               lineNum: this.pickString(line, ['LineNum', 'lineNum']),
@@ -147,9 +166,10 @@ export class DeliveryService {
               unitPrice: this.pickNumber(line, ['Price', 'unitPrice', 'price']),
               warehouse: this.pickString(line, ['WhsCode', 'warehouse', 'warehouseCode']),
               lineTotal: this.pickNumber(line, ['LineTotal', 'lineTotal']),
-              batchNumber: firstBatch
-                ? this.pickString(firstBatch, ['batchNumber', 'BatchNum', 'batch_number'])
-                : '',
+              batchNumbers: [
+                ...batchNumbersFromArray,
+                ...(batchNumberFromLine ? [batchNumberFromLine] : []),
+              ].map((batch) => batch.trim()).filter((batch) => batch !== ''),
             };
           });
 
@@ -165,9 +185,9 @@ export class DeliveryService {
           driverName: this.pickString(item, ['U_DriverName', 'driverName']),
           vehicleNo: this.pickString(item, ['U_VehicleNo', 'vehicleNo']),
           transporterName: this.pickString(item, ['U_TransporterName', 'transporterName']),
-          branch: this.pickString(item, ['BPLName', 'Branch', 'branch', 'BPLId']),
+          branch: this.resolveDeliveryBranch(this.pickString(item, ['BPLName', 'Branch', 'branch', 'BPLId'])),
           seriesName: this.pickString(item, ['SeriesName', 'seriesName', 'Series']),
-          status: this.pickString(item, ['DocStatus', 'status']) || 'O',
+          status: this.normalizeDeliveryStatus(this.pickString(item, ['DocStatus', 'docStatus', 'status']) || 'O'),
           itemCount: lines.length,
           items: lines,
         };
@@ -220,8 +240,43 @@ export class DeliveryService {
       if (Array.isArray(value)) {
         return value;
       }
+      if (typeof value === 'string' && value.trim() !== '') {
+        return value.split(',').map((v) => v.trim()).filter((v) => v);
+      }
     }
     return [];
+  }
+
+  private resolveDeliveryBranch(value: string): string {
+    const branchId = value.trim();
+    if (!branchId) {
+      return '';
+    }
+
+    const branchMap: Record<string, string> = {
+      '1': 'AHCP_Peshawar',
+      '2': 'AHCP_HO',
+      '3': 'AHCP_Faisalabad',
+      AHCP_Peshawar: 'AHCP_Peshawar',
+      AHCP_HO: 'AHCP_HO',
+      AHCP_Faisalabad: 'AHCP_Faisalabad',
+      Peshawar: 'AHCP_Peshawar',
+      HO: 'AHCP_HO',
+      Faisalabad: 'AHCP_Faisalabad',
+    };
+
+    return branchMap[branchId] ?? branchId;
+  }
+
+  private normalizeDeliveryStatus(value: string): string {
+    const normalized = value.trim().toUpperCase();
+    if (normalized === 'O' || normalized === 'OPEN') {
+      return 'O';
+    }
+    if (normalized === 'C' || normalized === 'CLOSED') {
+      return 'C';
+    }
+    return normalized;
   }
 
   private pickString(source: Record<string, unknown>, keys: string[]): string {

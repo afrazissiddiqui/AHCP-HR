@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import {
   ReceiptFromProductionListItem,
   ReceiptFromProductionService,
@@ -33,9 +32,9 @@ export interface ProductionStickerData {
 @Component({
   selector: 'app-receipt-from-production',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageToolbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './receipt-from-production.html',
-  styleUrls: ['../miscellaneous-list.css', './production-sticker.css'],
+  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css', './production-sticker.css'],
 })
 export class ReceiptFromProduction implements OnInit {
   private readonly router = inject(Router);

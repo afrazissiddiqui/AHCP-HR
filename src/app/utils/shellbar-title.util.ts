@@ -42,6 +42,7 @@ const EXACT_TITLES: Record<string, string> = {
   'miscellaneous/good-receipt-note/edit': 'Edit Good Receipt',
   'miscellaneous/receipt-from-production': 'Receipt From Production',
   'miscellaneous/receipt-from-production/create': 'Add Receipt From Production',
+  'miscellaneous/issue-from-production': 'Issue From Production',
   'miscellaneous/delivery': 'Delivery',
   'miscellaneous/inventory-transfer': 'Inventory transfer',
   'miscellaneous/good-issue': 'Good Issue',
@@ -58,6 +59,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/kpi-setup': 'KPI Setup',
   'setup/kpi-setup/add': 'Add KPI',
   'setup/overtime-list': 'Overtime List',
+  'setup/issue-from-production-list': 'Issue From Production',
   'setup/issue-from-production': 'Issue From Production',
   'plant-maintenance/main-form': 'Main Form',
   'plant-maintenance/main-form/plant-maintenance-master-form': 'Plant Maintenance Master Form',
@@ -105,6 +107,7 @@ const NON_SEARCH_ROUTE_KEYS = new Set([
   'setup/user-setup',
   'setup/workstation',
   'setup/overtime-list',
+  'setup/issue-from-production-list',
   'setup/issue-from-production',
 ]);
 

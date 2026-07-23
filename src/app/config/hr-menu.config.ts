@@ -127,12 +127,6 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         route: '/setup/overtime-list',
         access: { moduleSlug: 'overtime_list_form', action: 'list' },
       },
-      {
-        label: 'Issue from production',
-        value: 'setup/issue-from-production',
-        icon: 'receipt',
-        route: '/setup/issue-from-production',
-      },
     ],
   },
   // { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },

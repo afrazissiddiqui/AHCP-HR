@@ -9,7 +9,6 @@ import { WarehouseService } from '../../../../services/warehouse.service';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
-import { WarehouseSearchSelectComponent } from '../../warehouse-search-select';
 import {
   GoodIssueHeader,
   GoodIssueLine,
@@ -23,7 +22,7 @@ import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../u
 @Component({
   selector: 'app-add-good-issue',
   standalone: true,
-  imports: [CommonModule, FormsModule, OitmItemPickerDialogComponent, WarehouseSearchSelectComponent],
+  imports: [CommonModule, FormsModule, OitmItemPickerDialogComponent],
   templateUrl: './add-good-issue.html',
   styleUrls: ['../../miscellaneous-form.css'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -221,17 +220,7 @@ export class AddGoodIssue implements OnInit {
 
     const header = this.headerForm();
     if (!header.docDate.trim()) {
-      this.alertService.validation('Doc Date is required.');
-      return;
-    }
-
-    if (!header.taxDate.trim()) {
-      this.alertService.validation('Tax Date is required.');
-      return;
-    }
-
-    if (!header.docDueDate.trim()) {
-      this.alertService.validation('Doc Due Date is required.');
+      this.alertService.validation('Posting Date is required.');
       return;
     }
 

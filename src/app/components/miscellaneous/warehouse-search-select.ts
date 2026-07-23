@@ -28,6 +28,7 @@ export class WarehouseSearchSelectComponent implements OnInit, OnChanges, OnDest
   @Input() warehouseCode = '';
   @Input() compact = false;
   @Input() displayCodeOnly = false;
+  @Input() branchCode = '';
   @Input() placeholder = 'Select warehouse';
   @Output() warehouseCodeChange = new EventEmitter<string>();
 
@@ -35,6 +36,7 @@ export class WarehouseSearchSelectComponent implements OnInit, OnChanges, OnDest
   selectedCode = '';
   loading = false;
   loadError: string | null = null;
+  private allOptions: WarehouseOption[] = [];
 
   ngOnInit(): void {
     this.selectedCode = (this.warehouseCode ?? '').trim();
@@ -44,6 +46,10 @@ export class WarehouseSearchSelectComponent implements OnInit, OnChanges, OnDest
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['warehouseCode']) {
       this.selectedCode = (this.warehouseCode ?? '').trim();
+    }
+
+    if (changes['branchCode'] && this.allOptions.length > 0) {
+      this.options = this.filterOptionsForBranch(this.allOptions);
     }
   }
 
@@ -77,7 +83,8 @@ export class WarehouseSearchSelectComponent implements OnInit, OnChanges, OnDest
     this.loadSub = request.subscribe({
       next: (rows) => {
         this.loading = false;
-        this.options = [...rows];
+        this.allOptions = [...rows];
+        this.options = this.filterOptionsForBranch(this.allOptions);
         this.loadError = rows.length === 0 ? 'No warehouses returned from API.' : null;
 
         // Keep a pre-filled PO warehouse visible even if catalog is still catching up.
@@ -94,6 +101,25 @@ export class WarehouseSearchSelectComponent implements OnInit, OnChanges, OnDest
         this.options = [];
         this.loadError = 'Could not load warehouses from API.';
       },
+    });
+  }
+
+  private filterOptionsForBranch(rows: WarehouseOption[]): WarehouseOption[] {
+    const branchCode = (this.branchCode ?? '').trim().toLowerCase();
+    if (!branchCode) {
+      return rows;
+    }
+
+    const keywords: Record<string, string[]> = {
+      '1': ['peshawar', 'psh'],
+      '2': ['ho', 'head office', 'headoffice', 'head-office'],
+      '3': ['faisalabad', 'fsd'],
+    };
+
+    const branchKeywords = keywords[branchCode] ?? [];
+    return rows.filter((warehouse) => {
+      const label = `${warehouse.warehouseCode} ${warehouse.warehouseName}`.toLowerCase();
+      return branchKeywords.some((keyword) => label.includes(keyword));
     });
   }
 }

@@ -62,21 +62,24 @@
               <thead>
                 <tr>
                   <th class="sir-col-sr">Sr. No</th>
-                  <th class="sir-col-item-code">Item Code</th>
-                  <th class="sir-col-item-name">Item Name</th>
-                  <th class="sir-col-warehouse">Warehouse</th>
+                  <th class="sir-col-item-code">Item No.</th>
+                  <th class="sir-col-item-name">Item Description</th>
                   <th class="sir-col-qty">Quantity</th>
                   <th class="sir-col-price">Unit Price</th>
-                  <th class="sir-col-batch">Batch Number</th>
-                  <th class="sir-col-date">Mfg Date</th>
-                  <th class="sir-col-date">Expiry Date</th>
+                  <th class="sir-col-total">Total</th>
+                  <th class="sir-col-bin">Bin Location Allocation</th>
+                  <th class="sir-col-account">Account Code</th>
+                  <th class="sir-col-cost">Item Cost</th>
+                  <th class="sir-col-uom">UoM Code</th>
+                  <th class="sir-col-uom-name">UoM Name</th>
+                  <th class="sir-col-dept">Departments & Locations</th>
                   <th class="sir-col-actions">Action</th>
                 </tr>
               </thead>
               <tbody>
-                @for (line of contentLines(); track $index) {
+                @for (line of contentLines(); track $index; let lineIndex = $index) {
                   <tr>
-                    <td class="sir-col-sr">{{ $index + 1 }}</td>
+                    <td class="sir-col-sr">{{ lineIndex + 1 }}</td>
                     <td class="sir-col-item-code">
                       <input
                         type="text"
@@ -84,39 +87,44 @@
                         readonly
                         [ngModel]="line.itemCode"
                         title="Click to select item"
-                        (click)="openItemPicker($index)"
-                        (keydown.enter)="openItemPicker($index)"
+                        (click)="openItemPicker(lineIndex)"
+                        (keydown.enter)="openItemPicker(lineIndex)"
                       />
                     </td>
                     <td class="sir-col-item-name">
                       <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
                     </td>
-                    <td class="sir-col-warehouse">
-                      <app-warehouse-search-select
-                        [compact]="true"
-                        [warehouseCode]="line.warehouse"
-                        (warehouseCodeChange)="updateContentLine($index, 'warehouse', $event)"
-                      />
-                    </td>
                     <td class="sir-col-qty">
-                      <input type="number" class="sir-table-input" min="1" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)">
+                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.quantity" (ngModelChange)="updateContentLine(lineIndex, 'quantity', $event)">
                     </td>
                     <td class="sir-col-price">
-                      <input type="number" class="sir-table-input" [ngModel]="line.unitPrice" (ngModelChange)="updateContentLine($index, 'unitPrice', $event)">
+                      <input type="number" class="sir-table-input" min="0" step="0.01" [ngModel]="line.unitPrice" (ngModelChange)="updateContentLine(lineIndex, 'unitPrice', $event)">
                     </td>
-                    <td class="sir-col-batch">
-                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)">
+                    <td class="sir-col-total">
+                      <input type="text" class="sir-table-input" [value]="formatAmount((line.quantity ?? 0) * (line.unitPrice ?? 0))" readonly>
                     </td>
-                    <td class="sir-col-date">
-                      <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)">
+                    <td class="sir-col-bin">
+                      <input type="text" class="sir-table-input" [ngModel]="line.binLocationAllocation" (ngModelChange)="updateContentLine(lineIndex, 'binLocationAllocation', $event)">
                     </td>
-                    <td class="sir-col-date">
-                      <input type="date" class="sir-table-input" [ngModel]="line.expiryDate" (ngModelChange)="updateContentLine($index, 'expiryDate', $event)">
+                    <td class="sir-col-account">
+                      <input type="text" class="sir-table-input" [ngModel]="line.accountCode" (ngModelChange)="updateContentLine(lineIndex, 'accountCode', $event)">
+                    </td>
+                    <td class="sir-col-cost">
+                      <input type="number" class="sir-table-input" min="0" step="0.01" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine(lineIndex, 'itemCost', $event)">
+                    </td>
+                    <td class="sir-col-uom">
+                      <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine(lineIndex, 'uomCode', $event)">
+                    </td>
+                    <td class="sir-col-uom-name">
+                      <input type="text" class="sir-table-input" [ngModel]="line.uomName" (ngModelChange)="updateContentLine(lineIndex, 'uomName', $event)">
+                    </td>
+                    <td class="sir-col-dept">
+                      <input type="text" class="sir-table-input" [ngModel]="line.departmentsLocations" (ngModelChange)="updateContentLine(lineIndex, 'departmentsLocations', $event)">
                     </td>
                     <td class="sir-col-actions">
                       <div class="sir-row-action-buttons" data-ui5-compact-size>
                         <ui5-button design="Transparent" icon="add" accessible-name="Add row" (click)="addContentLine()"></ui5-button>
-                        <ui5-button design="Negative" icon="delete" accessible-name="Delete row" [disabled]="contentLines().length <= 1" (click)="deleteContentLine($index)"></ui5-button>
+                        <ui5-button design="Negative" icon="delete" accessible-name="Delete row" [disabled]="contentLines().length <= 1" (click)="deleteContentLine(lineIndex)"></ui5-button>
                       </div>
                     </td>
                   </tr>
@@ -130,18 +138,20 @@
       <section class="sir-form-section" id="footer">
         <div class="sir-footer-grid">
           <div class="sir-field-row">
-            <label>Submitted By:</label>
-            <input type="text" [ngModel]="submittedBy()" readonly />
-          </div>
-          <div class="sir-field-row">
             <label>Remarks:</label>
             <input type="text" placeholder="Document level remarks" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" />
           </div>
-        </div>
-        <div class="sir-footer-grid sir-footer-grid--totals">
-          <div class="sir-field-row">
-            <label>Total Amount:</label>
-            <input type="text" class="sir-input--amount" [value]="formatAmount(totalAmount())" readonly>
+          <div class="sir-footer-right">
+            <div class="sir-field-row sir-field-row--right">
+              <label>Submitted By:</label>
+              <input type="text" [ngModel]="submittedBy()" readonly />
+            </div>
+            <div class="sir-field-row sir-field-row--right">
+              <label>Total Amount</label>
+              <div class="sir-total-summary" role="status" aria-live="polite">
+                <span class="sir-total-summary__value">{{ formatAmount(totalAmount()) }}</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="sir-form-actions">

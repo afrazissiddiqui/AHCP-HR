@@ -14,11 +14,18 @@ export interface GoodIssueLine {
   itemCode: string;
   itemDescription: string;
   warehouse: string;
+  branch: string;
   quantity: number | null;
   unitPrice: number | null;
   batchSerialNumber: string;
   manufacturingDate: string;
   expiryDate: string;
+  binLocationAllocation: string;
+  accountCode: string;
+  itemCost: number | null;
+  uomCode: string;
+  uomName: string;
+  departmentsLocations: string;
 }
 
 function todayDateString(): string {
@@ -51,11 +58,18 @@ export function createEmptyGoodIssueLine(): GoodIssueLine {
     itemCode: '',
     itemDescription: '',
     warehouse: '',
+    branch: '',
     quantity: null,
     unitPrice: null,
     batchSerialNumber: '',
     manufacturingDate: '',
     expiryDate: plusDaysDateString(10),
+    binLocationAllocation: '',
+    accountCode: '',
+    itemCost: null,
+    uomCode: '',
+    uomName: '',
+    departmentsLocations: '',
   };
 }
 
@@ -70,7 +84,7 @@ export function updateGoodIssueLine(
       return row;
     }
 
-    if (field === 'quantity' || field === 'unitPrice') {
+    if (field === 'quantity' || field === 'unitPrice' || field === 'itemCost') {
       const numericValue = value === '' ? null : Number(value);
       return { ...row, [field]: Number.isNaN(numericValue) ? null : numericValue };
     }

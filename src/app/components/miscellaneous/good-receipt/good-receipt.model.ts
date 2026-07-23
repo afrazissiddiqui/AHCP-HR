@@ -16,6 +16,13 @@ export interface GoodReceiptLine {
   batchNumber: string;
   manufacturingDate: string;
   expiryDate: string;
+  binLocationAllocation: string;
+  accountCode: string;
+  itemCost: number | null;
+  uomCode: string;
+  uomName: string;
+  departmentsLocations: string;
+  branch: string;
   baseEntry?: string;
   baseLine?: string;
 }
@@ -52,6 +59,13 @@ export function createEmptyGoodReceiptLine(): GoodReceiptLine {
     batchNumber: '',
     manufacturingDate: '',
     expiryDate: plusDaysDateString(10),
+    binLocationAllocation: '',
+    accountCode: '',
+    itemCost: null,
+    uomCode: '',
+    uomName: '',
+    departmentsLocations: '',
+    branch: '',
     baseEntry: '',
     baseLine: '',
   };
@@ -68,7 +82,7 @@ export function updateGoodReceiptLine(
       return row;
     }
 
-    if (field === 'unitPrice' || field === 'quantity') {
+    if (field === 'unitPrice' || field === 'quantity' || field === 'itemCost') {
       const numericValue = value === '' ? null : Number(value);
       return { ...row, [field]: Number.isNaN(numericValue) ? null : numericValue };
     }
