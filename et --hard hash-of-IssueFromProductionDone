@@ -1,0 +1,282 @@
+[33m9b07f7d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m byRamish_7/23_MislForm
+[33m2889ec3[m Fixed#79.1
+[33m65c0636[m Fixed#79
+[33m31b6cb5[m IFP2
+[33ma39bf07[m Issue_from_Production
+[33maf6499f[m Payroll_4
+[33m2b282c7[m Fixed#78
+[33m8a095fb[m payroll_3
+[33meb73f1b[m Payroll_2
+[33m1a461ac[m Payroll_
+[33m9e2ecb9[m AGP_2
+[33ma0eecf7[m AGP
+[33m01f623d[m Gatepass_
+[33mbaaf77f[m addPayrollSecTest
+[33m787b749[m AddPayrollNewSect.
+[33m0b3f201[m UserSetup_Updated
+[33m92c928f[m KpiView#2
+[33m39aab7a[m Kpi View
+[33m27e07ad[m Fixed#77
+[33mcb8f8cb[m Fixed#76.1
+[33m20cf71e[m Fixed#76
+[33m3b00cc9[m KPIScrren
+[33mfb833c8[m MisInvTranReq
+[33m5d511b4[m ITR
+[33m2125c3f[m ProfileView
+[33m3b9c0ed[m Clean
+[33m523e62b[m Kpi's Start
+[33m97b6f2c[m fIXED#75
+[33mdfe7dc7[m Fixed#74
+[33m47917b7[m Fixed#73
+[33m4815313[m Fixed#72
+[33m19cd326[m Fixed#71
+[33mb8f3ce1[m Revert
+[33mae2781e[m UserSetup_6
+[33m76f9e1d[m UserSetup_5
+[33m6dc39c6[m UserSetup_4
+[33m6024039[m UserSetup_3
+[33m873302c[m UserSetup_2
+[33md3a74c3[m UserSetup_
+[33m9000654[m Fixed#70
+[33m5f61877[m Fixed#69
+[33m1c2add9[m Fixed#68
+[33mc82dd17[m IGP&AGPprint
+[33m4e8ac33[m PrintViewIGP
+[33ma4c6c29[m Fixed#67
+[33m9ff5d00[m ReciptFromProdAdded
+[33m0b77109[m Fix#66.5
+[33me39f34a[m Fixed#66
+[33mba535ea[m Fixed#65
+[33md5ddcb9[m test
+[33m4e3acdc[m fixed#64
+[33m909e91c[m Fixed#63
+[33m7d3c053[m AdRecFromProdBatchNum
+[33m0c07e29[m GatePassesTheme
+[33mf11f1d8[m Fixed#62
+[33mda7a939[m Fixed#61
+[33m017f498[m Fixed#60
+[33m85e1565[m Fixed Error
+[33m7e49745[m Update project changes
+[33m9287cb3[m Fixed#59
+[33m499887b[m Fixed#58
+[33m0d8d66a[m Fixed#57
+[33m161c5cc[m Fixed#56
+[33mca8ba68[m QC-Added
+[33mf9359c7[m LiveTest
+[33mb390c6c[m Fixed#55
+[33md7a869e[m Fixed#54
+[33m6a2ab72[m Fixed#53
+[33m2b3f32a[m Fixed#52
+[33m02e3840[m FuelCol
+[33m8991900[m OverTimeSetup
+[33macfdf3b[m PayrollStart
+[33md5c18eb[m Fixed#51.5
+[33m2910179[m Fixed#51
+[33ma890b50[m Fixed#50
+[33m656669c[m Fixed#49.99
+[33mb113868[m Fixed#49.9
+[33m0dd7ee6[m Fixed#49.5
+[33mbd1ba55[m Fixed#49
+[33m159cd5c[m Fixed#48
+[33m47cdd93[m Done!
+[33m1de8eb0[m Payload Fix
+[33md3b433c[m updatedloanAdvPayload
+[33m0b638ae[m Fixed#47
+[33mebceaec[m Fixed#46
+[33m0ac29d4[m Fixed#45
+[33mbcd571d[m Fixed#44
+[33m79ae6d1[m Fixed#43
+[33m87386dd[m PermissionAdded
+[33m4b91e4a[m Fixed#42.5
+[33me9c46f0[m Fixed#42
+[33m3b92315[m Leave-App-Form.
+[33m545ba4c[m Fiexed#41
+[33m55700a1[m Fixed#40
+[33m8e57f33[m BlankScreen
+[33m8ef796b[m Fixed#39
+[33mf39535c[m ErrorFixed#3!
+[33mf7fdc97[m ErrorFixed#2!
+[33m50fa758[m ErrorFixed
+[33ma7c1d4b[m Fixed#38
+[33md04de6d[m Fixed#37
+[33mb2f554c[m Fixed#36
+[33m6ea501f[m Fixed#35
+[33m7dd014d[m Fixed#34
+[33m07a5936[m Fixed#33
+[33m0778414[m Error
+[33me0bf81b[m Fixed#32
+[33m6b31e6d[m LoanAdvStart
+[33m46c8474[m Fixed#31
+[33med8d28f[m Fixed30.1
+[33m47a9326[m Fixed#30
+[33mfa8f10a[m FuelAllowance#5
+[33m137d8fc[m FuelAllowance#4
+[33m3d7fd56[m FuelAllowanceFixed#3
+[33m1871115[m undo
+[33m287a65d[m FuelAllowance#2
+[33m1522043[m FuelAllowanceFix
+[33m18e9f50[m Fixed#29
+[33m70f18f2[m Fixed#28
+[33m672c3c1[m Fixed#27
+[33m2432a3e[m Fixed#26
+[33mbd27130[m ErrorTerm.
+[33m833d064[m Fixed#25
+[33m1d8b814[m Fixed#24
+[33m614a5e8[m Fixed#23
+[33m6c4e23d[m AuthAdded.
+[33m874120c[m Training & Development Start.
+[33m65a5457[m Fixed#22
+[33mdef20c6[m Fixed#21
+[33m4274df9[m Fixed#21
+[33me0b6b7b[m Fixed#20
+[33m52eda12[m AuthTheme
+[33mce01421[m Auth-Start.
+[33m72ea21a[m Fixed#19
+[33md127109[m Fixed#18
+[33mffdb348[m Fixed#17
+[33mcc02ba9[m PayloadUpload0
+[33m006cf0f[m PayloadUpdate
+[33m43ad551[m Fixed#16
+[33m494027c[m FIxed#15
+[33m29d1d09[m ProbationEval-Start
+[33mcd08087[m Fixed#14.1
+[33m417a515[m Application Form Last PUSH.
+[33m693db12[m Fixed#14
+[33m6a3abd3[m FixedLeaveMangCRUD
+[33m1b8e5f3[m leave CRUD Done!
+[33m7290a78[m Leave Mang CRUD.
+[33m245d5f6[m Fixed#13
+[33mfcdde46[m Fixed#12
+[33m2324df9[m Fix#11
+[33m67f10ad[m Fixed#10
+[33m50ce63c[m Fixed#9
+[33m4a1ceef[m FIx#8
+[33md5db88f[m Fix#8
+[33m4118e38[m Fix#7
+[33mc9f6ed1[m Theme Fix PM -1
+[33mca3c6d4[m Check Feild # 6
+[33md591484[m check feild # 5
+[33m04d2596[m check feild # 4
+[33m70da567[m check feild # 3
+[33m895dada[m check feild #2
+[33med0a939[m Check feild # 1
+[33mecf5cca[m Check I to F
+[33m8741401[m Sub Component Defination Fixed
+[33mae5c946[m Undo#1
+[33mbfdd698[m ThemeFixed.
+[33m8fcdf0f[m Fix-N/A
+[33m0af3c27[m add maint. activity form Fix#2
+[33m8397617[m Add Maintenance Activity Defination and Theme.
+[33mf47a63b[m FixedAtten#7
+[33md4b2a9c[m FixedAttend#6
+[33m015b21f[m FixAttend#5
+[33m7e787a6[m FixedAttend#4
+[33m273aeab[m FixedAttend#3
+[33m61cc7f9[m FixedAttend#2
+[33m518081f[m Attend.Fix
+[33me8ff1d0[m FixedAttendance
+[33m7b14236[m Gate Fixes
+[33m39c9e89[m IGP-Submit-Issue.
+[33m9d3f8ba[m AttendFix
+[33mf8c73de[m IGP.FIx DriverName
+[33m6c136ed[m payroll process Load
+[33mb8b45bb[m Fix 0.6
+[33me0ed5c1[m Fix 0.5
+[33mce1a07a[m Attend. Theme Fix.
+[33mc5d1f0d[m Attendance Form Start
+[33mf82a6ad[m huskyform2pointsAfterDelivery
+[33mbfa23e1[m huskyFormCal#2
+[33me2e47f4[m HuskyFormCal.#1
+[33m1eaa682[m ITR post-API
+[33m147bbfc[m Theme fix 2
+[33m2f52bad[m ITR Theme Fix 1
+[33m286ed00[m ITR Theme Fix.
+[33mf72d63c[m Eror
+[33m49e34a8[m Itr Warehouses added.
+[33md5b2412[m Add-ITR TST#1
+[33mebbe17e[m ITR-Start
+[33m4486697[m ItemFeild-in-PM-MainForm
+[33mba4b80b[m Struc Fix PM-MasterForm
+[33mdb5a894[m P-M-NewTable
+[33mfd1558f[m Term
+[33m2cfdfff[m SSS
+[33mb2bd00b[m GP-FIxes
+[33mf15fa1d[m Leave App Form.
+[33m9d26a5c[m AGP-CRUD
+[33m421d6f5[m OGP-2nd
+[33mcdf1276[m OGP-CRUD
+[33m3dde566[m IGP-DocModal
+[33m768f6b4[m ExpenRemDateForm
+[33ma746715[m IGP-Updated
+[33mabc9da0[m Error Removal.
+[33m1a0bc33[m IGP-CRUD
+[33m2429180[m User-Setup-Added
+[33m1649e4e[m HR-Final
+[33m62efbf9[m PayRollProcessCRUD.
+[33m5224372[m G/L & Pay-roll-Processing.
+[33mc5817e5[m NewlyAddedHeadFeildP-Roll.Processin
+[33mcd1326d[m RemainingFix
+[33m699aa41[m Calculations
+[33mb82fc15[m StructFix-4
+[33md001161[m Fix Struct-3
+[33mea5aed3[m StructIss-Fix2
+[33mbe0943a[m FixStruct
+[33m3d2944c[m Undo1
+[33m9788957[m Undo
+[33mac986f7[m StructIssu Fix
+[33mca3aa56[m Theme FIx 1
+[33mc63a047[m Payroll add Form.
+[33m7ba09ee[m PayProcStart
+[33me321ce5[m UndoRemuPassinValueFix3
+[33m26c56c5[m AllowancesFix2
+[33m1d3dc75[m Allowances Feilds!
+[33mcfcce12[m FixRemu
+[33m24886b0[m ApFormMissinRemu
+[33mcb720b0[m updatedPayloadAppForm!
+[33mb2932e7[m ProbEvalFormStart
+[33me91d55e[m done
+[33ma852ccc[m VeryFinalAppFromPush
+[33m05258ea[m AppFormFinalPush
+[33mab5294c[m ApplicationForm-Update(2:29)
+[33ma202d1b[m Create App Form DONE!
+[33m9fbdf49[m JSForm
+[33ma69bf12[m EmptyJS
+[33m4e07eec[m Fix 0.0
+[33m59802d6[m G/LMod-Del/API
+[33m766b332[m G/L Module-Added.
+[33m47f445d[m Fix
+[33m898a265[m NewSetupSection
+[33mffb327c[m rem.AppForm
+[33m68b34ad[m JD dropdownFix
+[33mea087d0[m ProbationEvaluationForm.
+[33m7e4e491[m AppForm Done!
+[33mf21939f[m JDDropdown
+[33m38c7d0e[m blank app 4.2
+[33med38857[m Blankapp4.1.0
+[33m068258d[m BlankApp4.1
+[33m510e5da[m BlankApp4
+[33m8b71956[m BlankApp3
+[33mac7893f[m BlankApp:2
+[33mc34a0cd[m Blank Application Form Fix
+[33m18c5061[m Saturday Fix 1.
+[33m2a71443[m Fix 0.4
+[33m4183cc3[m Fix 0.3
+[33m2f99730[m TrainingForm
+[33m0f73a1a[m Fix new
+[33m0f6faf3[m Fix-0.2
+[33m0b78779[m Fix 0.2
+[33m94ceb14[m IGP-StructFix0.1
+[33m4157238[m IGP Structure Issue
+[33m4d7ba4c[m Overlapping issuee 1 (IGP)
+[33m8f00317[m update feild removed(GP's)
+[33mde52e43[m Fix2.2
+[33mda9d962[m Fix 2.1
+[33md47ff39[m Added BsDoc, Loc,weighFix n Other
+[33m401b4df[m Logo
+[33m4cb393f[m Error Message
+[33m9a484c5[m HuskyForm-CRUD
+[33mf7949d6[m BaseURLChange
+[33me72e62f[m Husky-Form CRUD.
+[33m2bac7af[m Maintenance-Master-Form CRUD
+[33m2ba7b42[m MaintenanceActivity-CRUD
+[33m7ca2a86[m Sub
