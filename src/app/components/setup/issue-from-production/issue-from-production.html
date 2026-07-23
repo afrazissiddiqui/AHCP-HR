@@ -324,6 +324,17 @@
           <div class="sir-detail-section">
             <h3>{{ activeLine.itemCode }}</h3>
             <p class="sir-modal-status-text">{{ activeLine.itemDescription }}</p>
+            <div class="sir-batch-info">
+              <span class="sir-batch-info-item">
+                <strong>Required Qty:</strong> {{ activeLine.requiredQuantity }}
+              </span>
+              <span class="sir-batch-info-item">
+                <strong>Already Issued Quantity:</strong> {{ getAlreadyIssuedQuantity(activeLine) }}
+              </span>
+              <span class="sir-batch-info-item" [class.sir-batch-info-item--remaining-zero]="getRemainingRequiredQuantity(activeLine) === 0">
+                <strong>Remaining Required:</strong> {{ getRemainingRequiredQuantity(activeLine) }}
+              </span>
+            </div>
             <div class="sir-batch-modal-scroll">
               <div class="sir-data-table-wrapper">
                 <table class="sir-modal-table">
@@ -349,7 +360,7 @@
                             (blur)="validateBatchIssueQuantity(batch, activeLine)"
                             min="0"
                             [max]="getMaxAvailableForBatch(batch, activeLine)"
-                            [title]="'Max available: ' + getMaxAvailableForBatch(batch, activeLine)"
+                            [title]="'Max: min(Available='+batch.quantity+', Remaining Required='+getRemainingRequiredQuantity(activeLine)+')'"
                             [disabled]="activeLine.batchNumber !== batch.batchNo"
                           />
                         </td>

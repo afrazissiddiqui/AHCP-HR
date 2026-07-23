@@ -71,6 +71,7 @@ export interface ProductionOrderItem {
   itemCode: string;
   itemDescription: string;
   quantity: number;
+  issuedQuantity?: number;
   jumboCartons: number;
   warehouse: string;
   batchNumber: string;
@@ -229,18 +230,25 @@ export class ReceiptFromProductionService {
     const fallback = fallbackItem ?? {};
     const itemCode = this.pickString(item, ['ItemCode', 'itemCode', 'Item', 'ProductCode', 'ProdCode', 'Product']) || this.pickString(fallback, ['ItemCode', 'itemCode', 'Item', 'ProductCode', 'ProdCode', 'Product']);
     const itemDescription = this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'Dscription', 'itemDescription', 'Name']) || this.pickString(fallback, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'Dscription', 'itemDescription', 'Name']);
+    const lineNum =
+      this.pickString(item, ['LineNum', 'lineNum', 'line_num', 'DocLine', 'docLine', 'doc_line']) ||
+      this.pickString(fallback, ['LineNum', 'lineNum', 'line_num', 'DocLine', 'docLine', 'doc_line']);
     const lineQuantity = this.pickProductionOrderItemQuantity(item);
     const fallbackQuantity = this.pickProductionOrderItemQuantity(fallback);
     const quantity = lineQuantity > 0 ? lineQuantity : fallbackQuantity;
+    const issuedQuantity = this.pickNumber(item, ['IssuedQty', 'issuedQty']);
+    const fallbackIssuedQuantity = this.pickNumber(fallback, ['IssuedQty', 'issuedQty']);
+    const normalizedIssuedQuantity = issuedQuantity > 0 ? issuedQuantity : fallbackIssuedQuantity;
     const lineJumboCartons = this.pickNumber(item, ['U_NoJC', 'NoJC', 'numJumboCartons', 'jumboCartons', 'U_NoJc']);
     const fallbackJumboCartons = this.pickNumber(fallback, ['U_NoJC', 'NoJC', 'numJumboCartons', 'jumboCartons', 'U_NoJc']);
     const jumboCartons = lineJumboCartons > 0 ? lineJumboCartons : fallbackJumboCartons;
 
     return {
-      lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']) || this.pickString(fallback, ['LineNum', 'lineNum', 'DocLine', 'docLine']),
+      lineNum,
       itemCode,
       itemDescription,
       quantity,
+      issuedQuantity: normalizedIssuedQuantity > 0 ? normalizedIssuedQuantity : undefined,
       jumboCartons,
       warehouse:
         this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse', 'Whs', 'WarehouseCode']) ||
@@ -252,21 +260,21 @@ export class ReceiptFromProductionService {
         (firstBatch ? this.pickString(firstBatch, ['BatchNum', 'batchNum', 'batchNumber', 'batch_number', 'BatchNo']) : ''),
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']) || this.pickDate(fallback, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']) || this.pickDate(fallback, ['ExpiryDate', 'expiry_date', 'expiryDate']),
-      baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || this.pickString(fallback, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
+      baseLine: lineNum || '0',
       batches: this.pickAvailableBatches(item),
     };
   }
 
   private pickProductionOrderItemQuantity(item: Record<string, unknown>): number {
-    const quantity = this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']);
-    if (quantity > 0) {
-      return quantity;
-    }
-
     const plannedQty = this.pickNumber(item, ['PlannedQty', 'plannedQty']);
     const completedQty = this.pickNumber(item, ['CmpltQty', 'completedQty', 'CompletedQty', 'completeQty']);
     if (plannedQty > 0 || completedQty > 0) {
       return Math.max(plannedQty - completedQty, 0);
+    }
+
+    const quantity = this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty']);
+    if (quantity > 0) {
+      return quantity;
     }
 
     const firstBatch = this.pickFirstBatch(item);

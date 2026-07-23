@@ -226,6 +226,37 @@
   max-height: 240px;
 }
 
+.sir-batch-info {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 4px solid #0f6bcb;
+}
+
+.sir-batch-info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.sir-batch-info-item strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.sir-batch-info-item--remaining-zero {
+  color: #ca8a04;
+}
+
+.sir-batch-info-item--remaining-zero strong {
+  color: #92400e;
+}
+
 .sir-modal-row--completed {
   background: #ecfdf5;
 }

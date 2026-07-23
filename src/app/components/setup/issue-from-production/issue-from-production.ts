@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
-import { formatApiErrorMessage } from '../../../utils/api-error.util';
+import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { ReceiptFromProductionService } from '../../miscellaneous/receipt-from-production/receipt-from-production.service';
 import { WarehouseOption, WarehouseService } from '../../../services/warehouse.service';
@@ -20,6 +20,7 @@ interface ProductionOrderItem {
   itemCode: string;
   itemDescription: string;
   quantity: number;
+  issuedQuantity?: number;
   warehouse: string;
   batchNumber: string;
   manufacturingDate: string;
@@ -56,6 +57,7 @@ interface IssueForProductionLine {
   itemDescription: string;
   warehouse: string;
   quantity: number | null;
+  requiredQuantity: number;
   batchNumber: string;
   manufacturingDate: string;
   expiryDate: string;
@@ -275,19 +277,23 @@ export class IssueFromProductionComponent implements OnInit {
     }));
 
     this.contentLines.set(
-      selectedItems.map((item, index) => ({
-        ...this.createEmptyLine(),
-        itemCode: item.itemCode,
-        itemDescription: item.itemDescription,
-        warehouse: branchWarehouse || item.warehouse || order.warehouse,
-        quantity: item.quantity ?? null,
-        batchNumber: item.batches?.[0]?.batchNo || item.batchNumber || order.batchNumber || '',
-        manufacturingDate: item.manufacturingDate,
-        expiryDate: item.expiryDate,
-        baseEntry: order.docEntry,
-        baseLine: item.baseLine || String(index),
-        availableBatches: item.batches ?? [],
-      })),
+      selectedItems.map((item, index) => {
+        const lineNum = this.resolveOrderItemLineNumber(item, index);
+        return {
+          ...this.createEmptyLine(),
+          itemCode: item.itemCode,
+          itemDescription: item.itemDescription,
+          warehouse: branchWarehouse || item.warehouse || order.warehouse,
+          quantity: item.quantity ?? null,
+          requiredQuantity: item.quantity ?? 0,
+          batchNumber: item.batches?.[0]?.batchNo || item.batchNumber || order.batchNumber || '',
+          manufacturingDate: item.manufacturingDate,
+          expiryDate: item.expiryDate,
+          baseEntry: order.docEntry,
+          baseLine: lineNum,
+          availableBatches: item.batches ?? [],
+        };
+      }),
     );
 
     this.activeBatchSelectionLineIndex.set(0);
@@ -326,7 +332,8 @@ export class IssueFromProductionComponent implements OnInit {
           if (availableBatch.batchNo !== batch.batchNo) {
             return availableBatch;
           }
-          return { ...availableBatch, issueQuantity: availableBatch.issueQuantity ?? row.quantity ?? 0 };
+          // Don't auto-initialize; keep existing value or null
+          return { ...availableBatch };
         });
 
         return {
@@ -350,7 +357,6 @@ export class IssueFromProductionComponent implements OnInit {
     }
 
     const quantity = value === '' ? null : Number(value);
-    const itemQuantity = row.quantity ?? 0;
     const normalizedQuantity = Number.isNaN(quantity) ? null : quantity;
 
     if (normalizedQuantity == null) {
@@ -376,15 +382,9 @@ export class IssueFromProductionComponent implements OnInit {
       return;
     }
 
-    const sumOfOtherBatches = row.availableBatches.reduce((sum, b) => {
-      if (b.batchNo === batch.batchNo) {
-        return sum;
-      }
-      return sum + (b.issueQuantity ?? 0);
-    }, 0);
-
-    const remainingAvailable = itemQuantity - sumOfOtherBatches;
-    const clampedQuantity = Math.min(normalizedQuantity, Math.max(remainingAvailable, 0));
+    // Use the constraint-based max: min(batch available, remaining required qty)
+    const maxAllowed = this.getMaxAvailableForBatch(batch, row);
+    const clampedQuantity = Math.min(normalizedQuantity, maxAllowed);
 
     this.contentLines.update((rows) =>
       rows.map((r, rowIndex) => {
@@ -417,21 +417,37 @@ export class IssueFromProductionComponent implements OnInit {
   }
 
   getMaxAvailableForBatch(batch: ProductionOrderBatch, line: IssueForProductionLine): number {
-    // Max is: Item's total quantity minus other batches' issue quantities
-    // The total of all Issue Qty across all batches cannot exceed the item's Qty
-    const itemQuantity = line.quantity ?? 0;
-    const sumOfOtherBatches = line.availableBatches.reduce((sum, b) => {
-      if (b.batchNo === batch.batchNo) {
-        return sum;
-      }
-      return sum + (b.issueQuantity ?? 0);
-    }, 0);
-    const remainingForItem = itemQuantity - sumOfOtherBatches;
-    return Math.max(remainingForItem, 0);
+    // Max is: min(batch.available, remaining required)
+    // Issued qty ≤ min(Available qty, Remaining required qty)
+    // Remaining required is based only on the issue quantity entered in the form
+    const batchAvailable = batch.quantity;
+    const requiredQty = line.requiredQuantity;
+    const totalIssueInForm = line.availableBatches
+      .filter((b) => b.batchNo !== batch.batchNo)
+      .reduce((sum, b) => sum + (b.issueQuantity ?? 0), 0);
+
+    const remainingRequired = requiredQty - totalIssueInForm;
+    const maxAllowed = Math.min(batchAvailable, Math.max(remainingRequired, 0));
+
+    return Math.max(maxAllowed, 0);
   }
 
   isBatchSelectionComplete(line: IssueForProductionLine): boolean {
     return line.availableBatches.some((batch) => (batch.issueQuantity ?? 0) > 0);
+  }
+
+  getRemainingRequiredQuantity(line: IssueForProductionLine): number {
+    const totalIssuedInForm = line.availableBatches.reduce((sum, b) => sum + (b.issueQuantity ?? 0), 0);
+    const remaining = line.requiredQuantity - totalIssuedInForm;
+    return Math.max(0, remaining);
+  }
+
+  getAlreadyIssuedQuantity(line: IssueForProductionLine): number {
+    return Math.max(0, line.requiredQuantity - this.getRemainingRequiredQuantity(line));
+  }
+
+  getTotalIssuedInForm(line: IssueForProductionLine): number {
+    return line.availableBatches.reduce((sum, b) => sum + (b.issueQuantity ?? 0), 0);
   }
 
   areAllBatchSelectionsComplete(): boolean {
@@ -479,6 +495,7 @@ export class IssueFromProductionComponent implements OnInit {
     if (currentValue > maxAvailable) {
       input.value = maxAvailable.toString();
       this.updateBatchIssueQuantity(batch, maxAvailable.toString());
+      return;
     }
   }
 
@@ -569,13 +586,20 @@ export class IssueFromProductionComponent implements OnInit {
       Remarks: header.remarks.trim(),
       docentry: Number(header.baseProductionOrderDocEntry.trim()) || 0,
       branch: header.branchId.trim(),
-      items: lines.map((line, index) => ({
-        line_num: index,
-        item_code: line.itemCode.trim(),
-        quantity: line.quantity ?? 0,
-        warehouse: line.warehouse.trim(),
-        batch_no: line.batchNumber.trim(),
-      })),
+      items: lines.map((line, index) => {
+        // Ensure baseLine has a valid non-zero value from the production order
+        // baseLine contains the actual LineNum from the API response
+        const baseLineNum = Number(line.baseLine ?? '0');
+        const lineNum = baseLineNum > 0 ? baseLineNum : index + 1;
+        const issueQtyTotal = this.getTotalIssuedInForm(line);
+        return {
+          line_num: lineNum,
+          item_code: line.itemCode.trim(),
+          quantity: issueQtyTotal,
+          warehouse: line.warehouse.trim(),
+          batch_no: line.batchNumber.trim(),
+        };
+      }),
     };
 
     this.saving.set(true);
@@ -583,8 +607,18 @@ export class IssueFromProductionComponent implements OnInit {
       .createIssueForProduction(payload as Record<string, unknown>)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: () => {
-          void this.alertService.success('Success', 'Issue for production submitted successfully.');
+        next: (response) => {
+          const ok = response?.success === true || response?.status === true;
+          if (!ok) {
+            void this.alertService.error(
+              'Submit Failed',
+              formatSapApiFailureMessage(response, 'Issue for production could not be submitted.'),
+            );
+            return;
+          }
+
+          const message = response?.message?.trim() || 'Issue for production submitted successfully.';
+          void this.alertService.success('Success', message);
           void this.router.navigate(['/miscellaneous/good-issue']);
         },
         error: (error: unknown) => {
@@ -643,26 +677,38 @@ export class IssueFromProductionComponent implements OnInit {
 
   private mapProductionOrderItem(item: Record<string, unknown>): ProductionOrderItem {
     const firstBatch = this.pickFirstBatch(item);
+    // Extract line number from multiple possible field names
+    const lineNumStr = this.pickString(item, [
+      'LineNum',
+      'lineNum',
+      'line_num',
+      'DocLine',
+      'docLine',
+      'doc_line',
+      'lineNumber',
+    ]);
+    const issuedQuantity = this.pickNumber(item, ['IssuedQty', 'issuedQty']);
     return {
-      lineNum: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine', 'LineNum']),
+      lineNum: lineNumStr,
       itemCode: this.pickString(item, ['ItemCode', 'itemCode', 'Item']),
       itemDescription: this.pickString(item, ['Dscription', 'itemDescription', 'ItemName', 'ProdName']),
       quantity: this.pickProductionOrderItemQuantity(item),
+      issuedQuantity: issuedQuantity > 0 ? issuedQuantity : undefined,
       warehouse:
         this.pickString(item, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) ||
         (firstBatch ? this.pickString(firstBatch, ['WhsCode', 'warehouse', 'Warehouse', 'wareHouse']) : ''),
       batchNumber: this.pickProductionOrderItemBatchNumber(item),
       manufacturingDate: this.pickDate(item, ['ManufactureDate', 'MfgDate', 'manufacturingDate']),
       expiryDate: this.pickDate(item, ['ExpiryDate', 'expiry_date', 'expiryDate']),
-      baseLine: this.pickString(item, ['LineNum', 'lineNum', 'DocLine', 'docLine']) || '0',
+      baseLine: lineNumStr || '0',
       batches: this.pickAvailableBatches(item),
     };
   }
 
   private pickProductionOrderItemQuantity(item: Record<string, unknown>): number {
-    const quantity = this.pickNumber(item, ['Quantity', 'quantity', 'Qty', 'qty', 'IssuedQty', 'IssuedQty', 'PlannedQty', 'PlannedQty']);
-    if (quantity > 0) {
-      return quantity;
+    const plannedQuantity = this.pickNumber(item, ['PlannedQty', 'plannedQty', 'Quantity', 'quantity', 'Qty', 'qty']);
+    if (plannedQuantity > 0) {
+      return plannedQuantity;
     }
 
     const firstBatch = this.pickFirstBatch(item);
@@ -765,6 +811,7 @@ export class IssueFromProductionComponent implements OnInit {
       itemDescription: '',
       warehouse: this.resolveDefaultWarehouseForBranch(this.headerForm().branchId),
       quantity: null,
+      requiredQuantity: 0,
       batchNumber: '',
       manufacturingDate: '',
       expiryDate: '',
@@ -775,7 +822,25 @@ export class IssueFromProductionComponent implements OnInit {
   }
 
   orderItemKey(item: ProductionOrderItem): string {
-    return `${item.baseLine}:${item.itemCode}`;
+    const lineNumber = this.resolveOrderItemLineNumber(item, 0);
+    return `${lineNumber}:${item.itemCode}`;
+  }
+
+  private resolveOrderItemLineNumber(item: ProductionOrderItem, index: number): string {
+    const rawBaseLine = item.baseLine?.trim();
+    const rawLineNum = item.lineNum?.trim();
+
+    const baseLineNumber = Number(rawBaseLine);
+    if (Number.isFinite(baseLineNumber) && baseLineNumber > 0) {
+      return String(baseLineNumber);
+    }
+
+    const lineNumber = Number(rawLineNum);
+    if (Number.isFinite(lineNumber) && lineNumber > 0) {
+      return String(lineNumber);
+    }
+
+    return String(index + 1);
   }
 
   private pickString(source: Record<string, unknown>, keys: string[]): string {
