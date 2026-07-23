@@ -1,107 +1,130 @@
-<div class="miscellaneous-content">
-  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
-    <button class="btn-default" pageToolbarActions (click)="onAddNew()">Add Good Receipt</button>
-  </app-page-toolbar>
+<div class="sir-list-page">
+  <header class="sir-page-header">
+    <div class="sir-page-titlebar">
+      <button type="button" class="sir-back-button" aria-label="Toggle sidebar" title="Toggle sidebar" (click)="toggleSidebar()">
+        <span class="sir-back-icon">❮</span>
+      </button>
 
-  <div class="misc-list-container">
-    <div class="misc-list-toolbar">
-      <div class="misc-list-title">Good Receipts ({{ filteredReceipts().length }}) · Selected (0)</div>
-      <div class="misc-toolbar-right">
-        <div class="misc-search-box">
-          <input type="text" class="misc-search-input" placeholder="Search..." [ngModel]="searchText()" (ngModelChange)="onSearchChange($event)" />
-          <span class="misc-search-icon">🔍</span>
-        </div>
-        <button type="button" class="misc-icon-button" (click)="openDialog()" title="Filter">⏷</button>
-        <button type="button" class="misc-icon-button" (click)="openDialog()" title="Settings">⚙</button>
-      </div>
+      <h1 class="sir-page-title" title="Good Receipt List">Good Receipt List</h1>
     </div>
 
-    @if (showDialog()) {
-      <div class="misc-dialog-backdrop" (click)="closeDialog()"></div>
-      <div class="misc-dialog">
-        <div class="misc-dialog-header">
-          <h3>Filter</h3>
-          <button type="button" class="misc-dialog-close" (click)="closeDialog()">&times;</button>
+    <button type="button" class="sir-primary-button" (click)="onAddNew()">Add New</button>
+  </header>
+
+  <div class="sir-page-content">
+    <div class="sir-card">
+      <div class="sir-toolbar">
+        <div class="sir-toolbar-title">Good Receipts ({{ filteredReceipts().length }}) · Selected (0)</div>
+        <div class="sir-toolbar-spacer"></div>
+
+        <div class="sir-search-field">
+          <input type="text" [ngModel]="searchText()" (ngModelChange)="onSearchChange($event)" placeholder="Search..." />
+          <span class="sir-search-icon">🔍</span>
         </div>
-        <div class="misc-dialog-body">
+
+        <div class="sir-toolbar-actions">
+          <button type="button" class="sir-icon-button" title="Filter" (click)="openDialog()">⏷</button>
+          <button type="button" class="sir-icon-button" title="View settings" (click)="openDialog()">⚙</button>
+        </div>
+      </div>
+
+      <div class="sir-dialog-backdrop" *ngIf="showDialog()" (click)="closeDialog()"></div>
+
+      <div class="sir-dialog" *ngIf="showDialog()">
+        <div class="sir-dialog-header">
+          <h3>View Settings</h3>
+          <button type="button" class="sir-dialog-close" (click)="closeDialog()">×</button>
+        </div>
+
+        <div class="sir-dialog-tabs">
+          <button type="button" class="active">Filter</button>
+        </div>
+
+        <div class="sir-dialog-body">
           @for (column of columns(); track column.key) {
-            <label class="misc-dialog-option">
+            <label class="sir-checkbox-row">
               <input type="checkbox" [checked]="column.visible" (change)="toggleColumnVisibility(column.key, $any($event.target).checked)" />
               <span>{{ column.label }}</span>
             </label>
           }
         </div>
-      </div>
-    }
 
-    @if (loading()) {
-      <div class="misc-empty-state">Loading good receipt records...</div>
-    } @else if (loadError()) {
-      <div class="misc-empty-state">
-        {{ loadError() }}
-        <button type="button" class="btn-primary" (click)="loadReceipts()">Retry</button>
-      </div>
-    } @else {
-      <div class="misc-table-wrapper">
-        <table class="misc-data-table">
-          <thead>
-            <tr>
-              <th class="col-sr">Sr#</th>
-              <th [hidden]="!isColumnVisible('docNum')">Receipt No</th>
-              <th [hidden]="!isColumnVisible('docDate')">Posting Date</th>
-              <th [hidden]="!isColumnVisible('seriesName')">Series</th>
-              <th [hidden]="!isColumnVisible('branch')">Branch</th>
-              <th [hidden]="!isColumnVisible('warehouse')">Warehouse</th>
-              <th [hidden]="!isColumnVisible('itemCount')">Items</th>
-              <th [hidden]="!isColumnVisible('status')">Status</th>
-              <th class="col-action">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of paginatedReceipts(); let idx = $index; track row.docEntry || row.docNum) {
-              <tr>
-                <td class="col-sr">{{ ((currentPage() - 1) * pageSize) + idx + 1 }}</td>
-                <td [hidden]="!isColumnVisible('docNum')">{{ row.docNum }}</td>
-                <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate }}</td>
-                <td [hidden]="!isColumnVisible('seriesName')">{{ row.seriesName }}</td>
-                <td [hidden]="!isColumnVisible('branch')">{{ row.branch }}</td>
-                <td [hidden]="!isColumnVisible('warehouse')">{{ row.warehouse }}</td>
-                <td [hidden]="!isColumnVisible('itemCount')" style="text-align: center;">{{ row.itemCount }}</td>
-                <td [hidden]="!isColumnVisible('status')">
-                  <span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">
-                    {{ statusLabel(row.status) }}
-                  </span>
-                </td>
-                <td class="col-action">
-                  <div class="action-buttons">
-                    <button type="button" class="btn-details" (click)="viewDetails(row)" title="View full details">
-                      <span class="btn-details-icon" aria-hidden="true">◎</span>
-                      Details
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="9" class="misc-empty-state">No good receipt records found</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="misc-pagination">
-        <div class="misc-pagination-info">
-          Showing {{ filteredReceipts().length ? ((currentPage() - 1) * pageSize) + 1 : 0 }} to
-          {{ paginationEnd() }} of {{ filteredReceipts().length }}
-        </div>
-        <div class="misc-pagination-controls">
-          <button type="button" class="btn-default" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
-          <span class="misc-pagination-status">Page {{ currentPage() }} of {{ totalPages() }}</span>
-          <button type="button" class="btn-default" [disabled]="currentPage() === totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
+        <div class="sir-dialog-footer">
+          <button type="button" class="sir-primary-button" (click)="closeDialog()">Done</button>
         </div>
       </div>
-    }
+
+      @if (loadError()) {
+        <div class="sir-error-banner">
+          <p>{{ loadError() }}</p>
+          <button type="button" class="sir-primary-button" (click)="loadReceipts()">Retry</button>
+        </div>
+      }
+
+      <div class="sir-table-card">
+        @if (loading()) {
+          <p class="sir-loading">Loading good receipt records…</p>
+        } @else {
+          <div class="sir-data-table-sticky-container">
+            <div class="sir-data-table-wrapper">
+              <table class="sir-data-table sir-data-table--row-level">
+                <thead>
+                  <tr>
+                    <th [hidden]="!isColumnVisible('docNum')">Receipt No</th>
+                    <th [hidden]="!isColumnVisible('docDate')">Posting Date</th>
+                    <th [hidden]="!isColumnVisible('seriesName')">Series</th>
+                    <th [hidden]="!isColumnVisible('warehouse')">Warehouse</th>
+                    <th [hidden]="!isColumnVisible('itemCount')">Items</th>
+                    <th [hidden]="!isColumnVisible('status')">Status</th>
+                    <th class="sir-col-action">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of paginatedReceipts(); let idx = $index; track row.docEntry || row.docNum) {
+                    <tr class="sir-data-row">
+                      <td [hidden]="!isColumnVisible('docNum')">{{ row.docNum }}</td>
+                      <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate }}</td>
+                      <td [hidden]="!isColumnVisible('seriesName')">{{ row.seriesName }}</td>
+                      <td [hidden]="!isColumnVisible('warehouse')">{{ row.warehouse }}</td>
+                      <td [hidden]="!isColumnVisible('itemCount')" style="text-align: center;">{{ row.itemCount }}</td>
+                      <td [hidden]="!isColumnVisible('status')">
+                        <span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">
+                          {{ statusLabel(row.status) }}
+                        </span>
+                      </td>
+                      <td class="sir-col-action">
+                        <div class="sir-row-actions">
+                          <button type="button" class="sir-action-button sir-action-button-secondary" (click)="viewDetails(row)">View</button>
+                        </div>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="9" class="sir-empty-state">No good receipt records found</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sir-pagination">
+            <div class="sir-pagination-info">
+              Showing {{ filteredReceipts().length ? ((currentPage() - 1) * pageSize) + 1 : 0 }} to
+              {{ paginationEnd() }} of {{ filteredReceipts().length }} entries
+            </div>
+
+            <div class="sir-pagination-controls">
+              <button type="button" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+              <div class="sir-page-numbers">
+                <button type="button" [class.active]="currentPage() === 1">1</button>
+              </div>
+              <button type="button" [disabled]="currentPage() === totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
   </div>
 </div>
 
@@ -121,7 +144,6 @@
         <div class="misc-detail-field"><label>Due Date</label><div>{{ row.docDueDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Status</label><div><span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">{{ statusLabel(row.status) }}</span></div></div>
         <div class="misc-detail-field"><label>Series</label><div>{{ row.seriesName || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Branch</label><div>{{ row.branch || '—' }}</div></div>
         <div class="misc-detail-field"><label>Warehouse</label><div>{{ row.warehouse || '—' }}</div></div>
         <div class="misc-detail-field"><label>Customer Code</label><div>{{ row.customerCode || '—' }}</div></div>
         <div class="misc-detail-field"><label>Customer Name</label><div>{{ row.customerName || '—' }}</div></div>

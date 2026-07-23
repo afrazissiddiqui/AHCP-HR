@@ -13,6 +13,8 @@ export interface InventoryTransferRequestLine {
   fromWarehouse: string;
   toWarehouse: string;
   batchNumber: string;
+  uomCode: string;
+  uomName: string;
 }
 
 export interface InventoryTransferRequestRecord {
@@ -36,6 +38,11 @@ export interface CreateInventoryTransferItemPayload {
   baseEntry?: string | number;
   baseLine?: string | number;
   item_code: string;
+  item_cost?: string;
+  uom_code?: string;
+  uom_name?: string;
+  distr_rule?: string;
+  to_branch?: string;
   quantity: string;
   FromWhsCod: string;
   ToWhsCode: string;
@@ -70,6 +77,8 @@ export interface InventoryTransferListLineItem {
   toWarehouse: string;
   lineTotal: number;
   batchNumber: string;
+  uomCode: string;
+  uomName: string;
 }
 
 export interface InventoryTransferListItem {
@@ -112,6 +121,11 @@ export function buildCreateInventoryTransferPayload(
           baseEntry: line.baseEntry?.trim() || undefined,
           baseLine: line.baseLine?.trim() || undefined,
           item_code: line.itemCode.trim(),
+          item_cost: line.itemCost.trim() || undefined,
+          uom_code: line.uomCode.trim() || undefined,
+          uom_name: line.uomName.trim() || undefined,
+          distr_rule: line.distrRule.trim() || undefined,
+          to_branch: line.toBranch.trim() || undefined,
           quantity,
           FromWhsCod: lineFromWarehouse,
           ToWhsCode: lineToWarehouse,
@@ -173,6 +187,8 @@ export class InventoryTransferService {
               batchNumber: firstBatch
                 ? this.pickString(firstBatch, ['batchNumber', 'BatchNum', 'batch_number'])
                 : '',
+              uomCode: this.pickString(line, ['UomCode', 'uomCode', 'UOMCode', 'Uom', 'uom', 'UOM']),
+              uomName: this.pickString(line, ['UomName', 'uomName', 'UOMName', 'UomCode', 'uomCode', 'UOMCode']),
             };
           });
 
@@ -228,6 +244,8 @@ export class InventoryTransferService {
               batchNumber: firstBatch
                 ? this.pickString(firstBatch, ['batchNumber', 'BatchNum', 'batch_number'])
                 : '',
+              uomCode: this.pickString(line, ['UomCode', 'uomCode', 'UOMCode', 'Uom', 'uom', 'UOM']),
+              uomName: this.pickString(line, ['UomName', 'uomName', 'UOMName', 'UomCode', 'uomCode', 'UOMCode']),
             };
           });
 

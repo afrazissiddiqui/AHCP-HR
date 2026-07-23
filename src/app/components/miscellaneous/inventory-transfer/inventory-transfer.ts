@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { InventoryTransferListItem, InventoryTransferService } from './inventory-transfer.service';
 import { MiscellaneousLayoutService } from '../miscellaneous-layout.service';
 
@@ -15,9 +14,9 @@ interface InventoryTransferColumn {
 @Component({
   selector: 'app-inventory-transfer',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageToolbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './inventory-transfer.html',
-  styleUrls: ['../miscellaneous-list.css'],
+  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
 })
 export class InventoryTransfer implements OnInit {
   private readonly router = inject(Router);

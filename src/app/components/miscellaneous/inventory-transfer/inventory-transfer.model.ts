@@ -1,8 +1,16 @@
 export interface InventoryTransferHeader {
+  businessPartner: string;
+  name: string;
+  contactPerson: string;
+  shipTo: string;
+  postingDate: string;
   docDate: string;
   taxDate: string;
+  fromBranch: string;
   fromWarehouse: string;
   toWarehouse: string;
+  toBinLocation: string;
+  journalRemarks: string;
   remarks: string;
   baseItrDocEntry?: string;
   baseItrDocNum?: string;
@@ -11,9 +19,17 @@ export interface InventoryTransferHeader {
 export interface InventoryTransferLine {
   itemCode: string;
   itemDescription: string;
-  quantity: number | null;
+  itemCost: string;
+  uomCode: string;
+  uomName: string;
+  distrRule: string;
   fromWarehouse: string;
+  fromBinLocation: string;
   toWarehouse: string;
+  toBinLocation: string;
+  firstToBinLocation: string;
+  toBranch: string;
+  quantity: number | null;
   batchNumber: string;
   baseEntry?: string;
   baseLine?: string;
@@ -26,10 +42,18 @@ function todayDateString(): string {
 export function createEmptyInventoryTransferHeader(): InventoryTransferHeader {
   const today = todayDateString();
   return {
+    businessPartner: '',
+    name: '',
+    contactPerson: '',
+    shipTo: '',
+    postingDate: today,
     docDate: today,
     taxDate: today,
+    fromBranch: '',
     fromWarehouse: '',
     toWarehouse: '',
+    toBinLocation: '',
+    journalRemarks: '',
     remarks: '',
     baseItrDocEntry: '',
     baseItrDocNum: '',
@@ -43,9 +67,17 @@ export function createEmptyInventoryTransferLine(
   return {
     itemCode: '',
     itemDescription: '',
-    quantity: null,
+    itemCost: '',
+    uomCode: '',
+    uomName: '',
+    distrRule: '',
     fromWarehouse,
+    fromBinLocation: '',
     toWarehouse,
+    toBinLocation: '',
+    firstToBinLocation: '',
+    toBranch: '',
+    quantity: null,
     batchNumber: '',
     baseEntry: '',
     baseLine: '',

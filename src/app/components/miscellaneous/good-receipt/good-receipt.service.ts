@@ -14,6 +14,13 @@ export interface CreateGoodReceiptItemPayload {
   batchNumber: string;
   manufacturingDate: string;
   expiryDate: string;
+  binLocationAllocation?: string;
+  accountCode?: string;
+  itemCost?: number;
+  uomCode?: string;
+  uomName?: string;
+  departmentsLocations?: string;
+  branch?: string;
 }
 
 export interface CreateGoodReceiptPayload {
@@ -90,6 +97,13 @@ export function buildCreateGoodReceiptPayload(
       batchNumber: line.batchNumber.trim(),
       manufacturingDate: line.manufacturingDate.trim(),
       expiryDate: line.expiryDate.trim(),
+      binLocationAllocation: line.binLocationAllocation.trim(),
+      accountCode: line.accountCode.trim(),
+      itemCost: line.itemCost ?? 0,
+      uomCode: line.uomCode.trim(),
+      uomName: line.uomName.trim(),
+      departmentsLocations: line.departmentsLocations.trim(),
+      branch: line.branch.trim(),
     })),
   };
 }

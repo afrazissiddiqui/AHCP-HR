@@ -9,6 +9,13 @@ export interface CreateGoodIssueItemPayload {
   warehouse: string;
   quantity: number;
   batches: CreateGoodIssueBatchPayload[];
+  binLocationAllocation?: string;
+  accountCode?: string;
+  itemCost?: number;
+  uomCode?: string;
+  uomName?: string;
+  departmentsLocations?: string;
+  branch?: string;
 }
 
 export interface CreateGoodIssueBatchPayload {
@@ -90,6 +97,13 @@ export function buildCreateGoodIssuePayload(
             quantity: line.quantity ?? 0,
           },
         ],
+        binLocationAllocation: line.binLocationAllocation.trim(),
+        accountCode: line.accountCode.trim(),
+        itemCost: line.itemCost ?? 0,
+        uomCode: line.uomCode.trim(),
+        uomName: line.uomName.trim(),
+        departmentsLocations: line.departmentsLocations.trim(),
+        branch: line.branch.trim(),
       })),
   };
 }

@@ -10,7 +10,6 @@ import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../u
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
-import { WarehouseSearchSelectComponent } from '../../warehouse-search-select';
 import {
   GoodReceiptHeader,
   GoodReceiptLine,
@@ -22,7 +21,7 @@ import {
 @Component({
   selector: 'app-add-good-receipt',
   standalone: true,
-  imports: [CommonModule, FormsModule, OitmItemPickerDialogComponent, WarehouseSearchSelectComponent],
+  imports: [CommonModule, FormsModule, OitmItemPickerDialogComponent],
   templateUrl: './add-good-receipt.html',
   styleUrls: ['../../miscellaneous-form.css'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

@@ -21,12 +21,49 @@
         <div class="sir-form-grid">
           <div class="sir-form-column">
             <div class="sir-field-row">
+              <label>Business Partner:</label>
+              <input type="text" [ngModel]="headerForm().businessPartner" (ngModelChange)="updateHeaderField('businessPartner', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Name:</label>
+              <input type="text" [ngModel]="headerForm().name" (ngModelChange)="updateHeaderField('name', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Contact Person:</label>
+              <input type="text" [ngModel]="headerForm().contactPerson" (ngModelChange)="updateHeaderField('contactPerson', $event)">
+            </div>
+            <div class="sir-field-row sir-field-row--top">
+              <label>Ship To:</label>
+              <textarea rows="3" [ngModel]="headerForm().shipTo" (ngModelChange)="updateHeaderField('shipTo', $event)"></textarea>
+            </div>
+          </div>
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Posting Date:</label>
+              <input type="date" [ngModel]="headerForm().postingDate" (ngModelChange)="updateHeaderField('postingDate', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Document Date:</label>
+              <input type="date" [ngModel]="headerForm().docDate" (ngModelChange)="updateHeaderField('docDate', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>From Branch:</label>
+              <input
+                type="text"
+                class="sir-table-input"
+                [ngModel]="headerForm().fromBranch"
+                readonly
+                placeholder="Branch will copy from ITR or warehouse selection"
+              />
+            </div>
+            <div class="sir-field-row">
               <label>From Warehouse:</label>
-              <div class="sir-input-group">
+              <div class="sir-warehouse-search">
                 <app-warehouse-search-select
                   style="flex: 1"
                   [displayCodeOnly]="true"
                   [warehouseCode]="headerForm().fromWarehouse"
+                  [branchCode]="selectedBranchCode()"
                   (warehouseCodeChange)="updateHeaderField('fromWarehouse', $event)"
                 />
                 <button type="button" class="sir-inline-button" (click)="openItrDialog()">Copy From ITR</button>
@@ -37,26 +74,13 @@
               <app-warehouse-search-select
                 [displayCodeOnly]="true"
                 [warehouseCode]="headerForm().toWarehouse"
+                [branchCode]="selectedBranchCode()"
                 (warehouseCodeChange)="updateHeaderField('toWarehouse', $event)"
               />
             </div>
             <div class="sir-field-row">
-              <label>Base ITR No.:</label>
-              <input type="text" [ngModel]="headerForm().baseItrDocNum" readonly>
-            </div>
-          </div>
-          <div class="sir-form-column">
-            <div class="sir-field-row">
-              <label>Doc Date:</label>
-              <input type="date" [ngModel]="headerForm().docDate" (ngModelChange)="updateHeaderField('docDate', $event)">
-            </div>
-            <div class="sir-field-row">
-              <label>Tax Date:</label>
-              <input type="date" [ngModel]="headerForm().taxDate" (ngModelChange)="updateHeaderField('taxDate', $event)">
-            </div>
-            <div class="sir-field-row">
-              <label>Remarks:</label>
-              <input type="text" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" placeholder="Inventory transfer">
+              <label>To Bin Location:</label>
+              <input type="text" [ngModel]="headerForm().toBinLocation" (ngModelChange)="updateHeaderField('toBinLocation', $event)">
             </div>
           </div>
         </div>
@@ -66,16 +90,23 @@
         <h2 class="sir-section-title">Row Level Information</h2>
         <div class="sir-data-table-sticky-container">
           <div class="sir-data-table-wrapper">
-            <table class="sir-data-table sir-data-table--row-level">
+            <table class="sir-data-table sir-data-table--row-level sir-data-table--wide">
               <thead>
                 <tr>
                   <th class="sir-col-sr">Sr. No</th>
                   <th class="sir-col-item-code">Item Code</th>
                   <th class="sir-col-item-name">Item Name</th>
+                  <th class="sir-col-cost">Item Cost</th>
+                  <th class="sir-col-uom">UoM Code</th>
+                  <th class="sir-col-dept-loc">Distr. Rule</th>
+                  <th class="sir-col-warehouse">From Warehouse</th>
+                  <th class="sir-col-bin">From Bin Locations</th>
+                  <th class="sir-col-warehouse">To Warehouse</th>
+                  <th class="sir-col-bin">To Bin Locations</th>
+                  <th class="sir-col-dept-loc">First To-Bin-Location</th>
+                  <th class="sir-col-branch">To Branch</th>
+                  <th class="sir-col-batch">Batch</th>
                   <th class="sir-col-qty">Quantity</th>
-                  <th>From Warehouse</th>
-                  <th>To Warehouse</th>
-                  <th>Batch Number</th>
                   <th class="sir-col-actions">Action</th>
                 </tr>
               </thead>
@@ -97,14 +128,28 @@
                     <td class="sir-col-item-name">
                       <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
                     </td>
-                    <td class="sir-col-qty">
-                      <input type="number" class="sir-table-input" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)">
+                    <td>
+                      <input type="text" class="sir-table-input" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine($index, 'itemCost', $event)" />
+                    </td>
+                    <td>
+                      <input type="text" class="sir-table-input" readonly [ngModel]="line.uomCode" />
+                    </td>
+                    <td>
+                      <input type="text" class="sir-table-input" [ngModel]="line.distrRule" (ngModelChange)="updateContentLine($index, 'distrRule', $event)" />
                     </td>
                     <td>
                       <app-warehouse-search-select
                         [compact]="true"
                         [warehouseCode]="line.fromWarehouse"
                         (warehouseCodeChange)="updateContentLine($index, 'fromWarehouse', $event)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        class="sir-table-input"
+                        [ngModel]="line.fromBinLocation"
+                        (ngModelChange)="updateContentLine($index, 'fromBinLocation', $event)"
                       />
                     </td>
                     <td>
@@ -115,16 +160,39 @@
                       />
                     </td>
                     <td>
-                      <select
+                      <input
+                        type="text"
                         class="sir-table-input"
+                        [ngModel]="line.toBinLocation"
+                        (ngModelChange)="updateContentLine($index, 'toBinLocation', $event)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        class="sir-table-input"
+                        [ngModel]="line.firstToBinLocation"
+                        (ngModelChange)="updateContentLine($index, 'firstToBinLocation', $event)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        class="sir-table-input"
+                        [ngModel]="line.toBranch"
+                        (ngModelChange)="updateContentLine($index, 'toBranch', $event)"
+                      />
+                    </td>
+                    <td class="sir-col-batch">
+                      <input
+                        type="text"
+                        class="sir-table-input"
+                        readonly
                         [ngModel]="line.batchNumber"
-                        (ngModelChange)="updateContentLine($index, 'batchNumber', $event)"
-                      >
-                        <option value="">Select batch</option>
-                        @for (batch of batchOptionsForLine(line); track batch) {
-                          <option [value]="batch">{{ batch }}</option>
-                        }
-                      </select>
+                      />
+                    </td>
+                    <td class="sir-col-qty">
+                      <input type="number" min="0" step="1" inputmode="numeric" class="sir-table-input" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)">
                     </td>
                     <td class="sir-col-actions">
                       <div class="sir-row-action-buttons" data-ui5-compact-size>
@@ -141,10 +209,22 @@
       </section>
 
       <section class="sir-form-section" id="footer">
-        <div class="sir-footer-grid">
-          <div class="sir-field-row">
-            <label>Submitted By:</label>
-            <input type="text" [ngModel]="submittedBy()" readonly />
+        <div class="sir-form-grid">
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Journal Remarks:</label>
+              <textarea rows="3" [ngModel]="headerForm().journalRemarks" (ngModelChange)="updateHeaderField('journalRemarks', $event)"></textarea>
+            </div>
+          </div>
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Remarks:</label>
+              <input type="text" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" placeholder="Inventory transfer" />
+            </div>
+            <div class="sir-field-row">
+              <label>Submitted By:</label>
+              <input type="text" [ngModel]="submittedBy()" readonly />
+            </div>
           </div>
         </div>
         <div class="sir-form-actions">

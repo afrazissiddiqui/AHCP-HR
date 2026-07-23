@@ -13,6 +13,7 @@
       <nav class="sir-section-nav">
         <ul class="sir-section-nav-list">
           <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'header'" (click)="scrollTo('header')">Header Info</li>
+          <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'logistics'" (click)="scrollTo('logistics')">Logistics</li>
           <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'items'" (click)="scrollTo('items')">Row Level Info</li>
         </ul>
       </nav>
@@ -59,12 +60,45 @@
               <label>Ship To Address</label>
               <textarea [ngModel]="headerForm().shipToAddress" (ngModelChange)="updateHeaderField('shipToAddress', $event)"></textarea>
             </div>
+            <div class="sir-field-row">
+              <label>Branch (from SO)</label>
+              <input type="text" [ngModel]="headerForm().branchName" readonly />
+            </div>
           </div>
 
+          <!-- Branch fields removed (permanent UI removal) -->
+        </div>
+      </section>
+
+      <section class="sir-form-section" id="logistics">
+        <h2 class="sir-section-title">Logistics</h2>
+        <div class="sir-form-grid">
           <div class="sir-form-column">
             <div class="sir-field-row">
-              <label>No.</label>
-              <input type="text" readonly>
+              <label>Builty No</label>
+              <input type="text" [ngModel]="headerForm().builtyNo" (ngModelChange)="updateHeaderField('builtyNo', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Driver Name</label>
+              <input type="text" [ngModel]="headerForm().driverName" (ngModelChange)="updateHeaderField('driverName', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Driver No</label>
+              <input type="text" [ngModel]="headerForm().driverNo" (ngModelChange)="updateHeaderField('driverNo', $event)">
+            </div>
+          </div>
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Vehicle No</label>
+              <input type="text" [ngModel]="headerForm().vehicleNo" (ngModelChange)="updateHeaderField('vehicleNo', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Transporter</label>
+              <input type="text" [ngModel]="headerForm().transporterName" (ngModelChange)="updateHeaderField('transporterName', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>IGP Date</label>
+              <input type="date" [ngModel]="headerForm().igpDateCus" (ngModelChange)="updateHeaderField('igpDateCus', $event)">
             </div>
           </div>
         </div>
@@ -79,19 +113,30 @@
                 <tr>
                   <th class="sir-col-sr">Sr. No</th>
                   <th class="sir-col-item-code">Item No.</th>
+                  <th class="sir-col-text">BP Catalog No.</th>
                   <th class="sir-col-item-name">Item Description</th>
                   <th class="sir-col-warehouse">Warehouse</th>
-                  <th class="sir-col-uom">UoM</th>
-                  <th class="sir-col-qty">Quantity</th>
-                  <th class="sir-col-price">Unit Price</th>
+                  <th class="sir-col-text">Bin Location</th>
+                    <th class="sir-col-uom">UoM</th>
+                      <th class="sir-col-qty">Quantity</th>
+                    <th class="sir-col-qty">Qty / Jumbo Carton</th>
+                    <th class="sir-col-qty"># Jumbo Cartons</th>
+                    <th class="sir-col-price">Unit Price</th>
                   <th class="sir-col-qty">Discount %</th>
+                  <th class="sir-col-text">Tax Code</th>
                   <th class="sir-col-text">Batch/Serial</th>
+                  <th class="sir-col-text">COGS Dept</th>
+                  <th class="sir-col-text">Country</th>
+                  <th class="sir-col-text">Blanket Agreement No.</th>
+                  <th class="sir-col-text">Std. Item ID</th>
+                  <th class="sir-col-text">Commodity Classification</th>
+          
                   <th class="sir-col-price">Line Total</th>
                   <th class="sir-col-actions">Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let line of contentLines(); let i = index">
+                <tr *ngFor="let line of contentLines(); let i = index; trackBy: trackByIndex">
                   <td class="sir-col-sr">{{ i + 1 }}</td>
                   <td class="sir-col-item-code">
                     <input
@@ -104,6 +149,7 @@
                       (keydown.enter)="openItemPicker(i)"
                     />
                   </td>
+                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.bpCatalogNo" (ngModelChange)="updateContentLine(i, 'bpCatalogNo', $event)"></td>
                   <td class="sir-col-item-name"><input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription"></td>
                   <td class="sir-col-warehouse">
                     <app-warehouse-search-select
@@ -112,10 +158,21 @@
                       (warehouseCodeChange)="updateContentLine(i, 'warehouse', $event)"
                     />
                   </td>
+                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.binLocation" (ngModelChange)="updateContentLine(i, 'binLocation', $event)"></td>
                   <td class="sir-col-uom"><input type="text" class="sir-table-input" readonly [ngModel]="line.unitOfMeasure"></td>
-                  <td class="sir-col-qty"><input type="number" class="sir-table-input" [ngModel]="line.quantity" (ngModelChange)="updateContentLine(i, 'quantity', $event)"></td>
+                  <td class="sir-col-qty"><input type="number" min="0" step="1" inputmode="numeric" class="sir-table-input" [ngModel]="line.quantity" (ngModelChange)="updateContentLine(i, 'quantity', $event)"></td>
+                  <td class="sir-col-qty"><input type="number" min="0" step="1" class="sir-table-input" [ngModel]="line.qtyPerJumboCarton" (ngModelChange)="updateContentLine(i, 'qtyPerJumboCarton', $event)"></td>
+                  <td class="sir-col-qty"><input type="number" min="0" step="1" class="sir-table-input" [ngModel]="line.jumboCartonsCount" (ngModelChange)="updateContentLine(i, 'jumboCartonsCount', $event)"></td>
                   <td class="sir-col-price"><input type="number" class="sir-table-input" [ngModel]="line.unitPrice" (ngModelChange)="updateContentLine(i, 'unitPrice', $event)"></td>
-                  <td class="sir-col-qty"><input type="text" class="sir-table-input" value="0.00" readonly></td>
+                  <td class="sir-col-qty"><input type="number" min="0" step="0.01" class="sir-table-input" [ngModel]="line.discountPercent" (ngModelChange)="updateContentLine(i, 'discountPercent', $event)"></td>
+                  <td class="sir-col-text">
+                    <select class="sir-table-input" [ngModel]="line.taxCode" (ngModelChange)="updateContentLine(i, 'taxCode', $event)">
+                      <option value=""></option>
+                      @for (code of taxCodeOptions(); track code) {
+                        <option [value]="code">{{ code }}</option>
+                      }
+                    </select>
+                  </td>
                   <td class="sir-col-text">
                     <select
                       class="sir-table-input"
@@ -128,6 +185,12 @@
                       }
                     </select>
                   </td>
+                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.cogsDepartment" (ngModelChange)="updateContentLine(i, 'cogsDepartment', $event)"></td>
+                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.country" (ngModelChange)="updateContentLine(i, 'country', $event)"></td>
+                  
+                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.blanketAgreementNo" (ngModelChange)="updateContentLine(i, 'blanketAgreementNo', $event)"></td>
+                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.standardItemIdentification" (ngModelChange)="updateContentLine(i, 'standardItemIdentification', $event)"></td>
+                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.commodityClassification" (ngModelChange)="updateContentLine(i, 'commodityClassification', $event)"></td>
                   <td class="sir-col-price"><input type="text" class="sir-table-input" [value]="formatAmount(calculateLineTotal(line))" readonly></td>
                   <td class="sir-col-actions">
                     <div class="sir-row-action-buttons" data-ui5-compact-size>
@@ -154,12 +217,6 @@
           </div>
         </div>
         <div class="sir-footer-grid sir-footer-grid--totals">
-          <div class="sir-field-row">
-            <label>Sales Employee:</label>
-            <select [ngModel]="headerForm().salesEmployee" (ngModelChange)="updateHeaderField('salesEmployee', $event)">
-              <option value="Brad">Brad</option>
-            </select>
-          </div>
           <div class="sir-field-row">
             <label>Total Before Discount:</label>
             <input type="text" class="sir-input--amount" [value]="formatAmount(totalAmount())" readonly>
@@ -195,6 +252,19 @@
         } @else if (salesOrdersError()) {
           <p class="sir-modal-error-text">{{ salesOrdersError() }}</p>
         } @else {
+          <div class="sir-field-row">
+            <label>Search Sales Orders</label>
+            <div class="sir-input-group">
+              <input
+                type="search"
+                class="sir-table-input"
+                placeholder="Search by SO no, customer, branch, PO"
+                [ngModel]="salesOrderSearchQuery()"
+                (ngModelChange)="salesOrderSearchQuery.set($event)"
+              />
+              <button type="button" class="sir-inline-button" (click)="searchSalesOrders()">Search</button>
+            </div>
+          </div>
           <div class="sir-data-table-wrapper">
             <table class="sir-modal-table">
               <thead>
@@ -208,7 +278,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (order of salesOrders(); track order.docEntry) {
+                @for (order of salesOrderSearchResults(); track order.docEntry) {
                   <tr
                     class="sir-modal-row"
                     [class.sir-modal-row--selected]="selectedSalesOrder()?.docEntry === order.docEntry"

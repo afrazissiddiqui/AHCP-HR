@@ -97,3 +97,62 @@ html.profile-drawer-open app-root .app-content {
 html.profile-drawer-open app-root .app-content > :not(router-outlet) {
   overflow: hidden !important;
 }
+
+/* Compact totals panel tweaks */
+.sir-footer-grid.sir-footer-grid--totals {
+  gap: 6px;
+  margin-top: 6px;
+}
+.sir-footer-grid.sir-footer-grid--totals .sir-field-row {
+  font-size: 12px;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sir-footer-grid.sir-footer-grid--totals .sir-field-row label {
+  width: 90px;
+  font-weight: 600;
+}
+.sir-footer-grid.sir-footer-grid--totals input.sir-input--amount,
+.sir-footer-grid.sir-footer-grid--totals input[type="number"],
+.sir-footer-grid.sir-footer-grid--totals input.sir-input--small {
+  font-size: 12px;
+  padding: 4px 6px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: right;
+}
+.sir-footer-grid.sir-footer-grid--totals input[type="checkbox"] {
+  transform: scale(0.95);
+  margin-left: 4px;
+}
+.sir-footer-grid.sir-footer-grid--totals .sir-inline-button {
+  padding: 5px 6px;
+  font-size: 12px;
+  min-height: 26px;
+}
+
+/* Footer container: left form area and right compact totals sidebar */
+.sir-footer-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.sir-footer-left {
+  flex: 1 1 auto;
+}
+.sir-footer-right {
+  width: 240px;
+  flex-shrink: 0;
+}
+.sir-footer-right .sir-footer-grid--totals {
+  background: rgba(255,255,255,0.02);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.sir-footer-grid.sir-footer-grid--totals .sir-field-row:last-child input.sir-input--amount {
+  font-weight: 700;
+}

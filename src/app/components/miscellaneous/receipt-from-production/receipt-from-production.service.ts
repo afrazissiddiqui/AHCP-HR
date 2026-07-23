@@ -6,6 +6,11 @@ import {
   ReceiptFromProductionHeader,
   ReceiptFromProductionLine,
 } from './receipt-from-production.model';
+import { resolveBranchNameFromBplId } from '../../../utils/branch-name.util';
+
+function normalizeBranchName(value: string | number | undefined | null): string {
+  return resolveBranchNameFromBplId(value);
+}
 
 function mapReceiptBranchLabel(value: string): string {
   const trimmed = value.trim();
@@ -315,8 +320,13 @@ export class ReceiptFromProductionService {
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
           startDate: this.pickDate(item, ['StartDate', 'startDate']),
           status: this.pickString(item, ['Status', 'status']),
+<<<<<<< HEAD
+          warehouse: this.pickString(item, ['Warehouse', 'warehouse', 'WhsCode', 'wareHouse']),
+          branch: normalizeBranchName(this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId'])),
+=======
           warehouse: this.pickString(item, ['wareHouse', 'Warehouse', 'warehouse', 'WhsCode', 'Whs', 'WarehouseCode']),
           branch: this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId']),
+>>>>>>> 83a0991f3d176f2370e57291e30699e9114d82fc
           batchNumber: this.pickProductionOrderBatchNumber(item),
           customerCode: this.pickString(item, ['CardCode', 'cardCode']),
           customerName: this.pickString(item, ['CardName', 'cardName']),
@@ -441,7 +451,11 @@ export class ReceiptFromProductionService {
           docDate: this.pickDate(item, ['DocDate', 'docDate']),
           docDueDate: this.pickDate(item, ['DocDueDate', 'docDueDate']),
           seriesName: this.pickString(item, ['SeriesName', 'seriesName', 'Series']),
+<<<<<<< HEAD
+          branch: normalizeBranchName(this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId'])),
+=======
           branch: mapReceiptBranchLabel(this.pickString(item, ['BPLName', 'branchName', 'Branch', 'branch', 'BPLId'])),
+>>>>>>> 83a0991f3d176f2370e57291e30699e9114d82fc
           warehouse:
             this.pickString(item, ['WhsCode', 'warehouse', 'Filler']) || firstLine?.warehouse || '',
           remarks: this.pickString(item, ['Comments', 'Remarks', 'remarks']),
@@ -521,7 +535,14 @@ export class ReceiptFromProductionService {
   private pickNumber(source: Record<string, unknown>, keys: string[]): number {
     for (const key of keys) {
       const value = source[key];
-      const parsed = Number(this.cleanSapText(value));
+      if (value === undefined || value === null) {
+        continue;
+      }
+      const text = this.cleanSapText(value);
+      if (text === '') {
+        continue;
+      }
+      const parsed = Number(text);
       if (!Number.isNaN(parsed)) {
         return parsed;
       }

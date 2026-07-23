@@ -2,7 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+<<<<<<< HEAD
+import {
+  ReceiptFromProductionListItem,
+  ReceiptFromProductionService,
+} from './receipt-from-production.service';
+=======
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
+>>>>>>> 83a0991f3d176f2370e57291e30699e9114d82fc
 import { MiscellaneousLayoutService } from '../miscellaneous-layout.service';
 import { ReceiptFromProductionListItem, ReceiptFromProductionService } from './receipt-from-production.service';
 
@@ -15,9 +22,13 @@ interface ReceiptFromProductionColumn {
 @Component({
   selector: 'app-receipt-from-production',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageToolbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './receipt-from-production.html',
+<<<<<<< HEAD
+  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css', './production-sticker.css'],
+=======
   styleUrls: ['../miscellaneous-list.css'],
+>>>>>>> 83a0991f3d176f2370e57291e30699e9114d82fc
 })
 export class ReceiptFromProduction implements OnInit {
   private readonly router = inject(Router);

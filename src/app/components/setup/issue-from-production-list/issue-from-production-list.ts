@@ -2,23 +2,23 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GoodIssueListItem, GoodIssueService } from './good-issue.service';
-import { MiscellaneousLayoutService } from '../miscellaneous-layout.service';
+import { GoodIssueListItem, GoodIssueService } from '../../miscellaneous/good-issue/good-issue.service';
+import { MiscellaneousLayoutService } from '../../miscellaneous/miscellaneous-layout.service';
 
-interface GoodIssueColumn {
-  key: 'issueNo' | 'postingDate' | 'fromWarehouse' | 'issuedTo' | 'itemCount' | 'status';
+interface IssueFromProductionListColumn {
+  key: 'docNum' | 'docDate' | 'fromWarehouse' | 'issuedTo' | 'itemCount' | 'status';
   label: string;
   visible: boolean;
 }
 
 @Component({
-  selector: 'app-good-issue',
+  selector: 'app-issue-from-production-list',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './good-issue.html',
+  templateUrl: './issue-from-production-list.html',
   styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
 })
-export class GoodIssue implements OnInit {
+export class IssueFromProductionListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly goodIssueService = inject(GoodIssueService);
   protected readonly layout = inject(MiscellaneousLayoutService);
@@ -31,9 +31,9 @@ export class GoodIssue implements OnInit {
   readonly showDetailDialog = signal(false);
   readonly selectedRow = signal<GoodIssueListItem | null>(null);
   readonly issues = signal<GoodIssueListItem[]>([]);
-  readonly columns = signal<GoodIssueColumn[]>([
-    { key: 'issueNo', label: 'Issue No', visible: true },
-    { key: 'postingDate', label: 'Posting Date', visible: true },
+  readonly columns = signal<IssueFromProductionListColumn[]>([
+    { key: 'docNum', label: 'Issue No', visible: true },
+    { key: 'docDate', label: 'Posting Date', visible: true },
     { key: 'fromWarehouse', label: 'From Warehouse', visible: true },
     { key: 'issuedTo', label: 'Issued To', visible: true },
     { key: 'itemCount', label: 'Items', visible: true },
@@ -54,24 +54,21 @@ export class GoodIssue implements OnInit {
         row.status.toLowerCase().includes(term),
     );
   });
+
   readonly pageSize = 10;
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filteredIssues().length / this.pageSize)),
-  );
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredIssues().length / this.pageSize)));
   readonly paginatedIssues = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize;
     return this.filteredIssues().slice(start, start + this.pageSize);
   });
-  readonly paginationEnd = computed(() =>
-    Math.min(this.currentPage() * this.pageSize, this.filteredIssues().length),
-  );
+  readonly paginationEnd = computed(() => Math.min(this.currentPage() * this.pageSize, this.filteredIssues().length));
 
   ngOnInit(): void {
     this.loadIssues();
   }
 
-  onAddNewIssue(): void {
-    void this.router.navigate(['/miscellaneous/good-issue/create']);
+  onAddNew(): void {
+    void this.router.navigate(['/setup/issue-from-production']);
   }
 
   toggleSidebar(): void {
@@ -91,14 +88,12 @@ export class GoodIssue implements OnInit {
     this.showDialog.set(false);
   }
 
-  isColumnVisible(key: GoodIssueColumn['key']): boolean {
+  isColumnVisible(key: IssueFromProductionListColumn['key']): boolean {
     return this.columns().find((column) => column.key === key)?.visible !== false;
   }
 
-  toggleColumnVisibility(key: GoodIssueColumn['key'], visible: boolean): void {
-    this.columns.update((columns) =>
-      columns.map((column) => (column.key === key ? { ...column, visible } : column)),
-    );
+  toggleColumnVisibility(key: IssueFromProductionListColumn['key'], visible: boolean): void {
+    this.columns.update((columns) => columns.map((column) => (column.key === key ? { ...column, visible } : column)));
   }
 
   viewDetails(row: GoodIssueListItem): void {
@@ -147,7 +142,7 @@ export class GoodIssue implements OnInit {
         this.issues.set([]);
         this.currentPage.set(1);
         this.loading.set(false);
-        this.loadError.set('Could not load good issues.');
+        this.loadError.set('Could not load issue from production records.');
       },
     });
   }
