@@ -59,15 +59,12 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   if (url.includes('/miscellaneous/sample-inspection-request')) {
     return 'miscellaneous-sample-inspection-request';
   }
-<<<<<<< HEAD
   if (url.includes('/miscellaneous/receipt-from-production')) {
     return 'miscellaneous-receipt-from-production';
   }
   if (url.includes('/miscellaneous/issue-from-production') || url.includes('/setup/issue-from-production')) {
     return 'miscellaneous-issue-from-production';
   }
-=======
->>>>>>> 83a0991f3d176f2370e57291e30699e9114d82fc
   if (url.includes('/miscellaneous/delivery')) {
     return 'miscellaneous-delivery';
   }
@@ -76,9 +73,6 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   }
   if (url.includes('/miscellaneous/inventory-transfer')) {
     return 'miscellaneous-inventory-transfer';
-  }
-  if (url.includes('/miscellaneous/receipt-from-production')) {
-    return 'miscellaneous-receipt-from-production';
   }
   if (url.includes('/miscellaneous/good-issue')) {
     return 'miscellaneous-good-issue';

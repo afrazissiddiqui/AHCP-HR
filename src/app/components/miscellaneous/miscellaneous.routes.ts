@@ -11,16 +11,11 @@ import { InventoryTransferRequest } from './inventory-transfer-request/inventory
 import { AddInventoryTransferRequest } from './inventory-transfer-request/add-inventory-transfer-request/add-inventory-transfer-request';
 import { MiscellaneousPageComponent } from './miscellaneous-page';
 import { MiscellaneousShellComponent } from './miscellaneous-shell';
-<<<<<<< HEAD
 import { ReceiptFromProduction } from './receipt-from-production/receipt-from-production';
 import { AddReceiptFromProduction } from './receipt-from-production/add-receipt-from-production/add-receipt-from-production';
 import { IssueFromProductionListComponent } from '../setup/issue-from-production-list/issue-from-production-list';
-=======
->>>>>>> 83a0991f3d176f2370e57291e30699e9114d82fc
 import { SampleInspectionRequest } from '../sample-inspection-request/sample-inspection-request';
 import { SampleInspectionRequestForm } from '../sample-inspection-request/sample-inspection-request-form/sample-inspection-request-form';
-import { ReceiptFromProduction } from './receipt-from-production/receipt-from-production';
-import { AddReceiptFromProduction } from './receipt-from-production/add-receipt-from-production/add-receipt-from-production';
 
 export const miscellaneousRoutes: Routes = [
   {
@@ -48,10 +43,9 @@ export const miscellaneousRoutes: Routes = [
         data: { title: 'Edit Good Receipt' },
       },
       {
-<<<<<<< HEAD
         path: 'receipt-from-production',
         component: ReceiptFromProduction,
-        data: { title: 'Receipt From Production' },
+        data: { title: 'Receipt from production' },
       },
       {
         path: 'issue-from-production',
@@ -61,11 +55,9 @@ export const miscellaneousRoutes: Routes = [
       {
         path: 'receipt-from-production/create',
         component: AddReceiptFromProduction,
-        data: { title: 'Add Receipt From Production' },
+        data: { title: 'Add Receipt from Production' },
       },
       {
-=======
->>>>>>> 83a0991f3d176f2370e57291e30699e9114d82fc
         path: 'delivery',
         component: Delivery,
         data: { title: 'Delivery' },
@@ -109,16 +101,6 @@ export const miscellaneousRoutes: Routes = [
         path: 'inventory-transfer-request/edit/:id',
         component: AddInventoryTransferRequest,
         data: { title: 'Edit Inventory Transfer Request' },
-      },
-      {
-        path: 'receipt-from-production',
-        component: ReceiptFromProduction,
-        data: { title: 'Receipt from production' },
-      },
-      {
-        path: 'receipt-from-production/create',
-        component: AddReceiptFromProduction,
-        data: { title: 'Add Receipt from Production' },
       },
       {
         path: 'receipt-from-production/edit/:id',
