@@ -16,7 +16,7 @@ interface InventoryTransferColumn {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './inventory-transfer.html',
-  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
+  styleUrls: ['../miscellaneous-list.css', '../../sample-inspection-request/sample-inspection-request.css'],
 })
 export class InventoryTransfer implements OnInit {
   private readonly router = inject(Router);

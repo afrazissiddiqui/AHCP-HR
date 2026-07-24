@@ -16,7 +16,7 @@ interface DeliveryColumn {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './delivery.html',
-  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
+  styleUrls: ['../miscellaneous-list.css', '../../sample-inspection-request/sample-inspection-request.css'],
 })
 export class Delivery implements OnInit {
   private readonly router = inject(Router);

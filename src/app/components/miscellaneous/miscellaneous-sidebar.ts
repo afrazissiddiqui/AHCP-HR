@@ -39,13 +39,8 @@ export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
       },
       {
         id: 'miscellaneous-issue-from-production',
-        label: 'Issue From Production',
+        label: 'Issue For Production',
         route: '/miscellaneous/issue-from-production',
-      },
-      {
-        id: 'miscellaneous-sample-inspection-request',
-        label: 'Sample Inspection Request',
-        route: '/miscellaneous/sample-inspection-request',
       },
     ],
   },
@@ -55,9 +50,6 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   const path = url.split('?')[0].split('#')[0];
   if (/\/miscellaneous\/?$/.test(path)) {
     return '';
-  }
-  if (url.includes('/miscellaneous/sample-inspection-request')) {
-    return 'miscellaneous-sample-inspection-request';
   }
   if (url.includes('/miscellaneous/receipt-from-production')) {
     return 'miscellaneous-receipt-from-production';

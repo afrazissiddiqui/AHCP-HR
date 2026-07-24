@@ -12,6 +12,31 @@ function normalizeBranchName(value: string | number | undefined | null): string 
   return resolveBranchNameFromBplId(value);
 }
 
+function normalizeBranchCode(value: string | number | undefined | null): string {
+  const trimmed = `${value ?? ''}`.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const directMatch = trimmed.match(/^\d$/);
+  if (directMatch) {
+    return trimmed;
+  }
+
+  const normalized = trimmed.toLowerCase();
+  if (normalized.includes('peshawar') || normalized.includes('psh')) {
+    return '1';
+  }
+  if (normalized.includes('ho') || normalized.includes('head office') || normalized.includes('headoffice')) {
+    return '2';
+  }
+  if (normalized.includes('faisalabad') || normalized.includes('fsd')) {
+    return '3';
+  }
+
+  return trimmed;
+}
+
 function mapReceiptBranchLabel(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -171,7 +196,7 @@ export function buildCreateReceiptFromProductionPayload(
     quantity: line?.quantity ?? 0,
     batchNumber: ((line?.batchNumber ?? '') as string).trim(),
     manufacturingDate: ((line?.manufacturingDate ?? '') as string).trim(),
-    branch: (header.branchId ?? '').trim(),
+    branch: normalizeBranchCode(header.branchId ?? ''),
     expiryDate: ((line?.expiryDate ?? '') as string).trim(),
     items: normalizedLines,
   };

@@ -16,7 +16,7 @@ interface IssueFromProductionListColumn {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './issue-from-production-list.html',
-  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
+  styleUrls: ['../../miscellaneous/miscellaneous-list.css', '../../sample-inspection-request/sample-inspection-request.css'],
 })
 export class IssueFromProductionListComponent implements OnInit {
   private readonly router = inject(Router);

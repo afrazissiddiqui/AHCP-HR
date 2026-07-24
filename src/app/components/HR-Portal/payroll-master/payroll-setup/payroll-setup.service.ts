@@ -83,18 +83,17 @@ export type PayrollSetupAmounts = Pick<
 export function computeNetPayable(amounts: PayrollSetupAmounts): number {
   const earnings =
     amounts.basicSalary +
-    amounts.medicalAllowance +
     amounts.fuelAllowance +
     amounts.mobileAllowance +
     amounts.carAllowance +
     amounts.otherAllowances +
-    amounts.overtime +
     amounts.bonus +
+    amounts.overtime +
     amounts.arrears;
   const deductions =
     amounts.providentFund +
-    amounts.gratuity +
     amounts.eobi +
+    amounts.gratuity +
     amounts.loanInstallment +
     amounts.otherDeductions;
   return Math.max(0, earnings - deductions);
@@ -176,12 +175,35 @@ export function computeYearsOfService(dateOfJoining: string, asOf: Date = new Da
   return roundPayrollAmount(elapsedMs / msPerYear);
 }
 
-/** Gratuity = Gross Salary × Years of Service */
-export function computeGratuity(grossSalary: number, yearsOfService: number): number {
-  if (grossSalary <= 0 || yearsOfService <= 0) {
+/**
+ * Gratuity formula:
+ * Gross Salary × (Total Months / 12) - Gross Salary × ((Total Months - 1) / 12)
+ * where Total Months is calculated from date of joining through the current payroll month.
+ */
+export function computeGratuity(grossSalary: number, dateOfJoining: string, asOf: Date = new Date()): number {
+  if (grossSalary <= 0) {
     return 0;
   }
-  return roundPayrollAmount(grossSalary * yearsOfService);
+
+  const trimmed = dateOfJoining?.trim() || '';
+  if (!trimmed) {
+    return 0;
+  }
+
+  const joiningDate = new Date(trimmed);
+  if (Number.isNaN(joiningDate.getTime())) {
+    return 0;
+  }
+
+  const asOfDate = asOf ?? new Date();
+  const elapsedMs = asOfDate.getTime() - joiningDate.getTime();
+  if (elapsedMs <= 0) {
+    return 0;
+  }
+
+  const totalMonths = Math.max(0, Math.floor(elapsedMs / (30 * 24 * 60 * 60 * 1000)) + 1);
+  const gratuity = grossSalary * (totalMonths / 12) - grossSalary * ((totalMonths - 1) / 12);
+  return roundPayrollAmount(Math.max(0, gratuity));
 }
 
 /** EOBI employee contribution = 1% of minimum wage */

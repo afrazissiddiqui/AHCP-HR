@@ -16,7 +16,7 @@ interface GoodReceiptColumn {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './good-receipt.html',
-  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
+  styleUrls: ['../miscellaneous-list.css', '../../sample-inspection-request/sample-inspection-request.css'],
 })
 export class GoodReceipt implements OnInit {
   private readonly router = inject(Router);

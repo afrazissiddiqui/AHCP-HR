@@ -16,7 +16,7 @@ interface ReceiptFromProductionColumn {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './receipt-from-production.html',
-  styleUrls: ['../../sample-inspection-request/sample-inspection-request.css'],
+  styleUrls: ['../miscellaneous-list.css', '../../sample-inspection-request/sample-inspection-request.css'],
 })
 export class ReceiptFromProduction implements OnInit {
   private readonly router = inject(Router);

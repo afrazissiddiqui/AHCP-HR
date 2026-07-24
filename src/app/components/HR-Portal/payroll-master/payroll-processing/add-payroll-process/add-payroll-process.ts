@@ -94,6 +94,8 @@ export interface PayrollProcessRow {
   arrears: number;
   loanAdjustment: number;
   loanAdvForm: number;
+  lateAttendDeduction: number;
+  costToCompany: number;
   approved: boolean;
 }
 
@@ -202,7 +204,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { id: 'socialSecurity', label: 'Social Security', tone: 'socialSecurity' },
     { id: 'eobi', label: 'EOBI', tone: 'eobi' },
     { id: 'other', label: 'Other', tone: 'other' },
-    { id: 'loan', label: 'Loan Adjustment', tone: 'loan' },
+    { id: 'loan', label: 'Salary Adjustment', tone: 'loan' },
     { id: 'final', label: 'Final Totals', tone: 'final' },
     { id: 'approval', label: 'Approval', tone: 'approval' },
   ];
@@ -226,8 +228,11 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'eobiEmployer', label: 'EOBI (Employer)', groupId: 'eobi', type: 'readonly', minWidth: 152 },
     { key: 'eobiEmployee', label: 'EOBI (Employee)', groupId: 'eobi', type: 'readonly', minWidth: 152 },
     { key: 'arrears', label: 'Arrears', groupId: 'other', type: 'currency', minWidth: 145 },
-    { key: 'loanAdjustment', label: 'Loan Adjustment', groupId: 'loan', type: 'currency', minWidth: 158 },
+    { key: 'gratuity', label: 'Gratuity', groupId: 'other', type: 'currency', minWidth: 145 },
+    { key: 'loanAdjustment', label: 'Salary Adjustment', groupId: 'loan', type: 'currency', minWidth: 158 },
     { key: 'loanAdvForm', label: 'Loan Adv Form', groupId: 'loan', type: 'currency', minWidth: 152 },
+    { key: 'lateAttendDeduction', label: 'Late Attend Deduction', groupId: 'loan', type: 'currency', minWidth: 182 },
+    { key: 'costToCompany', label: 'Cost to Company', groupId: 'final', type: 'currency', minWidth: 168 },
     { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 168 },
     { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 152 },
@@ -311,6 +316,8 @@ export class AddPayrollProcessComponent implements OnInit {
       arrears: 0,
       loanAdjustment: 0,
       loanAdvForm: 0,
+      lateAttendDeduction: 0,
+      costToCompany: 0,
       netPayable: 0,
       totalEarnings: 0,
       finalGrossSalary: 0,
@@ -341,6 +348,8 @@ export class AddPayrollProcessComponent implements OnInit {
       totals.arrears += row.arrears;
       totals.loanAdjustment += row.loanAdjustment;
       totals.loanAdvForm += row.loanAdvForm;
+      totals.lateAttendDeduction += row.lateAttendDeduction;
+      totals.costToCompany += row.costToCompany;
       totals.netPayable += this.netPayableForRow(row);
       totals.totalEarnings += this.totalEarningsForRow(row);
       totals.finalGrossSalary += row.grossSalary;
@@ -556,7 +565,7 @@ export class AddPayrollProcessComponent implements OnInit {
 
   netPayableForRow(row: PayrollProcessRow): number {
     return computeNetPayable({
-      basicSalary: row.basicSalary,
+      basicSalary: row.grossSalary,
       medicalAllowance: row.medicalAllowance,
       fuelAllowance: row.fuelAllowance,
       mobileAllowance: row.mobileAllowance,
@@ -564,12 +573,12 @@ export class AddPayrollProcessComponent implements OnInit {
       otherAllowances: row.otherAllowances,
       overtime: row.overtime,
       bonus: row.bonus,
-      arrears: 0,
+      arrears: row.arrears,
       providentFund: row.providentFund,
       gratuity: row.gratuity,
       eobi: row.eobiEmployee,
       loanInstallment: row.loanAdjustment,
-      otherDeductions: row.loanAdvForm + row.arrears,
+      otherDeductions: row.loanAdvForm + row.lateAttendDeduction,
     });
   }
 
@@ -725,6 +734,8 @@ export class AddPayrollProcessComponent implements OnInit {
       'arrears',
       'loanAdjustment',
       'loanAdvForm',
+      'lateAttendDeduction',
+      'costToCompany',
     ];
     const parsed = numericFields.includes(field)
       ? this.parseAmount(value)
@@ -858,6 +869,8 @@ export class AddPayrollProcessComponent implements OnInit {
         arrears: row.arrears,
         loanAdjustment: row.loanAdjustment,
         loanAdvForm: row.loanAdvForm,
+        lateAttendDeduction: row.lateAttendDeduction,
+        costToCompany: row.costToCompany,
         totalEarnings: this.totalEarningsForRow(row),
         netPayable: this.netPayableForRow(row),
         approved: row.approved,
@@ -1032,6 +1045,8 @@ export class AddPayrollProcessComponent implements OnInit {
       arrears: 0,
       loanAdjustment: 0,
       loanAdvForm: 0,
+      lateAttendDeduction: 0,
+      costToCompany: 0,
       approved: false,
     });
   }
@@ -1098,6 +1113,8 @@ export class AddPayrollProcessComponent implements OnInit {
       arrears: 0,
       loanAdjustment: this.resolvePayrollLoanAdjustment(employeeCode, employeeName),
       loanAdvForm: this.resolvePayrollAdvanceDeduction(employeeCode, employeeName),
+      lateAttendDeduction: 0,
+      costToCompany: 0,
       approved: false,
     });
   }
@@ -1122,8 +1139,7 @@ export class AddPayrollProcessComponent implements OnInit {
       ? computeOvertimeAmount(computeOvertimeRate(row.lastMonthGrossSalary), overtimeHours)
       : 0;
 
-    const yearsOfService = computeYearsOfService(row.dateOfJoining);
-    const gratuity = computeGratuity(grossSalary, yearsOfService);
+    const gratuity = computeGratuity(grossSalary, row.dateOfJoining, this.getPayrollAsOfDate());
     const minimumWage = this.minimumWageAdjust();
     // Compute EOBI based on configured minimum wage so values are visible when set.
     // Applicability is still retained for display/validation, but EOBI amounts
@@ -1134,6 +1150,19 @@ export class AddPayrollProcessComponent implements OnInit {
     // Social Security calculation based on branch
     const socialSecurityPunjab = this.calculateSocialSecurityPunjab(minimumWage, row.location);
     const socialSecurityKpk = this.calculateSocialSecurityKpk(minimumWage, row.location);
+    const costToCompany =
+      grossSalary +
+      fuelAllowance +
+      mobileAllowance +
+      carAllowance +
+      otherAllowances +
+      row.bonus +
+      overtime +
+      eobiEmployer +
+      row.arrears +
+      gratuity +
+      providentFund -
+      (socialSecurityPunjab + socialSecurityKpk + eobiEmployee + providentFund + row.loanAdjustment + row.loanAdvForm + row.lateAttendDeduction);
 
     return {
       ...row,
@@ -1150,11 +1179,17 @@ export class AddPayrollProcessComponent implements OnInit {
       providentFundEmployer: providentFund,
       socialSecurityPunjab,
       socialSecurityKpk,
-      yearsOfService,
       gratuity,
       eobiEmployee,
       eobiEmployer,
+      costToCompany,
     };
+  }
+
+  private getPayrollAsOfDate(): Date {
+    const year = this.selectedYear();
+    const month = this.selectedMonth();
+    return new Date(year, month - 1, 1);
   }
 
   private calculateSocialSecurityPunjab(minimumWage: number, location: string): number {
