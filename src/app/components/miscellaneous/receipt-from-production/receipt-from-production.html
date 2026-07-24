@@ -4,6 +4,7 @@
       <button type="button" class="sir-back-button" aria-label="Toggle sidebar" title="Toggle sidebar" (click)="toggleSidebar()">
         <span class="sir-back-icon">❮</span>
       </button>
+
       <h1 class="sir-page-title" title="Receipt from production">Receipt from production</h1>
     </div>
 
@@ -13,7 +14,7 @@
   <div class="sir-page-content">
     <div class="sir-card">
       <div class="sir-toolbar">
-        <div class="sir-toolbar-title">Receipt From Production ({{ filteredRows().length }})</div>
+        <div class="sir-toolbar-title">Receipt From Production ({{ filteredRows().length }}) · Selected (0)</div>
         <div class="sir-toolbar-spacer"></div>
 
         <div class="sir-search-field">
@@ -23,6 +24,7 @@
 
         <div class="sir-toolbar-actions">
           <button type="button" class="sir-icon-button" title="Filter" (click)="openDialog()">⏷</button>
+          <button type="button" class="sir-icon-button" title="View settings" (click)="openDialog()">⚙</button>
         </div>
       </div>
 
@@ -114,6 +116,9 @@
 
             <div class="sir-pagination-controls">
               <button type="button" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+              <div class="sir-page-numbers">
+                <button type="button" [class.active]="currentPage() === 1">1</button>
+              </div>
               <button type="button" [disabled]="currentPage() === totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
             </div>
           </div>
@@ -128,7 +133,7 @@
   <div class="misc-detail-dialog" (click)="$event.stopPropagation()">
     <div class="misc-dialog-header">
       <h3>Receipt from production #{{ row.docNum }}</h3>
-      <button type="button" class="misc-dialog-close" (click)="closeDetailDialog()">&times;</button>
+      <button type="button" class="misc-dialog-close" (click)="closeDetailDialog()">×</button>
     </div>
 
     <div class="misc-detail-body">
@@ -176,6 +181,10 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <div class="misc-detail-footer">
+      <button type="button" class="btn-default" (click)="closeDetailDialog()">Close</button>
     </div>
   </div>
 }

@@ -164,24 +164,48 @@ export class LeaveApplicationService {
 
     const nestedData = obj['data'];
     if (nestedData && typeof nestedData === 'object') {
-      const nestedItems = this.extractApiItems(nestedData);
+      if (Array.isArray(nestedData)) {
+        return nestedData.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+
+      const nestedRecord = this.asRecord(nestedData);
+      if (this.isSingleRecordPayload(nestedRecord)) {
+        return [nestedRecord];
+      }
+
+      const nestedItems = this.extractApiItems(nestedRecord);
       if (nestedItems.length > 0) {
         return nestedItems;
       }
     }
 
-    if (
-      obj['headerInfo'] ||
-      obj['header_info'] ||
-      obj['leaveRequest'] ||
-      obj['leave_request'] ||
-      obj['leaveBalanceInformation'] ||
-      obj['leave_balance_information']
-    ) {
+    if (this.isSingleRecordPayload(obj)) {
       return [obj];
     }
 
     return [];
+  }
+
+  private isSingleRecordPayload(obj: Record<string, unknown>): boolean {
+    return Boolean(
+      obj['headerInfo'] ||
+        obj['header_info'] ||
+        obj['HeaderInfo'] ||
+        obj['leaveRequest'] ||
+        obj['leave_request'] ||
+        obj['LeaveRequest'] ||
+        obj['leaveBalanceInformation'] ||
+        obj['leave_balance_information'] ||
+        obj['LeaveBalanceInformation'] ||
+        obj['form_number'] ||
+        obj['employee_name'] ||
+        obj['leave_type'] ||
+        obj['from_date'] ||
+        obj['to_date'] ||
+        obj['request_status'] ||
+        obj['total_leave_days_requested'] ||
+        obj['remaining_leaves'],
+    );
   }
 
   private asRecord(value: unknown): Record<string, unknown> {
@@ -232,13 +256,20 @@ export class LeaveApplicationService {
   }
 
   private mapDetailResponse(response: unknown): LeaveApplicationRecord {
-    const items = this.extractApiItems(response);
+    const responseRecord = this.asRecord(response);
+    const wrappedRecord = this.asRecord(responseRecord['data']);
+
+    const items = this.extractApiItems(wrappedRecord && Object.keys(wrappedRecord).length > 0 ? wrappedRecord : response);
     if (items.length > 0) {
       return this.mapApiItemToRecord(items[0]);
     }
 
-    if (response && typeof response === 'object') {
-      return this.mapApiItemToRecord(response as Record<string, unknown>);
+    if (wrappedRecord && Object.keys(wrappedRecord).length > 0) {
+      return this.mapApiItemToRecord(wrappedRecord);
+    }
+
+    if (responseRecord && Object.keys(responseRecord).length > 0) {
+      return this.mapApiItemToRecord(responseRecord);
     }
 
     throw new Error('Leave application not found');
