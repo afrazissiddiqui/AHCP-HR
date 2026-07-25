@@ -472,9 +472,9 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     );
     this.remarks.set(emptyIfDash(leave.remarks));
 
-    this.totalLeaves.set(balance.totalLeaves > 0 ? balance.totalLeaves : null);
-    this.leavesAvailed.set(balance.leavesAvailed > 0 ? balance.leavesAvailed : null);
-    this.remainingLeaves.set(balance.remainingLeaves > 0 ? balance.remainingLeaves : null);
+    this.totalLeaves.set(balance.totalLeaves !== null ? balance.totalLeaves : null);
+    this.leavesAvailed.set(balance.leavesAvailed !== null ? balance.leavesAvailed : null);
+    this.remainingLeaves.set(balance.remainingLeaves !== null ? balance.remainingLeaves : null);
 
     const matchedRecord = this.applicationFormService
       .getApplicationRecords()
