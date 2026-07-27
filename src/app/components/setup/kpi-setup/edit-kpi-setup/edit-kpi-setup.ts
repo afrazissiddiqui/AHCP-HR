@@ -22,7 +22,7 @@ interface KpiDetailResponse {
   Employement_Category?: string;
   Employement_Status?: string;
   Designation?: string;
-  kpis?: KpiItemForm[];
+  kpis?: Record<string, unknown>[];
   [key: string]: unknown;
 }
 
@@ -76,30 +76,39 @@ export class EditKpiSetupComponent implements OnInit {
   }
 
   private populateForm(detail: KpiDetailResponse & Record<string, unknown>): void {
-    console.log('Populating form with:', detail);
-    
-    this.department = (detail.department as string) || '';
-    this.employmentNature = (detail['Employement_Nature'] as string) || '';
-    this.workLevel = (detail['Work_Level'] as string) || '';
-    this.employmentCategory = (detail['Employement_Category'] as string) || '';
-    this.employmentStatus = (detail['Employement_Status'] as string) || '';
-    this.designation = (detail['Designation'] as string) || '';
-    
+    this.department = this.pickField(detail, ['department', 'Department']);
+    this.employmentNature = this.pickField(detail, ['Employement_Nature', 'Employment_Nature', 'employment_nature']);
+    this.workLevel = this.pickField(detail, ['Work_Level', 'work_level', 'workLevel']);
+    this.employmentCategory = this.pickField(detail, ['Employement_Category', 'Employment_Category', 'employment_category']);
+    this.employmentStatus = this.pickField(detail, ['Employement_Status', 'Employment_Status', 'employment_status']);
+    this.designation = this.pickField(detail, ['Designation', 'designation']);
+
     const kpisData = detail['kpis'];
-    console.log('KPIs data from API:', kpisData);
-    
+
     if (Array.isArray(kpisData) && kpisData.length > 0) {
-      this.kpiRows = kpisData.map((item: any) => ({
-        kpi: (item.kpi as string) || '',
-        weight: (item.weight as string) || '',
-        weight_percentage: (item.weight_percentage as string) || '',
-        defination_measurement: (item.defination_measurement as string) || '',
+      this.kpiRows = kpisData.map((item) => ({
+        kpi: this.pickField(item, ['kpi', 'Kpi', 'KPI', 'kpi_name', 'kpiName', 'Kpi_Name']),
+        weight: this.pickField(item, ['weight', 'Weight', 'weightage', 'Weightage']),
+        weight_percentage: this.pickField(item, ['weight_percentage', 'weightPercentage', 'Weight_Percentage', 'percentage', 'Percentage']),
+        defination_measurement: this.pickField(item, ['defination_measurement', 'definition_measurement', 'Defination_Measurement', 'Definition_Measurement', 'definition', 'Definition']),
       }));
-      console.log('KPI rows populated:', this.kpiRows);
     } else {
-      console.warn('No KPI rows found in API response');
       this.kpiRows = [];
     }
+  }
+
+  private pickField(source: Record<string, unknown>, keys: string[]): string {
+    for (const key of keys) {
+      const value = source[key];
+      if (value === null || value === undefined) {
+        continue;
+      }
+      const text = String(value).trim();
+      if (text) {
+        return text;
+      }
+    }
+    return '';
   }
 
   addKpiRow(): void {

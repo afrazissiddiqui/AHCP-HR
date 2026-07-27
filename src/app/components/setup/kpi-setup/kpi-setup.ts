@@ -59,56 +59,64 @@ export class KpiSetupComponent implements OnInit {
 
   viewKpi(record: KpiSetupRecord): void {
     const id = record.id;
-    console.log('View KPI clicked for:', record, 'ID:', id);
     if (id) {
       this.kpiSetupService.fetchKpiDetail(id).subscribe({
-        next: (detail) => {
-          console.log('KPI Detail fetched successfully:', detail);
-          this.showDetailModal(detail);
-        },
+        next: (detail) => this.showDetailModal(detail),
         error: (error: unknown) => {
-          console.error('Error fetching KPI detail:', error);
           void this.alertService.error('Load Failed', formatApiErrorMessage(error, 'Failed to load KPI details.'));
         },
       });
-    } else {
-      console.warn('No ID found for KPI record');
     }
   }
 
+  private pickDetailValue(detail: Record<string, unknown>, keys: string[]): string {
+    for (const key of keys) {
+      const value = detail[key];
+      if (value === null || value === undefined) {
+        continue;
+      }
+      const text = String(value).trim();
+      if (text) {
+        return text;
+      }
+    }
+    return '—';
+  }
+
   private showDetailModal(detail: KpiSetupRecord & Record<string, unknown>): void {
-    console.log('🎯 showDetailModal called with:', detail);
-    console.log('🎯 All detail keys:', Object.keys(detail));
-    console.log('🎯 department:', detail.department);
-    console.log('🎯 work_level:', detail.work_level);
-    console.log('🎯 designation:', detail.designation);
-    const kpis = Array.isArray(detail['kpis']) ? (detail['kpis'] as any[]) : [];
-    console.log('🎯 KPIs array:', kpis);
+    const kpis = Array.isArray(detail['kpis']) ? (detail['kpis'] as Record<string, unknown>[]) : [];
 
     const kpiRows = kpis
       .map(
-        (k: any, idx: number) =>
+        (k, idx: number) =>
           `<tr style="border-bottom: 1px solid #edf2ff;">
         <td style="padding: 10px;">${idx + 1}</td>
-        <td style="padding: 10px;">${k.kpi || '—'}</td>
-        <td style="padding: 10px;">${k.weight || '—'}</td>
-        <td style="padding: 10px;">${k.weight_percentage || '—'}</td>
-        <td style="padding: 10px;">${k.defination_measurement || '—'}</td>
+        <td style="padding: 10px;">${this.pickDetailValue(k, ['kpi', 'Kpi', 'KPI', 'kpi_name', 'kpiName', 'Kpi_Name'])}</td>
+        <td style="padding: 10px;">${this.pickDetailValue(k, ['weight', 'Weight', 'weightage', 'Weightage'])}</td>
+        <td style="padding: 10px;">${this.pickDetailValue(k, ['weight_percentage', 'weightPercentage', 'Weight_Percentage', 'percentage', 'Percentage'])}</td>
+        <td style="padding: 10px;">${this.pickDetailValue(k, ['defination_measurement', 'definition_measurement', 'Defination_Measurement', 'Definition_Measurement', 'definition', 'Definition'])}</td>
       </tr>`,
       )
       .join('');
+
+    const department = this.pickDetailValue(detail, ['department', 'Department']);
+    const employmentNature = this.pickDetailValue(detail, ['Employement_Nature', 'Employment_Nature', 'employment_nature']);
+    const workLevel = this.pickDetailValue(detail, ['work_level', 'Work_Level', 'workLevel']);
+    const employmentCategory = this.pickDetailValue(detail, ['Employement_Category', 'Employment_Category', 'employment_category']);
+    const employmentStatus = this.pickDetailValue(detail, ['Employement_Status', 'Employment_Status', 'employment_status']);
+    const designation = this.pickDetailValue(detail, ['designation', 'Designation']);
 
     const htmlContent = `
       <div style="text-align: left; max-height: 60vh; overflow-y: auto;">
         <div style="margin-bottom: 20px;">
           <h5 style="margin: 0 0 12px 0; color: #173e78; font-size: 14px;">Department Information</h5>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
-            <div><strong>Department:</strong> <span style="color: #555;">${detail.department || '—'}</span></div>
-            <div><strong>Employment Nature:</strong> <span style="color: #555;">${(detail['Employement_Nature'] as string) || '—'}</span></div>
-            <div><strong>Work Level:</strong> <span style="color: #555;">${detail.work_level || '—'}</span></div>
-            <div><strong>Employment Category:</strong> <span style="color: #555;">${(detail['Employement_Category'] as string) || '—'}</span></div>
-            <div><strong>Employment Status:</strong> <span style="color: #555;">${(detail['Employement_Status'] as string) || '—'}</span></div>
-            <div><strong>Designation:</strong> <span style="color: #555;">${detail.designation || '—'}</span></div>
+            <div><strong>Department:</strong> <span style="color: #555;">${department}</span></div>
+            <div><strong>Employment Nature:</strong> <span style="color: #555;">${employmentNature}</span></div>
+            <div><strong>Work Level:</strong> <span style="color: #555;">${workLevel}</span></div>
+            <div><strong>Employment Category:</strong> <span style="color: #555;">${employmentCategory}</span></div>
+            <div><strong>Employment Status:</strong> <span style="color: #555;">${employmentStatus}</span></div>
+            <div><strong>Designation:</strong> <span style="color: #555;">${designation}</span></div>
           </div>
         </div>
 
@@ -132,21 +140,12 @@ export class KpiSetupComponent implements OnInit {
       </div>
     `;
 
-    console.log('About to show modal with HTML content');
     void Swal.fire({
-      title: `<strong>KPI Details - ${detail.department}</strong>`,
+      title: `<strong>KPI Details - ${department}</strong>`,
       html: htmlContent,
       icon: 'info',
       confirmButtonColor: '#0052cc',
       width: '800px',
-      didOpen: () => {
-        console.log('Modal opened successfully');
-      },
-      didClose: () => {
-        console.log('Modal closed');
-      },
-    }).then(() => {
-      console.log('Modal promise resolved');
     });
   }
 

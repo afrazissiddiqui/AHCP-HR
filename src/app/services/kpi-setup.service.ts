@@ -43,32 +43,8 @@ export class KpiSetupService {
 
   fetchKpiDetail(id: string | number): Observable<KpiSetupRecord> {
     const identifier = encodeURIComponent(String(id));
-    console.log('🔍 Fetching KPI detail for ID:', identifier);
     return this.http.get<unknown>(apiUrl(`kpi-detail/${identifier}`)).pipe(
-      map((response) => {
-        console.log('📡 Raw API response for kpi-detail:', response);
-        console.log('📡 Response type:', typeof response);
-        console.log('📡 Is Array?:', Array.isArray(response));
-        if (response && typeof response === 'object') {
-          console.log('📡 Response keys:', Object.keys(response as Record<string, unknown>));
-        }
-        
-        const items = this.extractApiItems(response);
-        console.log('📡 Extracted items:', items);
-        
-        if (items.length > 0) {
-          const mapped = this.mapRecord(items[0]);
-          console.log('✅ Mapped record from array:', mapped);
-          return mapped;
-        }
-        if (response && typeof response === 'object') {
-          const mapped = this.mapRecord(response as Record<string, unknown>);
-          console.log('✅ Mapped record from object:', mapped);
-          return mapped;
-        }
-        console.warn('⚠️ Empty response, returning minimal record');
-        return this.mapRecord({ id });
-      }),
+      map((response) => this.mapRecord(this.extractDetailRecord(response, id))),
     );
   }
 
@@ -80,6 +56,29 @@ export class KpiSetupService {
   deleteKpi(id: string | number): Observable<unknown> {
     const identifier = encodeURIComponent(String(id));
     return this.http.delete<unknown>(apiUrl(`kpi-delete/${identifier}`));
+  }
+
+  private extractDetailRecord(response: unknown, id: string | number): Record<string, unknown> {
+    if (!response || typeof response !== 'object') {
+      return { id };
+    }
+
+    if (Array.isArray(response)) {
+      const first = response.find((item) => !!item && typeof item === 'object');
+      return (first as Record<string, unknown> | undefined) ?? { id };
+    }
+
+    const obj = response as Record<string, unknown>;
+    const wrapperKeys = ['data', 'item', 'record', 'result', 'kpi', 'kpi_detail', 'kpiDetail'];
+
+    for (const key of wrapperKeys) {
+      const value = obj[key];
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
+      }
+    }
+
+    return obj;
   }
 
   private extractApiItems(response: unknown): Record<string, unknown>[] {
@@ -123,10 +122,11 @@ export class KpiSetupService {
     
     const id = this.pickString(item, ['id', 'Id', 'ID', 'kpi_id', 'KpiId', 'kpiId', 'kpi_ID']) || '';
     const department = this.pickString(item, ['department', 'Department', 'dept', 'Dept']) || '';
-    const work_level = this.pickString(item, ['work_level', 'workLevel', 'WorkLevel', 'level', 'Level']) || '';
+    const work_level = this.pickString(item, ['work_level', 'Work_Level', 'workLevel', 'WorkLevel', 'level', 'Level']) || '';
     const designation = this.pickString(item, ['designation', 'Designation', 'role', 'Role', 'job_title', 'jobTitle']) || '';
+    const kpis = this.extractNestedRows(item);
     
-    console.log('📋 Mapped fields:', { id, department, work_level, designation });
+    console.log('📋 Mapped fields:', { id, department, work_level, designation, kpisCount: kpis.length });
     
     return {
       ...item,
@@ -134,7 +134,32 @@ export class KpiSetupService {
       department,
       work_level,
       designation,
+      kpis,
     };
+  }
+
+  private extractNestedRows(source: Record<string, unknown>): Record<string, unknown>[] {
+    const arrayKeys = ['kpis', 'kpi_rows', 'kpiRows', 'kpi_list', 'kpiList', 'details', 'kpi_details', 'kpiDetails', 'items'];
+
+    for (const key of arrayKeys) {
+      const value = source[key];
+      if (Array.isArray(value)) {
+        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+    }
+
+    const nestedKeys = ['data', 'result', 'record', 'payload', 'response'];
+    for (const key of nestedKeys) {
+      const value = source[key];
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const rows = this.extractNestedRows(value as Record<string, unknown>);
+        if (rows.length > 0) {
+          return rows;
+        }
+      }
+    }
+
+    return [];
   }
 
   private pickString(source: Record<string, unknown>, keys: string[]): string {

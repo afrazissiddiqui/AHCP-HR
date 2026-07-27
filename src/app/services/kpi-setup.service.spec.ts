@@ -62,11 +62,31 @@ describe('KpiSetupService', () => {
     service.fetchKpiDetail(1).subscribe((record) => {
       expect(record.id).toBe('1');
       expect(record.department).toBe('Production');
+      expect(record.work_level).toBe('2-A');
+      expect(record.designation).toBe('Plant Manager');
+      expect(Array.isArray(record['kpis'])).toBeTrue();
+      expect((record['kpis'] as Record<string, unknown>[])[0]?.['kpi']).toBe('Overall Production Target Achievement');
     });
 
     const req = httpMock.expectOne(apiUrl('kpi-detail/1'));
     expect(req.request.method).toBe('GET');
-    req.flush({ id: 1, department: 'Production', work_level: '2-A', designation: 'Plant Manager' });
+    req.flush({
+      id: 1,
+      department: 'Production',
+      Work_Level: '2-A',
+      Designation: 'Plant Manager',
+      Employement_Nature: 'Technical',
+      Employement_Category: 'Executive',
+      Employement_Status: 'Permanent',
+      kpis: [
+        {
+          kpi: 'Overall Production Target Achievement',
+          weight: '20',
+          weight_percentage: '≥98%',
+          defination_measurement: 'Achievement of monthly production plan.',
+        },
+      ],
+    });
   });
 
   it('updates KPI by id', () => {
