@@ -78,6 +78,8 @@ export interface CreateReceiptFromProductionPayload {
     quantity: number;
     warehouse: string;
     batch_no: string;
+    refilling?: boolean;
+    existing_batch?: string;
   }>;
 }
 
@@ -181,6 +183,8 @@ export function buildCreateReceiptFromProductionPayload(
     quantity: row.quantity ?? 0,
     warehouse: ((row.warehouse ?? '') as string).trim(),
     batch_no: ((row.batchNumber ?? '') as string).trim(),
+    refilling: Boolean(row.refilling),
+    existing_batch: ((row.existingBatch ?? '') as string).trim(),
   }));
 
   const headerWarehouse = ((header as ReceiptFromProductionHeader & { warehouse?: string }).warehouse ?? '').trim();

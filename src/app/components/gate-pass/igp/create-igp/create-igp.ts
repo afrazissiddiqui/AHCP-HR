@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, tap } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { OpenBaseDocument } from '../../open-base-documents.service';
@@ -156,12 +156,6 @@ export class CreateIgpComponent implements OnInit {
   }
 
   private assignNextReferenceNo(): void {
-    const cached = this.igpService.records().map((r) => r.referenceNo);
-    if (cached.length > 0) {
-      this.referenceNo = nextGatePassReferenceNo('IGP', cached);
-      return;
-    }
-
     this.igpService.fetchInwardGatePasses().subscribe({
       next: (records) => {
         this.referenceNo = nextGatePassReferenceNo(
@@ -172,6 +166,22 @@ export class CreateIgpComponent implements OnInit {
       error: () => {
         this.referenceNo = nextGatePassReferenceNo('IGP', []);
       },
+    });
+  }
+
+  private ensureUniqueReferenceNo(): Promise<void> {
+    return new Promise((resolve) => {
+      this.igpService.fetchInwardGatePasses().pipe(
+        tap((records) => {
+          const existingReferenceNos = records.map((r) => r.referenceNo);
+          if (existingReferenceNos.some((ref) => ref === this.referenceNo)) {
+            this.referenceNo = nextGatePassReferenceNo('IGP', existingReferenceNos);
+          }
+        }),
+      ).subscribe({
+        next: () => resolve(),
+        error: () => resolve(),
+      });
     });
   }
 
@@ -461,12 +471,38 @@ export class CreateIgpComponent implements OnInit {
       return;
     }
 
-    const payload = this.buildPayload();
-    const request$ = this.editingId
-      ? this.igpService.updateInwardGatePass(this.editingId, payload)
-      : this.igpService.addInwardGatePass(payload);
-
     this.submitting = true;
+    if (!this.editingId) {
+      this.ensureUniqueReferenceNo().then(() => {
+        const updatedRequest$ = this.igpService.addInwardGatePass(this.buildPayload());
+        updatedRequest$
+          .pipe(finalize(() => {
+            this.submitting = false;
+          }))
+          .subscribe({
+            next: async (response) => {
+              if (response?.status === false || response?.success === false) {
+                const fallback = 'Failed to save IGP.';
+                this.alertService.error('Error', response.message || fallback);
+                return;
+              }
+
+              const title = 'Success';
+              const message = response?.message || 'IGP record saved successfully.';
+              await this.alertService.successAndWait(title, message);
+              this.igpService.fetchInwardGatePasses().subscribe();
+              this.back();
+            },
+            error: (error: unknown) => {
+              const fallback = 'Failed to save IGP.';
+              this.alertService.error('Error', formatApiErrorMessage(error, fallback));
+            },
+          });
+      });
+      return;
+    }
+
+    const request$ = this.igpService.updateInwardGatePass(this.editingId, this.buildPayload());
     request$
       .pipe(finalize(() => {
         this.submitting = false;

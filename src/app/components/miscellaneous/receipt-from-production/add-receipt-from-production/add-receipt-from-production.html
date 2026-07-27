@@ -67,6 +67,8 @@
                   <th class="sir-col-item-name">Item Name</th>
                   <th class="sir-col-qty">Quantity</th>
                   <th class="sir-col-warehouse">Warehouse</th>
+                  <th class="sir-col-batch">Refilling</th>
+                  <th class="sir-col-batch">Existing Batches</th>
                   <th class="sir-col-batch">Batch</th>
                   <th class="sir-col-date">Manufacturing Date</th>
                   <th class="sir-col-date">Expiry Date</th>
@@ -91,6 +93,17 @@
                         <option value="">Select warehouse</option>
                         @for (option of warehouseOptions(); track option.warehouseCode) {
                           <option [value]="option.warehouseCode">{{ option.warehouseCode }} - {{ option.warehouseName }}</option>
+                        }
+                      </select>
+                    </td>
+                    <td class="sir-col-batch">
+                      <input type="checkbox" class="sir-table-input" [ngModel]="line.refilling" (ngModelChange)="updateContentLine($index, 'refilling', $event ? 'true' : 'false')" />
+                    </td>
+                    <td class="sir-col-batch">
+                      <select class="sir-table-input" [ngModel]="line.existingBatch" (ngModelChange)="updateContentLine($index, 'existingBatch', $event)">
+                        <option value="">Select existing batch</option>
+                        @for (batch of existingBatchesForLine($index); track batch) {
+                          <option [value]="batch">{{ batch }}</option>
                         }
                       </select>
                     </td>

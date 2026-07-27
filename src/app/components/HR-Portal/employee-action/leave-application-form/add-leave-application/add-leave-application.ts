@@ -178,6 +178,9 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => {
         this.employeeOptions.set(this.buildEmployeeOptions());
+        if (this.employeeId().trim()) {
+          this.loadSelectedEmployeeProfile(null, this.findMatchingEmployeeRecord(this.employeeId()));
+        }
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
@@ -278,10 +281,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
   protected selectEmployee(employee: LeaveEmployeeOption): void {
     this.closeCodeSuggestions();
     this.closeNameSuggestions();
-    const cachedRecord =
-      this.applicationFormService
-        .getApplicationRecords()
-        .find((record) => this.resolveEmployeeId(record) === employee.employeeId) ?? null;
+    const cachedRecord = this.findMatchingEmployeeRecord(employee.employeeId);
     this.selectedEmployeeRecord.set(cachedRecord);
     this.populateFromEmployeeOption(employee);
 
@@ -290,24 +290,7 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
       return;
     }
 
-    this.loadingEmployeeLeaveManagement.set(true);
-    this.cdr.markForCheck();
-    this.applicationFormService.fetchEmployeeProfileDetail(cachedRecord.apiId).subscribe({
-      next: (record) => {
-        this.selectedEmployeeRecord.set(record);
-        const balance = this.extractAggregateLeaveBalance(record);
-        this.totalLeaves.set(balance.totalLeaves);
-        this.leavesAvailed.set(balance.leavesAvailed);
-        this.remainingLeaves.set(balance.remainingLeaves);
-        this.applySelectedLeaveTypeBalance();
-        this.loadingEmployeeLeaveManagement.set(false);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.loadingEmployeeLeaveManagement.set(false);
-        this.cdr.markForCheck();
-      },
-    });
+    this.loadSelectedEmployeeProfile(cachedRecord.apiId, cachedRecord);
   }
 
   private readonly selectedEmployeeRecord = signal<ApplicationFormRecord | null>(null);
@@ -476,28 +459,87 @@ export class AddLeaveApplicationComponent implements OnInit, AfterViewInit, OnDe
     this.leavesAvailed.set(balance.leavesAvailed !== null ? balance.leavesAvailed : null);
     this.remainingLeaves.set(balance.remainingLeaves !== null ? balance.remainingLeaves : null);
 
-    const matchedRecord = this.applicationFormService
-      .getApplicationRecords()
-      .find((item) => this.resolveEmployeeId(item) === this.employeeId());
-    this.selectedEmployeeRecord.set(matchedRecord ?? null);
-    const selectedRecordApiId = this.selectedEmployeeRecord()?.apiId;
-    if (selectedRecordApiId) {
-      this.loadingEmployeeLeaveManagement.set(true);
-      this.applicationFormService.fetchEmployeeProfileDetail(selectedRecordApiId).subscribe({
-        next: (fullRecord) => {
-          this.selectedEmployeeRecord.set(fullRecord);
-          this.applySelectedLeaveTypeBalance();
-          this.loadingEmployeeLeaveManagement.set(false);
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.loadingEmployeeLeaveManagement.set(false);
-          this.cdr.markForCheck();
-        },
-      });
+    const matchedRecord = this.findMatchingEmployeeRecord(this.employeeId());
+    this.loadSelectedEmployeeProfile(null, matchedRecord);
+    this.applySelectedLeaveTypeBalance();
+  }
+
+  private findMatchingEmployeeRecord(employeeId: string): ApplicationFormRecord | null {
+    const normalizedEmployeeId = employeeId.trim();
+    if (!normalizedEmployeeId) {
+      return null;
     }
 
+    return (
+      this.applicationFormService
+        .getApplicationRecords()
+        .find((record) => this.resolveEmployeeId(record) === normalizedEmployeeId) ?? null
+    );
+  }
+
+  private loadSelectedEmployeeProfile(apiId: string | null, fallbackRecord: ApplicationFormRecord | null): void {
+    const candidate = fallbackRecord ?? this.findMatchingEmployeeRecord(this.employeeId());
+
+    if (!candidate) {
+      this.selectedEmployeeRecord.set(null);
+      this.selectedLeaveTypeTotalLeaves.set(null);
+      this.selectedLeaveTypeLeavesAvailed.set(null);
+      this.selectedLeaveTypeRemainingLeaves.set(null);
+      this.loadingEmployeeLeaveManagement.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.selectedEmployeeRecord.set(candidate);
+
+    if (candidate.detail) {
+      this.applyLeaveBalanceFromEmployeeRecord(candidate);
+      return;
+    }
+
+    if (!candidate.apiId && !apiId) {
+      this.applyLeaveBalanceFromEmployeeRecord(candidate);
+      return;
+    }
+
+    const resolvedApiId = (apiId || candidate.apiId || '').trim();
+    if (!resolvedApiId) {
+      this.applyLeaveBalanceFromEmployeeRecord(candidate);
+      return;
+    }
+
+    this.loadingEmployeeLeaveManagement.set(true);
+    this.cdr.markForCheck();
+    this.applicationFormService.fetchEmployeeProfileDetail(resolvedApiId).subscribe({
+      next: (fullRecord) => {
+        this.applyLeaveBalanceFromEmployeeRecord(fullRecord);
+      },
+      error: () => {
+        this.applyLeaveBalanceFromEmployeeRecord(candidate);
+      },
+    });
+  }
+
+  private applyLeaveBalanceFromEmployeeRecord(record: ApplicationFormRecord | null): void {
+    this.selectedEmployeeRecord.set(record);
+
+    if (!record) {
+      this.totalLeaves.set(null);
+      this.leavesAvailed.set(null);
+      this.remainingLeaves.set(null);
+      this.applySelectedLeaveTypeBalance();
+      this.loadingEmployeeLeaveManagement.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const aggregate = this.extractAggregateLeaveBalance(record);
+    this.totalLeaves.set(aggregate.totalLeaves);
+    this.leavesAvailed.set(aggregate.leavesAvailed);
+    this.remainingLeaves.set(aggregate.remainingLeaves);
     this.applySelectedLeaveTypeBalance();
+    this.loadingEmployeeLeaveManagement.set(false);
+    this.cdr.markForCheck();
   }
 
   private buildPayload(): LeaveApplicationAddPayload {

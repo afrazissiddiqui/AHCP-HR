@@ -7,6 +7,7 @@ import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { AddReceiptFromProduction } from './add-receipt-from-production';
 import { ReceiptFromProductionService, buildCreateReceiptFromProductionPayload } from '../receipt-from-production.service';
 import { createEmptyReceiptFromProductionLine } from '../receipt-from-production.model';
+import { OitmItemsService } from '../../../../services/oitm-items.service';
 
 describe('AddReceiptFromProduction', () => {
   let component: AddReceiptFromProduction;
@@ -43,6 +44,33 @@ describe('AddReceiptFromProduction', () => {
           useValue: {
             create: () => of({}),
             listProductionOrders: () => of([]),
+          },
+        },
+        {
+          provide: OitmItemsService,
+          useValue: {
+            ensureLoaded: () => of([
+              {
+                itemCode: 'FG-Toll-P-00000069',
+                itemName: 'Toll Flint - Preform 45 Gram',
+                uom: 'EA',
+                batches: [
+                  { batchNumber: 'BATCH-FSD-001', warehouse: 'FSD-WH03' },
+                  { batchNumber: 'BATCH-PSH-001', warehouse: 'PSH-WH03' },
+                ],
+              },
+            ]),
+            getCatalog: () => [
+              {
+                itemCode: 'FG-Toll-P-00000069',
+                itemName: 'Toll Flint - Preform 45 Gram',
+                uom: 'EA',
+                batches: [
+                  { batchNumber: 'BATCH-FSD-001', warehouse: 'FSD-WH03' },
+                  { batchNumber: 'BATCH-PSH-001', warehouse: 'PSH-WH03' },
+                ],
+              },
+            ],
           },
         },
       ],
@@ -125,5 +153,21 @@ describe('AddReceiptFromProduction', () => {
     const payload = buildCreateReceiptFromProductionPayload(component.headerForm(), component.contentLines());
 
     expect(payload.warehouse).toBe('FSD-WH03');
+  });
+
+  it('returns matching batches from the items catalog for the active branch warehouse', () => {
+    component.headerForm.set({
+      ...component.headerForm(),
+      branchId: '3',
+    });
+
+    component.contentLines.set([
+      {
+        ...createEmptyReceiptFromProductionLine(),
+        itemCode: 'FG-Toll-P-00000069',
+      },
+    ]);
+
+    expect(component.existingBatchesForLine(0)).toEqual(['BATCH-FSD-001']);
   });
 });

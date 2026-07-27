@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { WarehouseOption, WarehouseService } from '../../../../services/warehouse.service';
+import { OitmItemsService } from '../../../../services/oitm-items.service';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { ReceiptFromProductionHeader, ReceiptFromProductionLine, createEmptyReceiptFromProductionHeader, createEmptyReceiptFromProductionLine } from '../receipt-from-production.model';
@@ -26,6 +27,7 @@ export class AddReceiptFromProduction implements OnInit {
   private readonly alertService = inject(AlertService);
   private readonly receiptService = inject(ReceiptFromProductionService);
   private readonly warehouseService = inject(WarehouseService);
+  private readonly oitmItemsService = inject(OitmItemsService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
   readonly saving = signal(false);
@@ -56,6 +58,46 @@ export class AddReceiptFromProduction implements OnInit {
       next: (warehouses) => this.warehouseOptions.set(warehouses),
       error: () => this.warehouseOptions.set([]),
     });
+
+    this.oitmItemsService.ensureLoaded().subscribe({
+      next: () => undefined,
+      error: () => undefined,
+    });
+  }
+
+  existingBatchesForLine(index: number): string[] {
+    const row = this.contentLines()[index];
+    if (!row?.itemCode?.trim()) {
+      return [];
+    }
+
+    const branchWarehouse = this.branchWarehouseForRow(row);
+    if (!branchWarehouse) {
+      return [];
+    }
+
+    return this.oitmItemsService.getCatalog().filter((item) => item.itemCode.trim() === row.itemCode.trim()).flatMap((item) =>
+      (item.batches ?? [])
+        .filter((batch) => this.normalizeWarehouse(batch.warehouse) === branchWarehouse)
+        .map((batch) => batch.batchNumber)
+        .filter(Boolean),
+    );
+  }
+
+  private branchWarehouseForRow(row: ReceiptFromProductionLine): string | null {
+    const branchId = (this.headerForm().branchId ?? '').trim();
+    if (branchId === '1') {
+      return 'PSH-WH03';
+    }
+    if (branchId === '3') {
+      return 'FSD-WH03';
+    }
+    const warehouse = (row.warehouse ?? '').trim();
+    return warehouse ? this.normalizeWarehouse(warehouse) : null;
+  }
+
+  private normalizeWarehouse(value: string): string {
+    return (value ?? '').trim().toUpperCase();
   }
 
   scrollTo(section: 'header' | 'items' | 'footer'): void {
@@ -95,7 +137,7 @@ export class AddReceiptFromProduction implements OnInit {
     this.contentLines.update((rows) => rows.filter((_, rowIndex) => rowIndex !== index));
   }
 
-  updateContentLine(index: number, field: keyof ReceiptFromProductionLine, value: string): void {
+  updateContentLine(index: number, field: keyof ReceiptFromProductionLine, value: string | boolean | number): void {
     this.contentLines.update((rows) =>
       rows.map((row, rowIndex) => {
         if (rowIndex !== index) {
@@ -115,6 +157,11 @@ export class AddReceiptFromProduction implements OnInit {
         ) {
           const numericValue = value === '' ? null : Number(value);
           return { ...row, [field]: Number.isNaN(numericValue) ? null : numericValue } as ReceiptFromProductionLine;
+        }
+
+        if (field === 'refilling') {
+          const isChecked = value === true || value === 'true' || value === '1' || value === 1;
+          return { ...row, refilling: isChecked } as ReceiptFromProductionLine;
         }
 
         return { ...row, [field]: value } as ReceiptFromProductionLine;

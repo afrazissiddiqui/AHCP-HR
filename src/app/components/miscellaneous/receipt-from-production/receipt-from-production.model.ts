@@ -33,6 +33,8 @@ export interface ReceiptFromProductionLine {
   quantityPerJumboCtn: number | null;
   jumboCartons: number | null;
   batchNumber: string;
+  refilling: boolean;
+  existingBatch: string;
   manufacturingDate: string;
   expiryDate: string;
   baseEntry?: string;
@@ -88,6 +90,8 @@ export function createEmptyReceiptFromProductionLine(): ReceiptFromProductionLin
     quantityPerJumboCtn: null,
     jumboCartons: null,
     batchNumber: '',
+    refilling: false,
+    existingBatch: '',
     manufacturingDate: '',
     expiryDate: plusDaysDateString(10),
     baseEntry: '',
