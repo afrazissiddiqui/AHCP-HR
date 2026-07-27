@@ -97,10 +97,13 @@
                       </select>
                     </td>
                     <td class="sir-col-batch">
-                      <input type="checkbox" class="sir-table-input" [ngModel]="line.refilling" (ngModelChange)="updateContentLine($index, 'refilling', $event ? 'true' : 'false')" />
+                      <label class="sir-sap-checkbox">
+                        <input type="checkbox" [ngModel]="line.refilling" (ngModelChange)="updateContentLine($index, 'refilling', $event ? 'true' : 'false')" />
+                        <span class="sir-sap-checkbox__mark" aria-hidden="true"></span>
+                      </label>
                     </td>
                     <td class="sir-col-batch">
-                      <select class="sir-table-input" [ngModel]="line.existingBatch" (ngModelChange)="updateContentLine($index, 'existingBatch', $event)">
+                      <select class="sir-table-input" [ngModel]="line.existingBatch" [disabled]="!line.refilling" (ngModelChange)="updateContentLine($index, 'existingBatch', $event)">
                         <option value="">Select existing batch</option>
                         @for (batch of existingBatchesForLine($index); track batch) {
                           <option [value]="batch">{{ batch }}</option>
@@ -108,7 +111,7 @@
                       </select>
                     </td>
                     <td class="sir-col-batch">
-                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)" />
+                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" [disabled]="line.refilling" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)" />
                     </td>
                     <td class="sir-col-date">
                       <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)" />

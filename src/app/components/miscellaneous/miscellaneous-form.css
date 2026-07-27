@@ -522,9 +522,9 @@
 }
 
 .sir-data-table.sir-data-table--row-level {
-  width: auto;
+  width: max-content;
   min-width: 100%;
-  table-layout: auto;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   color: var(--sir-text);
@@ -571,11 +571,13 @@
 .sir-data-table--row-level tbody td {
   padding: 8px 10px;
   border-bottom: 1px solid #ededed;
-  vertical-align: middle;
+  vertical-align: top;
   font-size: 12px;
   white-space: normal;
   overflow: visible;
   min-width: 0;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .sir-data-table--row-level tbody td.sir-col-warehouse {
@@ -604,6 +606,15 @@
   box-sizing: border-box;
   white-space: normal;
   word-break: break-word;
+  overflow: visible;
+  height: auto;
+}
+
+.sir-data-table--row-level .sir-table-input:disabled {
+  background: #f3f4f6;
+  color: #8a9199;
+  border-color: #d7dce0;
+  cursor: not-allowed;
 }
 
 .sir-data-table--row-level .sir-table-input--picker {
@@ -659,8 +670,8 @@
 }
 
 .sir-col-item-name {
-  width: 300px;
-  min-width: 300px;
+  width: 320px;
+  min-width: 320px;
 }
 
 .sir-col-item-name .sir-table-input,
@@ -674,14 +685,14 @@
 }
 
 .sir-col-warehouse {
-  width: 260px;
-  min-width: 260px;
+  width: 280px;
+  min-width: 280px;
 }
 
 .sir-col-qty {
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
+  width: 130px;
+  min-width: 130px;
+  max-width: 130px;
 }
 
 .sir-col-total {
@@ -777,8 +788,68 @@
 }
 
 .sir-col-batch {
-  width: 140px;
-  min-width: 140px;
+  width: 180px;
+  min-width: 180px;
+}
+
+.sir-sap-checkbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 0 auto;
+  padding: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sir-sap-checkbox input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.sir-sap-checkbox__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #8a8f95;
+  border-radius: 2px;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sir-sap-checkbox__mark::after {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid #1f4e79;
+  border-bottom: 2px solid #1f4e79;
+  transform: rotate(-45deg) translate(1px, -1px);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.sir-sap-checkbox input:checked + .sir-sap-checkbox__mark {
+  background: #eaf3fb;
+  border-color: #1f4e79;
+  box-shadow: inset 0 0 0 1px rgba(31, 78, 121, 0.08);
+}
+
+.sir-sap-checkbox input:checked + .sir-sap-checkbox__mark::after {
+  opacity: 1;
+}
+
+.sir-sap-checkbox input:focus + .sir-sap-checkbox__mark {
+  outline: 1px solid #1f4e79;
+  outline-offset: 1px;
 }
 
 .sir-col-date {

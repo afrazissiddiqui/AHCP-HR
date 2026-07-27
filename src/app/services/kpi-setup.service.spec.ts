@@ -45,4 +45,45 @@ describe('KpiSetupService', () => {
     expect(req.request.body).toEqual(payload);
     req.flush({ success: true });
   });
+
+  it('maps submitted document values from the list response', () => {
+    service.fetchKpis().subscribe((records) => {
+      expect(records[0]?.department).toBe('Production');
+      expect(records[0]?.work_level).toBe('2-A');
+      expect(records[0]?.designation).toBe('Plant Manager');
+    });
+
+    const req = httpMock.expectOne(apiUrl('kpi-list'));
+    expect(req.request.method).toBe('GET');
+    req.flush([{ department: 'Production', work_level: '2-A', designation: 'Plant Manager' }]);
+  });
+
+  it('fetches KPI detail by id', () => {
+    service.fetchKpiDetail(1).subscribe((record) => {
+      expect(record.id).toBe('1');
+      expect(record.department).toBe('Production');
+    });
+
+    const req = httpMock.expectOne(apiUrl('kpi-detail/1'));
+    expect(req.request.method).toBe('GET');
+    req.flush({ id: 1, department: 'Production', work_level: '2-A', designation: 'Plant Manager' });
+  });
+
+  it('updates KPI by id', () => {
+    const updatePayload = { department: 'Quality', work_level: '2-B' };
+    service.updateKpi(1, updatePayload).subscribe();
+
+    const req = httpMock.expectOne(apiUrl('kpi-update/1'));
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(updatePayload);
+    req.flush({ success: true });
+  });
+
+  it('deletes KPI by id', () => {
+    service.deleteKpi(1).subscribe();
+
+    const req = httpMock.expectOne(apiUrl('kpi-delete/1'));
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ success: true });
+  });
 });

@@ -38,6 +38,7 @@ import { IssueFromProductionListComponent } from './components/setup/issue-from-
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
 import { KpiSetupComponent } from './components/setup/kpi-setup/kpi-setup';
 import { AddKpiSetupComponent } from './components/setup/kpi-setup/add-kpi-setup/add-kpi-setup';
+import { EditKpiSetupComponent } from './components/setup/kpi-setup/edit-kpi-setup/edit-kpi-setup';
 
 export const routes: Routes = [
   {
@@ -241,6 +242,11 @@ export const routes: Routes = [
   {
     path: 'setup/kpi-setup/add',
     component: AddKpiSetupComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'setup/kpi-setup/:id/edit',
+    component: EditKpiSetupComponent,
     canActivate: [authGuard],
   },
   {

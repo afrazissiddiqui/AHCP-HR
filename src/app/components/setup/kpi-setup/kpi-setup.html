@@ -42,20 +42,28 @@
             <thead>
               <tr>
                 <th class="col-sr">SR No.</th>
-                <th>Name</th>
-                <th>Code</th>
-                <th>Description</th>
-                <th>Status</th>
+                <th>Department</th>
+                <th>Work Level</th>
+                <th>Designation</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of kpis(); let index = index; trackBy: trackById">
                 <td class="col-sr">{{ index + 1 }}</td>
-                <td>{{ displayValue(item.name) }}</td>
-                <td>{{ displayValue(item.code) }}</td>
-                <td>{{ displayValue(item.description) }}</td>
-                <td>
-                  <span class="status-pill">{{ displayValue(item.status) }}</span>
+                <td>{{ displayValue(item.department) }}</td>
+                <td>{{ displayValue(item.work_level) }}</td>
+                <td>{{ displayValue(item.designation) }}</td>
+                <td class="action-cell">
+                  <button type="button" class="btn-action btn-view" (click)="viewKpi(item)" title="View KPI details">
+                    View
+                  </button>
+                  <button type="button" class="btn-action btn-update" (click)="updateKpi(item)" title="Update KPI">
+                    Update
+                  </button>
+                  <button type="button" class="btn-action btn-delete" (click)="deleteKpi(item)" title="Delete KPI">
+                    Delete
+                  </button>
                 </td>
               </tr>
             </tbody>
