@@ -10,6 +10,8 @@ export interface UserSetupPayload {
   name: string;
   email: string;
   password?: string;
+  branch?: Array<number | string>;
+  department?: number;
   authorization: UserAuthorizationModule[];
 }
 
@@ -123,9 +125,24 @@ export class UserSetupService {
 
   private serializePayload(payload: UserSetupPayload): Record<string, unknown> {
     const authorizationModules = authorizationToApiPayload(payload.authorization);
+    const branchLabels: Record<number, string> = {
+      1: 'peshawar',
+      2: 'HO',
+      3: 'faisalabad',
+    };
+    const branchValues = Array.isArray(payload.branch) ? payload.branch : [1, 2, 3];
+    const normalizedBranch = branchValues.map((value) => {
+      if (typeof value === 'number') {
+        return branchLabels[value] ?? String(value);
+      }
+      return value;
+    });
+
     const body: Record<string, unknown> = {
       name: payload.name.trim(),
       email: payload.email.trim(),
+      branch: normalizedBranch,
+      department: payload.department ?? 25,
       authorization: authorizationModules,
     };
 

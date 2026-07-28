@@ -51,11 +51,23 @@ describe('KpiSetupService', () => {
       expect(records[0]?.department).toBe('Production');
       expect(records[0]?.work_level).toBe('2-A');
       expect(records[0]?.designation).toBe('Plant Manager');
+      expect(records[0]?.employment_nature).toBe('Technical');
+      expect(records[0]?.employment_category).toBe('Executive');
+      expect(records[0]?.employment_status).toBe('Permanent');
     });
 
     const req = httpMock.expectOne(apiUrl('kpi-list'));
     expect(req.request.method).toBe('GET');
-    req.flush([{ department: 'Production', work_level: '2-A', designation: 'Plant Manager' }]);
+    req.flush([
+      {
+        department: 'Production',
+        work_level: '2-A',
+        designation: 'Plant Manager',
+        employment_nature: 'Technical',
+        employment_category: 'Executive',
+        employment_status: 'Permanent',
+      },
+    ]);
   });
 
   it('fetches KPI detail by id', () => {

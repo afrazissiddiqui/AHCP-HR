@@ -34,6 +34,7 @@ import { LeaveTypesComponent } from './components/setup/leave-types/leave-types'
 import { UserSetupComponent } from './components/setup/user-setup/user-setup';
 import { WorkstationComponent } from './components/setup/workstation/workstation';
 import { OvertimeListComponent } from './components/setup/overtime-list/overtime-list';
+import { MasterFormComponent } from './components/setup/master-form/master-form';
 import { IssueFromProductionListComponent } from './components/setup/issue-from-production-list/issue-from-production-list';
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
 import { KpiSetupComponent } from './components/setup/kpi-setup/kpi-setup';
@@ -258,6 +259,11 @@ export const routes: Routes = [
     path: 'setup/overtime-list',
     component: OvertimeListComponent,
     canActivate: [authGuard, requirePermission('overtime_list_form', 'list')],
+  },
+  {
+    path: 'setup/master-form',
+    component: MasterFormComponent,
+    canActivate: [authGuard, requirePermission('master_form', 'list')],
   },
   {
     path: 'setup/issue-from-production-list',

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
-import { GoodReceiptService, buildCreateGoodReceiptPayload } from '../good-receipt.service';
+import { GoodReceiptService, buildCreateGoodReceiptPayload, InventoryAccountOption } from '../good-receipt.service';
 import { WarehouseService } from '../../../../services/warehouse.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
@@ -50,6 +50,9 @@ export class AddGoodReceipt implements OnInit {
 
   readonly headerForm = signal<GoodReceiptHeader>(createEmptyGoodReceiptHeader());
   readonly contentLines = signal<GoodReceiptLine[]>([createEmptyGoodReceiptLine()]);
+  readonly accountCodeOptions = signal<InventoryAccountOption[]>([]);
+  readonly accountCodeOptionsLoading = signal(false);
+  readonly accountCodeOptionsError = signal('');
 
   readonly totalAmount = computed(() =>
     this.contentLines()
@@ -59,6 +62,35 @@ export class AddGoodReceipt implements OnInit {
 
   ngOnInit(): void {
     this.warehouseService.ensureLoaded().subscribe({ error: () => undefined });
+    this.loadAccountCodeOptions();
+  }
+
+  private loadAccountCodeOptions(): void {
+    const header = this.headerForm();
+    const branch = header.branchId.trim();
+    const docDate = header.documentDate.trim();
+    const taxDate = header.postingDate.trim();
+    const docDueDate = header.dueDate.trim();
+
+    if (!branch || !docDate || !taxDate || !docDueDate) {
+      this.accountCodeOptions.set([]);
+      this.accountCodeOptionsError.set('');
+      return;
+    }
+
+    this.accountCodeOptionsLoading.set(true);
+    this.accountCodeOptionsError.set('');
+    this.goodReceiptService.listInventoryAccounts(branch, docDate, taxDate, docDueDate).subscribe({
+      next: (options) => {
+        this.accountCodeOptions.set(options);
+        this.accountCodeOptionsLoading.set(false);
+      },
+      error: () => {
+        this.accountCodeOptions.set([]);
+        this.accountCodeOptionsError.set('Could not load account codes.');
+        this.accountCodeOptionsLoading.set(false);
+      },
+    });
   }
 
   updateBranch(value: string): void {
@@ -71,10 +103,14 @@ export class AddGoodReceipt implements OnInit {
       branchId: selected.code,
       branchName: selected.name,
     }));
+    this.loadAccountCodeOptions();
   }
 
   updateHeaderField(field: keyof GoodReceiptHeader, value: string): void {
     this.headerForm.update((state) => ({ ...state, [field]: value }));
+    if (field === 'documentDate' || field === 'postingDate' || field === 'dueDate') {
+      this.loadAccountCodeOptions();
+    }
   }
 
   addContentLine(): void {
@@ -159,6 +195,11 @@ export class AddGoodReceipt implements OnInit {
 
     if (lines.some((line) => !line.warehouse.trim())) {
       this.alertService.validation('Warehouse is required for every line item.');
+      return;
+    }
+
+    if (lines.some((line) => !line.accountCode.trim())) {
+      this.alertService.validation('Account Code is required for every line item.');
       return;
     }
 

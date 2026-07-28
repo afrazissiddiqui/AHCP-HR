@@ -460,6 +460,53 @@
             </tbody>
           </table>
         </div>
+
+        <div class="pa-kpi-table-wrap">
+          <table class="pa-allowances-table pa-kpi-table">
+            <thead>
+              <tr>
+                <th>SR#</th>
+                <th>KPI</th>
+                <th>Weight</th>
+                <th>Weight Percentage</th>
+                <th>Definition Measure</th>
+                <th>Obtained</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (kpiAssessmentLoading()) {
+                <tr>
+                  <td colspan="6" class="pa-allowances-table__empty">Loading KPI setup…</td>
+                </tr>
+              } @else if (kpiAssessmentRows().length === 0) {
+                <tr>
+                  <td colspan="6" class="pa-allowances-table__empty">
+                    {{ kpiAssessmentMessage() || 'Select an employee to load KPI setup rows.' }}
+                  </td>
+                </tr>
+              } @else {
+                @for (row of kpiAssessmentRows(); track row.sr) {
+                  <tr>
+                    <td>{{ row.sr }}</td>
+                    <td>{{ row.kpi }}</td>
+                    <td>{{ row.weight }}</td>
+                    <td>{{ row.weightPercentage }}</td>
+                    <td>{{ row.definitionMeasure }}</td>
+                    <td>
+                      <input
+                        type="text"
+                        class="pa-allowances-table__input"
+                        [ngModel]="row.obtained"
+                        (ngModelChange)="updateKpiObtainedValue(row.sr - 1, $event)"
+                        placeholder="Obtained"
+                      />
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
 

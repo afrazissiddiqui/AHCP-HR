@@ -59,6 +59,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/kpi-setup': 'KPI Setup',
   'setup/kpi-setup/add': 'Add KPI',
   'setup/overtime-list': 'Overtime List',
+  'setup/master-form': 'Master Form',
   'setup/issue-from-production-list': 'Issue From Production',
   'setup/issue-from-production': 'Issue From Production',
   'plant-maintenance/main-form': 'Main Form',
@@ -107,6 +108,7 @@ const NON_SEARCH_ROUTE_KEYS = new Set([
   'setup/user-setup',
   'setup/workstation',
   'setup/overtime-list',
+  'setup/master-form',
   'setup/issue-from-production-list',
   'setup/issue-from-production',
 ]);

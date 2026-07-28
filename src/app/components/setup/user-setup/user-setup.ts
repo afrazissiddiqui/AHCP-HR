@@ -164,6 +164,9 @@ export class UserSetupComponent implements OnInit {
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
     }
+    if (this.isBranchColumn(column)) {
+      return this.formatBranchValue(value);
+    }
     if (typeof value === 'object') {
       return JSON.stringify(value);
     }
@@ -173,6 +176,46 @@ export class UserSetupComponent implements OnInit {
   private isDateColumn(column: string): boolean {
     const normalized = column.toLowerCase();
     return normalized.endsWith('_at') || normalized === 'createdat' || normalized === 'updatedat';
+  }
+
+  private isBranchColumn(column: string): boolean {
+    const normalized = column.toLowerCase();
+    return normalized === 'branch' || normalized === 'branches';
+  }
+
+  private formatBranchValue(value: unknown): string {
+    const branchMap: Record<string, string> = {
+      '1': 'peshawar',
+      '2': 'HO',
+      '3': 'faisalabad',
+      peshawar: 'peshawar',
+      ho: 'HO',
+      faisalabad: 'faisalabad',
+    };
+
+    if (Array.isArray(value)) {
+      return value
+        .map((entry) => {
+          if (typeof entry === 'number') {
+            return branchMap[String(entry)] ?? String(entry);
+          }
+          if (typeof entry === 'string') {
+            return branchMap[entry.trim().toLowerCase()] ?? entry;
+          }
+          return String(entry);
+        })
+        .join(', ');
+    }
+
+    if (typeof value === 'number') {
+      return branchMap[String(value)] ?? String(value);
+    }
+
+    if (typeof value === 'string') {
+      return branchMap[value.trim().toLowerCase()] ?? value;
+    }
+
+    return String(value);
   }
 
   private formatDateColumn(value: unknown): string {
@@ -465,6 +508,8 @@ export class UserSetupComponent implements OnInit {
     const payload: UserSetupPayload = {
       name: read('name', 'Name'),
       email: read('email', 'Email'),
+      branch: [1, 2, 3],
+      department: 25,
       authorization: this.authorization(),
     };
 

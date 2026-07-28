@@ -8,6 +8,10 @@ export interface KpiSetupRecord {
   department: string;
   work_level: string;
   designation: string;
+  employment_nature?: string;
+  employment_category?: string;
+  employment_status?: string;
+  kpis?: Record<string, unknown>[];
   [key: string]: unknown;
 }
 
@@ -124,6 +128,9 @@ export class KpiSetupService {
     const department = this.pickString(item, ['department', 'Department', 'dept', 'Dept']) || '';
     const work_level = this.pickString(item, ['work_level', 'Work_Level', 'workLevel', 'WorkLevel', 'level', 'Level']) || '';
     const designation = this.pickString(item, ['designation', 'Designation', 'role', 'Role', 'job_title', 'jobTitle']) || '';
+    const employment_nature = this.pickString(item, ['employment_nature', 'Employment_Nature', 'Employement_Nature', 'employmentNature']) || '';
+    const employment_category = this.pickString(item, ['employment_category', 'Employment_Category', 'Employement_Category', 'employmentCategory']) || '';
+    const employment_status = this.pickString(item, ['employment_status', 'Employment_Status', 'Employement_Status', 'employmentStatus']) || '';
     const kpis = this.extractNestedRows(item);
     
     console.log('📋 Mapped fields:', { id, department, work_level, designation, kpisCount: kpis.length });
@@ -134,6 +141,9 @@ export class KpiSetupService {
       department,
       work_level,
       designation,
+      employment_nature,
+      employment_category,
+      employment_status,
       kpis,
     };
   }

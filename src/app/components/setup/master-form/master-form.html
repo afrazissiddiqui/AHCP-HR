@@ -1,0 +1,107 @@
+<div class="setup-layout">
+  <div class="setup-content">
+    <div class="setup-body">
+      <div class="page-header">
+        <div class="page-title-group">
+          <span class="page-eyebrow">Setup</span>
+          <h1 class="page-title">Master Form</h1>
+          <p class="page-description">Review submitted master form records in a structured SuccessFactors-style workspace.</p>
+        </div>
+        <div class="page-stats">
+          <span class="page-stats-label">Submitted records</span>
+          <span class="page-stats-value">{{ totalRecords() }}</span>
+        </div>
+      </div>
+
+      <section class="form-panel form-panel--list">
+        <div class="form-panel-head">
+          <div>
+            <h2 class="form-panel-title">Submitted Master Forms</h2>
+            <p class="panel-subtitle">{{ filteredRecords().length }} of {{ totalRecords() }} records visible</p>
+          </div>
+          <div class="panel-actions">
+            <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadMasterForms()">
+              {{ loading() ? 'Loading…' : 'Refresh' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-toolbar">
+          <div class="search-field search-field--table">
+            <span class="search-field-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="M20 20l-3.5-3.5"></path>
+              </svg>
+            </span>
+            <input
+              type="search"
+              class="search-input"
+              [ngModel]="searchText()"
+              (ngModelChange)="searchText.set($event)"
+              name="master-form-search"
+              placeholder="Search records…"
+            />
+          </div>
+        </div>
+
+        @if (loading()) {
+          <div class="panel-state panel-state--loading">
+            <div class="panel-state-spinner"></div>
+            <span class="panel-state-hint">Loading submitted master forms…</span>
+          </div>
+        } @else if (!records().length) {
+          <div class="panel-state panel-state--empty">
+            <span class="panel-state-hint">No submitted master form records found.</span>
+          </div>
+        } @else if (!filteredRecords().length) {
+          <div class="panel-state panel-state--empty">
+            <span class="panel-state-hint">No records match your search.</span>
+          </div>
+        } @else {
+          <div class="table-card">
+            <div class="table-wrap">
+              <table class="entry-table">
+                <thead>
+                  <tr>
+                    <th class="col-sr">SR No.</th>
+                    @for (column of columns(); track trackByColumn($index, column)) {
+                      <th>{{ columnLabel(column) }}</th>
+                    }
+                    <th class="col-action">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (record of filteredRecords(); track trackByRecord($index, record); let index = $index) {
+                    <tr>
+                      <td class="col-sr">{{ index + 1 }}</td>
+                      @for (column of columns(); track trackByColumn($index, column)) {
+                        <td>
+                          @if (isStatusColumn(column)) {
+                            <span [class]="statusClass(record, column)">{{ cellValue(record, column) }}</span>
+                          } @else {
+                            {{ cellValue(record, column) }}
+                          }
+                        </td>
+                      }
+                      <td class="col-action">
+                        <button
+                          type="button"
+                          class="btn-view"
+                          [disabled]="detailLoading()"
+                          (click)="viewRecord(record)"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>

@@ -253,6 +253,11 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
+    slug: 'master_form',
+    name: 'Master Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
     slug: 'kpi_setup_form',
     name: 'KPI Setup Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,

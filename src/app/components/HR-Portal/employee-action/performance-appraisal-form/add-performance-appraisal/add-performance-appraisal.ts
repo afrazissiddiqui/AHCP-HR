@@ -23,6 +23,7 @@ import {
   buildPerformanceAppraisalDraftFromForm,
   buildPerformanceAppraisalSubmitPayload,
 } from '../../../../../services/performance-appraisal.service';
+import { KpiSetupRecord, KpiSetupService } from '../../../../../services/kpi-setup.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { sanitizeApiText } from '../../../../../utils/api-text.util';
 import { formatDateForInput } from '../../../../../utils/date-format.util';
@@ -51,6 +52,15 @@ interface AllowanceRowState {
   label: string;
   existing: string;
   incrementPercentage: string;
+}
+
+interface KpiAssessmentRowState {
+  sr: number;
+  kpi: string;
+  weight: string;
+  weightPercentage: string;
+  definitionMeasure: string;
+  obtained: string;
 }
 
 const ALLOWANCE_KEY_ALIASES: Record<AllowanceKey, readonly string[]> = {
@@ -127,6 +137,9 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     DEFAULT_ALLOWANCE_ROWS.map((row) => ({ ...row })),
   );
   protected readonly employeeDetailLoading = signal(false);
+  protected readonly kpiAssessmentRows = signal<KpiAssessmentRowState[]>([]);
+  protected readonly kpiAssessmentLoading = signal(false);
+  protected readonly kpiAssessmentMessage = signal('');
 
   private employeeListLoadRequested = false;
   private readonly employeeOptions = signal<AppraisalEmployeeOption[]>([]);
@@ -158,6 +171,7 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     private readonly alertService: AlertService,
     private readonly appraisalService: PerformanceAppraisalService,
     private readonly applicationFormService: ApplicationFormService,
+    private readonly kpiSetupService: KpiSetupService,
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
@@ -205,6 +219,12 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.allowanceRows.update((rows) =>
       rows.map((row) => (row.key === key ? { ...row, incrementPercentage: next } : row)),
     );
+    this.cdr.markForCheck();
+  }
+
+  protected updateKpiObtainedValue(index: number, value: string | number | null): void {
+    const next = value === null ? '' : String(value);
+    this.kpiAssessmentRows.update((rows) => rows.map((row, rowIndex) => (rowIndex === index ? { ...row, obtained: next } : row)));
     this.cdr.markForCheck();
   }
 
@@ -635,11 +655,18 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.reportingManager.set('');
     this.currentSalary.set('');
     this.resetAllowanceRows();
+    this.resetKpiAssessmentRows();
     this.employeeProfileLoaded.set(false);
   }
 
   private resetAllowanceRows(): void {
     this.allowanceRows.set(DEFAULT_ALLOWANCE_ROWS.map((row) => ({ ...row })));
+  }
+
+  private resetKpiAssessmentRows(): void {
+    this.kpiAssessmentRows.set([]);
+    this.kpiAssessmentLoading.set(false);
+    this.kpiAssessmentMessage.set('');
   }
 
   private buildAllowancesPayload(): PerformanceAllowanceRowPayload[] {
@@ -733,11 +760,100 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   private populateFromApplicationRecord(record: ApplicationFormRecord): void {
     this.applyEmployeeFields(this.mapApplicationRecordToEmployeeFields(record), this.resolveEmployeeCode(record));
     this.applyAllowancesFromRemuneration(record.detail?.remuneration);
+    this.loadKpiAssessmentRows();
   }
 
   private loadAllowancesForEdit(savedAllowances: PerformanceAllowanceRowPayload[]): void {
     this.applyAllowancesFromRecord(savedAllowances);
     this.refreshAllowanceExistingFromEmployeeProfile(true);
+  }
+
+  private loadKpiAssessmentRows(): void {
+    const employeeFields = [
+      this.department(),
+      this.employmentNature(),
+      this.workGradeLevel(),
+      this.employeeCategory(),
+      this.employmentType(),
+      this.designation(),
+    ];
+
+    const hasEmployeeContext = employeeFields.some((value) => value.trim().length > 0);
+    if (!hasEmployeeContext) {
+      this.resetKpiAssessmentRows();
+      return;
+    }
+
+    this.kpiAssessmentLoading.set(true);
+    this.kpiAssessmentMessage.set('');
+    this.kpiSetupService.fetchKpis().subscribe({
+      next: (records) => {
+        const matchedRecord = records.find((record) => this.matchesKpiSetupRecord(record));
+        const rows = this.toKpiAssessmentRows(matchedRecord);
+        this.kpiAssessmentRows.set(rows);
+        this.kpiAssessmentMessage.set(rows.length > 0 ? '' : 'No KPI setup matched the selected employee profile.');
+        this.kpiAssessmentLoading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.kpiAssessmentRows.set([]);
+        this.kpiAssessmentLoading.set(false);
+        this.kpiAssessmentMessage.set('Unable to load KPI setup data right now.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private matchesKpiSetupRecord(record: KpiSetupRecord): boolean {
+    const comparisons = [
+      { employee: this.department().trim(), record: record.department?.trim() ?? '' },
+      { employee: this.employmentNature().trim(), record: record.employment_nature?.trim() ?? '' },
+      { employee: this.workGradeLevel().trim(), record: record.work_level?.trim() ?? '' },
+      { employee: this.employeeCategory().trim(), record: record.employment_category?.trim() ?? '' },
+      { employee: this.employmentType().trim(), record: record.employment_status?.trim() ?? '' },
+      { employee: this.designation().trim(), record: record.designation?.trim() ?? '' },
+    ];
+
+    const hasCriteria = comparisons.some((item) => item.employee.length > 0);
+    if (!hasCriteria) {
+      return false;
+    }
+
+    return comparisons.every((item) => {
+      if (!item.employee) {
+        return true;
+      }
+      if (!item.record) {
+        return false;
+      }
+      return this.normalizeText(item.employee) === this.normalizeText(item.record);
+    });
+  }
+
+  private toKpiAssessmentRows(record: KpiSetupRecord | undefined): KpiAssessmentRowState[] {
+    if (!record?.kpis?.length) {
+      return [];
+    }
+
+    return record.kpis.map((item, index) => {
+      const row = item as Record<string, unknown>;
+      return {
+        sr: index + 1,
+        kpi: this.asText(row['kpi']),
+        weight: this.asText(row['weight']),
+        weightPercentage: this.asText(row['weight_percentage']),
+        definitionMeasure: this.asText(row['defination_measurement'] ?? row['definition_measure']),
+        obtained: '',
+      };
+    });
+  }
+
+  private asText(value: unknown): string {
+    return value === null || value === undefined ? '' : String(value).trim();
+  }
+
+  private normalizeText(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, '').trim();
   }
 
   private refreshAllowanceExistingFromEmployeeProfile(preserveIncrement = false): void {

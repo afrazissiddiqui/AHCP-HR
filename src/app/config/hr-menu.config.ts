@@ -127,6 +127,13 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         route: '/setup/overtime-list',
         access: { moduleSlug: 'overtime_list_form', action: 'list' },
       },
+      {
+        label: 'Master Form',
+        value: 'setup/master-form',
+        icon: 'form',
+        route: '/setup/master-form',
+        access: { moduleSlug: 'master_form', action: 'list' },
+      },
     ],
   },
   // { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },

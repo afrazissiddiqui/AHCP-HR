@@ -1,8 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
 import { GoodReceiptHeader, GoodReceiptLine } from './good-receipt.model';
+
+export interface InventoryAccountOption {
+  code: string;
+  name?: string;
+}
 
 export interface CreateGoodReceiptItemPayload {
   baseEntry?: string | number;
@@ -15,7 +20,7 @@ export interface CreateGoodReceiptItemPayload {
   manufacturingDate: string;
   expiryDate: string;
   binLocationAllocation?: string;
-  accountCode?: string;
+  AcctCode?: string;
   itemCost?: number;
   uomCode?: string;
   uomName?: string;
@@ -98,7 +103,7 @@ export function buildCreateGoodReceiptPayload(
       manufacturingDate: line.manufacturingDate.trim(),
       expiryDate: line.expiryDate.trim(),
       binLocationAllocation: line.binLocationAllocation.trim(),
-      accountCode: line.accountCode.trim(),
+      AcctCode: line.accountCode.trim(),
       itemCost: line.itemCost ?? 0,
       uomCode: line.uomCode.trim(),
       uomName: line.uomName.trim(),
@@ -129,6 +134,31 @@ export class GoodReceiptService {
 
   create(payload: CreateGoodReceiptPayload): Observable<CreateGoodReceiptResponse> {
     return this.http.post<CreateGoodReceiptResponse>(apiUrl('createGoodsReceipt'), payload);
+  }
+
+  listInventoryAccounts(
+    branch: string,
+    docDate: string,
+    taxDate: string,
+    docDueDate: string,
+  ): Observable<InventoryAccountOption[]> {
+    const payload = {
+      branch: Number.parseInt(branch, 10) || 0,
+      docDate: docDate.trim(),
+      taxDate: taxDate.trim(),
+      docDueDate: docDueDate.trim(),
+      remarks: 'Goods Receipt',
+      items: [],
+    };
+
+    return this.http.get<unknown>(apiUrl('inventory_accounts')).pipe(
+      map((response) => this.parseInventoryAccounts(response)),
+      catchError(() =>
+        this.http.post<unknown>(apiUrl('inventory_accounts'), payload).pipe(
+          map((response) => this.parseInventoryAccounts(response)),
+        ),
+      ),
+    );
   }
 
   private parseGoodReceipts(
@@ -197,6 +227,73 @@ export class GoodReceiptService {
           itemCount: lines.length,
         };
       });
+  }
+
+  private parseInventoryAccounts(response: unknown): InventoryAccountOption[] {
+    const collected: InventoryAccountOption[] = [];
+    this.collectInventoryAccounts(response, collected);
+    return collected;
+  }
+
+  private collectInventoryAccounts(value: unknown, collected: InventoryAccountOption[]): void {
+    if (Array.isArray(value)) {
+      value.forEach((item) => this.collectInventoryAccounts(item, collected));
+      return;
+    }
+
+    if (!value || typeof value !== 'object') {
+      return;
+    }
+
+    const record = value as Record<string, unknown>;
+    const option = this.normalizeInventoryAccountOption(record);
+    if (option.length > 0) {
+      collected.push(...option);
+      return;
+    }
+
+    for (const nestedValue of Object.values(record)) {
+      if (nestedValue !== null && nestedValue !== undefined) {
+        this.collectInventoryAccounts(nestedValue, collected);
+      }
+    }
+  }
+
+  private normalizeInventoryAccountOption(item: unknown): InventoryAccountOption[] {
+    if (typeof item === 'string') {
+      const trimmed = item.trim();
+      return trimmed ? [{ code: trimmed, name: trimmed }] : [];
+    }
+
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+
+    const record = item as Record<string, unknown>;
+    const code = this.pickString(record, [
+      'AcctCode',
+      'AccountCode',
+      'Code',
+      'code',
+      'accountCode',
+      'value',
+      'id',
+    ]);
+
+    if (!code) {
+      return [];
+    }
+
+    const name = this.pickString(record, [
+      'Name',
+      'name',
+      'Description',
+      'description',
+      'AccountName',
+      'accountName',
+    ]);
+
+    return [{ code, name: name || code }];
   }
 
   private extractDataArray(response: unknown, wrapperKeys: string[]): unknown[] {

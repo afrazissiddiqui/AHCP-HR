@@ -13,7 +13,6 @@
       <nav class="sir-section-nav">
         <ul class="sir-section-nav-list">
           <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'header'" (click)="scrollTo('header')">Header Info</li>
-          <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'logistics'" (click)="scrollTo('logistics')">Logistics</li>
           <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'items'" (click)="scrollTo('items')">Row Level Info</li>
         </ul>
       </nav>
@@ -21,6 +20,14 @@
       <section class="sir-form-section" id="header">
         <div class="sir-form-grid">
           <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Branch:</label>
+              <select [ngModel]="headerForm().branchId" (ngModelChange)="updateBranch($event)">
+                @for (branch of branchOptions(); track branch.code) {
+                  <option [value]="branch.code">{{ branch.name }}</option>
+                }
+              </select>
+            </div>
             <div class="sir-field-row">
               <label>Customer</label>
               <div class="sir-input-group">
@@ -30,75 +37,24 @@
                 <button type="button" class="sir-inline-button" (click)="openSalesOrderDialog()">Copy From SO</button>
               </div>
             </div>
-
-            <div class="sir-field-row">
-              <label>Contact Person</label>
-              <select [ngModel]="headerForm().contactPerson" (ngModelChange)="updateHeaderField('contactPerson', $event)">
-                <option></option>
-              </select>
-            </div>
-
             <div class="sir-field-row">
               <label>Customer Ref. No.</label>
               <input type="text" [ngModel]="headerForm().customerRefNo" (ngModelChange)="updateHeaderField('customerRefNo', $event)">
             </div>
+          </div>
 
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Document Date:</label>
+              <input type="date" [ngModel]="headerForm().documentDate" (ngModelChange)="updateHeaderField('documentDate', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Posting Date:</label>
+              <input type="date" [ngModel]="headerForm().postingDate" (ngModelChange)="updateHeaderField('postingDate', $event)">
+            </div>
             <div class="sir-field-row">
               <label>Base Sales Order No.</label>
               <input type="text" [ngModel]="headerForm().baseSalesOrderNumber" readonly>
-            </div>
-
-            <div class="sir-field-row">
-              <label>Local Currency</label>
-              <select [ngModel]="headerForm().localCurrency" (ngModelChange)="updateHeaderField('localCurrency', $event)">
-                <option value="PKR">PKR</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
-
-            <div class="sir-field-row sir-field-row--top">
-              <label>Ship To Address</label>
-              <textarea [ngModel]="headerForm().shipToAddress" (ngModelChange)="updateHeaderField('shipToAddress', $event)"></textarea>
-            </div>
-            <div class="sir-field-row">
-              <label>Branch (from SO)</label>
-              <input type="text" [ngModel]="headerForm().branchName" readonly />
-            </div>
-          </div>
-
-          <!-- Branch fields removed (permanent UI removal) -->
-        </div>
-      </section>
-
-      <section class="sir-form-section" id="logistics">
-        <h2 class="sir-section-title">Logistics</h2>
-        <div class="sir-form-grid">
-          <div class="sir-form-column">
-            <div class="sir-field-row">
-              <label>Builty No</label>
-              <input type="text" [ngModel]="headerForm().builtyNo" (ngModelChange)="updateHeaderField('builtyNo', $event)">
-            </div>
-            <div class="sir-field-row">
-              <label>Driver Name</label>
-              <input type="text" [ngModel]="headerForm().driverName" (ngModelChange)="updateHeaderField('driverName', $event)">
-            </div>
-            <div class="sir-field-row">
-              <label>Driver No</label>
-              <input type="text" [ngModel]="headerForm().driverNo" (ngModelChange)="updateHeaderField('driverNo', $event)">
-            </div>
-          </div>
-          <div class="sir-form-column">
-            <div class="sir-field-row">
-              <label>Vehicle No</label>
-              <input type="text" [ngModel]="headerForm().vehicleNo" (ngModelChange)="updateHeaderField('vehicleNo', $event)">
-            </div>
-            <div class="sir-field-row">
-              <label>Transporter</label>
-              <input type="text" [ngModel]="headerForm().transporterName" (ngModelChange)="updateHeaderField('transporterName', $event)">
-            </div>
-            <div class="sir-field-row">
-              <label>IGP Date</label>
-              <input type="date" [ngModel]="headerForm().igpDateCus" (ngModelChange)="updateHeaderField('igpDateCus', $event)">
             </div>
           </div>
         </div>
@@ -208,12 +164,12 @@
       <section class="sir-form-section" id="footer">
         <div class="sir-footer-grid">
           <div class="sir-field-row">
-            <label>Submitted By:</label>
-            <input type="text" [ngModel]="submittedBy()" readonly />
-          </div>
-          <div class="sir-field-row">
             <label>Remarks:</label>
             <input type="text" placeholder="Document level remarks" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" />
+          </div>
+          <div class="sir-field-row">
+            <label>Submitted By:</label>
+            <input type="text" [ngModel]="submittedBy()" readonly />
           </div>
         </div>
         <div class="sir-footer-grid sir-footer-grid--totals">
@@ -224,7 +180,7 @@
         </div>
         <div class="sir-form-actions">
           <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="save()">
-            {{ saving() ? 'Saving…' : 'Add' }}
+            {{ saving() ? 'Saving…' : 'Save' }}
           </button>
         </div>
       </section>

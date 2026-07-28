@@ -16,7 +16,7 @@ import {
   createEmptyGoodIssueLine,
   updateGoodIssueLine,
 } from '../good-issue.model';
-import { GoodIssueService, buildCreateGoodIssuePayload } from '../good-issue.service';
+import { GoodIssueService, buildCreateGoodIssuePayload, InventoryAccountOption } from '../good-issue.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
 @Component({
@@ -55,6 +55,9 @@ export class AddGoodIssue implements OnInit {
 
   readonly headerForm = signal<GoodIssueHeader>(createEmptyGoodIssueHeader());
   readonly contentLines = signal<GoodIssueLine[]>([createEmptyGoodIssueLine()]);
+  readonly accountCodeOptions = signal<InventoryAccountOption[]>([]);
+  readonly accountCodeOptionsLoading = signal(false);
+  readonly accountCodeOptionsError = signal('');
 
   readonly totalAmount = computed(() =>
     this.contentLines()
@@ -65,6 +68,35 @@ export class AddGoodIssue implements OnInit {
   ngOnInit(): void {
     this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
     this.warehouseService.ensureLoaded().subscribe({ error: () => undefined });
+    this.loadAccountCodeOptions();
+  }
+
+  private loadAccountCodeOptions(): void {
+    const header = this.headerForm();
+    const branch = header.branchId.trim();
+    const docDate = header.docDate.trim();
+    const taxDate = header.taxDate.trim();
+    const docDueDate = header.docDueDate.trim();
+
+    if (!branch || !docDate || !taxDate || !docDueDate) {
+      this.accountCodeOptions.set([]);
+      this.accountCodeOptionsError.set('');
+      return;
+    }
+
+    this.accountCodeOptionsLoading.set(true);
+    this.accountCodeOptionsError.set('');
+    this.goodIssueService.listInventoryAccounts(branch, docDate, taxDate, docDueDate).subscribe({
+      next: (options) => {
+        this.accountCodeOptions.set(options);
+        this.accountCodeOptionsLoading.set(false);
+      },
+      error: () => {
+        this.accountCodeOptions.set([]);
+        this.accountCodeOptionsError.set('Could not load account codes.');
+        this.accountCodeOptionsLoading.set(false);
+      },
+    });
   }
 
   updateBranch(value: string): void {
@@ -77,10 +109,14 @@ export class AddGoodIssue implements OnInit {
       branchId: selected.code,
       branchName: selected.name,
     }));
+    this.loadAccountCodeOptions();
   }
 
   updateHeaderField(field: keyof GoodIssueHeader, value: string): void {
     this.headerForm.update((state) => ({ ...state, [field]: value }));
+    if (field === 'docDate' || field === 'taxDate' || field === 'docDueDate') {
+      this.loadAccountCodeOptions();
+    }
   }
 
   addContentLine(): void {
