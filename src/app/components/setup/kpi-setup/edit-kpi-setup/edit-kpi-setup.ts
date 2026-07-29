@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { KpiSetupService } from '../../../../services/kpi-setup.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { GatePassDepartmentService } from '../../../gate-pass/gate-pass-department.service';
 
 interface KpiItemForm {
   kpi: string;
@@ -36,11 +37,18 @@ interface KpiDetailResponse {
 export class EditKpiSetupComponent implements OnInit {
   private readonly alertService = inject(AlertService);
   private readonly kpiSetupService = inject(KpiSetupService);
+  private readonly departmentService = inject(GatePassDepartmentService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly loading = signal(false);
   readonly kpiId = signal<string | number | null>(null);
+  readonly departmentOptions = signal<string[]>([]);
+  readonly departmentLoading = signal(false);
+  readonly employmentNatureOptions = ['Technical', 'Non-Technical'];
+  readonly employmentCategoryOptions = ['Executive', 'Non-Executive', 'Top Management'];
+  readonly employmentStatusOptions = ['Permanent', 'Contractual'];
+  readonly workLevelOptions = ['WL 1A', 'WL 1W', 'WL 1S', 'WL 5', 'WL 4', 'WL 3B', 'WL 3A', 'WL 2C', 'WL 2B', 'WL 2A', 'WL 1D', 'WL 1B', 'WL 1C'];
   
   department = '';
   employmentNature = '';
@@ -51,6 +59,7 @@ export class EditKpiSetupComponent implements OnInit {
   kpiRows: KpiItemForm[] = [];
 
   ngOnInit(): void {
+    this.loadDepartments();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.kpiId.set(id);
@@ -171,5 +180,20 @@ export class EditKpiSetupComponent implements OnInit {
 
   cancel(): void {
     void this.router.navigate(['/setup/kpi-setup']);
+  }
+
+  private loadDepartments(): void {
+    this.departmentLoading.set(true);
+    this.departmentService.ensureLoaded().subscribe({
+      next: (departments) => {
+        const options = departments.map((department) => department.name).filter((name): name is string => !!name);
+        this.departmentOptions.set(options);
+        this.departmentLoading.set(false);
+      },
+      error: () => {
+        this.departmentOptions.set([]);
+        this.departmentLoading.set(false);
+      },
+    });
   }
 }

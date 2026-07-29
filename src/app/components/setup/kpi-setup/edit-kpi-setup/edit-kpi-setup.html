@@ -29,23 +29,38 @@
           <div class="form-grid">
             <div class="field-group">
               <label>Department</label>
-              <input type="text" [(ngModel)]="department" />
+              <select [(ngModel)]="department" [disabled]="departmentLoading()">
+                <option value="" disabled>Select department</option>
+                <option *ngFor="let option of departmentOptions()" [value]="option">{{ option }}</option>
+              </select>
             </div>
             <div class="field-group">
               <label>Employment Nature</label>
-              <input type="text" [(ngModel)]="employmentNature" />
+              <select [(ngModel)]="employmentNature">
+                <option value="" disabled>Select employment nature</option>
+                <option *ngFor="let option of employmentNatureOptions" [value]="option">{{ option }}</option>
+              </select>
             </div>
             <div class="field-group">
               <label>Work Level</label>
-              <input type="text" [(ngModel)]="workLevel" />
+              <select [(ngModel)]="workLevel">
+                <option value="" disabled>Select work level</option>
+                <option *ngFor="let option of workLevelOptions" [value]="option">{{ option }}</option>
+              </select>
             </div>
             <div class="field-group">
               <label>Employment Category</label>
-              <input type="text" [(ngModel)]="employmentCategory" />
+              <select [(ngModel)]="employmentCategory">
+                <option value="" disabled>Select employment category</option>
+                <option *ngFor="let option of employmentCategoryOptions" [value]="option">{{ option }}</option>
+              </select>
             </div>
             <div class="field-group">
               <label>Employment Status</label>
-              <input type="text" [(ngModel)]="employmentStatus" />
+              <select [(ngModel)]="employmentStatus">
+                <option value="" disabled>Select employment status</option>
+                <option *ngFor="let option of employmentStatusOptions" [value]="option">{{ option }}</option>
+              </select>
             </div>
             <div class="field-group">
               <label>Designation</label>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, tap } from 'rxjs';
@@ -108,6 +108,7 @@ export class CreateIgpComponent implements OnInit {
     private readonly departmentService: GatePassDepartmentService,
     private readonly applicationFormService: ApplicationFormService,
     private readonly authService: AuthService,
+    private readonly cdr: ChangeDetectorRef,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -141,6 +142,7 @@ export class CreateIgpComponent implements OnInit {
       .fetchInwardGatePassDetail(editId)
       .pipe(finalize(() => {
         this.loading = false;
+        this.cdr.detectChanges();
       }))
       .subscribe({
         next: (record) => {
@@ -171,15 +173,14 @@ export class CreateIgpComponent implements OnInit {
 
   private ensureUniqueReferenceNo(): Promise<void> {
     return new Promise((resolve) => {
-      this.igpService.fetchInwardGatePasses().pipe(
-        tap((records) => {
-          const existingReferenceNos = records.map((r) => r.referenceNo);
-          if (existingReferenceNos.some((ref) => ref === this.referenceNo)) {
-            this.referenceNo = nextGatePassReferenceNo('IGP', existingReferenceNos);
-          }
-        }),
-      ).subscribe({
-        next: () => resolve(),
+      this.igpService.fetchInwardGatePasses().subscribe({
+        next: (records) => {
+          this.referenceNo = nextGatePassReferenceNo(
+            'IGP',
+            records.map((r) => r.referenceNo),
+          );
+          resolve();
+        },
         error: () => resolve(),
       });
     });
