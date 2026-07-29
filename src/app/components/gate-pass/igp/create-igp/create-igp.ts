@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, tap } from 'rxjs';
+import { finalize, firstValueFrom, tap } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { OpenBaseDocument } from '../../open-base-documents.service';
@@ -36,6 +36,22 @@ function emptyIfDash(value: string): string {
 function numericFieldFromDoc(value: string | undefined): string {
   const parsed = parseFloat(String(value ?? '').replace(/[^\d.]/g, ''));
   return Number.isFinite(parsed) ? String(parsed) : '';
+}
+
+function generateClientUniqueIgpReferenceNo(): string {
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  let random = '';
+
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    random = String(array[0] % 100000000).padStart(8, '0');
+  } else {
+    random = String(Math.floor(Math.random() * 100000000)).padStart(8, '0');
+  }
+
+  return `IGP-${timestamp}-${random}`;
 }
 
 @Component({
@@ -97,6 +113,7 @@ export class CreateIgpComponent implements OnInit {
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
   departmentOptions: string[] = [];
+  private readonly maxReferenceRetry = 3;
 
   constructor(
     private readonly router: Router,
@@ -166,24 +183,74 @@ export class CreateIgpComponent implements OnInit {
         );
       },
       error: () => {
-        this.referenceNo = nextGatePassReferenceNo('IGP', []);
+        this.referenceNo = generateClientUniqueIgpReferenceNo();
       },
     });
   }
 
-  private ensureUniqueReferenceNo(): Promise<void> {
-    return new Promise((resolve) => {
-      this.igpService.fetchInwardGatePasses().subscribe({
-        next: (records) => {
-          this.referenceNo = nextGatePassReferenceNo(
-            'IGP',
-            records.map((r) => r.referenceNo),
-          );
-          resolve();
-        },
-        error: () => resolve(),
-      });
-    });
+  private async ensureUniqueReferenceNo(): Promise<void> {
+    try {
+      const records = await firstValueFrom(this.igpService.fetchInwardGatePasses());
+      this.referenceNo = nextGatePassReferenceNo(
+        'IGP',
+        records.map((r) => r.referenceNo),
+      );
+    } catch {
+      this.referenceNo = nextGatePassReferenceNo('IGP', []);
+    }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private isReferenceDuplicateError(message: string | undefined | null): boolean {
+    if (!message) {
+      return false;
+    }
+
+    const text = String(message).toLowerCase();
+    return (
+      text.includes('duplicate') ||
+      text.includes('reference number') ||
+      text.includes('reference no') ||
+      text.includes('already exists') ||
+      text.includes('unique')
+    );
+  }
+
+  private async saveNewIgp(attempt = 1): Promise<void> {
+    try {
+      await this.ensureUniqueReferenceNo();
+      this.referenceNo = generateClientUniqueIgpReferenceNo();
+      const response = await firstValueFrom(this.igpService.addInwardGatePass(this.buildPayload()));
+
+      if (response?.status === false || response?.success === false) {
+        if (attempt < this.maxReferenceRetry && this.isReferenceDuplicateError(response.message)) {
+          await this.delay(250);
+          return this.saveNewIgp(attempt + 1);
+        }
+
+        const fallback = 'Failed to save IGP.';
+        this.alertService.error('Error', response.message || fallback);
+        return;
+      }
+
+      const title = 'Success';
+      const message = response?.message || 'IGP record saved successfully.';
+      await this.alertService.successAndWait(title, message);
+      this.igpService.fetchInwardGatePasses().subscribe();
+      this.back();
+    } catch (error: unknown) {
+      const apiMessage = formatApiErrorMessage(error, 'Failed to save IGP.');
+      if (attempt < this.maxReferenceRetry && this.isReferenceDuplicateError(apiMessage)) {
+        await this.delay(250);
+        return this.saveNewIgp(attempt + 1);
+      }
+      this.alertService.error('Error', apiMessage);
+    } finally {
+      this.submitting = false;
+    }
   }
 
   private loadSignedInUserDetails(): void {
@@ -474,32 +541,7 @@ export class CreateIgpComponent implements OnInit {
 
     this.submitting = true;
     if (!this.editingId) {
-      this.ensureUniqueReferenceNo().then(() => {
-        const updatedRequest$ = this.igpService.addInwardGatePass(this.buildPayload());
-        updatedRequest$
-          .pipe(finalize(() => {
-            this.submitting = false;
-          }))
-          .subscribe({
-            next: async (response) => {
-              if (response?.status === false || response?.success === false) {
-                const fallback = 'Failed to save IGP.';
-                this.alertService.error('Error', response.message || fallback);
-                return;
-              }
-
-              const title = 'Success';
-              const message = response?.message || 'IGP record saved successfully.';
-              await this.alertService.successAndWait(title, message);
-              this.igpService.fetchInwardGatePasses().subscribe();
-              this.back();
-            },
-            error: (error: unknown) => {
-              const fallback = 'Failed to save IGP.';
-              this.alertService.error('Error', formatApiErrorMessage(error, fallback));
-            },
-          });
-      });
+      void this.saveNewIgp();
       return;
     }
 
