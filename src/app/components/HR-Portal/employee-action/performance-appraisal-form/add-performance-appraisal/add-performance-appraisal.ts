@@ -63,6 +63,38 @@ interface KpiAssessmentRowState {
   obtained: string;
 }
 
+export function pickKpiFieldValue(source: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = source[key];
+    if (value === null || value === undefined) {
+      continue;
+    }
+
+    const text = String(value).trim();
+    if (text) {
+      return text;
+    }
+  }
+
+  const lowerKeys = keys.map((key) => key.toLowerCase());
+  for (const [sourceKey, sourceValue] of Object.entries(source)) {
+    if (!lowerKeys.includes(sourceKey.toLowerCase())) {
+      continue;
+    }
+
+    if (sourceValue === null || sourceValue === undefined) {
+      continue;
+    }
+
+    const text = String(sourceValue).trim();
+    if (text) {
+      return text;
+    }
+  }
+
+  return '';
+}
+
 const ALLOWANCE_KEY_ALIASES: Record<AllowanceKey, readonly string[]> = {
   fuelLimit: ['fuelLimit', 'fuel_limit', 'Fuel Limit (Liters)', 'Fuel Limit (liter)'],
   mobileAllowances: ['mobileAllowances', 'mobile_allowances', 'Mobile Allowances'],
@@ -140,6 +172,41 @@ export class AddPerformanceAppraisalComponent implements OnInit {
   protected readonly kpiAssessmentRows = signal<KpiAssessmentRowState[]>([]);
   protected readonly kpiAssessmentLoading = signal(false);
   protected readonly kpiAssessmentMessage = signal('');
+  protected readonly totalKpiWeightPercentage = computed(() =>
+    this.kpiAssessmentRows().reduce((sum, row) => sum + (this.parseNumericValue(row.weightPercentage) ?? 0), 0),
+  );
+  protected readonly totalKpiObtained = computed(() =>
+    this.kpiAssessmentRows().reduce((sum, row) => sum + (this.parseNumericValue(row.obtained) ?? 0), 0),
+  );
+  protected readonly totalKpiPercentage = computed(() => {
+    const totalMarks = this.totalKpiWeightPercentage();
+    if (totalMarks <= 0) {
+      return 0;
+    }
+    return (this.totalKpiObtained() * 100) / totalMarks;
+  });
+  protected readonly totalKpiPercentageDisplay = computed(() => {
+    if (this.totalKpiWeightPercentage() <= 0) {
+      return '0%';
+    }
+    return `${this.totalKpiPercentage().toFixed(0)}%`;
+  });
+  protected readonly activeCategoryRow = computed(() => {
+    const percentage = this.totalKpiPercentage();
+    if (percentage >= 95) {
+      return 1;
+    }
+    if (percentage >= 85) {
+      return 2;
+    }
+    if (percentage >= 70) {
+      return 3;
+    }
+    if (percentage >= 50) {
+      return 4;
+    }
+    return 5;
+  });
 
   private employeeListLoadRequested = false;
   private readonly employeeOptions = signal<AppraisalEmployeeOption[]>([]);
@@ -224,7 +291,54 @@ export class AddPerformanceAppraisalComponent implements OnInit {
 
   protected updateKpiObtainedValue(index: number, value: string | number | null): void {
     const next = value === null ? '' : String(value);
-    this.kpiAssessmentRows.update((rows) => rows.map((row, rowIndex) => (rowIndex === index ? { ...row, obtained: next } : row)));
+    this.kpiAssessmentRows.update((rows) =>
+      rows.map((row, rowIndex) => {
+        if (rowIndex !== index) {
+          return row;
+        }
+
+        const cap = this.parseNumericValue(row.weightPercentage);
+        const parsed = this.parseNumericValue(next);
+        if (cap !== null && parsed !== null && parsed > cap) {
+          return row;
+        }
+
+        return { ...row, obtained: next };
+      }),
+    );
+    this.cdr.markForCheck();
+  }
+
+  protected getKpiObtainedMax(row: KpiAssessmentRowState): number | null {
+    return this.parseNumericValue(row.weightPercentage);
+  }
+
+  protected onKpiObtainedInput(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value;
+
+    const cap = this.parseNumericValue(this.kpiAssessmentRows()[index]?.weightPercentage ?? '');
+    const parsed = this.parseNumericValue(raw);
+
+    if (parsed === null) {
+      // allow empty or non-numeric (cleared) values
+      this.kpiAssessmentRows.update((rows) =>
+        rows.map((row, i) => (i === index ? { ...row, obtained: raw } : row)),
+      );
+      this.cdr.markForCheck();
+      return;
+    }
+
+    let safe = parsed;
+    if (cap !== null && parsed > cap) {
+      safe = cap;
+      // immediately reflect the clamped value in the input element
+      input.value = String(safe);
+    }
+
+    this.kpiAssessmentRows.update((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, obtained: String(safe) } : row)),
+    );
     this.cdr.markForCheck();
   }
 
@@ -836,13 +950,35 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     }
 
     return record.kpis.map((item, index) => {
-      const row = item as Record<string, unknown>;
+      const row = item as Record<string, unknown> | undefined;
+      if (!row) {
+        return {
+          sr: index + 1,
+          kpi: '',
+          weight: '',
+          weightPercentage: '',
+          definitionMeasure: '',
+          obtained: '',
+        };
+      }
+
       return {
         sr: index + 1,
-        kpi: this.asText(row['kpi']),
-        weight: this.asText(row['weight']),
-        weightPercentage: this.asText(row['weight_percentage']),
-        definitionMeasure: this.asText(row['defination_measurement'] ?? row['definition_measure']),
+        kpi: pickKpiFieldValue(row, ['kpi', 'Kpi', 'KPI', 'kpi_name', 'kpiName']),
+        weight: pickKpiFieldValue(row, ['weight', 'Weight', 'weightage', 'Weightage']),
+        weightPercentage: pickKpiFieldValue(row, ['weight_percentage', 'weightPercentage', 'Weight_Percentage', 'percentage', 'Percentage']),
+        definitionMeasure: pickKpiFieldValue(row, [
+          'defination_measurement',
+          'definition_measurement',
+          'Definition_Measurement',
+          'Defination_Measurement',
+          'definition_measure',
+          'Definition / Measurement',
+          'definition',
+          'Definition',
+          'measurement',
+          'Measurement',
+        ]),
         obtained: '',
       };
     });
@@ -1000,6 +1136,16 @@ export class AddPerformanceAppraisalComponent implements OnInit {
     this.promotionRemarks.set(emptyIfDash(promotion.remarks));
 
     this.loadAllowancesForEdit(record.OtherBenefits.allowances ?? []);
+  }
+
+  private parseNumericValue(value: string): number | null {
+    const sanitized = (value ?? '').toString().trim();
+    if (!sanitized) {
+      return null;
+    }
+
+    const numeric = Number(sanitized.replace(/,/g, '').replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(numeric) ? numeric : null;
   }
 
   private toAmount(value: string): number {

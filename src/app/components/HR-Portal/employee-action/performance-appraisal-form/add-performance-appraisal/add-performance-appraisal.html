@@ -494,10 +494,13 @@
                     <td>{{ row.definitionMeasure }}</td>
                     <td>
                       <input
-                        type="text"
+                        type="number"
                         class="pa-allowances-table__input"
-                        [ngModel]="row.obtained"
-                        (ngModelChange)="updateKpiObtainedValue(row.sr - 1, $event)"
+                        [value]="row.obtained"
+                        (input)="onKpiObtainedInput($event, row.sr - 1)"
+                        [min]="0"
+                        [max]="getKpiObtainedMax(row)"
+                        step="0.01"
                         placeholder="Obtained"
                       />
                     </td>
@@ -505,8 +508,235 @@
                 }
               }
             </tbody>
+            @if (kpiAssessmentRows().length > 0) {
+              <tfoot>
+                <tr>
+                  <td colspan="3"></td>
+                  <td><strong>{{ totalKpiWeightPercentage() }}</strong></td>
+                  <td><strong>Total</strong></td>
+                  <td><strong>{{ totalKpiObtained() }}</strong></td>
+                </tr>
+              </tfoot>
+            }
           </table>
         </div>
+
+        <section class="pa-category-section">
+          <div class="pa-category-header">
+            <h2>Category</h2>
+          </div>
+          <div class="pa-category-formula">
+            <p>
+              Score = Points Obtained × 100 ÷ Total Marks =
+              <strong>{{ totalKpiObtained() }}</strong> × 100 ÷
+              <strong>{{ totalKpiWeightPercentage() }}</strong> =
+              <strong>{{ totalKpiPercentageDisplay() }}</strong>
+            </p>
+          </div>
+          <div class="pa-category-grid">
+            <div class="pa-category-panel">
+              <table class="pa-category-table">
+                <thead>
+                  <tr>
+                    <th> </th>
+                    <th>Category</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr [class.pa-category-table__row--green]="activeCategoryRow() === 1">
+                    <td>1</td>
+                    <td>Outstanding Performance</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--green]="activeCategoryRow() === 2">
+                    <td>2</td>
+                    <td>Good Performance</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--yellow]="activeCategoryRow() === 3">
+                    <td>3</td>
+                    <td>Satisfactory Performance</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--yellow]="activeCategoryRow() === 4">
+                    <td>4</td>
+                    <td>Average Performance</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--red]="activeCategoryRow() === 5">
+                    <td>5</td>
+                    <td>Below Average</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pa-category-panel">
+              <table class="pa-category-table">
+                <thead>
+                  <tr>
+                    <th>Values</th>
+                    <th>Fall in the Category</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr [class.pa-category-table__row--green]="activeCategoryRow() === 1">
+                    <td>95% & above</td>
+                    <td class="pa-category-tick-cell">{{ activeCategoryRow() === 1 ? '✓' : '' }}</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--green]="activeCategoryRow() === 2">
+                    <td>85% & above</td>
+                    <td class="pa-category-tick-cell">{{ activeCategoryRow() === 2 ? '✓' : '' }}</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--yellow]="activeCategoryRow() === 3">
+                    <td>70% & above</td>
+                    <td class="pa-category-tick-cell">{{ activeCategoryRow() === 3 ? '✓' : '' }}</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--yellow]="activeCategoryRow() === 4">
+                    <td>50% & above</td>
+                    <td class="pa-category-tick-cell">{{ activeCategoryRow() === 4 ? '✓' : '' }}</td>
+                  </tr>
+                  <tr [class.pa-category-table__row--red]="activeCategoryRow() === 5">
+                    <td>Below 50%</td>
+                    <td class="pa-category-tick-cell">{{ activeCategoryRow() === 5 ? '✓' : '' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="pa-strength-improvement-grid">
+            <div class="pa-category-panel">
+              <table class="pa-category-table pa-strength-table">
+                <thead>
+                  <tr>
+                    <th colspan="2">EMPLOYEE'S STRENGTH</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td><textarea class="pa-table-textarea" rows="2" placeholder="Enter strength"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td><textarea class="pa-table-textarea" rows="2" placeholder="Enter strength"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td><textarea class="pa-table-textarea" rows="2" placeholder="Enter strength"></textarea></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pa-category-panel">
+              <table class="pa-category-table pa-improvement-table">
+                <thead>
+                  <tr>
+                    <th colspan="2">Areas of Improvement</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td><textarea class="pa-table-textarea" rows="2" placeholder="Enter improvement area"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td><textarea class="pa-table-textarea" rows="2" placeholder="Enter improvement area"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td><textarea class="pa-table-textarea" rows="2" placeholder="Enter improvement area"></textarea></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="pa-next-year-objectives-panel">
+            <table class="pa-category-table pa-next-year-table">
+              <thead>
+                <tr>
+                  <th colspan="2">Define Employee's Next Year Objectives/Targets</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><textarea class="pa-next-year-input" rows="2" placeholder="Enter objective"></textarea></td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><textarea class="pa-next-year-input" rows="2" placeholder="Enter objective"></textarea></td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td><textarea class="pa-next-year-input" rows="2" placeholder="Enter objective"></textarea></td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td><textarea class="pa-next-year-input" rows="2" placeholder="Enter objective"></textarea></td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td><textarea class="pa-next-year-input" rows="2" placeholder="Enter objective"></textarea></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pa-feedback-panel">
+            <table class="pa-category-table pa-feedback-table">
+              <thead>
+                <tr>
+                  <th colspan="2">Line Manager's Feedback &amp; Comments and Recommendation for Succession Planning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><textarea class="pa-feedback-input" rows="3" placeholder="Enter feedback and recommendation"></textarea></td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><textarea class="pa-feedback-input" rows="3" placeholder="Enter feedback and recommendation"></textarea></td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td><textarea class="pa-feedback-input" rows="3" placeholder="Enter feedback and recommendation"></textarea></td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td><textarea class="pa-feedback-input" rows="3" placeholder="Enter feedback and recommendation"></textarea></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="pa-comments-panel">
+            <table class="pa-category-table pa-comments-table">
+              <thead>
+                <tr>
+                  <th colspan="2">Employee's Comments if any:</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><textarea class="pa-comments-input" rows="3" placeholder="Enter employee comments if any"></textarea></td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><textarea class="pa-comments-input" rows="3" placeholder="Enter employee comments if any"></textarea></td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td><textarea class="pa-comments-input" rows="3" placeholder="Enter employee comments if any"></textarea></td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td><textarea class="pa-comments-input" rows="3" placeholder="Enter employee comments if any"></textarea></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </section>
     </div>
 
