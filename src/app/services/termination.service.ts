@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { AuthService } from './auth.service';
+import { filterRecordsBySessionBranches } from '../utils/branch-filter.util';
 
 export interface FinalSettlementHeaderSection {
   employeeId: number;
@@ -123,6 +125,7 @@ const FINAL_SETTLEMENT_DELETE_URL = apiUrl('final-settlement-delete');
 })
 export class TerminationService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly recordList = signal<TerminationRecord[]>([]);
 
   readonly terminations = this.recordList.asReadonly();
@@ -130,6 +133,9 @@ export class TerminationService {
   fetchFinalSettlements(): Observable<TerminationRecord[]> {
     return this.http.get<unknown>(FINAL_SETTLEMENT_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((records) =>
+        filterRecordsBySessionBranches(records, (record) => record.BranchLocation, this.authService.getSessionUser()),
+      ),
       tap((records) => this.recordList.set(records)),
     );
   }

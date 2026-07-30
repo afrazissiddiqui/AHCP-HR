@@ -42,7 +42,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         { moduleSlug: 'tax_allowance_form', action: 'list' },
         { moduleSlug: 'tax_computation_form', action: 'list' },
       ] } },
-      { label: 'Termination', value: 'termination', icon: 'feedback', route: '/termination', access: { moduleSlug: 'termination_form', action: 'list' } },
+      { label: 'Employee Separation', value: 'Employee Separation', icon: 'feedback', route: '/termination', access: { moduleSlug: 'termination_form', action: 'list' } },
     ],
   },
   { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },

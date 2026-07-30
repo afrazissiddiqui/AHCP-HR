@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { AuthService } from './auth.service';
+import { filterRecordsBySessionBranches } from '../utils/branch-filter.util';
 
 export interface ProbationRatingItem {
   rating: number;
@@ -215,6 +217,7 @@ function serializeProbationPayloadForApi(payload: ProbationEvaluationSubmitBody)
 })
 export class ProbationEvaluationService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly probationList = signal<ProbationEvaluationRecord[]>([]);
 
   readonly probations = this.probationList.asReadonly();
@@ -222,6 +225,9 @@ export class ProbationEvaluationService {
   fetchProbationEvaluations(): Observable<ProbationEvaluationRecord[]> {
     return this.http.get<unknown>(PROBATION_EVALUATION_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((records) =>
+        filterRecordsBySessionBranches(records, (record) => record.Location, this.authService.getSessionUser()),
+      ),
       tap((records) => this.probationList.set(records)),
     );
   }

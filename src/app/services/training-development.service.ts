@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { AuthService } from './auth.service';
+import { filterRecordsBySessionBranches } from '../utils/branch-filter.util';
 
 export interface TrainingDetailPayload {
   training_title: string;
@@ -369,6 +371,7 @@ export function buildTrainingDevelopmentDraftFromForm(input: {
 })
 export class TrainingDevelopmentService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly trainingList = signal<TrainingDevelopmentRecord[]>([]);
 
   readonly trainings = this.trainingList.asReadonly();
@@ -376,6 +379,9 @@ export class TrainingDevelopmentService {
   fetchTrainingDevelopments(): Observable<TrainingDevelopmentRecord[]> {
     return this.http.get<unknown>(TRAINING_DEVELOPMENT_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((records) =>
+        filterRecordsBySessionBranches(records, (record) => record.Location, this.authService.getSessionUser()),
+      ),
       tap((records) => this.trainingList.set(records)),
     );
   }

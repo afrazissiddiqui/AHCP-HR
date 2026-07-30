@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
+import { AuthService } from '../../../services/auth.service';
+import { resolveBranchNameFromBplId } from '../../../utils/branch-name.util';
 
 export interface AgpLineItem {
   itemCode: string;
@@ -157,13 +159,50 @@ export function createEmptyAgpLineItem(): AgpLineItem {
 })
 export class AgpService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly agpList = signal<AgpRecord[]>([]);
 
   readonly records = this.agpList.asReadonly();
 
   fetchArticleGatePasses(): Observable<AgpRecord[]> {
     return this.http.get<unknown>(ARTICLE_GATE_PASS_LIST_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item)) ),
+      map((records) => {
+        const sessionUser = this.authService.getSessionUser();
+        if (!sessionUser || sessionUser.is_admin) {
+          return records;
+        }
+
+        const rawBranches =
+          (sessionUser.branch ?? sessionUser.branches ?? sessionUser.Branch ?? sessionUser.Branches) as
+            | Array<number | string>
+            | number
+            | string
+            | undefined
+            | null;
+
+        const branchArray: Array<number | string> = Array.isArray(rawBranches)
+          ? rawBranches
+          : rawBranches !== undefined && rawBranches !== null
+          ? [rawBranches]
+          : [];
+
+        const allowed = new Set(
+          branchArray
+            .map((b) => resolveBranchNameFromBplId(b as string | number))
+            .filter((x) => x && x.trim())
+            .map((x) => x.toLowerCase()),
+        );
+
+        if (!allowed.size) {
+          return records;
+        }
+
+        return records.filter((rec) => {
+          const loc = resolveBranchNameFromBplId(rec.location).toLowerCase();
+          return allowed.has(loc);
+        });
+      }),
       tap((records) => this.agpList.set(records)),
     );
   }

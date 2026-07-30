@@ -6,7 +6,7 @@
   <div id="table-toolbar" class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar">
     <div class="sapMTableTitle sapMBarChild sapMBarChildFirstChild">
       <div class="sapMTitle sapMTitleStyleH5 sapMTitleNoWrap sapMTitleMaxWidth" role="heading" aria-level="5">
-        Termination List ({{ filteredList.length }}<ng-container *ngIf="hasActiveTableFilters()"> of {{ terminationList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
+        Employee Separation List ({{ filteredList.length }}<ng-container *ngIf="hasActiveTableFilters()"> of {{ terminationList.length }}</ng-container>) · Selected ({{ getSelectedCount() }})
       </div>
     </div>
     <div class="sapMTBSpacer"></div>
@@ -118,7 +118,7 @@
 <div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
 <div class="js-detail-modal" *ngIf="showViewDialog()">
   <div class="js-modal-header">
-    <h2>Termination Detail<ng-container *ngIf="selectedRecord() as record"> — {{ record.EmployeeName }}</ng-container></h2>
+    <h2>Employee Separation Detail<ng-container *ngIf="selectedRecord() as record"> — {{ record.EmployeeName }}</ng-container></h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">

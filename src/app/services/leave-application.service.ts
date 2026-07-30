@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { AuthService } from './auth.service';
+import { filterRecordsBySessionBranches } from '../utils/branch-filter.util';
 
 export interface LeaveApplicationHeaderInfo {
   formNumber: string;
@@ -79,6 +81,7 @@ const LEAVE_APPLICATION_DELETE_URL = apiUrl('leave-application-delete');
 })
 export class LeaveApplicationService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly leaveList = signal<LeaveApplicationRecord[]>([]);
 
   readonly leaves = this.leaveList.asReadonly();
@@ -100,6 +103,9 @@ export class LeaveApplicationService {
   fetchLeaveApplications(): Observable<LeaveApplicationRecord[]> {
     return this.http.get<unknown>(LEAVE_APPLICATION_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((records) =>
+        filterRecordsBySessionBranches(records, (record) => record.Location, this.authService.getSessionUser()),
+      ),
       tap((records) => this.leaveList.set(records)),
     );
   }

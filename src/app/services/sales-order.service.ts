@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { AuthService } from './auth.service';
+import { filterRecordsBySessionBranches } from '../utils/branch-filter.util';
 
 export interface SalesOrderLine {
   docEntry: string;
@@ -37,10 +39,17 @@ const SALES_ORDERS_URL = apiUrl('sales_orders');
 @Injectable({ providedIn: 'root' })
 export class SalesOrderService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
 
   list(): Observable<SalesOrderRecord[]> {
     return this.http.get<unknown>(SALES_ORDERS_URL).pipe(
-      map((response) => this.parseSalesOrders(response)),
+      map((response) =>
+        filterRecordsBySessionBranches(
+          this.parseSalesOrders(response),
+          (record) => record.branchId,
+          this.authService.getSessionUser(),
+        ),
+      ),
     );
   }
 

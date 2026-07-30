@@ -164,7 +164,7 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
   },
   {
     slug: 'termination_form',
-    name: 'Termination Form',
+    name: 'Employee Separation Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {

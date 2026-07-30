@@ -61,8 +61,8 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
   private sectionObserver: IntersectionObserver | null = null;
 
   protected editingId: string | null = null;
-  protected pageTitle = 'Termination Form';
-  protected submitButtonLabel = 'Save Termination';
+  protected pageTitle = 'Employee Separation Form';
+  protected submitButtonLabel = 'Save Employee Separation';
 
   constructor(
     private readonly router: Router,
@@ -163,8 +163,8 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     this.editingId = editId;
-    this.pageTitle = 'Update Termination';
-    this.submitButtonLabel = 'Update Termination';
+    this.pageTitle = 'Update Employee Separation';
+    this.submitButtonLabel = 'Update Employee Separation';
 
     this.terminationService.fetchFinalSettlementDetail(editId).subscribe({
       next: (record) => {

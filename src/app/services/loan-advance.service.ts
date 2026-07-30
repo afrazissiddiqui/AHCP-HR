@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
 import { apiUrl } from '../config/api.config';
+import { AuthService } from './auth.service';
+import { filterRecordsBySessionBranches } from '../utils/branch-filter.util';
 
 export interface LoanAdvanceHeaderInfo {
   documentNo: string;
@@ -150,6 +152,7 @@ const LOAN_ADVANCE_DELETE_URL = apiUrl('loan-advance-delete');
 })
 export class LoanAdvanceService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly loanList = signal<LoanAdvanceRecord[]>([]);
 
   readonly loans = this.loanList.asReadonly();
@@ -166,6 +169,9 @@ export class LoanAdvanceService {
             }
           })
           .filter((record): record is LoanAdvanceRecord => record !== null),
+      ),
+      map((records) =>
+        filterRecordsBySessionBranches(records, (record) => record.Location, this.authService.getSessionUser()),
       ),
       tap((records) => this.loanList.set(records)),
     );
