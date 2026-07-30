@@ -114,10 +114,21 @@ export class TerminationFormComponent implements OnInit {
     }
 
     list.sort((a, b) => {
-      const valueA = a[this.sortColumn];
-      const valueB = b[this.sortColumn];
-      if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
-      if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
+      const rawA = a[this.sortColumn] ?? '';
+      const rawB = b[this.sortColumn] ?? '';
+
+      const numA = Number(rawA as any);
+      const numB = Number(rawB as any);
+      if (Number.isFinite(numA) && Number.isFinite(numB)) {
+        if (numA > numB) return this.sortDirection === 'asc' ? 1 : -1;
+        if (numA < numB) return this.sortDirection === 'asc' ? -1 : 1;
+        return 0;
+      }
+
+      const sA = String(rawA).toLowerCase();
+      const sB = String(rawB).toLowerCase();
+      if (sA > sB) return this.sortDirection === 'asc' ? 1 : -1;
+      if (sA < sB) return this.sortDirection === 'asc' ? -1 : 1;
       return 0;
     });
 

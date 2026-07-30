@@ -1,4 +1,4 @@
-<div class="cjr-page">
+<div class="cjr-page mad-add-page">
   <div class="cjr-header">
     <div class="cjr-header-left">
       <button type="button" class="cjr-back" (click)="back()" aria-label="Back">
@@ -8,9 +8,9 @@
     </div>
   </div>
 
-  <div class="cjr-card">
+  <div class="cjr-card cjr-form-card">
 
-    <nav class="cjr-section-nav" aria-label="Termination sections">
+    <nav class="cjr-section-nav mad-sticky-nav" aria-label="Termination sections">
       <ul class="cjr-section-nav-list">
         <li class="cjr-section-nav-item"
           [class.cjr-section-nav-item--active]="activeSection() === 'header-section'"
@@ -24,10 +24,17 @@
       </ul>
     </nav>
 
-    <div class="cjr-personal" id="header-section">
-      <div class="cjr-section-title">Header Section</div>
+    <div class="cjr-form-body">
 
-      <div class="cjr-personal-grid">
+      <div class="cjr-personal cjr-form-section" id="header-section">
+        <section class="mad-form-panel mad-form-panel--machine">
+          <div class="mad-form-panel__heading">
+            <div class="mad-form-panel__titles">
+              <h2 class="cjr-section-title mad-form-panel__title">Header Section</h2>
+            </div>
+          </div>
+
+          <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Employee Code:</label>
@@ -116,6 +123,20 @@
             <input type="text" [ngModel]="employeeCategory()" (ngModelChange)="employeeCategory.set($event)" />
           </div>
           <div class="cjr-row">
+            <label>Employee Separation Type:</label>
+            <select [ngModel]="separationType()" (ngModelChange)="separationType.set($event)">
+              <option value="">No Selection</option>
+              <option value="Resignation">Resignation</option>
+              <option value="Retirement">Retirement</option>
+              <option value="Termination for misconduct">Termination for misconduct</option>
+              <option value="Termination for Poor Performance">Termination for Poor Performance</option>
+              <option value="LayOff">LayOff</option>
+              <option value="Dismissal">Dismissal</option>
+              <option value="End of Probation">End of Probation</option>
+              <option value="Contract Expiration">Contract Expiration</option>
+            </select>
+          </div>
+          <div class="cjr-row">
             <label>Designation:</label>
             <input type="text" [ngModel]="designation()" (ngModelChange)="designation.set($event)" />
           </div>
@@ -123,10 +144,7 @@
             <label>Branch / Location:</label>
             <input type="text" [ngModel]="branchLocation()" (ngModelChange)="branchLocation.set($event)" />
           </div>
-          <div class="cjr-row">
-            <label>Cost Center:</label>
-            <input type="text" [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)" />
-          </div>
+            
         </div>
 
         <div class="cjr-personal-col">
@@ -161,14 +179,20 @@
               <option value="No">No</option>
             </select>
           </div>
-        </div>
+          </div>
+          </div>
+        </section>
       </div>
-    </div>
 
-    <div class="cjr-personal" id="dues-payable-section">
-      <div class="cjr-section-title">Dues Payable</div>
+      <div class="cjr-personal cjr-form-section" id="dues-payable-section">
+        <section class="mad-form-panel mad-form-panel--machine">
+          <div class="mad-form-panel__heading">
+            <div class="mad-form-panel__titles">
+              <h2 class="cjr-section-title mad-form-panel__title">Dues Payable</h2>
+            </div>
+          </div>
 
-      <div class="cjr-personal-grid">
+          <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row cjr-row--date-range">
             <label>Dues From / To Date:</label>
@@ -216,18 +240,23 @@
               (ngModelChange)="otherPayables.set($event)" />
           </div>
         </div>
+          </div>
+          <div class="termination-section-total">
+            <label>Total Dues Payable:</label>
+            <input type="text" [value]="totalDuesPayable().toFixed(2)" readonly />
+          </div>
+        </section>
       </div>
 
-      <div class="termination-section-total">
-        <label>Total Dues Payable:</label>
-        <input type="text" [value]="totalDuesPayable().toFixed(2)" readonly />
-      </div>
-    </div>
+      <div class="cjr-personal cjr-form-section" id="recoverable-amount-section">
+        <section class="mad-form-panel mad-form-panel--machine">
+          <div class="mad-form-panel__heading">
+            <div class="mad-form-panel__titles">
+              <h2 class="cjr-section-title mad-form-panel__title">Recoverable Amount Section</h2>
+            </div>
+          </div>
 
-    <div class="cjr-personal" id="recoverable-amount-section">
-      <div class="cjr-section-title">Recoverable Amount Section</div>
-
-      <div class="cjr-personal-grid">
+          <div class="cjr-personal-grid">
         <div class="cjr-personal-col">
           <div class="cjr-row">
             <label>Salary Advances:</label>
@@ -284,12 +313,14 @@
           </div>
           
         </div>
+          </div>
+          <div class="termination-section-total">
+            <label>Total Recoverable Amount:</label>
+            <input type="text" [value]="totalRecoverableAmount().toFixed(2)" readonly />
+          </div>
+        </section>
       </div>
 
-      <div class="termination-section-total">
-        <label>Total Recoverable Amount:</label>
-        <input type="text" [value]="totalRecoverableAmount().toFixed(2)" readonly />
-      </div>
     </div>
 
     <div class="cjr-actions-footer">
@@ -298,4 +329,3 @@
       </button>
     </div>
   </div>
-</div>

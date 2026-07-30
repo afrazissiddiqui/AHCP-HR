@@ -3,8 +3,10 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { GatePassModule, OpenBaseDocument, OpenBaseDocumentsService } from '../open-base-documents.service';
-import { resolveGatePassLocationFromBplId } from '../gate-pass-location.options';
+import { resolveGatePassLocation, resolveGatePassLocationFromBplId } from '../gate-pass-location.options';
 import { displayDateSlash } from '../../../utils/date-format.util';
+import { AuthService } from '../../../services/auth.service';
+import { UserSetupService } from '../../../services/user-setup.service';
 
 @Component({
   selector: 'app-base-document-modal',
@@ -15,6 +17,8 @@ import { displayDateSlash } from '../../../utils/date-format.util';
 })
 export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
   private readonly openBaseDocuments = inject(OpenBaseDocumentsService);
+  private readonly authService = inject(AuthService);
+  private readonly userSetupService = inject(UserSetupService);
 
   @Input() open = false;
   @Input() gatePassModule: GatePassModule = 'igp';
@@ -138,6 +142,25 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     this.cancelLoad();
     this.resetListState();
 
+    const branchCodes = this.resolveCurrentUserBranchCodes();
+    if (branchCodes.length === 0 && this.userSetupService.users().length === 0) {
+      this.loading.set(true);
+      this.documents.set([]);
+      this.loadSubscription = this.userSetupService.fetchUsers().pipe(finalize(() => this.loading.set(false))).subscribe({
+        next: () => {
+          this.loadDocumentsWithBranchFilter(this.resolveCurrentUserBranchCodes());
+        },
+        error: () => {
+          this.loadDocumentsWithBranchFilter([]);
+        },
+      });
+      return;
+    }
+
+    this.loadDocumentsWithBranchFilter(branchCodes);
+  }
+
+  private loadDocumentsWithBranchFilter(branchCodes: string[]): void {
     const fetch$ = this.getApiFetch$();
     if (fetch$) {
       this.loading.set(true);
@@ -146,7 +169,7 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
         .pipe(finalize(() => this.loading.set(false)))
         .subscribe({
           next: (documents) => {
-            this.documents.set(this.filterOpenDocuments(documents));
+            this.documents.set(this.filterOpenDocuments(documents, branchCodes));
           },
           error: () => {
             this.documents.set([]);
@@ -156,11 +179,144 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     }
 
     this.loading.set(false);
-    this.documents.set(this.filterOpenDocuments(this.openBaseDocuments.listOpenByType(this.gatePassModule, this.documentType)));
+    this.documents.set(this.filterOpenDocuments(this.openBaseDocuments.listOpenByType(this.gatePassModule, this.documentType), branchCodes));
   }
 
-  private filterOpenDocuments(documents: OpenBaseDocument[]): OpenBaseDocument[] {
-    return documents.filter((doc) => doc.status === undefined || doc.status === 'O');
+  private filterOpenDocuments(documents: OpenBaseDocument[], branchCodes: string[]): OpenBaseDocument[] {
+    const openDocs = documents.filter((doc) => doc.status === undefined || doc.status === 'O');
+    if (!branchCodes.length) {
+      return openDocs;
+    }
+
+    const allowedLocations = branchCodes
+      .map((code) => this.branchCodeToLocation(code))
+      .filter((location): location is string => Boolean(location));
+
+    if (allowedLocations.length === 0) {
+      return openDocs;
+    }
+
+    return openDocs.filter((doc) => this.documentMatchesAllowedLocations(doc, allowedLocations));
+  }
+
+  private resolveCurrentUserBranchCodes(): string[] {
+    const sessionUser = this.authService.getSessionUser() as Record<string, unknown> | null;
+    const branchValues = [
+      sessionUser?.['branch'],
+      sessionUser?.['branches'],
+      sessionUser?.['Branch'],
+      sessionUser?.['Branches'],
+    ];
+
+    const foundCodes = new Set<string>();
+    for (const value of branchValues) {
+      this.collectBranchCodes(value, foundCodes);
+    }
+
+    if (foundCodes.size === 0) {
+      const sessionUserId = this.authService.getSessionUserId();
+      const users = this.userSetupService.users();
+      const matchingUser = users.find((user) => {
+        const userRecord = user as Record<string, unknown>;
+        const userId = userRecord['id'] ?? userRecord['Id'] ?? userRecord['ID'];
+        const email = userRecord['email'] ?? userRecord['Email'];
+        const name = userRecord['name'] ?? userRecord['Name'];
+        const compareValues = [String(userId ?? ''), String(email ?? ''), String(name ?? '')];
+        return compareValues.some((value) => value && value === String(sessionUserId ?? ''));
+      });
+
+      if (matchingUser) {
+        const matchingRecord = matchingUser as Record<string, unknown>;
+        const directBranch = matchingRecord['branch'] ?? matchingRecord['branches'] ?? matchingRecord['Branch'] ?? matchingRecord['Branches'];
+        this.collectBranchCodes(directBranch, foundCodes);
+      }
+
+      if (foundCodes.size === 0) {
+        const sessionEmail = sessionUser?.['email'] ?? sessionUser?.['Email'];
+        if (typeof sessionEmail === 'string' && sessionEmail.trim()) {
+          const byEmail = users.find((user) => {
+            const userRecord = user as Record<string, unknown>;
+            const email = userRecord['email'] ?? userRecord['Email'];
+            return typeof email === 'string' && email.trim().toLowerCase() === sessionEmail.trim().toLowerCase();
+          });
+          if (byEmail) {
+            const byEmailRecord = byEmail as Record<string, unknown>;
+            const directBranch = byEmailRecord['branch'] ?? byEmailRecord['branches'] ?? byEmailRecord['Branch'] ?? byEmailRecord['Branches'];
+            this.collectBranchCodes(directBranch, foundCodes);
+          }
+        }
+      }
+    }
+
+    return [...foundCodes];
+  }
+
+  private collectBranchCodes(value: unknown, codes: Set<string>): void {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => this.collectBranchCodes(entry, codes));
+      return;
+    }
+
+    if (typeof value === 'number') {
+      this.addBranchCode(String(value), codes);
+      return;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return;
+      }
+      this.addBranchCode(trimmed, codes);
+    }
+  }
+
+  private addBranchCode(value: string, codes: Set<string>): void {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) {
+      return;
+    }
+
+    if (['1', 'peshawar', 'psh', 'ahcp_peshawar'].includes(normalized)) {
+      codes.add('1');
+      return;
+    }
+
+    if (['2', 'ho', 'head office', 'head-office', 'headoffice', 'h.o', 'h.o.'].includes(normalized)) {
+      codes.add('2');
+      return;
+    }
+
+    if (['3', 'faisalabad', 'fsd', 'ahcp_faisalabad'].includes(normalized)) {
+      codes.add('3');
+    }
+  }
+
+  private branchCodeToLocation(branchCode: string): string | null {
+    switch (branchCode) {
+      case '1':
+        return 'PSH';
+      case '2':
+        return 'Head Office';
+      case '3':
+        return 'FSD';
+      default:
+        return null;
+    }
+  }
+
+  private documentMatchesAllowedLocations(doc: OpenBaseDocument, allowedLocations: string[]): boolean {
+    const documentLocation = resolveGatePassLocation(doc.location ?? doc.fromUnit ?? doc.bplId ?? '');
+    if (documentLocation) {
+      return allowedLocations.includes(documentLocation);
+    }
+
+    const fallbackLocation = resolveGatePassLocationFromBplId(doc.bplId ?? '');
+    if (fallbackLocation) {
+      return allowedLocations.includes(fallbackLocation);
+    }
+
+    return true;
   }
 
   private getApiFetch$(): Observable<OpenBaseDocument[]> | null {

@@ -95,6 +95,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
   protected readonly releasingDate = signal('');
   protected readonly grossMonthlySalary = signal('');
   protected readonly committeeMeetingHeld = signal<'Yes' | 'No' | ''>('');
+  protected readonly separationType = signal('');
 
   protected readonly duesFromDate = signal('');
   protected readonly duesToDate = signal('');
@@ -476,6 +477,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
         ? record.CommitteeMeetingHeld
         : '',
     );
+    this.separationType.set(record.SeparationType ? String(record.SeparationType) : '');
 
     const dues = record.detail?.duesPayable;
     if (dues) {
@@ -529,6 +531,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
         releasingDate: this.releasingDate().trim(),
         grossMonthlySalary: this.toNumber(this.grossMonthlySalary()),
         committeeMeetingHeld: this.committeeMeetingHeld() || '',
+        separationType: this.separationType() || '',
       },
       duesPayable: {
         duesFromDate: this.duesFromDate().trim(),

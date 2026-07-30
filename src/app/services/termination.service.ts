@@ -17,6 +17,7 @@ export interface FinalSettlementHeaderSection {
   releasingDate: string;
   grossMonthlySalary: number;
   committeeMeetingHeld: string;
+  separationType: string;
 }
 
 export interface FinalSettlementDuesPayable {
@@ -106,6 +107,7 @@ export interface TerminationRecord {
   ReleasingDate: string;
   GrossMonthlySalary: string;
   CommitteeMeetingHeld: string;
+  SeparationType?: string;
   selected?: boolean;
   detail?: TerminationFormDetail;
 }
@@ -417,6 +419,8 @@ export class TerminationService {
         this.pickString(sources, ['grossMonthlySalary', 'gross_monthly_salary', 'GrossMonthlySalary']) || '—',
       CommitteeMeetingHeld:
         this.pickString(sources, ['committeeMeetingHeld', 'committee_meeting_held', 'CommitteeMeetingHeld']) || '—',
+      SeparationType:
+        this.pickString(sources, ['separationType', 'separation_type', 'SeparationType']) || '—',
       selected: false,
     };
 

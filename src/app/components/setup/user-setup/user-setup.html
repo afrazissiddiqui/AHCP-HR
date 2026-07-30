@@ -31,27 +31,42 @@
                 @if (field.toLowerCase() !== 'authorization' && field.toLowerCase() !== 'is_admin' && field.toLowerCase() !== 'isadmin') {
                   <label class="field-block">
                     <span class="field-label">{{ columnLabel(field) }}<span class="field-required">*</span></span>
-                    <input
-                      [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'email' ? 'email' : 'text')"
-                      class="field-input"
-                      [attr.list]="field.toLowerCase() === 'name' ? 'name-suggestions' : field.toLowerCase() === 'email' ? 'email-suggestions' : null"
-                      [ngModel]="fieldValue(field)"
-                      (ngModelChange)="updateField(field, $event)"
-                      [name]="'user-field-' + field"
-                      [placeholder]="columnLabel(field)"
-                    />
-                    @if (field.toLowerCase() === 'name') {
-                      <datalist id="name-suggestions">
-                        @for (suggestion of nameSuggestions(); track $index) {
-                          <option [value]="suggestion">{{ suggestion }}</option>
+                    @if (isBranchField(field)) {
+                      <select
+                        class="field-input"
+                        [ngModel]="fieldValue(field)"
+                        (ngModelChange)="updateField(field, $event)"
+                        [name]="'user-field-' + field"
+                        multiple
+                        size="3"
+                      >
+                        @for (option of branchOptions; track option.value) {
+                          <option [value]="option.value">{{ option.label }}</option>
                         }
-                      </datalist>
-                    } @else if (field.toLowerCase() === 'email') {
-                      <datalist id="email-suggestions">
-                        @for (suggestion of emailSuggestions(); track $index) {
-                          <option [value]="suggestion">{{ suggestion }}</option>
-                        }
-                      </datalist>
+                      </select>
+                    } @else {
+                      <input
+                        [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'email' ? 'email' : 'text')"
+                        class="field-input"
+                        [attr.list]="field.toLowerCase() === 'name' ? 'name-suggestions' : field.toLowerCase() === 'email' ? 'email-suggestions' : null"
+                        [ngModel]="fieldValue(field)"
+                        (ngModelChange)="updateField(field, $event)"
+                        [name]="'user-field-' + field"
+                        [placeholder]="columnLabel(field)"
+                      />
+                      @if (field.toLowerCase() === 'name') {
+                        <datalist id="name-suggestions">
+                          @for (suggestion of nameSuggestions(); track $index) {
+                            <option [value]="suggestion">{{ suggestion }}</option>
+                          }
+                        </datalist>
+                      } @else if (field.toLowerCase() === 'email') {
+                        <datalist id="email-suggestions">
+                          @for (suggestion of emailSuggestions(); track $index) {
+                            <option [value]="suggestion">{{ suggestion }}</option>
+                          }
+                        </datalist>
+                      }
                     }
                   </label>
                 }

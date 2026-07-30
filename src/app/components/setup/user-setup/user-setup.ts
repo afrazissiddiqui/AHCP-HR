@@ -29,7 +29,12 @@ type UserFormMode = 'add' | 'edit';
 export class UserSetupComponent implements OnInit {
   private readonly userSetupService = inject(UserSetupService);
   private readonly alertService = inject(AlertService);
-  private readonly editableFallbackColumns = ['name', 'email', 'password'];
+  private readonly editableFallbackColumns = ['name', 'email', 'password', 'branch'];
+  readonly branchOptions = [
+    { value: '1', label: 'Peshawar' },
+    { value: '2', label: 'HO' },
+    { value: '3', label: 'Faisalabad' },
+  ];
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -39,11 +44,11 @@ export class UserSetupComponent implements OnInit {
   readonly formMode = signal<UserFormMode>('add');
   readonly editingUserId = signal<string | number | null>(null);
   readonly formFields = signal<string[]>([]);
-  readonly formModel = signal<Record<string, string>>({});
+  readonly formModel = signal<Record<string, string | string[]>>({});
   readonly authorization = signal<UserAuthorizationModule[]>(buildAuthorizationTemplate());
   readonly authDefinitions = AUTHORIZATION_MODULE_DEFINITIONS;
-  readonly nameSuggestions = computed(() => this.buildFieldSuggestions(['name', 'Name'], this.fieldValue('name') || this.fieldValue('Name')));
-  readonly emailSuggestions = computed(() => this.buildFieldSuggestions(['email', 'Email'], this.fieldValue('email') || this.fieldValue('Email')));
+  readonly nameSuggestions = computed(() => this.buildFieldSuggestions(['name', 'Name'], this.resolveTextValue(this.fieldValue('name')) || this.resolveTextValue(this.fieldValue('Name'))));
+  readonly emailSuggestions = computed(() => this.buildFieldSuggestions(['email', 'Email'], this.resolveTextValue(this.fieldValue('email')) || this.resolveTextValue(this.fieldValue('Email'))));
   readonly authorizationSummary = computed(() => {
     const authorization = this.authorization();
     let total = 0;
@@ -230,11 +235,19 @@ export class UserSetupComponent implements OnInit {
     return column;
   }
 
-  fieldValue(field: string): string {
-    return this.formModel()[field] ?? '';
+  fieldValue(field: string): string | string[] {
+    return this.formModel()[field] ?? (this.isBranchField(field) ? [] : '');
   }
 
-  updateField(field: string, value: string): void {
+  private resolveTextValue(value: string | string[] | undefined): string {
+    return Array.isArray(value) ? value.join(',') : value ?? '';
+  }
+
+  isBranchField(field: string): boolean {
+    return field.toLowerCase() === 'branch';
+  }
+
+  updateField(field: string, value: string | string[]): void {
     this.formModel.update((model) => ({
       ...model,
       [field]: value,
@@ -301,9 +314,9 @@ export class UserSetupComponent implements OnInit {
       return;
     }
 
-    const nextModel: Record<string, string> = {};
+    const nextModel: Record<string, string | string[]> = {};
     for (const field of this.formFields()) {
-      nextModel[field] = this.valueToInput(user[field]);
+      nextModel[field] = this.valueToInput(user[field], field);
     }
 
     this.formMode.set('edit');
@@ -332,7 +345,7 @@ export class UserSetupComponent implements OnInit {
     }
 
     const label =
-      this.valueToInput(user['name']) || this.valueToInput(user['Name']) || this.valueToInput(user['email']) || `ID ${userId}`;
+      this.valueToInput(user['name'], 'name') || this.valueToInput(user['Name'], 'Name') || this.valueToInput(user['email'], 'email') || `ID ${userId}`;
     const result = await this.alertService.confirm('Delete user?', `Remove ${label} from the list?`);
     if (!result.isConfirmed) {
       return;
@@ -454,7 +467,7 @@ export class UserSetupComponent implements OnInit {
     sourceKeys: string[],
     targetKeys: string[],
   ): void {
-    const sourceValue = this.fieldValue(sourceField).trim().toLowerCase();
+    const sourceValue = this.resolveTextValue(this.fieldValue(sourceField)).trim().toLowerCase();
     if (!sourceValue) {
       return;
     }
@@ -483,9 +496,9 @@ export class UserSetupComponent implements OnInit {
   }
 
   private resetForm(): void {
-    const nextModel: Record<string, string> = {};
+    const nextModel: Record<string, string | string[]> = {};
     for (const field of this.formFields()) {
-      nextModel[field] = '';
+      nextModel[field] = this.isBranchField(field) ? [] : '';
     }
     this.formMode.set('add');
     this.editingUserId.set(null);
@@ -497,7 +510,7 @@ export class UserSetupComponent implements OnInit {
     const model = this.formModel();
     const read = (...keys: string[]): string => {
       for (const key of keys) {
-        const value = (model[key] ?? '').trim();
+        const value = this.resolveTextValue(model[key] as string | string[] | undefined).trim();
         if (value) {
           return value;
         }
@@ -505,10 +518,11 @@ export class UserSetupComponent implements OnInit {
       return '';
     };
 
+    const branchSelection = this.normalizeBranchSelection(model['branch'] ?? model['Branch']);
     const payload: UserSetupPayload = {
       name: read('name', 'Name'),
       email: read('email', 'Email'),
-      branch: [1, 2, 3],
+      branch: branchSelection.length > 0 ? branchSelection : undefined,
       department: 25,
       authorization: this.authorization(),
     };
@@ -528,6 +542,9 @@ export class UserSetupComponent implements OnInit {
     if (!payload.email.trim()) {
       return 'email';
     }
+    if (!payload.branch?.length) {
+      return 'branch';
+    }
     if (this.formMode() === 'add' && !payload.password?.trim()) {
       return 'password';
     }
@@ -545,12 +562,60 @@ export class UserSetupComponent implements OnInit {
     return null;
   }
 
-  private valueToInput(value: unknown): string {
+  private normalizeBranchValue(value: string | number | null | undefined): number | null {
+    if (typeof value === 'number') {
+      return Number.isInteger(value) ? value : null;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim().toLowerCase();
+      const branchMap: Record<string, number> = {
+        peshawar: 1,
+        ho: 2,
+        faisalabad: 3,
+        '1': 1,
+        '2': 2,
+        '3': 3,
+      };
+      return branchMap[trimmed] ?? null;
+    }
+
+    return null;
+  }
+
+  private normalizeBranchSelection(value: unknown): number[] {
+    if (Array.isArray(value)) {
+      return value
+        .map((entry) => this.normalizeBranchValue(typeof entry === 'string' || typeof entry === 'number' ? entry : String(entry)))
+        .filter((entry): entry is number => entry !== null);
+    }
+
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .map((entry) => this.normalizeBranchValue(entry))
+        .filter((entry): entry is number => entry !== null);
+    }
+
+    const singleValue = this.normalizeBranchValue(value as string | number | null | undefined);
+    return singleValue === null ? [] : [singleValue];
+  }
+
+  private valueToInput(value: unknown, field: string): string | string[] {
     if (value === null || value === undefined) {
-      return '';
+      return this.isBranchField(field) ? [] : '';
     }
     if (typeof value === 'boolean') {
       return value ? '1' : '0';
+    }
+    if (Array.isArray(value)) {
+      return value.map((entry) => String(entry));
+    }
+    if (this.isBranchField(field)) {
+      const normalized = this.normalizeBranchValue(String(value));
+      return normalized === null ? [] : [String(normalized)];
     }
     return String(value);
   }

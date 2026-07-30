@@ -20,6 +20,10 @@ export interface LoginApiUser {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  branch?: Array<number | string> | number | string | null;
+  branches?: Array<number | string> | number | string | null;
+  Branch?: Array<number | string> | number | string | null;
+  Branches?: Array<number | string> | number | string | null;
 }
 
 export interface LoginApiResponse {

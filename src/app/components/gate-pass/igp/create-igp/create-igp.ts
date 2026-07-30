@@ -175,6 +175,10 @@ export class CreateIgpComponent implements OnInit {
   }
 
   private assignNextReferenceNo(): void {
+    // Assign a default immediately so user sees a number right away
+    this.referenceNo = 'IGP-..loading..';
+    
+    // Then fetch actual records and update with the correct next number
     this.igpService.fetchInwardGatePasses().subscribe({
       next: (records) => {
         this.referenceNo = nextGatePassReferenceNo(
@@ -183,7 +187,8 @@ export class CreateIgpComponent implements OnInit {
         );
       },
       error: () => {
-        this.referenceNo = generateClientUniqueIgpReferenceNo();
+        // Fallback if fetch fails
+        this.referenceNo = nextGatePassReferenceNo('IGP', []);
       },
     });
   }
@@ -222,7 +227,6 @@ export class CreateIgpComponent implements OnInit {
   private async saveNewIgp(attempt = 1): Promise<void> {
     try {
       await this.ensureUniqueReferenceNo();
-      this.referenceNo = generateClientUniqueIgpReferenceNo();
       const response = await firstValueFrom(this.igpService.addInwardGatePass(this.buildPayload()));
 
       if (response?.status === false || response?.success === false) {

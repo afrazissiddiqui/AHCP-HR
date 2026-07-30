@@ -123,20 +123,33 @@ export class UserSetupService {
     );
   }
 
+  private normalizeBranchValue(value: number | string): number | null {
+    if (typeof value === 'number' && Number.isInteger(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim().toLowerCase();
+      const branchMap: Record<string, number> = {
+        peshawar: 1,
+        ho: 2,
+        faisalabad: 3,
+        '1': 1,
+        '2': 2,
+        '3': 3,
+      };
+      return branchMap[trimmed] ?? null;
+    }
+
+    return null;
+  }
+
   private serializePayload(payload: UserSetupPayload): Record<string, unknown> {
     const authorizationModules = authorizationToApiPayload(payload.authorization);
-    const branchLabels: Record<number, string> = {
-      1: 'peshawar',
-      2: 'HO',
-      3: 'faisalabad',
-    };
-    const branchValues = Array.isArray(payload.branch) ? payload.branch : [1, 2, 3];
-    const normalizedBranch = branchValues.map((value) => {
-      if (typeof value === 'number') {
-        return branchLabels[value] ?? String(value);
-      }
-      return value;
-    });
+    const branchValues = Array.isArray(payload.branch) ? payload.branch : [];
+    const normalizedBranch = branchValues
+      .map((value) => this.normalizeBranchValue(value))
+      .filter((value): value is number => value !== null);
 
     const body: Record<string, unknown> = {
       name: payload.name.trim(),
