@@ -50,4 +50,53 @@ describe('IgpService', () => {
       },
     ]);
   });
+
+  it('extracts records from wrapped response envelopes', (done) => {
+    authService.getSessionUser.and.returnValue({ is_admin: true } as any);
+
+    service.fetchInwardGatePasses().subscribe({
+      next: (records) => {
+        expect(records.length).toBe(1);
+        expect(records[0].referenceNo).toBe('IGP-200');
+        done();
+      },
+      error: done.fail,
+    });
+
+    const req = httpMock.expectOne((request) => request.method === 'GET');
+    req.flush({
+      status: true,
+      data: {
+        value: [
+          {
+            referenceNo: 'IGP-200',
+            businessPartnerName: 'XYZ Traders',
+            location: 'HO',
+          },
+        ],
+      },
+    });
+  });
+
+  it('keeps records for users whose branch access is provided as a comma-separated string', (done) => {
+    authService.getSessionUser.and.returnValue({ is_admin: false, branch: '1,3' } as any);
+
+    service.fetchInwardGatePasses().subscribe({
+      next: (records) => {
+        expect(records.length).toBe(1);
+        expect(records[0].referenceNo).toBe('IGP-300');
+        done();
+      },
+      error: done.fail,
+    });
+
+    const req = httpMock.expectOne((request) => request.method === 'GET');
+    req.flush([
+      {
+        referenceNo: 'IGP-300',
+        businessPartnerName: 'ABC Traders',
+        location: 'Peshawar',
+      },
+    ]);
+  });
 });

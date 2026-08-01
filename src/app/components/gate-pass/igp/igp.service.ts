@@ -2,8 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
-import { AuthService } from '../../../services/auth.service';
-import { resolveBranchNameFromBplId } from '../../../utils/branch-name.util';
 
 export interface IgpLineItem {
   itemCode: string;
@@ -125,7 +123,6 @@ export function createEmptyIgpLineItem(): IgpLineItem {
 })
 export class IgpService {
   private readonly http = inject(HttpClient);
-  private readonly authService = inject(AuthService);
   private readonly igpList = signal<IgpRecord[]>([]);
 
   readonly records = this.igpList.asReadonly();
@@ -133,49 +130,6 @@ export class IgpService {
   fetchInwardGatePasses(): Observable<IgpRecord[]> {
     return this.http.get<unknown>(INWARD_GATE_PASS_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
-      map((records) => {
-        const sessionUser = this.authService.getSessionUser();
-        if (!sessionUser || sessionUser.is_admin) {
-          return records;
-        }
-
-        // Normalize session user's branch(s) into canonical branch names
-        const rawBranches =
-          (sessionUser.branch ?? sessionUser.branches ?? sessionUser.Branch ?? sessionUser.Branches) as
-            | Array<number | string>
-            | number
-            | string
-            | undefined
-            | null;
-
-        const branchArray: Array<number | string> = Array.isArray(rawBranches)
-          ? rawBranches
-          : rawBranches !== undefined && rawBranches !== null
-          ? [rawBranches]
-          : [];
-
-        const allowed = new Set(
-          branchArray
-            .map((b) => resolveBranchNameFromBplId(b as string | number))
-            .filter((x) => x && x.trim())
-            .map((x) => x.toLowerCase()),
-        );
-
-        if (!allowed.size) {
-          return records;
-        }
-
-        return records.filter((rec) => {
-          const resolvedLocation = resolveBranchNameFromBplId(rec.location);
-          const normalizedLocation = resolvedLocation.trim().toLowerCase();
-
-          if (!rec.location || !normalizedLocation) {
-            return true;
-          }
-
-          return allowed.has(normalizedLocation);
-        });
-      }),
       tap((records) => this.igpList.set(records)),
     );
   }
@@ -258,7 +212,7 @@ export class IgpService {
     }
 
     if (Array.isArray(response)) {
-      return response.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      return response.filter((item): item is Record<string, unknown> => this.isLikelyIgpItem(item));
     }
 
     if (typeof response !== 'object') {
@@ -268,10 +222,25 @@ export class IgpService {
     const obj = response as Record<string, unknown>;
     const arrayKeys = [
       'data',
+      'Data',
       'items',
+      'Items',
       'results',
+      'Results',
       'records',
+      'Records',
+      'rows',
+      'Rows',
       'list',
+      'List',
+      'value',
+      'Value',
+      'response',
+      'Response',
+      'result',
+      'Result',
+      'payload',
+      'Payload',
       'inward_gate_passes',
       'inward_gate_pass_list',
       'inwardGatePasses',
@@ -283,31 +252,56 @@ export class IgpService {
     for (const key of arrayKeys) {
       const value = obj[key];
       if (Array.isArray(value)) {
-        return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+        const items = value.filter((item): item is Record<string, unknown> => this.isLikelyIgpItem(item));
+        if (items.length > 0) {
+          return items;
+        }
+      }
+      if (value && typeof value === 'object') {
+        const nestedItems = this.extractApiItems(value);
+        if (nestedItems.length > 0) {
+          return nestedItems;
+        }
       }
     }
 
-    const nestedData = obj['data'];
-    if (nestedData && typeof nestedData === 'object') {
-      const nestedItems = this.extractApiItems(nestedData);
-      if (nestedItems.length > 0) {
-        return nestedItems;
+    for (const value of Object.values(obj)) {
+      if (value && typeof value === 'object') {
+        const nestedItems = this.extractApiItems(value);
+        if (nestedItems.length > 0) {
+          return nestedItems;
+        }
       }
     }
 
-    if (
-      obj['referenceNo'] ||
-      obj['reference_no'] ||
-      obj['type'] ||
-      obj['baseDocNo'] ||
-      obj['base_doc_no'] ||
-      obj['businessPartnerName'] ||
-      obj['business_partner_name']
-    ) {
+    if (this.isLikelyIgpItem(obj)) {
       return [obj];
     }
 
     return [];
+  }
+
+  private isLikelyIgpItem(item: unknown): item is Record<string, unknown> {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return false;
+    }
+
+    const record = item as Record<string, unknown>;
+    return Boolean(
+      record['referenceNo'] ||
+        record['reference_no'] ||
+        record['type'] ||
+        record['baseDocNo'] ||
+        record['base_doc_no'] ||
+        record['businessPartnerName'] ||
+        record['business_partner_name'] ||
+        record['documentDate'] ||
+        record['document_date'] ||
+        record['id'] ||
+        record['Id'] ||
+        record['igp_id'] ||
+        record['inward_gate_pass_id'],
+    );
   }
 
   private asRecord(value: unknown): Record<string, unknown> {

@@ -18,10 +18,33 @@ function normalizeBranchValues(rawBranches: unknown): string[] {
     ? [rawBranches]
     : [];
 
-  return branchArray
-    .map((value) => resolveBranchNameFromBplId(value as string | number))
-    .map((name) => name.trim().toLowerCase())
-    .filter((name) => name.length > 0);
+  const collected: string[] = [];
+
+  for (const value of branchArray) {
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    const text = String(value).trim();
+    if (!text) {
+      continue;
+    }
+
+    const parts = text
+      .split(/[;,/]/)
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+
+    for (const part of parts) {
+      const branchName = resolveBranchNameFromBplId(part as string | number);
+      const normalized = branchName.trim().toLowerCase();
+      if (normalized.length > 0) {
+        collected.push(normalized);
+      }
+    }
+  }
+
+  return collected;
 }
 
 export function getAllowedBranches(sessionUser: BranchSessionUser | LoginApiUser | null): Set<string> {

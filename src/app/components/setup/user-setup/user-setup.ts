@@ -189,38 +189,44 @@ export class UserSetupComponent implements OnInit {
   }
 
   private formatBranchValue(value: unknown): string {
-    const branchMap: Record<string, string> = {
-      '1': 'peshawar',
-      '2': 'HO',
-      '3': 'faisalabad',
-      peshawar: 'peshawar',
-      ho: 'HO',
-      faisalabad: 'faisalabad',
+    const branchMap: Record<string, { label: string; code: string }> = {
+      '1': { label: 'Peshawar', code: '1' },
+      '2': { label: 'HO', code: '2' },
+      '3': { label: 'Faisalabad', code: '3' },
+      peshawar: { label: 'Peshawar', code: '1' },
+      ho: { label: 'HO', code: '2' },
+      faisalabad: { label: 'Faisalabad', code: '3' },
+      ahcp_peshawar: { label: 'Peshawar', code: '1' },
+      ahcp_ho: { label: 'HO', code: '2' },
+      ahcp_faisalabad: { label: 'Faisalabad', code: '3' },
+      'ahcp peshawar': { label: 'Peshawar', code: '1' },
+      'ahcp ho': { label: 'HO', code: '2' },
+      'ahcp faisalabad': { label: 'Faisalabad', code: '3' },
+    };
+
+    const formatEntry = (entry: unknown): string => {
+      if (typeof entry === 'number') {
+        const normalized = branchMap[String(entry)] ?? branchMap[String(entry).trim().toLowerCase()];
+        return normalized ? `${normalized.label} (${normalized.code})` : String(entry);
+      }
+
+      if (typeof entry === 'string') {
+        const trimmed = entry.trim();
+        const normalized = branchMap[trimmed.toLowerCase()] ?? branchMap[trimmed];
+        if (normalized) {
+          return `${normalized.label} (${normalized.code})`;
+        }
+        return trimmed;
+      }
+
+      return String(entry);
     };
 
     if (Array.isArray(value)) {
-      return value
-        .map((entry) => {
-          if (typeof entry === 'number') {
-            return branchMap[String(entry)] ?? String(entry);
-          }
-          if (typeof entry === 'string') {
-            return branchMap[entry.trim().toLowerCase()] ?? entry;
-          }
-          return String(entry);
-        })
-        .join(', ');
+      return value.map((entry) => formatEntry(entry)).join(', ');
     }
 
-    if (typeof value === 'number') {
-      return branchMap[String(value)] ?? String(value);
-    }
-
-    if (typeof value === 'string') {
-      return branchMap[value.trim().toLowerCase()] ?? value;
-    }
-
-    return String(value);
+    return formatEntry(value);
   }
 
   private formatDateColumn(value: unknown): string {
