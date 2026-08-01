@@ -1803,7 +1803,11 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       this.hrLeaveManagementSetting.set(hrSettings.leaveManagement?.trim() || 'Enabled');
     }
 
-    this.employeeCode.set(detail.loginDetails.employeeCode || detail.loginDetails.userId);
+    this.employeeCode.set(
+      this.applicationFormService.normalizeEmployeeCodeValue(
+        detail.loginDetails.employeeCode || detail.loginDetails.userId,
+      ),
+    );
     this.userId.set(detail.loginDetails.userId);
     this.loginEmployeeName.set(detail.loginDetails.employeeName);
     this.password.set(detail.loginDetails.password);

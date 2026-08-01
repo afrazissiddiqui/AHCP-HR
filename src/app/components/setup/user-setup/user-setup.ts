@@ -239,6 +239,36 @@ export class UserSetupComponent implements OnInit {
     return this.formModel()[field] ?? (this.isBranchField(field) ? [] : '');
   }
 
+  isBranchSelected(optionValue: string): boolean {
+    const selected = this.fieldValue('branch');
+    if (Array.isArray(selected)) {
+      return selected.includes(optionValue);
+    }
+    return selected === optionValue;
+  }
+
+  toggleBranchSelection(optionValue: string, checked: boolean): void {
+    const selected = this.fieldValue('branch');
+    const nextValues = Array.isArray(selected)
+      ? [...selected]
+      : selected && String(selected).trim()
+      ? [String(selected)]
+      : [];
+
+    if (checked) {
+      if (!nextValues.includes(optionValue)) {
+        nextValues.push(optionValue);
+      }
+    } else {
+      const index = nextValues.indexOf(optionValue);
+      if (index >= 0) {
+        nextValues.splice(index, 1);
+      }
+    }
+
+    this.updateField('branch', nextValues);
+  }
+
   private resolveTextValue(value: string | string[] | undefined): string {
     return Array.isArray(value) ? value.join(',') : value ?? '';
   }

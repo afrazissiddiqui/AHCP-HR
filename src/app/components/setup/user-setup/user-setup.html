@@ -18,7 +18,7 @@
             <div>
               <p class="form-panel-eyebrow">Add New User</p>
               <h2 class="form-panel-title">{{ formTitle() }}</h2>
-              <p class="panel-subtitle">Manage account details and module access.</p>
+              <p class="panel-subtitle">Account and permission setup.</p>
             </div>
             </div>
 
@@ -32,18 +32,20 @@
                   <label class="field-block">
                     <span class="field-label">{{ columnLabel(field) }}<span class="field-required">*</span></span>
                     @if (isBranchField(field)) {
-                      <select
-                        class="field-input"
-                        [ngModel]="fieldValue(field)"
-                        (ngModelChange)="updateField(field, $event)"
-                        [name]="'user-field-' + field"
-                        multiple
-                        size="3"
-                      >
+                      <div class="branch-picker" role="group" [attr.aria-label]="columnLabel(field)">
+                        <p class="field-hint">Select one or more branches</p>
                         @for (option of branchOptions; track option.value) {
-                          <option [value]="option.value">{{ option.label }}</option>
+                          <label class="branch-option" [class.branch-option--selected]="isBranchSelected(option.value)">
+                            <input
+                              class="branch-option-input"
+                              type="checkbox"
+                              [checked]="isBranchSelected(option.value)"
+                              (change)="toggleBranchSelection(option.value, $event.target.checked)"
+                            />
+                            <span class="branch-option-label">{{ option.label }}</span>
+                          </label>
                         }
-                      </select>
+                      </div>
                     } @else {
                       <input
                         [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'email' ? 'email' : 'text')"

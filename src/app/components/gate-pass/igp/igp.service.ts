@@ -166,8 +166,14 @@ export class IgpService {
         }
 
         return records.filter((rec) => {
-          const loc = resolveBranchNameFromBplId(rec.location).toLowerCase();
-          return allowed.has(loc);
+          const resolvedLocation = resolveBranchNameFromBplId(rec.location);
+          const normalizedLocation = resolvedLocation.trim().toLowerCase();
+
+          if (!rec.location || !normalizedLocation) {
+            return true;
+          }
+
+          return allowed.has(normalizedLocation);
         });
       }),
       tap((records) => this.igpList.set(records)),
@@ -384,6 +390,24 @@ export class IgpService {
 
     const businessPartnerName =
       this.pickString(sources, ['businessPartnerName', 'business_partner_name', 'BusinessPartnerName']) || '—';
+    const location = this.pickString(sources, [
+      'location',
+      'Location',
+      'branchName',
+      'branch_name',
+      'BranchName',
+      'branch',
+      'Branch',
+      'branchLocation',
+      'branch_location',
+      'BranchLocation',
+      'BPLName',
+      'bplName',
+      'BPLId',
+      'bplId',
+      'branchId',
+      'branch_id',
+    ]);
     const lines = this.mapLines(item);
     const totalQty =
       this.pickNumber(sources, ['totalQty', 'total_qty', 'TotalQty']) ||
@@ -434,7 +458,7 @@ export class IgpService {
           'transporter_phone',
         ]) || '—',
       weight: this.pickString(sources, ['weight', 'Weight']) || '—',
-      location: this.pickString(sources, ['location', 'Location']) || '—',
+      location: location || '—',
       employee: this.pickString(sources, ['employee', 'Employee']) || '—',
       lines,
       totalQty,

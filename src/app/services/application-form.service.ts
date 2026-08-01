@@ -609,15 +609,55 @@ export class ApplicationFormService {
       return 1;
     }
 
-    const numbers = records
+    const parsedCodes = records
       .map((record) => this.parseEmployeeCodeSequence(record.EmployeeCode))
-      .filter((value) => value > 0);
+      .filter((value): value is number => value > 0)
+      .sort((left, right) => left - right);
 
-    if (numbers.length === 0) {
+    if (parsedCodes.length === 0) {
       return 1;
     }
 
-    return Math.max(...numbers) + 1;
+    let latestCode = parsedCodes[0];
+    for (let index = 1; index < parsedCodes.length; index += 1) {
+      const currentCode = parsedCodes[index];
+      const gap = currentCode - latestCode;
+      if (gap <= 1000) {
+        latestCode = currentCode;
+      } else {
+        break;
+      }
+    }
+
+    return latestCode + 1;
+  }
+
+  normalizeEmployeeCodeValue(value: string): string {
+    const trimmed = String(value ?? '').trim();
+    if (!trimmed || trimmed === '—') {
+      return trimmed;
+    }
+
+    const legacyOverrides = new Map<string, string>([
+      ['Emp-00003283', 'Emp-00000254'],
+      ['Emp-00003312', 'Emp-00000255'],
+      ['Emp-00003313', 'Emp-00000256'],
+      ['Emp-00003314', 'Emp-00000257'],
+    ]);
+    const overridden = legacyOverrides.get(trimmed);
+    if (overridden) {
+      return overridden;
+    }
+
+    const prefixMatch = trimmed.match(/^Emp[-\s]?(\d+)$/i);
+    if (prefixMatch) {
+      const code = Number.parseInt(prefixMatch[1], 10);
+      if (Number.isFinite(code) && code > 0) {
+        return this.formatEmployeeUserId(code);
+      }
+    }
+
+    return trimmed;
   }
 
   parseEmployeeCodeSequence(value: string): number {
@@ -626,12 +666,13 @@ export class ApplicationFormService {
       return 0;
     }
 
-    const direct = Number.parseInt(trimmed, 10);
-    if (Number.isFinite(direct) && direct > 0 && String(direct) === trimmed) {
+    const normalized = this.normalizeEmployeeCodeValue(trimmed);
+    const direct = Number.parseInt(normalized, 10);
+    if (Number.isFinite(direct) && direct > 0 && String(direct) === normalized) {
       return direct;
     }
 
-    const match = trimmed.match(/(\d+)$/);
+    const match = normalized.match(/(\d+)$/);
     if (match) {
       return Number.parseInt(match[1], 10) || 0;
     }
@@ -1692,7 +1733,7 @@ export class ApplicationFormService {
       asString(item['user_id']) ||
       '';
 
-    return employeeCode || '—';
+    return this.normalizeEmployeeCodeValue(employeeCode || '—');
   }
 
   private resolveUserIdFromApiItem(item: Record<string, unknown>): string {

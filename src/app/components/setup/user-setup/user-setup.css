@@ -36,7 +36,7 @@
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .page-title-group {
@@ -55,7 +55,7 @@
 
 .page-title {
   color: var(--us-text);
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.1;
   margin: 0;
@@ -77,7 +77,7 @@
 
 .page-stats-value {
   color: var(--us-text);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
 }
 
@@ -198,8 +198,8 @@
   background: var(--us-surface);
   border: 1px solid var(--us-border);
   border-radius: var(--us-radius-lg);
-  box-shadow: var(--us-shadow-sm);
-  padding: 18px 20px 22px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  padding: 16px 18px 18px;
   position: relative;
 }
 
@@ -266,7 +266,7 @@
   display: flex;
   gap: 12px;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .form-panel-head-copy {
@@ -286,16 +286,16 @@
 
 .form-panel-title {
   color: var(--us-text);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
 }
 
 .panel-subtitle {
   color: var(--us-muted);
-  font-size: 13px;
-  line-height: 1.45;
-  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 4px 0 0;
 }
 
 /* ─── Mode badge ────────────────────────────────────────────── */
@@ -374,17 +374,17 @@
 
 /* Form sections */
 .form-section {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .form-section--permissions {
   border-top: 1px solid var(--us-line);
   margin-bottom: 0;
-  padding-top: 18px;
+  padding-top: 14px;
 }
 
 .form-section-head {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .form-section-title {
@@ -396,14 +396,55 @@
 
 .form-grid {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .field-block {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
+}
+
+.branch-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.branch-option {
+  align-items: center;
+  background: var(--us-bg-subtle);
+  border: 1px solid var(--us-line);
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  padding: 7px 10px;
+  transition: border-color 0.2s var(--us-ease), background-color 0.2s var(--us-ease), box-shadow 0.2s var(--us-ease);
+  width: fit-content;
+}
+
+.branch-option:hover {
+  border-color: var(--us-primary);
+  box-shadow: var(--us-shadow-sm);
+}
+
+.branch-option--selected {
+  background: var(--us-primary-soft);
+  border-color: var(--us-primary);
+}
+
+.branch-option-input {
+  accent-color: var(--us-primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.branch-option-label {
+  color: var(--us-text);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .field-block--wide {
@@ -503,11 +544,11 @@
 
 /* ─── Permissions section ───────────────────────────────────── */
 .form-auth-head {
-  align-items: flex-start;
+  align-items: center;
   display: flex;
-  gap: 14px;
+  gap: 12px;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .form-auth-subtitle {
@@ -531,11 +572,11 @@
   align-items: center;
   background: var(--us-bg-subtle);
   border: 1px solid var(--us-line);
-  border-radius: var(--us-radius-lg);
+  border-radius: var(--us-radius);
   display: flex;
   flex-shrink: 0;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 8px 12px;
 }
 
 .form-auth-ring {
@@ -574,14 +615,14 @@
 }
 
 .form-auth-toolbar {
-  background: #fafafa;
+  background: #fcfcfd;
   border: 1px solid var(--us-line);
   border-radius: var(--us-radius);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding: 12px;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
 }
 
 .form-auth-toolbar .search-field {
@@ -613,7 +654,7 @@
 .form-module-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   max-height: min(50vh, 480px);
   overflow: auto;
   padding-bottom: 4px;
@@ -623,10 +664,10 @@
 }
 
 .form-module-card {
-  background: #fafbfc;
+  background: #fcfcfd;
   border: 1px solid var(--us-line);
   border-radius: var(--us-radius);
-  padding: 12px;
+  padding: 10px 12px;
 }
 
 .form-module-card--full {
@@ -826,7 +867,7 @@
   display: flex;
   gap: 8px;
   justify-content: space-between;
-  padding: 9px 11px;
+  padding: 8px 10px;
   transition: border-color 0.2s var(--us-ease), background 0.2s var(--us-ease);
 }
 
@@ -968,7 +1009,7 @@
   color: #fff;
   display: inline-flex;
   gap: 4px;
-  padding: 9px 16px;
+  padding: 8px 14px;
 }
 
 .btn-add-user:hover {
@@ -1065,7 +1106,7 @@
 
 .form-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-end;
 }
 
