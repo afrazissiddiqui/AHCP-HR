@@ -826,7 +826,18 @@ export class ApplicationFormService {
 
     const leaveDays = primaryLeave.leavesAllocated || remuneration.leaveDays;
     const leavesAvailed = primaryLeave.leavesAvailed || remuneration.leavesAvailed;
-    const remainingLeaves = primaryLeave.remainingLeave || remuneration.remainingLeaves;
+    const remainingLeavesFromRows = detail.leaveManagement.reduce((total, row) => {
+      const numeric = this.parseLeaveNumber(row.remainingLeave);
+      return total + (Number.isFinite(numeric) ? numeric : 0);
+    }, 0);
+    const remainingLeaves =
+      remainingLeavesFromRows > 0
+        ? String(remainingLeavesFromRows)
+        : primaryLeave.remainingLeave || remuneration.remainingLeaves;
+    const totalLeavesValue =
+      remainingLeavesFromRows > 0
+        ? String(remainingLeavesFromRows)
+        : leaveDays || remuneration.totalLeaves;
 
     const toNullableString = (value: string | undefined | null): string | null => {
       const trimmed = sanitizeApiText(value);
@@ -904,7 +915,7 @@ export class ApplicationFormService {
       leaveDays: toApiNumber(leaveDays),
       leavesAvailed: toApiNumber(leavesAvailed),
       remainingLeaves: toApiNumber(remainingLeaves),
-      totalLeaves: toApiNumber(leaveDays || remuneration.totalLeaves),
+      totalLeaves: toApiNumber(totalLeavesValue),
       leaveEligibilityCriteria: toNullableString(remuneration.leaveEligibilityCriteria),
       medicalAllowances: toApiNumber(remuneration.medicalAllowances),
       fuelAllowances: toNullableApiNumber(remuneration.fuelAllowances),
@@ -955,6 +966,15 @@ export class ApplicationFormService {
       password: login.password,
       status: toLoginStatusNumber(),
     };
+  }
+
+  private parseLeaveNumber(value: string): number {
+    const trimmed = (value ?? '').toString().trim();
+    if (!trimmed) {
+      return 0;
+    }
+    const numeric = Number.parseFloat(trimmed.replace(/,/g, ''));
+    return Number.isFinite(numeric) ? numeric : 0;
   }
 
   private filterEducationRows(rows: ApplicationFormEducationRow[]): ApplicationFormEducationRow[] {

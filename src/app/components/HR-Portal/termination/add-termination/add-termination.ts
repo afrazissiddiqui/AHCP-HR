@@ -22,6 +22,7 @@ import {
   TerminationService,
 } from '../../../../services/termination.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { glAccountBranchLabel } from '../../../../components/setup/gl-account-determination/gl-account-branch.options';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -37,6 +38,8 @@ interface TerminationEmployeeOption {
   branchLocation: string;
   costCenter: string;
   workGradeLevel: string;
+  dateOfJoining: string;
+  grossMonthlySalary: string;
 }
 
 @Component({
@@ -147,6 +150,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => {
         this.employeeOptions.set(this.buildEmployeeOptions());
+        this.recalculateLeaveEncashmentAmount();
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
@@ -261,6 +265,23 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     this.cdr.markForCheck();
   }
 
+  protected onDuesFromDateChange(value: string): void {
+    this.duesFromDate.set(value);
+    this.recalculateNoOfDaysSalaryNotPaid();
+  }
+
+  protected onDuesToDateChange(value: string): void {
+    this.duesToDate.set(value);
+    this.recalculateNoOfDaysSalaryNotPaid();
+  }
+
+  protected onGrossMonthlySalaryChange(value: string): void {
+    this.grossMonthlySalary.set(value);
+    this.recalculateSalaryPayable();
+    this.recalculateGratuity();
+    this.recalculateLeaveEncashmentAmount();
+  }
+
   protected save(): void {
     this.validationTouched.set(true);
     this.cdr.markForCheck();
@@ -347,18 +368,22 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
 
   private toEmployeeOption(record: ApplicationFormRecord): TerminationEmployeeOption {
     const employeeId = this.resolveEmployeeCode(record);
+    const personal = record.detail?.personalInfo;
+    const requisition = record.detail?.requisition;
+    const remuneration = record.detail?.remuneration;
+
     return {
       employeeId,
       employeeNumericId: this.resolveEmployeeNumericIdFromRecord(record, employeeId),
       employeeName: emptyIfDash(record.EmployeeName),
       department: emptyIfDash(record.Department),
       employeeCategory: emptyIfDash(record.EmploymentCategory),
-      designation: emptyIfDash(record.Designation),
-      branchLocation:
-        emptyIfDash(record.detail?.requisition.location ?? '') ||
-        emptyIfDash(record.detail?.personalInfo.city ?? ''),
-      costCenter: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
-      workGradeLevel: emptyIfDash(record.detail?.requisition.costCenter ?? ''),
+      designation: emptyIfDash(personal?.designation ?? record.Designation ?? requisition?.internalJobTitle ?? ''),
+      branchLocation: emptyIfDash(this.formatBranchLocation(personal?.branchLocation ?? requisition?.location ?? '')),
+      costCenter: emptyIfDash(personal?.costCenter ?? requisition?.costCenter ?? ''),
+      workGradeLevel: emptyIfDash(personal?.workGradeLevel ?? personal?.roleSalary ?? ''),
+      dateOfJoining: emptyIfDash(remuneration?.dateOfJoining ?? ''),
+      grossMonthlySalary: emptyIfDash(remuneration?.basicSalary ?? ''),
     };
   }
 
@@ -453,9 +478,59 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     this.department.set(employee.department);
     this.employeeCategory.set(employee.employeeCategory);
     this.designation.set(employee.designation);
-    this.branchLocation.set(employee.branchLocation);
+    this.branchLocation.set(this.formatBranchLocation(employee.branchLocation));
     this.costCenter.set(employee.costCenter);
     this.workGradeLevel.set(employee.workGradeLevel);
+    this.grossMonthlySalary.set(employee.grossMonthlySalary);
+    this.yearOfService.set(this.calculateYearOfService(employee.dateOfJoining));
+    this.recalculateSalaryPayable();
+    this.recalculateGratuity();
+    this.recalculateLeaveEncashmentAmount();
+  }
+
+  private formatBranchLocation(value: string): string {
+    const trimmed = (value ?? '').toString().trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const normalized = trimmed.toLowerCase();
+    if (normalized === '1' || normalized.includes('peshawar')) {
+      return 'Peshawar';
+    }
+    if (normalized === '2' || normalized.includes('ho')) {
+      return 'HO';
+    }
+    if (normalized === '3' || normalized.includes('faisalabad') || normalized.includes('fiasalabad')) {
+      return 'Faisalabad';
+    }
+
+    const viaSharedLabel = glAccountBranchLabel(trimmed);
+    if (viaSharedLabel) {
+      const fallback = viaSharedLabel.replace(/^ahcp[_\s-]+/i, '').trim();
+      if (fallback) {
+        return fallback;
+      }
+    }
+
+    return trimmed;
+  }
+
+  private calculateYearOfService(joiningDate: string): string {
+    const trimmed = joiningDate.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+
+    const now = new Date();
+    const diffMs = now.getTime() - parsed.getTime();
+    const years = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+    return years > 0 ? years.toFixed(1) : '';
   }
 
   private populateFromRecord(record: TerminationRecord): void {
@@ -465,7 +540,7 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     this.department.set(emptyIfDash(record.Department));
     this.employeeCategory.set(emptyIfDash(record.EmployeeCategory));
     this.designation.set(emptyIfDash(record.Designation));
-    this.branchLocation.set(emptyIfDash(record.BranchLocation));
+    this.branchLocation.set(emptyIfDash(this.formatBranchLocation(record.BranchLocation)));
     this.costCenter.set(emptyIfDash(record.CostCenter));
     this.workGradeLevel.set(emptyIfDash(record.WorkGradeLevel));
     this.lastWorkingDay.set(emptyIfDash(record.LastWorkingDay));
@@ -491,6 +566,10 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
       this.leaveEncashmentAmount.set(dues.leaveEncashmentAmount);
       this.otherPayables.set(dues.otherPayables);
     }
+
+    this.recalculateSalaryPayable();
+    this.recalculateGratuity();
+    this.recalculateLeaveEncashmentAmount();
 
     const recoverable = record.detail?.recoverableAmount;
     if (recoverable) {
@@ -563,6 +642,152 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
 
   private sumAmounts(values: string[]): number {
     return values.reduce((sum, value) => sum + this.toNumber(value), 0);
+  }
+
+  private recalculateNoOfDaysSalaryNotPaid(): void {
+    const fromDate = this.duesFromDate().trim();
+    const toDate = this.duesToDate().trim();
+
+    if (!fromDate || !toDate) {
+      this.noOfDaysSalaryNotPaid.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      this.noOfDaysSalaryNotPaid.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const diffMs = to.getTime() - from.getTime();
+    const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1);
+    this.noOfDaysSalaryNotPaid.set(String(diffDays));
+    this.recalculateSalaryPayable();
+    this.cdr.markForCheck();
+  }
+
+  private recalculateSalaryPayable(): void {
+    const grossSalary = this.toNumber(this.grossMonthlySalary());
+    const daysNotPaid = this.toNumber(this.noOfDaysSalaryNotPaid());
+
+    if (!grossSalary || !daysNotPaid) {
+      this.salaryPayable.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const referenceDate = this.duesToDate().trim() || this.duesFromDate().trim();
+    if (!referenceDate) {
+      this.salaryPayable.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const parsedDate = new Date(referenceDate);
+    if (Number.isNaN(parsedDate.getTime())) {
+      this.salaryPayable.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const daysInMonth = new Date(parsedDate.getFullYear(), parsedDate.getMonth() + 1, 0).getDate();
+    if (daysInMonth <= 0) {
+      this.salaryPayable.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const payable = (grossSalary * daysNotPaid) / daysInMonth;
+    this.salaryPayable.set(String(payable.toFixed(2)));
+    this.cdr.markForCheck();
+  }
+
+  private recalculateGratuity(): void {
+    const grossSalary = this.toNumber(this.grossMonthlySalary());
+    const yearsOfService = this.toNumber(this.yearOfService());
+
+    if (!grossSalary || !yearsOfService) {
+      this.gratuity.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const gratuity = grossSalary * yearsOfService;
+    this.gratuity.set(String(gratuity.toFixed(2)));
+    this.cdr.markForCheck();
+  }
+
+  private recalculateLeaveEncashmentAmount(): void {
+    const grossSalary = this.toNumber(this.grossMonthlySalary());
+    const remainingLeaves = this.toNumber(this.getRemainingLeavesFromApplicationForm());
+
+    if (!grossSalary || !remainingLeaves) {
+      this.leaveEncashmentAmount.set('');
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const leaveEncashmentAmount = (grossSalary * remainingLeaves * 12) / 365;
+    this.leaveEncashmentAmount.set(String(leaveEncashmentAmount.toFixed(2)));
+    this.cdr.markForCheck();
+  }
+
+  private getRemainingLeavesFromApplicationForm(): string {
+    const employee = this.employeeOptions().find((option) => option.employeeNumericId === this.employeeNumericId());
+    if (!employee) {
+      return '';
+    }
+
+    const selectedEmployeeCode = this.employeeId().trim();
+    const record = this.applicationFormService.getApplicationRecords().find((item) => {
+      const resolvedCode = this.resolveEmployeeCode(item);
+      const resolvedNumericId = this.resolveEmployeeNumericIdFromRecord(item, resolvedCode);
+      return (
+        resolvedNumericId > 0 && resolvedNumericId === employee.employeeNumericId
+      ) || (selectedEmployeeCode && resolvedCode === selectedEmployeeCode);
+    });
+
+    if (!record?.detail) {
+      return '';
+    }
+
+    const remunerationLeaves = this.normalizeLeaveValue(record.detail.remuneration?.remainingLeaves);
+    if (remunerationLeaves) {
+      return remunerationLeaves;
+    }
+
+    const leaveRows = Array.isArray(record.detail.leaveManagement) ? record.detail.leaveManagement : [];
+    const summedRemainingLeaves = leaveRows.reduce((sum, row) => {
+      const value = this.normalizeLeaveValue(row?.remainingLeave);
+      if (!value) {
+        return sum;
+      }
+
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? sum + numeric : sum;
+    }, 0);
+
+    return summedRemainingLeaves > 0 ? String(summedRemainingLeaves) : '';
+  }
+
+  private normalizeLeaveValue(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+
+    if (typeof value === 'string') {
+      return value.trim();
+    }
+
+    return String(value).trim();
   }
 
   private toNumber(value: string): number {

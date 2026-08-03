@@ -209,7 +209,7 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Blood Group:</label>
+            <label>Blood Group:</label>
             <input type="text" [ngModel]="bloodGroup()" (ngModelChange)="bloodGroup.set($event)"
               [class.cjr-invalid]="showFieldError('bloodGroup')" (blur)="touch('bloodGroup')" />
           </div>
@@ -283,9 +283,8 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Communication Address:</label>
-            <input type="text" [ngModel]="streetNo()" (ngModelChange)="streetNo.set($event)"
-              [class.cjr-invalid]="showFieldError('streetNo')" (blur)="touch('streetNo')" />
+            <label>Communication Address:</label>
+            <input type="text" [ngModel]="streetNo()" (ngModelChange)="streetNo.set($event)" />
           </div>
 
             <!-- <div class="cjr-row">
@@ -301,7 +300,7 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">State:</label>
+            <label>State:</label>
             <select [ngModel]="state()" (ngModelChange)="state.set($event)" [class.cjr-invalid]="showFieldError('state')"
               (blur)="touch('state')">
               <option value="">No Selection</option>
@@ -315,7 +314,7 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Country:</label>
+            <label>Country:</label>
             <div class="cjr-field">
               <input
                 type="text"
@@ -335,7 +334,7 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Zip Code:</label>
+            <label>Zip Code:</label>
             <div class="cjr-field">
               <input type="text" placeholder="54000" inputmode="numeric" maxlength="5" minlength="5"
                 [ngModel]="zipCode()" (ngModelChange)="onZipCodeChange($event)" (keydown)="onIntegerKeyDown($event)"
@@ -509,7 +508,7 @@
             </div>
 
             <div class="cjr-row">
-              <label class="cjr-label-required">Passing Year:</label>
+              <label>Passing Year:</label>
               <input type="text" inputmode="numeric" maxlength="4" [ngModel]="educationSections()[i].passingYear"
                 (ngModelChange)="updateEducationField(i, 'passingYear', $event)" (keydown)="onIntegerKeyDown($event)"
                 [class.cjr-invalid]="showFieldError(educationFieldKey('PassingYear', i))"
@@ -843,7 +842,7 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Effective Date:</label>
+            <label>Effective Date:</label>
             <input type="date" [ngModel]="effectiveDate()" (ngModelChange)="effectiveDate.set($event)"
               [class.cjr-invalid]="showFieldError('effectiveDate')" (blur)="touch('effectiveDate')" />
           </div>
@@ -993,6 +992,18 @@
         </div>
 
         <div class="cjr-leave-table-wrap">
+          <div class="cjr-row" style="margin-bottom: 12px; max-width: 320px;">
+            <label>Total Remaining Leave:</label>
+            <input
+              type="text"
+              class="cjr-leave-table__input cjr-leave-table__input--readonly"
+              [ngModel]="totalRemainingLeaves()"
+              readonly
+              tabindex="-1"
+              placeholder="0"
+            />
+          </div>
+
           <table class="cjr-leave-table">
             <thead>
               <tr>

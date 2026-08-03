@@ -87,17 +87,12 @@ const BASE_MANDATORY_FIELDS = [
   'dateOfBirth',
   'nationality',
   'religion',
-  'bloodGroup',
   'nationalIdCardNo',
   'incomeTaxNo',
   'contactNumber',
   'emergencyContactNumber',
   'street',
-  'streetNo',
   'city',
-  'state',
-  'country',
-  'zipCode',
   'departmentInAhcp',
   'branchLocation',
   'employmentCategory',
@@ -107,7 +102,6 @@ const BASE_MANDATORY_FIELDS = [
   'jobDescription',
   'basicSalary',
   'paymentMode',
-  'effectiveDate',
   'dateOfJoining',
   'loginEmployeeName',
 ] as const;
@@ -273,6 +267,17 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     { leaveType: '', leavesAllocated: '', leavesAvailed: '' },
   ]);
   protected readonly leaveTypeOptions = signal<LeaveTypeRecord[]>([]);
+  protected readonly totalRemainingLeaves = computed(() =>
+    this.leaveManagementRows().reduce((sum, row) => {
+      const remaining = this.computeRemainingLeave(row);
+      if (!remaining) {
+        return sum;
+      }
+
+      const numeric = Number.parseInt(remaining, 10);
+      return Number.isFinite(numeric) ? sum + numeric : sum;
+    }, 0).toString(),
+  );
 
   // HR / payroll settings
   protected readonly employeeMaster = signal('');
@@ -370,22 +375,27 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected isMandatory(field: string): boolean {
     if (
       field.startsWith('educationInstitute-') ||
-      field.startsWith('educationQualification-') ||
-      field.startsWith('educationPassingYear-')
+      field.startsWith('educationQualification-')
     ) {
       return true;
+    }
+    if (this.isOptionalField(field)) {
+      return false;
     }
     return this.getActiveMandatoryFields().includes(field);
   }
 
   protected showFieldError(field: string): boolean {
-    if (!this.shouldShowValidation(field)) {
+    if (this.isOptionalField(field) || !this.shouldShowValidation(field)) {
       return false;
     }
     return this.isFieldEmpty(field) || this.isFieldFormatInvalid(field);
   }
 
   protected isRequiredMissing(field: string): boolean {
+    if (this.isOptionalField(field)) {
+      return false;
+    }
     return this.shouldShowValidation(field) && this.isFieldEmpty(field);
   }
 
@@ -598,7 +608,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       leaveType: '',
       leaveDays: '',
       leavesAvailed: '',
-      remainingLeaves: '',
+      remainingLeaves: this.totalRemainingLeaves(),
       totalLeaves: '',
       medicalAllowances: this.areAllowancesEnabled() ? this.medicalAllowances() : '',
       fuelAllowances: this.fuelAllowances(),
@@ -750,6 +760,13 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.touched.update(t => ({ ...t, [field]: true }));
   }
 
+  private isOptionalField(field: string): boolean {
+    if (['bloodGroup', 'streetNo', 'state', 'country', 'zipCode', 'effectiveDate'].includes(field)) {
+      return true;
+    }
+    return field.startsWith('educationPassingYear-');
+  }
+
   private getActiveMandatoryFields(): string[] {
     const fields: string[] = [...BASE_MANDATORY_FIELDS];
     if (!this.editingApiId()) {
@@ -763,7 +780,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       fields.push(
         this.educationFieldKey('Institute', index),
         this.educationFieldKey('Qualification', index),
-        this.educationFieldKey('PassingYear', index),
       );
     });
     return fields;
