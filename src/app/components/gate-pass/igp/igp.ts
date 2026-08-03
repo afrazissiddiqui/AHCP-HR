@@ -133,13 +133,30 @@ export class IgpComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = () => {
         const content = typeof reader.result === 'string' ? reader.result : '';
-        const parsedRows = parseIgpBulkUploadCsv(content);
-        if (!parsedRows.length) {
+        const parsedData = parseIgpBulkUploadCsv(content);
+        if (!parsedData.lines.length) {
           this.alertService.warning('No rows found', 'The selected CSV did not contain any usable line items.');
           return;
         }
 
-        this.bulkImportService.setPendingLines(this.bulkImportService.createImportedLinesFromValues(parsedRows));
+        const importedLines = this.bulkImportService.createImportedLinesFromValues(parsedData.lines);
+        this.bulkImportService.setPendingData({
+          type: parsedData.type,
+          businessPartnerName: parsedData.businessPartnerName,
+          businessPartnerCode: parsedData.businessPartnerCode,
+          department: parsedData.department,
+          vehicleNo: parsedData.vehicleNo,
+          location: parsedData.location,
+          fromUnit: parsedData.fromUnit,
+          kantaSlip: parsedData.kantaSlip,
+          biltyNo: parsedData.biltyNo,
+          store: parsedData.store,
+          driverName: parsedData.driverName,
+          driverCnic: parsedData.driverCnic,
+          driverPhone: parsedData.driverPhone,
+          weight: parsedData.weight,
+          lines: importedLines,
+        });
         void this.router.navigate(['/gate-pass/igp/create']);
       };
       reader.onerror = () => {

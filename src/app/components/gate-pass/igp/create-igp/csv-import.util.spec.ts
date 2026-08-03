@@ -8,9 +8,9 @@ describe('parseIgpBulkUploadCsv', () => {
       'ITEM-002,Widget B,5,Spare,Second row',
     ].join('\n');
 
-    const rows = parseIgpBulkUploadCsv(csv);
+    const result = parseIgpBulkUploadCsv(csv);
 
-    expect(rows).toEqual([
+    expect(result.lines).toEqual([
       jasmine.objectContaining({
         itemCode: 'ITEM-001',
         itemName: 'Widget A',
@@ -36,9 +36,9 @@ describe('parseIgpBulkUploadCsv', () => {
       '   ',
     ].join('\n');
 
-    const rows = parseIgpBulkUploadCsv(csv);
+    const result = parseIgpBulkUploadCsv(csv);
 
-    expect(rows).toEqual([
+    expect(result.lines).toEqual([
       jasmine.objectContaining({
         itemCode: 'ITEM-003',
         itemName: 'Widget, with comma',
@@ -54,9 +54,9 @@ describe('parseIgpBulkUploadCsv', () => {
       'ALT-001,Widget C,12,Loose,Good,EA,Imported row,Needs follow up',
     ].join('\n');
 
-    const rows = parseIgpBulkUploadCsv(csv);
+    const result = parseIgpBulkUploadCsv(csv);
 
-    expect(rows).toEqual([
+    expect(result.lines).toEqual([
       jasmine.objectContaining({
         itemCode: 'ALT-001',
         itemName: 'Widget C',
@@ -68,5 +68,22 @@ describe('parseIgpBulkUploadCsv', () => {
         remarks: 'Needs follow up',
       }),
     ]);
+  });
+
+  it('extracts header fields when rows with Type, Department, etc. come first', () => {
+    const csv = [
+      'Type,Business Partner,Department,Vehicle No,Item Code,Item Name,Qty,Remarks',
+      'Purchase Order,Vendor ABC,Procurement,JW-2434,ITEM-001,Widget A,10,Sample item',
+      'ITEM-002,Widget B,5,Second item',
+    ].join('\n');
+
+    const result = parseIgpBulkUploadCsv(csv);
+
+    expect(result.type).toBe('Purchase Order');
+    expect(result.businessPartnerName).toBe('Vendor ABC');
+    expect(result.department).toBe('Procurement');
+    expect(result.vehicleNo).toBe('JW-2434');
+    expect(result.lines.length).toBe(2);
+    expect(result.lines[0]?.itemCode).toBe('ITEM-001');
   });
 });

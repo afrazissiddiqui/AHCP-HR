@@ -1,29 +1,50 @@
 import { Injectable, signal } from '@angular/core';
 import { createEmptyIgpLineItem, type IgpLineItem } from './igp.service';
 
+export interface IgpBulkImportData {
+  type?: string;
+  businessPartnerName?: string;
+  businessPartnerCode?: string;
+  department?: string;
+  vehicleNo?: string;
+  location?: string;
+  fromUnit?: string;
+  kantaSlip?: string;
+  biltyNo?: string;
+  store?: string;
+  driverName?: string;
+  driverCnic?: string;
+  driverPhone?: string;
+  weight?: string;
+  lines: IgpLineItem[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class IgpBulkImportService {
-  private readonly pendingLinesSignal = signal<IgpLineItem[]>([]);
+  private readonly pendingDataSignal = signal<IgpBulkImportData | null>(null);
 
-  readonly pendingLines = this.pendingLinesSignal.asReadonly();
+  readonly pendingData = this.pendingDataSignal.asReadonly();
 
-  setPendingLines(lines: IgpLineItem[]): void {
-    this.pendingLinesSignal.set(lines.map((line) => ({ ...line })));
+  setPendingData(data: IgpBulkImportData): void {
+    this.pendingDataSignal.set({ ...data, lines: data.lines.map((line) => ({ ...line })) });
   }
 
-  consumePendingLines(): IgpLineItem[] {
-    const lines = this.pendingLinesSignal();
-    if (!lines.length) {
-      return [];
+  consumePendingData(): IgpBulkImportData | null {
+    const data = this.pendingDataSignal();
+    if (!data) {
+      return null;
     }
 
-    const result = lines.map((line) => ({ ...line }));
-    this.pendingLinesSignal.set([]);
+    const result: IgpBulkImportData = {
+      ...data,
+      lines: data.lines.map((line) => ({ ...line })),
+    };
+    this.pendingDataSignal.set(null);
     return result;
   }
 
-  clearPendingLines(): void {
-    this.pendingLinesSignal.set([]);
+  clearPendingData(): void {
+    this.pendingDataSignal.set(null);
   }
 
   createImportedLinesFromValues(values: Array<Partial<IgpLineItem>>): IgpLineItem[] {
