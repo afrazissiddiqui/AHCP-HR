@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, firstValueFrom, tap } from 'rxjs';
@@ -28,6 +28,8 @@ import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-i
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
 import { ApplicationFormService } from '../../../../services/application-form.service';
 import { AuthService } from '../../../../services/auth.service';
+import { parseIgpBulkUploadCsv, type ParsedIgpCsvLine } from './csv-import.util';
+import { IgpBulkImportService } from '../igp-bulk-import.service';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -72,6 +74,8 @@ function generateClientUniqueIgpReferenceNo(): string {
   ],
 })
 export class CreateIgpComponent implements OnInit {
+  @ViewChild('bulkCsvUploadInput') private bulkCsvUploadInput?: ElementRef<HTMLInputElement>;
+
   editingId: string | null = null;
   pageTitle = 'Add IGP';
   submitButtonLabel = 'Save IGP';
@@ -125,6 +129,7 @@ export class CreateIgpComponent implements OnInit {
     private readonly departmentService: GatePassDepartmentService,
     private readonly applicationFormService: ApplicationFormService,
     private readonly authService: AuthService,
+    private readonly bulkImportService: IgpBulkImportService,
     private readonly cdr: ChangeDetectorRef,
   ) {
     const d = new Date();
@@ -147,6 +152,7 @@ export class CreateIgpComponent implements OnInit {
     if (!editId) {
       this.assignNextReferenceNo();
       this.loadSignedInUserDetails();
+      this.applyPendingBulkImportLines();
       return;
     }
 
@@ -203,6 +209,19 @@ export class CreateIgpComponent implements OnInit {
     } catch {
       this.referenceNo = nextGatePassReferenceNo('IGP', []);
     }
+  }
+
+  private applyPendingBulkImportLines(): void {
+    const pendingLines = this.bulkImportService.consumePendingLines();
+    if (!pendingLines.length) {
+      return;
+    }
+
+    this.lines = pendingLines;
+    this.activeSection = 'igp-lines-section';
+    setTimeout(() => {
+      document.getElementById('igp-lines-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   private delay(ms: number): Promise<void> {
@@ -386,6 +405,59 @@ export class CreateIgpComponent implements OnInit {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  triggerBulkCsvUpload(): void {
+    this.bulkCsvUploadInput?.nativeElement.click();
+  }
+
+  onBulkCsvUpload(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      this.alertService.error('Invalid file', 'Please choose a .csv file.');
+      input.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = typeof reader.result === 'string' ? reader.result : '';
+      const parsedRows = parseIgpBulkUploadCsv(content);
+
+      if (!parsedRows.length) {
+        this.alertService.warning('No rows found', 'The selected CSV did not contain any usable line items.');
+        input.value = '';
+        return;
+      }
+
+      this.applyImportedCsvLines(parsedRows);
+      this.alertService.success('CSV imported', `${parsedRows.length} line item${parsedRows.length === 1 ? '' : 's'} imported.`);
+      input.value = '';
+      this.cdr.detectChanges();
+    };
+
+    reader.onerror = () => {
+      this.alertService.error('Import failed', 'The selected file could not be read.');
+      input.value = '';
+    };
+
+    reader.readAsText(file);
+  }
+
+  private applyImportedCsvLines(parsedLines: ParsedIgpCsvLine[]): void {
+    const importedLines = this.bulkImportService.createImportedLinesFromValues(parsedLines);
+    this.bulkImportService.setPendingLines(importedLines);
+    this.lines = importedLines;
+    this.activeSection = 'igp-lines-section';
+    setTimeout(() => {
+      document.getElementById('igp-lines-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   addLine(): void {

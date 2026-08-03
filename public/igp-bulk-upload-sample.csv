@@ -1,0 +1,3 @@
+Item Code,Item Name,Qty,Category,Packing Condition,Product Quality,UOM,Info,Remarks
+ITEM-001,Widget A,10,Finished,Loose,Good,EA,Imported from sample,Sample import row
+ITEM-002,Widget B,5,Spare,Boxed,Standard,EA,Second sample row,Ready for review

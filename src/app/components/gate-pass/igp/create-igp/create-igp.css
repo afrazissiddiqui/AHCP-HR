@@ -120,22 +120,42 @@
   min-width: 0;
 }
 
+.igp-add-page .igp-lines-actions,
+.ogp-add-page .igp-lines-actions,
+.agp-add-page .igp-lines-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 12px;
+}
+
 .igp-add-page .igp-add-line-btn,
 .ogp-add-page .igp-add-line-btn,
 .agp-add-page .igp-add-line-btn {
-  color: var(--mad-accent, #0052cc);
-  border-color: var(--mad-accent-mid, rgba(0, 82, 204, 0.35));
-  border-radius: var(--mad-radius-sm, 8px);
-  min-height: 36px;
-  padding: 8px 16px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  min-height: 40px;
+  padding: 9px 16px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
 .igp-add-page .igp-add-line-btn:hover,
 .ogp-add-page .igp-add-line-btn:hover,
 .agp-add-page .igp-add-line-btn:hover {
-  background: var(--mad-accent-soft, #eff6ff);
-  border-color: var(--mad-accent, #0052cc);
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #2563eb;
+  transform: translateY(-1px);
 }
 
 .igp-add-page .igp-lines-scroll,

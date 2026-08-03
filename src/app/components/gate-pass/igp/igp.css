@@ -184,7 +184,22 @@ app-root {
 }
 
 .sapMTBActions .sapMBtnBase {
-  padding: 6px 8px;
+  padding: 6px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #f5f7fa;
+  color: #1d2d3e;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sapMTBActions .sapMBtnBase:hover {
+  background: #e9f2ff;
+  border-color: #0070f2;
+}
+
+.sapMTBActions .sapMBtn--action {
+  color: #0a6ed1;
 }
 
 

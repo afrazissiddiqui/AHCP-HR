@@ -12,6 +12,8 @@ import { compareGatePassListRecords, formatGatePassListCell } from '../gate-pass
 import { IgpService, IgpRecord } from './igp.service';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
+import { IgpBulkImportService } from './igp-bulk-import.service';
+import { parseIgpBulkUploadCsv } from './create-igp/csv-import.util';
 
 type IgpSortableKey = Exclude<keyof IgpRecord, 'lines' | 'selected'>;
 
@@ -36,6 +38,7 @@ export class IgpComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly shellbarSearch = inject(ShellbarSearchService);
   private readonly document = inject(DOCUMENT);
+  private readonly bulkImportService = inject(IgpBulkImportService);
 
   readonly warehouseLabel = gatePassWarehouseLabel;
   readonly records = this.igpService.records;
@@ -114,6 +117,37 @@ export class IgpComponent implements OnInit {
 
   openDialog(): void {
     this.showDialog = true;
+  }
+
+  triggerBulkCsvUpload(): void {
+    const input = this.document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,text/csv';
+    input.onchange = (event: Event) => {
+      const target = event.target as HTMLInputElement | null;
+      const file = target?.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const content = typeof reader.result === 'string' ? reader.result : '';
+        const parsedRows = parseIgpBulkUploadCsv(content);
+        if (!parsedRows.length) {
+          this.alertService.warning('No rows found', 'The selected CSV did not contain any usable line items.');
+          return;
+        }
+
+        this.bulkImportService.setPendingLines(this.bulkImportService.createImportedLinesFromValues(parsedRows));
+        void this.router.navigate(['/gate-pass/igp/create']);
+      };
+      reader.onerror = () => {
+        this.alertService.error('Import failed', 'The selected file could not be read.');
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 
   closeDialog(): void {

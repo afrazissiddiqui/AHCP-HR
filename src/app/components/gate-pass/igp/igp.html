@@ -27,7 +27,9 @@
         <span class="sapUiIcon search-icon">🔍</span>
       </div>
 
-      <div class="sapMTBActions"> 
+      <div class="sapMTBActions">
+        <a class="sapMBtnBase sapMBtn sapMBtn--action" href="/igp-bulk-upload-sample.csv" download title="Download CSV sample">⬇ Sample</a>
+        <button class="sapMBtnBase sapMBtn sapMBtn--action" type="button" (click)="triggerBulkCsvUpload()" title="Upload CSV bulk data">⇪ Upload CSV</button>
         <button class="sapMBtnBase sapMBtn" (click)="openDialog()" title="Settings" type="button">⚙</button>
       </div>
 
