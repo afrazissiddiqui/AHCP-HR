@@ -101,7 +101,6 @@ const BASE_MANDATORY_FIELDS = [
   'employmentStatus',
   'jobDescription',
   'basicSalary',
-  'paymentMode',
   'dateOfJoining',
   'loginEmployeeName',
 ] as const;
@@ -261,6 +260,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly allowancesApplicable = signal<'Yes' | 'No' | ''>('Yes');
   protected readonly cashSalaryPercentage = signal('');
   protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('No');
+  protected readonly providentApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly fuelLimit = signal('');
   protected readonly leaveManagementRows = signal<LeaveManagementRow[]>([
@@ -386,14 +386,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   protected showFieldError(field: string): boolean {
-    if (this.isOptionalField(field) || !this.shouldShowValidation(field)) {
+    if (this.isOptionalField(field) || !this.isMandatory(field) || !this.shouldShowValidation(field)) {
       return false;
     }
     return this.isFieldEmpty(field) || this.isFieldFormatInvalid(field);
   }
 
   protected isRequiredMissing(field: string): boolean {
-    if (this.isOptionalField(field)) {
+    if (this.isOptionalField(field) || !this.isMandatory(field)) {
       return false;
     }
     return this.shouldShowValidation(field) && this.isFieldEmpty(field);
@@ -620,6 +620,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       allowancesApplicable: this.allowancesApplicable(),
       cashSalaryPercentage: this.cashSalaryPercentage(),
       eobiApplicable: this.eobiApplicable(),
+      providentApplicable: this.providentApplicable(),
       socialSecurityApplicable: this.socialSecurityApplicable(),
       fuelLimit: this.fuelLimit(),
       leaveEligibilityCriteria: '',
@@ -771,10 +772,6 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     const fields: string[] = [...BASE_MANDATORY_FIELDS];
     if (!this.editingApiId()) {
       fields.push('password');
-    }
-    const payment = this.paymentMode();
-    if (payment === 'Bank' || payment === 'Hybrid') {
-      fields.push('accountTitle', 'bankName', 'accountNo', 'accountType');
     }
     this.educationSections().forEach((_, index) => {
       fields.push(

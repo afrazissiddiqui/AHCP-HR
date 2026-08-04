@@ -800,7 +800,7 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Payment Mode:</label>
+            <label>Payment Mode:</label>
             <select [ngModel]="paymentMode()" (ngModelChange)="onPaymentModeChange($event)"
               [class.cjr-invalid]="showFieldError('paymentMode')" (blur)="touch('paymentMode')">
               <option value="">No Selection</option>
@@ -811,13 +811,13 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Account Title:</label>
+            <label>Account Title:</label>
             <input type="text" [ngModel]="accountTitle()" (ngModelChange)="accountTitle.set($event)"
               [class.cjr-invalid]="showFieldError('accountTitle')" (blur)="touch('accountTitle')" />
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Bank Name:</label>
+            <label>Bank Name:</label>
             <input type="text" [ngModel]="bankName()" (ngModelChange)="bankName.set($event)"
               [class.cjr-invalid]="showFieldError('bankName')" (blur)="touch('bankName')" />
           </div>
@@ -829,7 +829,7 @@
           </div>
 
           <div class="cjr-row">
-            <label class="cjr-label-required">Bank Account Number:</label>
+            <label>Bank Account Number:</label>
             <input type="text" inputmode="numeric" [ngModel]="accountNo()" (ngModelChange)="onAccountNoChange($event)"
               [class.cjr-invalid]="showFieldError('accountNo')" (keydown)="onIntegerKeyDown($event)"
               (blur)="touch('accountNo')" />
@@ -913,6 +913,16 @@
             <label>EOBI Applicable:</label>
             <select [ngModel]="eobiApplicable()" (ngModelChange)="eobiApplicable.set($event)"
               (blur)="touch('eobiApplicable')">
+              <option value="">No Selection</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="cjr-row">
+            <label>Provident Fund:</label>
+            <select [ngModel]="providentApplicable()" (ngModelChange)="providentApplicable.set($event)"
+              (blur)="touch('providentApplicable')">
               <option value="">No Selection</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>

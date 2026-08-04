@@ -110,6 +110,10 @@ export class AddDelivery {
     this.headerForm.update((state) => ({ ...state, [field]: value }));
   }
 
+  updateIntegerHeaderField(field: keyof DeliveryHeader, value: string): void {
+    this.updateHeaderField(field, value.replace(/\D/g, ''));
+  }
+
   addContentLine(): void {
     this.contentLines.update((lines) => [...lines, createEmptyDeliveryLine()]);
   }

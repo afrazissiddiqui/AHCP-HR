@@ -41,6 +41,30 @@
               <label>Customer Ref. No.</label>
               <input type="text" [ngModel]="headerForm().customerRefNo" (ngModelChange)="updateHeaderField('customerRefNo', $event)">
             </div>
+            <div class="sir-field-row">
+              <label>IGP Date (Customer)</label>
+              <input type="date" [ngModel]="headerForm().igpDateCus" (ngModelChange)="updateHeaderField('igpDateCus', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Transporter Name</label>
+              <input type="text" [ngModel]="headerForm().transporterName" (ngModelChange)="updateHeaderField('transporterName', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Builty Number</label>
+              <input type="text" [ngModel]="headerForm().builtyNo" (ngModelChange)="updateHeaderField('builtyNo', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Vehicle Number</label>
+              <input type="text" [ngModel]="headerForm().vehicleNo" (ngModelChange)="updateHeaderField('vehicleNo', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Driver Name</label>
+              <input type="text" [ngModel]="headerForm().driverName" (ngModelChange)="updateHeaderField('driverName', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Driver Number</label>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" [ngModel]="headerForm().driverNo" (ngModelChange)="updateIntegerHeaderField('driverNo', $event)">
+            </div>
           </div>
 
           <div class="sir-form-column">

@@ -109,6 +109,7 @@ export interface ApplicationFormRemuneration {
   allowancesApplicable: string;
   cashSalaryPercentage: string;
   eobiApplicable: string;
+  providentApplicable: string;
   socialSecurityApplicable: string;
   fuelLimit: string;
   leaveEligibilityCriteria: string;
@@ -339,6 +340,7 @@ export interface EmployeeProfileAddPayload {
   overTimeApplicable: boolean;
   allowancesApplicable: boolean;
   eobiApplicable: boolean;
+  providentApplicable?: boolean;
   socialSecurityApplicable: boolean;
   medicalAllowances: number | string;
   fuelAllowances: number | string | null;
@@ -427,6 +429,7 @@ const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
   ['overTimeApplicable', 'over_time_applicable'],
   ['allowancesApplicable', 'allowances_applicable'],
   ['eobiApplicable', 'eobi_applicable'],
+  ['providentApplicable', 'provident_applicable'],
   ['socialSecurityApplicable', 'social_security_applicable'],
   ['fuelLimit', 'fuel_limit'],
   ['leaveEligibilityCriteria', 'leave_eligibility_criteria'],
@@ -909,6 +912,7 @@ export class ApplicationFormService {
       overTimeApplicable: toApiFlag(remuneration.overTimeApplicable),
       allowancesApplicable: toApiFlag(remuneration.allowancesApplicable),
       eobiApplicable: toApiFlag(remuneration.eobiApplicable),
+      providentApplicable: toApiFlag(remuneration.providentApplicable),
       socialSecurityApplicable: toApiFlag(remuneration.socialSecurityApplicable),
       fuelLimit: this.parseFuelLimitForApi(remuneration.fuelLimit),
       leaveType: primaryLeave.leaveType || remuneration.leaveType,
@@ -2167,6 +2171,9 @@ export class ApplicationFormService {
           pickRem('cashSalaryPercentage', 'cash_salary_percentage') ||
           pickRem('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
         eobiApplicable: this.yesNoFromApi(pickRem('eobiApplicable', 'eobi_applicable')),
+        providentApplicable: this.yesNoFromApi(
+          pickRem('providentApplicable', 'provident_applicable')
+        ),
         socialSecurityApplicable: this.yesNoFromApi(
           pickRem('socialSecurityApplicable', 'social_security_applicable'),
         ),
