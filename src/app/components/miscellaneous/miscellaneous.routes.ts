@@ -14,6 +14,7 @@ import { MiscellaneousShellComponent } from './miscellaneous-shell';
 import { ReceiptFromProduction } from './receipt-from-production/receipt-from-production';
 import { AddReceiptFromProduction } from './receipt-from-production/add-receipt-from-production/add-receipt-from-production';
 import { IssueFromProductionListComponent } from '../setup/issue-from-production-list/issue-from-production-list';
+import { PurchaseOrderListComponent } from '../setup/purchase-order-list/purchase-order-list';
 
 export const miscellaneousRoutes: Routes = [
   {
@@ -49,6 +50,11 @@ export const miscellaneousRoutes: Routes = [
         path: 'issue-from-production',
         component: IssueFromProductionListComponent,
         data: { title: 'Issue From Production' },
+      },
+      {
+        path: 'purchase-request',
+        component: PurchaseOrderListComponent,
+        data: { title: 'Purchase Request' },
       },
       {
         path: 'receipt-from-production/create',

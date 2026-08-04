@@ -43,6 +43,7 @@ const EXACT_TITLES: Record<string, string> = {
   'miscellaneous/receipt-from-production': 'Receipt from production',
   'miscellaneous/receipt-from-production/create': 'Add Receipt from Production',
   'miscellaneous/issue-from-production': 'Issue From Production',
+  'miscellaneous/purchase-request': 'Purchase Request',
   'miscellaneous/delivery': 'Delivery',
   'miscellaneous/inventory-transfer': 'Inventory transfer',
   'miscellaneous/good-issue': 'Good Issue',

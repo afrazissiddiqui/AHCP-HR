@@ -1098,7 +1098,9 @@ export class ApplicationFormService {
   private buildApiRemunerationObject(
     payload: EmployeeProfileAddPayload,
   ): Record<string, unknown> {
-    return {
+    const booleanFlagToNumber = (value: boolean | undefined): number => (value ? 1 : 0);
+
+    const remuneration: Record<string, unknown> = {
       basicSalary: payload.basicSalary,
       paymentMode: payload.paymentMode,
       accountTitle: payload.accountTitle,
@@ -1112,10 +1114,11 @@ export class ApplicationFormService {
       advancePercentAllowed: payload.advancePercentAllowed,
       maximumLoanCapacity: payload.maximumLoanCapacity,
       maximumAdvanceCapacity: payload.maximumAdvanceCapacity,
-      overTimeApplicable: payload.overTimeApplicable,
-      allowancesApplicable: payload.allowancesApplicable,
-      eobiApplicable: payload.eobiApplicable,
-      socialSecurityApplicable: payload.socialSecurityApplicable,
+      overTimeApplicable: booleanFlagToNumber(payload.overTimeApplicable),
+      allowancesApplicable: booleanFlagToNumber(payload.allowancesApplicable),
+      eobiApplicable: booleanFlagToNumber(payload.eobiApplicable),
+      providentApplicable: booleanFlagToNumber(payload.providentApplicable),
+      socialSecurityApplicable: booleanFlagToNumber(payload.socialSecurityApplicable),
       fuelLimit: payload.fuelLimit,
       leaveEligibilityCriteria: payload.leaveEligibilityCriteria,
       leaveType: payload.leaveType,
@@ -1128,6 +1131,14 @@ export class ApplicationFormService {
       carAllowances: payload.carAllowances,
       otherAllowances: payload.otherAllowances,
     };
+
+    for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
+      if (snake) {
+        remuneration[snake] = remuneration[camel];
+      }
+    }
+
+    return remuneration;
   }
 
   private buildApiAssetsObject(payload: EmployeeProfileAddPayload): Record<string, unknown> {
@@ -1173,8 +1184,16 @@ export class ApplicationFormService {
     const pastExperienceSections = payload.pastExperienceSections ?? [];
     const leaveManagementRows = payload.leaveManagementRows ?? [];
 
-    return {
+    const booleanFlagToNumber = (value: boolean | undefined): number => (value ? 1 : 0);
+
+    const serialized = {
       ...payload,
+      overTimeApplicable: booleanFlagToNumber(payload.overTimeApplicable),
+      allowancesApplicable: booleanFlagToNumber(payload.allowancesApplicable),
+      eobiApplicable: booleanFlagToNumber(payload.eobiApplicable),
+      providentApplicable: booleanFlagToNumber(payload.providentApplicable),
+      provident_applicable: booleanFlagToNumber(payload.providentApplicable),
+      socialSecurityApplicable: booleanFlagToNumber(payload.socialSecurityApplicable),
       fuel_limit: payload.fuelLimit,
       remuneration: this.buildApiRemunerationObject(payload),
       assets: this.buildApiAssetsObject(payload),
@@ -1187,6 +1206,18 @@ export class ApplicationFormService {
       past_experience_sections: this.mapPastExperienceSectionsSnakeCase(pastExperienceSections),
       pastExperience: pastExperienceSections,
     };
+
+    console.debug('Serialized employee profile payload', {
+      providentApplicable: serialized.providentApplicable,
+      provident_applicable: serialized.provident_applicable,
+      remunerationProvidentApplicable:
+        (serialized.remuneration as Record<string, unknown>)?.['providentApplicable'],
+      remunerationProvidentApplicableSnake:
+        (serialized.remuneration as Record<string, unknown>)?.['provident_applicable'],
+      serialized,
+    });
+
+    return serialized;
   }
 
   /**

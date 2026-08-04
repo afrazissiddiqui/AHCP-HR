@@ -307,6 +307,98 @@ export class PayrollProcessingComponent implements OnInit {
     });
   }
 
+  exportToExcel(record: PayrollProcessingListRecord): void {
+    if (!this.permissionService.assertCan(PAYROLL_PROCESSING_MODULE, 'view')) {
+      return;
+    }
+
+    if (!record.Id) {
+      void this.alertService.warning('Export', 'Unable to export this row: missing payroll process id.');
+      return;
+    }
+
+    this.viewLoading.set(true);
+    this.payrollProcessingService.fetchPayrollProcessingDetail(record.Id).subscribe({
+      next: (detail) => {
+        try {
+          const rows = Array.isArray(detail.Details) ? detail.Details.slice() : [];
+          rows.sort((a, b) => String(a.employeeCode).localeCompare(String(b.employeeCode), undefined, { sensitivity: 'base' }));
+
+          const headers = [
+            'Employee Code',
+            'Name',
+            'Basic Salary',
+            'Gross Salary',
+            'Fuel',
+            'Overtime',
+            'Bonus',
+            'Total Earnings',
+            'Net Payable',
+            'Approved',
+          ];
+
+          const escape = (v: unknown) => {
+            if (v === null || v === undefined) {
+              return '';
+            }
+            const s = String(v);
+            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+              return '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+          };
+
+          const formatNumber = (n: unknown) => {
+            const num = Number(n);
+            return Number.isFinite(num) ? num.toFixed(2) : '';
+          };
+
+          const lines = [headers.join(',')];
+          for (const r of rows) {
+            const line = [
+              escape(r.employeeCode),
+              escape(r.personName),
+              formatNumber(r.basicSalary),
+              formatNumber(r.grossSalary),
+              formatNumber(r.fuelAllowance),
+              formatNumber(r.overtime),
+              formatNumber(r.bonus),
+              formatNumber(r.totalEarnings),
+              formatNumber(r.netPayable),
+              escape(r.approved ? 'Yes' : 'No'),
+            ].join(',');
+            lines.push(line);
+          }
+
+          const csv = lines.join('\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const monthLabel = this.formatMonth(detail.Header.month) || String(detail.Header.month || '');
+          const yearLabel = String(detail.Header.year || '');
+          const filename = `payroll_${record.Id}_${monthLabel}_${yearLabel}.csv`;
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          link.setAttribute('href', url);
+          link.setAttribute('download', filename);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          void this.alertService.error('Export Failed', 'Failed to generate CSV for export.');
+        } finally {
+          this.viewLoading.set(false);
+        }
+      },
+      error: (error: unknown) => {
+        this.viewLoading.set(false);
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load payroll process details for export.'),
+        );
+      },
+    });
+  }
+
   closeViewDialog(): void {
     this.showViewDialog.set(false);
     this.selectedRecord.set(null);

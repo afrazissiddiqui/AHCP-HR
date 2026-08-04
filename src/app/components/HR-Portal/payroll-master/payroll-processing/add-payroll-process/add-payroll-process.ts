@@ -71,6 +71,7 @@ export interface PayrollProcessRow {
   overtimeApplicable: boolean;
   allowancesApplicable: boolean;
   eobiApplicable: boolean;
+  providentApplicable: boolean;
   basicSalary: number;
   grossSalary: number;
   medicalAllowance: number;
@@ -233,7 +234,9 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'loanAdvForm', label: 'Advance Deduction', groupId: 'loan', type: 'currency', minWidth: 152 },
     { key: 'lateAttendDeduction', label: 'Late Attend Deduction', groupId: 'loan', type: 'currency', minWidth: 182 },
     { key: 'costToCompany', label: 'Cost to Company', groupId: 'final', type: 'currency', minWidth: 168 },
-    { key: 'netPayable', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'netPayable', label: 'Gross Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'Tax Deduction', label: 'Tax Deduction', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'netpayable1', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 168 },
     { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 152 },
     { key: 'approved', label: 'Approval', groupId: 'approval', type: 'approval', minWidth: 96 },
@@ -1022,6 +1025,7 @@ export class AddPayrollProcessComponent implements OnInit {
       overtimeApplicable: false,
       allowancesApplicable: false,
       eobiApplicable: false,
+      providentApplicable: false,
       basicSalary: 0,
       grossSalary: 0,
       medicalAllowance: 0,
@@ -1090,6 +1094,7 @@ export class AddPayrollProcessComponent implements OnInit {
       overtimeApplicable: this.isYesFlag(remuneration?.overTimeApplicable),
       allowancesApplicable: this.isYesFlag(remuneration?.allowancesApplicable),
       eobiApplicable: this.isYesFlag(remuneration?.eobiApplicable),
+      providentApplicable: this.isYesFlag(remuneration?.providentApplicable),
       basicSalary,
       grossSalary,
       medicalAllowance,
@@ -1124,7 +1129,7 @@ export class AddPayrollProcessComponent implements OnInit {
     const grossSalary = row.grossSalary > 0 ? row.grossSalary : row.basicSalary;
     const medicalAllowance = computeMedicalAllowance(grossSalary);
     const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
-    const providentFund = computeProvidentFund(basicSalary);
+    const providentFund = row.providentApplicable ? computeProvidentFund(basicSalary) : 0;
 
     const effectiveFuelRate = row.monthlyFuelRate + this.fuelPriceAdjust();
     const fuelAllowance = row.allowancesApplicable

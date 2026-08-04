@@ -721,6 +721,30 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  private yesNoFromApiLocal(value: unknown): 'Yes' | 'No' | '' {
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+    const normalized = value === undefined || value === null ? '' : String(value).trim();
+    if (!normalized) {
+      return '';
+    }
+    const lower = normalized.toLowerCase();
+    if (lower === 'true' || normalized === '1') {
+      return 'Yes';
+    }
+    if (lower === 'false' || normalized === '0') {
+      return 'No';
+    }
+    if (lower === 'yes') {
+      return 'Yes';
+    }
+    if (lower === 'no') {
+      return 'No';
+    }
+    return '';
+  }
+
   protected onAssetAllocatedChange(value: string): void {
     this.assetAllocated.set(value);
     const asset = this.assetOptions.find((item) => item.itemCode === value);
@@ -1561,6 +1585,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       pastExperience: this.pastExperienceSections().map((row) => ({ ...row })),
     });
 
+    console.debug('Employee profile API payload', payload);
+
     const editId = this.editingApiId();
     const request$ = editId
       ? this.applicationFormService.updateEmployeeProfile(editId, payload)
@@ -1779,6 +1805,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       this.otherAllowances.set('');
     }
     this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? 'No');
+    const pv = this.yesNoFromApiLocal(remuneration.providentApplicable) || 'No';
+    this.providentApplicable.set(pv);
     this.socialSecurityApplicable.set(
       (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',
     );
