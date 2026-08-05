@@ -1,0 +1,150 @@
+<div class="sir-page">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()">
+    <span pageToolbarActions></span>
+  </app-page-toolbar>
+
+  <div class="sir-page-content">
+    <div class="sir-card">
+      <nav class="sir-section-nav">
+        <ul class="sir-section-nav-list">
+          <li class="sir-section-nav-item sir-section-nav-item--active">Purchase Request</li>
+        </ul>
+      </nav>
+
+      <section class="sir-form-section" id="header">
+        <h2 class="sir-section-title">Header Info</h2>
+        <div class="sir-form-grid">
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Request Date:</label>
+              <input type="date" [ngModel]="headerForm().requestDate" (ngModelChange)="updateHeaderField('requestDate', $event)" />
+            </div>
+            <div class="sir-field-row">
+              <label>Branch:</label>
+              <input type="text" [ngModel]="headerForm().branch" (ngModelChange)="updateHeaderField('branch', $event)" />
+            </div>
+          </div>
+
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Posting Date:</label>
+              <input type="date" [ngModel]="headerForm().postingDate" (ngModelChange)="updateHeaderField('postingDate', $event)" />
+            </div>
+            <div class="sir-field-row">
+              <label>Due Date:</label>
+              <input type="date" [ngModel]="headerForm().dueDate" (ngModelChange)="updateHeaderField('dueDate', $event)" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sir-form-section" id="items">
+        <h2 class="sir-section-title">Row Level Information</h2>
+        <div class="sir-data-table-sticky-container">
+          <div class="sir-data-table-wrapper">
+            <table class="sir-data-table sir-data-table--row-level">
+              <thead>
+                <tr>
+                  <th class="sir-col-sr">Sr. No</th>
+                  <th class="sir-col-item-code">Item Code</th>
+                  <th class="sir-col-item-name">Item Name</th>
+                  <th class="sir-col-item-name">Vendor</th>
+                  <th class="sir-col-date">Required Date</th>
+                  <th class="sir-col-qty">Required Quantity</th>
+                  <th class="sir-col-qty">Info Price</th>
+                  <th class="sir-col-qty">Discount</th>
+                  <th class="sir-col-item-name">Tax Code</th>
+                  <th class="sir-col-item-name">Department</th>
+                  <th class="sir-col-item-name">UOM Code</th>
+                  <th class="sir-col-warehouse">Warehouse</th>
+                  <th class="sir-col-qty">Quantity</th>
+                  <th class="sir-col-date">Mfg Date</th>
+                  <th class="sir-col-date">Expiry Date</th>
+                  <th class="sir-col-actions">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of contentLines(); track $index) {
+                  <tr>
+                    <td class="sir-col-sr">{{ $index + 1 }}</td>
+                    <td class="sir-col-item-code">
+                      <input type="text" class="sir-table-input" [ngModel]="line.itemCode" (ngModelChange)="updateContentLine($index, 'itemCode', $event)" />
+                    </td>
+                    <td class="sir-col-item-name">
+                      <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" (ngModelChange)="updateContentLine($index, 'itemDescription', $event)" />
+                    </td>
+                    <td class="sir-col-item-name">
+                      <input type="text" class="sir-table-input" [ngModel]="line.vendor" (ngModelChange)="updateContentLine($index, 'vendor', $event)" />
+                    </td>
+                    <td class="sir-col-date">
+                      <input type="date" class="sir-table-input" [ngModel]="line.requiredDate" (ngModelChange)="updateContentLine($index, 'requiredDate', $event)" />
+                    </td>
+                    <td class="sir-col-qty">
+                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.requiredQuantity" (ngModelChange)="updateContentLine($index, 'requiredQuantity', $event)" />
+                    </td>
+                    <td class="sir-col-qty">
+                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.infoPrice" (ngModelChange)="updateContentLine($index, 'infoPrice', $event)" />
+                    </td>
+                    <td class="sir-col-qty">
+                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.discount" (ngModelChange)="updateContentLine($index, 'discount', $event)" />
+                    </td>
+                    <td class="sir-col-item-name">
+                      <input type="text" class="sir-table-input" [ngModel]="line.taxCode" (ngModelChange)="updateContentLine($index, 'taxCode', $event)" />
+                    </td>
+                    <td class="sir-col-item-name">
+                      <input type="text" class="sir-table-input" [ngModel]="line.department" (ngModelChange)="updateContentLine($index, 'department', $event)" />
+                    </td>
+                    <td class="sir-col-item-name">
+                      <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine($index, 'uomCode', $event)" />
+                    </td>
+                    <td class="sir-col-warehouse">
+                      <input type="text" class="sir-table-input" [ngModel]="line.warehouse" (ngModelChange)="updateContentLine($index, 'warehouse', $event)" />
+                    </td>
+                    <td class="sir-col-qty">
+                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)" />
+                    </td>
+                    <td class="sir-col-date">
+                      <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)" />
+                    </td>
+                    <td class="sir-col-date">
+                      <input type="date" class="sir-table-input" [ngModel]="line.expiryDate" (ngModelChange)="updateContentLine($index, 'expiryDate', $event)" />
+                    </td>
+                    <td class="sir-col-actions">
+                      <div class="sir-row-action-buttons" data-ui5-compact-size>
+                        <button type="button" class="sir-inline-button" (click)="addContentLine()">Add</button>
+                        <button type="button" class="sir-inline-button" [disabled]="contentLines().length <= 1" (click)="deleteContentLine($index)">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="sir-form-section" id="footer">
+        <div class="sir-form-grid">
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Remarks:</label>
+              <input type="text" placeholder="Document level remarks" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" />
+            </div>
+          </div>
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Selected Base Order:</label>
+              <input type="text" [ngModel]="headerForm().selectedBaseOrder" (ngModelChange)="updateHeaderField('selectedBaseOrder', $event)" />
+            </div>
+          </div>
+        </div>
+
+        <div class="sir-form-actions">
+          <button type="button" class="sir-primary-button" [disabled]="saving() || !hasValidLine" (click)="submitPurchaseRequest()">
+            {{ saving() ? 'Submitting…' : 'Create Purchase Request' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

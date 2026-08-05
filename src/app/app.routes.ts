@@ -37,6 +37,7 @@ import { OvertimeListComponent } from './components/setup/overtime-list/overtime
 import { MasterFormComponent } from './components/setup/master-form/master-form';
 import { IssueFromProductionListComponent } from './components/setup/issue-from-production-list/issue-from-production-list';
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
+import { PurchaseRequestComponent } from './components/setup/purchase-request/purchase-request';
 import { KpiSetupComponent } from './components/setup/kpi-setup/kpi-setup';
 import { AddKpiSetupComponent } from './components/setup/kpi-setup/add-kpi-setup/add-kpi-setup';
 import { EditKpiSetupComponent } from './components/setup/kpi-setup/edit-kpi-setup/edit-kpi-setup';
@@ -274,6 +275,11 @@ export const routes: Routes = [
     path: 'setup/issue-from-production',
     component: IssueFromProductionComponent,
     canActivate: [authGuard, requirePermission('good_issue_form', 'add')],
+  },
+  {
+    path: 'setup/purchase-request',
+    component: PurchaseRequestComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'termination',

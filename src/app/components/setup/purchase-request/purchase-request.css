@@ -1,0 +1,10 @@
+.sir-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+}
+
+.sir-row-action-buttons {
+  display: flex;
+  gap: 8px;
+}

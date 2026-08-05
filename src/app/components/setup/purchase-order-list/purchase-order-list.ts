@@ -130,7 +130,7 @@ export class PurchaseOrderListComponent {
   readonly paginationEnd = computed(() => Math.min(this.currentPage() * this.pageSize, this.filteredOrders().length));
 
   onAddNew(): void {
-    void this.router.navigate(['/miscellaneous/purchase-request']);
+    void this.router.navigate(['/setup/purchase-request']);
   }
 
   toggleSidebar(): void {
