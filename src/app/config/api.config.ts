@@ -1,5 +1,5 @@
-const INTERNAL_API_BASE_URL = 'http://ahcp_live.hr:8084';
-const EXTERNAL_API_BASE_URL = 'http://alhafiz.vdc.services:8084/ahcp_live/public';
+const INTERNAL_API_BASE_URL = 'http://ahcp.hr:8084';
+const EXTERNAL_API_BASE_URL = 'http://alhafiz.vdc.services:8084/ahcp/public';
 
 function resolveApiBaseUrl(): string {
   if (typeof window === 'undefined') {

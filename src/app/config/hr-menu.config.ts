@@ -134,6 +134,13 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         route: '/setup/master-form',
         access: { moduleSlug: 'master_form', action: 'list' },
       },
+      {
+        label: 'Withholding Tax',
+        value: 'setup/withholding-tax',
+        icon: 'money-bills',
+        route: '/setup/withholding-tax',
+        access: { moduleSlug: 'withholding_tax_form', action: 'list' },
+      },
     ],
   },
   // { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },
@@ -142,7 +149,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   
   // { label: 'Learning', value: 'learning', icon: 'learning-assistant' },
   // { label: 'Org Chart', value: 'org-chart', icon: 'org-chart' },
-  { label: 'Quality Control', value: 'quality-control', icon: 'performance', externalUrl: 'http://alhafiz.vdc.services:8092/dashboard' },
+  { label: 'Quality Control', value: 'quality-control', icon: 'performance', externalUrl: 'http://alhafiz.vdc.services:8082/dashboard' },
   // { label: 'Succession', value: 'succession', icon: 'family-care' },
 ];
 

@@ -1,0 +1,262 @@
+.withholding-tax-layout {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: #f3f7fb;
+  padding: 20px 0 40px;
+}
+
+.withholding-tax-layout * {
+  box-sizing: inherit;
+}
+
+.withholding-tax-content {
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: 28px 24px 48px;
+  background: #f3f7fb;
+}
+
+.withholding-tax-hero {
+  background: linear-gradient(135deg, #fbfcfd 0%, #ffffff 100%);
+  border: 1px solid #d1d5db;
+  border-radius: 18px;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+  padding: 28px 32px;
+  margin-bottom: 26px;
+}
+
+.page-eyebrow {
+  color: #495057;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.1;
+  color: #19232f;
+}
+
+.page-description {
+  margin: 10px 0 0;
+  color: #475569;
+  font-size: 14px;
+  max-width: 740px;
+}
+
+.withholding-tax-panel {
+  background: #ffffff;
+  border: 1px solid #e1e6eb;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  margin-bottom: 20px;
+  overflow: visible;
+}
+
+.withholding-tax-panel-header {
+  padding: 20px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #19232f;
+  border-bottom: 1px solid #ebeff2;
+  background: #f7fafc;
+}
+
+.withholding-tax-grid {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+}
+
+.withholding-tax-grid > .withholding-tax-field {
+  min-width: 0;
+}
+
+.withholding-tax-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.withholding-tax-field label {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.withholding-tax-field input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #19232f;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.withholding-tax-search-wrap {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.withholding-tax-suggestions {
+  max-height: 260px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 999;
+  max-height: 280px;
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.withholding-tax-suggestions li {
+  cursor: pointer;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.withholding-tax-suggestions li:last-child {
+  border-bottom: none;
+}
+
+.withholding-tax-suggestions li:hover {
+  background: #f4f6f8;
+}
+
+.withholding-tax-suggestions strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.withholding-tax-suggestions span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.withholding-tax-table-wrap {
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.withholding-tax-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  table-layout: fixed;
+}
+
+.withholding-tax-table td:nth-child(1),
+.withholding-tax-table td:nth-child(2),
+.withholding-tax-table td:nth-child(3) {
+  width: 16%;
+}
+
+.withholding-tax-table td:nth-child(4) {
+  width: 38%;
+}
+
+.withholding-tax-table td:nth-child(5) {
+  width: 14%;
+}
+
+.withholding-tax-table th,
+.withholding-tax-table td {
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.withholding-tax-table th {
+  background: #f8fafc;
+  color: #102a43;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.withholding-tax-table input {
+  width: 100%;
+  min-width: 120px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.withholding-tax-empty {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  padding: 32px 0;
+}
+
+.withholding-tax-actions {
+  padding: 0 24px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.withholding-tax-add,
+.withholding-tax-remove {
+  background: #374151;
+  border: none;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.withholding-tax-remove {
+  background: #7f1d1d;
+}
+
+.withholding-tax-add:hover,
+.withholding-tax-remove:hover {
+  opacity: 0.92;
+}
+
+.withholding-tax-remove {
+  min-width: 100px;
+}
+
+@media (max-width: 960px) {
+  .withholding-tax-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .withholding-tax-table-wrap {
+    padding: 16px;
+  }
+
+  .withholding-tax-table {
+    min-width: 100%;
+  }
+
+  .withholding-tax-panel {
+    border-radius: 14px;
+  }
+}

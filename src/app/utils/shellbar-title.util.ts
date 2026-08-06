@@ -61,6 +61,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/kpi-setup/add': 'Add KPI',
   'setup/overtime-list': 'Overtime List',
   'setup/master-form': 'Master Form',
+  'setup/withholding-tax': 'Withholding Tax',
   'setup/issue-from-production-list': 'Issue From Production',
   'setup/issue-from-production': 'Issue From Production',
   'plant-maintenance/main-form': 'Main Form',

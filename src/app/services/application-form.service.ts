@@ -109,8 +109,8 @@ export interface ApplicationFormRemuneration {
   allowancesApplicable: string;
   cashSalaryPercentage: string;
   eobiApplicable: string;
-  providentApplicable: string;
   socialSecurityApplicable: string;
+  providentApplicable: string;
   fuelLimit: string;
   leaveEligibilityCriteria: string;
 }
@@ -340,7 +340,6 @@ export interface EmployeeProfileAddPayload {
   overTimeApplicable: boolean;
   allowancesApplicable: boolean;
   eobiApplicable: boolean;
-  providentApplicable?: boolean;
   socialSecurityApplicable: boolean;
   medicalAllowances: number | string;
   fuelAllowances: number | string | null;
@@ -429,7 +428,6 @@ const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
   ['overTimeApplicable', 'over_time_applicable'],
   ['allowancesApplicable', 'allowances_applicable'],
   ['eobiApplicable', 'eobi_applicable'],
-  ['providentApplicable', 'provident_applicable'],
   ['socialSecurityApplicable', 'social_security_applicable'],
   ['fuelLimit', 'fuel_limit'],
   ['leaveEligibilityCriteria', 'leave_eligibility_criteria'],
@@ -829,18 +827,7 @@ export class ApplicationFormService {
 
     const leaveDays = primaryLeave.leavesAllocated || remuneration.leaveDays;
     const leavesAvailed = primaryLeave.leavesAvailed || remuneration.leavesAvailed;
-    const remainingLeavesFromRows = detail.leaveManagement.reduce((total, row) => {
-      const numeric = this.parseLeaveNumber(row.remainingLeave);
-      return total + (Number.isFinite(numeric) ? numeric : 0);
-    }, 0);
-    const remainingLeaves =
-      remainingLeavesFromRows > 0
-        ? String(remainingLeavesFromRows)
-        : primaryLeave.remainingLeave || remuneration.remainingLeaves;
-    const totalLeavesValue =
-      remainingLeavesFromRows > 0
-        ? String(remainingLeavesFromRows)
-        : leaveDays || remuneration.totalLeaves;
+    const remainingLeaves = primaryLeave.remainingLeave || remuneration.remainingLeaves;
 
     const toNullableString = (value: string | undefined | null): string | null => {
       const trimmed = sanitizeApiText(value);
@@ -912,14 +899,13 @@ export class ApplicationFormService {
       overTimeApplicable: toApiFlag(remuneration.overTimeApplicable),
       allowancesApplicable: toApiFlag(remuneration.allowancesApplicable),
       eobiApplicable: toApiFlag(remuneration.eobiApplicable),
-      providentApplicable: toApiFlag(remuneration.providentApplicable),
       socialSecurityApplicable: toApiFlag(remuneration.socialSecurityApplicable),
       fuelLimit: this.parseFuelLimitForApi(remuneration.fuelLimit),
       leaveType: primaryLeave.leaveType || remuneration.leaveType,
       leaveDays: toApiNumber(leaveDays),
       leavesAvailed: toApiNumber(leavesAvailed),
       remainingLeaves: toApiNumber(remainingLeaves),
-      totalLeaves: toApiNumber(totalLeavesValue),
+      totalLeaves: toApiNumber(leaveDays || remuneration.totalLeaves),
       leaveEligibilityCriteria: toNullableString(remuneration.leaveEligibilityCriteria),
       medicalAllowances: toApiNumber(remuneration.medicalAllowances),
       fuelAllowances: toNullableApiNumber(remuneration.fuelAllowances),
@@ -970,15 +956,6 @@ export class ApplicationFormService {
       password: login.password,
       status: toLoginStatusNumber(),
     };
-  }
-
-  private parseLeaveNumber(value: string): number {
-    const trimmed = (value ?? '').toString().trim();
-    if (!trimmed) {
-      return 0;
-    }
-    const numeric = Number.parseFloat(trimmed.replace(/,/g, ''));
-    return Number.isFinite(numeric) ? numeric : 0;
   }
 
   private filterEducationRows(rows: ApplicationFormEducationRow[]): ApplicationFormEducationRow[] {
@@ -1098,9 +1075,7 @@ export class ApplicationFormService {
   private buildApiRemunerationObject(
     payload: EmployeeProfileAddPayload,
   ): Record<string, unknown> {
-    const booleanFlagToNumber = (value: boolean | undefined): number => (value ? 1 : 0);
-
-    const remuneration: Record<string, unknown> = {
+    return {
       basicSalary: payload.basicSalary,
       paymentMode: payload.paymentMode,
       accountTitle: payload.accountTitle,
@@ -1114,11 +1089,10 @@ export class ApplicationFormService {
       advancePercentAllowed: payload.advancePercentAllowed,
       maximumLoanCapacity: payload.maximumLoanCapacity,
       maximumAdvanceCapacity: payload.maximumAdvanceCapacity,
-      overTimeApplicable: booleanFlagToNumber(payload.overTimeApplicable),
-      allowancesApplicable: booleanFlagToNumber(payload.allowancesApplicable),
-      eobiApplicable: booleanFlagToNumber(payload.eobiApplicable),
-      providentApplicable: booleanFlagToNumber(payload.providentApplicable),
-      socialSecurityApplicable: booleanFlagToNumber(payload.socialSecurityApplicable),
+      overTimeApplicable: payload.overTimeApplicable,
+      allowancesApplicable: payload.allowancesApplicable,
+      eobiApplicable: payload.eobiApplicable,
+      socialSecurityApplicable: payload.socialSecurityApplicable,
       fuelLimit: payload.fuelLimit,
       leaveEligibilityCriteria: payload.leaveEligibilityCriteria,
       leaveType: payload.leaveType,
@@ -1131,14 +1105,6 @@ export class ApplicationFormService {
       carAllowances: payload.carAllowances,
       otherAllowances: payload.otherAllowances,
     };
-
-    for (const [camel, snake] of REMUNERATION_FIELD_KEYS) {
-      if (snake) {
-        remuneration[snake] = remuneration[camel];
-      }
-    }
-
-    return remuneration;
   }
 
   private buildApiAssetsObject(payload: EmployeeProfileAddPayload): Record<string, unknown> {
@@ -1184,16 +1150,8 @@ export class ApplicationFormService {
     const pastExperienceSections = payload.pastExperienceSections ?? [];
     const leaveManagementRows = payload.leaveManagementRows ?? [];
 
-    const booleanFlagToNumber = (value: boolean | undefined): number => (value ? 1 : 0);
-
-    const serialized = {
+    return {
       ...payload,
-      overTimeApplicable: booleanFlagToNumber(payload.overTimeApplicable),
-      allowancesApplicable: booleanFlagToNumber(payload.allowancesApplicable),
-      eobiApplicable: booleanFlagToNumber(payload.eobiApplicable),
-      providentApplicable: booleanFlagToNumber(payload.providentApplicable),
-      provident_applicable: booleanFlagToNumber(payload.providentApplicable),
-      socialSecurityApplicable: booleanFlagToNumber(payload.socialSecurityApplicable),
       fuel_limit: payload.fuelLimit,
       remuneration: this.buildApiRemunerationObject(payload),
       assets: this.buildApiAssetsObject(payload),
@@ -1206,18 +1164,6 @@ export class ApplicationFormService {
       past_experience_sections: this.mapPastExperienceSectionsSnakeCase(pastExperienceSections),
       pastExperience: pastExperienceSections,
     };
-
-    console.debug('Serialized employee profile payload', {
-      providentApplicable: serialized.providentApplicable,
-      provident_applicable: serialized.provident_applicable,
-      remunerationProvidentApplicable:
-        (serialized.remuneration as Record<string, unknown>)?.['providentApplicable'],
-      remunerationProvidentApplicableSnake:
-        (serialized.remuneration as Record<string, unknown>)?.['provident_applicable'],
-      serialized,
-    });
-
-    return serialized;
   }
 
   /**
@@ -2202,12 +2148,10 @@ export class ApplicationFormService {
           pickRem('cashSalaryPercentage', 'cash_salary_percentage') ||
           pickRem('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
         eobiApplicable: this.yesNoFromApi(pickRem('eobiApplicable', 'eobi_applicable')),
-        providentApplicable: this.yesNoFromApi(
-          pickRem('providentApplicable', 'provident_applicable')
-        ),
         socialSecurityApplicable: this.yesNoFromApi(
           pickRem('socialSecurityApplicable', 'social_security_applicable'),
         ),
+        providentApplicable: this.yesNoFromApi(pickRem('providentApplicable', 'provident_applicable')),
         fuelLimit: this.readFuelLimitFromProfileItem(item),
         leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },

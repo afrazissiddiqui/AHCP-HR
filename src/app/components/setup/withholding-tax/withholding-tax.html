@@ -1,0 +1,74 @@
+<div class="withholding-tax-layout">
+  <app-page-toolbar [showSidebarToggle]="true" (sidebarToggle)="toggleSidebar()"></app-page-toolbar>
+
+  <div class="withholding-tax-content">
+    <section class="withholding-tax-hero">
+      <div class="page-title-group">
+        <p class="page-eyebrow">Setup</p>
+        <h1 class="page-title">Withholding Tax</h1>
+        <p class="page-description">Assign withholding tax brackets for employees and reuse department and branch details from application records.</p>
+      </div>
+    </section>
+
+    <section class="withholding-tax-panel">
+      <div class="withholding-tax-panel-header">Tax brackets</div>
+      <div class="withholding-tax-table-wrap">
+        <table class="withholding-tax-table">
+          <thead>
+            <tr>
+              <th rowspan="2">Lower Limit</th>
+              <th rowspan="2">Upper Limit</th>
+              <th colspan="2">Tax Rate</th>
+              <th rowspan="2">Actions</th>
+            </tr>
+            <tr>
+              <th>Rate (%)</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="taxBrackets().length === 0">
+              <td colspan="5" class="withholding-tax-empty">No tax brackets defined yet.</td>
+            </tr>
+            <tr *ngFor="let bracket of taxBrackets(); trackBy: trackByTaxBracket; let i = index">
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  [ngModel]="bracket.lowerLimit"
+                  (ngModelChange)="updateBracket(i, 'lowerLimit', $event)"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  [ngModel]="bracket.upperLimit"
+                  (ngModelChange)="updateBracket(i, 'upperLimit', $event)"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="bracket.rate"
+                  (ngModelChange)="updateBracket(i, 'rate', $event)"
+                />
+              </td>
+              <td>{{ taxRateLabel(bracket) }}</td>
+              <td>
+                <button type="button" class="withholding-tax-remove" (click)="removeTaxBracket(i)">Remove</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="withholding-tax-actions">
+        <button type="button" class="withholding-tax-add" (click)="addTaxBracket()">Add bracket</button>
+      </div>
+    </section>
+  </div>
+</div>

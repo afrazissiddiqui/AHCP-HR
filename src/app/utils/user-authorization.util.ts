@@ -258,6 +258,11 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
+    slug: 'withholding_tax_form',
+    name: 'Withholding Tax Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
     slug: 'kpi_setup_form',
     name: 'KPI Setup Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,

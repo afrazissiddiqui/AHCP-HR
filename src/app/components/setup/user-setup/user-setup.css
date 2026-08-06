@@ -436,15 +436,44 @@
 }
 
 .branch-option-input {
-  accent-color: var(--us-primary);
-  cursor: pointer;
+  /* keep the native input for accessibility but visually hide it; indicator shows state */
+  position: absolute;
+  opacity: 0;
+  pointer-events: all;
   margin: 0;
+}
+
+.branch-option-indicator {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--us-line);
+  background: transparent;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: background 0.15s var(--us-ease), border-color 0.15s var(--us-ease), box-shadow 0.15s var(--us-ease);
+}
+
+.branch-option--selected .branch-option-indicator {
+  background: var(--us-primary);
+  border-color: var(--us-primary);
+  box-shadow: 0 0 0 6px rgba(10,110,209,0.06);
 }
 
 .branch-option-label {
   color: var(--us-text);
   font-size: 13px;
   font-weight: 600;
+}
+
+.field-select {
+  background: var(--us-surface);
+  border: 1px solid var(--us-line);
+  border-radius: 8px;
+  color: var(--us-text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
 }
 
 .field-block--wide {

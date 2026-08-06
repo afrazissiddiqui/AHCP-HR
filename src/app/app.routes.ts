@@ -35,6 +35,7 @@ import { UserSetupComponent } from './components/setup/user-setup/user-setup';
 import { WorkstationComponent } from './components/setup/workstation/workstation';
 import { OvertimeListComponent } from './components/setup/overtime-list/overtime-list';
 import { MasterFormComponent } from './components/setup/master-form/master-form';
+import { WithholdingTaxComponent } from './components/setup/withholding-tax/withholding-tax';
 import { IssueFromProductionListComponent } from './components/setup/issue-from-production-list/issue-from-production-list';
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
 import { PurchaseRequestComponent } from './components/setup/purchase-request/purchase-request';
@@ -265,6 +266,11 @@ export const routes: Routes = [
     path: 'setup/master-form',
     component: MasterFormComponent,
     canActivate: [authGuard, requirePermission('master_form', 'list')],
+  },
+  {
+    path: 'setup/withholding-tax',
+    component: WithholdingTaxComponent,
+    canActivate: [authGuard, requirePermission('withholding_tax_form', 'list')],
   },
   {
     path: 'setup/issue-from-production-list',

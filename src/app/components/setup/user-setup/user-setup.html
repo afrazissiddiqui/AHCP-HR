@@ -42,6 +42,7 @@
                               [checked]="isBranchSelected(option.value)"
                               (change)="toggleBranchSelection(option.value, $event.target.checked)"
                             />
+                            <span class="branch-option-indicator" aria-hidden></span>
                             <span class="branch-option-label">{{ option.label }}</span>
                           </label>
                         }
@@ -73,6 +74,21 @@
                   </label>
                 }
               }
+
+              <!-- SAP Employee ID (dropdown placeholder) -->
+              <label class="field-block field-block--wide">
+                <span class="field-label">SAP Employee ID</span>
+                <select
+                  class="field-select"
+                  [ngModel]="fieldValue('sap_employee_id')"
+                  (ngModelChange)="updateField('sap_employee_id', $event)"
+                  name="sap-employee-id"
+                >
+                  <option value="">Select employee</option>
+                  <!-- options to be populated later -->
+                </select>
+              </label>
+
             </div>
           </div>
 
