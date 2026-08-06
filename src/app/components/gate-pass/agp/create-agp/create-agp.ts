@@ -516,8 +516,8 @@ export class CreateAgpComponent implements OnInit {
     this.issuedTo = emptyIfDash(record.issuedTo);
     this.articleOutDate = emptyIfDash(record.articleOutDate);
     this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
-    this.location = resolveGatePassLocation(emptyIfDash(record.location));
-    this.store = resolveGatePassWarehouseCode(emptyIfDash(record.store));
+    this.location = resolveGatePassLocation(emptyIfDash(record.location)) || emptyIfDash(record.location);
+    this.store = resolveGatePassWarehouseCode(emptyIfDash(record.store)) || emptyIfDash(record.store);
     this.kantaSlip = emptyIfDash(record.kantaSlip);
     this.driverName = emptyIfDash(record.driverName);
     this.driverCnic = formatGatePassCnic(emptyIfDash(record.driverCnic));

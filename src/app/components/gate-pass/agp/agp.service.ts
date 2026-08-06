@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
 import { AuthService } from '../../../services/auth.service';
-import { filterRecordsBySessionBranches } from '../../../utils/branch-filter.util';
 
 export interface AgpLineItem {
   itemCode: string;
@@ -159,15 +158,13 @@ export function createEmptyAgpLineItem(): AgpLineItem {
 })
 export class AgpService {
   private readonly http = inject(HttpClient);
-  private readonly authService = inject(AuthService);
   private readonly agpList = signal<AgpRecord[]>([]);
 
   readonly records = this.agpList.asReadonly();
 
   fetchArticleGatePasses(): Observable<AgpRecord[]> {
     return this.http.get<unknown>(ARTICLE_GATE_PASS_LIST_URL).pipe(
-      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item)) ),
-      map((records) => filterRecordsBySessionBranches(records, (record) => record.location, this.authService.getSessionUser())),
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
       tap((records) => this.agpList.set(records)),
     );
   }
@@ -366,7 +363,15 @@ export class AgpService {
     const businessPartnerName =
       this.pickString(sources, ['businessPartnerName', 'business_partner_name', 'BusinessPartnerName']) || '—';
     const requestingDepartment =
-      this.pickString(sources, ['requestingDepartment', 'requesting_department', 'department', 'Department']) || '—';
+      this.pickString(sources, [
+        'requestingDepartment',
+        'requesting_department',
+        'RequestingDepartment',
+        'department',
+        'Department',
+        'requestingDept',
+        'requesting_dept',
+      ]) || '—';
     const lines = this.mapLines(item);
     const totalQtySent =
       this.pickNumber(sources, ['totalQtySent', 'total_qty_sent', 'TotalQtySent']) ||
@@ -389,17 +394,17 @@ export class AgpService {
       type: this.pickString(sources, ['type', 'Type']) || '—',
       businessPartnerCode:
         this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode']) || '—',
-      baseDocNo: this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo']) || '—',
+      baseDocNo: this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo', 'BaseDoc', 'baseDoc']) || '—',
       businessPartnerName,
       vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']) || '—',
-      reasonForMovement: this.pickString(sources, ['reasonForMovement', 'reason_for_movement']) || '—',
-      requestingEmployee: this.pickString(sources, ['requestingEmployee', 'requesting_employee']) || '—',
-      requestedBy: this.pickString(sources, ['requestedBy', 'requested_by']) || '—',
-      issuedTo: this.pickString(sources, ['issuedTo', 'issued_to']) || '—',
-      articleOutDate: this.pickString(sources, ['articleOutDate', 'article_out_date']) || '—',
-      articleReturnedDate: this.pickString(sources, ['articleReturnedDate', 'article_returned_date']) || '—',
-      location: this.pickString(sources, ['location', 'Location']) || '—',
-      store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse']) || '—',
+      reasonForMovement: this.pickString(sources, ['reasonForMovement', 'reason_for_movement', 'ReasonForMovement', 'reason']) || '—',
+      requestingEmployee: this.pickString(sources, ['requestingEmployee', 'requesting_employee', 'RequestingEmployee']) || '—',
+      requestedBy: this.pickString(sources, ['requestedBy', 'requested_by', 'RequestedBy']) || '—',
+      issuedTo: this.pickString(sources, ['issuedTo', 'issued_to', 'IssuedTo']) || '—',
+      articleOutDate: this.pickString(sources, ['articleOutDate', 'article_out_date', 'ArticleOutDate', 'articleOutDateDoc']) || '—',
+      articleReturnedDate: this.pickString(sources, ['articleReturnedDate', 'article_returned_date', 'ArticleReturnedDate']) || '—',
+      location: this.pickString(sources, ['location', 'Location', 'branch', 'Branch', 'branchName', 'branch_name']) || '—',
+      store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse', 'warehouseCode']) || '—',
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',
       driverName:
         this.pickString(sources, [
@@ -424,6 +429,8 @@ export class AgpService {
           'DriverPhone',
           'transporterPhone',
           'transporter_phone',
+          'TranspPhone',
+          'transportPhone',
         ]) || '—',
       biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']) || '—',
       weight: this.pickString(sources, ['weight', 'Weight']) || '—',

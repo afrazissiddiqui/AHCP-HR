@@ -76,6 +76,7 @@ export class AgpComponent implements OnInit {
     { key: 'businessPartnerName', label: 'Business partner', visible: true },
     { key: 'requestingDepartment', label: 'Department', visible: true },
     { key: 'vehicleNo', label: 'Vehicle no.', visible: true },
+    { key: 'location', label: 'Branch', visible: true },
     { key: 'totalQtySent', label: 'Qty sent', visible: true },
     { key: 'totalQtyReceived', label: 'Qty received', visible: true },
     { key: 'status', label: 'Status', visible: true },

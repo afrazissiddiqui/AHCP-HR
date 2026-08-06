@@ -35,6 +35,15 @@ function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
 }
 
+export function normalizeGatePassString(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  const text = String(value).trim();
+  return text === '—' ? '' : text;
+}
+
 function numericFieldFromDoc(value: string | undefined): string {
   const parsed = parseFloat(String(value ?? '').replace(/[^\d.]/g, ''));
   return Number.isFinite(parsed) ? String(parsed) : '';
@@ -665,37 +674,37 @@ export class CreateIgpComponent implements OnInit {
 
   private buildPayload(): IgpAddPayload {
     return {
-      type: this.type.trim(),
-      baseDocNo: this.baseDocNo.trim(),
-      documentDate: this.documentDate.trim(),
-      referenceNo: this.referenceNo.trim(),
-      businessPartnerCode: this.businessPartnerCode.trim(),
-      businessPartnerName: this.businessPartnerName.trim(),
-      vehicleNo: this.vehicleNo.trim(),
-      fromUnit: this.fromUnit.trim(),
-      kantaSlip: this.kantaSlip.trim(),
-      biltyNo: this.biltyNo.trim(),
-      store: this.store.trim(),
-      driverName: this.driverName.trim(),
-      driverCnic: this.driverCnic.trim(),
-      driverPhone: this.driverPhone.trim(),
-      department: this.department.trim(),
-      weight: String(this.weight ?? '').trim(),
-      location: this.location.trim(),
-      employee: this.employee.trim(),
-      remarks: this.remarks.trim(),
+      type: normalizeGatePassString(this.type),
+      baseDocNo: normalizeGatePassString(this.baseDocNo),
+      documentDate: normalizeGatePassString(this.documentDate),
+      referenceNo: normalizeGatePassString(this.referenceNo),
+      businessPartnerCode: normalizeGatePassString(this.businessPartnerCode),
+      businessPartnerName: normalizeGatePassString(this.businessPartnerName),
+      vehicleNo: normalizeGatePassString(this.vehicleNo),
+      fromUnit: normalizeGatePassString(this.fromUnit),
+      kantaSlip: normalizeGatePassString(this.kantaSlip),
+      biltyNo: normalizeGatePassString(this.biltyNo),
+      store: normalizeGatePassString(this.store),
+      driverName: normalizeGatePassString(this.driverName),
+      driverCnic: normalizeGatePassString(this.driverCnic),
+      driverPhone: normalizeGatePassString(this.driverPhone),
+      department: normalizeGatePassString(this.department),
+      weight: normalizeGatePassString(this.weight),
+      location: normalizeGatePassString(this.location),
+      employee: normalizeGatePassString(this.employee),
+      remarks: normalizeGatePassString(this.remarks),
       lines: this.lines
         .filter((line) => !line.deleted)
         .map((line) => ({
-          itemCode: line.itemCode.trim(),
-          itemName: line.itemName.trim(),
-          category: line.category.trim(),
-          packingCondition: line.packingCondition.trim(),
-          productQuality: line.productQuality.trim(),
-          uom: line.uom.trim(),
+          itemCode: normalizeGatePassString(line.itemCode),
+          itemName: normalizeGatePassString(line.itemName),
+          category: normalizeGatePassString(line.category),
+          packingCondition: normalizeGatePassString(line.packingCondition),
+          productQuality: normalizeGatePassString(line.productQuality),
+          uom: normalizeGatePassString(line.uom),
           qty: Number(line.qty) || 0,
-          info: line.info.trim(),
-          remarks: line.remarks.trim(),
+          info: normalizeGatePassString(line.info),
+          remarks: normalizeGatePassString(line.remarks),
         })),
       totalQty: this.totalQty,
     };

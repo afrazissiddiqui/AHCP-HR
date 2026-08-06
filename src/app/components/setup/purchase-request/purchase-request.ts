@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { MiscellaneousLayoutService } from '../../miscellaneous/miscellaneous-layout.service';
+import { OitmItem } from '../../../constants/oitm-items';
+import { OitmItemsService } from '../../../services/oitm-items.service';
 
 interface PurchaseRequestHeader {
   requestDate: string;
@@ -41,6 +43,7 @@ interface PurchaseRequestLine {
 })
 export class PurchaseRequestComponent {
   private readonly router = inject(Router);
+  private readonly oitmItemsService = inject(OitmItemsService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
   readonly headerForm = signal<PurchaseRequestHeader>({
@@ -53,6 +56,10 @@ export class PurchaseRequestComponent {
   });
 
   readonly contentLines = signal<PurchaseRequestLine[]>([this.createEmptyLine()]);
+  readonly itemOptions = signal<OitmItem[]>([]);
+  readonly itemOptionsLoading = signal(false);
+  readonly itemOptionsError = signal<string | null>(null);
+  readonly itemSearchTerms = signal<Record<number, string>>({});
   readonly saving = signal(false);
 
   get hasValidLine(): boolean {
@@ -75,6 +82,100 @@ export class PurchaseRequestComponent {
 
   addContentLine(): void {
     this.contentLines.update((lines) => [...lines, this.createEmptyLine()]);
+  }
+
+  loadItemOptions(forceReload = false): void {
+    if (!forceReload && this.itemOptions().length > 0) {
+      return;
+    }
+
+    this.itemOptionsLoading.set(true);
+    this.itemOptionsError.set(null);
+
+    const request = forceReload ? this.oitmItemsService.reload() : this.oitmItemsService.ensureLoaded();
+
+    request.subscribe({
+      next: (items) => {
+        this.itemOptions.set(items);
+        this.itemOptionsLoading.set(false);
+      },
+      error: () => {
+        this.itemOptions.set([]);
+        this.itemOptionsLoading.set(false);
+        this.itemOptionsError.set('Could not load items from AHCP.');
+      },
+    });
+  }
+
+  onItemCodeFocus(): void {
+    this.loadItemOptions();
+  }
+
+  updateItemSearch(index: number, value: string): void {
+    this.itemSearchTerms.update((terms) => ({ ...terms, [index]: value }));
+  }
+
+  getFilteredItemSuggestions(index: number): OitmItem[] {
+    const term = (this.itemSearchTerms()[index] ?? '').trim().toLowerCase();
+    if (!term) {
+      return [];
+    }
+
+    return this.itemOptions().filter((item) => {
+      const haystack = `${item.itemCode} ${item.itemName}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }
+
+  applySuggestedItem(index: number, item: OitmItem): void {
+    this.contentLines.update((lines) =>
+      lines.map((line, lineIndex) => {
+        if (lineIndex !== index) {
+          return line;
+        }
+
+        return {
+          ...line,
+          itemCode: item.itemCode,
+          itemDescription: item.itemName,
+          uomCode: item.uom,
+        };
+      }),
+    );
+    this.itemSearchTerms.update((terms) => ({ ...terms, [index]: item.itemCode }));
+  }
+
+  selectItem(index: number, value: string): void {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) {
+      this.contentLines.update((lines) =>
+        lines.map((line, lineIndex) => (lineIndex === index ? { ...line, itemCode: '', itemDescription: '', uomCode: '' } : line)),
+      );
+      return;
+    }
+
+    const selectedItem = this.itemOptions().find(
+      (item) => item.itemCode.toLowerCase() === normalized || item.itemName.toLowerCase() === normalized,
+    );
+
+    if (!selectedItem) {
+      return;
+    }
+
+    this.contentLines.update((lines) =>
+      lines.map((line, lineIndex) => {
+        if (lineIndex !== index) {
+          return line;
+        }
+
+        return {
+          ...line,
+          itemCode: selectedItem.itemCode,
+          itemDescription: selectedItem.itemName,
+          uomCode: selectedItem.uom,
+        };
+      }),
+    );
   }
 
   deleteContentLine(index: number): void {

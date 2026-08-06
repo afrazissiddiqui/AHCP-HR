@@ -58,8 +58,6 @@
                   <th class="sir-col-item-name">UOM Code</th>
                   <th class="sir-col-warehouse">Warehouse</th>
                   <th class="sir-col-qty">Quantity</th>
-                  <th class="sir-col-date">Mfg Date</th>
-                  <th class="sir-col-date">Expiry Date</th>
                   <th class="sir-col-actions">Action</th>
                 </tr>
               </thead>
@@ -68,7 +66,30 @@
                   <tr>
                     <td class="sir-col-sr">{{ $index + 1 }}</td>
                     <td class="sir-col-item-code">
-                      <input type="text" class="sir-table-input" [ngModel]="line.itemCode" (ngModelChange)="updateContentLine($index, 'itemCode', $event)" />
+                      <div style="position: relative;">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          [ngModel]="line.itemCode"
+                          (focus)="onItemCodeFocus()"
+                          (ngModelChange)="updateContentLine($index, 'itemCode', $event); updateItemSearch($index, $event)"
+                          placeholder="Type item code or name"
+                        />
+                        @if (itemOptionsLoading()) {
+                          <div style="margin-top: 4px; height: 4px; border-radius: 999px; background: #e5e7eb; overflow: hidden;">
+                            <div style="height: 100%; width: 70%; background: linear-gradient(90deg, #2563eb, #60a5fa); animation: pulse 1.2s ease-in-out infinite;"></div>
+                          </div>
+                        }
+                        @if (getFilteredItemSuggestions($index).length > 0) {
+                          <div class="purchase-request-item-suggestion-panel">
+                            @for (item of getFilteredItemSuggestions($index); track item.itemCode) {
+                              <button type="button" (mousedown)="applySuggestedItem($index, item)">
+                                {{ item.itemCode }} — {{ item.itemName }}
+                              </button>
+                            }
+                          </div>
+                        }
+                      </div>
                     </td>
                     <td class="sir-col-item-name">
                       <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" (ngModelChange)="updateContentLine($index, 'itemDescription', $event)" />
