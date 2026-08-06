@@ -10,16 +10,24 @@ export function resolveBranchNameFromBplId(value: string | number | undefined | 
     '2': 'AHCP_HO',
     '3': 'AHCP_Faisalabad',
     ahcp_peshawar: 'AHCP_Peshawar',
+    'ahcp-peshawar': 'AHCP_Peshawar',
     ahcp_ho: 'AHCP_HO',
+    'ahcp-ho': 'AHCP_HO',
     ahcp_faisalabad: 'AHCP_Faisalabad',
+    'ahcp-faisalabad': 'AHCP_Faisalabad',
     peshawar: 'AHCP_Peshawar',
     'ahcp peshawar': 'AHCP_Peshawar',
     psh: 'AHCP_Peshawar',
+    'psh branch': 'AHCP_Peshawar',
     ho: 'AHCP_HO',
     'head office': 'AHCP_HO',
+    'head-office': 'AHCP_HO',
     headoffice: 'AHCP_HO',
     faisalabad: 'AHCP_Faisalabad',
+    'faisalabad branch': 'AHCP_Faisalabad',
     fsd: 'AHCP_Faisalabad',
+    'ahcp fsd': 'AHCP_Faisalabad',
+    'ahcp-fsd': 'AHCP_Faisalabad',
     'ahcp faisalabad': 'AHCP_Faisalabad',
   };
 
@@ -32,13 +40,13 @@ export function resolveBranchNameFromBplId(value: string | number | undefined | 
     return branchNames[prefix];
   }
 
-  if (normalized.includes('psh')) {
+  if (normalized.includes('psh') || normalized.includes('peshawar')) {
     return 'AHCP_Peshawar';
   }
   if (normalized.includes('fsd') || normalized.includes('faisalabad')) {
     return 'AHCP_Faisalabad';
   }
-  if (normalized.includes('ho') || normalized.includes('head office')) {
+  if (normalized.includes('ho') || normalized.includes('head office') || normalized.includes('head-office')) {
     return 'AHCP_HO';
   }
 

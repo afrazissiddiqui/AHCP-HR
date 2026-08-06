@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
+import { AuthService } from '../../../services/auth.service';
+import { filterRecordsBySessionBranches } from '../../../utils/branch-filter.util';
 
 export interface IgpLineItem {
   itemCode: string;
@@ -123,6 +125,7 @@ export function createEmptyIgpLineItem(): IgpLineItem {
 })
 export class IgpService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly igpList = signal<IgpRecord[]>([]);
 
   readonly records = this.igpList.asReadonly();
@@ -130,6 +133,9 @@ export class IgpService {
   fetchInwardGatePasses(): Observable<IgpRecord[]> {
     return this.http.get<unknown>(INWARD_GATE_PASS_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
+      map((records) =>
+        filterRecordsBySessionBranches(records, (record) => record.location, this.authService.getSessionUser()),
+      ),
       tap((records) => this.igpList.set(records)),
     );
   }

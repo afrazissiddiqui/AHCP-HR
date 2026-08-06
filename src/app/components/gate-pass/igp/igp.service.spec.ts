@@ -51,6 +51,33 @@ describe('IgpService', () => {
     ]);
   });
 
+  it('filters records to the current user branch access', (done) => {
+    authService.getSessionUser.and.returnValue({ is_admin: false, branch: '3' } as any);
+
+    service.fetchInwardGatePasses().subscribe({
+      next: (records) => {
+        expect(records.length).toBe(1);
+        expect(records[0].referenceNo).toBe('IGP-400');
+        done();
+      },
+      error: done.fail,
+    });
+
+    const req = httpMock.expectOne((request) => request.method === 'GET');
+    req.flush([
+      {
+        referenceNo: 'IGP-400',
+        businessPartnerName: 'ABC Traders',
+        location: 'FSD',
+      },
+      {
+        referenceNo: 'IGP-500',
+        businessPartnerName: 'XYZ Traders',
+        location: 'Peshawar',
+      },
+    ]);
+  });
+
   it('extracts records from wrapped response envelopes', (done) => {
     authService.getSessionUser.and.returnValue({ is_admin: true } as any);
 

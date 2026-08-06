@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
 import { AuthService } from '../../../services/auth.service';
-import { resolveBranchNameFromBplId } from '../../../utils/branch-name.util';
+import { filterRecordsBySessionBranches } from '../../../utils/branch-filter.util';
 
 export interface OgpLineItem {
   itemCode: string;
@@ -133,42 +133,7 @@ export class OgpService {
   fetchOutwardGatePasses(): Observable<OgpRecord[]> {
     return this.http.get<unknown>(OUTWARD_GATE_PASS_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
-      map((records) => {
-        const sessionUser = this.authService.getSessionUser();
-        if (!sessionUser || sessionUser.is_admin) {
-          return records;
-        }
-
-        const rawBranches =
-          (sessionUser.branch ?? sessionUser.branches ?? sessionUser.Branch ?? sessionUser.Branches) as
-            | Array<number | string>
-            | number
-            | string
-            | undefined
-            | null;
-
-        const branchArray: Array<number | string> = Array.isArray(rawBranches)
-          ? rawBranches
-          : rawBranches !== undefined && rawBranches !== null
-          ? [rawBranches]
-          : [];
-
-        const allowed = new Set(
-          branchArray
-            .map((b) => resolveBranchNameFromBplId(b as string | number))
-            .filter((x) => x && x.trim())
-            .map((x) => x.toLowerCase()),
-        );
-
-        if (!allowed.size) {
-          return records;
-        }
-
-        return records.filter((rec) => {
-          const loc = resolveBranchNameFromBplId(rec.location).toLowerCase();
-          return allowed.has(loc);
-        });
-      }),
+      map((records) => filterRecordsBySessionBranches(records, (record) => record.location, this.authService.getSessionUser())),
       tap((records) => this.ogpList.set(records)),
     );
   }
