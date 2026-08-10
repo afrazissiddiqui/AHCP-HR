@@ -143,6 +143,7 @@ export class IgpComponent implements OnInit {
         this.bulkImportService.setPendingData({
           type: parsedData.type,
           baseDocNo: parsedData.baseDocNo,
+          poNumber: parsedData.poNumber,
           businessPartnerName: parsedData.businessPartnerName,
           businessPartnerCode: parsedData.businessPartnerCode,
           department: parsedData.department,

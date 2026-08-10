@@ -7,6 +7,7 @@ export interface ParsedIgpCsvLine extends Pick<IgpLineItem, 'itemCode' | 'itemNa
 export interface ParsedIgpCsvData {
   type?: string;
   baseDocNo?: string;
+  poNumber?: string;
   businessPartnerName?: string;
   businessPartnerCode?: string;
   department?: string;
@@ -131,6 +132,11 @@ export function parseIgpBulkUploadCsv(csvContent: string): ParsedIgpCsvData {
           ['basedocno', 'baseDocNo'],
           ['baseDoc', 'baseDocNo'],
           ['baseDocument', 'baseDocNo'],
+          ['poNumber', 'poNumber'],
+          ['ponumber', 'poNumber'],
+          ['poNo', 'poNumber'],
+          ['pono', 'poNumber'],
+          ['purchaseorderno', 'poNumber'],
         ]);
 
         const mapped = destination.get(name);
@@ -178,6 +184,7 @@ export function parseIgpBulkUploadCsv(csvContent: string): ParsedIgpCsvData {
   return {
     type: headerFields.get('type') || '',
     baseDocNo: headerFields.get('baseDocNo') || '',
+    poNumber: headerFields.get('poNumber') || '',
     businessPartnerName: headerFields.get('businesspartnername') || '',
     businessPartnerCode: headerFields.get('businesspartnercode') || '',
     department: headerFields.get('department') || '',

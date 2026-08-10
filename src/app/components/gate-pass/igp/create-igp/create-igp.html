@@ -198,6 +198,11 @@
               </div>
 
               <div class="cjr-row">
+                <label for="igp-po-number">PO number:</label>
+                <input id="igp-po-number" type="text" [(ngModel)]="poNumber" name="poNumber" readonly />
+              </div>
+
+              <div class="cjr-row">
                 <label for="igp-bp-code">Business partner code:</label>
                 <app-gate-pass-business-partner-search-input
                   inputId="igp-bp-code"

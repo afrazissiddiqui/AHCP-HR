@@ -34,6 +34,7 @@ export interface IgpPayloadLineItem {
 export interface IgpAddPayload {
   type: string;
   baseDocNo: string;
+  poNumber: string;
   documentDate: string;
   referenceNo: string;
   businessPartnerCode: string;
@@ -74,6 +75,7 @@ export interface IgpRecord {
   type: string;
   businessPartnerCode: string;
   baseDocNo: string;
+  poNumber: string;
   businessPartnerName: string;
   vehicleNo: string;
   fromUnit: string;
@@ -177,6 +179,7 @@ export class IgpService {
     return {
       type: record.type,
       baseDocNo: record.baseDocNo,
+      poNumber: record.poNumber,
       documentDate: record.submittedDate,
       referenceNo: record.referenceNo,
       businessPartnerCode: record.businessPartnerCode,
@@ -429,6 +432,10 @@ export class IgpService {
       businessPartnerCode:
         this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode', 'bpCode', 'BPCode']) || '—',
       baseDocNo:
+        this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo', 'baseDoc', 'BaseDoc', 'baseDocumentNo', 'BaseDocumentNo']) ||
+        '—',
+      poNumber:
+        this.pickString(sources, ['poNumber', 'po_number', 'PoNumber', 'poNo', 'po_no', 'PoNo', 'purchaseOrderNo', 'PurchaseOrderNo']) ||
         this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo', 'baseDoc', 'BaseDoc', 'baseDocumentNo', 'BaseDocumentNo']) ||
         '—',
       businessPartnerName,

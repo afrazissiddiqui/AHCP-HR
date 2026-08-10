@@ -98,6 +98,7 @@ export class CreateIgpComponent implements OnInit {
   documentDate = '';
   businessPartnerCode = '';
   baseDocNo = '';
+  poNumber = '';
   referenceNo = '';
   businessPartnerName = '';
   vehicleNo = '';
@@ -230,6 +231,9 @@ export class CreateIgpComponent implements OnInit {
     }
     if (pendingData.baseDocNo?.trim()) {
       this.baseDocNo = pendingData.baseDocNo.trim();
+    }
+    if (pendingData.poNumber?.trim()) {
+      this.poNumber = pendingData.poNumber.trim();
     }
     if (pendingData.businessPartnerName?.trim()) {
       this.businessPartnerName = pendingData.businessPartnerName.trim();
@@ -530,6 +534,7 @@ export class CreateIgpComponent implements OnInit {
 
   private clearBaseDocumentDerivedFields(): void {
     this.baseDocNo = '';
+    this.poNumber = '';
     this.businessPartnerCode = '';
     this.businessPartnerName = '';
     this.vehicleNo = '';
@@ -563,6 +568,7 @@ export class CreateIgpComponent implements OnInit {
 
   private applyBaseDocument(doc: OpenBaseDocument): void {
     this.baseDocNo = doc.number;
+    this.poNumber = doc.number || doc.docNum || '';
     if (doc.date?.trim()) {
       this.documentDate = doc.date.trim();
     }
@@ -657,6 +663,7 @@ export class CreateIgpComponent implements OnInit {
     this.referenceNo = emptyIfDash(record.referenceNo);
     this.businessPartnerCode = emptyIfDash(record.businessPartnerCode);
     this.baseDocNo = emptyIfDash(record.baseDocNo);
+    this.poNumber = emptyIfDash(record.poNumber) || emptyIfDash(record.baseDocNo);
     this.businessPartnerName = emptyIfDash(record.businessPartnerName);
     this.vehicleNo = emptyIfDash(record.vehicleNo);
     this.fromUnit = emptyIfDash(record.fromUnit);
@@ -715,6 +722,7 @@ export class CreateIgpComponent implements OnInit {
     return {
       type: normalizeGatePassString(this.type),
       baseDocNo: normalizeGatePassString(this.baseDocNo),
+      poNumber: normalizeGatePassString(this.poNumber),
       documentDate: normalizeGatePassString(this.documentDate),
       referenceNo: normalizeGatePassString(this.referenceNo),
       businessPartnerCode: normalizeGatePassString(this.businessPartnerCode),

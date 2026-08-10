@@ -4,6 +4,7 @@ import { createEmptyIgpLineItem, type IgpLineItem } from './igp.service';
 export interface IgpBulkImportData {
   type?: string;
   baseDocNo?: string;
+  poNumber?: string;
   businessPartnerName?: string;
   businessPartnerCode?: string;
   department?: string;
