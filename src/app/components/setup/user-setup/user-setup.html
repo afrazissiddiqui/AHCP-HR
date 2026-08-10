@@ -75,18 +75,16 @@
                 }
               }
 
-              <!-- SAP Employee ID (dropdown placeholder) -->
               <label class="field-block field-block--wide">
                 <span class="field-label">SAP Employee ID</span>
-                <select
-                  class="field-select"
+                <input
+                  type="text"
+                  class="field-input"
                   [ngModel]="fieldValue('sap_employee_id')"
                   (ngModelChange)="updateField('sap_employee_id', $event)"
                   name="sap-employee-id"
-                >
-                  <option value="">Select employee</option>
-                  <!-- options to be populated later -->
-                </select>
+                  placeholder="Select employee"
+                />
               </label>
 
             </div>

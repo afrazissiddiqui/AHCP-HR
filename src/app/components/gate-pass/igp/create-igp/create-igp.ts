@@ -228,6 +228,9 @@ export class CreateIgpComponent implements OnInit {
     if (pendingData.type?.trim()) {
       this.type = pendingData.type.trim();
     }
+    if (pendingData.baseDocNo?.trim()) {
+      this.baseDocNo = pendingData.baseDocNo.trim();
+    }
     if (pendingData.businessPartnerName?.trim()) {
       this.businessPartnerName = pendingData.businessPartnerName.trim();
     }
@@ -265,7 +268,7 @@ export class CreateIgpComponent implements OnInit {
       this.driverPhone = formatGatePassPhoneDigits(pendingData.driverPhone.trim());
     }
     if (pendingData.weight?.trim()) {
-      this.weight = pendingData.weight.trim();
+      this.weight = numericFieldFromDoc(pendingData.weight.trim());
     }
 
     // Apply line items
@@ -673,6 +676,42 @@ export class CreateIgpComponent implements OnInit {
   }
 
   private buildPayload(): IgpAddPayload {
+    const linesForPayload = this.lines
+      .filter((line) => !line.deleted)
+      .map((line) => {
+        const hydrated = { ...line };
+        if (!hydrated.category?.trim()) {
+          hydrated.category = 'N/A';
+        }
+        if (!hydrated.packingCondition?.trim()) {
+          hydrated.packingCondition = 'N/A';
+        }
+        if (!hydrated.productQuality?.trim()) {
+          hydrated.productQuality = 'N/A';
+        }
+        if (!hydrated.uom?.trim()) {
+          hydrated.uom = 'EA';
+        }
+        if (!hydrated.info?.trim()) {
+          hydrated.info = '';
+        }
+        if (!hydrated.remarks?.trim()) {
+          hydrated.remarks = '';
+        }
+
+        return {
+          itemCode: normalizeGatePassString(hydrated.itemCode),
+          itemName: normalizeGatePassString(hydrated.itemName),
+          category: normalizeGatePassString(hydrated.category),
+          packingCondition: normalizeGatePassString(hydrated.packingCondition),
+          productQuality: normalizeGatePassString(hydrated.productQuality),
+          uom: normalizeGatePassString(hydrated.uom),
+          qty: Number(hydrated.qty) || 0,
+          info: normalizeGatePassString(hydrated.info),
+          remarks: normalizeGatePassString(hydrated.remarks),
+        };
+      });
+
     return {
       type: normalizeGatePassString(this.type),
       baseDocNo: normalizeGatePassString(this.baseDocNo),
@@ -693,19 +732,7 @@ export class CreateIgpComponent implements OnInit {
       location: normalizeGatePassString(this.location),
       employee: normalizeGatePassString(this.employee),
       remarks: normalizeGatePassString(this.remarks),
-      lines: this.lines
-        .filter((line) => !line.deleted)
-        .map((line) => ({
-          itemCode: normalizeGatePassString(line.itemCode),
-          itemName: normalizeGatePassString(line.itemName),
-          category: normalizeGatePassString(line.category),
-          packingCondition: normalizeGatePassString(line.packingCondition),
-          productQuality: normalizeGatePassString(line.productQuality),
-          uom: normalizeGatePassString(line.uom),
-          qty: Number(line.qty) || 0,
-          info: normalizeGatePassString(line.info),
-          remarks: normalizeGatePassString(line.remarks),
-        })),
+      lines: linesForPayload,
       totalQty: this.totalQty,
     };
   }

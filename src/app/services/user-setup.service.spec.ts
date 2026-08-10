@@ -20,21 +20,25 @@ describe('UserSetupService', () => {
     httpMock.verify();
   });
 
-  it('includes branch and department in the serialized user payload', () => {
+  it('includes employee code, branch and department in the serialized user payload', () => {
     service.addUser({
-      name: 'Check',
-      email: 'Check@gmail.com',
+      name: 'Test-user',
+      email: 'testuser@gmail.com',
       password: '123456',
+      employee_code: 'Emp-00003290',
+      branch: [1, 3],
+      department: 25,
       authorization: [],
     }).subscribe();
 
     const req = httpMock.expectOne((request) => request.url.includes('user-add'));
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(jasmine.objectContaining({
-      name: 'Check',
-      email: 'Check@gmail.com',
+      name: 'Test-user',
+      email: 'testuser@gmail.com',
       password: '123456',
-      branch: ['peshawar', 'HO', 'faisalabad'],
+      employee_code: 'Emp-00003290',
+      branch: [1, 3],
       department: 25,
     }));
 

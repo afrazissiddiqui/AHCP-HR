@@ -142,6 +142,7 @@ export class IgpComponent implements OnInit {
         const importedLines = this.bulkImportService.createImportedLinesFromValues(parsedData.lines);
         this.bulkImportService.setPendingData({
           type: parsedData.type,
+          baseDocNo: parsedData.baseDocNo,
           businessPartnerName: parsedData.businessPartnerName,
           businessPartnerCode: parsedData.businessPartnerCode,
           department: parsedData.department,

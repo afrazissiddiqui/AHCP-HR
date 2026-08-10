@@ -21,7 +21,12 @@
             </div>
             <div class="sir-field-row">
               <label>Branch:</label>
-              <input type="text" [ngModel]="headerForm().branch" (ngModelChange)="updateHeaderField('branch', $event)" />
+              <select class="sir-table-input" [ngModel]="headerForm().branch" (ngModelChange)="updateHeaderField('branch', $event)">
+                <option value="">— Select branch —</option>
+                @for (option of branchOptions(); track option.value) {
+                  <option value="{{ option.value }}">{{ option.label }}</option>
+                }
+              </select>
             </div>
           </div>
 
@@ -57,8 +62,6 @@
                   <th class="sir-col-item-name">Department</th>
                   <th class="sir-col-item-name">UOM Code</th>
                   <th class="sir-col-warehouse">Warehouse</th>
-                  <th class="sir-col-qty">Quantity</th>
-                  <th class="sir-col-actions">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -70,32 +73,36 @@
                         <input
                           type="text"
                           class="sir-table-input"
-                          [ngModel]="line.itemCode"
-                          (focus)="onItemCodeFocus()"
-                          (ngModelChange)="updateContentLine($index, 'itemCode', $event); updateItemSearch($index, $event)"
-                          placeholder="Type item code or name"
+                          #itemInput
+                          [ngModel]="itemSearchTerms()[$index] ?? line.itemCode"
+                          (focus)="onItemCodeFocus($index, itemInput)"
+                          (input)="updateSuggestionPanelPosition($index, itemInput); updateItemSearch($index, itemInput.value)"
+                          (blur)="scheduleHideSuggestionPanel()"
+                          placeholder="Search item code or name"
                         />
                         @if (itemOptionsLoading()) {
                           <div style="margin-top: 4px; height: 4px; border-radius: 999px; background: #e5e7eb; overflow: hidden;">
                             <div style="height: 100%; width: 70%; background: linear-gradient(90deg, #2563eb, #60a5fa); animation: pulse 1.2s ease-in-out infinite;"></div>
                           </div>
                         }
-                        @if (getFilteredItemSuggestions($index).length > 0) {
-                          <div class="purchase-request-item-suggestion-panel">
-                            @for (item of getFilteredItemSuggestions($index); track item.itemCode) {
-                              <button type="button" (mousedown)="applySuggestedItem($index, item)">
-                                {{ item.itemCode }} — {{ item.itemName }}
-                              </button>
-                            }
-                          </div>
-                        }
                       </div>
                     </td>
                     <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" (ngModelChange)="updateContentLine($index, 'itemDescription', $event)" />
+                      <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" readonly placeholder="Search item code to select item" />
                     </td>
                     <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" [ngModel]="line.vendor" (ngModelChange)="updateContentLine($index, 'vendor', $event)" />
+                      <div style="position: relative;">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          #vendorInput
+                          [ngModel]="vendorSearchTerms()[$index] ?? line.vendor"
+                          (focus)="onVendorFocus($index, vendorInput)"
+                          (input)="updateVendorSuggestionPanelPosition($index, vendorInput); updateVendorSearch($index, vendorInput.value)"
+                          (blur)="scheduleHideVendorSuggestionPanel()"
+                          placeholder="Search vendor code or name"
+                        />
+                      </div>
                     </td>
                     <td class="sir-col-date">
                       <input type="date" class="sir-table-input" [ngModel]="line.requiredDate" (ngModelChange)="updateContentLine($index, 'requiredDate', $event)" />
@@ -110,31 +117,51 @@
                       <input type="number" class="sir-table-input" min="0" [ngModel]="line.discount" (ngModelChange)="updateContentLine($index, 'discount', $event)" />
                     </td>
                     <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" [ngModel]="line.taxCode" (ngModelChange)="updateContentLine($index, 'taxCode', $event)" />
+                      <div style="position: relative;">
+                        <select
+                          class="sir-table-input"
+                          [ngModel]="line.taxCode"
+                          (ngModelChange)="onTaxCodeChange($index, $event)"
+                          (focus)="loadTaxCodes()"
+                          (click)="loadTaxCodes()"
+                        >
+                          <option value="">— Select tax code —</option>
+                          @for (tax of getTaxCodes(); track tax.code) {
+                            <option value="{{ tax.code }}">{{ tax.code }} - {{ tax.name }}</option>
+                          }
+                        </select>
+                      </div>
                     </td>
                     <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" [ngModel]="line.department" (ngModelChange)="updateContentLine($index, 'department', $event)" />
+                      <select
+                        class="sir-table-input"
+                        [ngModel]="line.department"
+                        (ngModelChange)="updateContentLine($index, 'department', $event)"
+                        (focus)="loadDepartmentOptions()"
+                        (click)="loadDepartmentOptions()"
+                      >
+                        <option value="">— Select department —</option>
+                        @for (department of getDepartmentOptions(); track department.code) {
+                          <option value="{{ department.code }}">{{ department.code }} - {{ department.name }}</option>
+                        }
+                      </select>
                     </td>
                     <td class="sir-col-item-name">
                       <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine($index, 'uomCode', $event)" />
                     </td>
                     <td class="sir-col-warehouse">
-                      <input type="text" class="sir-table-input" [ngModel]="line.warehouse" (ngModelChange)="updateContentLine($index, 'warehouse', $event)" />
-                    </td>
-                    <td class="sir-col-qty">
-                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)" />
-                    </td>
-                    <td class="sir-col-date">
-                      <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)" />
-                    </td>
-                    <td class="sir-col-date">
-                      <input type="date" class="sir-table-input" [ngModel]="line.expiryDate" (ngModelChange)="updateContentLine($index, 'expiryDate', $event)" />
-                    </td>
-                    <td class="sir-col-actions">
-                      <div class="sir-row-action-buttons" data-ui5-compact-size>
-                        <button type="button" class="sir-inline-button" (click)="addContentLine()">Add</button>
-                        <button type="button" class="sir-inline-button" [disabled]="contentLines().length <= 1" (click)="deleteContentLine($index)">Delete</button>
-                      </div>
+                      <select
+                        class="sir-table-input"
+                        [ngModel]="line.warehouse"
+                        (ngModelChange)="updateContentLine($index, 'warehouse', $event)"
+                        (focus)="loadWarehouseOptions()"
+                        (click)="loadWarehouseOptions()"
+                      >
+                        <option value="">— Select warehouse —</option>
+                        @for (option of warehouseOptions(); track option.code) {
+                          <option value="{{ option.code }}">{{ option.code }}{{ option.name ? ' - ' + option.name : '' }}</option>
+                        }
+                      </select>
                     </td>
                   </tr>
                 }
@@ -143,6 +170,36 @@
           </div>
         </div>
       </section>
+      @if (activeSuggestionIndex() !== null && suggestionPanelStyle()) {
+        <div
+          class="purchase-request-item-suggestion-panel-fixed"
+          [style.left.px]="suggestionPanelStyle()!.left"
+          [style.top.px]="suggestionPanelStyle()!.top"
+          [style.width.px]="suggestionPanelStyle()!.width"
+        >
+          @for (item of getFilteredItemSuggestions(activeSuggestionIndex()!); track item.itemCode) {
+            <button type="button" (mousedown)="applySuggestedItem(activeSuggestionIndex()!, item)">
+              <div><strong>{{ item.itemCode }}</strong></div>
+              <div style="font-size: 12px; color: #4a5568;">{{ item.itemName }}</div>
+            </button>
+          }
+        </div>
+      }
+      @if (activeVendorSuggestionIndex() !== null && vendorSuggestionPanelStyle()) {
+        <div
+          class="purchase-request-item-suggestion-panel-fixed"
+          [style.left.px]="vendorSuggestionPanelStyle()!.left"
+          [style.top.px]="vendorSuggestionPanelStyle()!.top"
+          [style.width.px]="vendorSuggestionPanelStyle()!.width"
+        >
+          @for (vendor of getFilteredVendorSuggestions(activeVendorSuggestionIndex()!); track vendor.code) {
+            <button type="button" (mousedown)="applySuggestedVendor(activeVendorSuggestionIndex()!, vendor)">
+              <div><strong>{{ vendor.code }}</strong></div>
+              <div style="font-size: 12px; color: #4a5568;">{{ vendor.name }}</div>
+            </button>
+          }
+        </div>
+      }
 
       <section class="sir-form-section" id="footer">
         <div class="sir-form-grid">

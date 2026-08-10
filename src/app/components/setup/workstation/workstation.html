@@ -81,6 +81,18 @@
             />
           </label>
 
+          <label class="field-block">
+            <span class="field-label">Shift</span>
+            <input
+              type="text"
+              class="field-input"
+              [ngModel]="formShift()"
+              (ngModelChange)="formShift.set($event)"
+              name="shift"
+              placeholder="Morning Shift"
+            />
+          </label>
+
           <label class="field-block field-block--wide">
             <span class="field-label">Description</span>
             <input
@@ -130,6 +142,7 @@
                   <th>Office Out</th>
                   <th>In Grace</th>
                   <th>Out Grace</th>
+                  <th>Shift</th>
                   <th>Description</th>
                   <th>Status</th>
                   <th class="col-action">Action</th>
@@ -144,6 +157,7 @@
                     <td>{{ cellValue(record, 'officeOutTime') }}</td>
                     <td>{{ cellValue(record, 'inGraceMinutes') }}</td>
                     <td>{{ cellValue(record, 'outGraceMinutes') }}</td>
+                    <td>{{ cellValue(record, 'shift') }}</td>
                     <td>{{ cellValue(record, 'description') }}</td>
                     <td>{{ cellValue(record, 'status') }}</td>
                     <td class="col-action">

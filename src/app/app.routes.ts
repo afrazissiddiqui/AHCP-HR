@@ -39,6 +39,7 @@ import { WithholdingTaxComponent } from './components/setup/withholding-tax/with
 import { IssueFromProductionListComponent } from './components/setup/issue-from-production-list/issue-from-production-list';
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
 import { PurchaseRequestComponent } from './components/setup/purchase-request/purchase-request';
+import { PurchaseOrderListComponent } from './components/setup/purchase-order-list/purchase-order-list';
 import { KpiSetupComponent } from './components/setup/kpi-setup/kpi-setup';
 import { AddKpiSetupComponent } from './components/setup/kpi-setup/add-kpi-setup/add-kpi-setup';
 import { EditKpiSetupComponent } from './components/setup/kpi-setup/edit-kpi-setup/edit-kpi-setup';
@@ -285,6 +286,11 @@ export const routes: Routes = [
   {
     path: 'setup/purchase-request',
     component: PurchaseRequestComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'setup/purchase-order-list',
+    component: PurchaseOrderListComponent,
     canActivate: [authGuard],
   },
   {

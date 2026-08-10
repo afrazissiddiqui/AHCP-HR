@@ -29,7 +29,7 @@ type UserFormMode = 'add' | 'edit';
 export class UserSetupComponent implements OnInit {
   private readonly userSetupService = inject(UserSetupService);
   private readonly alertService = inject(AlertService);
-  private readonly editableFallbackColumns = ['name', 'email', 'password', 'branch'];
+  private readonly editableFallbackColumns = ['name', 'email', 'password', 'employee_code'];
   readonly branchOptions = [
     { value: '1', label: 'Peshawar' },
     { value: '2', label: 'HO' },
@@ -355,6 +355,11 @@ export class UserSetupComponent implements OnInit {
       nextModel[field] = this.valueToInput(user[field], field);
     }
 
+    const employeeCodeValue = this.resolveEmployeeCodeValue(user);
+    if (employeeCodeValue) {
+      nextModel['sap_employee_id'] = employeeCodeValue;
+    }
+
     this.formMode.set('edit');
     this.editingUserId.set(userId);
     this.formModel.set(nextModel);
@@ -452,7 +457,21 @@ export class UserSetupComponent implements OnInit {
       discovered.add(key);
     }
 
-    const priority = ['name', 'Name', 'username', 'Username', 'email', 'Email', 'password'];
+    const priority = [
+      'name',
+      'Name',
+      'username',
+      'Username',
+      'email',
+      'Email',
+      'password',
+      'employee_code',
+      'employeeCode',
+      'EmployeeCode',
+      'sap_employee_id',
+      'sapEmployeeId',
+      'SAPEmployeeID',
+    ];
     const ordered = priority.filter((key) => discovered.has(key));
     const remaining = [...discovered].filter((key) => !priority.includes(key)).sort((a, b) => a.localeCompare(b));
     return [...ordered, ...remaining];
@@ -558,6 +577,7 @@ export class UserSetupComponent implements OnInit {
     const payload: UserSetupPayload = {
       name: read('name', 'Name'),
       email: read('email', 'Email'),
+      employee_code: read('employee_code', 'employeeCode', 'EmployeeCode', 'sap_employee_id', 'sapEmployeeId', 'SAPEmployeeID'),
       branch: branchSelection.length > 0 ? branchSelection : undefined,
       department: 25,
       authorization: this.authorization(),
@@ -578,6 +598,9 @@ export class UserSetupComponent implements OnInit {
     if (!payload.email.trim()) {
       return 'email';
     }
+    if (!payload.employee_code?.trim()) {
+      return 'employee_code';
+    }
     if (!payload.branch?.length) {
       return 'branch';
     }
@@ -585,6 +608,19 @@ export class UserSetupComponent implements OnInit {
       return 'password';
     }
     return null;
+  }
+
+  private resolveEmployeeCodeValue(user: UserListItem): string {
+    const candidates = ['sap_employee_id', 'sapEmployeeId', 'SAPEmployeeID', 'employee_code', 'employeeCode', 'EmployeeCode'];
+    for (const key of candidates) {
+      const raw = user[key];
+      const value = this.valueToInput(raw, key);
+      const normalized = this.resolveTextValue(Array.isArray(value) ? value.join(',') : String(value)).trim();
+      if (normalized && normalized !== '—') {
+        return normalized;
+      }
+    }
+    return '';
   }
 
   private resolveUserId(user: UserListItem): string | number | null {

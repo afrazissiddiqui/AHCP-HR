@@ -11,6 +11,7 @@ export interface WorkstationRecord {
   officeOutTime: string;
   inGraceMinutes: number | string;
   outGraceMinutes: number | string;
+  shift: string;
   description: string;
   status: number | string;
   [key: string]: unknown;
@@ -26,6 +27,7 @@ export interface WorkstationPayload {
   office_out_time: string;
   in_grace_minutes: number;
   out_grace_minutes: number;
+  shift: string;
   description: string;
   status: number;
 }
@@ -81,6 +83,7 @@ export class WorkstationService {
       office_out_time: payload.office_out_time,
       in_grace_minutes: payload.in_grace_minutes,
       out_grace_minutes: payload.out_grace_minutes,
+      shift: payload.shift,
       description: payload.description,
       status: payload.status,
     });
@@ -137,6 +140,7 @@ export class WorkstationService {
         this.pickString(item, ['in_grace_minutes', 'inGraceMinutes', 'late_grace_minutes', 'grace_in']) || 0,
       outGraceMinutes:
         this.pickString(item, ['out_grace_minutes', 'outGraceMinutes', 'early_grace_minutes', 'grace_out']) || 0,
+      shift: this.pickString(item, ['shift', 'Shift', 'workstation_shift', 'shift_name']) || '',
       description: this.pickString(item, ['description', 'Description', 'remarks', 'note']) || '',
       status: this.pickString(item, ['status', 'Status']) || 1,
     };

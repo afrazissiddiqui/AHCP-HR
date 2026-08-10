@@ -359,16 +359,16 @@ export class IgpService {
 
   private mapLineItem(raw: Record<string, unknown>): IgpLineItem {
     return {
-      itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode']),
-      itemName: this.pickString([raw], ['itemName', 'item_name', 'ItemName']),
-      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'batchNo', 'batch_no', 'BatchNo']),
-      category: this.pickString([raw], ['category', 'Category']),
-      packingCondition: this.pickString([raw], ['packingCondition', 'packing_condition']),
-      productQuality: this.pickString([raw], ['productQuality', 'product_quality']),
-      uom: this.pickString([raw], ['uom', 'UOM', 'Uom']),
-      qty: this.pickNumber([raw], ['qty', 'quantity', 'Qty']),
-      info: this.pickString([raw], ['info', 'Info']),
-      remarks: this.pickString([raw], ['remarks', 'Remarks']),
+      itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode', 'ItemCodeNo']),
+      itemName: this.pickString([raw], ['itemName', 'item_name', 'ItemName', 'ItemDescription']),
+      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'batchNo', 'batch_no', 'BatchNo', 'serialNo', 'SerialNo']),
+      category: this.pickString([raw], ['category', 'Category', 'itemCategory', 'ItemCategory', 'lineCategory', 'LineCategory']),
+      packingCondition: this.pickString([raw], ['packingCondition', 'packing_condition', 'PackingCondition', 'Packing']),
+      productQuality: this.pickString([raw], ['productQuality', 'product_quality', 'ProductQuality', 'Quality']),
+      uom: this.pickString([raw], ['uom', 'UOM', 'Uom', 'unitOfMeasure', 'UnitOfMeasure']),
+      qty: this.pickNumber([raw], ['qty', 'quantity', 'Qty', 'quantityValue']),
+      info: this.pickString([raw], ['info', 'Info', 'lineInfo', 'LineInfo', 'description', 'Description']),
+      remarks: this.pickString([raw], ['remarks', 'Remarks', 'remark', 'Remark', 'notes', 'Notes', 'comment', 'Comment']),
       deleted: Boolean(raw['deleted'] ?? raw['Deleted'] ?? raw['isDeleted']),
     };
   }
@@ -417,22 +417,29 @@ export class IgpService {
       Id: Number.parseInt(id, 10) || 0,
       referenceNo: this.pickString(sources, ['referenceNo', 'reference_no', 'ReferenceNo']) || '—',
       title: businessPartnerName,
-      department: this.pickString(sources, ['department', 'Department']) || '—',
+      department: this.pickString(sources, ['department', 'Department', 'DepartmentName']) || '—',
       status: this.pickString(sources, ['status', 'Status']) || '—',
       submittedDate:
         this.pickString(sources, ['documentDate', 'document_date', 'submittedDate', 'submitted_date']) || '—',
-      remarks: this.pickString(sources, ['remarks', 'Remarks']) || undefined,
+      remarks: this.pickString(sources, ['remarks', 'Remarks', 'remarksText', 'remarksText']) || undefined,
       selected: false,
-      type: this.pickString(sources, ['type', 'Type']) || '—',
+      type:
+        this.pickString(sources, ['type', 'Type', 'igpType', 'IGPType', 'gatePassType', 'GatePassType', 'documentType']) ||
+        '—',
       businessPartnerCode:
-        this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode']) || '—',
-      baseDocNo: this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo']) || '—',
+        this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode', 'bpCode', 'BPCode']) || '—',
+      baseDocNo:
+        this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo', 'baseDoc', 'BaseDoc', 'baseDocumentNo', 'BaseDocumentNo']) ||
+        '—',
       businessPartnerName,
-      vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']) || '—',
-      fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit']) || '—',
-      kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',
-      biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']) || '—',
-      store: this.pickString(sources, ['store', 'Store']) || '—',
+      vehicleNo:
+        this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo', 'vehicleNumber', 'VehicleNumber']) || '—',
+      fromUnit:
+        this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit', 'fromLocation', 'from_location', 'FromUnitName']) || '—',
+      kantaSlip:
+        this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip', 'kantaSlipNo', 'kanta_slip_no', 'KantaSlipNo']) || '—',
+      biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo', 'biltyNumber', 'BiltyNumber']) || '—',
+      store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse', 'warehouseCode', 'WarehouseCode']) || '—',
       driverName:
         this.pickString(sources, [
           'driverName',
@@ -440,12 +447,18 @@ export class IgpService {
           'DriverName',
           'transporterName',
           'transporter_name',
+          'driverFullName',
+          'DriverFullName',
         ]) || '—',
       driverCnic:
         this.pickString(sources, [
           'driverCnic',
           'driver_cnic',
           'DriverCnic',
+          'driverCNIC',
+          'DriverCNIC',
+          'driverCnicNo',
+          'DriverCnicNo',
           'transporterCnic',
           'transporter_cnic',
         ]) || '—',
@@ -454,12 +467,16 @@ export class IgpService {
           'driverPhone',
           'driver_phone',
           'DriverPhone',
+          'driverPhoneNo',
+          'DriverPhoneNo',
+          'driverMobile',
+          'DriverMobile',
           'transporterPhone',
           'transporter_phone',
         ]) || '—',
-      weight: this.pickString(sources, ['weight', 'Weight']) || '—',
+      weight: this.pickString(sources, ['weight', 'Weight', 'grossWeight', 'GrossWeight', 'weightKg', 'WeightKg']) || '—',
       location: location || '—',
-      employee: this.pickString(sources, ['employee', 'Employee']) || '—',
+      employee: this.pickString(sources, ['employee', 'Employee', 'employeeName', 'EmployeeName']) || '—',
       lines,
       totalQty,
     };

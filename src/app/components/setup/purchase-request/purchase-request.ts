@@ -1,11 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { MiscellaneousLayoutService } from '../../miscellaneous/miscellaneous-layout.service';
 import { OitmItem } from '../../../constants/oitm-items';
 import { OitmItemsService } from '../../../services/oitm-items.service';
+import { GatePassBusinessPartnerService, GatePassBusinessPartner } from '../../gate-pass/gate-pass-business-partner.service';
+import { TaxCodesService, TaxCode } from '../../../services/tax-codes.service';
+import { DepartmentsPrService, DepartmentPr } from '../../../services/departments-pr.service';
+import { WarehouseService } from '../../../services/warehouse.service';
+import { AuthService } from '../../../services/auth.service';
+import { AlertService } from '../../../services/alert.service';
+import { PurchaseRequestService, CreatePurchaseRequestPayload } from '../../../services/purchase-request.service';
+import { ApplicationFormService } from '../../../services/application-form.service';
+import { formatApiErrorMessage } from '../../../utils/api-error.util';
 
 interface PurchaseRequestHeader {
   requestDate: string;
@@ -20,11 +29,13 @@ interface PurchaseRequestLine {
   itemCode: string;
   itemDescription: string;
   vendor: string;
+  vendorName: string;
   requiredDate: string;
   requiredQuantity: number | null;
   infoPrice: number | null;
   discount: number | null;
   taxCode: string;
+  taxCodeName: string;
   department: string;
   uomCode: string;
   warehouse: string;
@@ -34,6 +45,13 @@ interface PurchaseRequestLine {
   batchNumber: string;
 }
 
+interface WarehouseDropdownOption {
+  code: string;
+  name: string;
+}
+
+const DEFAULT_PURCHASE_REQUEST_EMPLOYEE_CODE = 'Emp-00000100';
+
 @Component({
   selector: 'app-purchase-request',
   standalone: true,
@@ -41,7 +59,7 @@ interface PurchaseRequestLine {
   templateUrl: './purchase-request.html',
   styleUrls: ['../../sample-inspection-request/sample-inspection-request.css', '../../miscellaneous/miscellaneous-form.css', './purchase-request.css'],
 })
-export class PurchaseRequestComponent {
+export class PurchaseRequestComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly oitmItemsService = inject(OitmItemsService);
   protected readonly layout = inject(MiscellaneousLayoutService);
@@ -59,8 +77,79 @@ export class PurchaseRequestComponent {
   readonly itemOptions = signal<OitmItem[]>([]);
   readonly itemOptionsLoading = signal(false);
   readonly itemOptionsError = signal<string | null>(null);
-  readonly itemSearchTerms = signal<Record<number, string>>({});
+  readonly itemSearchTerms = signal<Record<number, string | undefined>>({});
+  readonly vendorSearchTerms = signal<Record<number, string | undefined>>({});
+  readonly activeSuggestionIndex = signal<number | null>(null);
+  readonly suggestionPanelStyle = signal<{ left: number; width: number; top: number } | null>(null);
+  readonly activeVendorSuggestionIndex = signal<number | null>(null);
+  readonly vendorSuggestionPanelStyle = signal<{ left: number; width: number; top: number } | null>(null);
+  readonly departmentOptions = signal<DepartmentPr[]>([]);
+  readonly warehouseOptions = signal<WarehouseDropdownOption[]>([]);
+  readonly branchOptions = signal([
+    { label: 'Peshawar', value: 'Peshawar' },
+    { label: 'HO', value: 'HO' },
+    { label: 'Faisalabad', value: 'Faisalabad' },
+  ]);
+  readonly taxCodes = signal<TaxCode[]>([]);
+  // Tax codes are shown as a dropdown select; no per-row search signals needed.
   readonly saving = signal(false);
+  protected readonly businessPartnerService = inject(GatePassBusinessPartnerService);
+  protected readonly taxCodesService = inject(TaxCodesService);
+  protected readonly departmentsPrService = inject(DepartmentsPrService);
+  protected readonly warehouseService = inject(WarehouseService);
+  protected readonly authService = inject(AuthService);
+  protected readonly alertService = inject(AlertService);
+  protected readonly applicationFormService = inject(ApplicationFormService);
+  protected readonly purchaseRequestService = inject(PurchaseRequestService);
+
+  ngOnInit(): void {
+    this.businessPartnerService.ensureLoaded().subscribe();
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      error: () => undefined,
+    });
+    this.loadTaxCodes();
+    this.loadDepartmentOptions();
+    this.loadWarehouseOptions();
+  }
+
+  loadTaxCodes(): void {
+    if (this.taxCodes().length > 0) {
+      return;
+    }
+
+    this.taxCodesService.ensureLoaded().subscribe((list) => {
+      this.taxCodes.set(list);
+    });
+  }
+
+  loadDepartmentOptions(): void {
+    if (this.departmentOptions().length > 0) {
+      return;
+    }
+
+    this.departmentsPrService.ensureLoaded().subscribe((list) => {
+      this.departmentOptions.set(list);
+    });
+  }
+
+  loadWarehouseOptions(): void {
+    if (this.warehouseOptions().length > 0) {
+      return;
+    }
+
+    this.warehouseService.ensureLoaded().subscribe({
+      next: (warehouses) => {
+        const options = warehouses.map((warehouse) => ({
+          code: warehouse.warehouseCode,
+          name: warehouse.warehouseName,
+        }));
+        this.warehouseOptions.set(options);
+      },
+      error: () => {
+        this.warehouseOptions.set([]);
+      },
+    });
+  }
 
   get hasValidLine(): boolean {
     return this.contentLines().some((line) => line.itemCode.trim().length > 0);
@@ -107,13 +196,81 @@ export class PurchaseRequestComponent {
     });
   }
 
-  onItemCodeFocus(): void {
+  onItemCodeFocus(index: number, input: HTMLInputElement): void {
     this.loadItemOptions();
+    this.updateSuggestionPanelPosition(index, input);
   }
+
+  updateSuggestionPanelPosition(index: number, input: HTMLInputElement): void {
+    if (!input) {
+      return;
+    }
+
+    const rect = input.getBoundingClientRect();
+    this.activeSuggestionIndex.set(index);
+    this.suggestionPanelStyle.set({
+      left: rect.left + window.scrollX,
+      top: rect.bottom + window.scrollY,
+      width: rect.width,
+    });
+  }
+
+  scheduleHideSuggestionPanel(): void {
+    window.setTimeout(() => {
+      this.activeSuggestionIndex.set(null);
+    }, 150);
+  }
+
+  onVendorFocus(index: number, input: HTMLInputElement): void {
+    this.businessPartnerService.ensureLoaded().subscribe();
+    this.updateVendorSuggestionPanelPosition(index, input);
+  }
+
+
+  updateVendorSuggestionPanelPosition(index: number, input: HTMLInputElement): void {
+    if (!input) {
+      return;
+    }
+
+    const rect = input.getBoundingClientRect();
+    this.activeVendorSuggestionIndex.set(index);
+    this.vendorSuggestionPanelStyle.set({
+      left: rect.left + window.scrollX,
+      top: rect.bottom + window.scrollY,
+      width: rect.width,
+    });
+  }
+
+  scheduleHideVendorSuggestionPanel(): void {
+    window.setTimeout(() => {
+      this.activeVendorSuggestionIndex.set(null);
+    }, 150);
+  }
+
 
   updateItemSearch(index: number, value: string): void {
     this.itemSearchTerms.update((terms) => ({ ...terms, [index]: value }));
+    this.updateContentLine(index, 'itemCode', value);
+    this.updateContentLine(index, 'itemDescription', '');
+    this.activeSuggestionIndex.set(index);
   }
+
+  updateVendorSearch(index: number, value: string): void {
+    this.vendorSearchTerms.update((terms) => ({ ...terms, [index]: value }));
+
+    const partner = this.businessPartnerService.search(value, 1)[0];
+    if (partner) {
+      this.updateContentLine(index, 'vendor', partner.code);
+      this.updateContentLine(index, 'vendorName', partner.name);
+    } else {
+      this.updateContentLine(index, 'vendor', value.trim());
+      this.updateContentLine(index, 'vendorName', value.trim());
+    }
+
+    this.activeVendorSuggestionIndex.set(index);
+  }
+
+  // No-op: tax selection handled via dropdown.
 
   getFilteredItemSuggestions(index: number): OitmItem[] {
     const term = (this.itemSearchTerms()[index] ?? '').trim().toLowerCase();
@@ -143,6 +300,48 @@ export class PurchaseRequestComponent {
       }),
     );
     this.itemSearchTerms.update((terms) => ({ ...terms, [index]: item.itemCode }));
+    this.activeSuggestionIndex.set(null);
+  }
+
+  getFilteredVendorSuggestions(index: number): GatePassBusinessPartner[] {
+    const term = (this.vendorSearchTerms()[index] ?? '').trim();
+    if (!term) {
+      return [];
+    }
+
+    return this.businessPartnerService.search(term, 8);
+  }
+
+  applySuggestedVendor(index: number, vendor: GatePassBusinessPartner): void {
+    this.contentLines.update((lines) =>
+      lines.map((line, lineIndex) => {
+        if (lineIndex !== index) {
+          return line;
+        }
+
+        return {
+          ...line,
+          vendor: vendor.code || vendor.name,
+          vendorName: vendor.name || vendor.code,
+        };
+      }),
+    );
+    this.vendorSearchTerms.update((terms) => ({ ...terms, [index]: vendor.name || vendor.code }));
+    this.activeVendorSuggestionIndex.set(null);
+  }
+
+  getDepartmentOptions(): DepartmentPr[] {
+    return this.departmentOptions();
+  }
+
+  getTaxCodes(): TaxCode[] {
+    return this.taxCodes();
+  }
+
+  onTaxCodeChange(index: number, selectedCode: string): void {
+    const selectedTax = this.getTaxCodes().find((tax) => tax.code === selectedCode);
+    this.updateContentLine(index, 'taxCode', selectedCode);
+    this.updateContentLine(index, 'taxCodeName', selectedTax?.name ?? '');
   }
 
   selectItem(index: number, value: string): void {
@@ -182,11 +381,143 @@ export class PurchaseRequestComponent {
     this.contentLines.update((lines) => lines.filter((_, i) => i !== index));
   }
 
+  private parseBranchValue(value: string): number | string {
+    const trimmed = value.trim().toLowerCase();
+    switch (trimmed) {
+      case 'peshawar':
+        return 1;
+      case 'ho':
+        return 2;
+      case 'faisalabad':
+        return 3;
+      default:
+        const parsed = Number(value.trim());
+        return Number.isFinite(parsed) ? parsed : value.trim();
+    }
+  }
+
+  private resolveEmployeeCode(): string {
+    const sessionUserId = this.authService.getSessionUserId()?.trim() ?? '';
+    const sessionUserName = this.authService.getSessionUser()?.name?.trim() ?? '';
+    const profile = this.applicationFormService.getSignedInUserRecord(sessionUserId, sessionUserName);
+
+    const employeeCode =
+      profile?.EmployeeCode?.trim() ||
+      profile?.detail?.loginDetails?.employeeCode?.trim() ||
+      profile?.detail?.loginDetails?.userId?.trim() ||
+      profile?.userId?.trim() ||
+      '';
+
+    if (employeeCode) {
+      return employeeCode;
+    }
+
+    return DEFAULT_PURCHASE_REQUEST_EMPLOYEE_CODE;
+  }
+
   submitPurchaseRequest(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    const header = this.headerForm();
+    const lines = this.contentLines().filter((line) => line.itemCode.trim());
+
+    if (!header.requestDate.trim()) {
+      this.alertService.validation('Request Date is required.');
+      return;
+    }
+
+    if (!header.postingDate.trim()) {
+      this.alertService.validation('Posting Date is required.');
+      return;
+    }
+
+    if (!header.dueDate.trim()) {
+      this.alertService.validation('Required Date is required.');
+      return;
+    }
+
+    if (!header.branch.trim()) {
+      this.alertService.validation('Branch is required.');
+      return;
+    }
+
+    if (lines.length === 0) {
+      this.alertService.validation('At least one item row is required.');
+      return;
+    }
+
+    const invalidRow = lines.find(
+      (line) =>
+        !line.itemCode.trim() ||
+        !line.infoPrice ||
+        !line.requiredQuantity ||
+        !line.taxCode.trim() ||
+        !line.department.trim() ||
+        !line.warehouse.trim() ||
+        !line.requiredDate.trim() ||
+        !line.vendor.trim(),
+    );
+
+    if (invalidRow) {
+      this.alertService.validation('Each row must have item, vendor, required date, quantity, price, tax code, department, and warehouse.');
+      return;
+    }
+
+    const employeeCode = this.resolveEmployeeCode();
+
+    const payload: CreatePurchaseRequestPayload = {
+      employee_code: employeeCode,
+      docDate: header.requestDate.trim(),
+      requiredDate: header.dueDate.trim(),
+      branch: this.parseBranchValue(header.branch),
+      remarks: header.remarks.trim(),
+      items: lines.map((line) => ({
+        itemCode: line.itemCode.trim(),
+        infoPrice: line.infoPrice ?? 0,
+        quantity: line.requiredQuantity ?? 0,
+        discount: line.discount ?? 0,
+        CardCode: line.vendor.trim(),
+        CardName: line.vendorName.trim() || line.vendor.trim(),
+        warehouse: line.warehouse.trim(),
+        Code: line.taxCode.trim(),
+        Name: line.taxCodeName.trim() || line.taxCode.trim(),
+        department: line.department.trim(),
+        requiredDate: line.requiredDate.trim(),
+        remarks: header.remarks.trim(),
+      })),
+    };
+
+    if (!payload.employee_code) {
+      this.alertService.validation('Unable to resolve employee code for the request. Please sign in again.');
+      return;
+    }
+
     this.saving.set(true);
-    setTimeout(() => {
-      this.saving.set(false);
-    }, 600);
+    this.purchaseRequestService.create(payload).subscribe({
+      next: (response) => {
+        if (response?.success === false || response?.status === false || response?.error) {
+          this.saving.set(false);
+          const errorMessage = response?.error?.trim() || response?.message?.trim() || 'Purchase request could not be saved.';
+          void this.alertService.error('Save Failed', errorMessage);
+          return;
+        }
+
+        const message = response?.message?.trim() ||
+          (response?.docEntry != null ? `Purchase request created (Doc #${response.docEntry}).` : 'Purchase request created successfully.');
+        void this.alertService.success('Success', message);
+        this.saving.set(false);
+        void this.router.navigate(['/setup/purchase-order-list']);
+      },
+      error: (error) => {
+        this.saving.set(false);
+        void this.alertService.error(
+          'Save Failed',
+          formatApiErrorMessage(error, 'Purchase request could not be saved. Please try again.'),
+        );
+      },
+    });
   }
 
   createEmptyLine(): PurchaseRequestLine {
@@ -194,11 +525,13 @@ export class PurchaseRequestComponent {
       itemCode: '',
       itemDescription: '',
       vendor: '',
+      vendorName: '',
       requiredDate: '',
       requiredQuantity: null,
       infoPrice: null,
       discount: null,
       taxCode: '',
+      taxCodeName: '',
       department: '',
       uomCode: '',
       warehouse: '',

@@ -10,6 +10,7 @@ export interface UserSetupPayload {
   name: string;
   email: string;
   password?: string;
+  employee_code?: string;
   branch?: Array<number | string>;
   department?: number;
   authorization: UserAuthorizationModule[];
@@ -162,6 +163,11 @@ export class UserSetupService {
     const password = payload.password?.trim();
     if (password) {
       body['password'] = password;
+    }
+
+    const employeeCode = payload.employee_code?.trim();
+    if (employeeCode) {
+      body['employee_code'] = employeeCode;
     }
 
     return body;

@@ -34,6 +34,7 @@ export class WorkstationComponent implements OnInit {
   readonly formOfficeOutTime = signal('');
   readonly formInGraceMinutes = signal('0');
   readonly formOutGraceMinutes = signal('0');
+  readonly formShift = signal('');
   readonly formDescription = signal('');
   readonly totalWorkstations = computed(() => this.workstations().length);
 
@@ -129,6 +130,7 @@ export class WorkstationComponent implements OnInit {
           this.formOfficeOutTime.set(this.normalizeTimeInput(detail.officeOutTime ?? record.officeOutTime));
           this.formInGraceMinutes.set(this.valueToText(detail.inGraceMinutes ?? record.inGraceMinutes ?? '0'));
           this.formOutGraceMinutes.set(this.valueToText(detail.outGraceMinutes ?? record.outGraceMinutes ?? '0'));
+          this.formShift.set(detail.shift || this.valueToText(record.shift));
           this.formDescription.set(detail.description || this.valueToText(record.description));
         },
         error: (error: unknown) => {
@@ -184,7 +186,7 @@ export class WorkstationComponent implements OnInit {
 
   cellValue(
     record: WorkstationRecord,
-    field: 'name' | 'officeInTime' | 'officeOutTime' | 'inGraceMinutes' | 'outGraceMinutes' | 'description' | 'status',
+    field: 'name' | 'officeInTime' | 'officeOutTime' | 'inGraceMinutes' | 'outGraceMinutes' | 'shift' | 'description' | 'status',
   ): string {
     const value = record[field];
     if (value === null || value === undefined || value === '') {
@@ -230,6 +232,7 @@ export class WorkstationComponent implements OnInit {
       office_out_time: this.formOfficeOutTime().trim(),
       in_grace_minutes: Number.parseInt(this.formInGraceMinutes().trim(), 10) || 0,
       out_grace_minutes: Number.parseInt(this.formOutGraceMinutes().trim(), 10) || 0,
+      shift: this.formShift().trim(),
       description: this.formDescription().trim(),
       status: 1,
     };
@@ -260,6 +263,7 @@ export class WorkstationComponent implements OnInit {
     this.formOfficeOutTime.set('');
     this.formInGraceMinutes.set('0');
     this.formOutGraceMinutes.set('0');
+    this.formShift.set('');
     this.formDescription.set('');
   }
 
