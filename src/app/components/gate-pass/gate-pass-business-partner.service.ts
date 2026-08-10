@@ -6,6 +6,7 @@ import { apiUrl } from '../../config/api.config';
 export interface GatePassBusinessPartner {
   code: string;
   name: string;
+  cardType?: string;
 }
 
 const BUSINESS_PARTNERS_URL = apiUrl('business_partners');
@@ -26,7 +27,14 @@ export class GatePassBusinessPartnerService {
     if (!this.load$) {
       this.loading = true;
       this.load$ = this.http.get<unknown>(BUSINESS_PARTNERS_URL).pipe(
-        map((response) => this.extractApiItems(response).map((item) => this.mapPartner(item))),
+        map((response) =>
+          this.extractApiItems(response)
+            .map((item) => this.mapPartner(item))
+            .filter((partner) => {
+              const cardType = partner.cardType?.trim().toUpperCase();
+              return cardType !== 'C';
+            }),
+        ),
         tap((records) => {
           this.partners.set(records);
           this.loaded = true;
@@ -110,6 +118,8 @@ export class GatePassBusinessPartnerService {
   }
 
   private mapPartner(item: Record<string, unknown>): GatePassBusinessPartner {
+    const cardType = this.pickString([item], ['cardType', 'CardType', 'type', 'Type']);
+
     return {
       code: this.pickString([item], [
         'code',
@@ -127,6 +137,7 @@ export class GatePassBusinessPartnerService {
         'partner_name',
         'CardName',
       ]),
+      cardType,
     };
   }
 
