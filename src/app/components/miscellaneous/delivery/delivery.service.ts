@@ -15,6 +15,7 @@ export interface CreateDeliveryItemPayload {
   itemCode: string;
   warehouse: string;
   quantity: number;
+  discountPercent?: number;
   batches: CreateDeliveryBatchPayload[];
 }
 
@@ -111,6 +112,7 @@ export function buildCreateDeliveryPayload(
           itemCode: line.itemCode.trim(),
           warehouse: line.warehouse.trim(),
           quantity: line.quantity ?? 0,
+          discountPercent: Math.max(0, Math.min(100, line.discountPercent ?? 0)),
           batches: line.batchSerialNumber.trim()
             ? [
                 {

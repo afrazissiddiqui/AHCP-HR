@@ -32,7 +32,7 @@
               <label>Customer</label>
               <div class="sir-input-group">
                 <input type="text" style="flex: 1" [ngModel]="headerForm().customer" (ngModelChange)="updateHeaderField('customer', $event)" readonly>
-                <button type="button" class="sir-list-btn">≣</button>
+                <button type="button" class="sir-list-btn" (click)="openCustomerDialog()">≣</button>
                 <input type="text" style="flex: 2" [ngModel]="headerForm().customerName" readonly>
                 <button type="button" class="sir-inline-button" (click)="openSalesOrderDialog()">Copy From SO</button>
               </div>
@@ -201,16 +201,191 @@
             <label>Total Before Discount:</label>
             <input type="text" class="sir-input--amount" [value]="formatAmount(totalAmount())" readonly>
           </div>
+          <div class="sir-field-row">
+            <label>Total After Discount:</label>
+            <input type="text" class="sir-input--amount" [value]="formatAmount(discountAdjustedTotal())" readonly>
+          </div>
         </div>
         <div class="sir-form-actions">
-          <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="save()">
-            {{ saving() ? 'Saving…' : 'Save' }}
+          <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="openBatchSelectionDialog()">
+            {{ saving() ? 'Saving…' : 'Select batch' }}
           </button>
         </div>
       </section>
     </div>
   </div>
 </div>
+
+@if (batchSelectionDialogOpen()) {
+  <div class="sir-modal-overlay" (click)="closeBatchSelectionDialog()">
+    <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
+      <div class="sir-modal-header">
+        <h2>Available Batches</h2>
+        <button type="button" class="sir-modal-close" (click)="closeBatchSelectionDialog()">×</button>
+      </div>
+      <div class="sir-modal-body">
+        <div class="sir-detail-section">
+          <h3>Select batch for each item</h3>
+          <div class="sir-batch-modal-scroll sir-batch-modal-scroll--compact">
+            <div class="sir-data-table-wrapper">
+              <table class="sir-modal-table">
+                <thead>
+                  <tr>
+                    <th>Item Code</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Warehouse</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of contentLines(); track $index; let i = $index) {
+                    <tr
+                      class="sir-modal-row"
+                      [class.sir-modal-row--selected]="activeBatchSelectionLineIndex() === i"
+                      (click)="selectBatchSelectionLine(i)"
+                    >
+                      <td>{{ line.itemCode || 'Row ' + (i + 1) }}</td>
+                      <td>{{ line.itemDescription }}</td>
+                      <td>{{ line.quantity ?? '—' }}</td>
+                      <td>{{ line.warehouse || '—' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="4" class="sir-modal-empty">No items available for batch selection.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        @if (getActiveBatchSelectionLine(); as activeLine) {
+          <div class="sir-detail-section">
+            <h3>{{ activeLine.itemCode }}</h3>
+            <p class="sir-modal-status-text">{{ activeLine.itemDescription }}</p>
+            <div class="sir-batch-info">
+              <span class="sir-batch-info-item">
+                <strong>Required Qty:</strong> {{ activeLine.quantity ?? 0 }}
+              </span>
+              <span class="sir-batch-info-item">
+                <strong>Selected Batch:</strong> {{ activeLine.batchSerialNumber || '—' }}
+              </span>
+            </div>
+            <div class="sir-batch-modal-scroll">
+              <div class="sir-data-table-wrapper">
+                <table class="sir-modal-table">
+                  <thead>
+                    <tr>
+                      <th>Batch No.</th>
+                      <th>Warehouse</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (batch of batchOptionsForLine(activeLine); track batch) {
+                      <tr class="sir-modal-row" [class.sir-modal-row--selected]="activeLine.batchSerialNumber === batch" (click)="selectBatchForActiveLine(batch)">
+                        <td>{{ batch }}</td>
+                        <td>{{ activeLine.warehouse || '—' }}</td>
+                        <td>{{ activeLine.batchSerialNumber === batch ? 'Selected' : 'Available' }}</td>
+                        <td>
+                          <button type="button" class="sir-inline-button" (click)="selectBatchForActiveLine(batch)">
+                            Choose
+                          </button>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="4" class="sir-modal-empty">No batches available for this item.</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="sir-modal-footer sir-modal-footer--split">
+        <button type="button" class="sir-secondary-button" (click)="closeBatchSelectionDialog()">Cancel</button>
+        <button type="button" class="sir-primary-button" (click)="saveFromBatchSelectionDialog()">Save</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (customerDialogOpen()) {
+  <div class="sir-modal-overlay" (click)="closeCustomerDialog()">
+    <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
+      <div class="sir-modal-header">
+        <h2>Customer Search</h2>
+        <button type="button" class="sir-modal-close" (click)="closeCustomerDialog()">×</button>
+      </div>
+
+      <div class="sir-modal-body">
+        @if (customersLoading()) {
+          <p class="sir-modal-status-text">Loading customers…</p>
+        } @else if (customersError()) {
+          <p class="sir-modal-error-text">{{ customersError() }}</p>
+        } @else {
+          <div class="sir-field-row">
+            <label>Search Customer</label>
+            <div class="sir-input-group">
+              <input
+                type="search"
+                class="sir-table-input"
+                placeholder="Search by customer code or name"
+                [ngModel]="customerSearchQuery()"
+                (ngModelChange)="customerSearchQuery.set($event)"
+              />
+              <button type="button" class="sir-inline-button" (click)="searchCustomers()">Search</button>
+            </div>
+          </div>
+          <div class="sir-data-table-wrapper">
+            <table class="sir-modal-table">
+              <thead>
+                <tr>
+                  <th>Customer Code</th>
+                  <th>Customer Name</th>
+                  <th>Card Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (partner of customerSearchResults(); track partner.code) {
+                  <tr
+                    class="sir-modal-row"
+                    [class.sir-modal-row--selected]="selectedCustomer()?.code === partner.code"
+                    (click)="chooseCustomer(partner)"
+                    (dblclick)="applyCustomer(partner)"
+                  >
+                    <td>{{ partner.code }}</td>
+                    <td>{{ partner.name }}</td>
+                    <td>{{ partner.cardType || 'C' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="sir-modal-empty">No customers found.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="sir-modal-footer sir-modal-footer--split">
+        <span class="sir-modal-selection-count">
+          Selected: {{ selectedCustomer()?.code || 'None' }}
+        </span>
+        <div class="sir-modal-footer-actions">
+          <button type="button" class="sir-secondary-button" (click)="closeCustomerDialog()">Cancel</button>
+          <button type="button" class="sir-primary-button" [disabled]="!selectedCustomer()" (click)="applyCustomer(selectedCustomer()!)">Select Customer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 <app-oitm-item-picker-dialog
   [open]="itemPickerOpen()"
@@ -261,9 +436,9 @@
                 @for (order of salesOrderSearchResults(); track order.docEntry) {
                   <tr
                     class="sir-modal-row"
-                    [class.sir-modal-row--selected]="selectedSalesOrder()?.docEntry === order.docEntry"
+                    [class.sir-modal-row--selected]="isSalesOrderSelected(order)"
                     (click)="chooseSalesOrder(order)"
-                    (dblclick)="applySalesOrder(order)"
+                    (dblclick)="copyFromSalesOrder()"
                   >
                     <td>{{ order.docNum }}</td>
                     <td>{{ order.cardCode }}</td>
@@ -285,11 +460,11 @@
 
       <div class="sir-modal-footer sir-modal-footer--split">
         <span class="sir-modal-selection-count">
-          Selected: {{ selectedSalesOrder()?.docNum || 'None' }}
+          Selected: {{ selectedSalesOrders().size || 'None' }}
         </span>
         <div class="sir-modal-footer-actions">
           <button type="button" class="sir-secondary-button" (click)="closeSalesOrderDialog()">Cancel</button>
-          <button type="button" class="sir-primary-button" [disabled]="!selectedSalesOrder()" (click)="copyFromSalesOrder()">Copy From SO</button>
+          <button type="button" class="sir-primary-button" [disabled]="selectedSalesOrders().size === 0" (click)="copyFromSalesOrder()">Copy From SO</button>
         </div>
       </div>
     </div>

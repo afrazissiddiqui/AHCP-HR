@@ -17,7 +17,7 @@ import {
   createEmptyInventoryTransferLine,
 } from '../../inventory-transfer/inventory-transfer.model';
 import {
-  buildCreateInventoryTransferPayload,
+  buildCreateInventoryTransferRequestPayload,
   InventoryTransferService,
 } from '../../inventory-transfer/inventory-transfer.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
@@ -214,6 +214,23 @@ export class AddInventoryTransferRequest implements OnInit {
     return [...aliases];
   }
 
+  private normalizeWarehouseCode(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const normalized = trimmed.toLowerCase();
+    const warehouse = this.warehouseService.getCatalog().find((entry) => {
+      const code = entry.warehouseCode.trim().toLowerCase();
+      const name = entry.warehouseName.trim().toLowerCase();
+      const combined = `${entry.warehouseCode.trim()} ${entry.warehouseName.trim()}`.toLowerCase();
+      return code === normalized || name === normalized || combined === normalized;
+    });
+
+    return warehouse?.warehouseCode.trim() || trimmed;
+  }
+
   private removeRow(index: number): void {
     this.contentLines.update((rows) => {
       if (rows.length <= 1) {
@@ -250,6 +267,11 @@ export class AddInventoryTransferRequest implements OnInit {
       return;
     }
 
+    if (header.fromWarehouse.trim() === header.toWarehouse.trim()) {
+      this.alertService.validation('Receipt warehouse cannot be identical to the release warehouse.');
+      return;
+    }
+
     const lines = this.contentLines().filter((line) => line.itemCode.trim());
     if (lines.length === 0) {
       this.alertService.validation('At least one line item is required.');
@@ -268,7 +290,19 @@ export class AddInventoryTransferRequest implements OnInit {
       return;
     }
 
-    const payload = buildCreateInventoryTransferPayload(header, lines);
+    const normalizedHeader = {
+      ...header,
+      fromWarehouse: this.normalizeWarehouseCode(header.fromWarehouse),
+      toWarehouse: this.normalizeWarehouseCode(header.toWarehouse),
+    };
+
+    const normalizedLines = lines.map((line) => ({
+      ...line,
+      fromWarehouse: this.normalizeWarehouseCode(line.fromWarehouse),
+      toWarehouse: this.normalizeWarehouseCode(line.toWarehouse),
+    }));
+
+    const payload = buildCreateInventoryTransferRequestPayload(normalizedHeader, normalizedLines);
 
     this.saving.set(true);
     this.inventoryTransferService.create(payload).subscribe({

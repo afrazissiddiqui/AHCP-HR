@@ -15,9 +15,13 @@ const BUSINESS_PARTNERS_URL = apiUrl('business_partners');
 export class GatePassBusinessPartnerService {
   private readonly http = inject(HttpClient);
   private readonly partners = signal<GatePassBusinessPartner[]>([]);
+  private readonly customers = signal<GatePassBusinessPartner[]>([]);
   private loaded = false;
   private loading = false;
   private load$?: Observable<GatePassBusinessPartner[]>;
+  private customerLoaded = false;
+  private customerLoading = false;
+  private customerLoad$?: Observable<GatePassBusinessPartner[]>;
 
   ensureLoaded(): Observable<GatePassBusinessPartner[]> {
     if (this.loaded) {
@@ -52,8 +56,45 @@ export class GatePassBusinessPartnerService {
     return this.load$;
   }
 
+  ensureCustomersLoaded(): Observable<GatePassBusinessPartner[]> {
+    if (this.customerLoaded) {
+      return of(this.customers());
+    }
+
+    if (!this.customerLoad$) {
+      this.customerLoading = true;
+      this.customerLoad$ = this.http.get<unknown>(BUSINESS_PARTNERS_URL).pipe(
+        map((response) =>
+          this.extractApiItems(response)
+            .map((item) => this.mapPartner(item))
+            .filter((partner) => {
+              const cardType = partner.cardType?.trim().toUpperCase();
+              return cardType === 'C';
+            }),
+        ),
+        tap((records) => {
+          this.customers.set(records);
+          this.customerLoaded = true;
+          this.customerLoading = false;
+        }),
+        catchError(() => {
+          this.customers.set([]);
+          this.customerLoaded = true;
+          this.customerLoading = false;
+          return of([]);
+        }),
+      );
+    }
+
+    return this.customerLoad$;
+  }
+
   isLoading(): boolean {
     return this.loading;
+  }
+
+  customersLoading(): boolean {
+    return this.customerLoading;
   }
 
   search(query: string, limit = 8): GatePassBusinessPartner[] {
@@ -68,6 +109,17 @@ export class GatePassBusinessPartnerService {
           partner.code.toLowerCase().includes(q) ||
           partner.name.toLowerCase().includes(q),
       )
+      .slice(0, limit);
+  }
+
+  searchCustomers(query: string, limit = 50): GatePassBusinessPartner[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return this.customers();
+    }
+
+    return this.customers()
+      .filter((partner) => partner.code.toLowerCase().includes(q) || partner.name.toLowerCase().includes(q))
       .slice(0, limit);
   }
 

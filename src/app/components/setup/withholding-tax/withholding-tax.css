@@ -166,16 +166,17 @@
 
 .withholding-tax-table td:nth-child(1),
 .withholding-tax-table td:nth-child(2),
-.withholding-tax-table td:nth-child(3) {
-  width: 16%;
-}
-
+.withholding-tax-table td:nth-child(3),
 .withholding-tax-table td:nth-child(4) {
-  width: 38%;
+  width: 14%;
 }
 
 .withholding-tax-table td:nth-child(5) {
-  width: 14%;
+  width: 28%;
+}
+
+.withholding-tax-table td:nth-child(6) {
+  width: 12%;
 }
 
 .withholding-tax-table th,

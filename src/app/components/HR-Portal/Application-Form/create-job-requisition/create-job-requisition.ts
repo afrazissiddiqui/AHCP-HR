@@ -178,6 +178,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly workGradeLevel = signal('');
   protected readonly branchLocation = signal('');
   protected readonly branchLocationOptions = GL_ACCOUNT_BRANCH_OPTIONS;
+  protected readonly shiftTimeApplicable = signal<'Yes' | 'No' | ''>('');
   protected readonly remarks = signal('');
   protected readonly workGradeLevelOptions = WORK_GRADE_LEVEL_OPTIONS;
 
@@ -631,7 +632,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     return {
       employeeMaster: this.employeeMaster(),
       salaryStructure: this.salaryStructure(),
-      attendanceShiftManagement: this.attendanceShiftManagement(),
+      attendanceShiftManagement: this.shiftTimeApplicable(),
       leaveManagement: this.hrLeaveManagementSetting(),
       loanAdvancesForm: this.loanAdvancesForm(),
       requestStatus: this.requestStatus(),
@@ -1838,7 +1839,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     if (hrSettings) {
       this.employeeMaster.set(hrSettings.employeeMaster ?? '');
       this.salaryStructure.set(hrSettings.salaryStructure ?? '');
-      this.attendanceShiftManagement.set(hrSettings.attendanceShiftManagement ?? '');
+      this.shiftTimeApplicable.set((hrSettings.attendanceShiftManagement as 'Yes' | 'No' | '') ?? '');
       this.loanAdvancesForm.set(hrSettings.loanAdvancesForm ?? '');
       this.requestStatus.set(hrSettings.requestStatus?.trim() || 'Pending');
       this.hrLeaveManagementSetting.set(hrSettings.leaveManagement?.trim() || 'Enabled');

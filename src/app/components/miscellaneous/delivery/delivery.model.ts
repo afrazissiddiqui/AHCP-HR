@@ -131,13 +131,18 @@ export function updateDeliveryLine(
       const numericValue = value === '' ? null : Number(value);
       const normalized = Number.isNaN(numericValue) ? null : numericValue;
 
-      const updatedRow: DeliveryLine = { ...row, [field]: normalized } as DeliveryLine;
+      const editableValue =
+        field === 'discountPercent' && normalized !== null
+          ? Math.max(0, Math.min(100, normalized))
+          : normalized;
+
+      const updatedRow: DeliveryLine = { ...row, [field]: editableValue } as DeliveryLine;
 
       // If updating one of the jumbo-carton fields, and both are present (>0),
       // set `quantity` to their product.
       if (field === 'qtyPerJumboCarton' || field === 'jumboCartonsCount') {
-        const per = field === 'qtyPerJumboCarton' ? normalized : row.qtyPerJumboCarton;
-        const count = field === 'jumboCartonsCount' ? normalized : row.jumboCartonsCount;
+        const per = field === 'qtyPerJumboCarton' ? editableValue : row.qtyPerJumboCarton;
+        const count = field === 'jumboCartonsCount' ? editableValue : row.jumboCartonsCount;
 
         const perNum = per ?? null;
         const countNum = count ?? null;

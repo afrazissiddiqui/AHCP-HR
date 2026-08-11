@@ -11,6 +11,7 @@ import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
 import { WarehouseSearchSelectComponent } from '../../warehouse-search-select';
 import { resolveBranchNameFromBplId } from '../../../../utils/branch-name.util';
+import { GatePassBusinessPartner, GatePassBusinessPartnerService } from '../../../gate-pass/gate-pass-business-partner.service';
 import {
   DeliveryHeader,
   DeliveryLine,
@@ -41,6 +42,7 @@ export class AddDelivery {
   private readonly deliveryService = inject(DeliveryService);
   private readonly oitmItemsService = inject(OitmItemsService);
   private readonly salesOrderService = inject(SalesOrderService);
+  private readonly businessPartnerService = inject(GatePassBusinessPartnerService);
   protected readonly layout = inject(MiscellaneousLayoutService);
   readonly saving = signal(false);
   readonly activeSection = signal<'header' | 'logistics' | 'items' | 'footer'>('header');
@@ -53,7 +55,15 @@ export class AddDelivery {
   readonly salesOrderSearchResults = signal<SalesOrderRecord[]>([]);
   readonly salesOrdersLoading = signal(false);
   readonly salesOrdersError = signal<string | null>(null);
-  readonly selectedSalesOrder = signal<SalesOrderRecord | null>(null);
+  readonly selectedSalesOrders = signal<Set<string>>(new Set());
+  readonly customerDialogOpen = signal(false);
+  readonly customerSearchQuery = signal('');
+  readonly customerSearchResults = signal<GatePassBusinessPartner[]>([]);
+  readonly customersLoading = signal(false);
+  readonly customersError = signal<string | null>(null);
+  readonly selectedCustomer = signal<GatePassBusinessPartner | null>(null);
+  readonly batchSelectionDialogOpen = signal(false);
+  readonly activeBatchSelectionLineIndex = signal<number | null>(null);
 
   readonly branchOptions = signal([
     { code: '1', name: 'AHCP_Peshawar' },
@@ -84,11 +94,20 @@ export class AddDelivery {
   readonly headerForm = signal<DeliveryHeader>(createEmptyDeliveryHeader());
   readonly contentLines = signal<DeliveryLine[]>([createEmptyDeliveryLine()]);
 
-  readonly totals = computed(() => ({
-    totalAmount: this.contentLines()
+  readonly totals = computed(() => {
+    const beforeDiscount = this.contentLines()
       .map((line) => this.computeLineQuantity(line) * (line.unitPrice ?? 0))
-      .reduce((sum, amount) => sum + amount, 0),
-  }));
+      .reduce((sum, amount) => sum + amount, 0);
+
+    const afterDiscount = this.contentLines()
+      .map((line) => this.calculateLineTotal(line))
+      .reduce((sum, amount) => sum + amount, 0);
+
+    return {
+      beforeDiscount,
+      afterDiscount,
+    };
+  });
 
   constructor() {
     this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
@@ -195,11 +214,18 @@ export class AddDelivery {
   }
 
   totalAmount(): number {
-    return this.totals().totalAmount;
+    return this.totals().beforeDiscount;
+  }
+
+  discountAdjustedTotal(): number {
+    return this.totals().afterDiscount;
   }
 
   calculateLineTotal(line: DeliveryLine): number {
-    return this.computeLineQuantity(line) * (line.unitPrice ?? 0);
+    const grossAmount = this.computeLineQuantity(line) * (line.unitPrice ?? 0);
+    const discountPercent = Math.max(0, Math.min(100, line.discountPercent ?? 0));
+    const netAmount = grossAmount * (1 - discountPercent / 100);
+    return netAmount;
   }
 
   computeLineQuantity(line: DeliveryLine): number {
@@ -259,11 +285,17 @@ export class AddDelivery {
     this.salesOrdersLoading.set(true);
     this.salesOrdersError.set(null);
     this.salesOrderSearchQuery.set('');
+    this.selectedSalesOrders.set(new Set());
 
     this.salesOrderService.list().subscribe({
       next: (orders) => {
-        this.salesOrders.set(orders);
-        this.salesOrderSearchResults.set(orders);
+        const selectedCustomerCode = this.headerForm().customer.trim().toLowerCase();
+        const filteredOrders = selectedCustomerCode
+          ? orders.filter((order) => (order.cardCode || '').trim().toLowerCase() === selectedCustomerCode)
+          : orders;
+
+        this.salesOrders.set(filteredOrders);
+        this.salesOrderSearchResults.set(filteredOrders);
         this.salesOrdersLoading.set(false);
       },
       error: () => {
@@ -273,6 +305,54 @@ export class AddDelivery {
         this.salesOrdersError.set('Could not load sales orders.');
       },
     });
+  }
+
+  isSalesOrderSelected(order: SalesOrderRecord): boolean {
+    return this.selectedSalesOrders().has(order.docEntry);
+  }
+
+  openCustomerDialog(): void {
+    this.customerDialogOpen.set(true);
+    this.customerSearchQuery.set('');
+    this.customersLoading.set(true);
+    this.customersError.set(null);
+
+    this.businessPartnerService.ensureCustomersLoaded().subscribe({
+      next: (partners) => {
+        this.customerSearchResults.set(partners);
+        this.customersLoading.set(false);
+      },
+      error: () => {
+        this.customerSearchResults.set([]);
+        this.customersLoading.set(false);
+        this.customersError.set('Could not load customer accounts.');
+      },
+    });
+  }
+
+  closeCustomerDialog(): void {
+    this.customerDialogOpen.set(false);
+    this.selectedCustomer.set(null);
+    this.customerSearchQuery.set('');
+  }
+
+  searchCustomers(): void {
+    const query = this.customerSearchQuery().trim();
+    this.customerSearchResults.set(this.businessPartnerService.searchCustomers(query));
+  }
+
+  chooseCustomer(partner: GatePassBusinessPartner): void {
+    this.selectedCustomer.set(partner);
+  }
+
+  applyCustomer(partner: GatePassBusinessPartner): void {
+    this.headerForm.update((state) => ({
+      ...state,
+      customer: partner.code,
+      customerName: partner.name,
+    }));
+
+    this.closeCustomerDialog();
   }
 
   searchSalesOrders(): void {
@@ -302,39 +382,105 @@ export class AddDelivery {
 
   closeSalesOrderDialog(): void {
     this.salesOrderDialogOpen.set(false);
-    this.selectedSalesOrder.set(null);
+    this.selectedSalesOrders.set(new Set());
+  }
+
+  openBatchSelectionDialog(): void {
+    const lines = this.contentLines().filter((line) => line.itemCode.trim());
+    if (lines.length === 0) {
+      void this.alertService.warning('No items added', 'Add at least one item before opening the batch selection modal.');
+      return;
+    }
+
+    this.activeBatchSelectionLineIndex.set(0);
+    this.batchSelectionDialogOpen.set(true);
+  }
+
+  closeBatchSelectionDialog(): void {
+    this.batchSelectionDialogOpen.set(false);
+    this.activeBatchSelectionLineIndex.set(null);
+  }
+
+  saveFromBatchSelectionDialog(): void {
+    this.closeBatchSelectionDialog();
+    this.save();
+  }
+
+  selectBatchSelectionLine(index: number): void {
+    this.activeBatchSelectionLineIndex.set(index);
+  }
+
+  getActiveBatchSelectionLine(): DeliveryLine | null {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return null;
+    }
+
+    return this.contentLines()[index] ?? null;
+  }
+
+  selectBatchForActiveLine(batch: string): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    this.contentLines.update((rows) =>
+      rows.map((row, rowIndex) => {
+        if (rowIndex !== index) {
+          return row;
+        }
+
+        return {
+          ...row,
+          batchSerialNumber: batch,
+        };
+      }),
+    );
   }
 
   chooseSalesOrder(order: SalesOrderRecord): void {
-    this.selectedSalesOrder.set(order);
+    const next = new Set(this.selectedSalesOrders());
+    if (next.has(order.docEntry)) {
+      next.delete(order.docEntry);
+    } else {
+      next.add(order.docEntry);
+    }
+    this.selectedSalesOrders.set(next);
   }
 
   copyFromSalesOrder(): void {
-    const order = this.selectedSalesOrder();
-    if (!order) {
+    const selected = this.salesOrders().filter((order) => this.selectedSalesOrders().has(order.docEntry));
+    if (selected.length === 0) {
       return;
     }
-    this.applySalesOrder(order);
+
+    this.applySalesOrders(selected);
   }
 
-  applySalesOrder(order: SalesOrderRecord): void {
+  applySalesOrders(orders: SalesOrderRecord[]): void {
+    const [firstOrder] = orders;
+    if (!firstOrder) {
+      return;
+    }
+
     this.headerForm.update((state) => ({
       ...state,
-      branchId: order.branchId || state.branchId,
-      branchName: resolveBranchNameFromBplId(order.branchId) || state.branchName,
-      customer: order.cardCode,
-      customerName: order.cardName,
-      customerRefNo: order.customerPoNo || state.customerRefNo,
-      baseSalesOrderNumber: order.docNum,
-      baseSalesOrderDocEntry: order.docEntry,
-      shipToAddress: order.address,
-      driver: order.driverName || state.driver,
-      vehicleNumber: order.vehicleNo || state.vehicleNumber,
-      postingDate: order.docDate || state.postingDate,
-      documentDate: order.docDueDate || order.docDate || state.documentDate,
+      branchId: firstOrder.branchId || state.branchId,
+      branchName: resolveBranchNameFromBplId(firstOrder.branchId) || state.branchName,
+      customer: firstOrder.cardCode,
+      customerName: firstOrder.cardName,
+      customerRefNo: firstOrder.customerPoNo || state.customerRefNo,
+      baseSalesOrderNumber: firstOrder.docNum,
+      baseSalesOrderDocEntry: firstOrder.docEntry,
+      shipToAddress: firstOrder.address,
+      driver: firstOrder.driverName || state.driver,
+      vehicleNumber: firstOrder.vehicleNo || state.vehicleNumber,
+      postingDate: firstOrder.docDate || state.postingDate,
+      documentDate: firstOrder.docDueDate || firstOrder.docDate || state.documentDate,
     }));
 
-    this.contentLines.set(
+    const mergedLines = orders.flatMap((order) =>
       order.items.length > 0
         ? order.items.map((line) => ({
             ...createEmptyDeliveryLine(),
@@ -355,6 +501,7 @@ export class AddDelivery {
         : [createEmptyDeliveryLine()],
     );
 
+    this.contentLines.set(mergedLines.length > 0 ? mergedLines : [createEmptyDeliveryLine()]);
     this.closeSalesOrderDialog();
   }
 

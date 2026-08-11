@@ -67,4 +67,12 @@ describe('WorkstationComponent', () => {
       jasmine.objectContaining({ shift: 'Morning Shift' }),
     );
   });
+
+  it('renders an employee table with the requested columns', () => {
+    const tables = fixture.nativeElement.querySelectorAll('table.entry-table');
+    expect(tables.length).toBe(2);
+
+    const employeeHeaders = Array.from(tables[1].querySelectorAll('th')).map((header: HTMLElement) => header.textContent?.trim());
+    expect(employeeHeaders).toEqual(['Employee ID', 'Employee Name', 'Shift']);
+  });
 });

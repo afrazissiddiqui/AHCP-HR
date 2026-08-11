@@ -70,7 +70,6 @@
                   <th class="sir-col-qty">Quantity</th>
                   <th>From Warehouse</th>
                   <th>To Warehouse</th>
-                  <th>Batch Number</th>
                   <th class="sir-col-actions">Action</th>
                 </tr>
               </thead>
@@ -108,18 +107,6 @@
                         [warehouseCode]="line.toWarehouse"
                         (warehouseCodeChange)="updateContentLine($index, 'toWarehouse', $event)"
                       />
-                    </td>
-                    <td>
-                      <select
-                        class="sir-table-input"
-                        [ngModel]="line.batchNumber"
-                        (ngModelChange)="updateContentLine($index, 'batchNumber', $event)"
-                      >
-                        <option value="">Select batch</option>
-                        @for (batch of batchOptionsForLine(line); track batch) {
-                          <option [value]="batch">{{ batch }}</option>
-                        }
-                      </select>
                     </td>
                     <td class="sir-col-actions">
                       <div class="sir-row-action-buttons" data-ui5-compact-size>

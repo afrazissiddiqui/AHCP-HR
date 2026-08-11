@@ -46,7 +46,7 @@ export interface CreateInventoryTransferItemPayload {
   quantity: string;
   FromWhsCod: string;
   ToWhsCode: string;
-  batches: CreateInventoryTransferBatchPayload[];
+  batches?: CreateInventoryTransferBatchPayload[];
 }
 
 export interface CreateInventoryTransferPayload {
@@ -113,30 +113,44 @@ export function buildCreateInventoryTransferPayload(
       .filter((line) => line.itemCode.trim())
       .map((line) => {
         const quantity = String(line.quantity ?? 0);
-        const batchNumber = line.batchNumber.trim();
         const lineFromWarehouse = line.fromWarehouse.trim() || fromWarehouse;
         const lineToWarehouse = line.toWarehouse.trim() || toWarehouse;
 
         return {
-          baseEntry: line.baseEntry?.trim() || undefined,
-          baseLine: line.baseLine?.trim() || undefined,
           item_code: line.itemCode.trim(),
-          item_cost: line.itemCost.trim() || undefined,
-          uom_code: line.uomCode.trim() || undefined,
-          uom_name: line.uomName.trim() || undefined,
-          distr_rule: line.distrRule.trim() || undefined,
-          to_branch: line.toBranch.trim() || undefined,
           quantity,
           FromWhsCod: lineFromWarehouse,
           ToWhsCode: lineToWarehouse,
-          batches: batchNumber
-            ? [
-                {
-                  batch_number: batchNumber,
-                  quantity,
-                },
-              ]
-            : [],
+        };
+      }),
+  };
+}
+
+export function buildCreateInventoryTransferRequestPayload(
+  header: InventoryTransferHeader,
+  lines: InventoryTransferLine[],
+): CreateInventoryTransferPayload {
+  const fromWarehouse = header.fromWarehouse.trim();
+  const toWarehouse = header.toWarehouse.trim();
+
+  return {
+    DocDate: header.docDate.trim(),
+    TaxDate: header.taxDate.trim(),
+    from_warehouse: fromWarehouse,
+    to_warehouse: toWarehouse,
+    Remarks: header.remarks.trim(),
+    items: lines
+      .filter((line) => line.itemCode.trim())
+      .map((line) => {
+        const quantity = String(line.quantity ?? 0);
+        const lineFromWarehouse = line.fromWarehouse.trim() || fromWarehouse;
+        const lineToWarehouse = line.toWarehouse.trim() || toWarehouse;
+
+        return {
+          item_code: line.itemCode.trim(),
+          quantity,
+          FromWhsCod: lineFromWarehouse,
+          ToWhsCode: lineToWarehouse,
         };
       }),
   };
@@ -159,7 +173,10 @@ export class InventoryTransferService {
   }
 
   create(payload: CreateInventoryTransferPayload): Observable<CreateInventoryTransferResponse> {
-    return this.http.post<CreateInventoryTransferResponse>(apiUrl('it_submit_in_sap'), payload);
+    const url = apiUrl('itr_submit_in_sap');
+    console.debug('ITR submit URL:', url);
+    console.debug('ITR submit payload:', payload);
+    return this.http.post<CreateInventoryTransferResponse>(url, payload);
   }
 
   private parseInventoryTransferRequests(response: unknown): InventoryTransferRequestRecord[] {

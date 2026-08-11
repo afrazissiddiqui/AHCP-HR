@@ -442,6 +442,15 @@
               </select>
             </div>
 
+            <div class="cjr-row">
+              <label>Shift Time Applicable:</label>
+              <select [ngModel]="shiftTimeApplicable()" (ngModelChange)="shiftTimeApplicable.set($event)">
+                <option value="">No Selection</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+
             <div class="cjr-row cjr-row--textarea">
               <label>Remarks:</label>
               <textarea rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)"
