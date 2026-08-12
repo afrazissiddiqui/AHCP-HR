@@ -341,6 +341,10 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
       return this.openBaseDocuments.fetchPurchaseOrders();
     }
 
+    if (this.documentType === 'Purchase Request') {
+      return this.openBaseDocuments.fetchPurchaseRequests();
+    }
+
     return null;
   }
 }

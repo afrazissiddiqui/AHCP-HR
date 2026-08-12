@@ -466,16 +466,6 @@
   font-weight: 600;
 }
 
-.field-select {
-  background: var(--us-surface);
-  border: 1px solid var(--us-line);
-  border-radius: 8px;
-  color: var(--us-text);
-  font-family: inherit;
-  font-size: 13px;
-  padding: 8px 10px;
-}
-
 .field-block--wide {
   grid-column: 1 / -1;
 }

@@ -21,6 +21,7 @@ interface PurchaseRequestHeader {
   postingDate: string;
   dueDate: string;
   branch: string;
+  requestType: string;
   remarks: string;
   selectedBaseOrder: string;
 }
@@ -37,6 +38,9 @@ interface PurchaseRequestLine {
   taxCode: string;
   taxCodeName: string;
   department: string;
+  glAccount: string;
+  glName: string;
+  total: number | null;
   uomCode: string;
   warehouse: string;
   quantity: number | null;
@@ -69,6 +73,7 @@ export class PurchaseRequestComponent implements OnInit {
     postingDate: '',
     dueDate: '',
     branch: '',
+    requestType: '',
     remarks: '',
     selectedBaseOrder: '',
   });
@@ -89,6 +94,10 @@ export class PurchaseRequestComponent implements OnInit {
     { label: 'Peshawar', value: 'Peshawar' },
     { label: 'HO', value: 'HO' },
     { label: 'Faisalabad', value: 'Faisalabad' },
+  ]);
+  readonly requestTypeOptions = signal([
+    { label: 'Item', value: 'Item' },
+    { label: 'Service', value: 'Service' },
   ]);
   readonly taxCodes = signal<TaxCode[]>([]);
   // Tax codes are shown as a dropdown select; no per-row search signals needed.
@@ -149,6 +158,10 @@ export class PurchaseRequestComponent implements OnInit {
         this.warehouseOptions.set([]);
       },
     });
+  }
+
+  get isServiceRequest(): boolean {
+    return this.headerForm().requestType.trim().toLowerCase() === 'service';
   }
 
   get hasValidLine(): boolean {
@@ -448,8 +461,20 @@ export class PurchaseRequestComponent implements OnInit {
       return;
     }
 
-    const invalidRow = lines.find(
-      (line) =>
+    const invalidRow = lines.find((line) => {
+      if (this.isServiceRequest) {
+        return (
+          !line.vendor.trim() ||
+          !line.department.trim() ||
+          !line.glAccount.trim() ||
+          !line.glName.trim() ||
+          !line.taxCode.trim() ||
+          !line.total ||
+          !line.requiredDate.trim()
+        );
+      }
+
+      return (
         !line.itemCode.trim() ||
         !line.infoPrice ||
         !line.requiredQuantity ||
@@ -457,11 +482,15 @@ export class PurchaseRequestComponent implements OnInit {
         !line.department.trim() ||
         !line.warehouse.trim() ||
         !line.requiredDate.trim() ||
-        !line.vendor.trim(),
-    );
+        !line.vendor.trim()
+      );
+    });
 
     if (invalidRow) {
-      this.alertService.validation('Each row must have item, vendor, required date, quantity, price, tax code, department, and warehouse.');
+      const message = this.isServiceRequest
+        ? 'Each service row must have vendor, department, GL account, GL name, tax code, total, and required date.'
+        : 'Each row must have item, vendor, required date, quantity, price, tax code, department, and warehouse.';
+      this.alertService.validation(message);
       return;
     }
 
@@ -533,6 +562,9 @@ export class PurchaseRequestComponent implements OnInit {
       taxCode: '',
       taxCodeName: '',
       department: '',
+      glAccount: '',
+      glName: '',
+      total: null,
       uomCode: '',
       warehouse: '',
       quantity: null,

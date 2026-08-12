@@ -49,6 +49,22 @@ export class UserSetupComponent implements OnInit {
   readonly authDefinitions = AUTHORIZATION_MODULE_DEFINITIONS;
   readonly nameSuggestions = computed(() => this.buildFieldSuggestions(['name', 'Name'], this.resolveTextValue(this.fieldValue('name')) || this.resolveTextValue(this.fieldValue('Name'))));
   readonly emailSuggestions = computed(() => this.buildFieldSuggestions(['email', 'Email'], this.resolveTextValue(this.fieldValue('email')) || this.resolveTextValue(this.fieldValue('Email'))));
+  readonly employeeCodeOptions = computed(() => {
+    const set = new Set<string>();
+    const keys = ['EmployeeCode', 'employeeCode', 'employee_code', 'sap_employee_id', 'sapEmployeeId', 'SAPEmployeeID'];
+    for (const user of this.users()) {
+      for (const key of keys) {
+        const raw = (user as any)[key];
+        if (typeof raw === 'string') {
+          const txt = raw.trim();
+          if (txt && txt !== '—') set.add(txt);
+        } else if (typeof raw === 'number') {
+          set.add(String(raw));
+        }
+      }
+    }
+    return [...set].sort((a, b) => a.localeCompare(b));
+  });
   readonly authorizationSummary = computed(() => {
     const authorization = this.authorization();
     let total = 0;
@@ -281,6 +297,11 @@ export class UserSetupComponent implements OnInit {
 
   isBranchField(field: string): boolean {
     return field.toLowerCase() === 'branch';
+  }
+
+  isEmployeeCodeField(field: string): boolean {
+    const n = field.toLowerCase().replace(/[_\s]/g, '');
+    return n === 'employeecode' || n === 'sapemployeeid';
   }
 
   updateField(field: string, value: string | string[]): void {

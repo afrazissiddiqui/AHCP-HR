@@ -64,8 +64,8 @@
                   type="number"
                   min="0"
                   step="0.01"
-                  [ngModel]="bracket.rate"
-                  (ngModelChange)="updateBracket(i, 'rate', $event)"
+                  [ngModel]="bracket.amount"
+                  (ngModelChange)="updateBracket(i, 'amount', $event)"
                 />
               </td>
               <td>{{ taxRateLabel(bracket) }}</td>

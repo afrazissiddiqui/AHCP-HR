@@ -106,7 +106,7 @@ export class CreateAgpComponent implements OnInit {
   showBaseDocModal = false;
 
   departmentOptions: string[] = [];
-  readonly typeOptions = ['Purchase Order', 'Stand Alone Documents'] as const;
+  readonly typeOptions = ['Purchase Order', 'Purchase Request', 'Stand Alone Documents'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
 

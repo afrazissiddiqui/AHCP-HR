@@ -722,6 +722,7 @@ const OPEN_BY_MODULE: Record<GatePassModule, Record<string, OpenBaseDocument[]>>
 
 const GET_PO_RECORDS_URL = apiUrl('get_po_records');
 const SALES_RETURN_REQUESTS_URL = apiUrl('sales_return_requests');
+const PURCHASE_REQUESTS_URL = apiUrl('purchase_requests');
 const DELIVERY_URL = apiUrl('delivery');
 
 @Injectable({ providedIn: 'root' })
@@ -753,6 +754,16 @@ export class OpenBaseDocumentsService {
 
   fetchSalesReturnRequests(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(SALES_RETURN_REQUESTS_URL).pipe(
+      timeout(30_000),
+      map((response) =>
+        this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
+      ),
+      catchError(() => of([])),
+    );
+  }
+
+  fetchPurchaseRequests(): Observable<OpenBaseDocument[]> {
+    return this.http.get<unknown>(PURCHASE_REQUESTS_URL).pipe(
       timeout(30_000),
       map((response) =>
         this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
@@ -798,6 +809,8 @@ export class OpenBaseDocumentsService {
       'list',
       'purchaseOrders',
       'purchase_orders',
+      'purchaseRequests',
+      'purchase_requests',
       'poRecords',
       'po_records',
       'getPoRecords',
@@ -900,6 +913,8 @@ export class OpenBaseDocumentsService {
       'partner',
       'vendorName',
       'vendor_name',
+      'cardName',
+      'card_name',
       'CardName',
     ]);
     const title =
@@ -910,6 +925,10 @@ export class OpenBaseDocumentsService {
     const docNum = this.pickString(sources, [
       'docNum',
       'DocNum',
+      'purchaseRequestNo',
+      'purchase_request_no',
+      'purchaseRequestNumber',
+      'purchase_request_number',
       'baseDocNo',
       'base_doc_no',
       'poNumber',

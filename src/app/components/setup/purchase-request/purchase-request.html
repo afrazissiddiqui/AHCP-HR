@@ -28,6 +28,15 @@
                 }
               </select>
             </div>
+            <div class="sir-field-row">
+              <label>Request Type:</label>
+              <select class="sir-table-input" [ngModel]="headerForm().requestType" (ngModelChange)="updateHeaderField('requestType', $event)">
+                <option value="">— Select request type —</option>
+                @for (option of requestTypeOptions(); track option.value) {
+                  <option value="{{ option.value }}">{{ option.label }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           <div class="sir-form-column">
@@ -51,118 +60,183 @@
               <thead>
                 <tr>
                   <th class="sir-col-sr">Sr. No</th>
-                  <th class="sir-col-item-code">Item Code</th>
-                  <th class="sir-col-item-name">Item Name</th>
-                  <th class="sir-col-item-name">Vendor</th>
-                  <th class="sir-col-date">Required Date</th>
-                  <th class="sir-col-qty">Required Quantity</th>
-                  <th class="sir-col-qty">Info Price</th>
-                  <th class="sir-col-qty">Discount</th>
-                  <th class="sir-col-item-name">Tax Code</th>
-                  <th class="sir-col-item-name">Department</th>
-                  <th class="sir-col-item-name">UOM Code</th>
-                  <th class="sir-col-warehouse">Warehouse</th>
+                  @if (isServiceRequest) {
+                    <th class="sir-col-item-name">Vendor</th>
+                    <th class="sir-col-item-name">Department</th>
+                    <th class="sir-col-item-name">GL Account</th>
+                    <th class="sir-col-item-name">GL Name</th>
+                    <th class="sir-col-item-name">Tax Code</th>
+                    <th class="sir-col-qty">Total</th>
+                  } @else {
+                    <th class="sir-col-item-code">Item Code</th>
+                    <th class="sir-col-item-name">Item Name</th>
+                    <th class="sir-col-item-name">Vendor</th>
+                    <th class="sir-col-date">Required Date</th>
+                    <th class="sir-col-qty">Required Quantity</th>
+                    <th class="sir-col-qty">Info Price</th>
+                    <th class="sir-col-qty">Discount</th>
+                    <th class="sir-col-item-name">Tax Code</th>
+                    <th class="sir-col-item-name">Department</th>
+                    <th class="sir-col-item-name">UOM Code</th>
+                    <th class="sir-col-warehouse">Warehouse</th>
+                  }
                 </tr>
               </thead>
               <tbody>
                 @for (line of contentLines(); track $index) {
                   <tr>
                     <td class="sir-col-sr">{{ $index + 1 }}</td>
-                    <td class="sir-col-item-code">
-                      <div style="position: relative;">
-                        <input
-                          type="text"
-                          class="sir-table-input"
-                          #itemInput
-                          [ngModel]="itemSearchTerms()[$index] ?? line.itemCode"
-                          (focus)="onItemCodeFocus($index, itemInput)"
-                          (input)="updateSuggestionPanelPosition($index, itemInput); updateItemSearch($index, itemInput.value)"
-                          (blur)="scheduleHideSuggestionPanel()"
-                          placeholder="Search item code or name"
-                        />
-                        @if (itemOptionsLoading()) {
-                          <div style="margin-top: 4px; height: 4px; border-radius: 999px; background: #e5e7eb; overflow: hidden;">
-                            <div style="height: 100%; width: 70%; background: linear-gradient(90deg, #2563eb, #60a5fa); animation: pulse 1.2s ease-in-out infinite;"></div>
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" readonly placeholder="Search item code to select item" />
-                    </td>
-                    <td class="sir-col-item-name">
-                      <div style="position: relative;">
-                        <input
-                          type="text"
-                          class="sir-table-input"
-                          #vendorInput
-                          [ngModel]="vendorSearchTerms()[$index] ?? line.vendor"
-                          (focus)="onVendorFocus($index, vendorInput)"
-                          (input)="updateVendorSuggestionPanelPosition($index, vendorInput); updateVendorSearch($index, vendorInput.value)"
-                          (blur)="scheduleHideVendorSuggestionPanel()"
-                          placeholder="Search vendor code or name"
-                        />
-                      </div>
-                    </td>
-                    <td class="sir-col-date">
-                      <input type="date" class="sir-table-input" [ngModel]="line.requiredDate" (ngModelChange)="updateContentLine($index, 'requiredDate', $event)" />
-                    </td>
-                    <td class="sir-col-qty">
-                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.requiredQuantity" (ngModelChange)="updateContentLine($index, 'requiredQuantity', $event)" />
-                    </td>
-                    <td class="sir-col-qty">
-                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.infoPrice" (ngModelChange)="updateContentLine($index, 'infoPrice', $event)" />
-                    </td>
-                    <td class="sir-col-qty">
-                      <input type="number" class="sir-table-input" min="0" [ngModel]="line.discount" (ngModelChange)="updateContentLine($index, 'discount', $event)" />
-                    </td>
-                    <td class="sir-col-item-name">
-                      <div style="position: relative;">
+                    @if (isServiceRequest) {
+                      <td class="sir-col-item-name">
+                        <div style="position: relative;">
+                          <input
+                            type="text"
+                            class="sir-table-input"
+                            #vendorInput
+                            [ngModel]="vendorSearchTerms()[$index] ?? line.vendor"
+                            (focus)="onVendorFocus($index, vendorInput)"
+                            (input)="updateVendorSuggestionPanelPosition($index, vendorInput); updateVendorSearch($index, vendorInput.value)"
+                            (blur)="scheduleHideVendorSuggestionPanel()"
+                            placeholder="Search vendor code or name"
+                          />
+                        </div>
+                      </td>
+                      <td class="sir-col-item-name">
                         <select
                           class="sir-table-input"
-                          [ngModel]="line.taxCode"
-                          (ngModelChange)="onTaxCodeChange($index, $event)"
-                          (focus)="loadTaxCodes()"
-                          (click)="loadTaxCodes()"
+                          [ngModel]="line.department"
+                          (ngModelChange)="updateContentLine($index, 'department', $event)"
+                          (focus)="loadDepartmentOptions()"
+                          (click)="loadDepartmentOptions()"
                         >
-                          <option value="">— Select tax code —</option>
-                          @for (tax of getTaxCodes(); track tax.code) {
-                            <option value="{{ tax.code }}">{{ tax.code }} - {{ tax.name }}</option>
+                          <option value="">— Select department —</option>
+                          @for (department of getDepartmentOptions(); track department.code) {
+                            <option value="{{ department.code }}">{{ department.code }} - {{ department.name }}</option>
                           }
                         </select>
-                      </div>
-                    </td>
-                    <td class="sir-col-item-name">
-                      <select
-                        class="sir-table-input"
-                        [ngModel]="line.department"
-                        (ngModelChange)="updateContentLine($index, 'department', $event)"
-                        (focus)="loadDepartmentOptions()"
-                        (click)="loadDepartmentOptions()"
-                      >
-                        <option value="">— Select department —</option>
-                        @for (department of getDepartmentOptions(); track department.code) {
-                          <option value="{{ department.code }}">{{ department.code }} - {{ department.name }}</option>
-                        }
-                      </select>
-                    </td>
-                    <td class="sir-col-item-name">
-                      <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine($index, 'uomCode', $event)" />
-                    </td>
-                    <td class="sir-col-warehouse">
-                      <select
-                        class="sir-table-input"
-                        [ngModel]="line.warehouse"
-                        (ngModelChange)="updateContentLine($index, 'warehouse', $event)"
-                        (focus)="loadWarehouseOptions()"
-                        (click)="loadWarehouseOptions()"
-                      >
-                        <option value="">— Select warehouse —</option>
-                        @for (option of warehouseOptions(); track option.code) {
-                          <option value="{{ option.code }}">{{ option.code }}{{ option.name ? ' - ' + option.name : '' }}</option>
-                        }
-                      </select>
-                    </td>
+                      </td>
+                      <td class="sir-col-item-name">
+                        <input type="text" class="sir-table-input" [ngModel]="line.glAccount" (ngModelChange)="updateContentLine($index, 'glAccount', $event)" placeholder="GL Account" />
+                      </td>
+                      <td class="sir-col-item-name">
+                        <input type="text" class="sir-table-input" [ngModel]="line.glName" (ngModelChange)="updateContentLine($index, 'glName', $event)" placeholder="GL Name" />
+                      </td>
+                      <td class="sir-col-item-name">
+                        <div style="position: relative;">
+                          <select
+                            class="sir-table-input"
+                            [ngModel]="line.taxCode"
+                            (ngModelChange)="onTaxCodeChange($index, $event)"
+                            (focus)="loadTaxCodes()"
+                            (click)="loadTaxCodes()"
+                          >
+                            <option value="">— Select tax code —</option>
+                            @for (tax of getTaxCodes(); track tax.code) {
+                              <option value="{{ tax.code }}">{{ tax.code }} - {{ tax.name }}</option>
+                            }
+                          </select>
+                        </div>
+                      </td>
+                      <td class="sir-col-qty">
+                        <input type="number" class="sir-table-input" min="0" [ngModel]="line.total" (ngModelChange)="updateContentLine($index, 'total', $event)" />
+                      </td>
+                    } @else {
+                      <td class="sir-col-item-code">
+                        <div style="position: relative;">
+                          <input
+                            type="text"
+                            class="sir-table-input"
+                            #itemInput
+                            [ngModel]="itemSearchTerms()[$index] ?? line.itemCode"
+                            (focus)="onItemCodeFocus($index, itemInput)"
+                            (input)="updateSuggestionPanelPosition($index, itemInput); updateItemSearch($index, itemInput.value)"
+                            (blur)="scheduleHideSuggestionPanel()"
+                            placeholder="Search item code or name"
+                          />
+                          @if (itemOptionsLoading()) {
+                            <div style="margin-top: 4px; height: 4px; border-radius: 999px; background: #e5e7eb; overflow: hidden;">
+                              <div style="height: 100%; width: 70%; background: linear-gradient(90deg, #2563eb, #60a5fa); animation: pulse 1.2s ease-in-out infinite;"></div>
+                            </div>
+                          }
+                        </div>
+                      </td>
+                      <td class="sir-col-item-name">
+                        <input type="text" class="sir-table-input" [ngModel]="line.itemDescription" readonly placeholder="Search item code to select item" />
+                      </td>
+                      <td class="sir-col-item-name">
+                        <div style="position: relative;">
+                          <input
+                            type="text"
+                            class="sir-table-input"
+                            #vendorInput
+                            [ngModel]="vendorSearchTerms()[$index] ?? line.vendor"
+                            (focus)="onVendorFocus($index, vendorInput)"
+                            (input)="updateVendorSuggestionPanelPosition($index, vendorInput); updateVendorSearch($index, vendorInput.value)"
+                            (blur)="scheduleHideVendorSuggestionPanel()"
+                            placeholder="Search vendor code or name"
+                          />
+                        </div>
+                      </td>
+                      <td class="sir-col-date">
+                        <input type="date" class="sir-table-input" [ngModel]="line.requiredDate" (ngModelChange)="updateContentLine($index, 'requiredDate', $event)" />
+                      </td>
+                      <td class="sir-col-qty">
+                        <input type="number" class="sir-table-input" min="0" [ngModel]="line.requiredQuantity" (ngModelChange)="updateContentLine($index, 'requiredQuantity', $event)" />
+                      </td>
+                      <td class="sir-col-qty">
+                        <input type="number" class="sir-table-input" min="0" [ngModel]="line.infoPrice" (ngModelChange)="updateContentLine($index, 'infoPrice', $event)" />
+                      </td>
+                      <td class="sir-col-qty">
+                        <input type="number" class="sir-table-input" min="0" [ngModel]="line.discount" (ngModelChange)="updateContentLine($index, 'discount', $event)" />
+                      </td>
+                      <td class="sir-col-item-name">
+                        <div style="position: relative;">
+                          <select
+                            class="sir-table-input"
+                            [ngModel]="line.taxCode"
+                            (ngModelChange)="onTaxCodeChange($index, $event)"
+                            (focus)="loadTaxCodes()"
+                            (click)="loadTaxCodes()"
+                          >
+                            <option value="">— Select tax code —</option>
+                            @for (tax of getTaxCodes(); track tax.code) {
+                              <option value="{{ tax.code }}">{{ tax.code }} - {{ tax.name }}</option>
+                            }
+                          </select>
+                        </div>
+                      </td>
+                      <td class="sir-col-item-name">
+                        <select
+                          class="sir-table-input"
+                          [ngModel]="line.department"
+                          (ngModelChange)="updateContentLine($index, 'department', $event)"
+                          (focus)="loadDepartmentOptions()"
+                          (click)="loadDepartmentOptions()"
+                        >
+                          <option value="">— Select department —</option>
+                          @for (department of getDepartmentOptions(); track department.code) {
+                            <option value="{{ department.code }}">{{ department.code }} - {{ department.name }}</option>
+                          }
+                        </select>
+                      </td>
+                      <td class="sir-col-item-name">
+                        <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine($index, 'uomCode', $event)" />
+                      </td>
+                      <td class="sir-col-warehouse">
+                        <select
+                          class="sir-table-input"
+                          [ngModel]="line.warehouse"
+                          (ngModelChange)="updateContentLine($index, 'warehouse', $event)"
+                          (focus)="loadWarehouseOptions()"
+                          (click)="loadWarehouseOptions()"
+                        >
+                          <option value="">— Select warehouse —</option>
+                          @for (option of warehouseOptions(); track option.code) {
+                            <option value="{{ option.code }}">{{ option.code }}{{ option.name ? ' - ' + option.name : '' }}</option>
+                          }
+                        </select>
+                      </td>
+                    }
                   </tr>
                 }
               </tbody>

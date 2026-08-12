@@ -16,6 +16,7 @@ interface TaxBracketRow {
   lowerLimit: number | null;
   upperLimit: number | null;
   rate: number | null;
+  amount: number | null;
 }
 
 @Component({
@@ -67,7 +68,7 @@ export class WithholdingTaxComponent {
   addTaxBracket(): void {
     this.taxBrackets.update((rows) => [
       ...rows,
-      { lowerLimit: null, upperLimit: null, rate: null },
+      { lowerLimit: null, upperLimit: null, rate: null, amount: null },
     ]);
   }
 
@@ -94,15 +95,16 @@ export class WithholdingTaxComponent {
   }
 
   taxRateLabel(row: TaxBracketRow): string {
-    const lower = row.lowerLimit ?? 0;
-    const upper = row.upperLimit ?? 0;
-    const rate = row.rate ?? 0;
     if (row.lowerLimit === null && row.upperLimit === null) {
       return '—';
     }
+
     const lowerText = row.lowerLimit !== null ? row.lowerLimit.toLocaleString() : '0';
     const upperText = row.upperLimit !== null ? row.upperLimit.toLocaleString() : '—';
-    return `${rate ?? 0}% on amount > ${lowerText}${row.upperLimit !== null ? ` and < ${upperText}` : ''}`;
+    const rateText = row.rate !== null ? `${row.rate}%` : '0%';
+    const amountText = row.amount !== null ? row.amount.toLocaleString() : '0';
+
+    return `amount ${amountText} & Rate ${rateText} on value > ${lowerText} & Less then < ${upperText}`;
   }
 
   onEmployeeIdInput(value: string): void {

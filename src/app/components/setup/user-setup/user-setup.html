@@ -48,44 +48,46 @@
                         }
                       </div>
                     } @else {
-                      <input
-                        [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'email' ? 'email' : 'text')"
-                        class="field-input"
-                        [attr.list]="field.toLowerCase() === 'name' ? 'name-suggestions' : field.toLowerCase() === 'email' ? 'email-suggestions' : null"
-                        [ngModel]="fieldValue(field)"
-                        (ngModelChange)="updateField(field, $event)"
-                        [name]="'user-field-' + field"
-                        [placeholder]="columnLabel(field)"
-                      />
-                      @if (field.toLowerCase() === 'name') {
-                        <datalist id="name-suggestions">
-                          @for (suggestion of nameSuggestions(); track $index) {
-                            <option [value]="suggestion">{{ suggestion }}</option>
+                      @if (isEmployeeCodeField(field)) {
+                        <select
+                          class="field-input"
+                          [ngModel]="fieldValue(field)"
+                          (ngModelChange)="updateField(field, $event)"
+                          [name]="'user-field-' + field"
+                        >
+                          <option value="">Select employee code</option>
+                          @for (code of employeeCodeOptions(); track code) {
+                            <option [value]="code">{{ code }}</option>
                           }
-                        </datalist>
-                      } @else if (field.toLowerCase() === 'email') {
-                        <datalist id="email-suggestions">
-                          @for (suggestion of emailSuggestions(); track $index) {
-                            <option [value]="suggestion">{{ suggestion }}</option>
-                          }
-                        </datalist>
+                        </select>
+                      } @else {
+                        <input
+                          [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'email' ? 'email' : 'text')"
+                          class="field-input"
+                          [attr.list]="field.toLowerCase() === 'name' ? 'name-suggestions' : field.toLowerCase() === 'email' ? 'email-suggestions' : null"
+                          [ngModel]="fieldValue(field)"
+                          (ngModelChange)="updateField(field, $event)"
+                          [name]="'user-field-' + field"
+                          [placeholder]="columnLabel(field)"
+                        />
+                        @if (field.toLowerCase() === 'name') {
+                          <datalist id="name-suggestions">
+                            @for (suggestion of nameSuggestions(); track $index) {
+                              <option [value]="suggestion">{{ suggestion }}</option>
+                            }
+                          </datalist>
+                        } @else if (field.toLowerCase() === 'email') {
+                          <datalist id="email-suggestions">
+                            @for (suggestion of emailSuggestions(); track $index) {
+                              <option [value]="suggestion">{{ suggestion }}</option>
+                            }
+                          </datalist>
+                        }
                       }
                     }
                   </label>
                 }
               }
-
-              <label class="field-block field-block--wide">
-                <span class="field-label">SAP Employee ID</span>
-                <input
-                  type="text"
-                  class="field-input"
-                  [ngModel]="fieldValue('sap_employee_id')"
-                  (ngModelChange)="updateField('sap_employee_id', $event)"
-                  name="sap-employee-id"
-                  placeholder="Select employee"
-                />
-              </label>
 
             </div>
           </div>
