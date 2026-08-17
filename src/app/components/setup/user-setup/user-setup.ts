@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import { UserListItem, UserSetupPayload, UserSetupService } from '../../../services/user-setup.service';
+import { ApplicationFormService, ApplicationFormRecord } from '../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import {
   AUTHORIZATION_MODULE_DEFINITIONS,
@@ -28,6 +29,7 @@ type UserFormMode = 'add' | 'edit';
 })
 export class UserSetupComponent implements OnInit {
   private readonly userSetupService = inject(UserSetupService);
+  private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
   private readonly editableFallbackColumns = ['name', 'email', 'password', 'employee_code'];
   readonly branchOptions = [
@@ -39,6 +41,7 @@ export class UserSetupComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deleting = signal(false);
+  readonly employeeProfilesLoading = signal(false);
   readonly users = signal<UserListItem[]>([]);
   readonly columns = signal<string[]>([]);
   readonly formMode = signal<UserFormMode>('add');
@@ -47,23 +50,71 @@ export class UserSetupComponent implements OnInit {
   readonly formModel = signal<Record<string, string | string[]>>({});
   readonly authorization = signal<UserAuthorizationModule[]>(buildAuthorizationTemplate());
   readonly authDefinitions = AUTHORIZATION_MODULE_DEFINITIONS;
-  readonly nameSuggestions = computed(() => this.buildFieldSuggestions(['name', 'Name'], this.resolveTextValue(this.fieldValue('name')) || this.resolveTextValue(this.fieldValue('Name'))));
-  readonly emailSuggestions = computed(() => this.buildFieldSuggestions(['email', 'Email'], this.resolveTextValue(this.fieldValue('email')) || this.resolveTextValue(this.fieldValue('Email'))));
-  readonly employeeCodeOptions = computed(() => {
-    const set = new Set<string>();
-    const keys = ['EmployeeCode', 'employeeCode', 'employee_code', 'sap_employee_id', 'sapEmployeeId', 'SAPEmployeeID'];
+  readonly employeeProfiles = signal<ApplicationFormRecord[]>([]);
+  readonly employeeCodeSearchText = signal('');
+  readonly nameSuggestions = computed(() => {
+    const query = this.resolveTextValue(this.fieldValue('name')) || this.resolveTextValue(this.fieldValue('Name'));
+    const value = query.trim().toLowerCase();
+    if (!value) {
+      return [];
+    }
+
+    const results = new Set<string>();
+    
+    // Add names from existing users
     for (const user of this.users()) {
-      for (const key of keys) {
-        const raw = (user as any)[key];
-        if (typeof raw === 'string') {
-          const txt = raw.trim();
-          if (txt && txt !== '—') set.add(txt);
-        } else if (typeof raw === 'number') {
-          set.add(String(raw));
+      for (const field of ['name', 'Name']) {
+        const raw = user[field];
+        if (typeof raw !== 'string') {
+          continue;
+        }
+        const text = raw.trim();
+        if (!text) {
+          continue;
+        }
+        if (text.toLowerCase().includes(value)) {
+          results.add(text);
         }
       }
     }
-    return [...set].sort((a, b) => a.localeCompare(b));
+
+    // Add names from employee profiles
+    for (const profile of this.employeeProfiles()) {
+      const raw = profile.EmployeeName?.trim();
+      if (!raw) {
+        continue;
+      }
+      if (raw.toLowerCase().includes(value)) {
+        results.add(raw);
+      }
+    }
+
+    return [...results].sort((a, b) => a.localeCompare(b));
+  });
+  readonly emailSuggestions = computed(() => this.buildFieldSuggestions(['email', 'Email'], this.resolveTextValue(this.fieldValue('email')) || this.resolveTextValue(this.fieldValue('Email'))));
+  readonly employeeCodeOptions = computed(() => {
+    const searchQuery = this.employeeCodeSearchText().trim().toLowerCase();
+    const profiles = this.employeeProfiles();
+    const set = new Set<{ code: string; name: string }>();
+
+    for (const profile of profiles) {
+      const code = profile.EmployeeCode?.trim();
+      const name = profile.EmployeeName?.trim();
+      if (code && code !== '—' && name && name !== '—') {
+        set.add({ code, name });
+      }
+    }
+
+    const sorted = [...set].sort((a, b) => a.code.localeCompare(b.code));
+
+    if (!searchQuery) {
+      return sorted;
+    }
+
+    return sorted.filter(
+      (item) =>
+        item.code.toLowerCase().includes(searchQuery) || item.name.toLowerCase().includes(searchQuery),
+    );
   });
   readonly authorizationSummary = computed(() => {
     const authorization = this.authorization();
@@ -87,6 +138,8 @@ export class UserSetupComponent implements OnInit {
   });
   readonly searchText = signal('');
   readonly permissionSearchText = signal('');
+  readonly currentPage = signal(1);
+  readonly itemsPerPage = signal(10);
   readonly filteredUsers = computed(() => {
     const query = this.searchText().trim().toLowerCase();
     if (!query) {
@@ -106,6 +159,16 @@ export class UserSetupComponent implements OnInit {
     );
   });
 
+  readonly totalFilteredUsers = computed(() => this.filteredUsers().length);
+  readonly totalPages = computed(() => Math.ceil(this.totalFilteredUsers() / this.itemsPerPage()));
+  readonly paginatedUsers = computed(() => {
+    const start = (this.currentPage() - 1) * this.itemsPerPage();
+    const end = start + this.itemsPerPage();
+    return this.filteredUsers().slice(start, end);
+  });
+  readonly paginationStart = computed(() => (this.currentPage() - 1) * this.itemsPerPage() + 1);
+  readonly paginationEnd = computed(() => Math.min(this.currentPage() * this.itemsPerPage(), this.totalFilteredUsers()));
+
   readonly totalUsers = computed(() => this.users().length);
   readonly filteredAuthDefinitions = computed(() => {
     const query = this.permissionSearchText().trim().toLowerCase();
@@ -121,6 +184,23 @@ export class UserSetupComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadEmployeeProfiles();
+  }
+
+  loadEmployeeProfiles(): void {
+    this.employeeProfilesLoading.set(true);
+    this.applicationFormService
+      .fetchEmployeeProfiles()
+      .pipe(finalize(() => this.employeeProfilesLoading.set(false)))
+      .subscribe({
+        next: (profiles) => {
+          this.employeeProfiles.set(profiles);
+        },
+        error: (error: unknown) => {
+          this.employeeProfiles.set([]);
+          console.warn('Failed to load employee profiles:', error);
+        },
+      });
   }
 
   loadUsers(): void {
@@ -133,12 +213,14 @@ export class UserSetupComponent implements OnInit {
           this.users.set(users);
           this.columns.set(this.deriveColumns(users));
           this.formFields.set(this.deriveEditableFields(users));
+          this.currentPage.set(1);
           this.resetForm();
         },
         error: (error: unknown) => {
           this.users.set([]);
           this.columns.set([]);
           this.formFields.set(this.deriveEditableFields([]));
+          this.currentPage.set(1);
           this.resetForm();
           void this.alertService.error(
             'Load Failed',
@@ -146,6 +228,27 @@ export class UserSetupComponent implements OnInit {
           );
         },
       });
+  }
+
+  goToPage(page: number): void {
+    const totalPages = this.totalPages();
+    if (page >= 1 && page <= totalPages) {
+      this.currentPage.set(page);
+    }
+  }
+
+  nextPage(): void {
+    const nextPage = this.currentPage() + 1;
+    if (nextPage <= this.totalPages()) {
+      this.currentPage.set(nextPage);
+    }
+  }
+
+  previousPage(): void {
+    const prevPage = this.currentPage() - 1;
+    if (prevPage >= 1) {
+      this.currentPage.set(prevPage);
+    }
   }
 
   columnLabel(column: string): string {
@@ -316,12 +419,56 @@ export class UserSetupComponent implements OnInit {
         ['name', 'Name'],
         ['email', 'Email'],
       );
+      // Auto-populate employee code when name is selected
+      this.syncNameWithEmployeeCode();
     } else if (field.toLowerCase() === 'email') {
       this.syncPairedField(
         field,
         ['email', 'Email'],
         ['name', 'Name'],
       );
+    }
+  }
+
+  selectEmployeeCode(employeeCode: string): void {
+    // Update the employee code field
+    this.updateField('employee_code', employeeCode);
+
+    // Find the matching employee profile and auto-populate the name
+    const profile = this.employeeProfiles().find(
+      (p) => p.EmployeeCode?.trim().toLowerCase() === employeeCode.trim().toLowerCase(),
+    );
+
+    if (profile && profile.EmployeeName) {
+      this.formModel.update((model) => ({
+        ...model,
+        name: profile.EmployeeName.trim(),
+        Name: profile.EmployeeName.trim(),
+      }));
+    }
+
+    // Clear the search text
+    this.employeeCodeSearchText.set('');
+  }
+
+  private syncNameWithEmployeeCode(): void {
+    const nameValue = this.resolveTextValue(this.fieldValue('name')).trim();
+    if (!nameValue) {
+      return;
+    }
+
+    // Find employee profile matching the name
+    const profile = this.employeeProfiles().find((p) =>
+      p.EmployeeName?.trim().toLowerCase() === nameValue.toLowerCase(),
+    );
+
+    if (profile && profile.EmployeeCode) {
+      this.formModel.update((model) => ({
+        ...model,
+        employee_code: profile.EmployeeCode.trim(),
+        employeeCode: profile.EmployeeCode.trim(),
+        EmployeeCode: profile.EmployeeCode.trim(),
+      }));
     }
   }
 
@@ -378,7 +525,18 @@ export class UserSetupComponent implements OnInit {
 
     const employeeCodeValue = this.resolveEmployeeCodeValue(user);
     if (employeeCodeValue) {
-      nextModel['sap_employee_id'] = employeeCodeValue;
+      for (const key of [
+        'employee_code',
+        'employeeCode',
+        'EmployeeCode',
+        'sap_employee_id',
+        'sapEmployeeId',
+        'SAPEmployeeID',
+      ]) {
+        if (this.formFields().includes(key)) {
+          nextModel[key] = employeeCodeValue;
+        }
+      }
     }
 
     this.formMode.set('edit');
@@ -445,6 +603,12 @@ export class UserSetupComponent implements OnInit {
       'Username',
       'email',
       'Email',
+      'employee_code',
+      'employeeCode',
+      'EmployeeCode',
+      'sap_employee_id',
+      'sapEmployeeId',
+      'SAPEmployeeID',
       'is_admin',
       'isAdmin',
       'role',

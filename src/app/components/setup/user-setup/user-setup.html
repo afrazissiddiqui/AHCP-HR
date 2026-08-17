@@ -49,17 +49,31 @@
                       </div>
                     } @else {
                       @if (isEmployeeCodeField(field)) {
-                        <select
-                          class="field-input"
-                          [ngModel]="fieldValue(field)"
-                          (ngModelChange)="updateField(field, $event)"
-                          [name]="'user-field-' + field"
-                        >
-                          <option value="">Select employee code</option>
-                          @for (code of employeeCodeOptions(); track code) {
-                            <option [value]="code">{{ code }}</option>
+                        <div class="employee-code-picker">
+                          <input
+                            type="text"
+                            class="field-input"
+                            [ngModel]="fieldValue(field)"
+                            (ngModelChange)="employeeCodeSearchText.set($event); updateField(field, $event)"
+                            [name]="'user-field-' + field"
+                            placeholder="Search or select employee code"
+                            autocomplete="off"
+                          />
+                          @if (employeeCodeOptions().length > 0 && employeeCodeSearchText()) {
+                            <div class="employee-code-dropdown">
+                              @for (option of employeeCodeOptions(); track option.code) {
+                                <button
+                                  type="button"
+                                  class="employee-code-option"
+                                  (click)="selectEmployeeCode(option.code)"
+                                >
+                                  <span class="employee-code-label">{{ option.code }}</span>
+                                  <span class="employee-name-label">{{ option.name }}</span>
+                                </button>
+                              }
+                            </div>
                           }
-                        </select>
+                        </div>
                       } @else {
                         <input
                           [type]="field.toLowerCase() === 'password' ? 'password' : (field.toLowerCase() === 'email' ? 'email' : 'text')"
@@ -179,7 +193,7 @@
           <div class="form-panel-head users-panel-head">
             <div>
               <h3 class="form-panel-title">Directory</h3>
-              <p class="panel-subtitle">{{ filteredUsers().length }} visible entries</p>
+              <p class="panel-subtitle">{{ paginationStart() }}-{{ paginationEnd() }} of {{ totalFilteredUsers() }} entries</p>
             </div>
             <div class="users-panel-actions">
               <button type="button" class="btn-add-user" (click)="startAddUser()">Add user</button>
@@ -193,7 +207,7 @@
               <input
                 type="search"
                 [ngModel]="searchText()"
-                (ngModelChange)="searchText.set($event)"
+                (ngModelChange)="searchText.set($event); currentPage.set(1)"
                 class="search-input"
                 placeholder="Search users..."
               />
@@ -225,9 +239,9 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (user of filteredUsers(); track $index; let index = $index) {
+                    @for (user of paginatedUsers(); track $index; let index = $index) {
                       <tr>
-                        <td class="col-sr">{{ index + 1 }}</td>
+                        <td class="col-sr">{{ paginationStart() + index }}</td>
                         @for (column of columns(); track trackByColumn($index, column)) {
                           @if (column.toLowerCase() !== 'authorization') {
                             <td>{{ cellValue(user, column) }}</td>
@@ -244,6 +258,15 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="pagination-container">
+              <button type="button" class="btn-pagination" [disabled]="currentPage() === 1" (click)="previousPage()">← Previous</button>
+              <div class="pagination-info">
+                Page {{ currentPage() }} of {{ totalPages() }}
+              </div>
+              <button type="button" class="btn-pagination" [disabled]="currentPage() === totalPages()" (click)="nextPage()">Next →</button>
             </div>
           }
         </section>
