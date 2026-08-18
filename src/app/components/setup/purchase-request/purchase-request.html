@@ -105,7 +105,8 @@
                         <select
                           class="sir-table-input"
                           [ngModel]="line.department"
-                          (ngModelChange)="updateContentLine($index, 'department', $event)"
+                          (ngModelChange)="onDepartmentChange($index, $event)"
+                          (change)="onDepartmentChange($index, $any($event.target).value)"
                           (focus)="loadDepartmentOptions()"
                           (click)="loadDepartmentOptions()"
                         >
@@ -116,10 +117,19 @@
                         </select>
                       </td>
                       <td class="sir-col-item-name">
-                        <input type="text" class="sir-table-input" [ngModel]="line.glAccount" (ngModelChange)="updateContentLine($index, 'glAccount', $event)" placeholder="GL Account" />
+                        <select
+                          class="sir-table-input"
+                          [ngModel]="line.glAccount"
+                          (ngModelChange)="onGlAccountChange($index, $event)"
+                        >
+                          <option value="">— Select GL account —</option>
+                          @for (account of getGlAccountOptionsForRow($index); track account.code) {
+                            <option value="{{ account.code }}">{{ account.code }}</option>
+                          }
+                        </select>
                       </td>
                       <td class="sir-col-item-name">
-                        <input type="text" class="sir-table-input" [ngModel]="line.glName" (ngModelChange)="updateContentLine($index, 'glName', $event)" placeholder="GL Name" />
+                        <input type="text" class="sir-table-input" [ngModel]="line.glName" readonly placeholder="GL Name" />
                       </td>
                       <td class="sir-col-item-name">
                         <div style="position: relative;">
@@ -209,7 +219,8 @@
                         <select
                           class="sir-table-input"
                           [ngModel]="line.department"
-                          (ngModelChange)="updateContentLine($index, 'department', $event)"
+                          (ngModelChange)="onDepartmentChange($index, $event)"
+                          (change)="onDepartmentChange($index, $any($event.target).value)"
                           (focus)="loadDepartmentOptions()"
                           (click)="loadDepartmentOptions()"
                         >

@@ -208,6 +208,11 @@ export class AddReceiptFromProduction implements OnInit {
       branchName: order.branch || state.branchName,
       warehouse: state.warehouse || '',
       remarks: state.remarks || 'Receipt from production',
+      machineId: (order.U_MachineID?.trim() || state.machineId || ''),
+      machineName: (order.U_MachineName?.trim() || state.machineName || ''),
+      moldNumber: (order.U_MoldNo?.trim() || state.moldNumber || ''),
+      cavityNumber: (order.U_Cavity_NUM?.trim() || state.cavityNumber || ''),
+      shift: (order.U_EmployeeShift?.trim() || state.shift || ''),
     }));
 
     const nextLine = createEmptyReceiptFromProductionLine();

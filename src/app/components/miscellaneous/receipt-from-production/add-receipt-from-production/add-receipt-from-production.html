@@ -51,6 +51,30 @@
               <label>Remarks:</label>
               <input type="text" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" placeholder="Receipt from production">
             </div>
+            <div class="sir-field-row">
+              <label>Machine ID:</label>
+              <input type="text" [ngModel]="headerForm().machineId" (ngModelChange)="updateHeaderField('machineId', $event)" placeholder="Enter machine ID">
+            </div>
+            <div class="sir-field-row">
+              <label>Machine Name:</label>
+              <input type="text" [ngModel]="headerForm().machineName" (ngModelChange)="updateHeaderField('machineName', $event)" placeholder="Enter machine name">
+            </div>
+            <div class="sir-field-row">
+              <label>Shift:</label>
+              <input type="text" [ngModel]="headerForm().shift" (ngModelChange)="updateHeaderField('shift', $event)" placeholder="Enter shift">
+            </div>
+            <div class="sir-field-row">
+              <label>Mold Number:</label>
+              <input type="text" [ngModel]="headerForm().moldNumber" (ngModelChange)="updateHeaderField('moldNumber', $event)" placeholder="Enter mold number">
+            </div>
+            <div class="sir-field-row">
+              <label>Cavity Number:</label>
+              <input type="text" [ngModel]="headerForm().cavityNumber" (ngModelChange)="updateHeaderField('cavityNumber', $event)" placeholder="Enter cavity number">
+            </div>
+            <div class="sir-field-row">
+              <label>Document Tax Status:</label>
+              <input type="text" [ngModel]="headerForm().documentTaxStatus" (ngModelChange)="updateHeaderField('documentTaxStatus', $event)" placeholder="Enter document tax status">
+            </div>
           </div>
         </div>
       </section>

@@ -52,6 +52,7 @@ export class UserSetupComponent implements OnInit {
   readonly authDefinitions = AUTHORIZATION_MODULE_DEFINITIONS;
   readonly employeeProfiles = signal<ApplicationFormRecord[]>([]);
   readonly employeeCodeSearchText = signal('');
+  readonly employeeCodeInputFocused = signal(false);
   readonly nameSuggestions = computed(() => {
     const query = this.resolveTextValue(this.fieldValue('name')) || this.resolveTextValue(this.fieldValue('Name'));
     const value = query.trim().toLowerCase();
@@ -449,6 +450,17 @@ export class UserSetupComponent implements OnInit {
 
     // Clear the search text
     this.employeeCodeSearchText.set('');
+  }
+
+  onEmployeeCodeInputFocus(): void {
+    this.employeeCodeInputFocused.set(true);
+  }
+
+  onEmployeeCodeInputBlur(): void {
+    // Delay the blur to allow click event on dropdown options to fire
+    setTimeout(() => {
+      this.employeeCodeInputFocused.set(false);
+    }, 150);
   }
 
   private syncNameWithEmployeeCode(): void {

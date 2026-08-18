@@ -55,11 +55,13 @@
                             class="field-input"
                             [ngModel]="fieldValue(field)"
                             (ngModelChange)="employeeCodeSearchText.set($event); updateField(field, $event)"
+                            (focus)="onEmployeeCodeInputFocus()"
+                            (blur)="onEmployeeCodeInputBlur()"
                             [name]="'user-field-' + field"
                             placeholder="Search or select employee code"
                             autocomplete="off"
                           />
-                          @if (employeeCodeOptions().length > 0 && employeeCodeSearchText()) {
+                          @if (employeeCodeOptions().length > 0 && (employeeCodeInputFocused() || employeeCodeSearchText())) {
                             <div class="employee-code-dropdown">
                               @for (option of employeeCodeOptions(); track option.code) {
                                 <button

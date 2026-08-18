@@ -12,7 +12,13 @@ import { DepartmentsPrService, DepartmentPr } from '../../../services/department
 import { WarehouseService } from '../../../services/warehouse.service';
 import { AuthService } from '../../../services/auth.service';
 import { AlertService } from '../../../services/alert.service';
-import { PurchaseRequestService, CreatePurchaseRequestPayload } from '../../../services/purchase-request.service';
+import {
+  PurchaseRequestService,
+  CreatePurchaseRequestPayload,
+  CreatePurchaseRequestItemLine,
+  CreatePurchaseRequestServiceLine,
+  GlAccountAgainstDistributionOption,
+} from '../../../services/purchase-request.service';
 import { ApplicationFormService } from '../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 
@@ -54,6 +60,11 @@ interface WarehouseDropdownOption {
   name: string;
 }
 
+interface GlAccountOption {
+  code: string;
+  name: string;
+}
+
 const DEFAULT_PURCHASE_REQUEST_EMPLOYEE_CODE = 'Emp-00000100';
 
 @Component({
@@ -90,6 +101,7 @@ export class PurchaseRequestComponent implements OnInit {
   readonly vendorSuggestionPanelStyle = signal<{ left: number; width: number; top: number } | null>(null);
   readonly departmentOptions = signal<DepartmentPr[]>([]);
   readonly warehouseOptions = signal<WarehouseDropdownOption[]>([]);
+  readonly glAccountOptionsByRow = signal<Record<number, GlAccountOption[]>>({});
   readonly branchOptions = signal([
     { label: 'Peshawar', value: 'Peshawar' },
     { label: 'HO', value: 'HO' },
@@ -165,7 +177,20 @@ export class PurchaseRequestComponent implements OnInit {
   }
 
   get hasValidLine(): boolean {
-    return this.contentLines().some((line) => line.itemCode.trim().length > 0);
+    return this.contentLines().some((line) => {
+      if (this.isServiceRequest) {
+        return (
+          line.vendor.trim().length > 0 ||
+          line.department.trim().length > 0 ||
+          line.glAccount.trim().length > 0 ||
+          line.glName.trim().length > 0 ||
+          line.taxCode.trim().length > 0 ||
+          line.total !== null
+        );
+      }
+
+      return line.itemCode.trim().length > 0;
+    });
   }
 
   toggleSidebar(): void {
@@ -347,6 +372,10 @@ export class PurchaseRequestComponent implements OnInit {
     return this.departmentOptions();
   }
 
+  getGlAccountOptionsForRow(index: number): GlAccountOption[] {
+    return this.glAccountOptionsByRow()[index] ?? [];
+  }
+
   getTaxCodes(): TaxCode[] {
     return this.taxCodes();
   }
@@ -355,6 +384,52 @@ export class PurchaseRequestComponent implements OnInit {
     const selectedTax = this.getTaxCodes().find((tax) => tax.code === selectedCode);
     this.updateContentLine(index, 'taxCode', selectedCode);
     this.updateContentLine(index, 'taxCodeName', selectedTax?.name ?? '');
+  }
+
+  onDepartmentChange(index: number, selectedDepartmentCode: string): void {
+    this.updateContentLine(index, 'department', selectedDepartmentCode);
+
+    if (!this.isServiceRequest) {
+      return;
+    }
+
+    this.updateContentLine(index, 'glAccount', '');
+    this.updateContentLine(index, 'glName', '');
+
+    const department =
+      this.departmentOptions().find((item) => item.code === selectedDepartmentCode) ??
+      this.departmentOptions().find((item) => item.name === selectedDepartmentCode);
+
+    const ccTypeCode = department?.ccTypeCode?.trim();
+
+    console.log('Department selected for service row', {
+      rowIndex: index,
+      selectedDepartmentCode,
+      department,
+      ccTypeCode,
+    });
+
+    if (!ccTypeCode) {
+      this.glAccountOptionsByRow.update((record) => ({ ...record, [index]: [] }));
+      return;
+    }
+
+    this.purchaseRequestService.getGlAccountsAgainstDistribution(ccTypeCode).subscribe({
+      next: (accounts) => {
+        console.log('GL accounts loaded for row', { rowIndex: index, ccTypeCode, accounts });
+        this.glAccountOptionsByRow.update((record) => ({ ...record, [index]: accounts }));
+      },
+      error: (error) => {
+        console.error('GL account API failed for row', { rowIndex: index, ccTypeCode, error });
+        this.glAccountOptionsByRow.update((record) => ({ ...record, [index]: [] }));
+      },
+    });
+  }
+
+  onGlAccountChange(index: number, selectedCode: string): void {
+    const selectedAccount = this.getGlAccountOptionsForRow(index).find((account) => account.code === selectedCode);
+    this.updateContentLine(index, 'glAccount', selectedCode);
+    this.updateContentLine(index, 'glName', selectedAccount?.name ?? '');
   }
 
   selectItem(index: number, value: string): void {
@@ -434,7 +509,20 @@ export class PurchaseRequestComponent implements OnInit {
     }
 
     const header = this.headerForm();
-    const lines = this.contentLines().filter((line) => line.itemCode.trim());
+    const lines = this.contentLines().filter((line) => {
+      if (this.isServiceRequest) {
+        return (
+          line.vendor.trim() ||
+          line.department.trim() ||
+          line.glAccount.trim() ||
+          line.glName.trim() ||
+          line.taxCode.trim() ||
+          line.total !== null
+        );
+      }
+
+      return line.itemCode.trim();
+    });
 
     if (!header.requestDate.trim()) {
       this.alertService.validation('Request Date is required.');
@@ -456,8 +544,15 @@ export class PurchaseRequestComponent implements OnInit {
       return;
     }
 
+    if (!header.requestType.trim()) {
+      this.alertService.validation('Request Type is required.');
+      return;
+    }
+
     if (lines.length === 0) {
-      this.alertService.validation('At least one item row is required.');
+      this.alertService.validation(
+        this.isServiceRequest ? 'At least one service row is required.' : 'At least one item row is required.',
+      );
       return;
     }
 
@@ -469,8 +564,7 @@ export class PurchaseRequestComponent implements OnInit {
           !line.glAccount.trim() ||
           !line.glName.trim() ||
           !line.taxCode.trim() ||
-          !line.total ||
-          !line.requiredDate.trim()
+          !line.total
         );
       }
 
@@ -488,34 +582,47 @@ export class PurchaseRequestComponent implements OnInit {
 
     if (invalidRow) {
       const message = this.isServiceRequest
-        ? 'Each service row must have vendor, department, GL account, GL name, tax code, total, and required date.'
+        ? 'Each service row must have vendor, department, GL account, GL name, tax code, and total.'
         : 'Each row must have item, vendor, required date, quantity, price, tax code, department, and warehouse.';
       this.alertService.validation(message);
       return;
     }
 
     const employeeCode = this.resolveEmployeeCode();
+    const docType: 'item' | 'service' = this.isServiceRequest ? 'service' : 'item';
 
     const payload: CreatePurchaseRequestPayload = {
       employee_code: employeeCode,
       docDate: header.requestDate.trim(),
+      DocType: docType,
       requiredDate: header.dueDate.trim(),
       branch: this.parseBranchValue(header.branch),
       remarks: header.remarks.trim(),
-      items: lines.map((line) => ({
-        itemCode: line.itemCode.trim(),
-        infoPrice: line.infoPrice ?? 0,
-        quantity: line.requiredQuantity ?? 0,
-        discount: line.discount ?? 0,
-        CardCode: line.vendor.trim(),
-        CardName: line.vendorName.trim() || line.vendor.trim(),
-        warehouse: line.warehouse.trim(),
-        Code: line.taxCode.trim(),
-        Name: line.taxCodeName.trim() || line.taxCode.trim(),
-        department: line.department.trim(),
-        requiredDate: line.requiredDate.trim(),
-        remarks: header.remarks.trim(),
-      })),
+      items: lines.map((line) => {
+        if (this.isServiceRequest) {
+          return {
+            Vendor: line.vendor.trim(),
+            department: line.department.trim(),
+            AccountCode: line.glAccount.trim(),
+            taxCode: line.taxCode.trim(),
+            requiredDate: line.requiredDate.trim(),
+            total: String(line.total ?? 0),
+          } satisfies CreatePurchaseRequestServiceLine;
+        }
+
+        return {
+          itemCode: line.itemCode.trim(),
+          infoPrice: line.infoPrice ?? 0,
+          quantity: line.requiredQuantity ?? 0,
+          discount: line.discount ?? 0,
+          Vendor: line.vendor.trim(),
+          warehouse: line.warehouse.trim(),
+          taxCode: line.taxCode.trim(),
+          department: line.department.trim(),
+          requiredDate: line.requiredDate.trim(),
+          remarks: header.remarks.trim(),
+        } satisfies CreatePurchaseRequestItemLine;
+      }),
     };
 
     if (!payload.employee_code) {

@@ -132,6 +132,11 @@ export interface ProductionOrderRecord {
   batchNumber: string;
   customerCode: string;
   customerName: string;
+  U_MachineID?: string;
+  U_MachineName?: string;
+  U_MoldNo?: string;
+  U_Cavity_NUM?: string;
+  U_EmployeeShift?: string;
   items?: ProductionOrderItem[];
 }
 

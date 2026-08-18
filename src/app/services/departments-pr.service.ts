@@ -6,6 +6,7 @@ import { apiUrl } from '../config/api.config';
 export interface DepartmentPr {
   code: string;
   name: string;
+  ccTypeCode?: string;
 }
 
 const DEPARTMENTS_PR_URL = apiUrl('departments_PR');
@@ -165,6 +166,13 @@ export class DepartmentsPrService {
         'department',
         'title',
         'Title',
+      ]),
+      ccTypeCode: this.pickString([item], [
+        'CCTypeCode',
+        'ccTypeCode',
+        'cctypecode',
+        'typeCode',
+        'TypeCode',
       ]),
     };
   }
