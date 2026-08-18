@@ -268,6 +268,11 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
+    slug: 'good_receipt_form',
+    name: 'Good Receipt Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
     slug: 'good_receipt_note_form',
     name: 'Good Receipt Note Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
@@ -285,6 +290,36 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
   {
     slug: 'good_issue_form',
     name: 'Good Issue Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'good_issue_form',
+    name: 'Good Issue Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'inventory_transfer_request_form',
+    name: 'Inventory Transfer Request Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'receipt_from_production_form',
+    name: 'Receipt From Production Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'issue_from_production_form',
+    name: 'Issue From Production Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'issue_for_production_form',
+    name: 'Issue For Production Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'purchase_request_form',
+    name: 'Purchase Request Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
 ] as const;
