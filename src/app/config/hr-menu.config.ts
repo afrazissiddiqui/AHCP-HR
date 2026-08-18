@@ -47,7 +47,6 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
   },
   { label: 'Gate Pass', value: 'gate-pass/ogp', icon: 'shipping-status', route: '/gate-pass' },
   { label: 'SAP Form', value: 'miscellaneous', icon: 'grid', route: '/miscellaneous', access: { anyOf: [
-    { moduleSlug: 'good_receipt_form', action: 'list' },
     { moduleSlug: 'good_receipt_note_form', action: 'list' },
     { moduleSlug: 'good_issue_form', action: 'list' },
     { moduleSlug: 'delivery_form', action: 'list' },

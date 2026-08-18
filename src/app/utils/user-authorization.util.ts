@@ -268,13 +268,8 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
-    slug: 'good_receipt_form',
-    name: 'Good Receipt Form',
-    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
-  },
-  {
     slug: 'good_receipt_note_form',
-    name: 'Good Receipt Note Form',
+    name: 'Good Receipt Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
@@ -285,11 +280,6 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
   {
     slug: 'inventory_transfer_form',
     name: 'Inventory Transfer Form',
-    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
-  },
-  {
-    slug: 'good_issue_form',
-    name: 'Good Issue Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {

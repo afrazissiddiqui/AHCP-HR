@@ -9,14 +9,8 @@ export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
     title: 'SAP Form',
     items: [
       {
-        id: 'miscellaneous-good-receipt',
-        label: 'Good Receipt',
-        route: '/miscellaneous/good-receipt',
-        access: { moduleSlug: 'good_receipt_form', action: 'list' } as AccessRequirement,
-      },
-      {
         id: 'miscellaneous-good-receipt-note',
-        label: 'Good Receipt Note',
+        label: 'Good Receipt',
         route: '/miscellaneous/good-receipt-note',
         access: { moduleSlug: 'good_receipt_note_form', action: 'list' } as AccessRequirement,
       },
@@ -103,9 +97,6 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   }
   if (url.includes('/miscellaneous/good-receipt-note')) {
     return 'miscellaneous-good-receipt-note';
-  }
-  if (url.includes('/miscellaneous/good-receipt')) {
-    return 'miscellaneous-good-receipt';
   }
   return '';
 }
