@@ -103,6 +103,8 @@ export interface ProductionOrderItem {
   itemCode: string;
   itemDescription: string;
   quantity: number;
+  plannedQty?: number;
+  completedQty?: number;
   issuedQuantity?: number;
   jumboCartons: number;
   warehouse: string;
@@ -122,6 +124,7 @@ export interface ProductionOrderRecord {
   itemDescription: string;
   plannedQty: number;
   completedQty: number;
+  rejectedQty: number;
   receiptQty: number;
   postDate: string;
   dueDate: string;
@@ -137,6 +140,7 @@ export interface ProductionOrderRecord {
   U_MoldNo?: string;
   U_Cavity_NUM?: string;
   U_EmployeeShift?: string;
+  U_NoBinReceived?: string | null;
   items?: ProductionOrderItem[];
 }
 
@@ -328,6 +332,7 @@ export class ReceiptFromProductionService {
       .map((item) => {
         const plannedQty = this.pickNumber(item, ['PlannedQty', 'plannedQty']);
         const completedQty = this.pickNumber(item, ['CmpltQty', 'completedQty']);
+        const rejectedQty = this.pickNumber(item, ['RjctQty', 'rjctQty', 'RejectedQty', 'rejectedQty']);
         const receiptQty = this.pickNumber(item, ['qty', 'receiptQty', 'Quantity', 'quantity']);
         const remainingQty = Math.max(plannedQty - completedQty, 0);
         const orderQuantity = receiptQty > 0 ? receiptQty : remainingQty;
@@ -349,6 +354,7 @@ export class ReceiptFromProductionService {
           itemDescription: this.pickString(item, ['ItemName', 'itemName', 'ProdName', 'ProductName', 'itemDescription', 'Dscription', 'Name']),
           plannedQty,
           completedQty,
+          rejectedQty,
           receiptQty: orderQuantity,
           postDate: this.pickDate(item, ['PostDate', 'docDate', 'DocDate']),
           dueDate: this.pickDate(item, ['DueDate', 'docDueDate', 'DocDueDate']),
@@ -359,6 +365,12 @@ export class ReceiptFromProductionService {
           batchNumber: this.pickProductionOrderBatchNumber(item),
           customerCode: this.pickString(item, ['CardCode', 'cardCode']),
           customerName: this.pickString(item, ['CardName', 'cardName']),
+          U_MachineID: this.pickString(item, ['U_MachineID', 'machineId', 'MachineID', 'MachineNo']),
+          U_MachineName: this.pickString(item, ['U_MachineName', 'machineName', 'MachineName']),
+          U_MoldNo: this.pickString(item, ['U_MoldNo', 'moldNumber', 'MoldNo', 'Mold']),
+          U_Cavity_NUM: this.pickString(item, ['U_Cavity_NUM', 'cavityNumber', 'Cavity_NUM', 'CavityNum']),
+          U_EmployeeShift: this.pickString(item, ['U_EmployeeShift', 'employeeShift', 'Shift', 'shift']),
+          U_NoBinReceived: this.pickString(item, ['U_NoBinReceived', 'NoBinReceived']) || null,
           items,
         };
       });

@@ -51,12 +51,6 @@ export const MISCELLANEOUS_SIDEBAR_SECTIONS: SidebarSection[] = [
         access: { moduleSlug: 'issue_from_production_form', action: 'list' } as AccessRequirement,
       },
       {
-        id: 'miscellaneous-issue-for-production',
-        label: 'Issue For Production',
-        route: '/miscellaneous/issue-for-production',
-        access: { moduleSlug: 'issue_for_production_form', action: 'list' } as AccessRequirement,
-      },
-      {
         id: 'miscellaneous-purchase-request',
         label: 'Purchase Request',
         route: '/miscellaneous/purchase-request',
@@ -76,9 +70,6 @@ export function miscellaneousActiveItemFromUrl(url: string): string {
   }
   if (url.includes('/miscellaneous/issue-from-production') || url.includes('/setup/issue-from-production')) {
     return 'miscellaneous-issue-from-production';
-  }
-  if (url.includes('/miscellaneous/issue-for-production')) {
-    return 'miscellaneous-issue-for-production';
   }
   if (url.includes('/miscellaneous/purchase-request')) {
     return 'miscellaneous-purchase-request';

@@ -288,3 +288,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Checkbox group styling */
+.sir-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.sir-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  user-select: none;
+}
+
+.sir-checkbox-input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #0f6bcb;
+  cursor: pointer;
+}
+
+.sir-checkbox-label:hover {
+  color: #0f172a;
+}
+

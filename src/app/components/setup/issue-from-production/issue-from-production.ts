@@ -585,7 +585,7 @@ export class IssueFromProductionComponent implements OnInit {
       DocDate: header.documentDate.trim(),
       Remarks: header.remarks.trim(),
       docentry: Number(header.baseProductionOrderDocEntry.trim()) || 0,
-      branch: header.branchId.trim(),
+      branch: header.branchId,
       items: lines.map((line, index) => {
         // Ensure baseLine has a valid non-zero value from the production order
         // baseLine contains the actual LineNum from the API response
@@ -875,8 +875,12 @@ export class IssueFromProductionComponent implements OnInit {
       return '1';
     }
 
-    if (normalizedBranch === '2' || normalizedBranch === 'faisalabad' || normalizedBranch === 'ahcp_faisalabad' || normalizedBranch === '3') {
+    if (normalizedBranch === '2' || normalizedBranch === 'ho' || normalizedBranch === 'ahcp_ho') {
       return '2';
+    }
+
+    if (normalizedBranch === '3' || normalizedBranch === 'faisalabad' || normalizedBranch === 'ahcp_faisalabad') {
+      return '3';
     }
 
     return '';
@@ -890,6 +894,10 @@ export class IssueFromProductionComponent implements OnInit {
     }
 
     if (normalizedBranchId === '2') {
+      return 'AHCP_HO';
+    }
+
+    if (normalizedBranchId === '3') {
       return 'AHCP_Faisalabad';
     }
 
@@ -899,7 +907,7 @@ export class IssueFromProductionComponent implements OnInit {
   private resolveDefaultWarehouseForBranch(branchId: string): string {
     const normalizedBranchId = this.normalizeBranchId(branchId);
 
-    if (normalizedBranchId === '2') {
+    if (normalizedBranchId === '3') {
       return 'FSD-WH03';
     }
 
@@ -919,4 +927,6 @@ export class IssueFromProductionComponent implements OnInit {
   private todayIso(): string {
     return new Date().toISOString().slice(0, 10);
   }
+
+
 }

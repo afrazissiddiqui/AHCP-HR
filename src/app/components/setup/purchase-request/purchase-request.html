@@ -41,11 +41,7 @@
 
           <div class="sir-form-column">
             <div class="sir-field-row">
-              <label>Posting Date:</label>
-              <input type="date" [ngModel]="headerForm().postingDate" (ngModelChange)="updateHeaderField('postingDate', $event)" />
-            </div>
-            <div class="sir-field-row">
-              <label>Due Date:</label>
+              <label>Required Date:</label>
               <input type="date" [ngModel]="headerForm().dueDate" (ngModelChange)="updateHeaderField('dueDate', $event)" />
             </div>
           </div>
@@ -66,6 +62,7 @@
                     <th class="sir-col-item-name">GL Account</th>
                     <th class="sir-col-item-name">GL Name</th>
                     <th class="sir-col-item-name">Tax Code</th>
+                    <th class="sir-col-date">Required Date</th>
                     <th class="sir-col-qty">Total</th>
                   } @else {
                     <th class="sir-col-item-code">Item Code</th>
@@ -146,6 +143,9 @@
                             }
                           </select>
                         </div>
+                      </td>
+                      <td class="sir-col-date">
+                        <input type="date" class="sir-table-input" [ngModel]="line.requiredDate" (ngModelChange)="updateContentLine($index, 'requiredDate', $event)" />
                       </td>
                       <td class="sir-col-qty">
                         <input type="number" class="sir-table-input" min="0" [ngModel]="line.total" (ngModelChange)="updateContentLine($index, 'total', $event)" />
@@ -292,12 +292,6 @@
             <div class="sir-field-row">
               <label>Remarks:</label>
               <input type="text" placeholder="Document level remarks" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" />
-            </div>
-          </div>
-          <div class="sir-form-column">
-            <div class="sir-field-row">
-              <label>Selected Base Order:</label>
-              <input type="text" [ngModel]="headerForm().selectedBaseOrder" (ngModelChange)="updateHeaderField('selectedBaseOrder', $event)" />
             </div>
           </div>
         </div>

@@ -303,11 +303,6 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {
-    slug: 'issue_for_production_form',
-    name: 'Issue For Production Form',
-    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
-  },
-  {
     slug: 'purchase_request_form',
     name: 'Purchase Request Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,

@@ -99,11 +99,16 @@ export class UserSetupComponent implements OnInit {
     const set = new Set<{ code: string; name: string }>();
 
     for (const profile of profiles) {
-      const code = profile.EmployeeCode?.trim();
-      const name = profile.EmployeeName?.trim();
-      if (code && code !== '—' && name && name !== '—') {
-        set.add({ code, name });
+      const rawCode = profile.EmployeeCode?.trim();
+      const rawName = profile.EmployeeName?.trim();
+      const code = rawCode && rawCode !== '—' ? rawCode : '';
+      const name = rawName && rawName !== '—' ? rawName : '';
+
+      if (!code) {
+        continue;
       }
+
+      set.add({ code, name });
     }
 
     const sorted = [...set].sort((a, b) => a.code.localeCompare(b.code));
@@ -112,10 +117,11 @@ export class UserSetupComponent implements OnInit {
       return sorted;
     }
 
-    return sorted.filter(
-      (item) =>
-        item.code.toLowerCase().includes(searchQuery) || item.name.toLowerCase().includes(searchQuery),
-    );
+    return sorted.filter((item) => {
+      const codeMatch = item.code.toLowerCase().includes(searchQuery);
+      const nameMatch = item.name ? item.name.toLowerCase().includes(searchQuery) : false;
+      return codeMatch || nameMatch;
+    });
   });
   readonly authorizationSummary = computed(() => {
     const authorization = this.authorization();

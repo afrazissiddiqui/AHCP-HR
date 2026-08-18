@@ -170,4 +170,55 @@ describe('AddReceiptFromProduction', () => {
 
     expect(component.existingBatchesForLine(0)).toEqual(['BATCH-FSD-001']);
   });
+
+  it('auto-populates the copied production order metadata for related form fields', () => {
+    component.applyProductionOrder({
+      docEntry: '47',
+      docNum: '3',
+      postDate: '2026-07-18',
+      dueDate: '2026-07-22',
+      startDate: '2026-07-18',
+      status: 'R',
+      warehouse: 'FSD-WH03',
+      branch: '3',
+      customerCode: 'CC-000006',
+      customerName: 'Anc Foods (Private) Limited',
+      U_MachineID: 'M-100',
+      U_MachineName: 'Blow Molding',
+      U_MoldNo: 'MOLD-01',
+      U_Cavity_NUM: '6',
+      U_EmployeeShift: 'A',
+      plannedQty: 354816,
+      completedQty: 354817,
+      rejectedQty: 0,
+      receiptQty: 0,
+      items: [
+        {
+          lineNum: '1',
+          itemCode: 'FG-Toll-P-00000069',
+          itemDescription: 'Toll Flint - Preform 45 Gram',
+          quantity: 0,
+          warehouse: 'FSD-WH03',
+          batchNumber: 'BATCH-FSD-001',
+          manufacturingDate: '2026-07-18',
+          expiryDate: '2026-07-28',
+          jumboCartons: 12000,
+          baseLine: '1',
+          plannedQty: 354816,
+          completedQty: 354817,
+        },
+      ],
+    } as any);
+
+    expect((component.headerForm() as any).customerCode).toBe('CC-000006');
+    expect((component.headerForm() as any).customerName).toBe('Anc Foods (Private) Limited');
+    expect(component.headerForm().machineId).toBe('M-100');
+    expect(component.headerForm().machineName).toBe('Blow Molding');
+    expect(component.headerForm().moldNumber).toBe('MOLD-01');
+    expect(component.headerForm().cavityNumber).toBe('6');
+    expect(component.headerForm().shift).toBe('A');
+    expect(component.contentLines()[0].plannedQty).toBe(354816);
+    expect(component.contentLines()[0].completedQty).toBe(354817);
+    expect((component.selectedProductionOrder() as any)?.rejectedQty).toBe(0);
+  });
 });

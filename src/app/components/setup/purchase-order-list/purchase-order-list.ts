@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MiscellaneousLayoutService } from '../../miscellaneous/miscellaneous-layout.service';
+import { OpenBaseDocumentsService, type OpenBaseDocument } from '../../gate-pass/open-base-documents.service';
 
 interface PurchaseOrderListColumn {
   key: 'docNum' | 'docDate' | 'vendor' | 'warehouse' | 'itemCount' | 'status';
@@ -36,66 +37,17 @@ interface PurchaseOrderListItem {
   templateUrl: './purchase-order-list.html',
   styleUrls: ['../../miscellaneous/miscellaneous-list.css', '../../sample-inspection-request/sample-inspection-request.css'],
 })
-export class PurchaseOrderListComponent {
+export class PurchaseOrderListComponent implements OnInit {
   private readonly router = inject(Router);
   protected readonly layout = inject(MiscellaneousLayoutService);
+  private readonly openBaseDocumentsService = inject(OpenBaseDocumentsService);
 
   readonly searchText = signal('');
   readonly currentPage = signal(1);
   readonly showDialog = signal(false);
   readonly showDetailDialog = signal(false);
   readonly selectedRow = signal<PurchaseOrderListItem | null>(null);
-  readonly orders = signal<PurchaseOrderListItem[]>([
-    {
-      docNum: 'PO-1001',
-      docDate: '2026-08-01',
-      vendor: 'ABC Supplies',
-      warehouse: 'WH-01',
-      itemCount: 3,
-      status: 'O',
-      remarks: 'Urgent procurement for production line.',
-      items: [
-        {
-          itemCode: 'ITEM-001',
-          itemDescription: 'Raw Material A',
-          warehouse: 'WH-01',
-          quantity: 50,
-          unitPrice: 12.5,
-          lineTotal: 625,
-          batchNumber: 'B-1001',
-        },
-        {
-          itemCode: 'ITEM-002',
-          itemDescription: 'Packing Box',
-          warehouse: 'WH-01',
-          quantity: 100,
-          unitPrice: 2.25,
-          lineTotal: 225,
-          batchNumber: 'B-1002',
-        },
-      ],
-    },
-    {
-      docNum: 'PO-1002',
-      docDate: '2026-08-03',
-      vendor: 'Global Parts',
-      warehouse: 'WH-02',
-      itemCount: 2,
-      status: 'C',
-      remarks: 'Approved through standard procurement.',
-      items: [
-        {
-          itemCode: 'ITEM-003',
-          itemDescription: 'Spare Valve',
-          warehouse: 'WH-02',
-          quantity: 10,
-          unitPrice: 85,
-          lineTotal: 850,
-          batchNumber: 'B-2001',
-        },
-      ],
-    },
-  ]);
+  readonly orders = signal<PurchaseOrderListItem[]>([]);
 
   readonly columns = signal<PurchaseOrderListColumn[]>([
     { key: 'docNum', label: 'Order No', visible: true },
@@ -128,6 +80,74 @@ export class PurchaseOrderListComponent {
     return this.filteredOrders().slice(start, start + this.pageSize);
   });
   readonly paginationEnd = computed(() => Math.min(this.currentPage() * this.pageSize, this.filteredOrders().length));
+
+  ngOnInit(): void {
+    this.loadSubmittedPurchaseRequests();
+  }
+
+  private loadSubmittedPurchaseRequests(): void {
+    this.openBaseDocumentsService.fetchPurchaseOrders().subscribe({
+      next: (documents) => {
+        const mapped = documents.map((document) => this.mapOpenDocumentToListItem(document));
+        this.orders.set(mapped.length > 0 ? mapped : []);
+      },
+      error: () => {
+        this.orders.set([]);
+      },
+    });
+  }
+
+  private mapOpenDocumentToListItem(document: OpenBaseDocument): PurchaseOrderListItem {
+    const items = (document.lines ?? []).map((line, index) => {
+      const record = line as unknown as Record<string, unknown>;
+      const itemCode = this.asString(
+        record['itemCode'] ?? record['ItemCode'] ?? record['code'] ?? record['Code'] ?? `${index + 1}`,
+      );
+      const itemDescription = this.asString(
+        record['itemName'] ?? record['ItemName'] ?? record['description'] ?? record['Description'] ?? '—',
+      );
+      const warehouse = this.asString(
+        record['warehouse'] ?? record['Warehouse'] ?? record['whsCode'] ?? record['WhsCode'] ?? document.store ?? '',
+      );
+      const quantity = this.toNumber(record['quantity'] ?? record['Quantity'] ?? record['qty'] ?? record['Qty'] ?? 0);
+      const unitPrice = this.toNumber(record['unitPrice'] ?? record['UnitPrice'] ?? record['infoPrice'] ?? record['InfoPrice'] ?? 0);
+      const lineTotal = this.toNumber(record['lineTotal'] ?? record['LineTotal'] ?? record['total'] ?? record['Total'] ?? quantity * unitPrice);
+      const batchNumber = this.asString(record['batchNumber'] ?? record['BatchNumber'] ?? record['batch'] ?? record['Batch'] ?? '');
+
+      return {
+        itemCode,
+        itemDescription,
+        warehouse,
+        quantity,
+        unitPrice,
+        lineTotal,
+        batchNumber: batchNumber || undefined,
+      };
+    });
+
+    return {
+      docNum: this.asString(document.docNum ?? document.number ?? '—'),
+      docDate: this.asString(document.docDate ?? document.date ?? ''),
+      vendor: this.asString(document.businessPartnerName ?? document.partner ?? document.businessPartnerCode ?? '—'),
+      warehouse: this.asString(document.store ?? ''),
+      itemCount: items.length,
+      status: this.asString(document.status ?? 'O'),
+      remarks: this.asString(document.remarks ?? ''),
+      items,
+    };
+  }
+
+  private asString(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    return String(value).trim();
+  }
+
+  private toNumber(value: unknown): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
 
   onAddNew(): void {
     void this.router.navigate(['/setup/purchase-request']);

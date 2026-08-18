@@ -32,11 +32,23 @@ export interface CreatePurchaseRequestServiceLine {
 
 export type CreatePurchaseRequestLine = CreatePurchaseRequestItemLine | CreatePurchaseRequestServiceLine;
 
+export type PurchaseRequestDocType = 'item' | 'service';
+
+export function normalizePurchaseRequestDocumentType(value: string | null | undefined): PurchaseRequestDocType {
+  const normalized = (value ?? '').trim().toLowerCase();
+
+  if (normalized === 's' || normalized === 'service') {
+    return 'service';
+  }
+
+  return 'item';
+}
+
 export interface CreatePurchaseRequestPayload {
   employee_code: string;
   docDate: string;
-  DocType: 'item' | 'service';
-  requiredDate: string;
+  DocType: PurchaseRequestDocType;
+  requiredDate?: string;
   branch: string | number;
   remarks: string;
   items: CreatePurchaseRequestLine[];

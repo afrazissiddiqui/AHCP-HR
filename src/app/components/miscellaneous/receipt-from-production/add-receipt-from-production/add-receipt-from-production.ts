@@ -213,6 +213,9 @@ export class AddReceiptFromProduction implements OnInit {
       moldNumber: (order.U_MoldNo?.trim() || state.moldNumber || ''),
       cavityNumber: (order.U_Cavity_NUM?.trim() || state.cavityNumber || ''),
       shift: (order.U_EmployeeShift?.trim() || state.shift || ''),
+      customerCode: order.customerCode || state.customerCode || '',
+      customerName: order.customerName || state.customerName || '',
+      noBinReceived: order.U_NoBinReceived ?? state.noBinReceived ?? null,
     }));
 
     const nextLine = createEmptyReceiptFromProductionLine();
@@ -226,6 +229,8 @@ export class AddReceiptFromProduction implements OnInit {
     nextLine.warehouse = defaultWarehouse || order.warehouse || nextLine.warehouse;
     nextLine.batchNumber = order.batchNumber || nextLine.batchNumber;
     nextLine.quantity = order.receiptQty > 0 ? order.receiptQty : (firstItem?.quantity ?? null);
+    nextLine.plannedQty = Number.isFinite(order.plannedQty) ? order.plannedQty : (firstItem?.plannedQty ?? null);
+    nextLine.completedQty = Number.isFinite(order.completedQty) ? order.completedQty : (firstItem?.completedQty ?? null);
     nextLine.jumboCartons = firstItem?.jumboCartons ?? null;
     nextLine.manufacturingDate = firstItem?.manufacturingDate || '';
     nextLine.expiryDate = firstItem?.expiryDate || '';

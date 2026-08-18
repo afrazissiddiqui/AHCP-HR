@@ -54,7 +54,6 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
     { moduleSlug: 'inventory_transfer_request_form', action: 'list' },
     { moduleSlug: 'receipt_from_production_form', action: 'list' },
     { moduleSlug: 'issue_from_production_form', action: 'list' },
-    { moduleSlug: 'issue_for_production_form', action: 'list' },
     { moduleSlug: 'purchase_request_form', action: 'list' },
   ] } },
   {

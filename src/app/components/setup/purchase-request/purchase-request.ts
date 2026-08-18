@@ -18,18 +18,17 @@ import {
   CreatePurchaseRequestItemLine,
   CreatePurchaseRequestServiceLine,
   GlAccountAgainstDistributionOption,
+  normalizePurchaseRequestDocumentType,
 } from '../../../services/purchase-request.service';
 import { ApplicationFormService } from '../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 
 interface PurchaseRequestHeader {
   requestDate: string;
-  postingDate: string;
   dueDate: string;
   branch: string;
   requestType: string;
   remarks: string;
-  selectedBaseOrder: string;
 }
 
 interface PurchaseRequestLine {
@@ -81,12 +80,10 @@ export class PurchaseRequestComponent implements OnInit {
 
   readonly headerForm = signal<PurchaseRequestHeader>({
     requestDate: '',
-    postingDate: '',
     dueDate: '',
     branch: '',
     requestType: '',
     remarks: '',
-    selectedBaseOrder: '',
   });
 
   readonly contentLines = signal<PurchaseRequestLine[]>([this.createEmptyLine()]);
@@ -529,16 +526,6 @@ export class PurchaseRequestComponent implements OnInit {
       return;
     }
 
-    if (!header.postingDate.trim()) {
-      this.alertService.validation('Posting Date is required.');
-      return;
-    }
-
-    if (!header.dueDate.trim()) {
-      this.alertService.validation('Required Date is required.');
-      return;
-    }
-
     if (!header.branch.trim()) {
       this.alertService.validation('Branch is required.');
       return;
@@ -546,6 +533,11 @@ export class PurchaseRequestComponent implements OnInit {
 
     if (!header.requestType.trim()) {
       this.alertService.validation('Request Type is required.');
+      return;
+    }
+
+    if (!header.dueDate.trim()) {
+      this.alertService.validation('Required Date is required.');
       return;
     }
 
@@ -564,6 +556,7 @@ export class PurchaseRequestComponent implements OnInit {
           !line.glAccount.trim() ||
           !line.glName.trim() ||
           !line.taxCode.trim() ||
+          !line.requiredDate.trim() ||
           !line.total
         );
       }
@@ -582,14 +575,14 @@ export class PurchaseRequestComponent implements OnInit {
 
     if (invalidRow) {
       const message = this.isServiceRequest
-        ? 'Each service row must have vendor, department, GL account, GL name, tax code, and total.'
+        ? 'Each service row must have vendor, department, GL account, GL name, tax code, required date, and total.'
         : 'Each row must have item, vendor, required date, quantity, price, tax code, department, and warehouse.';
       this.alertService.validation(message);
       return;
     }
 
     const employeeCode = this.resolveEmployeeCode();
-    const docType: 'item' | 'service' = this.isServiceRequest ? 'service' : 'item';
+    const docType = normalizePurchaseRequestDocumentType(this.headerForm().requestType);
 
     const payload: CreatePurchaseRequestPayload = {
       employee_code: employeeCode,
@@ -597,7 +590,7 @@ export class PurchaseRequestComponent implements OnInit {
       DocType: docType,
       requiredDate: header.dueDate.trim(),
       branch: this.parseBranchValue(header.branch),
-      remarks: header.remarks.trim(),
+      remarks: header.remarks.trim() || 'Purchase Request from Portal',
       items: lines.map((line) => {
         if (this.isServiceRequest) {
           return {
@@ -612,18 +605,20 @@ export class PurchaseRequestComponent implements OnInit {
 
         return {
           itemCode: line.itemCode.trim(),
-          infoPrice: line.infoPrice ?? 0,
-          quantity: line.requiredQuantity ?? 0,
-          discount: line.discount ?? 0,
+          infoPrice: Number(line.infoPrice ?? 0),
+          quantity: Number(line.requiredQuantity ?? 0),
+          discount: Number(line.discount ?? 0),
           Vendor: line.vendor.trim(),
           warehouse: line.warehouse.trim(),
           taxCode: line.taxCode.trim(),
           department: line.department.trim(),
           requiredDate: line.requiredDate.trim(),
-          remarks: header.remarks.trim(),
+          remarks: header.remarks.trim() || 'Purchase Request from Portal',
         } satisfies CreatePurchaseRequestItemLine;
       }),
     };
+
+    console.log('[PurchaseRequest] Final payload before submit:', JSON.stringify(payload, null, 2));
 
     if (!payload.employee_code) {
       this.alertService.validation('Unable to resolve employee code for the request. Please sign in again.');

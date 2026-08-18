@@ -11,6 +11,9 @@ export interface ReceiptFromProductionHeader {
   shift?: string;
   moldNumber?: string;
   cavityNumber?: string;
+  customerCode?: string;
+  customerName?: string;
+  noBinReceived?: string | null;
   documentTaxStatus?: string;
   baseProductionOrderDocEntry?: string;
   baseProductionOrderDocNum?: string;
@@ -72,6 +75,9 @@ export function createEmptyReceiptFromProductionHeader(): ReceiptFromProductionH
     shift: '',
     moldNumber: '',
     cavityNumber: '',
+    customerCode: '',
+    customerName: '',
+    noBinReceived: null,
     documentTaxStatus: '',
     baseProductionOrderDocEntry: '',
     baseProductionOrderDocNum: '',
