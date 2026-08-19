@@ -66,6 +66,7 @@ export interface CreateReceiptFromProductionPayload {
   taxDate: string;
   docDueDate: string;
   remarks: string;
+  shift: string;
   warehouse: string;
   quantity: number;
   batchNumber: string;
@@ -205,6 +206,7 @@ export function buildCreateReceiptFromProductionPayload(
     taxDate: (header.postingDate ?? '').trim(),
     docDueDate: (header.dueDate ?? '').trim(),
     remarks: (header.remarks ?? '').trim(),
+    shift: (header.shift ?? '').trim(),
     warehouse: lineWarehouse || headerWarehouse,
     quantity: line?.quantity ?? 0,
     batchNumber: ((line?.batchNumber ?? '') as string).trim(),

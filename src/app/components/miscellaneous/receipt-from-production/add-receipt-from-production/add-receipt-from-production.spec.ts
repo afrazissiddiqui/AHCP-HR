@@ -53,23 +53,39 @@ describe('AddReceiptFromProduction', () => {
               {
                 itemCode: 'FG-Toll-P-00000069',
                 itemName: 'Toll Flint - Preform 45 Gram',
+                fetchPro: 'Y',
+                properties: [
+                  { code: '1', name: '17g-1810-425815' },
+                  { code: '4', name: '19.5g-1881-PTK-12303' },
+                  { code: '6', name: '21g-1881-PTK-10809' },
+                ],
                 uom: 'EA',
                 batches: [
                   { batchNumber: 'BATCH-FSD-001', warehouse: 'FSD-WH03' },
                   { batchNumber: 'BATCH-PSH-001', warehouse: 'PSH-WH03' },
                 ],
               },
+              { itemCode: 'FA-00000196', itemName: 'H1- HyPET-225, 48 Cavity, Serial# 3406566', fetchPro: 'Y', properties: [], batches: [] },
+              { itemCode: 'FA-00000203', itemName: 'H3, HPP4-400, 96 Cavity, Serial# 6150826', fetchPro: 'Y', properties: [], batches: [] },
             ]),
             getCatalog: () => [
               {
                 itemCode: 'FG-Toll-P-00000069',
                 itemName: 'Toll Flint - Preform 45 Gram',
+                fetchPro: 'Y',
+                properties: [
+                  { code: '1', name: '17g-1810-425815' },
+                  { code: '4', name: '19.5g-1881-PTK-12303' },
+                  { code: '6', name: '21g-1881-PTK-10809' },
+                ],
                 uom: 'EA',
                 batches: [
                   { batchNumber: 'BATCH-FSD-001', warehouse: 'FSD-WH03' },
                   { batchNumber: 'BATCH-PSH-001', warehouse: 'PSH-WH03' },
                 ],
               },
+              { itemCode: 'FA-00000196', itemName: 'H1- HyPET-225, 48 Cavity, Serial# 3406566', fetchPro: 'Y', properties: [], batches: [] },
+              { itemCode: 'FA-00000203', itemName: 'H3, HPP4-400, 96 Cavity, Serial# 6150826', fetchPro: 'Y', properties: [], batches: [] },
             ],
           },
         },
@@ -109,6 +125,7 @@ describe('AddReceiptFromProduction', () => {
     expect(component.headerForm().baseProductionOrderDocNum).toBe('4');
     expect(component.headerForm().postingDate).toBe('2026-07-20');
     expect(component.headerForm().dueDate).toBe('2026-07-20');
+    expect(component.headerForm().documentTaxStatus).toBe('Registered');
     expect(component.headerForm().branchId).toBe('3');
     expect(component.contentLines().length).toBe(1);
     expect(component.contentLines()[0].itemCode).toBe('FG-Toll-P-00000069');
@@ -169,6 +186,67 @@ describe('AddReceiptFromProduction', () => {
     ]);
 
     expect(component.existingBatchesForLine(0)).toEqual(['BATCH-FSD-001']);
+  });
+
+  it('syncs the selected production machine code and name', () => {
+    component.updateMachineId('FG-Toll-P-00000069');
+
+    expect(component.headerForm().machineId).toBe('FG-Toll-P-00000069');
+    expect(component.headerForm().machineName).toBe('Toll Flint - Preform 45 Gram');
+
+    component.updateMachineName('Toll Flint - Preform 45 Gram');
+
+    expect(component.headerForm().machineId).toBe('FG-Toll-P-00000069');
+  });
+
+  it('displays shift labels while retaining raw shift codes', () => {
+    component.headerForm.set({ ...component.headerForm(), shift: '01' });
+
+    expect(component.displayShift(component.headerForm().shift)).toBe('Shift A');
+
+    component.updateShift('Shift B');
+
+    expect(component.headerForm().shift).toBe('02');
+
+    component.contentLines.set([
+      {
+        ...createEmptyReceiptFromProductionLine(),
+        itemCode: 'FG-Toll-P-00000069',
+        quantity: 1,
+        warehouse: 'FSD-WH06',
+      },
+    ]);
+
+    expect(buildCreateReceiptFromProductionPayload(component.headerForm(), component.contentLines()).shift).toBe('02');
+  });
+
+  it('updates only the machine token in the row batch when the machine changes', () => {
+    component.headerForm.set({
+      ...component.headerForm(),
+      machineName: 'H3, HPP4-400, 96 Cavity, Serial# 6150826',
+    });
+    component.contentLines.set([
+      {
+        ...createEmptyReceiptFromProductionLine(),
+        batchNumber: '3-G-H3-2026-000000001',
+      },
+    ]);
+
+    component.updateMachineId('FA-00000196');
+
+    expect(component.headerForm().machineName).toBe('H1- HyPET-225, 48 Cavity, Serial# 3406566');
+    expect(component.contentLines()[0].batchNumber).toBe('3-G-H1-2026-000000001');
+  });
+
+  it('shows mold names and cavity codes for the selected production machine', () => {
+    component.updateMachineId('FG-Toll-P-00000069');
+
+    expect(component.moldNumberOptions()).toEqual([
+      '17g-1810-425815',
+      '19.5g-1881-PTK-12303',
+      '21g-1881-PTK-10809',
+    ]);
+    expect(component.cavityNumberOptions()).toEqual(['1', '4', '6']);
   });
 
   it('auto-populates the copied production order metadata for related form fields', () => {

@@ -40,6 +40,17 @@ function numericFieldFromDoc(value: string | undefined): string {
   return Number.isFinite(parsed) ? String(parsed) : '';
 }
 
+function normalizeReturnStatus(status: unknown, returnDate: string): 'Yes' | 'No' {
+  const normalized = String(status ?? '').trim().toLowerCase();
+  if (['yes', 'y', 'true', '1'].includes(normalized)) {
+    return 'Yes';
+  }
+  if (['no', 'n', 'false', '0'].includes(normalized)) {
+    return 'No';
+  }
+  return returnDate.trim() ? 'Yes' : 'No';
+}
+
 @Component({
   selector: 'app-create-agp',
   standalone: true,
@@ -79,6 +90,8 @@ export class CreateAgpComponent implements OnInit {
   vehicleNo = '';
 
   reasonForMovement = '';
+  natureOfItem = '';
+  natureOfRepair = '';
   requestingEmployee = '';
   requestingDepartment = '';
   requestedBy = '';
@@ -86,6 +99,11 @@ export class CreateAgpComponent implements OnInit {
 
   articleOutDate = '';
   articleReturnedDate = '';
+  returnStatus: 'Yes' | 'No' = 'No';
+  warrantyClaimable: 'Yes' | 'No' = 'No';
+  warrantyStartDate = '';
+  warrantyDuration = '';
+  warrantyExpiryDate = '';
   location = '';
   store = '';
   kantaSlip = '';
@@ -361,12 +379,19 @@ export class CreateAgpComponent implements OnInit {
     this.businessPartnerName = '';
     this.vehicleNo = '';
     this.reasonForMovement = '';
+    this.natureOfItem = '';
+    this.natureOfRepair = '';
     this.requestingEmployee = '';
     this.requestingDepartment = '';
     this.requestedBy = '';
     this.issuedTo = '';
     this.articleOutDate = '';
     this.articleReturnedDate = '';
+    this.returnStatus = 'No';
+    this.warrantyClaimable = 'No';
+    this.warrantyStartDate = '';
+    this.warrantyDuration = '';
+    this.warrantyExpiryDate = '';
     this.location = '';
     this.store = '';
     this.kantaSlip = '';
@@ -412,11 +437,18 @@ export class CreateAgpComponent implements OnInit {
     this.store = resolveGatePassWarehouseCode(doc.store) || doc.store?.trim() || '';
     this.location = resolveGatePassLocation(doc.location) || doc.location?.trim() || '';
     this.reasonForMovement = doc.reasonForMovement?.trim() ?? '';
+    this.natureOfItem = '';
+    this.natureOfRepair = '';
     this.requestingEmployee = doc.requestingEmployee?.trim() ?? '';
     this.requestedBy = doc.requestedBy?.trim() ?? '';
     this.issuedTo = doc.issuedTo?.trim() ?? '';
     this.articleOutDate = doc.articleOutDate?.trim() ?? '';
     this.articleReturnedDate = doc.articleReturnedDate?.trim() ?? '';
+    this.returnStatus = normalizeReturnStatus(undefined, this.articleReturnedDate);
+    this.warrantyClaimable = 'No';
+    this.warrantyStartDate = '';
+    this.warrantyDuration = '';
+    this.warrantyExpiryDate = '';
     this.driverName = (doc.driverName ?? doc.transporterName)?.trim() ?? '';
     this.driverCnic = formatGatePassCnic((doc.driverCnic ?? doc.transporterCnic)?.trim() ?? '');
     this.driverPhone = formatGatePassPhoneDigits((doc.driverPhone ?? doc.transporterPhone)?.trim() ?? '');
@@ -438,6 +470,33 @@ export class CreateAgpComponent implements OnInit {
         remarks: l.remarks ?? '',
         deleted: false,
       })) ?? [];
+  }
+
+  onWarrantyClaimableChange(): void {
+    if (this.warrantyClaimable === 'No') {
+      this.warrantyStartDate = '';
+      this.warrantyDuration = '';
+      this.warrantyExpiryDate = '';
+      return;
+    }
+    this.updateWarrantyExpiryDate();
+  }
+
+  updateWarrantyExpiryDate(): void {
+    if (this.warrantyClaimable !== 'Yes' || !this.warrantyStartDate || !this.warrantyDuration) {
+      this.warrantyExpiryDate = '';
+      return;
+    }
+
+    const durationDays = Number(this.warrantyDuration);
+    const startDate = new Date(`${this.warrantyStartDate}T00:00:00Z`);
+    if (!Number.isFinite(durationDays) || durationDays < 0 || Number.isNaN(startDate.getTime())) {
+      this.warrantyExpiryDate = '';
+      return;
+    }
+
+    startDate.setUTCDate(startDate.getUTCDate() + durationDays);
+    this.warrantyExpiryDate = startDate.toISOString().slice(0, 10);
   }
 
   back(): void {
@@ -510,12 +569,22 @@ export class CreateAgpComponent implements OnInit {
     this.businessPartnerName = emptyIfDash(record.businessPartnerName);
     this.vehicleNo = emptyIfDash(record.vehicleNo);
     this.reasonForMovement = emptyIfDash(record.reasonForMovement);
+    this.natureOfItem = emptyIfDash(record.natureOfItem);
+    this.natureOfRepair = emptyIfDash(record.natureOfRepair);
     this.requestingEmployee = emptyIfDash(record.requestingEmployee);
     this.requestingDepartment = emptyIfDash(record.requestingDepartment);
     this.requestedBy = emptyIfDash(record.requestedBy);
     this.issuedTo = emptyIfDash(record.issuedTo);
     this.articleOutDate = emptyIfDash(record.articleOutDate);
     this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
+    this.returnStatus = normalizeReturnStatus(record.returnStatus, this.articleReturnedDate);
+    this.warrantyClaimable = normalizeReturnStatus(record.warrantyClaimable, record.warrantyStartDate);
+    this.warrantyStartDate = emptyIfDash(record.warrantyStartDate);
+    this.warrantyDuration = emptyIfDash(record.warrantyDuration);
+    this.warrantyExpiryDate = emptyIfDash(record.warrantyExpiryDate);
+    if (!this.warrantyExpiryDate) {
+      this.updateWarrantyExpiryDate();
+    }
     this.location = resolveGatePassLocation(emptyIfDash(record.location)) || emptyIfDash(record.location);
     this.store = resolveGatePassWarehouseCode(emptyIfDash(record.store)) || emptyIfDash(record.store);
     this.kantaSlip = emptyIfDash(record.kantaSlip);
@@ -540,12 +609,19 @@ export class CreateAgpComponent implements OnInit {
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
       reasonForMovement: this.reasonForMovement.trim(),
+      natureOfItem: this.natureOfItem.trim(),
+      natureOfRepair: this.natureOfRepair.trim(),
       requestingEmployee: this.requestingEmployee.trim(),
       requestingDepartment: this.requestingDepartment.trim(),
       requestedBy: this.requestedBy.trim(),
       issuedTo: this.issuedTo.trim(),
       articleOutDate: this.articleOutDate.trim(),
       articleReturnedDate: this.articleReturnedDate.trim(),
+      returnStatus: this.returnStatus,
+      warrantyClaimable: this.warrantyClaimable,
+      warrantyStartDate: this.warrantyStartDate.trim(),
+      warrantyDuration: this.warrantyDuration.trim(),
+      warrantyExpiryDate: this.warrantyExpiryDate.trim(),
       location: this.location.trim(),
       store: this.store.trim(),
       kantaSlip: this.kantaSlip.trim(),

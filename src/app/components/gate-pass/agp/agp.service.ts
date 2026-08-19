@@ -45,12 +45,19 @@ export interface AgpAddPayload {
   businessPartnerName: string;
   vehicleNo: string;
   reasonForMovement: string;
+  natureOfItem: string;
+  natureOfRepair: string;
   requestingEmployee: string;
   requestingDepartment: string;
   requestedBy: string;
   issuedTo: string;
   articleOutDate: string;
   articleReturnedDate: string;
+  returnStatus: 'Yes' | 'No';
+  warrantyClaimable: 'Yes' | 'No';
+  warrantyStartDate: string;
+  warrantyDuration: string;
+  warrantyExpiryDate: string;
   location: string;
   store: string;
   kantaSlip: string;
@@ -94,12 +101,19 @@ export interface AgpRecord {
   vehicleNo: string;
 
   reasonForMovement: string;
+  natureOfItem: string;
+  natureOfRepair: string;
   requestingEmployee: string;
   requestedBy: string;
   issuedTo: string;
 
   articleOutDate: string;
   articleReturnedDate: string;
+  returnStatus: 'Yes' | 'No';
+  warrantyClaimable: 'Yes' | 'No';
+  warrantyStartDate: string;
+  warrantyDuration: string;
+  warrantyExpiryDate: string;
   location: string;
   store: string;
   kantaSlip: string;
@@ -142,6 +156,17 @@ function emptyLine(): AgpLineItem {
     remarks: '',
     deleted: false,
   };
+}
+
+function normalizeReturnStatus(status: string, returnDate: string): 'Yes' | 'No' {
+  const normalized = status.trim().toLowerCase();
+  if (['yes', 'y', 'true', '1'].includes(normalized)) {
+    return 'Yes';
+  }
+  if (['no', 'n', 'false', '0'].includes(normalized)) {
+    return 'No';
+  }
+  return returnDate.trim() && returnDate !== '—' ? 'Yes' : 'No';
 }
 
 export function createEmptyAgpLines(count: number): AgpLineItem[] {
@@ -398,11 +423,24 @@ export class AgpService {
       businessPartnerName,
       vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']) || '—',
       reasonForMovement: this.pickString(sources, ['reasonForMovement', 'reason_for_movement', 'ReasonForMovement', 'reason']) || '—',
+      natureOfItem: this.pickString(sources, ['natureOfItem', 'nature_of_item', 'NatureOfItem']) || '—',
+      natureOfRepair: this.pickString(sources, ['natureOfRepair', 'nature_of_repair', 'NatureOfRepair']) || '—',
       requestingEmployee: this.pickString(sources, ['requestingEmployee', 'requesting_employee', 'RequestingEmployee']) || '—',
       requestedBy: this.pickString(sources, ['requestedBy', 'requested_by', 'RequestedBy']) || '—',
       issuedTo: this.pickString(sources, ['issuedTo', 'issued_to', 'IssuedTo']) || '—',
       articleOutDate: this.pickString(sources, ['articleOutDate', 'article_out_date', 'ArticleOutDate', 'articleOutDateDoc']) || '—',
       articleReturnedDate: this.pickString(sources, ['articleReturnedDate', 'article_returned_date', 'ArticleReturnedDate']) || '—',
+      returnStatus: normalizeReturnStatus(
+        this.pickString(sources, ['returnStatus', 'return_status', 'ReturnStatus']),
+        this.pickString(sources, ['articleReturnedDate', 'article_returned_date', 'ArticleReturnedDate']),
+      ),
+      warrantyClaimable: normalizeReturnStatus(
+        this.pickString(sources, ['warrantyClaimable', 'warranty_claimable', 'WarrantyClaimable']),
+        this.pickString(sources, ['warrantyStartDate', 'warranty_start_date', 'WarrantyStartDate']),
+      ),
+      warrantyStartDate: this.pickString(sources, ['warrantyStartDate', 'warranty_start_date', 'WarrantyStartDate']) || '—',
+      warrantyDuration: this.pickString(sources, ['warrantyDuration', 'warranty_duration', 'WarrantyDuration']) || '—',
+      warrantyExpiryDate: this.pickString(sources, ['warrantyExpiryDate', 'warranty_expiry_date', 'WarrantyExpiryDate']) || '—',
       location: this.pickString(sources, ['location', 'Location', 'branch', 'Branch', 'branchName', 'branch_name']) || '—',
       store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse', 'warehouseCode']) || '—',
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MiscellaneousLayoutService } from '../../miscellaneous/miscellaneous-layout.service';
 import { OpenBaseDocumentsService, type OpenBaseDocument } from '../../gate-pass/open-base-documents.service';
+import { displayDateSlash } from '../../../utils/date-format.util';
 
 interface PurchaseOrderListColumn {
   key: 'docNum' | 'docDate' | 'vendor' | 'warehouse' | 'itemCount' | 'status';
@@ -127,7 +128,7 @@ export class PurchaseOrderListComponent implements OnInit {
 
     return {
       docNum: this.asString(document.docNum ?? document.number ?? '—'),
-      docDate: this.asString(document.docDate ?? document.date ?? ''),
+      docDate: displayDateSlash(this.asString(document.docDate ?? document.date ?? '')),
       vendor: this.asString(document.businessPartnerName ?? document.partner ?? document.businessPartnerCode ?? '—'),
       warehouse: this.asString(document.store ?? ''),
       itemCount: items.length,

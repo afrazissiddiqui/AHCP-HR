@@ -7,6 +7,7 @@ import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { WarehouseOption, WarehouseService } from '../../../../services/warehouse.service';
 import { OitmItemsService } from '../../../../services/oitm-items.service';
+import { OitmItem } from '../../../../constants/oitm-items';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { ReceiptFromProductionHeader, ReceiptFromProductionLine, createEmptyReceiptFromProductionHeader, createEmptyReceiptFromProductionLine } from '../receipt-from-production.model';
@@ -40,6 +41,27 @@ export class AddReceiptFromProduction implements OnInit {
   readonly productionOrders = signal<ProductionOrderRecord[]>([]);
   readonly selectedProductionOrder = signal<ProductionOrderRecord | null>(null);
   readonly warehouseOptions = signal<WarehouseOption[]>([]);
+  readonly productionMachineOptions = computed(() =>
+    this.oitmItemsService
+      .getCatalog()
+      .filter((item) => item.fetchPro?.trim().toUpperCase() === 'Y'),
+  );
+  readonly selectedMachineProperties = computed(() => {
+    const machine =
+      this.findMachineByCode(this.headerForm().machineId ?? '') ??
+      this.findMachineByName(this.headerForm().machineName ?? '');
+    return machine?.properties ?? [];
+  });
+  readonly moldNumberOptions = computed(() =>
+    this.selectedMachineProperties()
+      .map((property) => property.name.trim())
+      .filter(Boolean),
+  );
+  readonly cavityNumberOptions = computed(() =>
+    this.selectedMachineProperties()
+      .map((property) => property.code.trim())
+      .filter(Boolean),
+  );
 
   readonly editingId = signal<string | null>(this.route.snapshot.paramMap.get('id'));
   readonly pageTitle = computed(() => (this.editingId() ? 'Edit Receipt from Production' : 'Add Receipt from Production'));
@@ -111,6 +133,88 @@ export class AddReceiptFromProduction implements OnInit {
 
   updateHeaderField(field: keyof ReceiptFromProductionHeader, value: string): void {
     this.headerForm.update((state) => ({ ...state, [field]: value }));
+  }
+
+  displayShift(value: string | undefined): string {
+    switch ((value ?? '').trim()) {
+      case '01':
+        return 'Shift A';
+      case '02':
+        return 'Shift B';
+      case '03':
+        return 'Shift C';
+      default:
+        return value ?? '';
+    }
+  }
+
+  updateShift(value: string): void {
+    const normalized = value.trim().toLowerCase();
+    const rawValue = normalized === 'shift a' ? '01' : normalized === 'shift b' ? '02' : normalized === 'shift c' ? '03' : value;
+    this.updateHeaderField('shift', rawValue);
+  }
+
+  updateMachineId(value: string): void {
+    const machine = this.findMachineByCode(value);
+    const previousMachineToken = this.extractMachineToken(this.headerForm().machineName);
+    this.headerForm.update((state) => ({
+      ...state,
+      machineId: value,
+      machineName: machine?.itemName ?? state.machineName,
+    }));
+    if (machine) {
+      this.updateBatchMachineToken(previousMachineToken, this.extractMachineToken(machine.itemName));
+    }
+  }
+
+  updateMachineName(value: string): void {
+    const machine = this.findMachineByName(value);
+    const previousMachineToken = this.extractMachineToken(this.headerForm().machineName);
+    this.headerForm.update((state) => ({
+      ...state,
+      machineName: value,
+      machineId: machine?.itemCode ?? state.machineId,
+    }));
+    if (machine) {
+      this.updateBatchMachineToken(previousMachineToken, this.extractMachineToken(machine.itemName));
+    }
+  }
+
+  private extractMachineToken(machineName: string | undefined): string {
+    return machineName?.trim().match(/^([A-Za-z0-9]+)/)?.[1] ?? '';
+  }
+
+  private updateBatchMachineToken(previousToken: string, nextToken: string): void {
+    if (!previousToken || !nextToken || previousToken.toLowerCase() === nextToken.toLowerCase()) {
+      return;
+    }
+
+    const escapedPreviousToken = previousToken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const tokenPattern = new RegExp(`(^|-)${escapedPreviousToken}(?=-|$)`, 'i');
+    this.contentLines.update((rows) =>
+      rows.map((row) => ({
+        ...row,
+        batchNumber: row.batchNumber.replace(tokenPattern, `$1${nextToken}`),
+      })),
+    );
+  }
+
+  private findMachineByCode(value: string): OitmItem | undefined {
+    const normalized = value.trim().toLowerCase();
+    return this.productionMachineOptions().find((item) => item.itemCode.trim().toLowerCase() === normalized);
+  }
+
+  private findMachineByName(value: string): OitmItem | undefined {
+    const normalized = value.trim().toLowerCase();
+    return this.productionMachineOptions().find((item) => item.itemName.trim().toLowerCase() === normalized);
+  }
+
+  updateMoldNumber(value: string): void {
+    this.updateHeaderField('moldNumber', value);
+  }
+
+  updateCavityNumber(value: string): void {
+    this.updateHeaderField('cavityNumber', value);
   }
 
   getBranchDisplayName(branchId: string | undefined): string {
@@ -216,6 +320,7 @@ export class AddReceiptFromProduction implements OnInit {
       customerCode: order.customerCode || state.customerCode || '',
       customerName: order.customerName || state.customerName || '',
       noBinReceived: order.U_NoBinReceived ?? state.noBinReceived ?? null,
+      documentTaxStatus: order.status.trim().toUpperCase() === 'R' ? 'Registered' : state.documentTaxStatus || '',
     }));
 
     const nextLine = createEmptyReceiptFromProductionLine();

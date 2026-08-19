@@ -2,9 +2,16 @@ export interface OitmItem {
   itemCode: string;
   itemName: string;
   itemType?: string;
+  fetchPro?: string;
+  properties?: OitmProperty[];
   uom: string;
   availableQty?: string | number;
   batches?: OitmBatch[];
+}
+
+export interface OitmProperty {
+  code: string;
+  name: string;
 }
 
 export interface OitmBatch {

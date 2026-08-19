@@ -114,6 +114,8 @@ export class OitmItemsService {
       itemCode: this.pickString([item], ['ItemCode', 'itemCode', 'item_code', 'code', 'Code']),
       itemName: this.pickString([item], ['ItemName', 'itemName', 'item_name', 'name', 'Name', 'description', 'Description']),
       itemType: this.pickString([item], ['ItemType', 'itemType', 'item_type', 'type', 'Type']),
+      fetchPro: this.pickString([item], ['U_FetchPro', 'u_fetch_pro', 'uFetchPro']),
+      properties: this.pickProperties(item),
       uom: this.pickString([item], ['uom', 'UOM', 'Uom', 'unit', 'Unit']),
       availableQty: this.pickQtyValue(item),
       batches: this.pickBatches(item),
@@ -151,6 +153,21 @@ export class OitmItemsService {
     }
     const text = this.cleanSapText(value);
     return text || undefined;
+  }
+
+  private pickProperties(item: Record<string, unknown>): OitmItem['properties'] {
+    const raw = item['Properties'] ?? item['properties'];
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .filter((property): property is Record<string, unknown> => !!property && typeof property === 'object')
+      .map((property) => ({
+        code: this.pickString([property], ['code', 'Code']),
+        name: this.pickString([property], ['name', 'Name']),
+      }))
+      .filter((property) => property.code || property.name);
   }
 
   private pickBatches(item: Record<string, unknown>): OitmItem['batches'] {

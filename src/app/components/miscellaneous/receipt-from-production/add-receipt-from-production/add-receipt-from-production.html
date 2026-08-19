@@ -53,27 +53,27 @@
             </div>
             <div class="sir-field-row">
               <label>Machine ID:</label>
-              <input type="text" [ngModel]="headerForm().machineId" (ngModelChange)="updateHeaderField('machineId', $event)" placeholder="Enter machine ID">
+              <input type="text" list="receipt-production-machine-options" [ngModel]="headerForm().machineId" (ngModelChange)="updateMachineId($event)" placeholder="Search machine code" autocomplete="off">
             </div>
             <div class="sir-field-row">
               <label>Machine Name:</label>
-              <input type="text" [ngModel]="headerForm().machineName" (ngModelChange)="updateHeaderField('machineName', $event)" placeholder="Enter machine name">
+              <input type="search" list="receipt-production-machine-names" [ngModel]="headerForm().machineName" (ngModelChange)="updateMachineName($event)" placeholder="Search machine name" autocomplete="off">
             </div>
             <div class="sir-field-row">
               <label>Shift:</label>
-              <input type="text" [ngModel]="headerForm().shift" (ngModelChange)="updateHeaderField('shift', $event)" placeholder="Enter shift">
+              <input type="text" [ngModel]="displayShift(headerForm().shift)" (ngModelChange)="updateShift($event)" placeholder="Enter shift">
             </div>
             <div class="sir-field-row">
               <label>Mold Number:</label>
-              <input type="text" [ngModel]="headerForm().moldNumber" (ngModelChange)="updateHeaderField('moldNumber', $event)" placeholder="Enter mold number">
+              <input type="search" list="receipt-production-mold-options" [ngModel]="headerForm().moldNumber" (ngModelChange)="updateMoldNumber($event)" placeholder="Search mold number" autocomplete="off">
             </div>
             <div class="sir-field-row">
               <label>Cavity Number:</label>
-              <input type="text" [ngModel]="headerForm().cavityNumber" (ngModelChange)="updateHeaderField('cavityNumber', $event)" placeholder="Enter cavity number">
+              <input type="search" list="receipt-production-cavity-options" [ngModel]="headerForm().cavityNumber" (ngModelChange)="updateCavityNumber($event)" placeholder="Search cavity number" autocomplete="off">
             </div>
             <div class="sir-field-row">
               <label>Document Tax Status:</label>
-              <input type="text" [ngModel]="headerForm().documentTaxStatus" (ngModelChange)="updateHeaderField('documentTaxStatus', $event)" placeholder="Enter document tax status">
+              <input type="text" [ngModel]="headerForm().documentTaxStatus" readonly>
             </div>
           </div>
         </div>
@@ -173,6 +173,30 @@
     </div>
   </div>
 </div>
+
+<datalist id="receipt-production-machine-options">
+  @for (machine of productionMachineOptions(); track machine.itemCode) {
+    <option [value]="machine.itemCode" [label]="machine.itemName"></option>
+  }
+</datalist>
+
+<datalist id="receipt-production-machine-names">
+  @for (machine of productionMachineOptions(); track machine.itemCode) {
+    <option [value]="machine.itemName" [label]="machine.itemCode"></option>
+  }
+</datalist>
+
+<datalist id="receipt-production-mold-options">
+  @for (mold of moldNumberOptions(); track mold) {
+    <option [value]="mold"></option>
+  }
+</datalist>
+
+<datalist id="receipt-production-cavity-options">
+  @for (cavity of cavityNumberOptions(); track cavity) {
+    <option [value]="cavity"></option>
+  }
+</datalist>
 
 @if (productionOrderDialogOpen()) {
   <div class="sir-modal-overlay" (click)="closeProductionOrderDialog()">

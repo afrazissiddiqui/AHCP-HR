@@ -287,6 +287,26 @@
                 />
               </div>
               <div class="cjr-row">
+                <label for="agp-nature-of-item">Nature of item:</label>
+                <input
+                  id="agp-nature-of-item"
+                  type="text"
+                  [(ngModel)]="natureOfItem"
+                  name="natureOfItem"
+                  placeholder="Describe the item"
+                />
+              </div>
+              <div class="cjr-row">
+                <label for="agp-nature-of-repair">Nature of repair:</label>
+                <input
+                  id="agp-nature-of-repair"
+                  type="text"
+                  [(ngModel)]="natureOfRepair"
+                  name="natureOfRepair"
+                  placeholder="Describe the repair"
+                />
+              </div>
+              <div class="cjr-row">
                 <label for="agp-issued-to">Issued to (vendor or department):</label>
                 <input
                   id="agp-issued-to"
@@ -333,12 +353,74 @@
                 <input id="agp-article-out" type="date" [(ngModel)]="articleOutDate" name="articleOutDate" />
               </div>
               <div class="cjr-row">
-                <label for="agp-article-returned">Article returned date:</label>
+                <label for="agp-return-status">Return status:</label>
+                <select
+                  id="agp-return-status"
+                  [(ngModel)]="returnStatus"
+                  name="returnStatus"
+                  (ngModelChange)="returnStatus === 'No' && (articleReturnedDate = '')"
+                >
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div class="cjr-row">
+                <label for="agp-article-returned">Date of return:</label>
                 <input
                   id="agp-article-returned"
                   type="date"
                   [(ngModel)]="articleReturnedDate"
                   name="articleReturnedDate"
+                  [disabled]="returnStatus !== 'Yes'"
+                />
+              </div>
+            </div>
+            <div class="cjr-personal-col">
+              <div class="cjr-row">
+                <label for="agp-warranty-claimable">Warranty claimable:</label>
+                <select
+                  id="agp-warranty-claimable"
+                  [(ngModel)]="warrantyClaimable"
+                  name="warrantyClaimable"
+                  (ngModelChange)="onWarrantyClaimableChange()"
+                >
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div class="cjr-row">
+                <label for="agp-warranty-start">Warranty start date:</label>
+                <input
+                  id="agp-warranty-start"
+                  type="date"
+                  [(ngModel)]="warrantyStartDate"
+                  name="warrantyStartDate"
+                  [disabled]="warrantyClaimable !== 'Yes'"
+                  (ngModelChange)="updateWarrantyExpiryDate()"
+                />
+              </div>
+              <div class="cjr-row">
+                <label for="agp-warranty-duration">Warranty duration (days):</label>
+                <input
+                  id="agp-warranty-duration"
+                  type="number"
+                  min="0"
+                  step="1"
+                  [(ngModel)]="warrantyDuration"
+                  name="warrantyDuration"
+                  [disabled]="warrantyClaimable !== 'Yes'"
+                  (ngModelChange)="updateWarrantyExpiryDate()"
+                />
+              </div>
+              <div class="cjr-row">
+                <label for="agp-warranty-expiry">Warranty expiry date:</label>
+                <input
+                  id="agp-warranty-expiry"
+                  type="date"
+                  [ngModel]="warrantyExpiryDate"
+                  name="warrantyExpiryDate"
+                  readonly
+                  disabled
                 />
               </div>
             </div>
