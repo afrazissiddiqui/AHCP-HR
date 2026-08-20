@@ -192,21 +192,7 @@ export class AddGoodIssue implements OnInit {
       return;
     }
 
-    const validItems = items.filter((item) => this.firstBatchWithNumber(item));
-    const invalidItems = items.filter((item) => !this.firstBatchWithNumber(item));
-
-    if (invalidItems.length > 0) {
-      const codes = invalidItems.map((item) => item.itemCode).join(', ');
-      this.alertService.validation(
-        `Batch number not found for: ${codes}. Those items were not added.`,
-      );
-    }
-
-    if (validItems.length === 0) {
-      this.removeRow(index);
-      this.itemPickerRowIndex.set(null);
-      return;
-    }
+    const validItems = items;
 
     this.contentLines.update((rows) => {
       const updated = [...rows];

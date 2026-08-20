@@ -331,15 +331,16 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (line of contentLines(); track $index) {
+                  @for (batchLine of batchSelectionLines(); track batchLine.index) {
+                    @let line = batchLine.line;
                     <tr
                       class="sir-modal-row"
-                      [class.sir-modal-row--selected]="activeBatchSelectionLineIndex() === $index"
+                      [class.sir-modal-row--selected]="activeBatchSelectionLineIndex() === batchLine.index"
                       [class.sir-modal-row--completed]="isBatchSelectionComplete(line)"
                       [class.sir-modal-row--incomplete]="!isBatchSelectionComplete(line)"
-                      (click)="selectBatchSelectionLine($index)"
+                      (click)="selectBatchSelectionLine(batchLine.index)"
                     >
-                      <td>{{ line.itemCode || 'Row ' + ($index + 1) }}</td>
+                      <td>{{ line.itemCode || 'Row ' + (batchLine.index + 1) }}</td>
                       <td>{{ line.itemDescription }}</td>
                       <td>{{ line.quantity ?? '—' }}</td>
                       <td>{{ line.warehouse || '—' }}</td>

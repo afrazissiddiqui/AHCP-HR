@@ -75,6 +75,7 @@ interface IssueForProductionHeader {
 interface IssueForProductionLine {
   itemCode: string;
   itemDescription: string;
+  manBtchNum?: string;
   warehouse: string;
   quantity: number | null;
   requiredQuantity: number;
@@ -143,8 +144,11 @@ export class IssueFromProductionComponent implements OnInit {
     });
   });
 
-  readonly productionOrderItems = computed(() =>
-    (this.selectedProductionOrder()?.items ?? []).filter((item) => item.manBtchNum?.trim().toUpperCase() === 'Y'),
+  readonly productionOrderItems = computed(() => this.selectedProductionOrder()?.items ?? []);
+  readonly batchSelectionLines = computed(() =>
+    this.contentLines()
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) => line.manBtchNum?.trim().toUpperCase() === 'Y'),
   );
 
   readonly selectedProductionOrderItems = computed(() => {
@@ -210,11 +214,6 @@ export class IssueFromProductionComponent implements OnInit {
       branchId,
       branchName: this.getBranchDisplayName(branchId),
     }));
-
-    if (order.items?.length) {
-      this.productionOrderItemsDialogOpen.set(true);
-      return;
-    }
 
     this.productionOrderItemsLoading.set(true);
     this.receiptFromProductionService
@@ -311,6 +310,7 @@ export class IssueFromProductionComponent implements OnInit {
           ...this.createEmptyLine(),
           itemCode: item.itemCode,
           itemDescription: item.itemDescription,
+          manBtchNum: item.manBtchNum,
           warehouse: branchWarehouse || item.warehouse || order.warehouse,
           quantity: item.quantity ?? null,
           requiredQuantity: item.quantity ?? 0,
@@ -324,7 +324,7 @@ export class IssueFromProductionComponent implements OnInit {
       }),
     );
 
-    this.activeBatchSelectionLineIndex.set(0);
+    this.activeBatchSelectionLineIndex.set(this.batchSelectionLines()[0]?.index ?? null);
     this.productionOrderItemsDialogOpen.set(false);
     this.selectedProductionOrderItemKeys.set(new Set());
   }
@@ -336,7 +336,7 @@ export class IssueFromProductionComponent implements OnInit {
       return;
     }
 
-    this.activeBatchSelectionLineIndex.set(0);
+    this.activeBatchSelectionLineIndex.set(this.batchSelectionLines()[0]?.index ?? null);
     this.batchSelectionDialogOpen.set(true);
   }
 
