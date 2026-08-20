@@ -404,6 +404,15 @@ export class AddReceiptFromProduction implements OnInit {
     this.saving.set(true);
     this.receiptService.create(payload).pipe(finalize(() => this.saving.set(false))).subscribe({
       next: (response) => {
+        const ok = response?.success === true || response?.status === true;
+        if (!ok) {
+          void this.alertService.error(
+            'Save Failed',
+            formatSapApiFailureMessage(response, 'Receipt from production could not be saved.'),
+          );
+          return;
+        }
+
         const successText = response?.message?.trim() || (response?.docEntry != null ? `Receipt from production created (Doc #${response.docEntry}).` : 'Receipt from production was created successfully.');
         void this.alertService.success('Success', successText);
         void this.router.navigate(['/miscellaneous/receipt-from-production']);

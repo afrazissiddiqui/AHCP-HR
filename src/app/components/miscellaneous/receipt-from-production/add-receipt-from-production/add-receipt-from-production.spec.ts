@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
@@ -11,8 +11,17 @@ import { OitmItemsService } from '../../../../services/oitm-items.service';
 
 describe('AddReceiptFromProduction', () => {
   let component: AddReceiptFromProduction;
+  let receiptService: jasmine.SpyObj<ReceiptFromProductionService>;
+  let alertService: jasmine.SpyObj<AlertService>;
+  let router: { navigate: jasmine.Spy };
 
   beforeEach(async () => {
+    receiptService = jasmine.createSpyObj<ReceiptFromProductionService>('ReceiptFromProductionService', ['create', 'listProductionOrders']);
+    receiptService.create.and.returnValue(of({}));
+    receiptService.listProductionOrders.and.returnValue(of([]));
+    alertService = jasmine.createSpyObj<AlertService>('AlertService', ['validation', 'success', 'error']);
+    router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+
     await TestBed.configureTestingModule({
       imports: [AddReceiptFromProduction],
       providers: [
@@ -26,12 +35,9 @@ describe('AddReceiptFromProduction', () => {
         },
         {
           provide: AlertService,
-          useValue: {
-            validation: jasmine.createSpy('validation'),
-            success: jasmine.createSpy('success'),
-            error: jasmine.createSpy('error'),
-          },
+          useValue: alertService,
         },
+        { provide: Router, useValue: router },
         {
           provide: MiscellaneousLayoutService,
           useValue: {
@@ -41,10 +47,7 @@ describe('AddReceiptFromProduction', () => {
         },
         {
           provide: ReceiptFromProductionService,
-          useValue: {
-            create: () => of({}),
-            listProductionOrders: () => of([]),
-          },
+          useValue: receiptService,
         },
         {
           provide: OitmItemsService,
@@ -93,6 +96,33 @@ describe('AddReceiptFromProduction', () => {
     }).compileComponents();
 
     component = TestBed.createComponent(AddReceiptFromProduction).componentInstance;
+  });
+
+  it('shows the SAP error when the API returns an unsuccessful response', () => {
+    receiptService.create.and.returnValue(
+      of({
+        success: false,
+        error: 'unique constraint violation: Code=1 already exists',
+      }),
+    );
+    component.headerForm.update((header) => ({ ...header, baseProductionOrderDocEntry: '53' }));
+    component.contentLines.set([
+      {
+        ...createEmptyReceiptFromProductionLine(),
+        itemCode: 'FG-Toll-P-00000069',
+        quantity: 10,
+        warehouse: 'FSD-WH06',
+      },
+    ]);
+
+    component.save();
+
+    expect(alertService.error).toHaveBeenCalledWith(
+      'Save Failed',
+      jasmine.stringContaining('unique constraint violation'),
+    );
+    expect(alertService.success).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('only populates header values when a production order is selected', () => {

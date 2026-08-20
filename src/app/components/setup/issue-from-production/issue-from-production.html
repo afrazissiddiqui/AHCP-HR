@@ -47,6 +47,35 @@
               <label>Due Date:</label>
               <input type="date" [ngModel]="headerForm().dueDate" (ngModelChange)="updateHeaderField('dueDate', $event)" />
             </div>
+            <div class="sir-field-row">
+              <label>Machine ID:</label>
+              <input type="text" [ngModel]="headerForm().machineId" (ngModelChange)="updateHeaderField('machineId', $event)" />
+            </div>
+            <div class="sir-field-row">
+              <label>Machine Name:</label>
+              <input type="text" [ngModel]="headerForm().machineName" (ngModelChange)="updateHeaderField('machineName', $event)" />
+            </div>
+            <div class="sir-field-row">
+              <label>Shift:</label>
+              <select [ngModel]="headerForm().shift" (ngModelChange)="updateHeaderField('shift', $event)">
+                <option value="">Select shift</option>
+                <option value="Shift A">Shift A</option>
+                <option value="Shift B">Shift B</option>
+                <option value="Shift C">Shift C</option>
+              </select>
+            </div>
+            <div class="sir-field-row">
+              <label>Mold Number:</label>
+              <input type="text" [ngModel]="headerForm().moldNumber" (ngModelChange)="updateHeaderField('moldNumber', $event)" />
+            </div>
+            <div class="sir-field-row">
+              <label>Cavity Number:</label>
+              <input type="text" [ngModel]="headerForm().cavityNumber" (ngModelChange)="updateHeaderField('cavityNumber', $event)" />
+            </div>
+            <div class="sir-field-row">
+              <label>Document Tax Status:</label>
+              <input type="text" [ngModel]="headerForm().documentTaxStatus" readonly />
+            </div>
           </div>
         </div>
       </section>
@@ -215,6 +244,12 @@
               <div class="js-detail-item"><label>Post Date:</label> <span>{{ selectedProductionOrder()?.postDate || '—' }}</span></div>
               <div class="js-detail-item"><label>Due Date:</label> <span>{{ selectedProductionOrder()?.dueDate || '—' }}</span></div>
               <div class="js-detail-item"><label>Warehouse:</label> <span>{{ selectedProductionOrder()?.warehouse || '—' }}</span></div>
+              <div class="js-detail-item"><label>Machine ID:</label> <span>{{ selectedProductionOrder()?.U_MachineID || selectedProductionOrder()?.machineId || '—' }}</span></div>
+              <div class="js-detail-item"><label>Machine Name:</label> <span>{{ selectedProductionOrder()?.U_MachineName || selectedProductionOrder()?.machineName || '—' }}</span></div>
+              <div class="js-detail-item"><label>Shift:</label> <span>{{ displaySelectedOrderShift() || '—' }}</span></div>
+              <div class="js-detail-item"><label>Mold Number:</label> <span>{{ selectedProductionOrder()?.U_MoldNo || selectedProductionOrder()?.moldNumber || '—' }}</span></div>
+              <div class="js-detail-item"><label>Cavity Number:</label> <span>{{ selectedProductionOrder()?.U_Cavity_NUM || selectedProductionOrder()?.cavityNumber || '—' }}</span></div>
+              <div class="js-detail-item"><label>Document Tax Status:</label> <span>{{ displaySelectedOrderTaxStatus() || '—' }}</span></div>
             </div>
           </div>
 

@@ -19,6 +19,7 @@ interface ProductionOrderItem {
   lineNum: string;
   itemCode: string;
   itemDescription: string;
+  manBtchNum?: string;
   quantity: number;
   issuedQuantity?: number;
   warehouse: string;
@@ -38,6 +39,19 @@ interface ProductionOrderRecord {
   branch: string;
   batchNumber: string;
   status: string;
+  machineId?: string;
+  machineName?: string;
+  shift?: string;
+  moldNumber?: string;
+  cavityNumber?: string;
+  documentTaxStatus?: string;
+  U_MachineID?: string;
+  U_MachineName?: string;
+  U_MoldNo?: string;
+  U_Cavity_NUM?: string;
+  U_EmployeeShift?: string;
+  U_Shift?: string;
+  U_DocTaxStatus?: string;
   items: ProductionOrderItem[];
 }
 
@@ -50,6 +64,12 @@ interface IssueForProductionHeader {
   documentDate: string;
   postingDate: string;
   dueDate: string;
+  machineId: string;
+  machineName: string;
+  shift: string;
+  moldNumber: string;
+  cavityNumber: string;
+  documentTaxStatus: string;
 }
 
 interface IssueForProductionLine {
@@ -123,7 +143,9 @@ export class IssueFromProductionComponent implements OnInit {
     });
   });
 
-  readonly productionOrderItems = computed(() => this.selectedProductionOrder()?.items ?? []);
+  readonly productionOrderItems = computed(() =>
+    (this.selectedProductionOrder()?.items ?? []).filter((item) => item.manBtchNum?.trim().toUpperCase() === 'Y'),
+  );
 
   readonly selectedProductionOrderItems = computed(() => {
     const keys = this.selectedProductionOrderItemKeys();
@@ -274,6 +296,12 @@ export class IssueFromProductionComponent implements OnInit {
       dueDate: order.dueDate || state.dueDate,
       branchId,
       branchName,
+      machineId: order.machineId || order.U_MachineID || state.machineId,
+      machineName: order.machineName || order.U_MachineName || state.machineName,
+      shift: this.formatShift(order.shift || order.U_Shift || order.U_EmployeeShift) || state.shift,
+      moldNumber: order.moldNumber || order.U_MoldNo || state.moldNumber,
+      cavityNumber: order.cavityNumber || order.U_Cavity_NUM || state.cavityNumber,
+      documentTaxStatus: this.formatDocumentTaxStatus(order.documentTaxStatus || order.U_DocTaxStatus) || state.documentTaxStatus,
     }));
 
     this.contentLines.set(
@@ -586,6 +614,11 @@ export class IssueFromProductionComponent implements OnInit {
       Remarks: header.remarks.trim(),
       docentry: Number(header.baseProductionOrderDocEntry.trim()) || 0,
       branch: header.branchId,
+      U_MachineID: header.machineId.trim(),
+      U_Shift: this.shiftCode(header.shift),
+      U_MoldNo: header.moldNumber.trim(),
+      U_Cavity_NUM: header.cavityNumber.trim(),
+      U_DocTaxStatus: this.documentTaxStatusCode(header.documentTaxStatus),
       items: lines.map((line, index) => {
         // Ensure baseLine has a valid non-zero value from the production order
         // baseLine contains the actual LineNum from the API response
@@ -670,6 +703,12 @@ export class IssueFromProductionComponent implements OnInit {
           branch: this.pickString(item, ['BPLId', 'BPLName', 'branch', 'Branch', 'branchId', 'branchName']),
           batchNumber: orderBatchNumber || items[0]?.batchNumber || '',
           status: this.pickString(item, ['Status', 'status', 'docStatus', 'DocStatus']),
+          machineId: this.pickString(item, ['U_MachineID', 'machineId', 'MachineID']),
+          machineName: this.pickString(item, ['U_MachineName', 'machineName', 'MachineName']),
+          shift: this.pickString(item, ['U_Shift', 'U_EmployeeShift', 'shift', 'Shift']),
+          moldNumber: this.pickString(item, ['U_MoldNo', 'moldNumber', 'MoldNumber']),
+          cavityNumber: this.pickString(item, ['U_Cavity_NUM', 'cavityNumber', 'CavityNumber']),
+          documentTaxStatus: this.pickString(item, ['U_DocTaxStatus', 'documentTaxStatus', 'DocTaxStatus']),
           items,
         };
       });
@@ -802,7 +841,55 @@ export class IssueFromProductionComponent implements OnInit {
       documentDate: today,
       postingDate: today,
       dueDate: today,
+      machineId: '',
+      machineName: '',
+      shift: '',
+      moldNumber: '',
+      cavityNumber: '',
+      documentTaxStatus: '',
     };
+  }
+
+  formatShift(value: string | undefined): string {
+    const normalized = (value ?? '').trim().toUpperCase();
+    return ({
+      '01': 'Shift A',
+      '02': 'Shift B',
+      '03': 'Shift C',
+    } as Record<string, string>)[normalized] ?? (value ?? '').trim();
+  }
+
+  formatDocumentTaxStatus(value: string | undefined): string {
+    const normalized = (value ?? '').trim().toUpperCase();
+    return normalized === 'R' ? 'Registered' : (value ?? '').trim();
+  }
+
+  displaySelectedOrderShift(): string {
+    const order = this.selectedProductionOrder();
+    return this.formatShift(order?.U_Shift || order?.U_EmployeeShift || order?.shift);
+  }
+
+  displaySelectedOrderTaxStatus(): string {
+    const order = this.selectedProductionOrder();
+    return this.formatDocumentTaxStatus(order?.U_DocTaxStatus || order?.documentTaxStatus);
+  }
+
+  private shiftCode(value: string): string {
+    const normalized = value.trim().toUpperCase();
+    if (normalized === 'SHIFT A' || normalized === '01') {
+      return '01';
+    }
+    if (normalized === 'SHIFT B' || normalized === '02') {
+      return '02';
+    }
+    if (normalized === 'SHIFT C' || normalized === '03') {
+      return '03';
+    }
+    return value.trim();
+  }
+
+  private documentTaxStatusCode(value: string): string {
+    return value.trim().toUpperCase() === 'REGISTERED' ? 'R' : value.trim();
   }
 
   private createEmptyLine(): IssueForProductionLine {

@@ -103,6 +103,7 @@ export interface ProductionOrderItem {
   lineNum: string;
   itemCode: string;
   itemDescription: string;
+  manBtchNum?: string;
   quantity: number;
   plannedQty?: number;
   completedQty?: number;
@@ -141,6 +142,8 @@ export interface ProductionOrderRecord {
   U_MoldNo?: string;
   U_Cavity_NUM?: string;
   U_EmployeeShift?: string;
+  U_Shift?: string;
+  U_DocTaxStatus?: string;
   U_NoBinReceived?: string | null;
   items?: ProductionOrderItem[];
 }
@@ -292,6 +295,7 @@ export class ReceiptFromProductionService {
       lineNum,
       itemCode,
       itemDescription,
+      manBtchNum: this.pickString(item, ['ManBtchNum', 'manBtchNum', 'ManBatchNum']),
       quantity,
       issuedQuantity: normalizedIssuedQuantity > 0 ? normalizedIssuedQuantity : undefined,
       jumboCartons,
@@ -372,6 +376,8 @@ export class ReceiptFromProductionService {
           U_MoldNo: this.pickString(item, ['U_MoldNo', 'moldNumber', 'MoldNo', 'Mold']),
           U_Cavity_NUM: this.pickString(item, ['U_Cavity_NUM', 'cavityNumber', 'Cavity_NUM', 'CavityNum']),
           U_EmployeeShift: this.pickString(item, ['U_EmployeeShift', 'employeeShift', 'Shift', 'shift']),
+          U_Shift: this.pickString(item, ['U_Shift', 'shift', 'Shift']),
+          U_DocTaxStatus: this.pickString(item, ['U_DocTaxStatus', 'documentTaxStatus', 'DocTaxStatus']),
           U_NoBinReceived: this.pickString(item, ['U_NoBinReceived', 'NoBinReceived']) || null,
           items,
         };
