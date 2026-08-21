@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+  import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
@@ -247,7 +247,7 @@ describe('AddReceiptFromProduction', () => {
       },
     ]);
 
-    expect(buildCreateReceiptFromProductionPayload(component.headerForm(), component.contentLines()).shift).toBe('02');
+    expect(buildCreateReceiptFromProductionPayload(component.headerForm(), component.contentLines()).U_Shift).toBe('02');
   });
 
   it('updates only the machine token in the row batch when the machine changes', () => {
@@ -266,6 +266,40 @@ describe('AddReceiptFromProduction', () => {
 
     expect(component.headerForm().machineName).toBe('H1- HyPET-225, 48 Cavity, Serial# 3406566');
     expect(component.contentLines()[0].batchNumber).toBe('3-G-H1-2026-000000001');
+  });
+
+  it('updates the row batch when the machine is changed through its name', () => {
+    component.headerForm.set({
+      ...component.headerForm(),
+      machineName: 'H2, HPP6e-400, 96 Cavity, Serial# 13693258',
+    });
+    component.contentLines.set([
+      {
+        ...createEmptyReceiptFromProductionLine(),
+        batchNumber: '3-32.54G-H2-2026-000000001',
+      },
+    ]);
+
+    component.updateMachineName('H5, HPP6e-400, 96 cavity, Serial# 13693259');
+
+    expect(component.contentLines()[0].batchNumber).toBe('3-32.54G-H5-2026-000000001');
+  });
+
+  it('normalizes a lowercase batch machine token when the selected machine token is unchanged', () => {
+    component.headerForm.set({
+      ...component.headerForm(),
+      machineName: 'H4, HPP6e-400, 96 Cavity, Serial# 13693259',
+    });
+    component.contentLines.set([
+      {
+        ...createEmptyReceiptFromProductionLine(),
+        batchNumber: '1-G-h4-2026-000000001',
+      },
+    ]);
+
+    component.updateMachineName('H4, HPP6e-400, 96 Cavity, Serial# 13693259');
+
+    expect(component.contentLines()[0].batchNumber).toBe('1-G-H4-2026-000000001');
   });
 
   it('shows mold names and cavity codes for the selected production machine', () => {

@@ -6,6 +6,7 @@ import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { OitmItemsService } from '../../../../services/oitm-items.service';
 import { WarehouseService } from '../../../../services/warehouse.service';
+import { DepartmentsPrService, DepartmentPr } from '../../../../services/departments-pr.service';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
@@ -35,6 +36,7 @@ export class AddGoodIssue implements OnInit {
   private readonly goodIssueService = inject(GoodIssueService);
   private readonly oitmItemsService = inject(OitmItemsService);
   private readonly warehouseService = inject(WarehouseService);
+  private readonly departmentsPrService = inject(DepartmentsPrService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
   readonly saving = signal(false);
@@ -58,6 +60,7 @@ export class AddGoodIssue implements OnInit {
   readonly accountCodeOptions = signal<InventoryAccountOption[]>([]);
   readonly accountCodeOptionsLoading = signal(false);
   readonly accountCodeOptionsError = signal('');
+  readonly departmentOptions = signal<DepartmentPr[]>([]);
 
   readonly totalAmount = computed(() =>
     this.contentLines()
@@ -68,7 +71,18 @@ export class AddGoodIssue implements OnInit {
   ngOnInit(): void {
     this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
     this.warehouseService.ensureLoaded().subscribe({ error: () => undefined });
+    this.loadDepartmentOptions();
     this.loadAccountCodeOptions();
+  }
+
+  loadDepartmentOptions(): void {
+    if (this.departmentOptions().length > 0) {
+      return;
+    }
+
+    this.departmentsPrService.ensureLoaded().subscribe((options) => {
+      this.departmentOptions.set(options);
+    });
   }
 
   private loadAccountCodeOptions(): void {
@@ -198,6 +212,7 @@ export class AddGoodIssue implements OnInit {
       const updated = [...rows];
       const first = validItems[0];
       const firstBatch = this.firstBatchWithNumber(first);
+      const selectedUom = first.uom?.trim() || '';
       updated[index] = {
         ...updated[index],
         itemCode: first.itemCode,
@@ -210,10 +225,13 @@ export class AddGoodIssue implements OnInit {
         expiryDate: firstBatch?.expiryDate
           ? String(firstBatch.expiryDate).split(' ')[0]
           : createEmptyGoodIssueLine().expiryDate,
+        uomCode: selectedUom,
+        uomName: selectedUom,
       };
 
       const extras = validItems.slice(1).map((item) => {
         const batch = this.firstBatchWithNumber(item);
+        const selectedUom = item.uom?.trim() || '';
         return {
           ...createEmptyGoodIssueLine(),
           itemCode: item.itemCode,
@@ -226,6 +244,8 @@ export class AddGoodIssue implements OnInit {
           expiryDate: batch?.expiryDate
             ? String(batch.expiryDate).split(' ')[0]
             : createEmptyGoodIssueLine().expiryDate,
+          uomCode: selectedUom,
+          uomName: selectedUom,
         };
       });
 

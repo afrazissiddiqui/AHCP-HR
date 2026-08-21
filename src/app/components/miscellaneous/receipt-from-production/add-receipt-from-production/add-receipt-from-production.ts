@@ -175,9 +175,7 @@ export class AddReceiptFromProduction implements OnInit {
       machineName: value,
       machineId: machine?.itemCode ?? state.machineId,
     }));
-    if (machine) {
-      this.updateBatchMachineToken(previousMachineToken, this.extractMachineToken(machine.itemName));
-    }
+    this.updateBatchMachineToken(previousMachineToken, this.extractMachineToken(value));
   }
 
   private extractMachineToken(machineName: string | undefined): string {
@@ -185,16 +183,19 @@ export class AddReceiptFromProduction implements OnInit {
   }
 
   private updateBatchMachineToken(previousToken: string, nextToken: string): void {
-    if (!previousToken || !nextToken || previousToken.toLowerCase() === nextToken.toLowerCase()) {
+    if (!nextToken) {
       return;
     }
 
+    const normalizedNextToken = nextToken.toUpperCase();
     const escapedPreviousToken = previousToken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const tokenPattern = new RegExp(`(^|-)${escapedPreviousToken}(?=-|$)`, 'i');
+    const tokenPattern = previousToken
+      ? new RegExp(`(^|-)${escapedPreviousToken}(?=-|$)`, 'i')
+      : /(^|-)h\d+(?=-|$)/i;
     this.contentLines.update((rows) =>
       rows.map((row) => ({
         ...row,
-        batchNumber: row.batchNumber.replace(tokenPattern, `$1${nextToken}`),
+        batchNumber: row.batchNumber.replace(tokenPattern, `$1${normalizedNextToken}`),
       })),
     );
   }
@@ -320,7 +321,12 @@ export class AddReceiptFromProduction implements OnInit {
       customerCode: order.customerCode || state.customerCode || '',
       customerName: order.customerName || state.customerName || '',
       noBinReceived: order.U_NoBinReceived ?? state.noBinReceived ?? null,
-      documentTaxStatus: order.status.trim().toUpperCase() === 'R' ? 'Registered' : state.documentTaxStatus || '',
+      documentTaxStatus:
+        order.status.trim().toUpperCase() === 'R'
+          ? 'Registered'
+          : order.status.trim().toUpperCase() === 'UR'
+            ? 'Unregistered'
+            : state.documentTaxStatus || '',
     }));
 
     const nextLine = createEmptyReceiptFromProductionLine();

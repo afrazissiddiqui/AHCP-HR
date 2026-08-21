@@ -8,6 +8,7 @@ import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../util
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { ReceiptFromProductionService } from '../../miscellaneous/receipt-from-production/receipt-from-production.service';
 import { WarehouseOption, WarehouseService } from '../../../services/warehouse.service';
+import { OitmItemsService } from '../../../services/oitm-items.service';
 
 interface ProductionOrderBatch {
   batchNo: string;
@@ -99,6 +100,7 @@ export class IssueFromProductionComponent implements OnInit {
   private readonly receiptFromProductionService = inject(ReceiptFromProductionService);
   private readonly alertService = inject(AlertService);
   private readonly warehouseService = inject(WarehouseService);
+  private readonly oitmItemsService = inject(OitmItemsService);
 
   readonly productionOrders = signal<ProductionOrderRecord[]>([]);
   readonly productionOrdersLoading = signal(false);
@@ -118,6 +120,27 @@ export class IssueFromProductionComponent implements OnInit {
     { code: '3', name: 'AHCP_Faisalabad' },
   ]);
   readonly warehouseOptions = signal<WarehouseOption[]>([]);
+  readonly productionMachineOptions = computed(() =>
+    this.oitmItemsService
+      .getCatalog()
+      .filter((item) => item.fetchPro?.trim().toUpperCase() === 'Y'),
+  );
+  readonly selectedMachineProperties = computed(() => {
+    const machine =
+      this.findMachineByCode(this.headerForm().machineId) ??
+      this.findMachineByName(this.headerForm().machineName);
+    return machine?.properties ?? [];
+  });
+  readonly moldNumberOptions = computed(() =>
+    this.selectedMachineProperties()
+      .map((property) => property.name.trim())
+      .filter(Boolean),
+  );
+  readonly cavityNumberOptions = computed(() =>
+    this.selectedMachineProperties()
+      .map((property) => property.code.trim())
+      .filter(Boolean),
+  );
 
   readonly headerForm = signal<IssueForProductionHeader>(this.createEmptyHeader());
   readonly contentLines = signal<IssueForProductionLine[]>([this.createEmptyLine()]);
@@ -172,6 +195,11 @@ export class IssueFromProductionComponent implements OnInit {
       next: (warehouses) => this.warehouseOptions.set(warehouses),
       error: () => this.warehouseOptions.set([]),
     });
+
+    this.oitmItemsService.ensureLoaded().subscribe({
+      next: () => undefined,
+      error: () => undefined,
+    });
   }
 
   toggleSidebar(): void {
@@ -214,23 +242,8 @@ export class IssueFromProductionComponent implements OnInit {
       branchId,
       branchName: this.getBranchDisplayName(branchId),
     }));
-
-    this.productionOrderItemsLoading.set(true);
-    this.receiptFromProductionService
-      .getProductionOrderDetails(order.docEntry)
-      .pipe(finalize(() => this.productionOrderItemsLoading.set(false)))
-      .subscribe({
-        next: (items) => {
-          this.selectedProductionOrder.set({ ...order, items: items as unknown as ProductionOrderItem[] });
-          this.productionOrderItemsDialogOpen.set(true);
-        },
-        error: (error: unknown) => {
-          void this.alertService.error(
-            'Load Failed',
-            formatApiErrorMessage(error, 'Could not load production order items.'),
-          );
-        },
-      });
+    this.productionOrderItemsLoading.set(false);
+    this.productionOrderItemsDialogOpen.set(true);
   }
 
   closeProductionOrderItemsDialog(): void {
@@ -544,6 +557,34 @@ export class IssueFromProductionComponent implements OnInit {
 
   updateHeaderField(field: keyof IssueForProductionHeader, value: string): void {
     this.headerForm.update((state) => ({ ...state, [field]: value }));
+  }
+
+  updateMachineId(value: string): void {
+    const machine = this.findMachineByCode(value);
+    this.headerForm.update((state) => ({
+      ...state,
+      machineId: value,
+      machineName: machine?.itemName ?? state.machineName,
+    }));
+  }
+
+  updateMachineName(value: string): void {
+    const machine = this.findMachineByName(value);
+    this.headerForm.update((state) => ({
+      ...state,
+      machineName: value,
+      machineId: machine?.itemCode ?? state.machineId,
+    }));
+  }
+
+  private findMachineByCode(value: string): ReturnType<OitmItemsService['getCatalog']>[number] | undefined {
+    const normalized = value.trim().toLowerCase();
+    return this.productionMachineOptions().find((item) => item.itemCode.trim().toLowerCase() === normalized);
+  }
+
+  private findMachineByName(value: string): ReturnType<OitmItemsService['getCatalog']>[number] | undefined {
+    const normalized = value.trim().toLowerCase();
+    return this.productionMachineOptions().find((item) => item.itemName.trim().toLowerCase() === normalized);
   }
 
   updateContentLine(index: number, field: keyof IssueForProductionLine, value: string): void {
@@ -1014,6 +1055,4 @@ export class IssueFromProductionComponent implements OnInit {
   private todayIso(): string {
     return new Date().toISOString().slice(0, 10);
   }
-
-
 }

@@ -210,6 +210,14 @@
   min-width: 0;
 }
 
+.receipt-production-header-grid .sir-form-column {
+  display: contents;
+}
+
+.receipt-production-header-grid .sir-field-row {
+  margin-bottom: 14px;
+}
+
 .sir-field-row {
   display: grid;
   grid-template-columns: 130px minmax(0, 1fr);

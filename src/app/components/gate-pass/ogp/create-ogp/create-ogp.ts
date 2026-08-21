@@ -78,6 +78,7 @@ export class CreateOgpComponent implements OnInit {
   businessPartnerName = '';
   vehicleNo = '';
   fromUnit = '';
+  originalDeliveryDestination = '';
   kantaSlip = '';
   department = '';
   biltyNo = '';
@@ -346,6 +347,7 @@ export class CreateOgpComponent implements OnInit {
     this.businessPartnerName = '';
     this.vehicleNo = '';
     this.fromUnit = '';
+    this.originalDeliveryDestination = '';
     this.kantaSlip = '';
     this.biltyNo = '';
     this.store = '';
@@ -382,6 +384,7 @@ export class CreateOgpComponent implements OnInit {
     this.businessPartnerName = (doc.businessPartnerName || doc.partner || '').trim();
     this.vehicleNo = doc.vehicleNo?.trim() ?? '';
     this.fromUnit = doc.fromUnit?.trim() ?? '';
+    this.originalDeliveryDestination = doc.originalDeliveryDestination?.trim() ?? '';
     this.kantaSlip = doc.kantaSlip?.trim() ?? '';
     if (doc.department?.trim()) {
       this.department = this.findMatchingDepartmentOption(doc.department);
@@ -467,6 +470,7 @@ export class CreateOgpComponent implements OnInit {
     this.businessPartnerName = emptyIfDash(record.businessPartnerName);
     this.vehicleNo = emptyIfDash(record.vehicleNo);
     this.fromUnit = emptyIfDash(record.fromUnit);
+    this.originalDeliveryDestination = emptyIfDash(record.originalDeliveryDestination);
     this.kantaSlip = emptyIfDash(record.kantaSlip);
     this.biltyNo = emptyIfDash(record.biltyNo);
     this.store = resolveGatePassWarehouseCode(emptyIfDash(record.store));
@@ -491,6 +495,7 @@ export class CreateOgpComponent implements OnInit {
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
       fromUnit: this.fromUnit.trim(),
+      originalDeliveryDestination: this.originalDeliveryDestination.trim(),
       kantaSlip: this.kantaSlip.trim(),
       biltyNo: this.biltyNo.trim(),
       store: this.store.trim(),

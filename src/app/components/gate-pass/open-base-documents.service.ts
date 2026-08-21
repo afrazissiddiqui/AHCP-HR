@@ -33,6 +33,7 @@ export interface OpenBaseDocument {
   businessPartnerName?: string;
   vehicleNo?: string;
   fromUnit?: string;
+  originalDeliveryDestination?: string;
   kantaSlip?: string;
   department?: string;
   biltyNo?: string;

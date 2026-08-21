@@ -6,6 +6,7 @@ export interface ReceiptFromProductionHeader {
   postingDate: string;
   documentDate: string;
   dueDate: string;
+  productionTime: string;
   machineId?: string;
   machineName?: string;
   shift?: string;
@@ -70,6 +71,7 @@ export function createEmptyReceiptFromProductionHeader(): ReceiptFromProductionH
     postingDate: today,
     documentDate: today,
     dueDate: today,
+    productionTime: '',
     machineId: '',
     machineName: '',
     shift: '',

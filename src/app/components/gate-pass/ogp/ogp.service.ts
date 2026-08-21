@@ -40,6 +40,7 @@ export interface OgpAddPayload {
   businessPartnerName: string;
   vehicleNo: string;
   fromUnit: string;
+  originalDeliveryDestination: string;
   kantaSlip: string;
   biltyNo: string;
   store: string;
@@ -77,6 +78,7 @@ export interface OgpRecord {
   businessPartnerName: string;
   vehicleNo: string;
   fromUnit: string;
+  originalDeliveryDestination: string;
   kantaSlip: string;
   biltyNo: string;
   store: string;
@@ -327,6 +329,12 @@ export class OgpService {
       businessPartnerName,
       vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']) || '—',
       fromUnit: this.pickString(sources, ['fromUnit', 'from_unit', 'FromUnit']) || '—',
+      originalDeliveryDestination:
+        this.pickString(sources, [
+          'originalDeliveryDestination',
+          'original_delivery_destination',
+          'OriginalDeliveryDestination',
+        ]) || '—',
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',
       biltyNo: this.pickString(sources, ['biltyNo', 'bilty_no', 'BiltyNo']) || '—',
       store: this.pickString(sources, ['store', 'Store']) || '—',

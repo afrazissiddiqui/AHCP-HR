@@ -55,8 +55,6 @@
                   <th class="sir-col-qty">Quantity</th>
                   <th class="sir-col-bin">Bin Location Allocation</th>
                   <th class="sir-col-account">Account Code</th>
-                  <th class="sir-col-cost">Item Cost</th>
-                  <th class="sir-col-uom">UoM Code</th>
                   <th class="sir-col-uom-name">UoM Name</th>
                   <th class="sir-col-dept">Departments & Locations</th>
                   <th class="sir-col-branch">Branch</th>
@@ -96,29 +94,38 @@
                       >
                         <option value="">{{ accountCodeOptionsLoading() ? 'Loading…' : 'Select account code' }}</option>
                         @for (account of accountCodeOptions(); track account.code) {
-                          <option [value]="account.code">{{ account.name || account.code }}</option>
+                          <option [value]="account.code">{{ account.name ? account.name + ' (' + account.code + ')' : account.code }}</option>
                         }
                       </select>
-                    </td>
-                    <td class="sir-col-cost">
-                      <input type="number" class="sir-table-input" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine($index, 'itemCost', $event)">
-                    </td>
-                    <td class="sir-col-uom">
-                      <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine($index, 'uomCode', $event)">
                     </td>
                     <td class="sir-col-uom-name">
                       <input type="text" class="sir-table-input" [ngModel]="line.uomName" (ngModelChange)="updateContentLine($index, 'uomName', $event)">
                     </td>
                     <td class="sir-col-dept">
-                      <input type="text" class="sir-table-input" [ngModel]="line.departmentsLocations" (ngModelChange)="updateContentLine($index, 'departmentsLocations', $event)">
+                      <select
+                        class="sir-table-input"
+                        [ngModel]="line.departmentsLocations"
+                        (ngModelChange)="updateContentLine($index, 'departmentsLocations', $event)"
+                        (focus)="loadDepartmentOptions()"
+                        (click)="loadDepartmentOptions()"
+                      >
+                        <option value="">— Select department —</option>
+                        @for (department of departmentOptions(); track department.code) {
+                          <option [value]="department.code">{{ department.code }} - {{ department.name }}</option>
+                        }
+                      </select>
                     </td>
                     <td class="sir-col-branch">
-                      <input
-                        type="text"
+                      <select
                         class="sir-table-input"
                         [ngModel]="line.branch"
                         (ngModelChange)="updateContentLine($index, 'branch', $event)"
-                      />
+                      >
+                        <option value="">— Select branch —</option>
+                        <option value="AHCP_Peshawar">AHCP_Peshawar</option>
+                        <option value="AHCP_HO">AHCP_HO</option>
+                        <option value="AHCP_Faisalabad">AHCP_Faisalabad</option>
+                      </select>
                     </td>
                     <td class="sir-col-actions">
                       <div class="sir-row-action-buttons" data-ui5-compact-size>

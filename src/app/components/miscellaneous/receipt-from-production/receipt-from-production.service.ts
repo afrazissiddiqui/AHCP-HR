@@ -12,6 +12,40 @@ function normalizeBranchName(value: string | number | undefined | null): string 
   return resolveBranchNameFromBplId(value);
 }
 
+function normalizeShift(value: string | undefined | null): string {
+  const normalized = `${value ?? ''}`.trim().toLowerCase();
+  if (normalized === 'shift a') {
+    return '01';
+  }
+  if (normalized === 'shift b') {
+    return '02';
+  }
+  if (normalized === 'shift c') {
+    return '03';
+  }
+  return `${value ?? ''}`.trim();
+}
+
+function normalizeDocumentTaxStatus(value: string | undefined | null): string {
+  const normalized = `${value ?? ''}`.trim().toLowerCase();
+  if (normalized === 'registered' || normalized === 'r') {
+    return 'R';
+  }
+  if (normalized === 'unregistered' || normalized === 'u') {
+    return 'U';
+  }
+  return `${value ?? ''}`.trim();
+}
+
+function normalizeProductionTime(value: string | undefined | null): string {
+  const trimmed = `${value ?? ''}`.trim();
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    return trimmed;
+  }
+  return `${Number(match[1])}:${match[2]}`;
+}
+
 function normalizeBranchCode(value: string | number | undefined | null): string {
   const trimmed = `${value ?? ''}`.trim();
   if (!trimmed) {
@@ -65,14 +99,19 @@ export interface CreateReceiptFromProductionPayload {
   docDate: string;
   taxDate: string;
   docDueDate: string;
+  production_time: string;
   remarks: string;
-  shift: string;
   warehouse: string;
   quantity: number;
   batchNumber: string;
   manufacturingDate: string;
   branch: string;
   expiryDate: string;
+  U_MachineID: string;
+  U_Shift: string;
+  U_MoldNo: string;
+  U_Cavity_NUM: string;
+  U_DocTaxStatus: string;
   items?: Array<{
     line_num: number;
     item_code: string;
@@ -208,14 +247,19 @@ export function buildCreateReceiptFromProductionPayload(
     docDate: (header.documentDate ?? '').trim(),
     taxDate: (header.postingDate ?? '').trim(),
     docDueDate: (header.dueDate ?? '').trim(),
+    production_time: normalizeProductionTime(header.productionTime),
     remarks: (header.remarks ?? '').trim(),
-    shift: (header.shift ?? '').trim(),
     warehouse: lineWarehouse || headerWarehouse,
     quantity: line?.quantity ?? 0,
     batchNumber: ((line?.batchNumber ?? '') as string).trim(),
     manufacturingDate: ((line?.manufacturingDate ?? '') as string).trim(),
     branch: normalizeBranchCode(header.branchId ?? ''),
     expiryDate: ((line?.expiryDate ?? '') as string).trim(),
+    U_MachineID: (header.machineId ?? '').trim(),
+    U_Shift: normalizeShift(header.shift),
+    U_MoldNo: (header.moldNumber ?? '').trim(),
+    U_Cavity_NUM: (header.cavityNumber ?? '').trim(),
+    U_DocTaxStatus: normalizeDocumentTaxStatus(header.documentTaxStatus),
     items: normalizedLines,
   };
 }

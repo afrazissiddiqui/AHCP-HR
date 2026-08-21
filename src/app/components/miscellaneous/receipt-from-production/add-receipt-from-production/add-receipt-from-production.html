@@ -20,7 +20,7 @@
       </nav>
 
       <section class="sir-form-section" id="header">
-        <div class="sir-form-grid">
+        <div class="sir-form-grid receipt-production-header-grid">
           <div class="sir-form-column">
             <div class="sir-field-row">
               <label>Production Order:</label>
@@ -46,6 +46,10 @@
             <div class="sir-field-row">
               <label>Due Date:</label>
               <input type="date" [ngModel]="headerForm().dueDate" (ngModelChange)="updateHeaderField('dueDate', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Production Time:</label>
+              <input type="time" [ngModel]="headerForm().productionTime" (ngModelChange)="updateHeaderField('productionTime', $event)">
             </div>
             <div class="sir-field-row">
               <label>Remarks:</label>

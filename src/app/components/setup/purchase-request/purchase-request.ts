@@ -100,9 +100,9 @@ export class PurchaseRequestComponent implements OnInit {
   readonly warehouseOptions = signal<WarehouseDropdownOption[]>([]);
   readonly glAccountOptionsByRow = signal<Record<number, GlAccountOption[]>>({});
   readonly branchOptions = signal([
-    { label: 'Peshawar', value: 'Peshawar' },
-    { label: 'HO', value: 'HO' },
-    { label: 'Faisalabad', value: 'Faisalabad' },
+    { label: 'AHCP_Peshawar', value: 'AHCP_Peshawar' },
+    { label: 'AHCP_HO', value: 'AHCP_HO' },
+    { label: 'AHCP_Faisalabad', value: 'AHCP_Faisalabad' },
   ]);
   readonly requestTypeOptions = signal([
     { label: 'Item', value: 'Item' },

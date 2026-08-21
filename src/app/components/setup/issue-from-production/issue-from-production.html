@@ -49,11 +49,11 @@
             </div>
             <div class="sir-field-row">
               <label>Machine ID:</label>
-              <input type="text" [ngModel]="headerForm().machineId" (ngModelChange)="updateHeaderField('machineId', $event)" />
+              <input type="text" list="issue-production-machine-options" [ngModel]="headerForm().machineId" (ngModelChange)="updateMachineId($event)" placeholder="Search machine code" autocomplete="off" />
             </div>
             <div class="sir-field-row">
               <label>Machine Name:</label>
-              <input type="text" [ngModel]="headerForm().machineName" (ngModelChange)="updateHeaderField('machineName', $event)" />
+              <input type="search" list="issue-production-machine-names" [ngModel]="headerForm().machineName" (ngModelChange)="updateMachineName($event)" placeholder="Search machine name" autocomplete="off" />
             </div>
             <div class="sir-field-row">
               <label>Shift:</label>
@@ -162,6 +162,18 @@
     </div>
   </div>
 </div>
+
+<datalist id="issue-production-machine-options">
+  @for (machine of productionMachineOptions(); track machine.itemCode) {
+    <option [value]="machine.itemCode" [label]="machine.itemName"></option>
+  }
+</datalist>
+
+<datalist id="issue-production-machine-names">
+  @for (machine of productionMachineOptions(); track machine.itemCode) {
+    <option [value]="machine.itemName" [label]="machine.itemCode"></option>
+  }
+</datalist>
 
 @if (productionOrderDialogOpen()) {
   <div class="sir-modal-overlay" (click)="closeProductionOrderDialog()">
