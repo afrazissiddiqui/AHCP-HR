@@ -201,9 +201,18 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colspan="4" style="text-align: center; color: #6b7280;">No employee shift assignments found.</td>
-              </tr>
+              @for (employee of shiftApplicableEmployees(); track employee.EmployeeCode) {
+                <tr>
+                  <td>{{ employee.EmployeeCode }}</td>
+                  <td>{{ employee.EmployeeName }}</td>
+                  <td>—</td>
+                  <td>{{ employee.ReportingManager || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #6b7280;">No shift-applicable employees found.</td>
+                </tr>
+              }
             </tbody>
           </table>
         </div>

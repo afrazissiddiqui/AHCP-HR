@@ -22,14 +22,14 @@ export interface WorkstationPayload {
   Id?: string | number;
   workstation_id?: string | number;
   name: string;
-  code: string;
+  code?: string;
   office_in_time: string;
   office_out_time: string;
   in_grace_minutes: number;
   out_grace_minutes: number;
   shift: string;
   description: string;
-  status: number;
+  status: number | string;
 }
 
 const WORKSTATION_LIST_URL = apiUrl('workstation-list');
@@ -140,7 +140,18 @@ export class WorkstationService {
         this.pickString(item, ['in_grace_minutes', 'inGraceMinutes', 'late_grace_minutes', 'grace_in']) || 0,
       outGraceMinutes:
         this.pickString(item, ['out_grace_minutes', 'outGraceMinutes', 'early_grace_minutes', 'grace_out']) || 0,
-      shift: this.pickString(item, ['shift', 'Shift', 'workstation_shift', 'shift_name']) || '',
+      shift: this.pickString(item, [
+        'shift',
+        'Shift',
+        'workstation_shift',
+        'shift_name',
+        'work_shift',
+        'workShift',
+        'employee_shift',
+        'employeeShift',
+        'shift_code',
+        'shiftCode',
+      ]) || '',
       description: this.pickString(item, ['description', 'Description', 'remarks', 'note']) || '',
       status: this.pickString(item, ['status', 'Status']) || 1,
     };

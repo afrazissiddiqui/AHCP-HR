@@ -4,6 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import {
+  ApplicationFormRecord,
+  ApplicationFormService,
+} from '../../../services/application-form.service';
+import {
   WorkstationPayload,
   WorkstationRecord,
   WorkstationService,
@@ -21,25 +25,40 @@ type WorkstationFormMode = 'add' | 'edit';
 })
 export class WorkstationComponent implements OnInit {
   private readonly workstationService = inject(WorkstationService);
+  private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deleting = signal(false);
   readonly workstations = signal<WorkstationRecord[]>([]);
+  readonly employeeProfiles = signal<ApplicationFormRecord[]>([]);
   readonly formMode = signal<WorkstationFormMode>('add');
   readonly editingId = signal<string | number | null>(null);
   readonly formName = signal('');
   readonly formOfficeInTime = signal('');
   readonly formOfficeOutTime = signal('');
-  readonly formInGraceMinutes = signal('0');
-  readonly formOutGraceMinutes = signal('0');
+  readonly formInGraceMinutes = signal<string | number>('0');
+  readonly formOutGraceMinutes = signal<string | number>('0');
   readonly formShift = signal('');
   readonly formDescription = signal('');
   readonly totalWorkstations = computed(() => this.workstations().length);
+  readonly shiftApplicableEmployees = computed(() =>
+    this.employeeProfiles().filter(
+      (employee) => employee.detail?.hrSettings.attendanceShiftManagement.trim().toLowerCase() === 'yes',
+    ),
+  );
 
   ngOnInit(): void {
     this.loadWorkstations();
+    this.loadShiftApplicableEmployees();
+  }
+
+  private loadShiftApplicableEmployees(): void {
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: (records) => this.employeeProfiles.set(records),
+      error: () => this.employeeProfiles.set([]),
+    });
   }
 
   loadWorkstations(): void {
@@ -227,14 +246,13 @@ export class WorkstationComponent implements OnInit {
     const name = this.formName().trim();
     const payload: WorkstationPayload = {
       name,
-      code: name,
       office_in_time: this.formOfficeInTime().trim(),
       office_out_time: this.formOfficeOutTime().trim(),
-      in_grace_minutes: Number.parseInt(this.formInGraceMinutes().trim(), 10) || 0,
-      out_grace_minutes: Number.parseInt(this.formOutGraceMinutes().trim(), 10) || 0,
-      shift: this.formShift().trim(),
+      in_grace_minutes: Number.parseInt(this.valueToText(this.formInGraceMinutes()).trim(), 10) || 0,
+      out_grace_minutes: Number.parseInt(this.valueToText(this.formOutGraceMinutes()).trim(), 10) || 0,
       description: this.formDescription().trim(),
-      status: 1,
+      shift: this.formShift().trim(),
+      status: 'Active',
     };
 
     if (this.formMode() === 'edit' && this.editingId() !== null) {
@@ -242,6 +260,7 @@ export class WorkstationComponent implements OnInit {
       payload.id = editId;
       payload.Id = editId;
       payload.workstation_id = editId;
+      payload.code = name;
     }
 
     return payload;
@@ -274,8 +293,8 @@ export class WorkstationComponent implements OnInit {
     return String(value);
   }
 
-  private isValidMinutes(value: string): boolean {
-    const trimmed = value.trim();
+  private isValidMinutes(value: unknown): boolean {
+    const trimmed = this.valueToText(value).trim();
     if (!trimmed) {
       return true;
     }

@@ -63,6 +63,14 @@ interface KpiAssessmentRowState {
   obtained: string;
 }
 
+export function calculateIncrementAmount(currentSalary: number, percentage: number): number {
+  return currentSalary > 0 && percentage > 0 ? (currentSalary * percentage) / 100 : 0;
+}
+
+export function calculateIncrementPercentage(currentSalary: number, amount: number): number {
+  return currentSalary > 0 && amount > 0 ? (amount * 100) / currentSalary : 0;
+}
+
 export function pickKpiFieldValue(source: Record<string, unknown>, keys: string[]): string {
   for (const key of keys) {
     const value = source[key];
@@ -467,16 +475,24 @@ export class AddPerformanceAppraisalComponent implements OnInit {
 
   protected onIncrementAmountChange(value: string | number | null): void {
     this.incrementAmount.set(value === null ? '' : String(value));
-    if (this.toAmount(this.incrementAmount()) > 0) {
-      this.incrementPercentage.set('');
-    }
+    const amount = this.toAmount(this.incrementAmount());
+    const currentSalary = this.toAmount(this.currentSalary());
+    this.incrementPercentage.set(
+      amount > 0 && currentSalary > 0
+        ? String(Math.round(calculateIncrementPercentage(currentSalary, amount) * 100) / 100)
+        : '',
+    );
   }
 
   protected onIncrementPercentageChange(value: string | number | null): void {
     this.incrementPercentage.set(value === null ? '' : String(value));
-    if (this.toAmount(this.incrementPercentage()) > 0) {
-      this.incrementAmount.set('');
-    }
+    const percentage = this.toAmount(this.incrementPercentage());
+    const currentSalary = this.toAmount(this.currentSalary());
+    this.incrementAmount.set(
+      percentage > 0 && currentSalary > 0
+        ? String(Math.round(calculateIncrementAmount(currentSalary, percentage) * 100) / 100)
+        : '',
+    );
   }
 
   protected back(): void {
