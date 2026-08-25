@@ -68,17 +68,78 @@
                   (ngModelChange)="updateBracket(i, 'amount', $event)"
                 />
               </td>
-              <td>{{ taxRateLabel(bracket) }}</td>
               <td>
-                <button type="button" class="withholding-tax-remove" (click)="removeTaxBracket(i)">Remove</button>
+                {{ taxRateLabel(bracket) }}
+              </td>
+              <td>
+                <div class="withholding-tax-row-actions">
+                  <button
+                    type="button"
+                    class="withholding-tax-save"
+                    [disabled]="saving()"
+                    (click)="saveTaxBracket(i)"
+                  >
+                    Save
+                  </button>
+                  <button type="button" class="withholding-tax-remove" (click)="removeTaxBracket(i)">Remove</button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="withholding-tax-actions">
-        <button type="button" class="withholding-tax-add" (click)="addTaxBracket()">Add bracket</button>
+        <button type="button" class="withholding-tax-add" [disabled]="saving()" (click)="addTaxBracket()">
+          {{ saving() ? 'Saving…' : 'Add bracket' }}
+        </button>
       </div>
+    </section>
+
+    <section class="withholding-tax-panel">
+      <div class="withholding-tax-panel-header">Withholding Tax</div>
+      @if (loadingList()) {
+        <div class="withholding-tax-empty">Loading saved tax brackets...</div>
+      } @else if (!savedTaxBrackets().length) {
+        <div class="withholding-tax-empty">No saved tax brackets found.</div>
+      } @else {
+        <div class="withholding-tax-table-wrap">
+          <table class="withholding-tax-table saved-tax-table">
+            <thead>
+              <tr>
+                <th>Lower Limit</th>
+                <th>Upper Limit</th>
+                <th>Rate (%)</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (bracket of savedTaxBrackets(); track bracket.id) {
+                <tr>
+                  <td>{{ bracket.lower_limit }}</td>
+                  <td>{{ bracket.upper_limit }}</td>
+                  <td>{{ bracket.tax_rate }}</td>
+                  <td>{{ bracket.amount }}</td>
+                  <td>{{ bracket.description }}</td>
+                  <td>{{ bracket.status }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="withholding-tax-remove"
+                      [disabled]="deleting() || saving()"
+                      (click)="deleteSavedTaxBracket(bracket)"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </section>
   </div>
 </div>

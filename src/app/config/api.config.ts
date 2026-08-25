@@ -13,16 +13,17 @@ function resolveApiBaseUrl(): string {
   return isInternalServer ? INTERNAL_API_BASE_URL : EXTERNAL_API_BASE_URL;
 }
 
-/** Pioneer biometrics attendance API (proxied in local dev via proxy.conf.json). */
+/** Pioneer attendance API (proxied in local dev via proxy.conf.json). */
 export const BIOMETRICS_API_BASE_URL = resolveBiometricsApiBaseUrl();
+export const BIOMETRICS_API_KEY = 'ak_07dd2f9ab665fbad693682fa';
 
 function resolveBiometricsApiBaseUrl(): string {
   if (typeof window === 'undefined') {
-    return 'http://pioneerbiometrics.com:71/api';
+    return 'http://pioneerattendance.com:3002/api';
   }
 
   // Same-origin path avoids browser CORS. Local dev: proxy.conf.json.
-  // Deployed IIS: public/web.config rewrites /biometrics-api → pioneerbiometrics.com.
+  // Deployed IIS: public/web.config rewrites /biometrics-api → pioneerattendance.com.
   return '/biometrics-api';
 }
 

@@ -10,7 +10,7 @@
     }
   },
   "/biometrics-api": {
-    "target": "http://pioneerbiometrics.com:71",
+    "target": "http://pioneerattendance.com:3002",
     "secure": false,
     "changeOrigin": true,
     "timeout": 60000,

@@ -1,8 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import { ApplicationFormService } from '../../../services/application-form.service';
+import {
+  WithholdingTaxAddPayload,
+  WithholdingTaxRecord,
+  WithholdingTaxService,
+} from '../../../services/withholding-tax.service';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 
 interface WithholdingTaxEmployeeOption {
@@ -29,6 +35,7 @@ interface TaxBracketRow {
 export class WithholdingTaxComponent {
   private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
+  private readonly withholdingTaxService = inject(WithholdingTaxService);
 
   readonly employeeId = signal('');
   readonly employeeName = signal('');
@@ -38,11 +45,16 @@ export class WithholdingTaxComponent {
   readonly nameSuggestionsOpen = signal(false);
   readonly employeeOptions = signal<WithholdingTaxEmployeeOption[]>([]);
   readonly taxBrackets = signal<TaxBracketRow[]>([]);
+  readonly savedTaxBrackets = signal<WithholdingTaxRecord[]>([]);
+  readonly saving = signal(false);
+  readonly deleting = signal(false);
+  readonly loadingList = signal(false);
 
   readonly idSuggestions = computed(() => this.filterEmployeeSuggestions(this.employeeId()));
   readonly nameSuggestions = computed(() => this.filterEmployeeSuggestions(this.employeeName()));
 
   ngOnInit(): void {
+    this.loadWithholdingTaxes();
     if (this.applicationFormService.getApplicationRecords().length > 0) {
       this.employeeOptions.set(this.buildEmployeeOptions());
       return;
@@ -68,12 +80,99 @@ export class WithholdingTaxComponent {
   addTaxBracket(): void {
     this.taxBrackets.update((rows) => [
       ...rows,
-      { lowerLimit: null, upperLimit: null, rate: null, amount: null },
+      {
+        lowerLimit: null,
+        upperLimit: null,
+        rate: null,
+        amount: null,
+      },
     ]);
+  }
+
+  saveTaxBracket(index: number): void {
+    if (this.saving()) {
+      return;
+    }
+
+    const bracket = this.taxBrackets()[index];
+    if (!bracket) {
+      return;
+    }
+
+    const validationMessage = this.validateBracket(bracket);
+    if (validationMessage) {
+      this.alertService.validation(validationMessage);
+      return;
+    }
+
+    this.saving.set(true);
+    this.withholdingTaxService.addWithholdingTax(this.toPayload(bracket)).subscribe({
+      next: () => {
+        this.alertService.success('Saved', 'Withholding tax bracket added successfully.');
+        this.saving.set(false);
+        this.loadWithholdingTaxes();
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        void this.alertService.error(
+          'Save Failed',
+          String(error) || 'Failed to add withholding tax bracket.',
+        );
+      },
+    });
+  }
+
+  private loadWithholdingTaxes(): void {
+    this.loadingList.set(true);
+    this.withholdingTaxService
+      .fetchWithholdingTaxes()
+      .pipe(finalize(() => this.loadingList.set(false)))
+      .subscribe({
+        next: (records) => this.savedTaxBrackets.set(records),
+        error: (error: unknown) => {
+          void this.alertService.error('Load Failed', String(error) || 'Failed to load withholding tax list.');
+        },
+      });
   }
 
   removeTaxBracket(index: number): void {
     this.taxBrackets.update((rows) => rows.filter((_, idx) => idx !== index));
+  }
+
+  async deleteSavedTaxBracket(bracket: WithholdingTaxRecord): Promise<void> {
+    if (this.deleting() || this.saving()) {
+      return;
+    }
+
+    if (!bracket.id) {
+      this.alertService.warning('Delete', 'Unable to delete this row: missing withholding tax id.');
+      return;
+    }
+
+    const result = await this.alertService.confirm(
+      'Delete withholding tax bracket?',
+      `Remove the bracket for ${bracket.lower_limit} - ${bracket.upper_limit}?`,
+    );
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.withholdingTaxService
+      .deleteWithholdingTax(bracket.id)
+      .pipe(finalize(() => this.deleting.set(false)))
+      .subscribe({
+        next: () => {
+          this.alertService.success('Deleted', 'Withholding tax bracket removed successfully.');
+          this.loadWithholdingTaxes();
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Delete Failed',
+            String(error) || 'Failed to delete withholding tax bracket.',
+          );
+        },
+      });
   }
 
   trackByTaxBracket(index: number): number {
@@ -92,6 +191,27 @@ export class WithholdingTaxComponent {
           : row,
       ),
     );
+  }
+
+  private validateBracket(bracket: TaxBracketRow): string | null {
+    if (bracket.lowerLimit === null || bracket.upperLimit === null) {
+      return 'Enter both lower and upper limits.';
+    }
+    if (bracket.rate === null || bracket.amount === null) {
+      return 'Enter the tax rate and amount.';
+    }
+    return null;
+  }
+
+  private toPayload(bracket: TaxBracketRow): WithholdingTaxAddPayload {
+    return {
+      lower_limit: bracket.lowerLimit as number,
+      upper_limit: bracket.upperLimit as number,
+      tax_rate: bracket.rate as number,
+      amount: bracket.amount as number,
+      description: this.taxRateLabel(bracket),
+      status: 'Active',
+    };
   }
 
   taxRateLabel(row: TaxBracketRow): string {

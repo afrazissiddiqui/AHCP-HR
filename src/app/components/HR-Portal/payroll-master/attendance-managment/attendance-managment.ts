@@ -88,6 +88,7 @@ export class AttendanceManagmentComponent implements OnInit {
   sortDirection: 'asc' | 'desc' = 'desc';
   currentPage = 1;
   pageSize = 25;
+  readonly skeletonRows = [1, 2, 3, 4, 5, 6, 7, 8];
   readonly pageSizeOptions = [10, 25, 50, 100];
   readonly queryModeOptions: Array<{ value: AttendanceQueryMode; label: string }> = [
     { value: 'today', label: 'Today' },
@@ -370,6 +371,21 @@ export class AttendanceManagmentComponent implements OnInit {
       return 'attendance-status--absent';
     }
     return 'attendance-status--default';
+  }
+
+  getSkeletonClass(column: AttendanceColumnKey): string {
+    switch (column) {
+      case 'EmployeeName':
+        return 'attendance-skeleton--name';
+      case 'AttendanceStatus':
+        return 'attendance-skeleton--status';
+      case 'PunchIn':
+      case 'PunchOut':
+      case 'AttendanceDate':
+        return 'attendance-skeleton--time';
+      default:
+        return 'attendance-skeleton--text';
+    }
   }
 
   viewRecord(record: AttendanceDailyRecord): void {

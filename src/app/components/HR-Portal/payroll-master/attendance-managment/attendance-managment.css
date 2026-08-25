@@ -658,6 +658,68 @@
   animation: attendance-spin 0.8s linear infinite;
 }
 
+.attendance-skeleton-row td {
+  height: 58px;
+  background: #fff !important;
+}
+
+.attendance-skeleton-row--alt td {
+  background: #fbfcfe !important;
+}
+
+.attendance-skeleton {
+  display: block;
+  height: 12px;
+  border-radius: 5px;
+  background: linear-gradient(100deg, #e8edf3 20%, #f8fafc 42%, #e8edf3 64%);
+  background-size: 240% 100%;
+  animation: attendance-shimmer 1.35s ease-in-out infinite;
+}
+
+.attendance-skeleton--checkbox {
+  width: 15px;
+  height: 15px;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+.attendance-skeleton--text {
+  width: 72px;
+}
+
+.attendance-skeleton--name {
+  width: min(150px, 80%);
+}
+
+.attendance-skeleton--time {
+  width: 82px;
+}
+
+.attendance-skeleton--status {
+  width: 66px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.attendance-skeleton--button {
+  width: 58px;
+  height: 28px;
+  margin: 0 auto;
+  border-radius: 7px;
+}
+
+@keyframes attendance-shimmer {
+  to {
+    background-position: -240% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attendance-skeleton {
+    animation: none;
+  }
+}
+
 @keyframes attendance-spin {
   to {
     transform: rotate(360deg);

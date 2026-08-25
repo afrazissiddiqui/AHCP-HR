@@ -9,6 +9,10 @@ import {
 } from '../../../../gate-pass/gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../../../gate-pass/item-search-input/item-search-input';
 import { AlertService } from '../../../../../services/alert.service';
+import {
+  ApplicationFormRecord,
+  ApplicationFormService,
+} from '../../../../../services/application-form.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { MachineSearchOption } from '../../plant-maintenance-machine.model';
 import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
@@ -44,6 +48,7 @@ function createEmptyInspectionLine(): PlantMaintenanceMasterInspectionLine {
     replacementItems: [],
     instructions: '',
     status: '',
+    employee: '',
     recommendation: '',
     attachments: [],
   };
@@ -103,6 +108,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   private readonly machineItemService = inject(PlantMaintenanceMachineItemService);
   private readonly itemMasterService = inject(GatePassItemMasterService);
   private readonly alertService = inject(AlertService);
+  private readonly applicationFormService = inject(ApplicationFormService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -131,6 +137,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   );
   readonly idSuggestionsOpen = signal(false);
   readonly nameSuggestionsOpen = signal(false);
+  readonly employeeRecords = signal<ApplicationFormRecord[]>([]);
+  readonly employeeSuggestionsOpen = signal<string | null>(null);
 
   readonly machineTypeSelectOptions = computed(() =>
     this.getProfileSelectOptions('machineType', []),
@@ -183,6 +191,10 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.activityService.fetchMaintenanceActivityDefinitions().subscribe({ error: () => {} });
     this.masterService.fetchPlantMaintenanceMasterForms().subscribe({ error: () => {} });
     this.itemMasterService.ensureLoaded().subscribe({ error: () => {} });
+    this.applicationFormService.fetchEmployeeProfiles().subscribe({
+      next: (records) => this.employeeRecords.set(records),
+      error: () => {},
+    });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -333,6 +345,46 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
         return { ...component, inspectionLines };
       }),
     );
+  }
+
+  getEmployeeSuggestions(query: string): ApplicationFormRecord[] {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return [];
+    }
+
+    return this.employeeRecords()
+      .filter(
+        (employee) =>
+          employee.EmployeeCode.toLowerCase().includes(normalizedQuery) ||
+          employee.EmployeeName.toLowerCase().includes(normalizedQuery),
+      )
+      .slice(0, 10);
+  }
+
+  onEmployeeInput(componentIndex: number, lineIndex: number, value: string): void {
+    this.updateInspectionLine(componentIndex, lineIndex, 'employee', value);
+    this.employeeSuggestionsOpen.set(`${componentIndex}-${lineIndex}`);
+  }
+
+  openEmployeeSuggestions(componentIndex: number, lineIndex: number, value: string): void {
+    if (value.trim()) {
+      this.employeeSuggestionsOpen.set(`${componentIndex}-${lineIndex}`);
+    }
+  }
+
+  closeEmployeeSuggestions(componentIndex: number, lineIndex: number): void {
+    setTimeout(() => {
+      if (this.employeeSuggestionsOpen() === `${componentIndex}-${lineIndex}`) {
+        this.employeeSuggestionsOpen.set(null);
+      }
+    }, 150);
+  }
+
+  selectEmployee(componentIndex: number, lineIndex: number, employee: ApplicationFormRecord): void {
+    const displayValue = employee.EmployeeName.trim() || employee.EmployeeCode.trim();
+    this.updateInspectionLine(componentIndex, lineIndex, 'employee', displayValue);
+    this.employeeSuggestionsOpen.set(null);
   }
 
   onReplacementChange(componentIndex: number, lineIndex: number, value: string): void {
@@ -693,6 +745,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
               : [],
           instructions: line.instructions.trim(),
           status: line.status.trim(),
+          employee: line.employee.trim(),
           recommendation: line.recommendation.trim(),
           attachments: line.attachments.map((attachment) => ({
             fileName: attachment.fileName.trim(),
@@ -1092,6 +1145,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
           : [],
       instructions: line.instructions ?? '',
       status: line.status ?? '',
+      employee: line.employee ?? '',
       recommendation: line.recommendation ?? '',
       attachments: (line.attachments ?? []).map((attachment) => ({
         fileName: attachment.fileName ?? '',
@@ -1131,6 +1185,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
             whatToCheck: component.whatToCheck,
             instructions: component.instructions,
             status: component.status,
+            employee: '',
           }),
         ],
       };

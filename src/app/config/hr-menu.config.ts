@@ -132,7 +132,7 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         access: { moduleSlug: 'overtime_list_form', action: 'list' },
       },
       {
-        label: 'Master Form',
+        label: 'Employee Shift Allocation',
         value: 'setup/master-form',
         icon: 'form',
         route: '/setup/master-form',

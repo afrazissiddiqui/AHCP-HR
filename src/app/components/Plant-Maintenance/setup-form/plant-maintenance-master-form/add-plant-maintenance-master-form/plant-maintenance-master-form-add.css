@@ -846,6 +846,33 @@
   height: 34px;
 }
 
+.pmm-line-employee {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pmm-line-employee label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.pmm-line-employee input {
+  width: 180px;
+  min-height: 34px;
+}
+
+.pmm-line-employee__suggestions {
+  top: calc(100% + 4px);
+  right: 0;
+  left: auto;
+  width: 300px;
+  z-index: 20;
+}
+
 .pmm-line-toolbar .mad-line-remove-btn { margin-left: 0; }
 
 .mad-select--status-empty {
@@ -1468,6 +1495,15 @@
   }
   .pmm-line-status .mad-select {
     flex: 1 1 auto;
+    min-width: 0;
+  }
+  .pmm-line-employee {
+    width: 100%;
+    margin-left: 0;
+  }
+  .pmm-line-employee input {
+    flex: 1 1 auto;
+    width: auto;
     min-width: 0;
   }
 }

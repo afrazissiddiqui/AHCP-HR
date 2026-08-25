@@ -58,9 +58,9 @@ describe('PurchaseRequestService', () => {
     const requestBody = req.request.body as Record<string, unknown>;
 
     expect(req.request.method).toBe('POST');
-    expect(requestBody.requiredDate).toBeUndefined();
-    expect((requestBody.items as Array<Record<string, unknown>>)[0].requiredDate).toBe('2026-08-19');
-    expect(requestBody.DocType).toBe('service');
+    expect(requestBody['requiredDate']).toBeUndefined();
+    expect((requestBody['items'] as Array<Record<string, unknown>>)[0]['requiredDate']).toBe('2026-08-19');
+    expect(requestBody['DocType']).toBe('service');
     req.flush({ success: true, message: 'Saved' });
   });
 });

@@ -180,6 +180,8 @@ export interface ApplicationFormDetail {
 export interface ApplicationFormRecord {
   EmployeeCode: string;
   EmployeeName: string;
+  /** External attendance card number from the employee profile. */
+  ExtEmpNo?: string;
   Department: string;
   EmployeeNature: string;
   Designation: string;
@@ -1827,6 +1829,12 @@ export class ApplicationFormService {
 
     const apiId = asString(item['id']) || (employeeCode !== '—' ? employeeCode : '');
     const userId = this.resolveUserIdFromApiItem(item);
+    const extEmpNo =
+      pickFrom(personalInfoSource, 'ExtEmpNo', 'extEmpNo') ||
+      pickFrom(personalInfoSource, 'ext_emp_no') ||
+      asString(item['ExtEmpNo']) ||
+      asString(item['extEmpNo']) ||
+      asString(item['ext_emp_no']);
 
     return {
       EmployeeCode: employeeCode,
@@ -1887,6 +1895,7 @@ export class ApplicationFormService {
       selected: false,
       apiId: apiId || undefined,
       userId: userId || undefined,
+      ExtEmpNo: extEmpNo || undefined,
     };
   }
 

@@ -194,7 +194,7 @@
 
       <div class="attendance-table-panel">
         <div class="attendance-table-scroll" #tableScroll>
-          <table class="attendance-table">
+          <table class="attendance-table" [attr.aria-busy]="loading()">
             <thead>
               <tr class="attendance-table__group-row">
                 <th class="attendance-table__group attendance-table__group--select" scope="colgroup">
@@ -246,12 +246,15 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngIf="loading()">
-                <td class="attendance-table__empty" [attr.colspan]="visibleColumns.length + 2">
-                  <div class="attendance-table__empty-content">
-                    <span class="attendance-table__spinner" aria-hidden="true"></span>
-                    Loading attendance records…
-                  </div>
+              <tr *ngFor="let skeletonRow of skeletonRows; let i = index" class="attendance-skeleton-row" [class.attendance-skeleton-row--alt]="i % 2 === 1" [hidden]="!loading()">
+                <td class="attendance-table__select">
+                  <span class="attendance-skeleton attendance-skeleton--checkbox" aria-hidden="true"></span>
+                </td>
+                <td *ngFor="let col of visibleColumns" [ngClass]="getColumnGroupClass(col.key)">
+                  <span class="attendance-skeleton" [ngClass]="getSkeletonClass(col.key)" aria-hidden="true"></span>
+                </td>
+                <td class="attendance-table__actions">
+                  <span class="attendance-skeleton attendance-skeleton--button" aria-hidden="true"></span>
                 </td>
               </tr>
               <tr *ngIf="!loading() && filteredSlotCount === 0">

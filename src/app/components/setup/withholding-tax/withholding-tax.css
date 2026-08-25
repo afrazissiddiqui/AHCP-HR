@@ -219,29 +219,65 @@
   flex-wrap: wrap;
 }
 
+.withholding-tax-row-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
 .withholding-tax-add,
+.withholding-tax-save,
 .withholding-tax-remove {
-  background: #374151;
-  border: none;
-  color: #ffffff;
-  border-radius: 8px;
-  padding: 10px 18px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  padding: 8px 14px;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.withholding-tax-save {
+  background: #0a6ed1;
+  border: 1px solid #0a6ed1;
+  color: #ffffff;
 }
 
 .withholding-tax-remove {
-  background: #7f1d1d;
+  background: #ffffff;
+  border: 1px solid #dc2626;
+  color: #dc2626;
 }
 
-.withholding-tax-add:hover,
-.withholding-tax-remove:hover {
-  opacity: 0.92;
+.withholding-tax-add {
+  background: #ffffff;
+  border: 1px solid #0a6ed1;
+  color: #0a6ed1;
 }
 
-.withholding-tax-remove {
-  min-width: 100px;
+.withholding-tax-add:hover:not(:disabled),
+.withholding-tax-save:hover:not(:disabled) {
+  background: #085caf;
+  border-color: #085caf;
+  color: #ffffff;
+}
+
+.withholding-tax-remove:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.withholding-tax-add:focus-visible,
+.withholding-tax-save:focus-visible,
+.withholding-tax-remove:focus-visible {
+  outline: 3px solid rgba(10, 110, 209, 0.22);
+  outline-offset: 1px;
+}
+
+.withholding-tax-add:disabled,
+.withholding-tax-save:disabled,
+.withholding-tax-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 @media (max-width: 960px) {

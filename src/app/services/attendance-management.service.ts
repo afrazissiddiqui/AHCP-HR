@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, last, map, of, switchMap, throwError } from 'rxjs';
-import { BIOMETRICS_API_BASE_URL } from '../config/api.config';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, catchError, forkJoin, last, map, of, throwError } from 'rxjs';
+import { BIOMETRICS_API_BASE_URL, BIOMETRICS_API_KEY } from '../config/api.config';
 import { ApplicationFormRecord, ApplicationFormService } from './application-form.service';
 
 export type AttendanceQueryMode = 'today' | 'date' | 'dateRange';
@@ -63,6 +63,11 @@ interface AttendanceSession {
 
 interface BiometricsPunchApiRecord {
   No?: number;
+  id?: string | number;
+  card_no?: string;
+  punch_in?: string | null;
+  punch_out?: string | null;
+  machine_id?: string | number;
   'Employee ID'?: string;
   'User ID'?: string;
   EmployeeId?: string;
@@ -91,13 +96,12 @@ export class AttendanceManagementService {
   readonly slots = computed(() => this.sessionState()?.slots ?? []);
   readonly totalSlotCount = computed(() => this.slots().length);
 
-  /** Loads punch data + employee list summaries only (no per-employee detail calls). */
   loadSession(query: AttendanceQuery): Observable<number> {
     this.lastQuery = this.normalizeQuery(query);
 
     return forkJoin({
+      employees: this.applicationFormService.fetchEmployeeProfiles(),
       punches: this.fetchPunches(this.lastQuery),
-      employees: this.applicationFormService.fetchEmployeeProfiles().pipe(catchError(() => of([]))),
     }).pipe(
       map(({ punches, employees }) => {
         const session = this.createSession(punches, employees, this.lastQuery);
@@ -176,11 +180,14 @@ export class AttendanceManagementService {
       }
 
       const userId = resolveAttendanceUserId(employee);
-      if (!userId) {
+      const cardNo = employee.ExtEmpNo?.trim();
+      if (!userId && !cardNo) {
         return false;
       }
 
-      return wanted.has(canonicalAttendanceKey(userId));
+      return [userId, cardNo]
+        .filter((value): value is string => !!value)
+        .some((value) => wanted.has(canonicalAttendanceKey(value)));
     });
   }
 
@@ -368,52 +375,37 @@ export class AttendanceManagementService {
    * - Range all:        /EmployeeData/DateRange/{from}/{to}/
    * - Range employee:   /EmployeeData/DateRange/{from}/{to}/{employeeId}
    */
-  buildQueryUrl(query: AttendanceQuery): string {
+  buildQueryUrl(query: AttendanceQuery, cardNo?: string): string {
     const normalized = this.normalizeQuery(query);
-    const apiEmployeeId = normalized.userId?.trim()
-      ? biometricsPathEmployeeId(normalized.userId.trim())
-      : '';
-    const employeePath = apiEmployeeId ? `/${encodeURIComponent(apiEmployeeId)}` : '';
-
-    switch (normalized.mode) {
-      case 'today':
-        return `${BIOMETRICS_API_BASE_URL}/EmployeeData${employeePath}`;
-
-      case 'date': {
-        const date = normalized.date ?? formatIsoDate(new Date());
-        return `${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${date}${employeePath}`;
-      }
-
-      case 'dateRange': {
-        const fromDate = normalized.fromDate ?? formatIsoDate(new Date());
-        const toDate = normalized.toDate ?? fromDate;
-        const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
-        if (apiEmployeeId) {
-          return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/${encodeURIComponent(apiEmployeeId)}`;
-        }
-        return `${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/`;
-      }
+    const dates = resolveAttendanceRequestDates(normalized);
+    const params = new URLSearchParams({
+      from_date: dates.fromDate,
+      to_date: dates.toDate,
+      type: 'calculated',
+    });
+    const requestCardNo = cardNo?.trim() || normalized.userId?.trim();
+    if (requestCardNo) {
+      params.set('card_no', formatAttendanceCardNo(requestCardNo));
     }
+    return `${BIOMETRICS_API_BASE_URL}/rawpunch?${params.toString()}`;
   }
 
   /** Fallback when the scoped URL returns no rows or fails. */
   buildFallbackPunchUrl(query: AttendanceQuery): string {
-    const normalized = this.normalizeQuery(query);
-    const apiEmployeeId = normalized.userId?.trim()
-      ? biometricsPathEmployeeId(normalized.userId.trim())
-      : '';
-
-    if (apiEmployeeId) {
-      return `${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(apiEmployeeId)}`;
-    }
-
-    return `${BIOMETRICS_API_BASE_URL}/EmployeeData`;
+    return this.buildQueryUrl(query);
   }
 
   private fetchPunches(query: AttendanceQuery): Observable<AttendancePunchRecord[]> {
     const normalized = this.normalizeQuery(query);
-    const primaryUrl = this.buildQueryUrl(normalized);
-    const fallbackUrls = this.buildFallbackPunchUrls(normalized);
+    const requestedCardNo = normalized.userId?.trim();
+    if (!requestedCardNo) {
+      return this.loadPunchUrl(this.buildQueryUrl(normalized));
+    }
+
+    return this.loadPunchUrl(this.buildQueryUrl(normalized, requestedCardNo));
+  }
+
+  private loadPunchUrl(url: string): Observable<AttendancePunchRecord[]> {
 
     const parse = (response: unknown): AttendancePunchRecord[] => {
       if (typeof response === 'string') {
@@ -431,11 +423,16 @@ export class AttendanceManagementService {
         }
       }
 
-      return this.extractApiItems(response).map((item) => this.mapApiItem(item));
+      return this.extractApiItems(response).flatMap((item) => this.mapApiItem(item));
     };
 
     const loadUrl = (url: string) =>
-      this.http.get(url, { responseType: 'text' }).pipe(
+      this.http
+        .get(url, {
+          headers: new HttpHeaders({ 'X-API-Key': BIOMETRICS_API_KEY }),
+          responseType: 'text',
+        })
+        .pipe(
         map((text) => parse(text)),
         catchError((error: unknown) => {
           const status = (error as { status?: number })?.status;
@@ -452,70 +449,11 @@ export class AttendanceManagementService {
         }),
       );
 
-    return loadUrl(primaryUrl).pipe(
-      switchMap((primaryPunches) => {
-        if (primaryPunches.length > 0) {
-          return of(primaryPunches);
-        }
-
-        if (fallbackUrls.length === 0) {
-          return of(primaryPunches);
-        }
-
-        return loadUrl(fallbackUrls[0]).pipe(
-          switchMap((secondPunches) => {
-            if (secondPunches.length > 0 || fallbackUrls.length < 2) {
-              return of(secondPunches);
-            }
-            return loadUrl(fallbackUrls[1]);
-          }),
-        );
-      }),
-    );
+    return loadUrl(url);
   }
 
   private buildFallbackPunchUrls(query: AttendanceQuery): string[] {
-    const normalized = this.normalizeQuery(query);
-    const apiEmployeeId = normalized.userId?.trim()
-      ? biometricsPathEmployeeId(normalized.userId.trim())
-      : '';
-    const urls: string[] = [];
-    const seen = new Set<string>();
-    const add = (url: string) => {
-      if (!seen.has(url)) {
-        seen.add(url);
-        urls.push(url);
-      }
-    };
-
-    add(this.buildFallbackPunchUrl(query));
-
-    if (normalized.mode === 'date') {
-      const date = normalized.date ?? formatIsoDate(new Date());
-      if (apiEmployeeId) {
-        add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${date}/${date}/${encodeURIComponent(apiEmployeeId)}`);
-      } else {
-        add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${date}/${date}/`);
-      }
-    }
-
-    if (normalized.mode === 'dateRange') {
-      const fromDate = normalized.fromDate ?? formatIsoDate(new Date());
-      const toDate = normalized.toDate ?? fromDate;
-      const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
-      if (apiEmployeeId) {
-        add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/${encodeURIComponent(apiEmployeeId)}`);
-      }
-      add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${rangeStart}/${rangeEnd}/`);
-    }
-
-    if (normalized.mode === 'today' && apiEmployeeId) {
-      const today = formatIsoDate(new Date());
-      add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/Date/${today}/${encodeURIComponent(apiEmployeeId)}`);
-      add(`${BIOMETRICS_API_BASE_URL}/EmployeeData/DateRange/${today}/${today}/${encodeURIComponent(apiEmployeeId)}`);
-    }
-
-    return urls.filter((url) => url !== this.buildQueryUrl(query));
+    return [];
   }
 
   private normalizeQuery(query: AttendanceQuery): AttendanceQuery {
@@ -528,8 +466,10 @@ export class AttendanceManagementService {
     };
   }
 
-  private mapApiItem(item: BiometricsPunchApiRecord): AttendancePunchRecord {
+  private mapApiItem(item: BiometricsPunchApiRecord): AttendancePunchRecord[] {
     const record = item as Record<string, unknown>;
+    const punchIn = String(item.punch_in ?? '').trim();
+    const punchOut = String(item.punch_out ?? '').trim();
     const punchDatetime = String(
       item.PunchDatetime ??
         item.punchDatetime ??
@@ -549,20 +489,38 @@ export class AttendanceManagementService {
       item['User ID'],
       item.userId,
       item.UserId,
+      item.card_no,
     );
     const normalizedEmployeeId =
       canonicalAttendanceKey(rawEmployeeId) || extractAttendanceUserId(rawEmployeeId) || rawEmployeeId;
 
-    return {
-      No: Number(item.No ?? record['no'] ?? 0),
+    const no = Number(item.No ?? item.id ?? record['no'] ?? 0);
+    const deviceNo = String(
+      item['Device No'] ?? item.DeviceNo ?? item.deviceNo ?? item.machine_id ?? record['DeviceNo'] ?? '',
+      ).trim();
+    const status = String(item.Status ?? item.status ?? '').trim();
+
+    if (punchIn || punchOut) {
+      return [
+        ...(punchIn ? [{ No: no, PunchDatetime: punchIn }] : []),
+        ...(punchOut ? [{ No: no + 1, PunchDatetime: punchOut }] : []),
+      ].map((punch) => ({
+        ...punch,
+        EmployeeId: normalizedEmployeeId,
+        DeviceNo: deviceNo,
+        Status: status,
+        selected: false,
+      }));
+    }
+
+    return [{
+      No: no,
       EmployeeId: normalizedEmployeeId,
       PunchDatetime: punchDatetime,
-      DeviceNo: String(
-        item['Device No'] ?? item.DeviceNo ?? item.deviceNo ?? record['DeviceNo'] ?? '',
-      ).trim(),
-      Status: String(item.Status ?? item.status ?? '').trim(),
+      DeviceNo: deviceNo,
+      Status: status,
       selected: false,
-    };
+    }];
   }
 
   private extractApiItems(response: unknown): BiometricsPunchApiRecord[] {
@@ -713,6 +671,28 @@ function biometricsPathEmployeeId(userId: string): string {
   return extracted;
 }
 
+function formatAttendanceCardNo(value: string): string {
+  const digits = extractAttendanceUserId(value);
+  return /^\d+$/.test(digits) ? digits.padStart(8, '0') : value.trim();
+}
+
+function resolveAttendanceRequestDates(query: AttendanceQuery): { fromDate: string; toDate: string } {
+  if (query.mode === 'date') {
+    const date = query.date ?? formatIsoDate(new Date());
+    return { fromDate: date, toDate: date };
+  }
+
+  if (query.mode === 'dateRange') {
+    const fromDate = query.fromDate ?? formatIsoDate(new Date());
+    const toDate = query.toDate ?? fromDate;
+    const [rangeStart, rangeEnd] = normalizeDateRange(fromDate, toDate);
+    return { fromDate: rangeStart, toDate: rangeEnd };
+  }
+
+  const today = formatIsoDate(new Date());
+  return { fromDate: today, toDate: today };
+}
+
 function pickFirstNonEmptyString(...values: unknown[]): string {
   for (const value of values) {
     const text = value === undefined || value === null ? '' : String(value).trim();
@@ -793,18 +773,20 @@ function buildEmployeeAttendanceIndex(employees: ApplicationFormRecord[]): Emplo
 
   for (const employee of employees) {
     const rawUserId = resolveAttendanceUserId(employee);
-    if (!rawUserId) {
+    const cardNo = employee.ExtEmpNo?.trim() || '';
+    if (!rawUserId && !cardNo) {
       continue;
     }
 
     const loginCode = employee.detail?.loginDetails.employeeCode?.trim() || '';
     const rawCode = employee.EmployeeCode?.trim();
     const employeeCode = rawCode && rawCode !== '—' ? rawCode : '';
-    const canonical = canonicalAttendanceKey(rawUserId);
+    const canonical = canonicalAttendanceKey(cardNo || rawUserId);
     const employeeName = employee.EmployeeName?.trim() || '';
 
-    registerEmployeeAliases(index, canonical, rawUserId, employeeName, [
+    registerEmployeeAliases(index, canonical, cardNo || rawUserId, employeeName, [
       rawUserId,
+      cardNo,
       canonical,
       employee.userId,
       employee.detail?.loginDetails.userId,

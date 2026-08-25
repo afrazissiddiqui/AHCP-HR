@@ -25,6 +25,7 @@ export interface PlantMaintenanceMasterInspectionLine {
   replacementItems: PlantMaintenanceMasterReplacementLine[];
   instructions: string;
   status: string;
+  employee: string;
   recommendation: string;
   attachments: PlantMaintenanceMasterLineAttachment[];
 }
@@ -256,6 +257,7 @@ export function buildPlantMaintenanceMasterFormPayload(
               }))
             : [],
         instructions: line.instructions.trim(),
+        employee: line.employee.trim(),
         recommendation: line.recommendation.trim(),
         attachments: line.attachments.map((attachment) => ({
           fileName: attachment.fileName.trim(),
@@ -517,6 +519,7 @@ export class PlantMaintenanceMasterFormService {
         replacement === 'Yes' ? this.mapReplacementItems(raw) : [],
       instructions: this.pickString([raw], ['instructions', 'Instructions']),
       status: this.pickString([raw], ['status', 'Status']),
+      employee: this.pickString([raw], ['employee', 'Employee', 'employeeName', 'employee_name']),
       recommendation: this.pickString([raw], ['recommendation', 'Recommendation']),
       attachments: this.mapAttachments(raw['attachments'] ?? raw['Attachments']),
     };

@@ -43,6 +43,10 @@ function emptyRow(): GlAccountDeterminationRow {
   };
 }
 
+function debitCreditLabel(value: string): string {
+  return value.trim().toLowerCase() === 'credit' ? 'Credit' : 'Debit';
+}
+
 @Component({
   selector: 'app-gl-account-determination',
   standalone: true,
@@ -60,6 +64,7 @@ export class GlAccountDeterminationComponent implements OnInit {
   readonly deleting = signal(false);
   readonly loadingList = signal(false);
   readonly savedRecords = signal<GlAccountDeterminationRecord[]>([]);
+  readonly editingId = signal<number | null>(null);
 
   rows: GlAccountDeterminationRow[] = [emptyRow()];
 
@@ -92,6 +97,12 @@ export class GlAccountDeterminationComponent implements OnInit {
       }
     }
 
+    const editingId = this.editingId();
+    if (editingId !== null) {
+      this.updateRecord(editingId, this.rows[0]);
+      return;
+    }
+
     this.persistRowsSequentially([...this.rows], 0, () => {
       this.alertService.success(
         'Submitted',
@@ -104,6 +115,34 @@ export class GlAccountDeterminationComponent implements OnInit {
 
   formRowSrNo(index: number): number {
     return this.savedRecords().length + index + 1;
+  }
+
+  editRecord(record: GlAccountDeterminationRecord): void {
+    if (this.saving() || this.deleting()) {
+      return;
+    }
+
+    if (!record.Id) {
+      this.alertService.warning('Edit', 'Unable to edit this row: missing record id.');
+      return;
+    }
+
+    this.editingId.set(record.Id);
+    this.rows = [
+      {
+        id: newId(),
+        glItemType: record.Type,
+        salaryGlAccountCode: record.Code,
+        salaryGlAccountName: record.Name,
+        branch: record.Branch,
+        debitCreditType: debitCreditLabel(record.DebitCreditType),
+      },
+    ];
+  }
+
+  cancelEdit(): void {
+    this.editingId.set(null);
+    this.rows = [emptyRow()];
   }
 
   async deleteRecord(record: GlAccountDeterminationRecord): Promise<void> {
@@ -185,8 +224,29 @@ export class GlAccountDeterminationComponent implements OnInit {
       code: row.salaryGlAccountCode.trim(),
       name: row.salaryGlAccountName.trim(),
       branch: glAccountBranchCode(row.branch),
-      debit_credit_type: row.debitCreditType,
+      debit_credit_type: row.debitCreditType.trim().toUpperCase(),
     };
+  }
+
+  private updateRecord(id: number, row: GlAccountDeterminationRow): void {
+    this.saving.set(true);
+    this.glAccountService
+      .updateGlAccountDetermination(id, this.toPayload(row))
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.alertService.success('Updated', 'GL Account Determination updated successfully.');
+          this.editingId.set(null);
+          this.rows = [emptyRow()];
+          this.loadSavedRecords();
+        },
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Update Failed',
+            formatApiErrorMessage(error, 'Failed to update GL Account Determination.'),
+          );
+        },
+      });
   }
 
   private persistRowsSequentially(

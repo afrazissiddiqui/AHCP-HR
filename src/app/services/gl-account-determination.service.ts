@@ -23,6 +23,7 @@ export interface GlAccountDeterminationRecord {
 
 const GL_ACCOUNT_DETERMINATION_LIST_URL = apiUrl('gl-account-determination-list');
 const GL_ACCOUNT_DETERMINATION_ADD_URL = apiUrl('gl-account-determination-add');
+const GL_ACCOUNT_DETERMINATION_UPDATE_URL = apiUrl('gl-account-determination-update');
 const GL_ACCOUNT_DETERMINATION_DELETE_URL = apiUrl('gl-account-determination-delete');
 
 @Injectable({
@@ -36,6 +37,14 @@ export class GlAccountDeterminationService {
 
   addGlAccountDetermination(payload: GlAccountDeterminationAddPayload): Observable<unknown> {
     return this.http.post(GL_ACCOUNT_DETERMINATION_ADD_URL, payload);
+  }
+
+  updateGlAccountDetermination(
+    id: string | number,
+    payload: GlAccountDeterminationAddPayload,
+  ): Observable<unknown> {
+    const identifier = encodeURIComponent(String(id));
+    return this.http.post(`${GL_ACCOUNT_DETERMINATION_UPDATE_URL}/${identifier}`, payload);
   }
 
   fetchGlAccountDeterminations(): Observable<GlAccountDeterminationRecord[]> {

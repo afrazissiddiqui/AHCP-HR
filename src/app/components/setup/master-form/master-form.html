@@ -1,22 +1,15 @@
 <div class="setup-layout">
   <div class="setup-content">
     <div class="setup-body">
-      <div class="page-header">
-        <div class="page-title-group">
-          <span class="page-eyebrow">Setup</span>
-          <h1 class="page-title">Master Form</h1>
-          <p class="page-description">Review submitted master form records in a structured SuccessFactors-style workspace.</p>
-        </div>
-        <div class="page-stats">
-          <span class="page-stats-label">Submitted records</span>
-          <span class="page-stats-value">{{ totalRecords() }}</span>
-        </div>
+      <div class="setup-intro">
+        <h2>Employee Shift Allocation</h2>
+        <p>Assign employees to workstation shifts.</p>
       </div>
 
-      <section class="form-panel form-panel--list">
+      <section class="form-panel">
         <div class="form-panel-head">
           <div>
-            <h2 class="form-panel-title">Submitted Master Forms</h2>
+            <h3 class="form-panel-title">Employee Shift Allocation</h3>
             <p class="panel-subtitle">{{ filteredRecords().length }} of {{ totalRecords() }} records visible</p>
           </div>
           <div class="panel-actions">
@@ -40,7 +33,7 @@
               [ngModel]="searchText()"
               (ngModelChange)="searchText.set($event)"
               name="master-form-search"
-              placeholder="Search records…"
+              placeholder="Search employees…"
             />
           </div>
         </div>
@@ -48,57 +41,53 @@
         @if (loading()) {
           <div class="panel-state panel-state--loading">
             <div class="panel-state-spinner"></div>
-            <span class="panel-state-hint">Loading submitted master forms…</span>
+            <span class="panel-state-hint">Loading employee shift allocation…</span>
           </div>
         } @else if (!records().length) {
           <div class="panel-state panel-state--empty">
-            <span class="panel-state-hint">No submitted master form records found.</span>
+            <span class="panel-state-hint">No shift-applicable employees found.</span>
           </div>
         } @else if (!filteredRecords().length) {
           <div class="panel-state panel-state--empty">
             <span class="panel-state-hint">No records match your search.</span>
           </div>
         } @else {
-          <div class="table-card">
-            <div class="table-wrap">
+          <div class="table-wrap">
               <table class="entry-table">
                 <thead>
                   <tr>
                     <th class="col-sr">SR No.</th>
-                    @for (column of columns(); track trackByColumn($index, column)) {
-                      <th>{{ columnLabel(column) }}</th>
-                    }
-                    <th class="col-action">Action</th>
+                    <th>Employee ID</th>
+                    <th>Employee Name</th>
+                    <th>Shift Alot</th>
+                    <th>Reporting Manager</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (record of filteredRecords(); track trackByRecord($index, record); let index = $index) {
                     <tr>
                       <td class="col-sr">{{ index + 1 }}</td>
-                      @for (column of columns(); track trackByColumn($index, column)) {
-                        <td>
-                          @if (isStatusColumn(column)) {
-                            <span [class]="statusClass(record, column)">{{ cellValue(record, column) }}</span>
-                          } @else {
-                            {{ cellValue(record, column) }}
-                          }
-                        </td>
-                      }
-                      <td class="col-action">
-                        <button
-                          type="button"
-                          class="btn-view"
-                          [disabled]="detailLoading()"
-                          (click)="viewRecord(record)"
+                      <td>{{ record['EmployeeCode'] }}</td>
+                      <td>{{ record['EmployeeName'] }}</td>
+                      <td>
+                        <select
+                          class="shift-select"
+                          [ngModel]="selectedShift(record, index)"
+                          (ngModelChange)="setSelectedShift(record, index, $event)"
+                          [name]="'employee-shift-' + index"
+                          aria-label="Select employee shift"
                         >
-                          View
-                        </button>
+                          <option value="">Select shift</option>
+                          @for (shift of shiftOptions(); track shift) {
+                            <option [value]="shift">{{ shift }}</option>
+                          }
+                        </select>
                       </td>
+                      <td>{{ record['ReportingManager'] || '—' }}</td>
                     </tr>
                   }
                 </tbody>
-              </table>
-            </div>
+            </table>
           </div>
         }
       </section>

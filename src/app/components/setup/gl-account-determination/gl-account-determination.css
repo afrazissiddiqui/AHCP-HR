@@ -90,7 +90,8 @@
 
 .btn-add-row:disabled,
 .btn-submit-form:disabled,
-.btn-remove-row:disabled {
+.btn-remove-row:disabled,
+.btn-edit-row:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
@@ -127,7 +128,8 @@
 
 .col-action {
   text-align: center;
-  width: 56px;
+  white-space: nowrap;
+  width: 112px;
 }
 
 .field-input,
@@ -162,6 +164,21 @@
 
 .btn-remove-row:hover {
   color: #922b21;
+}
+
+.btn-edit-row {
+  background: transparent;
+  border: none;
+  color: #4f46b8;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 8px;
+  padding: 4px 0;
+}
+
+.btn-edit-row:hover {
+  color: #352f8f;
 }
 
 .form-footer {

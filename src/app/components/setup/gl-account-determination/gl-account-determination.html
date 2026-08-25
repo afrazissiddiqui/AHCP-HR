@@ -8,8 +8,14 @@
 
       <div class="form-panel">
         <div class="form-panel-head">
-          <h3 class="form-panel-title">Add new lines</h3>
-          <button type="button" class="btn-add-row" [disabled]="saving()" (click)="addRow()">Add row</button>
+          <h3 class="form-panel-title">{{ editingId() !== null ? 'Update line' : 'Add new lines' }}</h3>
+          <div class="panel-actions">
+            @if (editingId() !== null) {
+              <button type="button" class="btn-add-row" [disabled]="saving()" (click)="cancelEdit()">Cancel</button>
+            } @else {
+              <button type="button" class="btn-add-row" [disabled]="saving()" (click)="addRow()">Add row</button>
+            }
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -100,7 +106,7 @@
 
       <div class="form-footer">
         <button type="button" class="btn-submit-form" [disabled]="saving()" (click)="submitForm()">
-          {{ saving() ? 'Saving…' : 'Submit form' }}
+          {{ saving() ? 'Saving…' : editingId() !== null ? 'Update line' : 'Submit form' }}
         </button>
       </div>
 
@@ -137,6 +143,15 @@
                     <td>{{ record.Branch }}</td>
                     <td>{{ record.DebitCreditType }}</td>
                     <td class="col-action">
+                      <button
+                        type="button"
+                        class="btn-edit-row"
+                        [disabled]="deleting() || saving()"
+                        (click)="editRecord(record)"
+                        title="Edit row"
+                      >
+                        Edit
+                      </button>
                       <button
                         type="button"
                         class="btn-remove-row"

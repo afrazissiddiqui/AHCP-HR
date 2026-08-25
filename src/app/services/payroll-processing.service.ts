@@ -40,6 +40,7 @@ export interface PayrollProcessingDetailPayload {
   loanAdvForm: number;
   lateAttendDeduction: number;
   costToCompany: number;
+  taxDeduction: number;
   totalEarnings: number;
   netPayable: number;
   approved: boolean;
@@ -179,6 +180,7 @@ export class PayrollProcessingService {
       loanAdvForm: this.pickAmount(item, ['loanAdvForm', 'loan_adv_form', 'LoanAdvForm', 'otherDeductions', 'other_deductions']),
       lateAttendDeduction: this.pickAmount(item, ['lateAttendDeduction', 'late_attend_deduction', 'LateAttendDeduction']),
       costToCompany: this.pickAmount(item, ['costToCompany', 'cost_to_company', 'CostToCompany']),
+      taxDeduction: this.pickAmount(item, ['taxDeduction', 'tax_deduction', 'TaxDeduction']),
       totalEarnings: this.pickAmount(item, ['totalEarnings', 'total_earnings', 'TotalEarnings']),
       netPayable: this.pickAmount(item, ['netPayable', 'net_payable', 'NetPayable']),
       approved: this.pickBoolean(item, ['approved', 'Approved']),

@@ -445,6 +445,46 @@
                       </option>
                     </select>
                   </div>
+                  <div class="pmm-line-employee tax-computation-search-wrap">
+                    <label [attr.for]="'pmm-line-employee-' + ci + '-' + li">Employee</label>
+                    <input
+                      [id]="'pmm-line-employee-' + ci + '-' + li"
+                      type="search"
+                      role="combobox"
+                      [attr.aria-expanded]="employeeSuggestionsOpen() === ci + '-' + li"
+                      aria-autocomplete="list"
+                      [attr.aria-controls]="'pmm-line-employee-list-' + ci + '-' + li"
+                      [ngModel]="line.employee"
+                      (ngModelChange)="onEmployeeInput(ci, li, $event)"
+                      (focus)="openEmployeeSuggestions(ci, li, line.employee)"
+                      (blur)="closeEmployeeSuggestions(ci, li)"
+                      [name]="'lineEmployee' + ci + '_' + li"
+                      placeholder="Search employee"
+                      autocomplete="off"
+                    />
+                    <ul
+                      [id]="'pmm-line-employee-list-' + ci + '-' + li"
+                      class="tax-computation-suggestions pmm-line-employee__suggestions"
+                      role="listbox"
+                      *ngIf="employeeSuggestionsOpen() === ci + '-' + li && line.employee.trim()"
+                    >
+                      <li
+                        *ngFor="let employee of getEmployeeSuggestions(line.employee)"
+                        role="option"
+                        class="tax-computation-suggestion-item"
+                        (mousedown)="selectEmployee(ci, li, employee)"
+                      >
+                        <span class="tax-computation-suggestion-primary">{{ employee.EmployeeCode }} — {{ employee.EmployeeName }}</span>
+                      </li>
+                      <li
+                        *ngIf="getEmployeeSuggestions(line.employee).length === 0"
+                        class="tax-computation-suggestion-empty"
+                        role="presentation"
+                      >
+                        No matching employees
+                      </li>
+                    </ul>
+                  </div>
                   <button
                     type="button"
                     class="mad-line-remove-btn scd-remove-btn"

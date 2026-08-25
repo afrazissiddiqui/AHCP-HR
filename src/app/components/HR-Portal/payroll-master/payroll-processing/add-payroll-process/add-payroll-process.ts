@@ -44,6 +44,11 @@ import {
   computeProvidentFund,
   computeYearsOfService,
 } from '../../payroll-setup/payroll-setup.service';
+import {
+  computeMonthlyWithholdingTax,
+  WithholdingTaxRecord,
+  WithholdingTaxService,
+} from '../../../../../services/withholding-tax.service';
 import { resolveBranchCode } from '../../../../setup/gl-account-determination/gl-account-branch.options';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
@@ -97,6 +102,7 @@ export interface PayrollProcessRow {
   loanAdvForm: number;
   lateAttendDeduction: number;
   costToCompany: number;
+  taxDeduction: number;
   approved: boolean;
 }
 
@@ -148,6 +154,7 @@ export class AddPayrollProcessComponent implements OnInit {
   private readonly loanAdvanceService = inject(LoanAdvanceService);
   private readonly payrollSetupService = inject(PayrollSetupService);
   private readonly payrollProcessingService = inject(PayrollProcessingService);
+  private readonly withholdingTaxService = inject(WithholdingTaxService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -186,6 +193,7 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly detailOpen = signal(false);
   readonly detailLoading = signal(false);
   readonly detailRecord = signal<ApplicationFormRecord | null>(null);
+  readonly withholdingTaxBrackets = signal<WithholdingTaxRecord[]>([]);
 
   private readonly fixedPane = viewChild<ElementRef<HTMLElement>>('fixedPane');
   private readonly scrollPane = viewChild<ElementRef<HTMLElement>>('scrollPane');
@@ -235,7 +243,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'lateAttendDeduction', label: 'Late Attend Deduction', groupId: 'loan', type: 'currency', minWidth: 182 },
     { key: 'costToCompany', label: 'Cost to Company', groupId: 'final', type: 'currency', minWidth: 168 },
     { key: 'netPayable', label: 'Gross Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
-    { key: 'Tax Deduction', label: 'Tax Deduction', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'taxDeduction', label: 'Tax Deduction', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'netpayable1', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 168 },
     { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 152 },
@@ -321,6 +329,7 @@ export class AddPayrollProcessComponent implements OnInit {
       loanAdvForm: 0,
       lateAttendDeduction: 0,
       costToCompany: 0,
+      taxDeduction: 0,
       netPayable: 0,
       totalEarnings: 0,
       finalGrossSalary: 0,
@@ -353,6 +362,7 @@ export class AddPayrollProcessComponent implements OnInit {
       totals.loanAdvForm += row.loanAdvForm;
       totals.lateAttendDeduction += row.lateAttendDeduction;
       totals.costToCompany += row.costToCompany;
+      totals.taxDeduction += row.taxDeduction;
       totals.netPayable += this.netPayableForRow(row);
       totals.totalEarnings += this.totalEarningsForRow(row);
       totals.finalGrossSalary += row.grossSalary;
@@ -363,6 +373,7 @@ export class AddPayrollProcessComponent implements OnInit {
 
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => this.pageDetailsSub?.unsubscribe());
+    this.loadWithholdingTaxes();
     this.loadLoanAdvances();
     this.loadEmployees();
   }
@@ -874,6 +885,7 @@ export class AddPayrollProcessComponent implements OnInit {
         loanAdvForm: row.loanAdvForm,
         lateAttendDeduction: row.lateAttendDeduction,
         costToCompany: row.costToCompany,
+        taxDeduction: row.taxDeduction,
         totalEarnings: this.totalEarningsForRow(row),
         netPayable: this.netPayableForRow(row),
         approved: row.approved,
@@ -1051,6 +1063,7 @@ export class AddPayrollProcessComponent implements OnInit {
       loanAdvForm: 0,
       lateAttendDeduction: 0,
       costToCompany: 0,
+      taxDeduction: 0,
       approved: false,
     });
   }
@@ -1120,6 +1133,7 @@ export class AddPayrollProcessComponent implements OnInit {
       loanAdvForm: this.resolvePayrollAdvanceDeduction(employeeCode, employeeName),
       lateAttendDeduction: 0,
       costToCompany: 0,
+      taxDeduction: 0,
       approved: false,
     });
   }
@@ -1168,6 +1182,7 @@ export class AddPayrollProcessComponent implements OnInit {
       gratuity +
       providentFund -
       (socialSecurityPunjab + socialSecurityKpk + eobiEmployee + providentFund + row.loanAdjustment + row.loanAdvForm + row.lateAttendDeduction);
+    const taxDeduction = computeMonthlyWithholdingTax(grossSalary, this.withholdingTaxBrackets());
 
     return {
       ...row,
@@ -1188,7 +1203,27 @@ export class AddPayrollProcessComponent implements OnInit {
       eobiEmployee,
       eobiEmployer,
       costToCompany,
+      taxDeduction,
     };
+  }
+
+  private loadWithholdingTaxes(): void {
+    this.withholdingTaxService.fetchWithholdingTaxes().subscribe({
+      next: (brackets) => {
+        this.withholdingTaxBrackets.set(brackets);
+        this.rowCache.update((cache) => {
+          const next = new Map(cache);
+          for (const [id, row] of next) {
+            next.set(id, this.recalculateRow(row));
+          }
+          return next;
+        });
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Payroll remains usable when withholding tax setup is unavailable.
+      },
+    });
   }
 
   private getPayrollAsOfDate(): Date {
