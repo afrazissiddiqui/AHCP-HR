@@ -5,7 +5,7 @@
       <h1 class="comp-topbar__title">Payroll Processing</h1>
     </div>
     <div class="comp-topbar__actions">
-      <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || loadingPageDetails() || saving() || employeeSummaries().length === 0">
+      <button type="button" class="comp-btn comp-btn--primary" (click)="save()" [disabled]="loading() || loadingPageDetails() || saving() || filteredEmployeeSummaries().length === 0">
         {{ saving() ? 'Saving…' : 'Save' }}
       </button>
     </div>
@@ -35,6 +35,21 @@
           />
           <span class="comp-plan-search__icon" aria-hidden="true">🔍</span>
         </div>
+      </div>
+
+      <div class="comp-plan-field">
+        <label class="comp-plan-field__label" for="pp-branch">Branch</label>
+        <select
+          id="pp-branch"
+          class="comp-plan-field__select comp-plan-field__select--branch"
+          [ngModel]="selectedBranch()"
+          (ngModelChange)="onBranchChange($event)"
+        >
+          <option value="">All Branches</option>
+          @for (branch of branchOptions; track branch.code) {
+            <option [value]="branch.code">{{ branch.name }}</option>
+          }
+        </select>
       </div>
 
       <div class="comp-plan-field">
@@ -204,7 +219,21 @@
                   </tr>
                   <tr class="comp-col-row">
                     @for (col of payrollColumns; track col.key) {
-                      <th [class]="columnSectionClass(col)">{{ col.label }}</th>
+                      <th [class]="columnSectionClass(col)">
+                        @if (col.key === 'approved') {
+                          <button
+                            type="button"
+                            class="comp-approval-select-all"
+                            (click)="toggleAllApprovals()"
+                            [disabled]="loadingPageDetails() || paginatedRows().length === 0"
+                            [attr.aria-pressed]="allApprovalsSelected()"
+                          >
+                            {{ allApprovalsSelected() ? 'Deselect All' : 'Select All' }}
+                          </button>
+                        } @else {
+                          {{ col.label }}
+                        }
+                      </th>
                     }
                   </tr>
                 </thead>
@@ -355,7 +384,21 @@
                   </tr>
                   <tr class="comp-col-row">
                     @for (col of payrollColumns; track col.key) {
-                      <th [class]="columnSectionClass(col)">{{ col.label }}</th>
+                      <th [class]="columnSectionClass(col)">
+                        @if (col.key === 'approved') {
+                          <button
+                            type="button"
+                            class="comp-approval-select-all"
+                            (click)="toggleAllApprovals()"
+                            [disabled]="loadingPageDetails() || paginatedRows().length === 0"
+                            [attr.aria-pressed]="allApprovalsSelected()"
+                          >
+                            {{ allApprovalsSelected() ? 'Deselect All' : 'Select All' }}
+                          </button>
+                        } @else {
+                          {{ col.label }}
+                        }
+                      </th>
                     }
                   </tr>
                 </thead>

@@ -319,6 +319,10 @@
   overflow: hidden;
 }
 
+.comp-table-card:not(.comp-table-card--skeleton) {
+  flex: 0 1 auto;
+}
+
 .comp-table-card--skeleton {
   flex: 1 1 auto;
 }
@@ -659,6 +663,21 @@
   height: 16px;
   cursor: pointer;
   accent-color: #0070f2;
+}
+
+.comp-approval-select-all {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #0070f2;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.comp-approval-select-all:disabled {
+  color: #9aa6b2;
+  cursor: default;
 }
 
 .comp-emp-cell {

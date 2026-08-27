@@ -49,7 +49,10 @@ import {
   WithholdingTaxRecord,
   WithholdingTaxService,
 } from '../../../../../services/withholding-tax.service';
-import { resolveBranchCode } from '../../../../setup/gl-account-determination/gl-account-branch.options';
+import {
+  GL_ACCOUNT_BRANCH_OPTIONS,
+  resolveBranchCode,
+} from '../../../../setup/gl-account-determination/gl-account-branch.options';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import {
   buildPaginationFooterItems,
@@ -171,6 +174,9 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly fuelPriceAdjust = signal(0);
   readonly minimumWageAdjust = signal(0);
   readonly searchText = signal('');
+  readonly selectedBranch = signal('');
+  readonly branchOptions = GL_ACCOUNT_BRANCH_OPTIONS;
+  readonly allApprovalsSelected = signal(false);
   readonly selectedMonth = signal(new Date().getMonth() + 1);
   readonly selectedYear = signal(new Date().getFullYear());
   readonly monthOptions: PayrollMonthOption[] = [
@@ -201,6 +207,7 @@ export class AddPayrollProcessComponent implements OnInit {
   private pageDetailsSub?: Subscription;
   private pageDetailsGeneration = 0;
   private readonly lastMonthGrossSalaryCache = new Map<string, number>();
+  private readonly approvalOverrides = signal<Map<string, boolean>>(new Map());
 
   readonly minimumWage = this.payrollSetupService.minimumWage;
   readonly currencyCode = 'PKR';
@@ -256,12 +263,19 @@ export class AddPayrollProcessComponent implements OnInit {
 
   readonly filteredEmployeeSummaries = computed(() => {
     const list = this.employeeSummaries();
+    const branch = this.selectedBranch();
     const search = this.searchText().trim().toLowerCase();
+    const branchFiltered = branch
+      ? list.filter(
+          (record) =>
+            resolveBranchCode(record.detail?.personalInfo.branchLocation ?? '') === branch,
+        )
+      : list;
     if (!search) {
-      return list;
+      return branchFiltered;
     }
 
-    return list.filter((record) => {
+    return branchFiltered.filter((record) => {
       const haystack = [
         record.EmployeeName,
         record.EmployeeCode,
@@ -406,6 +420,13 @@ export class AddPayrollProcessComponent implements OnInit {
   onSelectedYearChange(value: string | number): void {
     this.selectedYear.set(Number(value));
     this.refreshPayrollRows();
+  }
+
+  onBranchChange(value: string): void {
+    this.selectedBranch.set(value);
+    this.currentPage.set(1);
+    this.scrollTablesToTop();
+    this.loadCurrentPageDetails();
   }
 
   onSearchChange(value: string): void {
@@ -711,6 +732,11 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   setApproval(apiId: string, approved: boolean): void {
+    this.approvalOverrides.update((overrides) => {
+      const next = new Map(overrides);
+      next.set(apiId, approved);
+      return next;
+    });
     this.rowCache.update((cache) => {
       const row = cache.get(apiId);
       if (!row) {
@@ -720,6 +746,25 @@ export class AddPayrollProcessComponent implements OnInit {
       next.set(apiId, { ...row, approved });
       return next;
     });
+  }
+
+  toggleAllApprovals(): void {
+    const approved = !this.allApprovalsSelected();
+    this.allApprovalsSelected.set(approved);
+    this.approvalOverrides.set(new Map());
+    this.rowCache.update((cache) => {
+      const next = new Map(cache);
+      for (const [apiId, row] of next) {
+        if (row) {
+          next.set(apiId, { ...row, approved });
+        }
+      }
+      return next;
+    });
+  }
+
+  private approvalForEmployee(apiId: string): boolean {
+    return this.approvalOverrides().get(apiId) ?? this.allApprovalsSelected();
   }
 
   updateRowField(
@@ -806,8 +851,13 @@ export class AddPayrollProcessComponent implements OnInit {
       return;
     }
 
-    const rows = Array.from(this.rowCache().values());
-    if (this.employeeSummaries().length === 0) {
+    const visibleEmployeeKeys = new Set(
+      this.filteredEmployeeSummaries().map((summary) => this.resolveEmployeeKey(summary)),
+    );
+    const rows = Array.from(this.rowCache().values()).filter((row) =>
+      visibleEmployeeKeys.has(row.apiId),
+    );
+    if (visibleEmployeeKeys.size === 0) {
       void this.alertService.validation('No employees available to save.');
       return;
     }
@@ -1064,7 +1114,7 @@ export class AddPayrollProcessComponent implements OnInit {
       lateAttendDeduction: 0,
       costToCompany: 0,
       taxDeduction: 0,
-      approved: false,
+      approved: this.approvalForEmployee(this.resolveEmployeeKey(record)),
     });
   }
 
@@ -1134,7 +1184,7 @@ export class AddPayrollProcessComponent implements OnInit {
       lateAttendDeduction: 0,
       costToCompany: 0,
       taxDeduction: 0,
-      approved: false,
+      approved: this.approvalForEmployee(record.apiId ?? record.EmployeeCode),
     });
   }
 
