@@ -57,6 +57,8 @@ interface ApplicationDetailViewState {
 export class RecruitmentComponent implements OnInit {
 
   readonly applicationTableFilter = APPLICATION_FORM_TABLE_FILTER;
+  readonly loading = signal(true);
+  readonly skeletonRows = [1, 2, 3, 4, 5, 6];
   private readonly destroyRef = inject(DestroyRef);
   private readonly shellbarSearch = inject(ShellbarSearchService);
   readonly detailViewState$ = new BehaviorSubject<ApplicationDetailViewState>({
@@ -100,9 +102,11 @@ export class RecruitmentComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loading.set(true);
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
-      next: () => undefined,
+      next: () => this.loading.set(false),
       error: (error: unknown) => {
+        this.loading.set(false);
         const errorMessage =
           (error as { error?: { message?: string } })?.error?.message ||
           (error as { message?: string })?.message ||

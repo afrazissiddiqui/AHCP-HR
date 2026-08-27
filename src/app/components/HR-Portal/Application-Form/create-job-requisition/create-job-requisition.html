@@ -1106,6 +1106,11 @@
           </div>
 
           <div class="cjr-row">
+            <label>Leagacy Code:</label>
+            <input type="text" [ngModel]="legacyCode()" readonly placeholder="Legacy code" />
+          </div>
+
+          <div class="cjr-row">
             <label>User ID:</label>
             <input type="text" [ngModel]="userId()" (ngModelChange)="userId.set($event)" (blur)="touch('userId')"
               placeholder="Enter user ID..." />

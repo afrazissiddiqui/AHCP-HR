@@ -11,9 +11,7 @@ type OvertimeColumnKey =
   | 'employeeName'
   | 'overtimeHours'
   | 'overtimeRate'
-  | 'overtimeAmount'
-  | 'reportingManager'
-  | 'status';
+  | 'exceptionalOt';
 
 interface OvertimeTableColumn {
   key: OvertimeColumnKey;
@@ -38,11 +36,9 @@ export class OvertimeListComponent implements OnInit {
   readonly columns: OvertimeTableColumn[] = [
     { key: 'employeeId', label: 'Employee ID' },
     { key: 'employeeName', label: 'Employee Name' },
-    { key: 'overtimeHours', label: 'Over Time Hours' },
-    { key: 'overtimeRate', label: 'OverTime Rate' },
-    { key: 'overtimeAmount', label: 'Overtime Amount' },
-    { key: 'reportingManager', label: 'Reporting Manager' },
-    { key: 'status', label: 'Status' },
+    { key: 'overtimeHours', label: 'Overtime Hours' },
+    { key: 'overtimeRate', label: 'Overtime Rate' },
+    { key: 'exceptionalOt', label: 'Exceptional OT' },
   ];
 
   readonly totalRecords = computed(() => this.records().length);
@@ -57,11 +53,9 @@ export class OvertimeListComponent implements OnInit {
       const searchable = [
         record.employeeId,
         record.employeeName,
-        record.reportingManager,
-        record.status,
         this.formatNumber(record.overtimeHours),
         this.formatNumber(record.overtimeRate),
-        this.formatNumber(record.overtimeAmount),
+        this.formatNumber(record.exceptionalOt),
       ]
         .join(' ')
         .toLowerCase();
@@ -95,10 +89,8 @@ export class OvertimeListComponent implements OnInit {
     switch (key) {
       case 'overtimeHours':
       case 'overtimeRate':
-      case 'overtimeAmount':
+      case 'exceptionalOt':
         return this.formatNumber(record[key]);
-      case 'status':
-        return this.formatStatus(record.status);
       default: {
         const value = record[key];
         if (value === null || value === undefined || value === '') {
@@ -119,16 +111,4 @@ export class OvertimeListComponent implements OnInit {
     });
   }
 
-  private formatStatus(value: string): string {
-    if (!value) {
-      return '—';
-    }
-    if (value === '1') {
-      return 'Active';
-    }
-    if (value === '3') {
-      return 'Inactive';
-    }
-    return value;
-  }
 }

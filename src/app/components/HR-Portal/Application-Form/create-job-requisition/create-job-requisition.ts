@@ -290,6 +290,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   // Login Detail fields
   protected readonly employeeCode = signal(''); // Employee code
+  protected readonly legacyCode = signal(''); // Legacy employee code
   protected readonly loginEmployeeName = signal(''); // Employee name
   protected readonly userId = signal(''); // User ID
   protected readonly password = signal(''); // Password
@@ -1529,6 +1530,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       hrSettings: this.buildHrSettingsPayload(),
       loginDetails: {
         employeeCode: this.employeeCode(),
+        legacyCode: this.legacyCode(),
         employeeName: this.loginEmployeeName(),
         userId: this.userId(),
         password: this.password(),
@@ -1850,6 +1852,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
         detail.loginDetails.employeeCode || detail.loginDetails.userId,
       ),
     );
+    this.legacyCode.set(detail.loginDetails.legacyCode || record.ExtEmpNo || '');
     this.userId.set(detail.loginDetails.userId);
     this.loginEmployeeName.set(detail.loginDetails.employeeName);
     this.password.set(detail.loginDetails.password);

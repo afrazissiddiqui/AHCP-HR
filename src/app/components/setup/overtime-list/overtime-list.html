@@ -3,7 +3,7 @@
     <div class="setup-body">
       <div class="setup-intro">
         <h2>Overtime List</h2>
-        <p>View employee overtime hours, rates, amounts, and approval status.</p>
+        <p>View employee overtime hours, rates, and exceptional overtime.</p>
       </div>
 
       <div class="form-panel">
@@ -31,10 +31,6 @@
 
         @if (loading()) {
           <div class="panel-message">Loading overtime list…</div>
-        } @else if (!records().length) {
-          <div class="panel-message">No overtime records found.</div>
-        } @else if (!filteredRecords().length) {
-          <div class="panel-message">No records match your search.</div>
         } @else {
           <div class="table-wrap">
             <table class="entry-table">
@@ -47,15 +43,27 @@
                 </tr>
               </thead>
               <tbody>
-                @for (record of filteredRecords(); track record.id; let index = $index) {
+                @if (!records().length) {
                   <tr>
-                    <td class="col-sr">{{ index + 1 }}</td>
-                    @for (column of columns; track column.key) {
-                      <td [class.col-status]="column.key === 'status'">
-                        {{ cellValue(record, column.key) }}
-                      </td>
-                    }
+                    <td [attr.colspan]="columns.length + 1" class="table-empty-cell">
+                      No overtime records found.
+                    </td>
                   </tr>
+                } @else if (!filteredRecords().length) {
+                  <tr>
+                    <td [attr.colspan]="columns.length + 1" class="table-empty-cell">
+                      No records match your search.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (record of filteredRecords(); track record.id; let index = $index) {
+                    <tr>
+                      <td class="col-sr">{{ index + 1 }}</td>
+                      @for (column of columns; track column.key) {
+                        <td>{{ cellValue(record, column.key) }}</td>
+                      }
+                    </tr>
+                  }
                 }
               </tbody>
             </table>

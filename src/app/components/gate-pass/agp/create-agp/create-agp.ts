@@ -223,7 +223,7 @@ export class CreateAgpComponent implements OnInit {
   }
 
   private applyLoggedInUserDefaults(): void {
-    if (this.editingId || this.requestingDepartment?.trim()) {
+    if (this.editingId) {
       return;
     }
 
@@ -243,11 +243,11 @@ export class CreateAgpComponent implements OnInit {
       profileRecord?.detail?.personalInfo?.departmentInAhcp?.trim() ||
       '';
 
-    if (employeeName) {
+    if (employeeName && !this.requestingEmployee.trim()) {
       this.requestingEmployee = employeeName;
     }
 
-    if (departmentValue) {
+    if (departmentValue && !this.requestingDepartment.trim()) {
       this.requestingDepartment = this.findMatchingDepartmentOption(departmentValue);
     }
   }

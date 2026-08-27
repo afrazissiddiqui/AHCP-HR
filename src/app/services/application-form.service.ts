@@ -126,6 +126,7 @@ export interface ApplicationFormHrSettings {
 
 export interface ApplicationFormLoginDetails {
   employeeCode: string;
+  legacyCode?: string;
   employeeName: string;
   userId: string;
   password: string;
@@ -2182,6 +2183,7 @@ export class ApplicationFormService {
         employeeCode:
           pickLogin('employeeCode', 'employee_code') ||
           (summary.EmployeeCode !== '—' ? summary.EmployeeCode : ''),
+        legacyCode: pickLogin('legacyCode', 'legacy_code') || summary.ExtEmpNo || '',
         employeeName:
           pickLogin('loginEmployeeName', 'login_employee_name') ||
           pickLogin('employeeName', 'employee_name') ||

@@ -103,6 +103,22 @@
 
           <!-- BODY -->
           <tbody>
+            <ng-container *ngIf="loading()">
+            <ng-container *ngFor="let row of skeletonRows">
+            <tr class="application-skeleton-row" aria-hidden="true">
+              <td><span class="application-skeleton-cell application-skeleton-cell--checkbox"></span></td>
+              <td *ngFor="let column of visibleColumns">
+                <span class="application-skeleton-cell"></span>
+              </td>
+              <ng-container *ngIf="showApplicationActions">
+                <td>
+                  <span class="application-skeleton-cell application-skeleton-cell--actions"></span>
+                </td>
+              </ng-container>
+            </tr>
+            </ng-container>
+            </ng-container>
+            <ng-container *ngIf="!loading()">
             <tr *ngFor="let s of paginatedList">
 
               <td>
@@ -140,6 +156,7 @@
               </td>
 
             </tr>
+            </ng-container>
           </tbody>
 
         </table>
@@ -446,6 +463,8 @@
             <dl class="application-detail-dl">
               <dt>Employee code</dt>
               <dd>{{ displayDash(d.loginDetails.employeeCode) }}</dd>
+              <dt>Leagacy code</dt>
+              <dd>{{ displayDash(d.loginDetails.legacyCode) }}</dd>
               <dt>User ID</dt>
               <dd>{{ displayDash(d.loginDetails.userId) }}</dd>
               <dt>Employee name</dt>

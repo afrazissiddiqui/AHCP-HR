@@ -626,7 +626,7 @@ export function canonicalAttendanceKey(value: string): string {
 export function formatAttendanceUserId(value: string): string {
   const extracted = extractAttendanceUserId(value);
   if (/^\d+$/.test(extracted)) {
-    return extracted.padStart(8, '0');
+    return `Emp-${extracted.padStart(8, '0')}`;
   }
   return extracted || value.trim();
 }
@@ -784,7 +784,7 @@ function buildEmployeeAttendanceIndex(employees: ApplicationFormRecord[]): Emplo
     const canonical = canonicalAttendanceKey(cardNo || rawUserId);
     const employeeName = employee.EmployeeName?.trim() || '';
 
-    registerEmployeeAliases(index, canonical, cardNo || rawUserId, employeeName, [
+    registerEmployeeAliases(index, canonical, employee.apiId?.trim() || cardNo || rawUserId, employeeName, [
       rawUserId,
       cardNo,
       canonical,

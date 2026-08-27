@@ -365,6 +365,38 @@ app-root {
   background: #f9f9f9;
 }
 
+.application-skeleton-row:hover {
+  background: transparent !important;
+}
+
+.application-skeleton-cell {
+  display: block;
+  width: 72%;
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #eef1f3 25%, #f8fafb 50%, #eef1f3 75%);
+  background-size: 200% 100%;
+  animation: application-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.application-skeleton-cell--actions {
+  width: 120px;
+}
+
+.application-skeleton-cell--checkbox {
+  width: 16px;
+  margin: 0 auto;
+}
+
+@keyframes application-skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
 /* =========================================================
    ACTION BUTTONS & STATUS BADGES
    ========================================================= */
