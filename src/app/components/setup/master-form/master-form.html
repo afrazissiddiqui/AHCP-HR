@@ -20,6 +20,50 @@
         </div>
 
         <div class="panel-toolbar">
+          <div class="allocation-filters" aria-label="Employee shift allocation filters">
+            <label class="allocation-filter">
+              <span>Branch</span>
+              <select
+                class="filter-select"
+                [ngModel]="selectedBranch()"
+                (ngModelChange)="selectedBranch.set($event)"
+                name="allocation-branch-filter"
+              >
+                <option value="">All branches</option>
+                @for (branch of branchOptions(); track branch) {
+                  <option [value]="branch">{{ branch }}</option>
+                }
+              </select>
+            </label>
+            <label class="allocation-filter">
+              <span>Department</span>
+              <select
+                class="filter-select"
+                [ngModel]="selectedDepartment()"
+                (ngModelChange)="selectedDepartment.set($event)"
+                name="allocation-department-filter"
+              >
+                <option value="">All departments</option>
+                @for (department of departmentOptions(); track department) {
+                  <option [value]="department">{{ department }}</option>
+                }
+              </select>
+            </label>
+            <label class="allocation-filter">
+              <span>Reporting Manager</span>
+              <select
+                class="filter-select"
+                [ngModel]="selectedReportingManager()"
+                (ngModelChange)="selectedReportingManager.set($event)"
+                name="allocation-reporting-manager-filter"
+              >
+                <option value="">All reporting managers</option>
+                @for (manager of reportingManagerOptions(); track manager) {
+                  <option [value]="manager">{{ manager }}</option>
+                }
+              </select>
+            </label>
+          </div>
           <div class="search-field search-field--table">
             <span class="search-field-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -49,7 +93,7 @@
           </div>
         } @else if (!filteredRecords().length) {
           <div class="panel-state panel-state--empty">
-            <span class="panel-state-hint">No records match your search.</span>
+            <span class="panel-state-hint">No records match your filters.</span>
           </div>
         } @else {
           <div class="table-wrap">

@@ -15,6 +15,50 @@
             </p>
           </div>
           <div class="panel-actions">
+            <div class="overtime-filters" aria-label="Overtime list filters">
+              <label class="overtime-filter">
+                <span>Department</span>
+                <select
+                  class="filter-select"
+                  [ngModel]="selectedDepartment()"
+                  (ngModelChange)="selectedDepartment.set($event)"
+                  name="overtime-department-filter"
+                >
+                  <option value="">All departments</option>
+                  @for (department of departmentOptions(); track department) {
+                    <option [value]="department">{{ department }}</option>
+                  }
+                </select>
+              </label>
+              <label class="overtime-filter">
+                <span>Branch</span>
+                <select
+                  class="filter-select"
+                  [ngModel]="selectedBranch()"
+                  (ngModelChange)="selectedBranch.set($event)"
+                  name="overtime-branch-filter"
+                >
+                  <option value="">All branches</option>
+                  @for (branch of branchOptions(); track branch) {
+                    <option [value]="branch">{{ branch }}</option>
+                  }
+                </select>
+              </label>
+              <label class="overtime-filter">
+                <span>Reporting Manager</span>
+                <select
+                  class="filter-select"
+                  [ngModel]="selectedReportingManager()"
+                  (ngModelChange)="selectedReportingManager.set($event)"
+                  name="overtime-reporting-manager-filter"
+                >
+                  <option value="">All reporting managers</option>
+                  @for (manager of reportingManagerOptions(); track manager) {
+                    <option [value]="manager">{{ manager }}</option>
+                  }
+                </select>
+              </label>
+            </div>
             <input
               type="search"
               class="search-input"

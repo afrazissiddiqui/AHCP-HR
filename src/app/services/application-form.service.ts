@@ -1094,7 +1094,9 @@ export class ApplicationFormService {
       maximumAdvanceCapacity: payload.maximumAdvanceCapacity,
       overTimeApplicable: payload.overTimeApplicable,
       allowancesApplicable: payload.allowancesApplicable,
+      allowances_applicable: payload.allowancesApplicable,
       eobiApplicable: payload.eobiApplicable,
+      eobi_applicable: payload.eobiApplicable,
       socialSecurityApplicable: payload.socialSecurityApplicable,
       fuelLimit: payload.fuelLimit,
       leaveEligibilityCriteria: payload.leaveEligibilityCriteria,
@@ -2153,11 +2155,12 @@ export class ApplicationFormService {
         otherAllowances: asNumberString(pickRem('otherAllowances', 'other_allowances')),
         allowancesApplicable: this.yesNoFromApi(
           pickRem('allowancesApplicable', 'allowances_applicable'),
-        ),
+        ) || 'Yes',
         cashSalaryPercentage:
           pickRem('cashSalaryPercentage', 'cash_salary_percentage') ||
           pickRem('percentageOfSalaryInCash', 'percentage_of_salary_in_cash'),
-        eobiApplicable: this.yesNoFromApi(pickRem('eobiApplicable', 'eobi_applicable')),
+        eobiApplicable:
+          this.yesNoFromApi(pickRem('eobiApplicable', 'eobi_applicable')) || 'Yes',
         socialSecurityApplicable: this.yesNoFromApi(
           pickRem('socialSecurityApplicable', 'social_security_applicable'),
         ),

@@ -1296,18 +1296,18 @@ export class AddPayrollProcessComponent implements OnInit {
 
   private calculateSocialSecurityPunjab(minimumWage: number, location: string): number {
     const branchCode = resolveBranchCode(location || '');
-    // AHCP_HO and AHCP_FSD are Punjab: (Minimum wage * 1.4) * 0.06
+    // AHCP_HO and AHCP_Faisalabad are Punjab branches.
     if (['01', '03'].includes(branchCode)) {
-      return this.parseAmount((minimumWage * 1.4) * 0.06);
+      return this.parseAmount(minimumWage * 0.06);
     }
     return 0;
   }
 
   private calculateSocialSecurityKpk(minimumWage: number, location: string): number {
     const branchCode = resolveBranchCode(location || '');
-    // AHCP_Peshawar is KPK: (Minimum wage * 1.6) * 0.06
+    // AHCP_Peshawar is the KPK branch.
     if (branchCode === '02') {
-      return this.parseAmount((minimumWage * 1.6) * 0.06);
+      return this.parseAmount(minimumWage * 0.06);
     }
     return 0;
   }

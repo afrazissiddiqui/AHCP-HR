@@ -7,8 +7,10 @@ import {
   ApplicationFormRecord,
   ApplicationFormService,
 } from '../../../services/application-form.service';
+import { GatePassDepartmentService } from '../../gate-pass/gate-pass-department.service';
 import { WorkstationService } from '../../../services/workstation.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
+import { resolveBranchNameFromBplId } from '../../../utils/branch-name.util';
 
 @Component({
   selector: 'app-master-form',
@@ -19,13 +21,20 @@ import { formatApiErrorMessage } from '../../../utils/api-error.util';
 })
 export class MasterFormComponent implements OnInit {
   private readonly applicationFormService = inject(ApplicationFormService);
+  private readonly departmentService = inject(GatePassDepartmentService);
   private readonly workstationService = inject(WorkstationService);
   private readonly alertService = inject(AlertService);
 
   readonly loading = signal(false);
   readonly records = signal<ApplicationFormRecord[]>([]);
   readonly searchText = signal('');
+  readonly selectedBranch = signal('');
+  readonly selectedDepartment = signal('');
+  readonly selectedReportingManager = signal('');
   readonly shiftSelections = signal<Record<string, string>>({});
+  readonly branchOptions = computed(() => this.getOptions('branch'));
+  readonly departmentOptions = computed(() => this.getOptions('department'));
+  readonly reportingManagerOptions = computed(() => this.getOptions('reportingManager'));
   readonly shiftOptions = computed(() => {
     const shifts = new Set<string>();
     for (const workstation of this.workstationService.workstations()) {
@@ -41,8 +50,14 @@ export class MasterFormComponent implements OnInit {
 
   readonly filteredRecords = computed(() => {
     const query = this.searchText().trim().toLowerCase();
+    const branch = this.selectedBranch();
+    const department = this.selectedDepartment();
+    const reportingManager = this.selectedReportingManager();
     return this.records().filter((record) =>
       this.isShiftApplicable(record) &&
+      (!branch || this.branchValue(record) === branch) &&
+      (!department || this.departmentValue(record) === department) &&
+      (!reportingManager || record.ReportingManager === reportingManager) &&
       (!query || [record.EmployeeCode, record.EmployeeName, record.ReportingManager].some((value) =>
         value.toLowerCase().includes(query),
       )),
@@ -52,6 +67,7 @@ export class MasterFormComponent implements OnInit {
   ngOnInit(): void {
     this.loadMasterForms();
     this.loadShiftOptions();
+    this.departmentService.ensureLoaded().subscribe();
   }
 
   loadMasterForms(): void {
@@ -99,6 +115,34 @@ export class MasterFormComponent implements OnInit {
 
   private employeeKey(record: ApplicationFormRecord, index: number): string {
     return record.apiId ?? record.EmployeeCode ?? String(index);
+  }
+
+  private getOptions(field: 'branch' | 'department' | 'reportingManager'): string[] {
+    const values = new Set<string>();
+    for (const record of this.records()) {
+      if (!this.isShiftApplicable(record)) {
+        continue;
+      }
+
+      const value = field === 'branch'
+        ? this.branchValue(record)
+        : field === 'department'
+          ? this.departmentValue(record)
+          : record.ReportingManager;
+      const trimmedValue = value.trim();
+      if (trimmedValue) {
+        values.add(trimmedValue);
+      }
+    }
+    return [...values].sort((first, second) => first.localeCompare(second));
+  }
+
+  private branchValue(record: ApplicationFormRecord): string {
+    return resolveBranchNameFromBplId(record.detail?.personalInfo.branchLocation);
+  }
+
+  private departmentValue(record: ApplicationFormRecord): string {
+    return this.departmentService.resolveDepartmentName(record.Department);
   }
 
   private isShiftApplicable(record: ApplicationFormRecord): boolean {

@@ -5,6 +5,8 @@ import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import { OvertimeListRecord, OvertimeListService } from '../../../services/overtime-list.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
+import { GatePassDepartmentService } from '../../gate-pass/gate-pass-department.service';
+import { resolveBranchNameFromBplId } from '../../../utils/branch-name.util';
 
 type OvertimeColumnKey =
   | 'employeeId'
@@ -27,11 +29,18 @@ interface OvertimeTableColumn {
 })
 export class OvertimeListComponent implements OnInit {
   private readonly overtimeListService = inject(OvertimeListService);
+  private readonly departmentService = inject(GatePassDepartmentService);
   private readonly alertService = inject(AlertService);
 
   readonly loading = signal(false);
   readonly records = signal<OvertimeListRecord[]>([]);
   readonly searchText = signal('');
+  readonly selectedDepartment = signal('');
+  readonly selectedBranch = signal('');
+  readonly selectedReportingManager = signal('');
+  readonly departmentOptions = computed(() => this.getOptions('department'));
+  readonly branchOptions = computed(() => this.getOptions('branch'));
+  readonly reportingManagerOptions = computed(() => this.getOptions('reportingManager'));
 
   readonly columns: OvertimeTableColumn[] = [
     { key: 'employeeId', label: 'Employee ID' },
@@ -45,11 +54,24 @@ export class OvertimeListComponent implements OnInit {
 
   readonly filteredRecords = computed(() => {
     const query = this.searchText().trim().toLowerCase();
-    if (!query) {
-      return this.records();
-    }
+    const department = this.selectedDepartment();
+    const branch = this.selectedBranch();
+    const reportingManager = this.selectedReportingManager();
 
     return this.records().filter((record) => {
+      if (department && this.departmentValue(record) !== department) {
+        return false;
+      }
+      if (branch && this.branchValue(record) !== branch) {
+        return false;
+      }
+      if (reportingManager && record.reportingManager !== reportingManager) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+
       const searchable = [
         record.employeeId,
         record.employeeName,
@@ -66,6 +88,7 @@ export class OvertimeListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadOvertimeList();
+    this.departmentService.ensureLoaded().subscribe();
   }
 
   loadOvertimeList(): void {
@@ -109,6 +132,30 @@ export class OvertimeListComponent implements OnInit {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     });
+  }
+
+  private getOptions(field: 'department' | 'branch' | 'reportingManager'): string[] {
+    const values = new Set<string>();
+    for (const record of this.records()) {
+      const value = field === 'department'
+        ? this.departmentValue(record)
+        : field === 'branch'
+          ? this.branchValue(record)
+          : record.reportingManager;
+      const trimmedValue = value.trim();
+      if (trimmedValue) {
+        values.add(trimmedValue);
+      }
+    }
+    return [...values].sort((first, second) => first.localeCompare(second));
+  }
+
+  private departmentValue(record: OvertimeListRecord): string {
+    return this.departmentService.resolveDepartmentName(record.department);
+  }
+
+  private branchValue(record: OvertimeListRecord): string {
+    return resolveBranchNameFromBplId(record.branch);
   }
 
 }

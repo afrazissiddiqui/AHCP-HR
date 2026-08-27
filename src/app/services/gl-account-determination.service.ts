@@ -21,10 +21,16 @@ export interface GlAccountDeterminationRecord {
   DebitCreditType: string;
 }
 
+export interface GlAccountOption {
+  code: string;
+  name: string;
+}
+
 const GL_ACCOUNT_DETERMINATION_LIST_URL = apiUrl('gl-account-determination-list');
 const GL_ACCOUNT_DETERMINATION_ADD_URL = apiUrl('gl-account-determination-add');
 const GL_ACCOUNT_DETERMINATION_UPDATE_URL = apiUrl('gl-account-determination-update');
 const GL_ACCOUNT_DETERMINATION_DELETE_URL = apiUrl('gl-account-determination-delete');
+const INVENTORY_ACCOUNTS_URL = apiUrl('inventory_accounts');
 
 @Injectable({
   providedIn: 'root',
@@ -34,6 +40,12 @@ export class GlAccountDeterminationService {
   private readonly recordList = signal<GlAccountDeterminationRecord[]>([]);
 
   readonly records = this.recordList.asReadonly();
+
+  fetchGlAccountOptions(): Observable<GlAccountOption[]> {
+    return this.http.get<unknown>(INVENTORY_ACCOUNTS_URL).pipe(
+      map((response) => this.extractInventoryAccountOptions(response)),
+    );
+  }
 
   addGlAccountDetermination(payload: GlAccountDeterminationAddPayload): Observable<unknown> {
     return this.http.post(GL_ACCOUNT_DETERMINATION_ADD_URL, payload);
@@ -104,6 +116,50 @@ export class GlAccountDeterminationService {
     }
 
     return [];
+  }
+
+  private extractInventoryAccountOptions(response: unknown): GlAccountOption[] {
+    const options: GlAccountOption[] = [];
+    const visit = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      if (!value || typeof value !== 'object') {
+        return;
+      }
+
+      const record = value as Record<string, unknown>;
+      const code = this.pickString([record], [
+        'AcctCode',
+        'AccountCode',
+        'Code',
+        'code',
+        'accountCode',
+        'value',
+        'id',
+      ]);
+      const name = this.pickString([record], [
+        'Name',
+        'name',
+        'Description',
+        'description',
+        'AccountName',
+        'accountName',
+      ]);
+
+      if (code) {
+        if (!options.some((option) => option.code === code)) {
+          options.push({ code, name: name || code });
+        }
+        return;
+      }
+
+      Object.values(record).forEach(visit);
+    };
+
+    visit(response);
+    return options;
   }
 
   private mapApiItemToRecord(item: Record<string, unknown>): GlAccountDeterminationRecord {

@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import {
   GlAccountDeterminationAddPayload,
+  GlAccountOption,
   GlAccountDeterminationRecord,
   GlAccountDeterminationService,
 } from '../../../services/gl-account-determination.service';
@@ -63,13 +64,75 @@ export class GlAccountDeterminationComponent implements OnInit {
   readonly saving = signal(false);
   readonly deleting = signal(false);
   readonly loadingList = signal(false);
+  readonly loadingAccountOptions = signal(false);
+  readonly accountOptions = signal<GlAccountOption[]>([]);
+  readonly openAccountSearch = signal<{ rowId: string; field: 'code' | 'name' } | null>(null);
+  readonly accountSearchPosition = signal({ top: 0, left: 0, width: 0 });
   readonly savedRecords = signal<GlAccountDeterminationRecord[]>([]);
   readonly editingId = signal<number | null>(null);
 
   rows: GlAccountDeterminationRow[] = [emptyRow()];
 
   ngOnInit(): void {
+    this.loadAccountOptions();
     this.loadSavedRecords();
+  }
+
+  accountOptionsFor(row: GlAccountDeterminationRow, field: 'code' | 'name'): GlAccountOption[] {
+    const query = (field === 'code' ? row.salaryGlAccountCode : row.salaryGlAccountName)
+      .trim()
+      .toLowerCase();
+    const options = this.accountOptions();
+    if (!query) {
+      return options;
+    }
+    return options.filter((option) =>
+      `${option.code} ${option.name}`.toLowerCase().includes(query),
+    );
+  }
+
+  accountSearchIsOpen(rowId: string, field: 'code' | 'name'): boolean {
+    const openSearch = this.openAccountSearch();
+    return openSearch?.rowId === rowId && openSearch.field === field;
+  }
+
+  openAccountSearchAt(rowId: string, field: 'code' | 'name', event: FocusEvent): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const bounds = input.getBoundingClientRect();
+    this.accountSearchPosition.set({
+      top: bounds.bottom + 4,
+      left: bounds.left,
+      width: bounds.width,
+    });
+    this.openAccountSearch.set({ rowId, field });
+  }
+
+  updateAccountSearch(row: GlAccountDeterminationRow, field: 'code' | 'name', value: string): void {
+    if (field === 'code') {
+      row.salaryGlAccountCode = value;
+    } else {
+      row.salaryGlAccountName = value;
+    }
+
+    const normalizedValue = value.trim().toLowerCase();
+    const selected = this.accountOptions().find((option) =>
+      (field === 'code' ? option.code : option.name).trim().toLowerCase() === normalizedValue,
+    );
+    if (selected) {
+      row.salaryGlAccountCode = selected.code;
+      row.salaryGlAccountName = selected.name;
+    }
+    this.openAccountSearch.set({ rowId: row.id, field });
+  }
+
+  selectAccount(row: GlAccountDeterminationRow, option: GlAccountOption): void {
+    row.salaryGlAccountCode = option.code;
+    row.salaryGlAccountName = option.name;
+    this.openAccountSearch.set(null);
+  }
+
+  closeAccountSearchSoon(): void {
+    setTimeout(() => this.openAccountSearch.set(null), 150);
   }
 
   addRow(): void {
@@ -194,6 +257,22 @@ export class GlAccountDeterminationComponent implements OnInit {
           void this.alertService.error(
             'Load Failed',
             formatApiErrorMessage(error, 'Failed to load GL Account Determination list.'),
+          );
+        },
+      });
+  }
+
+  private loadAccountOptions(): void {
+    this.loadingAccountOptions.set(true);
+    this.glAccountService
+      .fetchGlAccountOptions()
+      .pipe(finalize(() => this.loadingAccountOptions.set(false)))
+      .subscribe({
+        next: (options) => this.accountOptions.set(options),
+        error: (error: unknown) => {
+          void this.alertService.error(
+            'Load Failed',
+            formatApiErrorMessage(error, 'Failed to load Salary G/L Account options.'),
           );
         },
       });

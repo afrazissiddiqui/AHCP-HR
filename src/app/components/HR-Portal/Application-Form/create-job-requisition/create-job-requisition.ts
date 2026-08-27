@@ -260,7 +260,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly otherAllowances = signal('');
   protected readonly allowancesApplicable = signal<'Yes' | 'No' | ''>('Yes');
   protected readonly cashSalaryPercentage = signal('');
-  protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('No');
+  protected readonly eobiApplicable = signal<'Yes' | 'No' | ''>('Yes');
   protected readonly providentApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly fuelLimit = signal('');
@@ -1807,7 +1807,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       this.carAllowances.set('');
       this.otherAllowances.set('');
     }
-    this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') ?? 'No');
+    this.eobiApplicable.set((remuneration.eobiApplicable as 'Yes' | 'No' | '') || 'Yes');
     const pv = this.yesNoFromApiLocal(remuneration.providentApplicable) || 'No';
     this.providentApplicable.set(pv);
     this.socialSecurityApplicable.set(

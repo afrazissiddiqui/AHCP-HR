@@ -45,22 +45,72 @@
                     />
                   </td>
                   <td>
-                    <input
-                      type="text"
-                      class="field-input"
-                      [(ngModel)]="row.salaryGlAccountCode"
-                      [name]="'salaryGlAccountCode-' + row.id"
-                      placeholder="Salary G/L Account Codes"
-                    />
+                    <div class="account-search-wrap">
+                      <input
+                        type="search"
+                        class="field-input"
+                        role="combobox"
+                        [ngModel]="row.salaryGlAccountCode"
+                        [name]="'salaryGlAccountCode-' + row.id"
+                        [attr.aria-expanded]="accountSearchIsOpen(row.id, 'code')"
+                        placeholder="Search account code"
+                        autocomplete="off"
+                        (ngModelChange)="updateAccountSearch(row, 'code', $event)"
+                        (focus)="openAccountSearchAt(row.id, 'code', $event)"
+                        (blur)="closeAccountSearchSoon()"
+                      />
+                      @if (accountSearchIsOpen(row.id, 'code')) {
+                        <ul
+                          class="account-search-suggestions"
+                          role="listbox"
+                          [style.top.px]="accountSearchPosition().top"
+                          [style.left.px]="accountSearchPosition().left"
+                          [style.width.px]="accountSearchPosition().width"
+                        >
+                          @for (option of accountOptionsFor(row, 'code'); track option.code) {
+                            <li role="option" (mousedown)="selectAccount(row, option)">
+                              <strong>{{ option.code }}</strong><span>{{ option.name }}</span>
+                            </li>
+                          } @empty {
+                            <li class="account-search-empty">No matching accounts</li>
+                          }
+                        </ul>
+                      }
+                    </div>
                   </td>
                   <td>
-                    <input
-                      type="text"
-                      class="field-input"
-                      [(ngModel)]="row.salaryGlAccountName"
-                      [name]="'salaryGlAccountName-' + row.id"
-                      placeholder="Salary G/L Account Names"
-                    />
+                    <div class="account-search-wrap">
+                      <input
+                        type="search"
+                        class="field-input"
+                        role="combobox"
+                        [ngModel]="row.salaryGlAccountName"
+                        [name]="'salaryGlAccountName-' + row.id"
+                        [attr.aria-expanded]="accountSearchIsOpen(row.id, 'name')"
+                        placeholder="Search account name"
+                        autocomplete="off"
+                        (ngModelChange)="updateAccountSearch(row, 'name', $event)"
+                        (focus)="openAccountSearchAt(row.id, 'name', $event)"
+                        (blur)="closeAccountSearchSoon()"
+                      />
+                      @if (accountSearchIsOpen(row.id, 'name')) {
+                        <ul
+                          class="account-search-suggestions"
+                          role="listbox"
+                          [style.top.px]="accountSearchPosition().top"
+                          [style.left.px]="accountSearchPosition().left"
+                          [style.width.px]="accountSearchPosition().width"
+                        >
+                          @for (option of accountOptionsFor(row, 'name'); track option.code) {
+                            <li role="option" (mousedown)="selectAccount(row, option)">
+                              <strong>{{ option.name }}</strong><span>{{ option.code }}</span>
+                            </li>
+                          } @empty {
+                            <li class="account-search-empty">No matching accounts</li>
+                          }
+                        </ul>
+                      }
+                    </div>
                   </td>
                   <td>
                     <select

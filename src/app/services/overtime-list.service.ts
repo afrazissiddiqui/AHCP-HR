@@ -6,6 +6,9 @@ export interface OvertimeListRecord {
   id: string | number;
   employeeId: string;
   employeeName: string;
+  department: string;
+  branch: string;
+  reportingManager: string;
   overtimeHours: number;
   overtimeRate: number;
   exceptionalOt: number;
@@ -33,6 +36,9 @@ export class OvertimeListService {
       id: record.apiId || record.EmployeeCode,
       employeeId: record.EmployeeCode,
       employeeName: record.EmployeeName || record.detail?.personalInfo.personName || '',
+      department: record.Department,
+      branch: record.detail?.personalInfo.branchLocation ?? '',
+      reportingManager: record.ReportingManager,
       overtimeHours: 0,
       overtimeRate: 0,
       exceptionalOt: 0,
