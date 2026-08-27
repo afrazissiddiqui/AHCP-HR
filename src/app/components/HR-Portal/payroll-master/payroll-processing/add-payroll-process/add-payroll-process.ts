@@ -345,6 +345,7 @@ export class AddPayrollProcessComponent implements OnInit {
       costToCompany: 0,
       taxDeduction: 0,
       netPayable: 0,
+      netPayableAfterTax: 0,
       totalEarnings: 0,
       finalGrossSalary: 0,
     };
@@ -377,7 +378,8 @@ export class AddPayrollProcessComponent implements OnInit {
       totals.lateAttendDeduction += row.lateAttendDeduction;
       totals.costToCompany += row.costToCompany;
       totals.taxDeduction += row.taxDeduction;
-      totals.netPayable += this.netPayableForRow(row);
+      totals.netPayable += this.grossPayableForRow(row);
+      totals.netPayableAfterTax += this.netPayableAfterTaxForRow(row);
       totals.totalEarnings += this.totalEarningsForRow(row);
       totals.finalGrossSalary += row.grossSalary;
     }
@@ -598,7 +600,7 @@ export class AddPayrollProcessComponent implements OnInit {
     );
   }
 
-  netPayableForRow(row: PayrollProcessRow): number {
+  grossPayableForRow(row: PayrollProcessRow): number {
     return computeNetPayable({
       basicSalary: row.grossSalary,
       medicalAllowance: row.medicalAllowance,
@@ -617,6 +619,10 @@ export class AddPayrollProcessComponent implements OnInit {
     });
   }
 
+  netPayableAfterTaxForRow(row: PayrollProcessRow): number {
+    return Math.max(0, this.grossPayableForRow(row) - row.taxDeduction);
+  }
+
   earningsRatioForRow(row: PayrollProcessRow): number {
     if (row.basicSalary <= 0) {
       return 0;
@@ -626,7 +632,10 @@ export class AddPayrollProcessComponent implements OnInit {
 
   getColumnValue(row: PayrollProcessRow, column: PayrollColumnDef): number | string {
     if (column.key === 'netPayable') {
-      return this.netPayableForRow(row);
+      return this.grossPayableForRow(row);
+    }
+    if (column.key === 'netpayable1') {
+      return this.netPayableAfterTaxForRow(row);
     }
     if (column.key === 'totalEarnings') {
       return this.totalEarningsForRow(row);
@@ -695,6 +704,9 @@ export class AddPayrollProcessComponent implements OnInit {
     }
     if (column.key === 'netPayable') {
       return this.groupTotals().netPayable;
+    }
+    if (column.key === 'netpayable1') {
+      return this.groupTotals().netPayableAfterTax;
     }
     if (column.key === 'totalEarnings') {
       return this.groupTotals().totalEarnings;
@@ -937,7 +949,7 @@ export class AddPayrollProcessComponent implements OnInit {
         costToCompany: row.costToCompany,
         taxDeduction: row.taxDeduction,
         totalEarnings: this.totalEarningsForRow(row),
-        netPayable: this.netPayableForRow(row),
+        netPayable: this.netPayableAfterTaxForRow(row),
         approved: row.approved,
       })),
     };
