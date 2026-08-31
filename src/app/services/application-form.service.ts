@@ -112,6 +112,7 @@ export interface ApplicationFormRemuneration {
   socialSecurityApplicable: string;
   providentApplicable: string;
   fuelLimit: string;
+  gratuityBalance: string;
   leaveEligibilityCriteria: string;
 }
 
@@ -2166,6 +2167,7 @@ export class ApplicationFormService {
         ),
         providentApplicable: this.yesNoFromApi(pickRem('providentApplicable', 'provident_applicable')),
         fuelLimit: this.readFuelLimitFromProfileItem(item),
+        gratuityBalance: asNumberString(pickRem('gratuityBalance', 'gratuity_balance')),
         leaveEligibilityCriteria: pickRem('leaveEligibilityCriteria', 'leave_eligibility_criteria'),
       },
       leaveManagement: this.mapLeaveManagementRows(item, {

@@ -264,6 +264,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   protected readonly providentApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly socialSecurityApplicable = signal<'Yes' | 'No' | ''>('No');
   protected readonly fuelLimit = signal('');
+  protected readonly gratuityBalance = signal('');
   protected readonly leaveManagementRows = signal<LeaveManagementRow[]>([
     { leaveType: '', leavesAllocated: '', leavesAvailed: '' },
   ]);
@@ -625,6 +626,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       providentApplicable: this.providentApplicable(),
       socialSecurityApplicable: this.socialSecurityApplicable(),
       fuelLimit: this.fuelLimit(),
+      gratuityBalance: this.gratuityBalance(),
       leaveEligibilityCriteria: '',
     };
   }
@@ -887,6 +889,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       case 'dateOfJoining': return this.dateOfJoining();
       case 'loginEmployeeName': return this.loginEmployeeName();
       case 'password': return this.password();
+      case 'gratuityBalance': return this.gratuityBalance();
       default: return '';
     }
   }
@@ -1814,6 +1817,9 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       (remuneration.socialSecurityApplicable as 'Yes' | 'No' | '') ?? 'No',
     );
     this.fuelLimit.set(this.applicationFormService.formatFuelLimitForForm(remuneration.fuelLimit));
+
+    const gratuityValue = remuneration.gratuityBalance?.trim() ?? '';
+    this.gratuityBalance.set(gratuityValue);
 
     const leaveRows = detail.leaveManagement?.length
       ? detail.leaveManagement

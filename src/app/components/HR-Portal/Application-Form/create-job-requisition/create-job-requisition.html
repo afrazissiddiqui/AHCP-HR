@@ -956,6 +956,13 @@
           </div>
 
           <div class="cjr-row">
+            <label>Gratuity Balance:</label>
+            <input type="text" inputmode="decimal" [ngModel]="gratuityBalance()"
+              (ngModelChange)="onNumericOnlyChange($event, gratuityBalance)" (keydown)="onDecimalKeyDown($event)"
+              placeholder="e.g. 50000" (blur)="touch('gratuityBalance')" />
+          </div>
+
+          <div class="cjr-row">
             <label>Medical Allowances:</label>
             <input type="text" inputmode="decimal" [ngModel]="medicalAllowances()" readonly
               [disabled]="!areAllowancesEnabled()"

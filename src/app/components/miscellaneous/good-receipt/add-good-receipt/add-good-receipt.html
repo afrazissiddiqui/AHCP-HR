@@ -65,12 +65,10 @@
                   <th class="sir-col-item-code">Item No.</th>
                   <th class="sir-col-item-name">Item Description</th>
                   <th class="sir-col-qty">Quantity</th>
-                  <th class="sir-col-price">Unit Price</th>
                   <th class="sir-col-total">Total</th>
                   <th class="sir-col-bin">Bin Location Allocation</th>
                   <th class="sir-col-account">Account Code</th>
                   <th class="sir-col-cost">Item Cost</th>
-                  <th class="sir-col-uom">UoM Code</th>
                   <th class="sir-col-uom-name">UoM Name</th>
                   <th class="sir-col-dept">Departments & Locations</th>
                   <th class="sir-col-actions">Action</th>
@@ -97,9 +95,6 @@
                     <td class="sir-col-qty">
                       <input type="number" class="sir-table-input" min="0" [ngModel]="line.quantity" (ngModelChange)="updateContentLine(lineIndex, 'quantity', $event)">
                     </td>
-                    <td class="sir-col-price">
-                      <input type="number" class="sir-table-input" min="0" step="0.01" [ngModel]="line.unitPrice" (ngModelChange)="updateContentLine(lineIndex, 'unitPrice', $event)">
-                    </td>
                     <td class="sir-col-total">
                       <input type="text" class="sir-table-input" [value]="formatAmount((line.quantity ?? 0) * (line.unitPrice ?? 0))" readonly>
                     </td>
@@ -107,29 +102,77 @@
                       <input type="text" class="sir-table-input" [ngModel]="line.binLocationAllocation" (ngModelChange)="updateContentLine(lineIndex, 'binLocationAllocation', $event)">
                     </td>
                     <td class="sir-col-account">
-                      <select
-                        class="sir-table-input"
-                        [ngModel]="line.accountCode"
-                        (ngModelChange)="updateContentLine(lineIndex, 'accountCode', $event)"
-                        [disabled]="accountCodeOptionsLoading()"
-                      >
-                        <option value="">{{ accountCodeOptionsLoading() ? 'Loading…' : 'Select account code' }}</option>
-                        @for (account of accountCodeOptions(); track account.code) {
-                          <option [value]="account.code">{{ account.name || account.code }}</option>
+                      <div style="position: relative;">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          placeholder="Search account code"
+                          #accountCodeInput
+                          [ngModel]="accountCodeSearchText()[lineIndex] || line.accountCode"
+                          (ngModelChange)="updateAccountCodeSearch(lineIndex, $event)"
+                          (focus)="toggleAccountCodeDropdown(lineIndex)"
+                          [disabled]="accountCodeOptionsLoading()"
+                        >
+                        @if (openAccountCodeDropdown() === lineIndex) {
+                          <div [style]="getDropdownStyle(lineIndex, accountCodeInput)">
+                            @if (accountCodeOptionsLoading()) {
+                              <div style="padding: 8px; text-align: center;">Loading…</div>
+                            } @else {
+                              @if (getFilteredAccountCodes(accountCodeSearchText()[lineIndex] || '').length === 0) {
+                                <div style="padding: 8px; text-align: center; color: #999;">No results</div>
+                              } @else {
+                                @for (account of getFilteredAccountCodes(accountCodeSearchText()[lineIndex] || ''); track account.code) {
+                                  <div
+                                    style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;"
+                                    (click)="selectAccountCode(lineIndex, account.code, account.name)"
+                                    (mouseenter)="onAccountCodeItemHover($event)"
+                                    (mouseleave)="onAccountCodeItemLeave($event)"
+                                  >
+                                    {{ account.name ? account.name + ' (' + account.code + ')' : account.code }}
+                                  </div>
+                                }
+                              }
+                            }
+                          </div>
                         }
-                      </select>
+                      </div>
                     </td>
                     <td class="sir-col-cost">
                       <input type="number" class="sir-table-input" min="0" step="0.01" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine(lineIndex, 'itemCost', $event)">
-                    </td>
-                    <td class="sir-col-uom">
-                      <input type="text" class="sir-table-input" [ngModel]="line.uomCode" (ngModelChange)="updateContentLine(lineIndex, 'uomCode', $event)">
                     </td>
                     <td class="sir-col-uom-name">
                       <input type="text" class="sir-table-input" [ngModel]="line.uomName" (ngModelChange)="updateContentLine(lineIndex, 'uomName', $event)">
                     </td>
                     <td class="sir-col-dept">
-                      <input type="text" class="sir-table-input" [ngModel]="line.departmentsLocations" (ngModelChange)="updateContentLine(lineIndex, 'departmentsLocations', $event)">
+                      <div style="position: relative;">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          placeholder="Search department"
+                          #departmentInput
+                          [ngModel]="departmentSearchText()[lineIndex] || line.departmentsLocations"
+                          (ngModelChange)="updateDepartmentSearch(lineIndex, $event)"
+                          (focus)="toggleDepartmentDropdown(lineIndex)"
+                        >
+                        @if (openDepartmentDropdown() === lineIndex) {
+                          <div [style]="getDepartmentDropdownStyle(lineIndex, departmentInput)">
+                            @if (getFilteredDepartments(departmentSearchText()[lineIndex] || '').length === 0) {
+                              <div style="padding: 8px; text-align: center; color: #999;">No results</div>
+                            } @else {
+                              @for (dept of getFilteredDepartments(departmentSearchText()[lineIndex] || ''); track dept.code) {
+                                <div
+                                  style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;"
+                                  (click)="selectDepartment(lineIndex, dept.code, dept.name)"
+                                  (mouseenter)="onDepartmentItemHover($event)"
+                                  (mouseleave)="onDepartmentItemLeave($event)"
+                                >
+                                  {{ dept.name }} ({{ dept.code }})
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                      </div>
                     </td>
                     <td class="sir-col-actions">
                       <div class="sir-row-action-buttons" data-ui5-compact-size>

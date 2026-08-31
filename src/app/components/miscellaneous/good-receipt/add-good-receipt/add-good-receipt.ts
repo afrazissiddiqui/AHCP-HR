@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { GoodReceiptService, buildCreateGoodReceiptPayload, InventoryAccountOption } from '../good-receipt.service';
+import { DepartmentsPrService, DepartmentPr } from '../../../../services/departments-pr.service';
 import { WarehouseService } from '../../../../services/warehouse.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
@@ -31,6 +32,7 @@ export class AddGoodReceipt implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly alertService = inject(AlertService);
   private readonly goodReceiptService = inject(GoodReceiptService);
+  private readonly departmentsPrService = inject(DepartmentsPrService);
   private readonly warehouseService = inject(WarehouseService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
@@ -53,6 +55,12 @@ export class AddGoodReceipt implements OnInit {
   readonly accountCodeOptions = signal<InventoryAccountOption[]>([]);
   readonly accountCodeOptionsLoading = signal(false);
   readonly accountCodeOptionsError = signal('');
+  readonly accountCodeSearchText = signal<{ [key: number]: string }>({});
+  readonly openAccountCodeDropdown = signal<number | null>(null);
+
+  readonly departmentOptions = signal<DepartmentPr[]>([]);
+  readonly departmentSearchText = signal<{ [key: number]: string }>({});
+  readonly openDepartmentDropdown = signal<number | null>(null);
 
   readonly totalAmount = computed(() =>
     this.contentLines()
@@ -63,6 +71,7 @@ export class AddGoodReceipt implements OnInit {
   ngOnInit(): void {
     this.warehouseService.ensureLoaded().subscribe({ error: () => undefined });
     this.loadAccountCodeOptions();
+    this.loadDepartmentOptions();
   }
 
   private loadAccountCodeOptions(): void {
@@ -139,6 +148,117 @@ export class AddGoodReceipt implements OnInit {
     document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
   }
 
+  getFilteredAccountCodes(searchText: string): InventoryAccountOption[] {
+    if (!searchText.trim()) {
+      return this.accountCodeOptions();
+    }
+    const lower = searchText.toLowerCase();
+    return this.accountCodeOptions().filter(
+      (account) =>
+        account.code.toLowerCase().includes(lower) ||
+        (account.name && account.name.toLowerCase().includes(lower))
+    );
+  }
+
+  updateAccountCodeSearch(index: number, value: string): void {
+    this.accountCodeSearchText.update((state) => ({
+      ...state,
+      [index]: value,
+    }));
+  }
+
+  selectAccountCode(index: number, code: string, name?: string): void {
+    this.updateContentLine(index, 'accountCode', code);
+    this.accountCodeSearchText.update((state) => ({
+      ...state,
+      [index]: name ? `${name} (${code})` : code,
+    }));
+    this.openAccountCodeDropdown.set(null);
+  }
+
+  toggleAccountCodeDropdown(index: number): void {
+    const current = this.openAccountCodeDropdown();
+    this.openAccountCodeDropdown.set(current === index ? null : index);
+  }
+
+  onAccountCodeItemHover(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    target.style.background = '#f5f5f5';
+  }
+
+  onAccountCodeItemLeave(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    target.style.background = 'white';
+  }
+
+  getDropdownStyle(lineIndex: number, input: HTMLInputElement | null): string {
+    if (!input) return '';
+    const rect = input.getBoundingClientRect();
+    return `position: fixed; top: ${rect.bottom + 2}px; left: ${rect.left}px; width: ${rect.width}px; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10000;`;
+  }
+
+  private loadDepartmentOptions(): void {
+    this.departmentsPrService.ensureLoaded().subscribe({
+      next: (options) => {
+        console.log('Department options loaded:', options);
+        this.departmentOptions.set(options as any);
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
+        this.departmentOptions.set([]);
+      },
+    });
+  }
+
+  getFilteredDepartments(searchText: string): DepartmentPr[] {
+    if (!searchText.trim()) {
+      return this.departmentOptions();
+    }
+    const lower = searchText.toLowerCase();
+    return this.departmentOptions().filter(
+      (dept) =>
+        dept.code.toLowerCase().includes(lower) ||
+        dept.name.toLowerCase().includes(lower)
+    );
+  }
+
+  updateDepartmentSearch(index: number, value: string): void {
+    this.departmentSearchText.update((state) => ({
+      ...state,
+      [index]: value,
+    }));
+  }
+
+  selectDepartment(index: number, id: string, name: string): void {
+    this.updateContentLine(index, 'departmentsLocations', id);
+    this.departmentSearchText.update((state) => ({
+      ...state,
+      [index]: `${name} (${id})`,
+    }));
+    this.openDepartmentDropdown.set(null);
+  }
+
+  toggleDepartmentDropdown(index: number): void {
+    const current = this.openDepartmentDropdown();
+    this.openDepartmentDropdown.set(current === index ? null : index);
+  }
+
+  onDepartmentItemHover(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    target.style.background = '#f5f5f5';
+  }
+
+  onDepartmentItemLeave(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    target.style.background = 'white';
+  }
+
+  getDepartmentDropdownStyle(lineIndex: number, input: HTMLInputElement | null): string {
+    if (!input) return '';
+    const rect = input.getBoundingClientRect();
+    return `position: fixed; top: ${rect.bottom + 2}px; left: ${rect.left}px; width: ${rect.width}px; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10000;`;
+  }
+
   openItemPicker(index: number): void {
     this.itemPickerRowIndex.set(index);
     this.itemPickerOpen.set(true);
@@ -157,12 +277,14 @@ export class AddGoodReceipt implements OnInit {
         ...updated[index],
         itemCode: first.itemCode,
         itemDescription: first.itemName,
+        uomName: first.uom,
       };
 
       const extras = items.slice(1).map((item) => ({
         ...createEmptyGoodReceiptLine(),
         itemCode: item.itemCode,
         itemDescription: item.itemName,
+        uomName: item.uom,
       }));
 
       return [...updated, ...extras];
