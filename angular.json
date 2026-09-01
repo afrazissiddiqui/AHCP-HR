@@ -17,7 +17,9 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "outputPath": "dist/SAPQC",
             "browser": "src/main.ts",
+            "index": "src/index.html",
             "tsConfig": "tsconfig.app.json",
             "allowedCommonJsDependencies": [
               "sweetalert2"
@@ -26,12 +28,8 @@
               "src/assets",
               {
                 "glob": "**/*",
-                "input": "assets",
-                "output": "assets"
-              },
-              {
-                "glob": "**/*",
-                "input": "public"
+                "input": "public",
+                "output": "."
               }
             ],
             "styles": [
