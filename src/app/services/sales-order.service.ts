@@ -84,7 +84,7 @@ export class SalesOrderService {
       cardCode: this.pickString(item, ['CardCode', 'cardCode']),
       cardName: this.pickString(item, ['CardName', 'cardName']),
       address: this.pickString(item, ['Address', 'address']),
-      customerPoNo: this.pickString(item, ['U_CusPoNo', 'customerPoNo']),
+      customerPoNo: this.pickString(item, ['NumAtCard', 'U_CusPoNo', 'customerPoNo']),
       branchId: this.pickString(item, ['BPLId', 'branchId']),
       vehicleNo: this.pickString(item, ['U_VehicleNo', 'vehicleNo']),
       driverName: this.pickString(item, ['U_DriverName', 'driverName']),

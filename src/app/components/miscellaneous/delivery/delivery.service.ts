@@ -193,7 +193,7 @@ export class DeliveryService {
           cardCode: this.pickString(item, ['CardCode', 'cardCode']),
           cardName: this.pickString(item, ['CardName', 'cardName', 'customerName']),
           shipToAddress: this.pickString(item, ['Address', 'ShipToAddress', 'shipToAddress']),
-          customerPoNo: this.pickString(item, ['U_CusPoNo', 'customerPoNo']),
+          customerPoNo: this.pickString(item, ['NumAtCard', 'U_CusPoNo', 'customerPoNo']),
           driverName: this.pickString(item, ['U_DriverName', 'driverName']),
           vehicleNo: this.pickString(item, ['U_VehicleNo', 'vehicleNo']),
           transporterName: this.pickString(item, ['U_TransporterName', 'transporterName']),

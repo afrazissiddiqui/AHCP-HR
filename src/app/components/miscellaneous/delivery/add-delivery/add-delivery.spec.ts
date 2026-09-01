@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
@@ -119,5 +119,37 @@ describe('AddDelivery batch selection', () => {
 
     const batch = line.availableBatches[0];
     expect((component as any).getMaxAvailableForBatch(batch, line)).toBe(3);
+  });
+
+  it('maps NumAtCard from SAP sales orders into the customer reference number', () => {
+    const httpTesting = TestBed.inject(HttpTestingController);
+    const service = TestBed.inject(SalesOrderService);
+
+    service.list().subscribe((orders) => {
+      expect(orders[0].customerPoNo).toBe('0024');
+    });
+
+    const req = httpTesting.expectOne((request) => request.url.includes('sales_orders'));
+    req.flush({
+      sales_orders: {
+        data: [
+          {
+            DocEntry: '101',
+            DocNum: 'SO-1001',
+            DocDate: '2026-09-01',
+            DocDueDate: '2026-09-08',
+            DocStatus: 'O',
+            CardCode: 'CUST-01',
+            CardName: 'Customer One',
+            Address: 'Some address',
+            NumAtCard: '0024',
+            BPLId: '1',
+            items: [],
+          },
+        ],
+      },
+    });
+
+    httpTesting.verify();
   });
 });
