@@ -27,6 +27,12 @@ interface DeliveryTab {
   label: string;
 }
 
+interface DeliveryBatchSelection {
+  batchNo: string;
+  quantity: number;
+  issueQuantity?: number | null;
+}
+
 @Component({
   selector: 'app-add-delivery',
   standalone: true,
@@ -186,7 +192,7 @@ export class AddDelivery {
     return null;
   }
 
-  batchOptionsForLine(line: DeliveryLine): string[] {
+  batchOptionsForLine(line: DeliveryLine): DeliveryBatchSelection[] {
     if (!line.itemCode.trim()) {
       return [];
     }
@@ -201,7 +207,13 @@ export class AddDelivery {
       ? item.batches.filter((batch) => batch.warehouse.trim().toLowerCase() === selectedWarehouse)
       : item.batches;
 
-    return [...new Set(filtered.map((batch) => batch.batchNumber.trim()).filter(Boolean))];
+    return filtered.map((batch) => ({
+      batchNo: batch.batchNumber.trim(),
+      quantity: Number(batch.quantity ?? 0),
+      issueQuantity: line.batchSerialNumber && batch.batchNumber.trim() === line.batchSerialNumber.trim()
+        ? line.quantity ?? 0
+        : null,
+    })).filter((batch) => batch.batchNo.trim() !== '');
   }
 
   formatAmount(value: number): string {
@@ -392,7 +404,28 @@ export class AddDelivery {
       return;
     }
 
-    this.activeBatchSelectionLineIndex.set(0);
+    this.contentLines.update((rows) =>
+      rows.map((row) => {
+        if (!row.itemCode.trim()) {
+          return row;
+        }
+
+        const normalizedAvailable = row.availableBatches?.length
+          ? row.availableBatches
+          : this.buildAvailableBatchesForLine(row);
+
+        return {
+          ...row,
+          availableBatches: normalizedAvailable,
+          batchSerialNumber: normalizedAvailable.some((batch) => batch.batchNo === row.batchSerialNumber)
+            ? row.batchSerialNumber
+            : normalizedAvailable[0]?.batchNo ?? row.batchSerialNumber,
+        };
+      }),
+    );
+
+    const firstBatchLineIndex = this.contentLines().findIndex((line) => line.itemCode.trim() && (line.availableBatches?.length ?? 0) > 0);
+    this.activeBatchSelectionLineIndex.set(firstBatchLineIndex >= 0 ? firstBatchLineIndex : 0);
     this.batchSelectionDialogOpen.set(true);
   }
 
@@ -419,7 +452,171 @@ export class AddDelivery {
     return this.contentLines()[index] ?? null;
   }
 
-  selectBatchForActiveLine(batch: string): void {
+  private buildAvailableBatchesForLine(line: DeliveryLine): DeliveryBatchSelection[] {
+    if (!line.itemCode.trim()) {
+      return [];
+    }
+
+    const item = this.oitmItemsService.getCatalog().find((entry) => entry.itemCode === line.itemCode);
+    if (!item?.batches?.length) {
+      return [];
+    }
+
+    const selectedWarehouse = line.warehouse.trim().toLowerCase();
+    const filtered = selectedWarehouse
+      ? item.batches.filter((batch) => batch.warehouse.trim().toLowerCase() === selectedWarehouse)
+      : item.batches;
+
+    return filtered
+      .map((batch) => ({
+        batchNo: batch.batchNumber.trim(),
+        quantity: Number(batch.quantity ?? 0),
+        issueQuantity: line.batchSerialNumber && batch.batchNumber.trim() === line.batchSerialNumber.trim()
+          ? line.quantity ?? 0
+          : null,
+      }))
+      .filter((batch) => batch.batchNo.trim() !== '');
+  }
+
+  getMaxAvailableForBatch(batch: DeliveryBatchSelection, line: DeliveryLine): number {
+    const batchAvailable = batch.quantity;
+    const requiredQty = line.quantity ?? 0;
+    const totalIssueInForm = (line.availableBatches ?? [])
+      .filter((currentBatch) => currentBatch.batchNo !== batch.batchNo)
+      .reduce((sum, currentBatch) => sum + (currentBatch.issueQuantity ?? 0), 0);
+
+    const remainingRequired = requiredQty - totalIssueInForm;
+    const maxAllowed = Math.min(batchAvailable, Math.max(remainingRequired, 0));
+
+    return Math.max(maxAllowed, 0);
+  }
+
+  isBatchSelectionComplete(line: DeliveryLine): boolean {
+    return (line.availableBatches ?? []).some((batch) => (batch.issueQuantity ?? 0) > 0);
+  }
+
+  getRemainingRequiredQuantity(line: DeliveryLine): number {
+    const totalIssuedInForm = (line.availableBatches ?? []).reduce((sum, batch) => sum + (batch.issueQuantity ?? 0), 0);
+    const remaining = (line.quantity ?? 0) - totalIssuedInForm;
+    return Math.max(0, remaining);
+  }
+
+  getAlreadyIssuedQuantity(line: DeliveryLine): number {
+    return Math.max(0, (line.quantity ?? 0) - this.getRemainingRequiredQuantity(line));
+  }
+
+  getTotalIssuedInForm(line: DeliveryLine): number {
+    return (line.availableBatches ?? []).reduce((sum, batch) => sum + (batch.issueQuantity ?? 0), 0);
+  }
+
+  updateBatchIssueQuantity(batch: DeliveryBatchSelection, value: string): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    const row = this.contentLines()[index];
+    if (!row) {
+      return;
+    }
+
+    const quantity = value === '' ? null : Number(value);
+    const normalizedQuantity = Number.isNaN(quantity) ? null : quantity;
+
+    if (normalizedQuantity == null) {
+      this.contentLines.update((rows) =>
+        rows.map((item, rowIndex) => {
+          if (rowIndex !== index) {
+            return item;
+          }
+
+          const updatedBatches = (item.availableBatches ?? []).map((availableBatch) => {
+            if (availableBatch.batchNo !== batch.batchNo) {
+              return availableBatch;
+            }
+            return { ...availableBatch, issueQuantity: null };
+          });
+
+          return {
+            ...item,
+            availableBatches: updatedBatches,
+          };
+        }),
+      );
+      return;
+    }
+
+    const maxAllowed = this.getMaxAvailableForBatch(batch, row);
+    const clampedQuantity = Math.min(normalizedQuantity, maxAllowed);
+
+    this.contentLines.update((rows) =>
+      rows.map((item, rowIndex) => {
+        if (rowIndex !== index) {
+          return item;
+        }
+
+        const updatedBatches = (item.availableBatches ?? []).map((availableBatch) => {
+          if (availableBatch.batchNo !== batch.batchNo) {
+            return availableBatch;
+          }
+          return { ...availableBatch, issueQuantity: clampedQuantity };
+        });
+
+        return {
+          ...item,
+          availableBatches: updatedBatches,
+        };
+      }),
+    );
+  }
+
+  validateBatchIssueQuantity(batch: DeliveryBatchSelection, line: DeliveryLine): void {
+    const maxAvailable = this.getMaxAvailableForBatch(batch, line);
+    const currentValue = batch.issueQuantity ?? 0;
+    if (currentValue > maxAvailable) {
+      const index = this.activeBatchSelectionLineIndex();
+      if (index !== null) {
+        this.contentLines.update((rows) =>
+          rows.map((item, rowIndex) => {
+            if (rowIndex !== index) {
+              return item;
+            }
+
+            const updatedBatches = (item.availableBatches ?? []).map((availableBatch) => {
+              if (availableBatch.batchNo !== batch.batchNo) {
+                return availableBatch;
+              }
+              return { ...availableBatch, issueQuantity: maxAvailable };
+            });
+
+            return {
+              ...item,
+              availableBatches: updatedBatches,
+            };
+          }),
+        );
+      }
+    }
+  }
+
+  onBatchIssueQuantityInput(batch: DeliveryBatchSelection, line: DeliveryLine, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const maxAvailable = this.getMaxAvailableForBatch(batch, line);
+    const currentValue = Number(input.value);
+
+    if (Number.isNaN(currentValue) || currentValue < 0) {
+      input.value = (batch.issueQuantity ?? 0).toString();
+      return;
+    }
+
+    if (currentValue > maxAvailable) {
+      input.value = maxAvailable.toString();
+      this.updateBatchIssueQuantity(batch, maxAvailable.toString());
+      return;
+    }
+  }
+
+  selectBatchForActiveLine(batch: DeliveryBatchSelection): void {
     const index = this.activeBatchSelectionLineIndex();
     if (index === null) {
       return;
@@ -431,9 +628,15 @@ export class AddDelivery {
           return row;
         }
 
+        const updatedBatches = (row.availableBatches ?? []).map((availableBatch) => ({
+          ...availableBatch,
+          issueQuantity: availableBatch.batchNo === batch.batchNo ? availableBatch.issueQuantity ?? 0 : availableBatch.issueQuantity ?? null,
+        }));
+
         return {
           ...row,
-          batchSerialNumber: batch,
+          batchSerialNumber: batch.batchNo,
+          availableBatches: updatedBatches,
         };
       }),
     );

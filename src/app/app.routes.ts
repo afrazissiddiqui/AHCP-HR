@@ -7,56 +7,94 @@ import { authGuard } from './guards/auth.guard';
 import { requireAccess, requirePermission } from './guards/permission.guard';
 import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.routes';
 
+import { dashboardComponent } from './components/dashboard/dashboard';
+import { ProfilePageComponent } from './components/profile/profile-page';
+import { FormsHubComponent } from './components/forms-hub/forms-hub';
+import { RecruitmentComponent } from './components/HR-Portal/Application-Form/recruitment';
+import { CreateJobRequisitionComponent } from './components/HR-Portal/Application-Form/create-job-requisition/create-job-requisition';
+import { JobSpecificationFormComponent } from './components/HR-Portal/job-specification-form/job-specification-form';
+import { CreateJobSpecificationComponent } from './components/HR-Portal/job-specification-form/create-job-specification/create-job-specification';
+import { EmployeeActionComponent } from './components/HR-Portal/employee-action/employee-action';
+import { ProbationEvaluationFormComponent } from './components/HR-Portal/employee-action/probation-evaluation-form/probation-evaluation-form';
+import { AddProbationEvaluationComponent } from './components/HR-Portal/employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation';
+import { TrainingDevelopmentFormComponent } from './components/HR-Portal/employee-action/training-development-form/training-development-form';
+import { AddTrainingDevelopmentComponent } from './components/HR-Portal/employee-action/training-development-form/add-training-development/add-training-development';
+import { PerformanceAppraisalFormComponent } from './components/HR-Portal/employee-action/performance-appraisal-form/performance-appraisal-form';
+import { AddPerformanceAppraisalComponent } from './components/HR-Portal/employee-action/performance-appraisal-form/add-performance-appraisal/add-performance-appraisal';
+import { ExpenseReimbursmentFormComponent } from './components/HR-Portal/employee-action/expense-reimbursment-form/expense-reimbursment-form';
+import { AddExpenseReimbursmentComponent } from './components/HR-Portal/employee-action/expense-reimbursment-form/add-expense-reimbursment/add-expense-reimbursment';
+import { LoanAdvanceFormComponent } from './components/HR-Portal/employee-action/loan-advance-form/loan-advance-form';
+import { LeaveApplicationFormComponent } from './components/HR-Portal/employee-action/leave-application-form/leave-application-form';
+import { AddLoanAdvanceComponent } from './components/HR-Portal/employee-action/loan-advance-form/add-loan-advance/add-loan-advance';
+import { AddLeaveApplicationComponent } from './components/HR-Portal/employee-action/leave-application-form/add-leave-application/add-leave-application';
+import { ApprovalAuthoritySetupComponent } from './components/HR-Portal/employee-action/approval-authority-setup/approval-authority-setup';
+import { GlAccountDeterminationComponent } from './components/setup/gl-account-determination/gl-account-determination';
+import { LeaveTypesComponent } from './components/setup/leave-types/leave-types';
+import { UserSetupComponent } from './components/setup/user-setup/user-setup';
+import { WorkstationComponent } from './components/setup/workstation/workstation';
+import { AddKpiSetupComponent } from './components/setup/kpi-setup/add-kpi-setup/add-kpi-setup';
+import { EditKpiSetupComponent } from './components/setup/kpi-setup/edit-kpi-setup/edit-kpi-setup';
+import { KpiSetupComponent } from './components/setup/kpi-setup/kpi-setup';
+import { OvertimeListComponent } from './components/setup/overtime-list/overtime-list';
+import { MasterFormComponent } from './components/setup/master-form/master-form';
+import { WithholdingTaxComponent } from './components/setup/withholding-tax/withholding-tax';
+import { IssueFromProductionListComponent } from './components/setup/issue-from-production-list/issue-from-production-list';
+import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
+import { PurchaseRequestComponent } from './components/setup/purchase-request/purchase-request';
+import { PurchaseOrderListComponent } from './components/setup/purchase-order-list/purchase-order-list';
+import { TerminationFormComponent } from './components/HR-Portal/termination/termination-form';
+import { AddTerminationComponent } from './components/HR-Portal/termination/add-termination/add-termination';
+
 export const routes: Routes = [
   {
     path: '',
     redirectTo: 'login',
-    pathMatch: 'full'
+    pathMatch: 'full',
   },
   {
     path: 'dashboard',
-    loadComponent: () => import('./components/dashboard/dashboard').then((m) => m.dashboardComponent),
+    component: dashboardComponent,
     canActivate: [authGuard],
   },
   ...loginRoutes,
   {
     path: 'profile',
-    loadComponent: () => import('./components/profile/profile-page').then((m) => m.ProfilePageComponent),
+    component: ProfilePageComponent,
     canActivate: [authGuard],
   },
   {
     path: 'forms-hub',
-    loadComponent: () => import('./components/forms-hub/forms-hub').then((m) => m.FormsHubComponent),
+    component: FormsHubComponent,
     canActivate: [authGuard],
   },
   {
     path: 'recruitment',
-    loadComponent: () => import('./components/HR-Portal/Application-Form/recruitment').then((m) => m.RecruitmentComponent),
+    component: RecruitmentComponent,
     canActivate: [authGuard, requirePermission('application_form', 'list')],
   },
   {
     path: 'recruitment/create',
-    loadComponent: () => import('./components/HR-Portal/Application-Form/create-job-requisition/create-job-requisition').then((m) => m.CreateJobRequisitionComponent),
+    component: CreateJobRequisitionComponent,
     canActivate: [authGuard, requirePermission('application_form', 'add')],
   },
   {
     path: 'recruitment/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/Application-Form/create-job-requisition/create-job-requisition').then((m) => m.CreateJobRequisitionComponent),
+    component: CreateJobRequisitionComponent,
     canActivate: [authGuard, requirePermission('application_form', 'update')],
   },
   {
     path: 'job-specification-form',
-    loadComponent: () => import('./components/HR-Portal/job-specification-form/job-specification-form').then((m) => m.JobSpecificationFormComponent),
+    component: JobSpecificationFormComponent,
     canActivate: [authGuard, requirePermission('job_specification', 'list')],
   },
   {
     path: 'job-specification-form/create',
-    loadComponent: () => import('./components/HR-Portal/job-specification-form/create-job-specification/create-job-specification').then((m) => m.CreateJobSpecificationComponent),
+    component: CreateJobSpecificationComponent,
     canActivate: [authGuard, requirePermission('job_specification', 'add')],
   },
   {
     path: 'job-specification-form/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/job-specification-form/create-job-specification/create-job-specification').then((m) => m.CreateJobSpecificationComponent),
+    component: CreateJobSpecificationComponent,
     canActivate: [authGuard, requirePermission('job_specification', 'update')],
   },
   ...gatePassRoutes.map((route) =>
@@ -65,11 +103,11 @@ export const routes: Routes = [
       : {
           ...route,
           canActivate: [...(route.canActivate ?? []), authGuard],
-        }
+        },
   ),
   {
     path: 'employee-action',
-    loadComponent: () => import('./components/HR-Portal/employee-action/employee-action').then((m) => m.EmployeeActionComponent),
+    component: EmployeeActionComponent,
     canActivate: [
       authGuard,
       requireAccess(
@@ -89,192 +127,192 @@ export const routes: Routes = [
     ],
   },
   ...payrollMasterRoutes.map((route) =>
-    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+    route.redirectTo ? route : { ...route, canActivate: [authGuard] },
   ),
   {
     path: 'employee-action/probation-evaluation-form',
-    loadComponent: () => import('./components/HR-Portal/employee-action/probation-evaluation-form/probation-evaluation-form').then((m) => m.ProbationEvaluationFormComponent),
+    component: ProbationEvaluationFormComponent,
     canActivate: [authGuard, requirePermission('probation_evaluation_form', 'list')],
   },
   {
     path: 'employee-action/probation-evaluation-form/create',
-    loadComponent: () => import('./components/HR-Portal/employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation').then((m) => m.AddProbationEvaluationComponent),
+    component: AddProbationEvaluationComponent,
     canActivate: [authGuard, requirePermission('probation_evaluation_form', 'add')],
   },
   {
     path: 'employee-action/probation-evaluation-form/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/employee-action/probation-evaluation-form/add-probation-evaluation/add-probation-evaluation').then((m) => m.AddProbationEvaluationComponent),
+    component: AddProbationEvaluationComponent,
     canActivate: [authGuard, requirePermission('probation_evaluation_form', 'update')],
   },
   {
     path: 'employee-action/training-development-form',
-    loadComponent: () => import('./components/HR-Portal/employee-action/training-development-form/training-development-form').then((m) => m.TrainingDevelopmentFormComponent),
+    component: TrainingDevelopmentFormComponent,
     canActivate: [authGuard, requirePermission('training_development_form', 'list')],
   },
   {
     path: 'employee-action/training-development-form/create',
-    loadComponent: () => import('./components/HR-Portal/employee-action/training-development-form/add-training-development/add-training-development').then((m) => m.AddTrainingDevelopmentComponent),
+    component: AddTrainingDevelopmentComponent,
     canActivate: [authGuard, requirePermission('training_development_form', 'add')],
   },
   {
     path: 'employee-action/training-development-form/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/employee-action/training-development-form/add-training-development/add-training-development').then((m) => m.AddTrainingDevelopmentComponent),
+    component: AddTrainingDevelopmentComponent,
     canActivate: [authGuard, requirePermission('training_development_form', 'update')],
   },
   {
     path: 'employee-action/performance-appraisal-form',
-    loadComponent: () => import('./components/HR-Portal/employee-action/performance-appraisal-form/performance-appraisal-form').then((m) => m.PerformanceAppraisalFormComponent),
+    component: PerformanceAppraisalFormComponent,
     canActivate: [authGuard, requirePermission('performance_appraisal_form', 'list')],
   },
   {
     path: 'employee-action/performance-appraisal-form/create',
-    loadComponent: () => import('./components/HR-Portal/employee-action/performance-appraisal-form/add-performance-appraisal/add-performance-appraisal').then((m) => m.AddPerformanceAppraisalComponent),
+    component: AddPerformanceAppraisalComponent,
     canActivate: [authGuard, requirePermission('performance_appraisal_form', 'add')],
   },
   {
     path: 'employee-action/performance-appraisal-form/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/employee-action/performance-appraisal-form/add-performance-appraisal/add-performance-appraisal').then((m) => m.AddPerformanceAppraisalComponent),
+    component: AddPerformanceAppraisalComponent,
     canActivate: [authGuard, requirePermission('performance_appraisal_form', 'update')],
   },
   {
     path: 'employee-action/expense-reimbursement-form',
-    loadComponent: () => import('./components/HR-Portal/employee-action/expense-reimbursment-form/expense-reimbursment-form').then((m) => m.ExpenseReimbursmentFormComponent),
+    component: ExpenseReimbursmentFormComponent,
     canActivate: [authGuard, requirePermission('expense_reimbursment_form', 'list')],
   },
   {
     path: 'employee-action/expense-reimbursement-form/create',
-    loadComponent: () => import('./components/HR-Portal/employee-action/expense-reimbursment-form/add-expense-reimbursment/add-expense-reimbursment').then((m) => m.AddExpenseReimbursmentComponent),
+    component: AddExpenseReimbursmentComponent,
     canActivate: [authGuard, requirePermission('expense_reimbursment_form', 'add')],
   },
   {
     path: 'employee-action/expense-reimbursement-form/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/employee-action/expense-reimbursment-form/add-expense-reimbursment/add-expense-reimbursment').then((m) => m.AddExpenseReimbursmentComponent),
+    component: AddExpenseReimbursmentComponent,
     canActivate: [authGuard, requirePermission('expense_reimbursment_form', 'update')],
   },
   {
     path: 'employee-action/loan-advance-form',
-    loadComponent: () => import('./components/HR-Portal/employee-action/loan-advance-form/loan-advance-form').then((m) => m.LoanAdvanceFormComponent),
+    component: LoanAdvanceFormComponent,
     canActivate: [authGuard, requirePermission('loan_advance_form', 'list')],
   },
   {
     path: 'employee-action/leave-application-form',
-    loadComponent: () => import('./components/HR-Portal/employee-action/leave-application-form/leave-application-form').then((m) => m.LeaveApplicationFormComponent),
+    component: LeaveApplicationFormComponent,
     canActivate: [authGuard, requirePermission('leave_application_form', 'list')],
   },
   {
     path: 'employee-action/loan-advance-form/create',
-    loadComponent: () => import('./components/HR-Portal/employee-action/loan-advance-form/add-loan-advance/add-loan-advance').then((m) => m.AddLoanAdvanceComponent),
+    component: AddLoanAdvanceComponent,
     canActivate: [authGuard, requirePermission('loan_advance_form', 'add')],
   },
   {
     path: 'employee-action/loan-advance-form/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/employee-action/loan-advance-form/add-loan-advance/add-loan-advance').then((m) => m.AddLoanAdvanceComponent),
+    component: AddLoanAdvanceComponent,
     canActivate: [authGuard, requirePermission('loan_advance_form', 'update')],
   },
   {
     path: 'employee-action/leave-application-form/create',
-    loadComponent: () => import('./components/HR-Portal/employee-action/leave-application-form/add-leave-application/add-leave-application').then((m) => m.AddLeaveApplicationComponent),
+    component: AddLeaveApplicationComponent,
     canActivate: [authGuard, requirePermission('leave_application_form', 'add')],
   },
   {
     path: 'employee-action/leave-application-form/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/employee-action/leave-application-form/add-leave-application/add-leave-application').then((m) => m.AddLeaveApplicationComponent),
+    component: AddLeaveApplicationComponent,
     canActivate: [authGuard, requirePermission('leave_application_form', 'update')],
   },
   {
     path: 'employee-action/approval-authority-setup',
-    loadComponent: () => import('./components/HR-Portal/employee-action/approval-authority-setup/approval-authority-setup').then((m) => m.ApprovalAuthoritySetupComponent),
+    component: ApprovalAuthoritySetupComponent,
     canActivate: [authGuard],
   },
   {
     path: 'setup/gl-account-determination',
-    loadComponent: () => import('./components/setup/gl-account-determination/gl-account-determination').then((m) => m.GlAccountDeterminationComponent),
+    component: GlAccountDeterminationComponent,
     canActivate: [authGuard, requirePermission('gl_account_determination_form', 'list')],
   },
   {
     path: 'setup/leave-types',
-    loadComponent: () => import('./components/setup/leave-types/leave-types').then((m) => m.LeaveTypesComponent),
+    component: LeaveTypesComponent,
     canActivate: [authGuard, requirePermission('leave_types_form', 'list')],
   },
   {
     path: 'setup/user-setup',
-    loadComponent: () => import('./components/setup/user-setup/user-setup').then((m) => m.UserSetupComponent),
+    component: UserSetupComponent,
     canActivate: [authGuard, requirePermission('user_setup_form', 'list')],
   },
   {
     path: 'setup/workstation',
-    loadComponent: () => import('./components/setup/workstation/workstation').then((m) => m.WorkstationComponent),
+    component: WorkstationComponent,
     canActivate: [authGuard, requirePermission('workstation_form', 'list')],
   },
   {
     path: 'setup/kpi-setup/add',
-    loadComponent: () => import('./components/setup/kpi-setup/add-kpi-setup/add-kpi-setup').then((m) => m.AddKpiSetupComponent),
+    component: AddKpiSetupComponent,
     canActivate: [authGuard],
   },
   {
     path: 'setup/kpi-setup/:id/edit',
-    loadComponent: () => import('./components/setup/kpi-setup/edit-kpi-setup/edit-kpi-setup').then((m) => m.EditKpiSetupComponent),
+    component: EditKpiSetupComponent,
     canActivate: [authGuard],
   },
   {
     path: 'setup/kpi-setup',
-    loadComponent: () => import('./components/setup/kpi-setup/kpi-setup').then((m) => m.KpiSetupComponent),
+    component: KpiSetupComponent,
     canActivate: [authGuard],
   },
   {
     path: 'setup/overtime-list',
-    loadComponent: () => import('./components/setup/overtime-list/overtime-list').then((m) => m.OvertimeListComponent),
+    component: OvertimeListComponent,
     canActivate: [authGuard, requirePermission('overtime_list_form', 'list')],
   },
   {
     path: 'setup/master-form',
-    loadComponent: () => import('./components/setup/master-form/master-form').then((m) => m.MasterFormComponent),
+    component: MasterFormComponent,
     canActivate: [authGuard, requirePermission('master_form', 'list')],
   },
   {
     path: 'setup/withholding-tax',
-    loadComponent: () => import('./components/setup/withholding-tax/withholding-tax').then((m) => m.WithholdingTaxComponent),
+    component: WithholdingTaxComponent,
     canActivate: [authGuard, requirePermission('withholding_tax_form', 'list')],
   },
   {
     path: 'setup/issue-from-production-list',
-    loadComponent: () => import('./components/setup/issue-from-production-list/issue-from-production-list').then((m) => m.IssueFromProductionListComponent),
+    component: IssueFromProductionListComponent,
     canActivate: [authGuard, requirePermission('good_issue_form', 'list')],
   },
   {
     path: 'setup/issue-from-production',
-    loadComponent: () => import('./components/setup/issue-from-production/issue-from-production').then((m) => m.IssueFromProductionComponent),
+    component: IssueFromProductionComponent,
     canActivate: [authGuard, requirePermission('good_issue_form', 'add')],
   },
   {
     path: 'setup/purchase-request',
-    loadComponent: () => import('./components/setup/purchase-request/purchase-request').then((m) => m.PurchaseRequestComponent),
+    component: PurchaseRequestComponent,
     canActivate: [authGuard],
   },
   {
     path: 'setup/purchase-order-list',
-    loadComponent: () => import('./components/setup/purchase-order-list/purchase-order-list').then((m) => m.PurchaseOrderListComponent),
+    component: PurchaseOrderListComponent,
     canActivate: [authGuard],
   },
   {
     path: 'termination',
-    loadComponent: () => import('./components/HR-Portal/termination/termination-form').then((m) => m.TerminationFormComponent),
+    component: TerminationFormComponent,
     canActivate: [authGuard, requirePermission('termination_form', 'list')],
   },
   {
     path: 'termination/create',
-    loadComponent: () => import('./components/HR-Portal/termination/add-termination/add-termination').then((m) => m.AddTerminationComponent),
+    component: AddTerminationComponent,
     canActivate: [authGuard, requirePermission('termination_form', 'add')],
   },
   {
     path: 'termination/edit/:id',
-    loadComponent: () => import('./components/HR-Portal/termination/add-termination/add-termination').then((m) => m.AddTerminationComponent),
+    component: AddTerminationComponent,
     canActivate: [authGuard, requirePermission('termination_form', 'update')],
   },
   ...plantMaintenanceRoutes.map((route) =>
-    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+    route.redirectTo ? route : { ...route, canActivate: [authGuard] },
   ),
   ...miscellaneousRoutes.map((route) =>
-    route.redirectTo ? route : { ...route, canActivate: [authGuard] }
+    route.redirectTo ? route : { ...route, canActivate: [authGuard] },
   ),
 ];

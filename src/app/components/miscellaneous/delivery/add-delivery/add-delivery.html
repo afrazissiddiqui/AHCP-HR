@@ -242,6 +242,8 @@
                     <tr
                       class="sir-modal-row"
                       [class.sir-modal-row--selected]="activeBatchSelectionLineIndex() === i"
+                      [class.sir-modal-row--completed]="isBatchSelectionComplete(line)"
+                      [class.sir-modal-row--incomplete]="!isBatchSelectionComplete(line)"
                       (click)="selectBatchSelectionLine(i)"
                     >
                       <td>{{ line.itemCode || 'Row ' + (i + 1) }}</td>
@@ -269,7 +271,10 @@
                 <strong>Required Qty:</strong> {{ activeLine.quantity ?? 0 }}
               </span>
               <span class="sir-batch-info-item">
-                <strong>Selected Batch:</strong> {{ activeLine.batchSerialNumber || '—' }}
+                <strong>Already Issued Quantity:</strong> {{ getAlreadyIssuedQuantity(activeLine) }}
+              </span>
+              <span class="sir-batch-info-item" [class.sir-batch-info-item--remaining-zero]="getRemainingRequiredQuantity(activeLine) === 0">
+                <strong>Remaining Required:</strong> {{ getRemainingRequiredQuantity(activeLine) }}
               </span>
             </div>
             <div class="sir-batch-modal-scroll">
@@ -278,26 +283,37 @@
                   <thead>
                     <tr>
                       <th>Batch No.</th>
-                      <th>Warehouse</th>
-                      <th>Status</th>
-                      <th>Action</th>
+                      <th>Available Qty</th>
+                      <th>Issue Qty</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @for (batch of batchOptionsForLine(activeLine); track batch) {
-                      <tr class="sir-modal-row" [class.sir-modal-row--selected]="activeLine.batchSerialNumber === batch" (click)="selectBatchForActiveLine(batch)">
-                        <td>{{ batch }}</td>
-                        <td>{{ activeLine.warehouse || '—' }}</td>
-                        <td>{{ activeLine.batchSerialNumber === batch ? 'Selected' : 'Available' }}</td>
+                    @for (batch of activeLine.availableBatches ?? []; track batch.batchNo) {
+                      <tr
+                        class="sir-modal-row"
+                        [class.sir-modal-row--selected]="activeLine.batchSerialNumber === batch.batchNo"
+                        (click)="selectBatchForActiveLine(batch)"
+                      >
+                        <td>{{ batch.batchNo }}</td>
+                        <td>{{ batch.quantity }}</td>
                         <td>
-                          <button type="button" class="sir-inline-button" (click)="selectBatchForActiveLine(batch)">
-                            Choose
-                          </button>
+                          <input
+                            type="number"
+                            class="sir-table-input"
+                            [ngModel]="batch.issueQuantity ?? 0"
+                            (ngModelChange)="updateBatchIssueQuantity(batch, $event)"
+                            (input)="onBatchIssueQuantityInput(batch, activeLine, $event)"
+                            (blur)="validateBatchIssueQuantity(batch, activeLine)"
+                            min="0"
+                            [max]="getMaxAvailableForBatch(batch, activeLine)"
+                            [title]="'Max: min(Available='+batch.quantity+', Remaining Required='+getRemainingRequiredQuantity(activeLine)+')'"
+                            [disabled]="activeLine.batchSerialNumber !== batch.batchNo"
+                          />
                         </td>
                       </tr>
                     } @empty {
                       <tr>
-                        <td colspan="4" class="sir-modal-empty">No batches available for this item.</td>
+                        <td colspan="3" class="sir-modal-empty">No batch information available for this item.</td>
                       </tr>
                     }
                   </tbody>

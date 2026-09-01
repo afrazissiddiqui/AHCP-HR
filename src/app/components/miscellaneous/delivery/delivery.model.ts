@@ -25,6 +25,12 @@ export interface DeliveryHeader {
   igpDateCus: string;
 }
 
+export interface DeliveryBatchSelection {
+  batchNo: string;
+  quantity: number;
+  issueQuantity?: number | null;
+}
+
 export interface DeliveryLine {
   itemCode: string;
   itemDescription: string;
@@ -47,6 +53,7 @@ export interface DeliveryLine {
   commodityClassification: string;
   qtyPerJumboCarton: number | null;
   jumboCartonsCount: number | null;
+  availableBatches?: DeliveryBatchSelection[];
 }
 
 function todayDateString(): string {
@@ -106,6 +113,7 @@ export function createEmptyDeliveryLine(): DeliveryLine {
     commodityClassification: '',
     qtyPerJumboCarton: null,
     jumboCartonsCount: null,
+    availableBatches: [],
   };
 }
 

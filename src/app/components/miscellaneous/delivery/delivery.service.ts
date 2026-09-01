@@ -106,6 +106,23 @@ export function buildCreateDeliveryPayload(
             : 0;
         const resolvedBaseLine = Number.isFinite(baseLine) ? baseLine : 0;
 
+        const selectedBatches = (line.availableBatches ?? [])
+          .filter((batch) => (batch.issueQuantity ?? 0) > 0)
+          .map((batch) => ({
+            batchNumber: batch.batchNo.trim(),
+            quantity: batch.issueQuantity ?? 0,
+          }))
+          .filter((batch) => batch.batchNumber && batch.quantity > 0);
+
+        const fallbackBatches = line.batchSerialNumber.trim()
+          ? [
+              {
+                batchNumber: line.batchSerialNumber.trim(),
+                quantity: line.quantity ?? 0,
+              },
+            ]
+          : [];
+
         return {
           baseEntry: resolvedBaseEntry,
           baseLine: resolvedBaseLine,
@@ -113,14 +130,7 @@ export function buildCreateDeliveryPayload(
           warehouse: line.warehouse.trim(),
           quantity: line.quantity ?? 0,
           discountPercent: Math.max(0, Math.min(100, line.discountPercent ?? 0)),
-          batches: line.batchSerialNumber.trim()
-            ? [
-                {
-                  batchNumber: line.batchSerialNumber.trim(),
-                  quantity: line.quantity ?? 0,
-                },
-              ]
-            : [],
+          batches: selectedBatches.length > 0 ? selectedBatches : fallbackBatches,
         };
       }),
   };
