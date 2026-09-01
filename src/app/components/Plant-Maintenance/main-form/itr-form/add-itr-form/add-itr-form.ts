@@ -77,6 +77,7 @@ export class AddItrFormComponent implements OnInit {
   readonly machineName = signal('');
   readonly maintenanceType = signal('');
   readonly maintenanceFrequency = signal('');
+  readonly location = signal('');
   readonly serialNo = signal('');
   readonly moldNo = signal('');
   readonly hotRunnerJobNo = signal('');
@@ -136,6 +137,8 @@ export class AddItrFormComponent implements OnInit {
     'Semi-annually',
     'Anually',
   ] as const;
+
+  readonly locationOptions = ['AHCP_Peshawar', 'AHCP_HO', 'AHCP_Faisalabad'] as const;
 
   private kpiRows = createEmptyItrKpiRows();
   private safetyCheckpoints = createEmptyItrSafetyCheckpoints();
@@ -344,6 +347,7 @@ export class AddItrFormComponent implements OnInit {
     const machineName = this.machineName().trim();
     const maintenanceType = this.maintenanceType().trim();
     const maintenanceFrequency = this.maintenanceFrequency().trim();
+    const location = this.location().trim();
     const inspector = this.inspector().trim() || this.resolveInspectorName();
 
     if (!machineId) {
@@ -370,6 +374,10 @@ export class AddItrFormComponent implements OnInit {
     }
     if (!docDate) {
       this.alertService.validation('Please enter a Doc Date.');
+      return;
+    }
+    if (!location) {
+      this.alertService.validation('Please select a Location.');
       return;
     }
 
@@ -416,6 +424,7 @@ export class AddItrFormComponent implements OnInit {
       machineName,
       maintenanceType,
       maintenanceFrequency,
+      location,
       serialNo: this.serialNo().trim(),
       moldNo: this.moldNo().trim(),
       hotRunnerJobNo: this.hotRunnerJobNo().trim(),
@@ -472,6 +481,7 @@ export class AddItrFormComponent implements OnInit {
     this.machineName.set(record.machineName);
     this.maintenanceType.set(record.maintenanceType);
     this.maintenanceFrequency.set(record.maintenanceFrequency);
+    this.location.set(record.location ?? '');
     this.serialNo.set(record.serialNo);
     this.moldNo.set(record.moldNo);
     this.hotRunnerJobNo.set(record.hotRunnerJobNo);

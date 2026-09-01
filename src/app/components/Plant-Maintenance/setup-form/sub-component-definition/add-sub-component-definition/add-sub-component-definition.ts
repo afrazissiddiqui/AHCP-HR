@@ -12,6 +12,7 @@ import { SubComponentDefinitionService, SubComponentMachineRecord, MachineInput 
 const SUB_COMPONENT_MACHINE_ITEM_TYPE = 'F';
 
 const MACHINE_TYPE_OPTIONS = ['Blowing', 'Injection', 'Other'] as const;
+const LOCATION_OPTIONS = ['AHCP_Peshawar', 'AHCP_HO', 'AHCP_Faisalabad'] as const;
 
 @Component({
   selector: 'app-add-sub-component-definition',
@@ -36,9 +37,11 @@ export class AddSubComponentDefinitionComponent implements OnInit {
   readonly machineId = signal('');
   readonly machineName = signal('');
   readonly machineType = signal('');
+  readonly location = signal('');
   readonly subComponents = signal<string[]>(['']);
   readonly isSaving = signal(false);
   readonly machineTypeOptions = MACHINE_TYPE_OPTIONS;
+  readonly locationOptions = LOCATION_OPTIONS;
 
   readonly machineOptions = computed(() => {
     this.machineItemService.records(SUB_COMPONENT_MACHINE_ITEM_TYPE)();
@@ -243,6 +246,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.machineId.set('');
     this.machineName.set('');
     this.machineType.set('');
+    this.location.set('');
     this.subComponents.set(['']);
   }
 
@@ -263,6 +267,12 @@ export class AddSubComponentDefinitionComponent implements OnInit {
 
     if (!machineType) {
       this.alertService.validation('Select Machine Type.');
+      return;
+    }
+
+    const location = this.location().trim();
+    if (!location) {
+      this.alertService.validation('Select a Location.');
       return;
     }
 
@@ -290,6 +300,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       machineId,
       machineName,
       machineType,
+      location,
       subComponents,
     };
     const editingId = this.editingRecordId();
@@ -337,6 +348,7 @@ export class AddSubComponentDefinitionComponent implements OnInit {
     this.machineId.set(record.machineId === '—' ? '' : record.machineId);
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
     this.machineType.set(this.normalizeMachineType(record.machineType));
+    this.location.set(this.normalizeLocation(record.location));
     this.subComponents.set(
       record.subComponents.length ? [...record.subComponents] : [''],
     );
@@ -356,5 +368,13 @@ export class AddSubComponentDefinitionComponent implements OnInit {
       return '';
     }
     return (MACHINE_TYPE_OPTIONS as readonly string[]).includes(trimmed) ? trimmed : '';
+  }
+
+  private normalizeLocation(value?: string): string {
+    const trimmed = (value ?? '').trim();
+    if (!trimmed || trimmed === '—') {
+      return '';
+    }
+    return (LOCATION_OPTIONS as readonly string[]).includes(trimmed) ? trimmed : '';
   }
 }

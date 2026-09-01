@@ -25,6 +25,7 @@ import {
 type InspectionLineField = keyof MaintenanceActivityInspectionLine;
 
 const MACHINE_TYPE_OPTIONS = ['Blowing', 'Injection', 'Other'] as const;
+const LOCATION_OPTIONS = ['AHCP_Peshawar', 'AHCP_HO', 'AHCP_Faisalabad'] as const;
 
 
 
@@ -105,6 +106,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
   readonly machineType = signal('');
 
+  readonly location = signal('');
+
   readonly maintenanceNature = signal('');
 
   readonly plantMaintenanceFrequency = signal('');
@@ -113,6 +116,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
   readonly components = signal<MaintenanceActivityComponent[]>([]);
   readonly machineTypeOptions = MACHINE_TYPE_OPTIONS;
+  readonly locationOptions = LOCATION_OPTIONS;
 
   readonly idSuggestionsOpen = signal(false);
 
@@ -514,6 +518,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     this.machineType.set('');
 
+    this.location.set('');
+
     this.maintenanceNature.set('');
 
     this.plantMaintenanceFrequency.set('');
@@ -545,6 +551,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     const machineType = this.machineType().trim();
 
     const maintenanceNature = this.maintenanceNature().trim();
+
+    const location = this.location().trim();
 
     const plantMaintenanceFrequency = this.plantMaintenanceFrequency().trim();
 
@@ -588,6 +596,11 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     if (!machineType) {
       this.alertService.validation('Select Machine Type.');
+      return;
+    }
+
+    if (!location) {
+      this.alertService.validation('Select a Location.');
       return;
     }
 
@@ -646,6 +659,8 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
       machineName: resolved.machineName,
 
       machineType,
+
+      location,
 
       maintenanceNature,
 
@@ -768,6 +783,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
 
     const subComponentRecord = this.subComponentService.getByMachineId(machine.machineId);
     this.machineType.set(this.normalizeMachineType(subComponentRecord?.machineType ?? ''));
+    this.location.set(this.normalizeLocation(subComponentRecord?.location ?? ''));
 
     this.applyComponentsFromSubComponentDefinition(machine.machineId);
 
@@ -856,6 +872,7 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
 
     this.machineType.set(this.normalizeMachineType(record.machineType));
+    this.location.set(this.normalizeLocation(record.location));
 
     this.maintenanceNature.set(record.maintenanceNature === '—' ? '' : record.maintenanceNature);
 
@@ -977,6 +994,14 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
       return '';
     }
     return (MACHINE_TYPE_OPTIONS as readonly string[]).includes(trimmed) ? trimmed : '';
+  }
+
+  private normalizeLocation(value?: string): string {
+    const trimmed = (value ?? '').trim();
+    if (!trimmed || trimmed === '—') {
+      return '';
+    }
+    return (LOCATION_OPTIONS as readonly string[]).includes(trimmed) ? trimmed : '';
   }
 
 }

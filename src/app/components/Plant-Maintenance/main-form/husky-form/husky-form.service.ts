@@ -794,6 +794,7 @@ export interface HuskyFormRecord {
   machineName: string;
   maintenanceType: string;
   maintenanceFrequency: string;
+  location?: string;
   serialNo: string;
   moldNo: string;
   hotRunnerJobNo: string;
@@ -834,6 +835,7 @@ export interface HuskyFormAddInput {
   machineName: string;
   maintenanceType: string;
   maintenanceFrequency: string;
+  location: string;
   serialNo: string;
   moldNo: string;
   hotRunnerJobNo: string;
@@ -863,6 +865,7 @@ export interface HuskyFormAddPayload {
   machine_name: string;
   maintenance_type: string;
   maintenance_frequency: string;
+  location: string;
   serial_no: string;
   mold_no: string;
   hot_runner_job_no: string;
@@ -1063,6 +1066,7 @@ export function buildHuskyFormAddPayload(entry: HuskyFormAddInput): HuskyFormAdd
     machine_name: entry.machineName.trim(),
     maintenance_type: entry.maintenanceType.trim(),
     maintenance_frequency: entry.maintenanceFrequency.trim(),
+    location: entry.location.trim(),
     serial_no: entry.serialNo.trim(),
     mold_no: entry.moldNo.trim(),
     hot_runner_job_no: entry.hotRunnerJobNo.trim(),
@@ -1405,6 +1409,7 @@ function mapApiItemToRecord(item: Record<string, unknown>): HuskyFormRecord {
       'maintenanceFrequency',
       'MaintenanceFrequency',
     ]),
+    location: pickStringValue(sources, ['location', 'Location']),
     serialNo: pickStringValue(sources, ['serial_no', 'serialNo', 'SerialNo']),
     moldNo: pickStringValue(sources, ['mold_no', 'moldNo', 'MoldNo']),
     hotRunnerJobNo: pickStringValue(sources, [

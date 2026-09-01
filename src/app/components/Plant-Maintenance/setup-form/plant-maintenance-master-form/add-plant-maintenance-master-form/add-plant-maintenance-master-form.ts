@@ -121,6 +121,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
   readonly machineId = signal('');
   readonly machineName = signal('');
   readonly machineType = signal('');
+  readonly location = signal('');
   readonly maintenanceNature = signal('');
   readonly plantMaintenanceFrequency = signal('');
   readonly plantMaintenanceType = signal('');
@@ -156,6 +157,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.getProfileSelectOptions('plantMaintenanceType', this.plantMaintenanceTypeOptions),
   );
 
+  readonly locationOptions = ['AHCP_Peshawar', 'AHCP_HO', 'AHCP_Faisalabad'] as const;
   readonly maintenanceNatureOptions = ['Electrical', 'Mechanical'] as const;
   readonly plantMaintenanceFrequencyOptions = [
     'Daily',
@@ -698,6 +700,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.machineId.set('');
     this.machineName.set('');
     this.machineType.set('');
+    this.location.set('');
     this.maintenanceNature.set('');
     this.plantMaintenanceFrequency.set('');
     this.plantMaintenanceType.set('');
@@ -719,6 +722,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     const machineId = this.machineId().trim();
     const machineName = this.machineName().trim();
     const machineType = this.machineType().trim();
+    const location = this.location().trim();
     const maintenanceNature = this.maintenanceNature().trim();
     const plantMaintenanceFrequency = this.plantMaintenanceFrequency().trim();
     const plantMaintenanceType = this.plantMaintenanceType().trim();
@@ -759,6 +763,11 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       this.alertService.validation(
         'Machine ID, Machine Name, and Machine Type are required.',
       );
+      return;
+    }
+
+    if (!location) {
+      this.alertService.validation('Select a Location.');
       return;
     }
 
@@ -830,6 +839,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       machineId,
       machineName,
       machineType,
+      location,
       maintenanceNature,
       plantMaintenanceFrequency,
       plantMaintenanceType,
@@ -852,6 +862,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       machineId,
       machineName,
       machineType,
+      location,
       maintenanceNature,
       plantMaintenanceFrequency,
       plantMaintenanceType,
@@ -969,6 +980,14 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     }
   }
 
+  private normalizeLocation(value?: string): string {
+    const trimmed = (value ?? '').trim();
+    if (!trimmed || trimmed === '—') {
+      return '';
+    }
+    return ['AHCP_Peshawar', 'AHCP_HO', 'AHCP_Faisalabad'].includes(trimmed) ? trimmed : '';
+  }
+
   private resolveComponentHeaderStatus(
     component: PlantMaintenanceMasterComponent,
   ): 'pass' | 'fail' | 'na' | '' {
@@ -999,6 +1018,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.machineId.set(record.machineId === '—' ? '' : record.machineId);
     this.machineName.set(record.machineName === '—' ? '' : record.machineName);
     this.machineType.set(record.machineType === '—' ? '' : record.machineType);
+    this.location.set(this.normalizeLocation(record.location));
     this.maintenanceNature.set(record.maintenanceNature === '—' ? '' : record.maintenanceNature);
     this.plantMaintenanceFrequency.set(
       record.plantMaintenanceFrequency === '—' ? '' : record.plantMaintenanceFrequency,
@@ -1030,6 +1050,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     this.machineId.set(machine.machineId);
     this.machineName.set(machine.machineName);
     this.machineType.set(machine.defaultMachineType);
+    this.location.set('');
     this.loadActivityProfilesForMachine(machine.machineId, machine.machineName);
   }
 

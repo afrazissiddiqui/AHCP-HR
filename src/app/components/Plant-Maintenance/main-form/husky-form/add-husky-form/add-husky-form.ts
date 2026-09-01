@@ -94,6 +94,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly machineName = signal('');
   readonly maintenanceType = signal('');
   readonly maintenanceFrequency = signal('');
+  readonly location = signal('');
   readonly serialNo = signal('');
   readonly moldNo = signal('');
   readonly hotRunnerJobNo = signal('');
@@ -145,6 +146,8 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     'Semi-annually',
     'Anually',
   ] as const;
+
+  readonly locationOptions = ['AHCP_Peshawar', 'AHCP_HO', 'AHCP_Faisalabad'] as const;
 
   readonly sectionNavItems: HuskySectionNavItem[] = [
     { id: 'husky-kpi-section', label: 'Key Performance Indicators (KPI)' },
@@ -344,7 +347,13 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isHeaderFieldInvalid(
-    field: 'machineId' | 'maintenanceType' | 'maintenanceFrequency' | 'inspector' | 'inspectionDate',
+    field:
+      | 'machineId'
+      | 'maintenanceType'
+      | 'maintenanceFrequency'
+      | 'location'
+      | 'inspector'
+      | 'inspectionDate',
   ): boolean {
     if (!this.submitAttempted()) {
       return false;
@@ -357,6 +366,8 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
         return !this.maintenanceType().trim();
       case 'maintenanceFrequency':
         return !this.maintenanceFrequency().trim();
+      case 'location':
+        return !this.location().trim();
       case 'inspector':
         return !this.inspector().trim();
       case 'inspectionDate':
@@ -521,6 +532,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     const machineName = this.machineName().trim();
     const maintenanceType = this.maintenanceType().trim();
     const maintenanceFrequency = this.maintenanceFrequency().trim();
+    const location = this.location().trim();
     const inspector = this.inspector().trim();
     const inspectionDate = this.inspectionDate().trim();
 
@@ -534,6 +546,10 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (!maintenanceFrequency) {
       this.alertService.validation('Please select a Maintenance Frequency.');
+      return;
+    }
+    if (!location) {
+      this.alertService.validation('Please select a Location.');
       return;
     }
     if (!inspector) {
@@ -550,6 +566,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       machineName,
       maintenanceType,
       maintenanceFrequency,
+      location,
       serialNo: this.serialNo().trim(),
       moldNo: this.moldNo().trim(),
       hotRunnerJobNo: this.hotRunnerJobNo().trim(),
@@ -668,6 +685,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.machineName.set(record.machineName);
     this.maintenanceType.set(record.maintenanceType);
     this.maintenanceFrequency.set(record.maintenanceFrequency);
+    this.location.set(record.location ?? '');
     this.serialNo.set(record.serialNo);
     this.moldNo.set(record.moldNo);
     this.hotRunnerJobNo.set(record.hotRunnerJobNo);

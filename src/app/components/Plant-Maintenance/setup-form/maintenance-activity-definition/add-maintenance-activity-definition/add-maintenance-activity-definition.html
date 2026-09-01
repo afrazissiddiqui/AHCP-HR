@@ -182,6 +182,22 @@
                 </select>
               </div>
             </div>
+
+            <div class="cjr-row scd-field-row">
+              <label for="mad-location">Location:</label>
+              <div class="scd-field-control">
+                <select
+                  id="mad-location"
+                  class="mad-select"
+                  [ngModel]="location()"
+                  (ngModelChange)="location.set($event)"
+                  name="location"
+                >
+                  <option value="">Select location</option>
+                  <option *ngFor="let item of locationOptions" [value]="item">{{ item }}</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -16,6 +16,7 @@ export interface MachinePayload {
   machine_id: string;
   machine_name: string;
   machine_type: string;
+  location?: string;
   sub_components: MachineSubComponentPayload[];
 }
 
@@ -24,6 +25,7 @@ export interface MachineInput {
   machineName: string;
   /** Resolved from SAP item or existing record; required by API, not shown in the form. */
   machineType?: string;
+  location?: string;
   subComponents: string[];
 }
 
@@ -45,6 +47,7 @@ export function buildMachinePayload(entry: MachineInput): MachinePayload {
     machine_id: entry.machineId.trim(),
     machine_name: entry.machineName.trim(),
     machine_type: (entry.machineType ?? '').trim(),
+    location: (entry.location ?? '').trim(),
     sub_components: entry.subComponents
       .map((name) => name.trim())
       .filter(Boolean)
@@ -273,6 +276,7 @@ export class SubComponentDefinitionService {
       machineId: this.pickString(sources, ['machine_id', 'machineId', 'MachineId']) || '—',
       machineName: this.pickString(sources, ['machine_name', 'machineName', 'MachineName']) || '—',
       machineType: this.pickString(sources, ['machine_type', 'machineType', 'MachineType']) || '—',
+      location: this.pickString(sources, ['location', 'Location', 'machine_location', 'machineLocation', 'MachineLocation']) || '—',
       subComponents: this.mapSubComponents(item),
       selected: false,
     };

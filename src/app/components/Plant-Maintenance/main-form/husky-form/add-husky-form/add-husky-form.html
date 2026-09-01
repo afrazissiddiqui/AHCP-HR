@@ -157,6 +157,23 @@
               </select>
               </div>
             </div>
+
+            <div class="cjr-row scd-field-row">
+              <label for="husky-location">Location:</label>
+              <div class="scd-field-control">
+                <select
+                  id="husky-location"
+                  class="mad-select husky-form-select husky-header-select"
+                  [class.husky-field__control--error]="isHeaderFieldInvalid('location')"
+                  [ngModel]="location()"
+                  (ngModelChange)="location.set($event)"
+                  name="location"
+                >
+                  <option value="">Select location</option>
+                  <option *ngFor="let item of locationOptions" [value]="item">{{ item }}</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <div class="cjr-personal-col">

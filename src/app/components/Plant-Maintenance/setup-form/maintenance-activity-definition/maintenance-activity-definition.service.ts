@@ -51,6 +51,7 @@ export interface MaintenanceActivityDefinitionInput {
   machineName: string;
   /** Required by API; resolved from SAP item or existing record, not shown in the form. */
   machineType?: string;
+  location?: string;
   maintenanceNature: string;
   plantMaintenanceFrequency: string;
   plantMaintenanceType: string;
@@ -61,6 +62,7 @@ export interface MaintenanceActivityDefinitionPayload {
   machine_id: string;
   machine_name: string;
   machine_type: string;
+  location?: string;
   maintenance_nature: string;
   plant_maintenance_frequency: string;
   plant_maintenance_type: string;
@@ -108,6 +110,7 @@ export function buildMaintenanceActivityPayload(
     machine_id: entry.machineId.trim(),
     machine_name: entry.machineName.trim(),
     machine_type: (entry.machineType ?? '').trim(),
+    location: (entry.location ?? '').trim(),
     maintenance_nature: entry.maintenanceNature.trim(),
     plant_maintenance_frequency: entry.plantMaintenanceFrequency.trim(),
     plant_maintenance_type: entry.plantMaintenanceType.trim(),
@@ -394,6 +397,9 @@ export class MaintenanceActivityDefinitionService {
       machineId: this.pickString(sources, ['machine_id', 'machineId', 'MachineId']) || '—',
       machineName: this.pickString(sources, ['machine_name', 'machineName', 'MachineName']) || '—',
       machineType: this.pickString(sources, ['machine_type', 'machineType', 'MachineType']) || '—',
+      location:
+        this.pickString(sources, ['location', 'Location', 'machine_location', 'machineLocation', 'MachineLocation']) ||
+        '—',
       maintenanceNature:
         this.pickString(sources, ['maintenance_nature', 'maintenanceNature', 'MaintenanceNature']) ||
         '—',

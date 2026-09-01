@@ -21,6 +21,7 @@ export interface PlantMaintenanceMachineRecordBase {
   machineId: string;
   machineName: string;
   machineType: string;
+  location?: string;
   selected: boolean;
 }
 

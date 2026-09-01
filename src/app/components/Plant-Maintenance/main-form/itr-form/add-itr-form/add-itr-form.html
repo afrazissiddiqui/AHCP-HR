@@ -129,6 +129,20 @@
             </div>
             <div class="itr-form-fields">
               <div class="itr-field">
+                <label class="itr-field__label" for="itr-location">Location</label>
+                <select
+                  id="itr-location"
+                  class="mad-select itr-field__control itr-form-select"
+                  [ngModel]="location()"
+                  (ngModelChange)="location.set($event)"
+                  name="location"
+                >
+                  <option value="">Select location</option>
+                  <option *ngFor="let item of locationOptions" [value]="item">{{ item }}</option>
+                </select>
+              </div>
+
+              <div class="itr-field">
                 <label class="itr-field__label" for="husky-posting-date">Posting Date</label>
                 <input
                   id="husky-posting-date"

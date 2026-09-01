@@ -59,6 +59,7 @@ export interface PlantMaintenanceMasterFormInput {
   machineId: string;
   machineName: string;
   machineType: string;
+  location?: string;
   maintenanceNature: string;
   plantMaintenanceFrequency: string;
   plantMaintenanceType: string;
@@ -73,6 +74,7 @@ export interface PlantMaintenanceMasterFormPayload {
   machineId: string;
   machineName: string;
   machineType: string;
+  location?: string;
   maintenanceNature: string;
   plantMaintenanceFrequency: string;
   plantMaintenanceType: string;
@@ -228,6 +230,7 @@ export function buildPlantMaintenanceMasterFormPayload(
     machineId: entry.machineId.trim(),
     machineName: entry.machineName.trim(),
     machineType: entry.machineType.trim(),
+    location: (entry.location ?? '').trim(),
     maintenanceNature: entry.maintenanceNature.trim(),
     plantMaintenanceFrequency: entry.plantMaintenanceFrequency.trim(),
     plantMaintenanceType: entry.plantMaintenanceType.trim(),
@@ -363,6 +366,7 @@ export class PlantMaintenanceMasterFormService {
         r.machineId.trim().toLowerCase() === entry.machineId.trim().toLowerCase() &&
         r.machineName.trim().toLowerCase() === entry.machineName.trim().toLowerCase() &&
         r.machineType.trim().toLowerCase() === entry.machineType.trim().toLowerCase() &&
+        (r.location ?? '').trim().toLowerCase() === (entry.location ?? '').trim().toLowerCase() &&
         r.maintenanceNature.trim().toLowerCase() === entry.maintenanceNature.trim().toLowerCase() &&
         r.plantMaintenanceFrequency.trim().toLowerCase() ===
           entry.plantMaintenanceFrequency.trim().toLowerCase() &&
@@ -595,6 +599,9 @@ export class PlantMaintenanceMasterFormService {
       machineId: this.pickString(sources, ['machineId', 'machine_id', 'MachineId']) || '—',
       machineName: this.pickString(sources, ['machineName', 'machine_name', 'MachineName']) || '—',
       machineType: this.pickString(sources, ['machineType', 'machine_type', 'MachineType']) || '—',
+      location:
+        this.pickString(sources, ['location', 'Location', 'machine_location', 'machineLocation', 'MachineLocation']) ||
+        '—',
       maintenanceNature:
         this.pickString(sources, ['maintenanceNature', 'maintenance_nature', 'MaintenanceNature']) ||
         '—',

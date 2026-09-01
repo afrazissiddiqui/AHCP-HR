@@ -626,6 +626,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       providentApplicable: this.providentApplicable(),
       socialSecurityApplicable: this.socialSecurityApplicable(),
       fuelLimit: this.fuelLimit(),
+      grauity: this.gratuityBalance(),
       gratuityBalance: this.gratuityBalance(),
       leaveEligibilityCriteria: '',
     };
@@ -1818,7 +1819,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     );
     this.fuelLimit.set(this.applicationFormService.formatFuelLimitForForm(remuneration.fuelLimit));
 
-    const gratuityValue = remuneration.gratuityBalance?.trim() ?? '';
+    const gratuityValue =
+      remuneration.grauity?.trim() || remuneration.gratuityBalance?.trim() || '';
     this.gratuityBalance.set(gratuityValue);
 
     const leaveRows = detail.leaveManagement?.length
