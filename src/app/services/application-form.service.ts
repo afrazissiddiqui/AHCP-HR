@@ -261,6 +261,7 @@ export interface EmployeeProfileRemunerationPayload {
   paymentMode: string;
   accountTitle: string;
   bankName: string;
+  branchName: string;
   accountNo: string;
   accountType: string;
   effectiveDate: string;
@@ -345,6 +346,7 @@ export interface EmployeeProfileAddPayload {
   overTimeApplicable: boolean;
   allowancesApplicable: boolean;
   eobiApplicable: boolean;
+  providentApplicable: boolean;
   socialSecurityApplicable: boolean;
   medicalAllowances: number | string;
   fuelAllowances: number | string | null;
@@ -352,6 +354,7 @@ export interface EmployeeProfileAddPayload {
   carAllowances: number | string;
   otherAllowances: number | string;
   fuelLimit: number | string | null;
+  gratuityBalance: number | string;
   leaveEligibilityCriteria: string | null;
   leaveType: string;
   leaveDays: number | string;
@@ -433,6 +436,7 @@ const REMUNERATION_FIELD_KEYS: ReadonlyArray<[camel: string, snake: string]> = [
   ['overTimeApplicable', 'over_time_applicable'],
   ['allowancesApplicable', 'allowances_applicable'],
   ['eobiApplicable', 'eobi_applicable'],
+  ['providentApplicable', 'provident_applicable'],
   ['socialSecurityApplicable', 'social_security_applicable'],
   ['fuelLimit', 'fuel_limit'],
   ['leaveEligibilityCriteria', 'leave_eligibility_criteria'],
@@ -878,8 +882,8 @@ export class ApplicationFormService {
       remarks: toNullableString(personal.remarks),
       employmentStatus:
         normalizeEmploymentStatus(personal.employmentStatus) || 'Permanent',
-      department: personal.departmentInAhcp,
-      departmentInAhcp: null,
+      department: detail.requisition.department || personal.departmentInAhcp,
+      departmentInAhcp: toNullableString(personal.departmentInAhcp),
       designation: personal.designation,
       jobDescription: personal.jobDescription,
       roleSalary: personal.roleSalary || personal.workGradeLevel,
@@ -904,6 +908,7 @@ export class ApplicationFormService {
       overTimeApplicable: toApiFlag(remuneration.overTimeApplicable),
       allowancesApplicable: toApiFlag(remuneration.allowancesApplicable),
       eobiApplicable: toApiFlag(remuneration.eobiApplicable),
+      providentApplicable: toApiFlag(remuneration.providentApplicable),
       socialSecurityApplicable: toApiFlag(remuneration.socialSecurityApplicable),
       fuelLimit: this.parseFuelLimitForApi(remuneration.fuelLimit),
       leaveType: primaryLeave.leaveType || remuneration.leaveType,
@@ -917,6 +922,7 @@ export class ApplicationFormService {
       mobileAllowances: toApiNumber(remuneration.mobileAllowances),
       carAllowances: toApiNumber(remuneration.carAllowances),
       otherAllowances: toApiNumber(remuneration.otherAllowances),
+      gratuityBalance: toApiNumber(remuneration.gratuityBalance || remuneration.grauity),
       assetAllocated: toNullableString(assets?.assetAllocated),
       allocationStatus: toNullableString(assets?.allocationStatus),
       allocationDateType: toNullableString(assets?.allocationDateType),
@@ -1085,6 +1091,7 @@ export class ApplicationFormService {
       paymentMode: payload.paymentMode,
       accountTitle: payload.accountTitle,
       bankName: payload.bankName,
+      branchName: payload.branchName,
       accountNo: payload.accountNo,
       accountType: payload.accountType,
       effectiveDate: payload.effectiveDate,
@@ -1099,6 +1106,8 @@ export class ApplicationFormService {
       allowances_applicable: payload.allowancesApplicable,
       eobiApplicable: payload.eobiApplicable,
       eobi_applicable: payload.eobiApplicable,
+      providentApplicable: payload.providentApplicable,
+      provident_applicable: payload.providentApplicable,
       socialSecurityApplicable: payload.socialSecurityApplicable,
       fuelLimit: payload.fuelLimit,
       leaveEligibilityCriteria: payload.leaveEligibilityCriteria,
@@ -1111,6 +1120,7 @@ export class ApplicationFormService {
       mobileAllowances: payload.mobileAllowances,
       carAllowances: payload.carAllowances,
       otherAllowances: payload.otherAllowances,
+      gratuity_balance: payload.gratuityBalance,
     };
   }
 
