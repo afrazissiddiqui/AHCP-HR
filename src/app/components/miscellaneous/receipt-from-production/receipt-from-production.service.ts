@@ -118,6 +118,13 @@ export interface CreateReceiptFromProductionPayload {
     quantity: number;
     warehouse: string;
     batch_no: string;
+    batches: Array<{
+      BatchNum: string;
+      Quantity: string;
+      MnfDate: string | null;
+      ProductionTime: string | null;
+      U_LegacyBatch: string | null;
+    }>;
     refilling?: boolean;
     existing_batch?: string;
   }>;
@@ -235,6 +242,15 @@ export function buildCreateReceiptFromProductionPayload(
     quantity: row.quantity ?? 0,
     warehouse: ((row.warehouse ?? '') as string).trim(),
     batch_no: ((row.batchNumber ?? '') as string).trim(),
+    batches: [
+      {
+        BatchNum: ((row.batchNumber ?? '') as string).trim(),
+        Quantity: (row.quantity ?? 0).toFixed(6),
+        MnfDate: ((row.manufacturingDate ?? '') as string).trim() || null,
+        ProductionTime: normalizeProductionTime(header.productionTime) || null,
+        U_LegacyBatch: ((row.legacyBatch ?? '') as string).trim() || null,
+      },
+    ],
     refilling: Boolean(row.refilling),
     existing_batch: ((row.existingBatch ?? '') as string).trim(),
   }));

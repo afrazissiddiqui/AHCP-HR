@@ -180,6 +180,32 @@ describe('AddReceiptFromProduction', () => {
     expect(payload.warehouse).toBe('FSD-WH03');
   });
 
+  it('includes the legacy batch in the item batch payload', () => {
+    component.headerForm.update((header) => ({ ...header, productionTime: '08:30' }));
+    component.contentLines.set([
+      {
+        ...createEmptyReceiptFromProductionLine(),
+        itemCode: 'FG-Toll-P-00000069',
+        batchNumber: 'FSD-26-000001',
+        legacyBatch: 'LEGACY-001',
+        quantity: 354816,
+        manufacturingDate: '2026-08-31',
+      },
+    ]);
+
+    const payload = buildCreateReceiptFromProductionPayload(component.headerForm(), component.contentLines());
+
+    expect(payload.items?.[0].batches).toEqual([
+      {
+        BatchNum: 'FSD-26-000001',
+        Quantity: '354816.000000',
+        MnfDate: '2026-08-31',
+        ProductionTime: '8:30',
+        U_LegacyBatch: 'LEGACY-001',
+      },
+    ]);
+  });
+
   it('prefers the changed line warehouse over a prefilled header warehouse', () => {
     component.headerForm.set({
       ...component.headerForm(),

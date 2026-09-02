@@ -52,9 +52,10 @@ export class App {
 
   protected readonly profileAvatarInitials = computed(() => {
     const record = this.applicationFormService.getSignedInUserRecord(
-      this.authService.getSessionUserId()
+      this.authService.getSessionUserId(),
+      this.authService.getSessionUser()?.name ?? null,
     );
-    const name = record?.EmployeeName?.trim() ?? '';
+    const name = record?.EmployeeName?.trim() || this.authService.getSessionUser()?.name?.trim() || '';
     if (!name) {
       return 'UI';
     }

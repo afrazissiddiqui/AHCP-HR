@@ -98,6 +98,7 @@
                   <th class="sir-col-batch">Refilling</th>
                   <th class="sir-col-batch">Existing Batches</th>
                   <th class="sir-col-batch">Batch</th>
+                  <th class="sir-col-batch">Legacy Batch</th>
                   <th class="sir-col-date">Manufacturing Date</th>
                   <th class="sir-col-date">Expiry Date</th>
                   <th class="sir-col-actions">Action</th>
@@ -140,6 +141,9 @@
                     </td>
                     <td class="sir-col-batch">
                       <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" [disabled]="line.refilling" (ngModelChange)="updateContentLine($index, 'batchNumber', $event)" />
+                    </td>
+                    <td class="sir-col-batch">
+                      <input type="text" class="sir-table-input" [ngModel]="line.legacyBatch" (ngModelChange)="updateContentLine($index, 'legacyBatch', $event)" />
                     </td>
                     <td class="sir-col-date">
                       <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine($index, 'manufacturingDate', $event)" />
