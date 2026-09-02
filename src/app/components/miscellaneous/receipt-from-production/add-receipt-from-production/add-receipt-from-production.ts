@@ -333,7 +333,7 @@ export class AddReceiptFromProduction implements OnInit {
     const firstItem = order.items?.[0];
     const orderItemCode = (order as ProductionOrderRecord & { itemCode?: string }).itemCode?.trim() || '';
     const orderItemName = (order as ProductionOrderRecord & { itemDescription?: string }).itemDescription?.trim() || '';
-    const defaultWarehouse = this.defaultWarehouseForBranch(order.branch || this.headerForm().branchId);
+    const defaultWarehouse = this.defaultWarehouseForProductionOrder(order);
 
     nextLine.itemCode = orderItemCode || firstItem?.itemCode || '';
     nextLine.itemDescription = orderItemName || firstItem?.itemDescription || '';
@@ -351,14 +351,23 @@ export class AddReceiptFromProduction implements OnInit {
     this.contentLines.set([nextLine]);
   }
 
-  private defaultWarehouseForBranch(branchId: string | undefined): string {
-    const normalized = (branchId ?? '').trim();
-    if (normalized === '1') {
+  private defaultWarehouseForProductionOrder(order: ProductionOrderRecord): string {
+    const normalizedWarehouse = order.warehouse.trim().toUpperCase();
+    if (normalizedWarehouse.startsWith('PSH')) {
       return 'PSH-WH06';
     }
-    if (normalized === '3') {
+    if (normalizedWarehouse.startsWith('FSD')) {
       return 'FSD-WH06';
     }
+
+    const normalizedBranch = (order.branch || this.headerForm().branchId || '').trim();
+    if (normalizedBranch === '1') {
+      return 'PSH-WH06';
+    }
+    if (normalizedBranch === '3') {
+      return 'FSD-WH06';
+    }
+
     return '';
   }
 

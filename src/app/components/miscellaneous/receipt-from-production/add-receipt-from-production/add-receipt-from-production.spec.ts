@@ -160,7 +160,24 @@ describe('AddReceiptFromProduction', () => {
     expect(component.contentLines().length).toBe(1);
     expect(component.contentLines()[0].itemCode).toBe('FG-Toll-P-00000069');
     expect(component.contentLines()[0].itemDescription).toBe('Toll Flint - Preform 45 Gram');
-    expect(component.contentLines()[0].warehouse).toBe('FSD-WH03');
+    expect(component.contentLines()[0].warehouse).toBe('FSD-WH06');
+  });
+
+  it('defaults the row warehouse from the production order warehouse prefix', () => {
+    component.applyProductionOrder({
+      docEntry: '54',
+      docNum: '5',
+      postDate: '2026-07-20',
+      dueDate: '2026-07-20',
+      startDate: '2026-07-20',
+      status: 'R',
+      warehouse: 'PSH-WH03',
+      branch: '3',
+      batchNumber: '',
+      items: [],
+    } as any);
+
+    expect(component.contentLines()[0].warehouse).toBe('PSH-WH06');
   });
 
   it('uses the manually selected warehouse when creating the payload', () => {
