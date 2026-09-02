@@ -265,6 +265,9 @@
                             @case ('approval') {
                               <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
                             }
+                            @case ('print') {
+                              <span class="comp-skeleton comp-skeleton--button" aria-hidden="true"></span>
+                            }
                           }
                         </td>
                       }
@@ -498,6 +501,22 @@
                                 </div>
                               } @else {
                                 <span class="comp-skeleton comp-skeleton--checkbox" aria-hidden="true"></span>
+                              }
+                            }
+                            @case ('print') {
+                              @if (isRowLoaded(row.apiId)) {
+                                <div class="comp-print-cell">
+                                  <button
+                                    type="button"
+                                    class="comp-print-btn"
+                                    (click)="$event.stopPropagation(); printPaySlip(row)"
+                                    [attr.aria-label]="'Print pay slip for ' + row.personName"
+                                  >
+                                    Print
+                                  </button>
+                                </div>
+                              } @else {
+                                <span class="comp-skeleton comp-skeleton--button" aria-hidden="true"></span>
                               }
                             }
                           }

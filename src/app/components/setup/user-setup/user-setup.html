@@ -12,7 +12,7 @@
         </div>
       </div>
 
-      <div class="user-setup-workspace">
+      <div class="user-setup-workspace" [style.--user-editor-width.px]="editorWidth()">
         <section class="form-panel form-panel--editor">
           <div class="form-panel-head">
             <div>
@@ -20,7 +20,7 @@
               <h2 class="form-panel-title">{{ formTitle() }}</h2>
               <p class="panel-subtitle">Account and permission setup.</p>
             </div>
-            </div>
+          </div>
 
           <div class="form-section">
             <div class="form-section-head">
@@ -190,6 +190,8 @@
             }
           </div>
         </section>
+
+        <div class="resize-handle" role="separator" aria-orientation="vertical" aria-label="Resize add user panel" (mousedown)="startResize($event)"></div>
 
         <section class="form-panel form-panel--list">
           <div class="form-panel-head users-panel-head">

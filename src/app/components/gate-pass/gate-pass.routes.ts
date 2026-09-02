@@ -7,6 +7,7 @@ import { CreateOgpComponent } from './ogp/create-ogp/create-ogp';
 import { AgpComponent } from './agp/agp';
 import { CreateAgpComponent } from './agp/create-agp/create-agp';
 import { requireAccess, requirePermission } from '../../guards/permission.guard';
+import { GatePassRedirectComponent } from './gate-pass-redirect';
 
 export const gatePassRoutes: Routes = [
   {
@@ -32,7 +33,7 @@ export const gatePassRoutes: Routes = [
       ),
     ],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'igp' },
+      { path: '', pathMatch: 'full', component: GatePassRedirectComponent },
       { path: 'igp', component: IgpComponent, canActivate: [requirePermission('igp_form', 'list')] },
       { path: 'igp/create', component: CreateIgpComponent, canActivate: [requirePermission('igp_form', 'add')] },
       { path: 'igp/edit/:id', component: CreateIgpComponent, canActivate: [requirePermission('igp_form', 'update')] },

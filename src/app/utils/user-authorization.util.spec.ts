@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getGatePassDefaultRoute } from '../components/gate-pass/gate-pass-access.util';
 import { buildAuthorizationTemplate, isPermissionGranted, permissionKey } from './user-authorization.util';
 
 describe('user authorization template', () => {
@@ -22,5 +23,11 @@ describe('user authorization template', () => {
 
     expect(isPermissionGranted(template, 'kpi_setup_form', 'list')).toBe(true);
     expect(isPermissionGranted(template, 'itr_setup_form', 'add')).toBe(false);
+  });
+
+  it('redirects AGP-only users to the AGP route instead of IGP', () => {
+    const can = (moduleSlug: string, action: string) => moduleSlug === 'agp_form' && action === 'list';
+
+    expect(getGatePassDefaultRoute(can)).toBe('/gate-pass/agp');
   });
 });

@@ -680,6 +680,29 @@
   cursor: default;
 }
 
+.comp-print-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.comp-print-btn {
+  border: 1px solid #0070f2;
+  background: #edf6ff;
+  color: #0058c7;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.comp-print-btn:hover {
+  background: #dfeeff;
+}
+
 .comp-emp-cell {
   width: 280px;
 }

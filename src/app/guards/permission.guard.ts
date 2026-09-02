@@ -8,17 +8,16 @@ import { AccessRequirement } from '../utils/access-requirement.util';
 export function requirePermission(moduleSlug: string, action: string): CanActivateFn {
   return () => {
     const permissionService = inject(PermissionService);
-    const router = inject(Router);
     const alertService = inject(AlertService);
 
     return permissionService.ensureLoaded().pipe(
-      map((): boolean | UrlTree => {
+      map((): boolean => {
         if (permissionService.can(moduleSlug, action)) {
           return true;
         }
 
         void alertService.error('Not allowed', permissionService.deniedMessage(moduleSlug, action));
-        return router.createUrlTree([permissionService.fallbackRoute(moduleSlug)]);
+        return false;
       }),
     );
   };
@@ -31,17 +30,16 @@ export function requireAccess(
 ): CanActivateFn {
   return () => {
     const permissionService = inject(PermissionService);
-    const router = inject(Router);
     const alertService = inject(AlertService);
 
     return permissionService.ensureLoaded().pipe(
-      map((): boolean | UrlTree => {
+      map((): boolean => {
         if (permissionService.canAccess(requirement)) {
           return true;
         }
 
         void alertService.error('Not allowed', permissionService.deniedMessage(deniedModuleSlug, deniedAction));
-        return router.createUrlTree([permissionService.fallbackRoute(deniedModuleSlug)]);
+        return false;
       }),
     );
   };

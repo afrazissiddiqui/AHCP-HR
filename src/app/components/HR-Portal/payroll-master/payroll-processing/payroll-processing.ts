@@ -324,17 +324,36 @@ export class PayrollProcessingComponent implements OnInit {
           const rows = Array.isArray(detail.Details) ? detail.Details.slice() : [];
           rows.sort((a, b) => String(a.employeeCode).localeCompare(String(b.employeeCode), undefined, { sensitivity: 'base' }));
 
-          const headers = [
-            'Employee Code',
-            'Name',
-            'Basic Salary',
-            'Gross Salary',
-            'Fuel',
-            'Overtime',
-            'Bonus',
-            'Total Earnings',
-            'Net Payable',
-            'Approved',
+          const exportColumns: Array<{ key: keyof PayrollProcessingRecord['Details'][number]; label: string }> = [
+            { key: 'employeeId', label: 'Employee ID' },
+            { key: 'employeeCode', label: 'Employee Code' },
+            { key: 'personName', label: 'Name' },
+            { key: 'basicSalary', label: 'Basic Salary' },
+            { key: 'grossSalary', label: 'Gross Salary' },
+            { key: 'medicalAllowance', label: 'Medical Allowance' },
+            { key: 'allowedLiters', label: 'Allowed Liters' },
+            { key: 'monthlyFuelRate', label: 'Monthly Fuel Rate' },
+            { key: 'fuelAllowance', label: 'Fuel Allowance' },
+            { key: 'mobileAllowance', label: 'Mobile Allowance' },
+            { key: 'carAllowance', label: 'Car Allowance' },
+            { key: 'otherAllowances', label: 'Other Allowances' },
+            { key: 'bonus', label: 'Bonus' },
+            { key: 'lastMonthGrossSalary', label: 'Last Month Gross Salary' },
+            { key: 'overtimeHours', label: 'Overtime Hours' },
+            { key: 'overtime', label: 'Overtime' },
+            { key: 'providentFund', label: 'Provident Fund' },
+            { key: 'gratuity', label: 'Gratuity' },
+            { key: 'eobiEmployee', label: 'EOBI Employee' },
+            { key: 'eobiEmployer', label: 'EOBI Employer' },
+            { key: 'arrears', label: 'Arrears' },
+            { key: 'loanAdjustment', label: 'Loan Adjustment' },
+            { key: 'loanAdvForm', label: 'Loan Adv Form' },
+            { key: 'lateAttendDeduction', label: 'Late Attend Deduction' },
+            { key: 'costToCompany', label: 'Cost To Company' },
+            { key: 'taxDeduction', label: 'Tax Deduction' },
+            { key: 'totalEarnings', label: 'Total Earnings' },
+            { key: 'netPayable', label: 'Net Payable' },
+            { key: 'approved', label: 'Approved' },
           ];
 
           const escape = (v: unknown) => {
@@ -353,20 +372,17 @@ export class PayrollProcessingComponent implements OnInit {
             return Number.isFinite(num) ? num.toFixed(2) : '';
           };
 
+          const headers = exportColumns.map((column) => column.label);
           const lines = [headers.join(',')];
           for (const r of rows) {
-            const line = [
-              escape(r.employeeCode),
-              escape(r.personName),
-              formatNumber(r.basicSalary),
-              formatNumber(r.grossSalary),
-              formatNumber(r.fuelAllowance),
-              formatNumber(r.overtime),
-              formatNumber(r.bonus),
-              formatNumber(r.totalEarnings),
-              formatNumber(r.netPayable),
-              escape(r.approved ? 'Yes' : 'No'),
-            ].join(',');
+            const line = exportColumns.map((column) => {
+              if (column.key === 'approved') {
+                return escape(r.approved ? 'Yes' : 'No');
+              }
+
+              const value = r[column.key];
+              return typeof value === 'number' ? formatNumber(value) : escape(value);
+            }).join(',');
             lines.push(line);
           }
 

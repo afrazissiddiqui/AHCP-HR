@@ -46,6 +46,7 @@ export class UserSetupComponent implements OnInit {
   readonly columns = signal<string[]>([]);
   readonly formMode = signal<UserFormMode>('add');
   readonly editingUserId = signal<string | number | null>(null);
+  readonly editorWidth = signal<number>(420);
   readonly formFields = signal<string[]>([]);
   readonly formModel = signal<Record<string, string | string[]>>({});
   readonly authorization = signal<UserAuthorizationModule[]>(buildAuthorizationTemplate());
@@ -192,6 +193,32 @@ export class UserSetupComponent implements OnInit {
   ngOnInit(): void {
     this.loadUsers();
     this.loadEmployeeProfiles();
+  }
+
+  resizePanel(width: number): void {
+    const minimumWidth = 360;
+    const maximumWidth = Math.max(minimumWidth + 120, window.innerWidth * 0.65);
+    this.editorWidth.set(Math.min(Math.max(width, minimumWidth), maximumWidth));
+  }
+
+  startResize(event: MouseEvent): void {
+    event.preventDefault();
+
+    const startX = event.clientX;
+    const startWidth = this.editorWidth();
+
+    const onMouseMove = (moveEvent: MouseEvent): void => {
+      const nextWidth = startWidth + (moveEvent.clientX - startX);
+      this.resizePanel(nextWidth);
+    };
+
+    const onMouseUp = (): void => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }
 
   loadEmployeeProfiles(): void {

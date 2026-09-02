@@ -188,10 +188,39 @@
 
 /* ─── Workspace grid ────────────────────────────────────────── */
 .user-setup-workspace {
-  align-items: start;
+  --user-editor-width: 420px;
+  align-items: stretch;
   display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(360px, 400px) minmax(0, 1fr);
+  gap: 0;
+  grid-template-columns: minmax(360px, var(--user-editor-width)) 12px minmax(0, 1fr);
+  position: relative;
+}
+
+.resize-handle {
+  align-self: stretch;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0));
+  border-left: 1px solid var(--us-line);
+  border-right: 1px solid var(--us-line);
+  cursor: col-resize;
+  height: auto;
+  margin: 0;
+  min-height: 100%;
+  position: relative;
+  width: 12px;
+  z-index: 2;
+}
+
+.resize-handle::before {
+  background: var(--us-primary);
+  border-radius: 999px;
+  content: '';
+  height: 28px;
+  left: 50%;
+  opacity: 0.75;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
 }
 
 .form-panel {
@@ -204,8 +233,13 @@
 }
 
 .form-panel--editor {
+  min-width: 0;
   position: sticky;
   top: 16px;
+}
+
+.form-panel--list {
+  min-width: 0;
 }
 
 .form-panel-accent {

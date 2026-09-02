@@ -121,7 +121,7 @@ export type PayrollColumnTone =
   | 'final'
   | 'approval';
 
-export type PayrollColumnType = 'currency' | 'readonly' | 'readonly-pill' | 'approval';
+export type PayrollColumnType = 'currency' | 'readonly' | 'readonly-pill' | 'approval' | 'print';
 
 export interface PayrollColumnGroup {
   id: string;
@@ -255,6 +255,7 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 168 },
     { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 152 },
     { key: 'approved', label: 'Approval', groupId: 'approval', type: 'approval', minWidth: 96 },
+    { key: 'paySlip', label: 'Pay Slip', groupId: 'approval', type: 'print', minWidth: 120 },
   ];
 
   readonly scrollMinWidth = computed(() =>
@@ -699,7 +700,7 @@ export class AddPayrollProcessComponent implements OnInit {
   }
 
   getGroupTotal(column: PayrollColumnDef): number | null {
-    if (column.key === 'approved') {
+    if (column.key === 'approved' || column.key === 'paySlip') {
       return null;
     }
     if (column.key === 'netPayable') {
@@ -773,6 +774,123 @@ export class AddPayrollProcessComponent implements OnInit {
       }
       return next;
     });
+  }
+
+  printPaySlip(row: PayrollProcessRow): void {
+    if (!row?.apiId) {
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=900,height=800');
+    if (!printWindow) {
+      void this.alertService.warning('Print', 'Your browser blocked the pay slip window. Please allow pop-ups and try again.');
+      return;
+    }
+
+    const content = this.buildPaySlipDocument(row);
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
+
+  private buildPaySlipDocument(row: PayrollProcessRow): string {
+    const totalEarnings = this.totalEarningsForRow(row);
+    const grossPayable = this.grossPayableForRow(row);
+    const netPayable = this.netPayableAfterTaxForRow(row);
+    const monthLabel =
+      this.monthOptions.find((option) => option.value === this.selectedMonth())?.label ??
+      String(this.selectedMonth());
+
+    const escapeHtml = (value: string | number | null | undefined): string =>
+      String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+    const fields = [
+      ['Employee Code', row.employeeCode],
+      ['Employee Name', row.personName],
+      ['Designation', row.designation || '—'],
+      ['Department', row.department || '—'],
+      ['Month', monthLabel],
+      ['Year', this.selectedYear()],
+      ['Basic Salary', this.formatMoney(row.basicSalary)],
+      ['Gross Salary', this.formatMoney(row.grossSalary)],
+      ['Fuel Allowance', this.formatMoney(row.fuelAllowance)],
+      ['Mobile Allowance', this.formatMoney(row.mobileAllowance)],
+      ['Car Allowance', this.formatMoney(row.carAllowance)],
+      ['Other Allowances', this.formatMoney(row.otherAllowances)],
+      ['Bonus', this.formatMoney(row.bonus)],
+      ['Overtime', this.formatMoney(row.overtime)],
+      ['Provident Fund', this.formatMoney(row.providentFund)],
+      ['Gratuity', this.formatMoney(row.gratuity)],
+      ['EOBI Employee', this.formatMoney(row.eobiEmployee)],
+      ['EOBI Employer', this.formatMoney(row.eobiEmployer)],
+      ['Arrears', this.formatMoney(row.arrears)],
+      ['Loan Deduction', this.formatMoney(row.loanAdjustment)],
+      ['Advance Deduction', this.formatMoney(row.loanAdvForm)],
+      ['Late Attendance Deduction', this.formatMoney(row.lateAttendDeduction)],
+      ['Tax Deduction', this.formatMoney(row.taxDeduction)],
+      ['Total Earnings', this.formatMoney(totalEarnings)],
+      ['Gross Payable', this.formatMoney(grossPayable)],
+      ['Net Payable', this.formatMoney(netPayable)],
+      ['Approved', row.approved ? 'Yes' : 'No'],
+    ];
+
+    return `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Payroll Pay Slip</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; }
+            .sheet { max-width: 900px; margin: 0 auto; border: 1px solid #dfe7f1; border-radius: 12px; overflow: hidden; }
+            .header { background: linear-gradient(135deg, #0a6ed1, #054a97); color: white; padding: 22px 28px; }
+            .header h1 { margin: 0; font-size: 26px; }
+            .header p { margin: 8px 0 0; opacity: 0.92; }
+            .body { padding: 24px 28px 28px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 16px; }
+            .field { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
+            .field strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; margin-bottom: 5px; }
+            .field span { font-size: 14px; font-weight: 600; color: #0f172a; }
+            .totals { margin-top: 22px; border-top: 2px solid #dfe7f1; padding-top: 18px; }
+            .total-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+            .total-line strong { font-weight: 700; }
+            @media print { body { margin: 0; } .sheet { box-shadow: none; border-color: #d1d9e3; } }
+          </style>
+        </head>
+        <body>
+          <div class="sheet">
+            <div class="header">
+              <h1>Payroll Pay Slip</h1>
+              <p>${escapeHtml(monthLabel)} ${escapeHtml(this.selectedYear())}</p>
+            </div>
+            <div class="body">
+              <div class="grid">
+                ${fields
+                  .map(
+                    ([label, value]) => `
+                      <div class="field">
+                        <strong>${escapeHtml(label)}</strong>
+                        <span>${escapeHtml(value)}</span>
+                      </div>`,
+                  )
+                  .join('')}
+              </div>
+              <div class="totals">
+                <div class="total-line"><span>Total Earnings</span><strong>${escapeHtml(this.formatMoney(totalEarnings))}</strong></div>
+                <div class="total-line"><span>Gross Payable</span><strong>${escapeHtml(this.formatMoney(grossPayable))}</strong></div>
+                <div class="total-line"><span>Net Payable</span><strong>${escapeHtml(this.formatMoney(netPayable))}</strong></div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>`;
   }
 
   private approvalForEmployee(apiId: string): boolean {

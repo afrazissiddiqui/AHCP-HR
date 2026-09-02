@@ -58,4 +58,11 @@ describe('UserSetupComponent', () => {
     expect(codes).toContain('EMP-00001');
     expect(codes).toContain('EMP-00002');
   });
+
+  it('allows the add-user panel to be widened beyond the default editor width', () => {
+    component.resizePanel(560);
+
+    expect(component.editorWidth()).toBe(560);
+    expect(component.editorWidth()).toBeGreaterThan(400);
+  });
 });
