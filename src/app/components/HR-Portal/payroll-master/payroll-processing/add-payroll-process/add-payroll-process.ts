@@ -1347,8 +1347,16 @@ export class AddPayrollProcessComponent implements OnInit {
     const eobiEmployer = computeEobiEmployerContribution(minimumWage);
 
     // Social Security calculation based on branch
-    const socialSecurityPunjab = this.calculateSocialSecurityPunjab(minimumWage, row.location);
-    const socialSecurityKpk = this.calculateSocialSecurityKpk(minimumWage, row.location);
+    const socialSecurityPunjab = this.calculateSocialSecurityPunjab(
+      minimumWage,
+      grossSalary,
+      row.location,
+    );
+    const socialSecurityKpk = this.calculateSocialSecurityKpk(
+      minimumWage,
+      grossSalary,
+      row.location,
+    );
     const costToCompany =
       grossSalary +
       fuelAllowance +
@@ -1412,19 +1420,27 @@ export class AddPayrollProcessComponent implements OnInit {
     return new Date(year, month - 1, 1);
   }
 
-  private calculateSocialSecurityPunjab(minimumWage: number, location: string): number {
+  private calculateSocialSecurityPunjab(
+    minimumWage: number,
+    grossSalary: number,
+    location: string,
+  ): number {
     const branchCode = resolveBranchCode(location || '');
     // AHCP_HO and AHCP_Faisalabad are Punjab branches.
-    if (['01', '03'].includes(branchCode)) {
+    if (['01', '03'].includes(branchCode) && minimumWage * 1.4 > grossSalary) {
       return this.parseAmount(minimumWage * 0.06);
     }
     return 0;
   }
 
-  private calculateSocialSecurityKpk(minimumWage: number, location: string): number {
+  private calculateSocialSecurityKpk(
+    minimumWage: number,
+    grossSalary: number,
+    location: string,
+  ): number {
     const branchCode = resolveBranchCode(location || '');
     // AHCP_Peshawar is the KPK branch.
-    if (branchCode === '02') {
+    if (branchCode === '02' && minimumWage * 1.6 > grossSalary) {
       return this.parseAmount(minimumWage * 0.06);
     }
     return 0;

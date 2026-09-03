@@ -185,41 +185,6 @@
         }
       </div>
 
-      <div class="form-panel">
-        <div class="form-panel-head">
-          <div>
-            <h3 class="form-panel-title">Employee Shift Allocation</h3>
-            <p class="panel-subtitle">Assign employees to workstation shifts.</p>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table class="entry-table">
-            <thead>
-              <tr>
-                <th>Employee ID</th>
-                <th>Employee Name</th>
-                <th>Shift Alot</th>
-                <th>Reporting Manager</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (employee of shiftApplicableEmployees(); track employee.EmployeeCode) {
-                <tr>
-                  <td>{{ employee.EmployeeCode }}</td>
-                  <td>{{ employee.EmployeeName }}</td>
-                  <td>—</td>
-                  <td>{{ employee.ReportingManager || '—' }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="4" style="text-align: center; color: #6b7280;">No shift-applicable employees found.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   </div>
 </div>

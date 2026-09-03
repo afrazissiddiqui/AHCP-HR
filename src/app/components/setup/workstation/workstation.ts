@@ -4,10 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import {
-  ApplicationFormRecord,
-  ApplicationFormService,
-} from '../../../services/application-form.service';
-import {
   WorkstationPayload,
   WorkstationRecord,
   WorkstationService,
@@ -25,14 +21,12 @@ type WorkstationFormMode = 'add' | 'edit';
 })
 export class WorkstationComponent implements OnInit {
   private readonly workstationService = inject(WorkstationService);
-  private readonly applicationFormService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deleting = signal(false);
   readonly workstations = signal<WorkstationRecord[]>([]);
-  readonly employeeProfiles = signal<ApplicationFormRecord[]>([]);
   readonly formMode = signal<WorkstationFormMode>('add');
   readonly editingId = signal<string | number | null>(null);
   readonly formName = signal('');
@@ -43,22 +37,9 @@ export class WorkstationComponent implements OnInit {
   readonly formShift = signal('');
   readonly formDescription = signal('');
   readonly totalWorkstations = computed(() => this.workstations().length);
-  readonly shiftApplicableEmployees = computed(() =>
-    this.employeeProfiles().filter(
-      (employee) => employee.detail?.hrSettings.attendanceShiftManagement.trim().toLowerCase() === 'yes',
-    ),
-  );
 
   ngOnInit(): void {
     this.loadWorkstations();
-    this.loadShiftApplicableEmployees();
-  }
-
-  private loadShiftApplicableEmployees(): void {
-    this.applicationFormService.fetchEmployeeProfiles().subscribe({
-      next: (records) => this.employeeProfiles.set(records),
-      error: () => this.employeeProfiles.set([]),
-    });
   }
 
   loadWorkstations(): void {
