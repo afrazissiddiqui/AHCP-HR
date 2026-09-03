@@ -14,6 +14,7 @@ interface ProductionOrderBatch {
   batchNo: string;
   quantity: number;
   issueQuantity?: number | null;
+  legacyBatch?: string;
 }
 
 interface ProductionOrderItem {
@@ -171,7 +172,7 @@ export class IssueFromProductionComponent implements OnInit {
   readonly batchSelectionLines = computed(() =>
     this.contentLines()
       .map((line, index) => ({ line, index }))
-      .filter(({ line }) => line.manBtchNum?.trim().toUpperCase() === 'Y'),
+      .filter(({ line }) => line.itemCode.trim()),
   );
 
   readonly selectedProductionOrderItems = computed(() => {
@@ -448,6 +449,22 @@ export class IssueFromProductionComponent implements OnInit {
     );
   }
 
+  updateBatchLegacyBatch(batch: ProductionOrderBatch, value: string): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    this.contentLines.update((rows) => rows.map((row, rowIndex) => rowIndex === index
+      ? {
+          ...row,
+          availableBatches: row.availableBatches.map((availableBatch) => availableBatch.batchNo === batch.batchNo
+            ? { ...availableBatch, legacyBatch: value }
+            : availableBatch),
+        }
+      : row));
+  }
+
   getActiveBatchSelectionLine(): IssueForProductionLine | null {
     const index = this.activeBatchSelectionLineIndex();
     if (index === null) {
@@ -672,6 +689,13 @@ export class IssueFromProductionComponent implements OnInit {
           quantity: issueQtyTotal,
           warehouse: line.warehouse.trim(),
           batch_no: line.batchNumber.trim(),
+          batches: line.availableBatches
+            .filter((batch) => (batch.issueQuantity ?? 0) > 0)
+            .map((batch) => ({
+              BatchNum: batch.batchNo.trim(),
+              Quantity: batch.issueQuantity ?? 0,
+              U_LegacyBatch: batch.legacyBatch?.trim() || null,
+            })),
         };
       }),
     };

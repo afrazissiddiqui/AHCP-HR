@@ -29,6 +29,7 @@ export interface DeliveryBatchSelection {
   batchNo: string;
   quantity: number;
   issueQuantity?: number | null;
+  legacyBatch?: string;
 }
 
 export interface DeliveryLine {

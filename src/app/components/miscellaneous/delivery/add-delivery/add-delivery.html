@@ -278,6 +278,7 @@
                       <th>Batch No.</th>
                       <th>Available Qty</th>
                       <th>Issue Qty</th>
+                      <th>Legacy Batch</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -303,10 +304,18 @@
                             [disabled]="activeLine.batchSerialNumber !== batch.batchNo"
                           />
                         </td>
+                        <td>
+                          <input
+                            type="text"
+                            class="sir-table-input"
+                            [ngModel]="batch.legacyBatch ?? ''"
+                            (ngModelChange)="updateBatchLegacyBatch(batch, $event)"
+                          />
+                        </td>
                       </tr>
                     } @empty {
                       <tr>
-                        <td colspan="3" class="sir-modal-empty">No batch information available for this item.</td>
+                        <td colspan="4" class="sir-modal-empty">No batch information available for this item.</td>
                       </tr>
                     }
                   </tbody>
@@ -438,7 +447,7 @@
                   <th>Customer Name</th>
                   <th>Doc Date</th>
                   <th>Due Date</th>
-                  <th>Items</th>
+                  <th>Item Description</th>
                 </tr>
               </thead>
               <tbody>
@@ -454,7 +463,7 @@
                     <td>{{ order.cardName }}</td>
                     <td>{{ order.docDate }}</td>
                     <td>{{ order.docDueDate }}</td>
-                    <td>{{ order.items.length }}</td>
+                    <td>{{ salesOrderItemDescriptions(order) }}</td>
                   </tr>
                 } @empty {
                   <tr>

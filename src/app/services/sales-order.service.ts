@@ -108,8 +108,8 @@ export class SalesOrderService {
         unitPrice: this.pickNumber(item, ['Price', 'price']),
         warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'warehouseCode']),
         lineTotal: this.pickNumber(item, ['LineTotal', 'lineTotal']),
-        qtyPerJumboCarton: this.pickNumber(item, ['U_QtyPerJumboCarton', 'QtyPerJumboCarton', 'qtyPerJumboCarton', 'U_QtyPerJumbo', 'QtyPerJumbo']),
-        jumboCartonsCount: this.pickNumber(item, ['U_JumboCartonsCount', 'JumboCartonsCount', 'jumboCartonsCount', '#JumboCartons', 'U_JumboCartons']),
+        qtyPerJumboCarton: this.pickNumber(item, ['U_QtyPerJC', 'U_QtyPerJumboCarton', 'QtyPerJumboCarton', 'qtyPerJumboCarton', 'U_QtyPerJumbo', 'QtyPerJumbo']),
+        jumboCartonsCount: this.pickNumber(item, ['U_NoJc', 'U_NoJC', 'U_JumboCartonsCount', 'JumboCartonsCount', 'jumboCartonsCount', '#JumboCartons', 'U_JumboCartons']),
       }));
   }
 

@@ -26,6 +26,7 @@ export interface CreateGoodIssueItemPayload {
 export interface CreateGoodIssueBatchPayload {
   batchNumber: string;
   quantity: number;
+  U_LegacyBatch: string;
 }
 
 export interface CreateGoodIssuePayload {
@@ -96,12 +97,13 @@ export function buildCreateGoodIssuePayload(
         itemCode: line.itemCode.trim(),
         warehouse: line.warehouse.trim(),
         quantity: line.quantity ?? 0,
-        batches: [
-          {
-            batchNumber: line.batchSerialNumber.trim(),
-            quantity: line.quantity ?? 0,
-          },
-        ],
+        batches: (line.availableBatches ?? [])
+          .filter((batch) => (batch.issueQuantity ?? 0) > 0)
+          .map((batch) => ({
+            batchNumber: batch.batchNo.trim(),
+            quantity: batch.issueQuantity ?? 0,
+            U_LegacyBatch: batch.legacyBatch?.trim() ?? '',
+          })),
         binLocationAllocation: line.binLocationAllocation.trim(),
         AcctCode: line.accountCode.trim(),
         itemCost: line.itemCost ?? 0,
@@ -109,7 +111,21 @@ export function buildCreateGoodIssuePayload(
         uomName: line.uomName.trim(),
         departmentsLocations: line.departmentsLocations.trim(),
         branch: line.branch.trim(),
-      })),
+      }))
+      .map((item, index) => {
+        const line = lines.filter((currentLine) => currentLine.itemCode.trim())[index];
+        if (item.batches.length > 0 || !line.batchSerialNumber.trim()) {
+          return item;
+        }
+        return {
+          ...item,
+          batches: [{
+            batchNumber: line.batchSerialNumber.trim(),
+            quantity: line.quantity ?? 0,
+            U_LegacyBatch: '',
+          }],
+        };
+      }),
   };
 }
 

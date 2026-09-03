@@ -155,7 +155,7 @@
         </div>
               <div class="sir-form-actions">
           <button type="button" class="sir-primary-button" [disabled]="saving() || !contentLines().some((line) => line.itemCode.trim())" (click)="submitIssueForProduction()">
-            {{ saving() ? 'Submitting…' : 'Issue for Production' }}
+            {{ saving() ? 'Submitting…' : 'Select batch' }}
           </button>
         </div>
       </section>
@@ -391,6 +391,7 @@
                       <th>Batch No.</th>
                       <th>Available Qty</th>
                       <th>Issue Qty</th>
+                      <th>Legacy Batch</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -412,10 +413,18 @@
                             [disabled]="activeLine.batchNumber !== batch.batchNo"
                           />
                         </td>
+                        <td>
+                          <input
+                            type="text"
+                            class="sir-table-input"
+                            [ngModel]="batch.legacyBatch ?? ''"
+                            (ngModelChange)="updateBatchLegacyBatch(batch, $event)"
+                          />
+                        </td>
                       </tr>
                     } @empty {
                       <tr>
-                        <td colspan="3" class="sir-modal-empty">No batch information available for this item.</td>
+                        <td colspan="4" class="sir-modal-empty">No batch information available for this item.</td>
                       </tr>
                     }
                   </tbody>

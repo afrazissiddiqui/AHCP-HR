@@ -225,6 +225,13 @@ export class AddDelivery {
         });
   }
 
+  salesOrderItemDescriptions(order: SalesOrderRecord): string {
+    return order.items
+      .map((item) => item.itemDescription.trim())
+      .filter((description) => description.length > 0)
+      .join(', ') || '—';
+  }
+
   totalAmount(): number {
     return this.totals().beforeDiscount;
   }
@@ -697,8 +704,8 @@ export class AddDelivery {
             unitPrice: line.unitPrice,
             batchSerialNumber: '',
             taxCode: '',
-            qtyPerJumboCarton: (line as any).qtyPerJumboCarton ?? null,
-            jumboCartonsCount: (line as any).jumboCartonsCount ?? null,
+            qtyPerJumboCarton: line.qtyPerJumboCarton ?? null,
+            jumboCartonsCount: line.jumboCartonsCount ?? null,
             branch: resolveBranchNameFromBplId(order.branchId) || '',
           }))
         : [createEmptyDeliveryLine()],
@@ -791,5 +798,21 @@ export class AddDelivery {
         );
       },
     });
+  }
+
+  updateBatchLegacyBatch(batch: DeliveryBatchSelection, value: string): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    this.contentLines.update((rows) => rows.map((row, rowIndex) => rowIndex === index
+      ? {
+          ...row,
+          availableBatches: (row.availableBatches ?? []).map((availableBatch) => availableBatch.batchNo === batch.batchNo
+            ? { ...availableBatch, legacyBatch: value }
+            : availableBatch),
+        }
+      : row));
   }
 }

@@ -13,6 +13,7 @@ import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
 import {
   GoodIssueHeader,
   GoodIssueLine,
+  GoodIssueBatchSelection,
   createEmptyGoodIssueHeader,
   createEmptyGoodIssueLine,
   updateGoodIssueLine,
@@ -61,6 +62,8 @@ export class AddGoodIssue implements OnInit {
   readonly accountCodeOptionsLoading = signal(false);
   readonly accountCodeOptionsError = signal('');
   readonly departmentOptions = signal<DepartmentPr[]>([]);
+  readonly batchSelectionDialogOpen = signal(false);
+  readonly activeBatchSelectionLineIndex = signal<number | null>(null);
 
   readonly totalAmount = computed(() =>
     this.contentLines()
@@ -179,6 +182,156 @@ export class AddGoodIssue implements OnInit {
     }
 
     this.contentLines.update((rows) => updateGoodIssueLine(rows, index, field, value));
+  }
+
+  openBatchSelectionDialog(): void {
+    const lines = this.contentLines().filter((line) => line.itemCode.trim());
+    if (lines.length === 0) {
+      void this.alertService.warning('No items added', 'Add at least one item before opening the batch selection modal.');
+      return;
+    }
+
+    this.contentLines.update((rows) =>
+      rows.map((row) => {
+        if (!row.itemCode.trim()) {
+          return row;
+        }
+
+        const availableBatches = row.availableBatches?.length
+          ? row.availableBatches
+          : this.buildAvailableBatchesForLine(row);
+        return {
+          ...row,
+          availableBatches,
+          batchSerialNumber: availableBatches.some((batch) => batch.batchNo === row.batchSerialNumber)
+            ? row.batchSerialNumber
+            : availableBatches[0]?.batchNo ?? row.batchSerialNumber,
+        };
+      }),
+    );
+
+    const firstBatchLineIndex = this.contentLines().findIndex((line) => line.itemCode.trim());
+    this.activeBatchSelectionLineIndex.set(firstBatchLineIndex >= 0 ? firstBatchLineIndex : null);
+    this.batchSelectionDialogOpen.set(true);
+  }
+
+  closeBatchSelectionDialog(): void {
+    this.batchSelectionDialogOpen.set(false);
+    this.activeBatchSelectionLineIndex.set(null);
+  }
+
+  saveFromBatchSelectionDialog(): void {
+    this.closeBatchSelectionDialog();
+    this.save();
+  }
+
+  selectBatchSelectionLine(index: number): void {
+    this.activeBatchSelectionLineIndex.set(index);
+  }
+
+  getActiveBatchSelectionLine(): GoodIssueLine | null {
+    const index = this.activeBatchSelectionLineIndex();
+    return index === null ? null : this.contentLines()[index] ?? null;
+  }
+
+  selectBatchForActiveLine(batch: GoodIssueBatchSelection): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    this.contentLines.update((rows) => rows.map((row, rowIndex) => rowIndex === index
+      ? {
+          ...row,
+          batchSerialNumber: batch.batchNo,
+          availableBatches: (row.availableBatches ?? []).map((availableBatch) => ({
+            ...availableBatch,
+            issueQuantity: availableBatch.batchNo === batch.batchNo
+              ? availableBatch.issueQuantity ?? 0
+              : availableBatch.issueQuantity ?? null,
+          })),
+        }
+      : row));
+  }
+
+  updateBatchIssueQuantity(batch: GoodIssueBatchSelection, value: string): void {
+    const index = this.activeBatchSelectionLineIndex();
+    const line = index === null ? null : this.contentLines()[index];
+    if (index === null || !line) {
+      return;
+    }
+
+    const quantity = value === '' ? null : Number(value);
+    const normalized = quantity === null || Number.isNaN(quantity) ? null : quantity;
+    const maxAllowed = normalized === null ? 0 : this.getMaxAvailableForBatch(batch, line);
+    const issueQuantity = normalized === null ? null : Math.min(normalized, maxAllowed);
+
+    this.contentLines.update((rows) => rows.map((row, rowIndex) => rowIndex === index
+      ? { ...row, availableBatches: (row.availableBatches ?? []).map((availableBatch) => availableBatch.batchNo === batch.batchNo ? { ...availableBatch, issueQuantity } : availableBatch) }
+      : row));
+  }
+
+  updateBatchLegacyBatch(batch: GoodIssueBatchSelection, value: string): void {
+    const index = this.activeBatchSelectionLineIndex();
+    if (index === null) {
+      return;
+    }
+
+    this.contentLines.update((rows) => rows.map((row, rowIndex) => rowIndex === index
+      ? {
+          ...row,
+          availableBatches: (row.availableBatches ?? []).map((availableBatch) => availableBatch.batchNo === batch.batchNo
+            ? { ...availableBatch, legacyBatch: value }
+            : availableBatch),
+        }
+      : row));
+  }
+
+  getMaxAvailableForBatch(batch: GoodIssueBatchSelection, line: GoodIssueLine): number {
+    const otherAllocations = (line.availableBatches ?? [])
+      .filter((availableBatch) => availableBatch.batchNo !== batch.batchNo)
+      .reduce((sum, availableBatch) => sum + (availableBatch.issueQuantity ?? 0), 0);
+    return Math.max(0, Math.min(batch.quantity, (line.quantity ?? 0) - otherAllocations));
+  }
+
+  isBatchSelectionComplete(line: GoodIssueLine): boolean {
+    return (line.availableBatches ?? []).some((batch) => (batch.issueQuantity ?? 0) > 0);
+  }
+
+  getRemainingRequiredQuantity(line: GoodIssueLine): number {
+    const allocated = (line.availableBatches ?? []).reduce((sum, batch) => sum + (batch.issueQuantity ?? 0), 0);
+    return Math.max(0, (line.quantity ?? 0) - allocated);
+  }
+
+  getAlreadyIssuedQuantity(line: GoodIssueLine): number {
+    return Math.max(0, (line.quantity ?? 0) - this.getRemainingRequiredQuantity(line));
+  }
+
+  onBatchIssueQuantityInput(batch: GoodIssueBatchSelection, line: GoodIssueLine, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const maxAllowed = this.getMaxAvailableForBatch(batch, line);
+    const value = Number(input.value);
+    if (Number.isNaN(value) || value < 0) {
+      input.value = (batch.issueQuantity ?? 0).toString();
+      return;
+    }
+    if (value > maxAllowed) {
+      input.value = maxAllowed.toString();
+      this.updateBatchIssueQuantity(batch, input.value);
+    }
+  }
+
+  private buildAvailableBatchesForLine(line: GoodIssueLine): GoodIssueBatchSelection[] {
+    const item = this.oitmItemForRow(line.itemCode);
+    const selectedWarehouse = this.resolveWarehouseAliases(line.warehouse);
+    return (item?.batches ?? [])
+      .filter((batch) => !selectedWarehouse.length || this.resolveWarehouseAliases(batch.warehouse).some((value) => selectedWarehouse.includes(value)))
+      .map((batch) => ({
+        batchNo: batch.batchNumber.trim(),
+        quantity: Number(batch.quantity ?? 0),
+        issueQuantity: batch.batchNumber.trim() === line.batchSerialNumber.trim() ? line.quantity ?? 0 : null,
+      }))
+      .filter((batch) => batch.batchNo.length > 0);
   }
 
   formatAmount(value: number): string {

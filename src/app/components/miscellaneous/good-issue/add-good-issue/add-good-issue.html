@@ -153,14 +153,75 @@
           </div>
         </div>
         <div class="sir-form-actions">
-          <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="save()">
-            {{ saving() ? 'Saving…' : 'Save' }}
+          <button type="button" class="sir-primary-button" [disabled]="saving()" (click)="openBatchSelectionDialog()">
+            {{ saving() ? 'Saving…' : 'Select batch' }}
           </button>
         </div>
       </section>
     </div>
   </div>
 </div>
+
+@if (batchSelectionDialogOpen()) {
+  <div class="sir-modal-overlay" (click)="closeBatchSelectionDialog()">
+    <div class="sir-modal sir-modal--wide" (click)="$event.stopPropagation()">
+      <div class="sir-modal-header">
+        <h2>Available Batches</h2>
+        <button type="button" class="sir-modal-close" (click)="closeBatchSelectionDialog()">×</button>
+      </div>
+      <div class="sir-modal-body">
+        <div class="sir-detail-section">
+          <h3>Select batch for each item</h3>
+          <div class="sir-batch-modal-scroll sir-batch-modal-scroll--compact">
+            <div class="sir-data-table-wrapper">
+              <table class="sir-modal-table">
+                <thead><tr><th>Item Code</th><th>Description</th><th>Qty</th><th>Warehouse</th></tr></thead>
+                <tbody>
+                  @for (line of contentLines(); track $index; let i = $index) {
+                    <tr class="sir-modal-row" [class.sir-modal-row--selected]="activeBatchSelectionLineIndex() === i" [class.sir-modal-row--completed]="isBatchSelectionComplete(line)" [class.sir-modal-row--incomplete]="!isBatchSelectionComplete(line)" (click)="selectBatchSelectionLine(i)">
+                      <td>{{ line.itemCode || 'Row ' + (i + 1) }}</td><td>{{ line.itemDescription }}</td><td>{{ line.quantity ?? '—' }}</td><td>{{ line.warehouse || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        @if (getActiveBatchSelectionLine(); as activeLine) {
+          <div class="sir-detail-section">
+            <h3>{{ activeLine.itemCode }}</h3>
+            <p class="sir-modal-status-text">{{ activeLine.itemDescription }}</p>
+            <div class="sir-batch-info">
+              <span class="sir-batch-info-item"><strong>Required Qty:</strong> {{ activeLine.quantity ?? 0 }}</span>
+              <span class="sir-batch-info-item"><strong>Already Issued Quantity:</strong> {{ getAlreadyIssuedQuantity(activeLine) }}</span>
+              <span class="sir-batch-info-item"><strong>Remaining Required:</strong> {{ getRemainingRequiredQuantity(activeLine) }}</span>
+            </div>
+            <div class="sir-batch-modal-scroll">
+              <div class="sir-data-table-wrapper">
+                <table class="sir-modal-table">
+                  <thead><tr><th>Batch No.</th><th>Available Qty</th><th>Issue Qty</th><th>Legacy Batch</th></tr></thead>
+                  <tbody>
+                    @for (batch of activeLine.availableBatches ?? []; track batch.batchNo) {
+                      <tr class="sir-modal-row" [class.sir-modal-row--selected]="activeLine.batchSerialNumber === batch.batchNo" (click)="selectBatchForActiveLine(batch)">
+                        <td>{{ batch.batchNo }}</td><td>{{ batch.quantity }}</td>
+                        <td><input type="number" class="sir-table-input" [ngModel]="batch.issueQuantity ?? 0" (ngModelChange)="updateBatchIssueQuantity(batch, $event)" (input)="onBatchIssueQuantityInput(batch, activeLine, $event)" min="0" [max]="getMaxAvailableForBatch(batch, activeLine)" [disabled]="activeLine.batchSerialNumber !== batch.batchNo" /></td>
+                        <td><input type="text" class="sir-table-input" [ngModel]="batch.legacyBatch ?? ''" (ngModelChange)="updateBatchLegacyBatch(batch, $event)" /></td>
+                      </tr>
+                    } @empty { <tr><td colspan="4" class="sir-modal-empty">No batch information available for this item.</td></tr> }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="sir-modal-footer sir-modal-footer--split">
+        <button type="button" class="sir-secondary-button" (click)="closeBatchSelectionDialog()">Cancel</button>
+        <button type="button" class="sir-primary-button" (click)="saveFromBatchSelectionDialog()">Save</button>
+      </div>
+    </div>
+  </div>
+}
 
 <app-oitm-item-picker-dialog
   [open]="itemPickerOpen()"

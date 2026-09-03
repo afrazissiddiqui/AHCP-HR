@@ -39,4 +39,25 @@ describe('GoodIssueService', () => {
       branch: 'BR-01',
     });
   });
+
+  it('serializes selected quantities from multiple batches', () => {
+    const header = createEmptyGoodIssueHeader();
+    const line = {
+      ...createEmptyGoodIssueLine(),
+      itemCode: 'ITEM-001',
+      warehouse: 'WH-01',
+      quantity: 10,
+      availableBatches: [
+        { batchNo: 'BATCH-001', quantity: 6, issueQuantity: 4 },
+        { batchNo: 'BATCH-002', quantity: 8, issueQuantity: 6 },
+      ],
+    };
+
+    const payload = buildCreateGoodIssuePayload(header, [line]);
+
+    expect(payload.items[0].batches).toEqual([
+      { batchNumber: 'BATCH-001', quantity: 4 },
+      { batchNumber: 'BATCH-002', quantity: 6 },
+    ]);
+  });
 });

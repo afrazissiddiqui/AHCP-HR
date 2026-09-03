@@ -7,6 +7,7 @@ import { DeliveryHeader, DeliveryLine } from './delivery.model';
 export interface CreateDeliveryBatchPayload {
   batchNumber: string;
   quantity: number;
+  U_LegacyBatch: string;
 }
 
 export interface CreateDeliveryItemPayload {
@@ -111,6 +112,7 @@ export function buildCreateDeliveryPayload(
           .map((batch) => ({
             batchNumber: batch.batchNo.trim(),
             quantity: batch.issueQuantity ?? 0,
+            U_LegacyBatch: batch.legacyBatch?.trim() ?? '',
           }))
           .filter((batch) => batch.batchNumber && batch.quantity > 0);
 
@@ -119,6 +121,7 @@ export function buildCreateDeliveryPayload(
               {
                 batchNumber: line.batchSerialNumber.trim(),
                 quantity: line.quantity ?? 0,
+                U_LegacyBatch: '',
               },
             ]
           : [];

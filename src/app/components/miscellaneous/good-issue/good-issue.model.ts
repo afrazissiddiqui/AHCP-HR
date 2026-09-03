@@ -26,6 +26,14 @@ export interface GoodIssueLine {
   uomCode: string;
   uomName: string;
   departmentsLocations: string;
+  availableBatches?: GoodIssueBatchSelection[];
+}
+
+export interface GoodIssueBatchSelection {
+  batchNo: string;
+  quantity: number;
+  issueQuantity?: number | null;
+  legacyBatch?: string;
 }
 
 function todayDateString(): string {
@@ -70,6 +78,7 @@ export function createEmptyGoodIssueLine(): GoodIssueLine {
     uomCode: '',
     uomName: '',
     departmentsLocations: '',
+    availableBatches: [],
   };
 }
 
