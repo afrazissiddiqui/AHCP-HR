@@ -153,6 +153,54 @@ html.profile-drawer-open app-root .app-content > :not(router-outlet) {
   border-radius: 6px;
 }
 
+/* Shared pagination layout */
+.table-pagination,
+.sir-pagination,
+.gp-bdm-pagination,
+.attendance-pagination,
+.comp-pagination,
+.payroll-list-pagination,
+.pagination-container {
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.table-pagination .page-numbers,
+.sir-pagination .page-numbers,
+.gp-bdm-pagination .gp-bdm-page-numbers,
+.attendance-pagination__numbers,
+.comp-pagination .page-numbers,
+.payroll-list-pagination .page-numbers,
+.pagination-container .page-numbers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table-pagination .pagination-info,
+.sir-pagination .pagination-info,
+.gp-bdm-pagination .gp-bdm-pagination-info {
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .table-pagination,
+  .sir-pagination,
+  .gp-bdm-pagination,
+  .attendance-pagination,
+  .comp-pagination,
+  .payroll-list-pagination,
+  .pagination-container {
+    justify-content: center;
+  }
+}
+
 .sir-footer-grid.sir-footer-grid--totals .sir-field-row:last-child input.sir-input--amount {
   font-weight: 700;
 }

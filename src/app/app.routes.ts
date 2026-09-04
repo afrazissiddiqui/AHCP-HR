@@ -38,6 +38,7 @@ import { KpiSetupComponent } from './components/setup/kpi-setup/kpi-setup';
 import { OvertimeListComponent } from './components/setup/overtime-list/overtime-list';
 import { MasterFormComponent } from './components/setup/master-form/master-form';
 import { WithholdingTaxComponent } from './components/setup/withholding-tax/withholding-tax';
+import { EmployeeRosterComponent } from './components/setup/employee-roster/employee-roster';
 import { IssueFromProductionListComponent } from './components/setup/issue-from-production-list/issue-from-production-list';
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
 import { PurchaseRequestComponent } from './components/setup/purchase-request/purchase-request';
@@ -273,6 +274,11 @@ export const routes: Routes = [
     path: 'setup/withholding-tax',
     component: WithholdingTaxComponent,
     canActivate: [authGuard, requirePermission('withholding_tax_form', 'list')],
+  },
+  {
+    path: 'setup/employee-roster',
+    component: EmployeeRosterComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'setup/issue-from-production-list',

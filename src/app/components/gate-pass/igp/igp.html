@@ -118,9 +118,12 @@
         <div class="pagination-controls">
           <button type="button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
           <div class="page-numbers">
-            <button type="button" *ngFor="let page of pages" [class.active]="page === currentPage" (click)="setPage(page)">
-              {{ page }}
-            </button>
+            <ng-container *ngFor="let page of pages">
+              <span *ngIf="page === 'ellipsis'" class="page-ellipsis" aria-hidden="true">...</span>
+              <button *ngIf="page !== 'ellipsis'" type="button" [class.active]="page === currentPage" (click)="setPage(page)">
+                {{ page }}
+              </button>
+            </ng-container>
           </div>
           <button type="button" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
         </div>

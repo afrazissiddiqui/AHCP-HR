@@ -18,6 +18,45 @@
           </div>
         </div>
 
+        <div class="vendor-fields">
+          <label class="vendor-field">
+            <span>Vendor for Expense Reimbursment</span>
+            <app-gate-pass-business-partner-search-input
+              [value]="vendorForExpenseReimbursement"
+              inputId="vendor-for-expense-reimbursement"
+              placeholder="Search vendor code or name"
+              [supplierOnly]="true"
+              [disabled]="saving()"
+              (valueChange)="vendorForExpenseReimbursement = $event"
+              (partnerSelected)="selectExpenseReimbursementVendor($event)"
+            />
+          </label>
+          <label class="vendor-field">
+            <span>Vendor for Loans</span>
+            <app-gate-pass-business-partner-search-input
+              [value]="vendorForLoans"
+              inputId="vendor-for-loans"
+              placeholder="Search vendor code or name"
+              [supplierOnly]="true"
+              [disabled]="saving()"
+              (valueChange)="vendorForLoans = $event"
+              (partnerSelected)="selectLoanVendor($event)"
+            />
+          </label>
+          <label class="vendor-field">
+            <span>Vendor for Advances</span>
+            <app-gate-pass-business-partner-search-input
+              [value]="vendorForAdvances"
+              inputId="vendor-for-advances"
+              placeholder="Search vendor code or name"
+              [supplierOnly]="true"
+              [disabled]="saving()"
+              (valueChange)="vendorForAdvances = $event"
+              (partnerSelected)="selectAdvanceVendor($event)"
+            />
+          </label>
+        </div>
+
         <div class="table-wrap">
           <table class="entry-table">
             <thead>

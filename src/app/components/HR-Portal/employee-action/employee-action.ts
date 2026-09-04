@@ -5,6 +5,7 @@ import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../services/application-form.service';
+import { buildCompactPageNumbers } from '../../../utils/pagination.util';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from './employee-action-sidebar';
@@ -123,7 +124,7 @@ export class EmployeeActionComponent implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   toggleAll(event: Event): void {

@@ -7,6 +7,7 @@ import { resolveGatePassLocation, resolveGatePassLocationFromBplId } from '../ga
 import { displayDateSlash } from '../../../utils/date-format.util';
 import { AuthService } from '../../../services/auth.service';
 import { UserSetupService } from '../../../services/user-setup.service';
+import { buildCompactPageNumbers } from '../../../utils/pagination.util';
 
 @Component({
   selector: 'app-base-document-modal',
@@ -69,7 +70,7 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
     Math.max(1, Math.ceil(this.filteredDocuments().length / this.pageSize())),
   );
 
-  readonly pages = computed(() => Array.from({ length: this.totalPages() }, (_, index) => index + 1));
+  readonly pages = computed(() => buildCompactPageNumbers(this.totalPages(), this.currentPage()));
 
   Math = Math;
   readonly displayDateSlash = displayDateSlash;

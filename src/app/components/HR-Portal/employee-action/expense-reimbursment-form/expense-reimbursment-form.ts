@@ -12,6 +12,7 @@ import {
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import { displayDateSlash, formatTableCellValue } from '../../../../utils/date-format.util';
+import { buildCompactPageNumbers } from '../../../../utils/pagination.util';
 import { EMPLOYEE_ACTION_SIDEBAR_ITEMS, EMPLOYEE_ACTION_SIDEBAR_SECTIONS } from '../employee-action-sidebar';
 import {
   EXPENSE_REIMBURSEMENT_TABLE_FILTER,
@@ -189,7 +190,7 @@ export class ExpenseReimbursmentFormComponent implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   toggleAll(event: Event): void {

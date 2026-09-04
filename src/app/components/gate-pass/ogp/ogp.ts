@@ -12,6 +12,7 @@ import { compareGatePassListRecords, formatGatePassListCell } from '../gate-pass
 import { OgpRecord, OgpService } from './ogp.service';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
+import { buildCompactPageNumbers } from '../../../utils/pagination.util';
 
 type OgpSortableKey = Exclude<keyof OgpRecord, 'lines' | 'selected'>;
 
@@ -389,7 +390,7 @@ export class OgpComponent implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   onSearchChange(): void {

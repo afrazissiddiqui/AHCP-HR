@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../column-resize';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
+import { buildCompactPageNumbers } from '../../../utils/pagination.util';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../sidebar/sidebar';
 import { JobSpecificationService, JobSpecificationRecord } from '../../../services/job-specification.service';
 import { AlertService } from '../../../services/alert.service';
@@ -300,7 +301,7 @@ export class JobSpecificationFormComponent implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   onSearchChange() {

@@ -16,12 +16,15 @@ export class GatePassBusinessPartnerService {
   private readonly http = inject(HttpClient);
   private readonly partners = signal<GatePassBusinessPartner[]>([]);
   private readonly customers = signal<GatePassBusinessPartner[]>([]);
+  private readonly suppliers = signal<GatePassBusinessPartner[]>([]);
   private loaded = false;
   private loading = false;
   private load$?: Observable<GatePassBusinessPartner[]>;
   private customerLoaded = false;
   private customerLoading = false;
   private customerLoad$?: Observable<GatePassBusinessPartner[]>;
+  private supplierLoaded = false;
+  private supplierLoad$?: Observable<GatePassBusinessPartner[]>;
 
   ensureLoaded(): Observable<GatePassBusinessPartner[]> {
     if (this.loaded) {
@@ -119,6 +122,44 @@ export class GatePassBusinessPartnerService {
     }
 
     return this.customers()
+      .filter((partner) => partner.code.toLowerCase().includes(q) || partner.name.toLowerCase().includes(q))
+      .slice(0, limit);
+  }
+
+  ensureSuppliersLoaded(): Observable<GatePassBusinessPartner[]> {
+    if (this.supplierLoaded) {
+      return of(this.suppliers());
+    }
+
+    if (!this.supplierLoad$) {
+      this.supplierLoad$ = this.http.get<unknown>(BUSINESS_PARTNERS_URL).pipe(
+        map((response) =>
+          this.extractApiItems(response)
+            .map((item) => this.mapPartner(item))
+            .filter((partner) => partner.cardType?.trim().toUpperCase() === 'S'),
+        ),
+        tap((records) => {
+          this.suppliers.set(records);
+          this.supplierLoaded = true;
+        }),
+        catchError(() => {
+          this.suppliers.set([]);
+          this.supplierLoaded = true;
+          return of([]);
+        }),
+      );
+    }
+
+    return this.supplierLoad$;
+  }
+
+  searchSuppliers(query: string, limit = 8): GatePassBusinessPartner[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [];
+    }
+
+    return this.suppliers()
       .filter((partner) => partner.code.toLowerCase().includes(q) || partner.name.toLowerCase().includes(q))
       .slice(0, limit);
   }

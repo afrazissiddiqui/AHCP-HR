@@ -62,6 +62,7 @@ const EXACT_TITLES: Record<string, string> = {
   'setup/overtime-list': 'Overtime List',
   'setup/master-form': 'Master Form',
   'setup/withholding-tax': 'Withholding Tax',
+  'setup/employee-roster': 'Employee Roster',
   'setup/issue-from-production-list': 'Issue From Production',
   'setup/issue-from-production': 'Issue From Production',
   'plant-maintenance/main-form': 'Main Form',

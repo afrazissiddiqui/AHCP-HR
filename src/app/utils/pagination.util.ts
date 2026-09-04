@@ -95,3 +95,19 @@ export function paginationItemTrack(index: number, item: PaginationFooterItem): 
       return 'last';
   }
 }
+
+export function buildCompactPageNumbers(totalPages: number, currentPage = 1): number[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
+  const pages = new Set<number>([1, totalPages]);
+  for (let page = activePage - 1; page <= activePage + 1; page += 1) {
+    if (page > 1 && page < totalPages) {
+      pages.add(page);
+    }
+  }
+
+  return Array.from(pages).sort((first, second) => first - second);
+}

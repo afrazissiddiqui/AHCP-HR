@@ -23,6 +23,8 @@ interface ColumnConfig {
   visible: boolean;
 }
 
+type PaginationItem = number | 'ellipsis';
+
 @Component({
   selector: 'app-igp',
   standalone: true,
@@ -446,8 +448,28 @@ export class IgpComponent implements OnInit {
     return Math.ceil(this.filteredList.length / this.pageSize);
   }
 
-  get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  get pages(): PaginationItem[] {
+    const totalPages = this.totalPages;
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const pageSet = new Set<number>([1, totalPages, this.currentPage]);
+    for (let page = this.currentPage - 1; page <= this.currentPage + 1; page += 1) {
+      if (page > 1 && page < totalPages) {
+        pageSet.add(page);
+      }
+    }
+
+    const visiblePages = Array.from(pageSet).sort((first, second) => first - second);
+    const paginationItems: PaginationItem[] = [];
+    visiblePages.forEach((page, index) => {
+      if (index > 0 && page - visiblePages[index - 1] > 1) {
+        paginationItems.push('ellipsis');
+      }
+      paginationItems.push(page);
+    });
+    return paginationItems;
   }
 
   onSearchChange(): void {

@@ -14,6 +14,7 @@ import { ui5SelectStringValue } from '../../ui5-select-helpers';
 import { PermissionService } from '../../services/permission.service';
 import { ShellbarSearchService } from '../../services/shellbar-search.service';
 import { connectShellbarSearch } from '../../utils/shellbar-search-connect.util';
+import { buildCompactPageNumbers } from '../../utils/pagination.util';
 import {
   SampleInspectionRequestService,
   SampleInspectionRecord,
@@ -218,7 +219,7 @@ export class SampleInspectionRequest implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, index) => index + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   onSearchChange(): void {

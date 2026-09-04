@@ -1,0 +1,82 @@
+<div class="roster-page">
+  <app-page-toolbar [showSidebarToggle]="false"></app-page-toolbar>
+
+  <main class="roster-content">
+    <header class="roster-header">
+      <div>
+        <div class="roster-heading-row">
+          <h1>Employee Roster</h1>
+          <span class="draft-badge"><span></span>Status: {{ hasChanges() ? 'Unsaved' : 'Draft' }}</span>
+          <span class="autosave"><ui5-icon name="history" aria-hidden="true"></ui5-icon> Last autosaved 2m ago</span>
+        </div>
+        <p>Monthly Shift Allocation &amp; Roster Planning</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="button button--generate" (click)="loadEmployees()" [disabled]="loading()">
+          <ui5-icon name="validate" aria-hidden="true"></ui5-icon> Generate Roster
+        </button>
+        <button type="button" class="button button--save" (click)="saveChanges()" [disabled]="!hasChanges() || saving()">
+          <ui5-icon name="save" aria-hidden="true"></ui5-icon> {{ saving() ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </header>
+
+    <section class="roster-controls" aria-label="Roster filters">
+      <label class="select-control"><ui5-icon name="building" aria-hidden="true"></ui5-icon><select [ngModel]="selectedHub()" (ngModelChange)="selectedHub.set($event)"><option>Lahore HQ</option><option>Faisalabad</option><option>Karachi</option></select><ui5-icon name="slim-arrow-down" aria-hidden="true"></ui5-icon></label>
+      <label class="select-control"><ui5-icon name="group" aria-hidden="true"></ui5-icon><select [ngModel]="selectedDepartment()" (ngModelChange)="selectedDepartment.set($event)"><option>Operations</option><option>Support</option><option>Logistics</option></select><ui5-icon name="slim-arrow-down" aria-hidden="true"></ui5-icon></label>
+      <div class="month-control"><button type="button" aria-label="Previous month">‹</button><span><ui5-icon name="calendar" aria-hidden="true"></ui5-icon> {{ monthLabel() }}</span><button type="button" aria-label="Next month">›</button></div>
+      <button type="button" class="today-button">Jump to Today</button>
+      <label class="search-control"><ui5-icon name="search" aria-hidden="true"></ui5-icon><input type="search" placeholder="Search employee by name, ID, or role..." [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" /></label>
+    </section>
+
+    <section class="summary-grid" aria-label="Roster summary">
+      <article class="summary-card summary-card--employees"><div><span class="summary-label">Total Employees</span><strong>{{ totalEmployees() }}</strong><small>100% active roster</small></div><ui5-icon name="employee" aria-hidden="true"></ui5-icon></article>
+      <article class="summary-card summary-card--morning"><div><span class="summary-label">Morning (08-16)</span><strong>{{ morningCount() }}</strong><small>42% capacity</small></div><ui5-icon name="day-protection" aria-hidden="true"></ui5-icon></article>
+      <article class="summary-card summary-card--evening"><div><span class="summary-label">Evening (16-00)</span><strong>{{ eveningCount() }}</strong><small>33% capacity</small></div><ui5-icon name="lateness" aria-hidden="true"></ui5-icon></article>
+      <article class="summary-card summary-card--night"><div><span class="summary-label">Night (00-08)</span><strong>{{ nightCount() }}</strong><small>25% capacity</small></div><ui5-icon name="lateness" aria-hidden="true"></ui5-icon></article>
+      <article class="summary-card summary-card--unassigned"><div><span class="summary-label">Unassigned</span><strong>{{ unassignedCount() }}</strong><small>Needs allocation</small></div><ui5-icon name="alert" aria-hidden="true"></ui5-icon></article>
+      <article class="legend-card"><span class="summary-label">Roster Legend</span><div class="legend-items"><span class="legend-chip legend-chip--m">M 08-16</span><span class="legend-chip legend-chip--e">E 16-00</span><span class="legend-chip legend-chip--n">N 00-08</span><span class="legend-chip legend-chip--off">OFF</span><span class="legend-chip legend-chip--hol">HOL</span><span class="legend-chip legend-chip--leave">L Leave</span></div></article>
+    </section>
+
+    <section class="action-bar" aria-label="Roster actions">
+      <label class="select-all"><input type="checkbox" /> <strong>Select All ({{ totalEmployees() }})</strong></label>
+      <span class="action-divider"></span>
+      <button type="button" class="action-button" (click)="assignShift('M')">Assign Shift <span>⌄</span></button>
+      <button type="button" class="action-button">Assign Days Off</button>
+      <button type="button" class="action-button">Apply Rotation</button>
+      <button type="button" class="action-button">Copy Previous Month</button>
+      <button type="button" class="action-button action-button--danger" (click)="clearSelection()">Clear Selection</button>
+      <div class="action-row action-row--secondary"><button type="button" class="action-button"><ui5-icon name="process" aria-hidden="true"></ui5-icon> Shift Rotation Engine (3 Active)</button><button type="button" class="action-button"><ui5-icon name="calendar" aria-hidden="true"></ui5-icon> Days Off Patterns</button><button type="button" class="action-button action-button--holiday"><ui5-icon name="accept" aria-hidden="true"></ui5-icon> Branch Holidays (2)</button><button type="button" class="action-button action-button--danger"><ui5-icon name="alert" aria-hidden="true"></ui5-icon> 4 Conflicts</button></div>
+    </section>
+
+    <section class="conflict-banner"><div class="conflict-icon"><ui5-icon name="alert" aria-hidden="true"></ui5-icon></div><div><strong>4 Scheduling Conflicts Detected in September 2026</strong><p>Usman Ali has Night shift followed immediately by Morning shift on Sep 07; 2 employees have unassigned gaps; 1 holiday overlap in Lahore Branch.</p></div><button type="button" class="resolve-button">Review Conflicts &amp; Auto-Resolve</button><button type="button" class="close-button" aria-label="Dismiss conflicts">×</button></section>
+
+    <section class="roster-table-panel" aria-label="Employee shift roster">
+      <div class="table-scroll">
+        <table class="roster-table">
+          <thead><tr><th class="employee-column"><label><input type="checkbox" /> Staff Member ({{ totalEmployees() }})</label></th><th class="role-column">Role / Hub</th><th class="menu-column"></th><th *ngFor="let day of days" [class.today-column]="day.isToday" [class.weekend-column]="day.isHoliday"><span>{{ day.weekday }}</span><strong>{{ day.date | number:'2.0-0' }}</strong></th></tr></thead>
+          <tbody>
+            @if (loading()) { <tr><td class="empty-state" [attr.colspan]="days.length + 3">Loading employees...</td></tr> }
+            @else if (!filteredEmployees().length) { <tr><td class="empty-state" [attr.colspan]="days.length + 3">No employees found for this search.</td></tr> }
+            @else { @for (employee of filteredEmployees(); track employee.EmployeeCode; let employeeIndex = $index) { <tr><td class="employee-cell"><label><input type="checkbox" /><span class="avatar">{{ (employee.EmployeeName || 'EM').slice(0, 2).toUpperCase() }}</span><span class="employee-name"><strong>{{ employee.EmployeeName || 'Employee ' + (employeeIndex + 1) }}</strong><small>{{ employee.EmployeeCode || 'EMP-' + (employeeIndex + 1) }} · {{ employeeIndex % 2 ? '160h' : '168h' }}</small></span></label></td><td class="role-cell"><span>{{ employee.role }}</span></td><td class="row-menu">⋮</td>@for (day of days; track day.date; let dayIndex = $index) { @let shift = shiftFor(employee, dayIndex); <td [class.today-column]="day.isToday" [class.weekend-column]="day.isHoliday" (click)="selectCell(employee, dayIndex)"><button type="button" [class]="shiftClass(shift)" [class.roster-shift--selected]="selectedCell()?.employeeCode === employee.EmployeeCode && selectedCell()?.day === dayIndex" [title]="shiftName(shift)" (click)="openShiftDialog(employee, dayIndex, $event); $event.stopPropagation()">{{ shift }}</button></td> }</tr> } }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  @if (shiftDialog(); as dialog) {
+    <div class="dialog-backdrop" (click)="closeShiftDialog()"></div>
+    <section class="shift-dialog" role="dialog" aria-modal="true" aria-labelledby="shift-dialog-title" [style.top.px]="shiftDialogPosition().top" [style.left.px]="shiftDialogPosition().left" (click)="$event.stopPropagation()">
+      <header class="shift-dialog__header"><div><h2 id="shift-dialog-title">Assign Shift</h2><p>{{ dialog.employee.EmployeeName }} · {{ days[dialog.dayIndex].weekday }} {{ days[dialog.dayIndex].date }}</p></div><button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeShiftDialog()">×</button></header>
+      <div class="shift-options">
+        @for (option of shiftOptions; track option.code) {
+          <button type="button" class="shift-option" [class]="'shift-option shift-option--' + option.className" [class.shift-option--active]="dialog.shift === option.code" (click)="chooseDialogShift(option.code)">
+            <span class="shift-option__code">{{ option.code }}</span><span class="shift-option__copy"><strong>{{ option.title }}</strong>@if (option.hours) { <small>{{ option.hours }}</small> }</span><span class="radio-dot" aria-hidden="true"></span>
+          </button>
+        }
+      </div>
+      <footer class="shift-dialog__footer"><span>Rotation Rule...</span><div><button type="button" class="dialog-button dialog-button--cancel" (click)="closeShiftDialog()">Cancel</button><button type="button" class="dialog-button dialog-button--apply" (click)="applyDialogShift()">Apply</button></div></footer>
+    </section>
+  }
+</div>

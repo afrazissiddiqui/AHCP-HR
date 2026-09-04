@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
+import { buildCompactPageNumbers } from '../../../../utils/pagination.util';
 import { PageToolbarComponent } from '../../../page-toolbar/page-toolbar';
 import { PlantMaintenanceSetupLayoutService } from '../plant-maintenance-setup-layout.service';
 import {
@@ -114,7 +115,7 @@ export class SubComponentDefinitionComponent implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   get visibleColumnCount(): number {

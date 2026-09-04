@@ -10,6 +10,9 @@ export interface GlAccountDeterminationAddPayload {
   name: string;
   branch: string;
   debit_credit_type: string;
+  vendor_for_expense_reimbursement: string;
+  vendor_for_loans: string;
+  vendor_for_advances: string;
 }
 
 export interface GlAccountDeterminationRecord {
@@ -19,6 +22,9 @@ export interface GlAccountDeterminationRecord {
   Name: string;
   Branch: string;
   DebitCreditType: string;
+  VendorForExpenseReimbursement: string;
+  VendorForLoans: string;
+  VendorForAdvances: string;
 }
 
 export interface GlAccountOption {
@@ -174,6 +180,21 @@ export class GlAccountDeterminationService {
         'DebitCreditType',
         'debitCreditType',
         'debit_credit_type',
+      ]),
+      VendorForExpenseReimbursement: this.pickString(sources, [
+        'VendorForExpenseReimbursement',
+        'vendorForExpenseReimbursement',
+        'vendor_for_expense_reimbursement',
+      ]),
+      VendorForLoans: this.pickString(sources, [
+        'VendorForLoans',
+        'vendorForLoans',
+        'vendor_for_loans',
+      ]),
+      VendorForAdvances: this.pickString(sources, [
+        'VendorForAdvances',
+        'vendorForAdvances',
+        'vendor_for_advances',
       ]),
     };
   }

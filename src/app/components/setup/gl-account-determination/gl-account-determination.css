@@ -57,6 +57,22 @@
   margin: 0;
 }
 
+.vendor-fields {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.vendor-field {
+  color: #1d2d3e;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 6px;
+}
+
 .list-panel {
   margin-bottom: 0;
   margin-top: 8px;
@@ -236,4 +252,10 @@
 
 .btn-submit-form:hover {
   background: #4338ca;
+}
+
+@media (max-width: 760px) {
+  .vendor-fields {
+    grid-template-columns: 1fr;
+  }
 }

@@ -145,6 +145,12 @@ export const HR_MENU_OPTIONS: HrMenuOption[] = [
         route: '/setup/withholding-tax',
         access: { moduleSlug: 'withholding_tax_form', action: 'list' },
       },
+      {
+        label: 'Emploee Roster',
+        value: 'setup/employee-roster',
+        icon: 'employee',
+        route: '/setup/employee-roster',
+      },
     ],
   },
   // { label: 'Continuous Performance', value: 'continuous-performance', icon: 'performance' },

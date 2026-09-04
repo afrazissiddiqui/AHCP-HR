@@ -20,6 +20,7 @@ export class GatePassBusinessPartnerSearchInputComponent {
   @Input() placeholder = 'Search code or name';
   @Input() inputId = '';
   @Input() disabled = false;
+  @Input() supplierOnly = false;
 
   @Output() valueChange = new EventEmitter<string>();
   @Output() partnerSelected = new EventEmitter<GatePassBusinessPartner>();
@@ -69,9 +70,14 @@ export class GatePassBusinessPartnerSearchInputComponent {
 
     this.suggestionsOpen = true;
     this.loadingSuggestions = true;
-    this.businessPartnerService.ensureLoaded().subscribe({
+    const load$ = this.supplierOnly
+      ? this.businessPartnerService.ensureSuppliersLoaded()
+      : this.businessPartnerService.ensureLoaded();
+    load$.subscribe({
       next: () => {
-        this.suggestions = this.businessPartnerService.search(query);
+        this.suggestions = this.supplierOnly
+          ? this.businessPartnerService.searchSuppliers(query)
+          : this.businessPartnerService.search(query);
         this.loadingSuggestions = false;
       },
       error: () => {

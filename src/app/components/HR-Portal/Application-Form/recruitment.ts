@@ -19,6 +19,7 @@ import {
   TableFilterService,
 } from '../../table-filter';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
+import { buildCompactPageNumbers } from '../../../utils/pagination.util';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
 import { glAccountBranchLabel } from '../../setup/gl-account-determination/gl-account-branch.options';
@@ -264,7 +265,7 @@ export class RecruitmentComponent implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   // Actions

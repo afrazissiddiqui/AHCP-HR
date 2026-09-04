@@ -7,6 +7,7 @@ import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { TerminationRecord, TerminationService } from '../../../services/termination.service';
 import { AlertService } from '../../../services/alert.service';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
+import { buildCompactPageNumbers } from '../../../utils/pagination.util';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { formatTableCellValue } from '../../../utils/date-format.util';
@@ -145,7 +146,7 @@ export class TerminationFormComponent implements OnInit {
   }
 
   get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    return buildCompactPageNumbers(this.totalPages, this.currentPage);
   }
 
   toggleAll(event: Event): void {

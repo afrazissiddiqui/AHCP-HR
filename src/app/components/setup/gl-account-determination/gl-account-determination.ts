@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  GatePassBusinessPartner,
+  GatePassBusinessPartnerService,
+} from '../../gate-pass/gate-pass-business-partner.service';
+import { GatePassBusinessPartnerSearchInputComponent } from '../../gate-pass/business-partner-search-input/business-partner-search-input';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
 import {
@@ -51,13 +56,14 @@ function debitCreditLabel(value: string): string {
 @Component({
   selector: 'app-gl-account-determination',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, GatePassBusinessPartnerSearchInputComponent],
   templateUrl: './gl-account-determination.html',
   styleUrl: './gl-account-determination.css',
 })
 export class GlAccountDeterminationComponent implements OnInit {
   private readonly alertService = inject(AlertService);
   private readonly glAccountService = inject(GlAccountDeterminationService);
+  private readonly businessPartnerService = inject(GatePassBusinessPartnerService);
 
   readonly branchOptions = GL_ACCOUNT_BRANCH_OPTIONS;
   readonly debitCreditOptions = GL_ACCOUNT_DEBIT_CREDIT_OPTIONS;
@@ -71,11 +77,27 @@ export class GlAccountDeterminationComponent implements OnInit {
   readonly savedRecords = signal<GlAccountDeterminationRecord[]>([]);
   readonly editingId = signal<number | null>(null);
 
+  vendorForExpenseReimbursement = '';
+  vendorForLoans = '';
+  vendorForAdvances = '';
   rows: GlAccountDeterminationRow[] = [emptyRow()];
 
   ngOnInit(): void {
     this.loadAccountOptions();
     this.loadSavedRecords();
+    this.businessPartnerService.ensureSuppliersLoaded().subscribe();
+  }
+
+  selectExpenseReimbursementVendor(partner: GatePassBusinessPartner): void {
+    this.vendorForExpenseReimbursement = partner.code;
+  }
+
+  selectLoanVendor(partner: GatePassBusinessPartner): void {
+    this.vendorForLoans = partner.code;
+  }
+
+  selectAdvanceVendor(partner: GatePassBusinessPartner): void {
+    this.vendorForAdvances = partner.code;
   }
 
   accountOptionsFor(row: GlAccountDeterminationRow, field: 'code' | 'name'): GlAccountOption[] {
@@ -171,7 +193,7 @@ export class GlAccountDeterminationComponent implements OnInit {
         'Submitted',
         `GL Account Determination saved with ${this.rows.length} row(s).`,
       );
-      this.rows = [emptyRow()];
+      this.resetForm();
       this.loadSavedRecords();
     });
   }
@@ -201,11 +223,21 @@ export class GlAccountDeterminationComponent implements OnInit {
         debitCreditType: debitCreditLabel(record.DebitCreditType),
       },
     ];
+    this.vendorForExpenseReimbursement = record.VendorForExpenseReimbursement;
+    this.vendorForLoans = record.VendorForLoans;
+    this.vendorForAdvances = record.VendorForAdvances;
   }
 
   cancelEdit(): void {
+    this.resetForm();
+  }
+
+  private resetForm(): void {
     this.editingId.set(null);
     this.rows = [emptyRow()];
+    this.vendorForExpenseReimbursement = '';
+    this.vendorForLoans = '';
+    this.vendorForAdvances = '';
   }
 
   async deleteRecord(record: GlAccountDeterminationRecord): Promise<void> {
@@ -304,6 +336,9 @@ export class GlAccountDeterminationComponent implements OnInit {
       name: row.salaryGlAccountName.trim(),
       branch: glAccountBranchCode(row.branch),
       debit_credit_type: row.debitCreditType.trim().toUpperCase(),
+      vendor_for_expense_reimbursement: this.vendorForExpenseReimbursement.trim(),
+      vendor_for_loans: this.vendorForLoans.trim(),
+      vendor_for_advances: this.vendorForAdvances.trim(),
     };
   }
 
@@ -315,8 +350,7 @@ export class GlAccountDeterminationComponent implements OnInit {
       .subscribe({
         next: () => {
           this.alertService.success('Updated', 'GL Account Determination updated successfully.');
-          this.editingId.set(null);
-          this.rows = [emptyRow()];
+          this.resetForm();
           this.loadSavedRecords();
         },
         error: (error: unknown) => {
