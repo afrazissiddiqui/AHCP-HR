@@ -6,11 +6,12 @@ import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { GoodReceiptService, buildCreateGoodReceiptPayload, InventoryAccountOption } from '../good-receipt.service';
 import { DepartmentsPrService, DepartmentPr } from '../../../../services/departments-pr.service';
-import { WarehouseService } from '../../../../services/warehouse.service';
+import { WarehouseOption } from '../../../../services/warehouse.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
+import { ReceiptFromProductionService } from '../../receipt-from-production/receipt-from-production.service';
 import {
   GoodReceiptHeader,
   GoodReceiptLine,
@@ -33,7 +34,7 @@ export class AddGoodReceipt implements OnInit {
   private readonly alertService = inject(AlertService);
   private readonly goodReceiptService = inject(GoodReceiptService);
   private readonly departmentsPrService = inject(DepartmentsPrService);
-  private readonly warehouseService = inject(WarehouseService);
+  private readonly receiptFromProductionService = inject(ReceiptFromProductionService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
   readonly saving = signal(false);
@@ -47,6 +48,7 @@ export class AddGoodReceipt implements OnInit {
     { code: '2', name: 'AHCP_HO' },
     { code: '3', name: 'AHCP_Faisalabad' },
   ]);
+  readonly warehouseOptions = signal<WarehouseOption[]>([]);
 
   readonly pageTitle = computed(() => 'Good Receipt');
 
@@ -64,12 +66,24 @@ export class AddGoodReceipt implements OnInit {
 
   readonly totalAmount = computed(() =>
     this.contentLines()
-      .map((line) => (line.quantity ?? 0) * (line.unitPrice ?? 0))
+      .map((line) => (line.quantity ?? 0) * (line.itemCost ?? 0))
       .reduce((sum, amount) => sum + amount, 0),
   );
 
   ngOnInit(): void {
-    this.warehouseService.ensureLoaded().subscribe({ error: () => undefined });
+    this.receiptFromProductionService.list().subscribe({
+      next: (receipts) => {
+        const warehouses = new Map<string, WarehouseOption>();
+        receipts.flatMap((receipt) => receipt.items).forEach((item) => {
+          const code = item.warehouse.trim();
+          if (code && !warehouses.has(code)) {
+            warehouses.set(code, { warehouseCode: code, warehouseName: code });
+          }
+        });
+        this.warehouseOptions.set([...warehouses.values()]);
+      },
+      error: () => this.warehouseOptions.set([]),
+    });
     this.loadAccountCodeOptions();
     this.loadDepartmentOptions();
   }

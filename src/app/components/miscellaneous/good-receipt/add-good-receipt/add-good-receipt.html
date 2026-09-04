@@ -64,11 +64,12 @@
                   <th class="sir-col-sr">Sr. No</th>
                   <th class="sir-col-item-code">Item No.</th>
                   <th class="sir-col-item-name">Item Description</th>
+                  <th class="sir-col-warehouse">Warehouse</th>
                   <th class="sir-col-qty">Quantity</th>
+                  <th class="sir-col-cost">Item Cost</th>
                   <th class="sir-col-total">Total</th>
                   <th class="sir-col-bin">Bin Location Allocation</th>
                   <th class="sir-col-account">Account Code</th>
-                  <th class="sir-col-cost">Item Cost</th>
                   <th class="sir-col-uom-name">UoM Name</th>
                   <th class="sir-col-dept">Departments & Locations</th>
                   <th class="sir-col-actions">Action</th>
@@ -92,11 +93,22 @@
                     <td class="sir-col-item-name">
                       <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
                     </td>
+                    <td class="sir-col-warehouse">
+                      <select class="sir-table-input" [ngModel]="line.warehouse" (ngModelChange)="updateContentLine(lineIndex, 'warehouse', $event)">
+                        <option value="">— Select warehouse —</option>
+                        @for (warehouse of warehouseOptions(); track warehouse.warehouseCode) {
+                          <option [value]="warehouse.warehouseCode">{{ warehouse.warehouseCode }} - {{ warehouse.warehouseName }}</option>
+                        }
+                      </select>
+                    </td>
                     <td class="sir-col-qty">
                       <input type="number" class="sir-table-input" min="0" [ngModel]="line.quantity" (ngModelChange)="updateContentLine(lineIndex, 'quantity', $event)">
                     </td>
+                    <td class="sir-col-cost">
+                      <input type="number" class="sir-table-input" min="0" step="0.01" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine(lineIndex, 'itemCost', $event)">
+                    </td>
                     <td class="sir-col-total">
-                      <input type="text" class="sir-table-input" [value]="formatAmount((line.quantity ?? 0) * (line.unitPrice ?? 0))" readonly>
+                      <input type="text" class="sir-table-input" [value]="formatAmount((line.quantity ?? 0) * (line.itemCost ?? 0))" readonly>
                     </td>
                     <td class="sir-col-bin">
                       <input type="text" class="sir-table-input" [ngModel]="line.binLocationAllocation" (ngModelChange)="updateContentLine(lineIndex, 'binLocationAllocation', $event)">
@@ -136,9 +148,6 @@
                           </div>
                         }
                       </div>
-                    </td>
-                    <td class="sir-col-cost">
-                      <input type="number" class="sir-table-input" min="0" step="0.01" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine(lineIndex, 'itemCost', $event)">
                     </td>
                     <td class="sir-col-uom-name">
                       <input type="text" class="sir-table-input" [ngModel]="line.uomName" (ngModelChange)="updateContentLine(lineIndex, 'uomName', $event)">

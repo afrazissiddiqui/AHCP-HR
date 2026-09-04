@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { OitmItemsService } from '../../../../services/oitm-items.service';
+import { TaxCode, TaxCodesService } from '../../../../services/tax-codes.service';
 import { SalesOrderRecord, SalesOrderService } from '../../../../services/sales-order.service';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
@@ -47,6 +48,7 @@ export class AddDelivery {
   private readonly authService = inject(AuthService);
   private readonly deliveryService = inject(DeliveryService);
   private readonly oitmItemsService = inject(OitmItemsService);
+  private readonly taxCodesService = inject(TaxCodesService);
   private readonly salesOrderService = inject(SalesOrderService);
   private readonly businessPartnerService = inject(GatePassBusinessPartnerService);
   protected readonly layout = inject(MiscellaneousLayoutService);
@@ -77,12 +79,7 @@ export class AddDelivery {
     { code: '3', name: 'AHCP_Faisalabad' },
   ]);
 
-  readonly taxCodeOptions = signal([
-    'EX',
-    'SR',
-    'Z0',
-    'Z1',
-  ]);
+  readonly taxCodeOptions = signal<TaxCode[]>([]);
 
   readonly deliveryMethodOptions = signal([
     'Standard Delivery',
@@ -117,6 +114,7 @@ export class AddDelivery {
 
   constructor() {
     this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
+    this.taxCodesService.ensureLoaded().subscribe((taxCodes) => this.taxCodeOptions.set(taxCodes));
   }
 
   updateBranch(value: string): void {

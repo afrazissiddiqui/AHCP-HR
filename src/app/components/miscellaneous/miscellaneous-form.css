@@ -870,6 +870,11 @@
   min-width: 140px;
 }
 
+.sir-col-tax-code {
+  width: 240px;
+  min-width: 240px;
+}
+
 .sir-col-actions {
   width: 120px;
   min-width: 120px;

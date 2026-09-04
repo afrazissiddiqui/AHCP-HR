@@ -5,6 +5,7 @@ import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { OitmItemsService } from '../../../../services/oitm-items.service';
 import { SalesOrderService } from '../../../../services/sales-order.service';
+import { TaxCodesService } from '../../../../services/tax-codes.service';
 import { GatePassBusinessPartnerService } from '../../../gate-pass/gate-pass-business-partner.service';
 import { DeliveryLine, createEmptyDeliveryHeader } from '../delivery.model';
 import { buildCreateDeliveryPayload } from '../delivery.service';
@@ -44,6 +45,12 @@ describe('AddDelivery batch selection', () => {
           provide: SalesOrderService,
           useValue: {
             list: () => of([]),
+          },
+        },
+        {
+          provide: TaxCodesService,
+          useValue: {
+            ensureLoaded: () => of([]),
           },
         },
         {
