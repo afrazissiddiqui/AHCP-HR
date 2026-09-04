@@ -188,6 +188,7 @@ export class OitmItemsService {
           'WhsCode',
         ]),
         quantity: this.pickQtyValue(batch),
+        legacyBatch: this.pickString([batch], ['U_LegacyBatch', 'u_legacy_batch', 'legacyBatch', 'legacy_batch']),
         manufacturingDate: this.pickString([batch], [
           'manufacturingDate',
           'manufacturing_date',
@@ -197,7 +198,7 @@ export class OitmItemsService {
       }))
       .filter(
         (batch) =>
-          batch.batchNumber || batch.warehouse || batch.quantity || batch.manufacturingDate || batch.expiryDate,
+          batch.batchNumber || batch.warehouse || batch.quantity || batch.legacyBatch || batch.manufacturingDate || batch.expiryDate,
       );
   }
 }

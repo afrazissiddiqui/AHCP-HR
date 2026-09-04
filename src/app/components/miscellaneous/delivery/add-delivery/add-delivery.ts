@@ -32,6 +32,7 @@ interface DeliveryBatchSelection {
   batchNo: string;
   quantity: number;
   issueQuantity?: number | null;
+  legacyBatch?: string;
 }
 
 @Component({
@@ -208,6 +209,7 @@ export class AddDelivery {
     return filtered.map((batch) => ({
       batchNo: batch.batchNumber.trim(),
       quantity: Number(batch.quantity ?? 0),
+      legacyBatch: batch.legacyBatch ?? '',
       issueQuantity: line.batchSerialNumber && batch.batchNumber.trim() === line.batchSerialNumber.trim()
         ? line.quantity ?? 0
         : null,
@@ -476,6 +478,7 @@ export class AddDelivery {
       .map((batch) => ({
         batchNo: batch.batchNumber.trim(),
         quantity: Number(batch.quantity ?? 0),
+        legacyBatch: batch.legacyBatch ?? '',
         issueQuantity: line.batchSerialNumber && batch.batchNumber.trim() === line.batchSerialNumber.trim()
           ? line.quantity ?? 0
           : null,

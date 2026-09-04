@@ -18,6 +18,7 @@ export interface OitmBatch {
   batchNumber: string;
   warehouse: string;
   quantity?: string | number;
+  legacyBatch?: string;
   manufacturingDate?: string;
   expiryDate?: string;
 }
