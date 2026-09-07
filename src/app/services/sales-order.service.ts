@@ -18,6 +18,18 @@ export interface SalesOrderLine {
   jumboCartonsCount?: number;
 }
 
+export interface SalesOrderAddress {
+  address: string;
+  street: string | null;
+  streetNo: string | null;
+  block: string | null;
+  building: string | null;
+  city: string | null;
+  zipCode: string | null;
+  state: string | null;
+  country: string | null;
+}
+
 export interface SalesOrderRecord {
   docEntry: string;
   docNum: string;
@@ -27,6 +39,7 @@ export interface SalesOrderRecord {
   cardCode: string;
   cardName: string;
   address: string;
+  shipToAddresses: SalesOrderAddress[];
   customerPoNo: string;
   branchId: string;
   vehicleNo: string;
@@ -84,6 +97,7 @@ export class SalesOrderService {
       cardCode: this.pickString(item, ['CardCode', 'cardCode']),
       cardName: this.pickString(item, ['CardName', 'cardName']),
       address: this.pickString(item, ['Address', 'address']),
+      shipToAddresses: this.mapAddresses(item['shipToAddresses'] ?? item['ShipToAddresses']),
       customerPoNo: this.pickString(item, ['NumAtCard', 'U_CusPoNo', 'customerPoNo']),
       branchId: this.pickString(item, ['BPLId', 'branchId']),
       vehicleNo: this.pickString(item, ['U_VehicleNo', 'vehicleNo']),
@@ -113,6 +127,26 @@ export class SalesOrderService {
       }));
   }
 
+  private mapAddresses(value: unknown): SalesOrderAddress[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+      .map((item) => ({
+        address: this.pickString(item, ['address', 'Address']),
+        street: this.pickNullableString(item, ['street', 'Street']),
+        streetNo: this.pickNullableString(item, ['streetNo', 'StreetNo']),
+        block: this.pickNullableString(item, ['block', 'Block']),
+        building: this.pickNullableString(item, ['building', 'Building']),
+        city: this.pickNullableString(item, ['city', 'City']),
+        zipCode: this.pickNullableString(item, ['zipCode', 'ZipCode']),
+        state: this.pickNullableString(item, ['state', 'State']),
+        country: this.pickNullableString(item, ['country', 'Country']),
+      }));
+  }
+
   private pickString(source: Record<string, unknown>, keys: string[]): string {
     for (const key of keys) {
       const value = source[key];
@@ -121,6 +155,11 @@ export class SalesOrderService {
       }
     }
     return '';
+  }
+
+  private pickNullableString(source: Record<string, unknown>, keys: string[]): string | null {
+    const value = this.pickString(source, keys);
+    return value || null;
   }
 
   private pickNumber(source: Record<string, unknown>, keys: string[]): number {

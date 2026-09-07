@@ -6,7 +6,7 @@ import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { OitmItemsService } from '../../../../services/oitm-items.service';
 import { TaxCode, TaxCodesService } from '../../../../services/tax-codes.service';
-import { SalesOrderRecord, SalesOrderService } from '../../../../services/sales-order.service';
+import { SalesOrderAddress, SalesOrderRecord, SalesOrderService } from '../../../../services/sales-order.service';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
@@ -16,11 +16,13 @@ import { GatePassBusinessPartner, GatePassBusinessPartnerService } from '../../.
 import {
   DeliveryHeader,
   DeliveryLine,
+  DeliveryAddress,
   createEmptyDeliveryHeader,
+  createEmptyDeliveryAddress,
   createEmptyDeliveryLine,
   updateDeliveryLine,
 } from '../delivery.model';
-import { DeliveryService, buildCreateDeliveryPayload } from '../delivery.service';
+import { DeliveryService, DeliveryVendor, buildCreateDeliveryPayload } from '../delivery.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
 interface DeliveryTab {
@@ -54,7 +56,7 @@ export class AddDelivery {
   private readonly businessPartnerService = inject(GatePassBusinessPartnerService);
   protected readonly layout = inject(MiscellaneousLayoutService);
   readonly saving = signal(false);
-  readonly activeSection = signal<'header' | 'logistics' | 'items' | 'footer'>('header');
+  readonly activeSection = signal<'header' | 'logistics' | 'items' | 'shipTo' | 'footer'>('header');
   readonly itemPickerOpen = signal(false);
   readonly itemPickerRowIndex = signal<number | null>(null);
   readonly submittedBy = signal(this.authService.getSessionUser()?.name ?? '');
@@ -64,6 +66,9 @@ export class AddDelivery {
   readonly salesOrderSearchResults = signal<SalesOrderRecord[]>([]);
   readonly salesOrdersLoading = signal(false);
   readonly salesOrdersError = signal<string | null>(null);
+  readonly deliveryVendors = signal<DeliveryVendor[]>([]);
+  readonly deliveryVendorsLoading = signal(false);
+  readonly transporterSuggestionsOpen = signal(false);
   readonly selectedSalesOrders = signal<Set<string>>(new Set());
   readonly customerDialogOpen = signal(false);
   readonly customerSearchQuery = signal('');
@@ -96,7 +101,19 @@ export class AddDelivery {
     this.editingId() ? 'Edit Delivery' : 'Add Delivery',
   );
   readonly headerForm = signal<DeliveryHeader>(createEmptyDeliveryHeader());
+  readonly selectedShipToAddressIndex = signal(0);
+  readonly selectedShipToAddress = computed(() =>
+    this.headerForm().shipToAddresses[this.selectedShipToAddressIndex()] ?? createEmptyDeliveryAddress(),
+  );
   readonly contentLines = signal<DeliveryLine[]>([createEmptyDeliveryLine()]);
+  readonly filteredTransporterSuggestions = computed(() => {
+    const query = this.headerForm().transporterName.trim().toLowerCase();
+    if (!query) {
+      return this.deliveryVendors();
+    }
+
+    return this.deliveryVendors().filter((vendor) => `${vendor.code} ${vendor.name}`.toLowerCase().includes(query));
+  });
 
   readonly totals = computed(() => {
     const beforeDiscount = this.contentLines()
@@ -116,6 +133,34 @@ export class AddDelivery {
   constructor() {
     this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
     this.taxCodesService.ensureLoaded().subscribe((taxCodes) => this.taxCodeOptions.set(taxCodes));
+    this.loadDeliveryVendors();
+  }
+
+  private loadDeliveryVendors(): void {
+    this.deliveryVendorsLoading.set(true);
+    this.deliveryService.getDeliveryVendors().subscribe({
+      next: (vendors) => {
+        this.deliveryVendors.set(vendors);
+        this.deliveryVendorsLoading.set(false);
+      },
+      error: () => {
+        this.deliveryVendors.set([]);
+        this.deliveryVendorsLoading.set(false);
+      },
+    });
+  }
+
+  openTransporterSuggestions(): void {
+    this.transporterSuggestionsOpen.set(true);
+  }
+
+  closeTransporterSuggestions(): void {
+    window.setTimeout(() => this.transporterSuggestionsOpen.set(false), 150);
+  }
+
+  selectTransporter(vendor: DeliveryVendor): void {
+    this.updateHeaderField('transporterName', vendor.name || vendor.code);
+    this.transporterSuggestionsOpen.set(false);
   }
 
   updateBranch(value: string): void {
@@ -136,6 +181,25 @@ export class AddDelivery {
 
   updateIntegerHeaderField(field: keyof DeliveryHeader, value: string): void {
     this.updateHeaderField(field, value.replace(/\D/g, ''));
+  }
+
+  updateShipToAddress(field: keyof DeliveryAddress, value: string): void {
+    this.headerForm.update((state) => ({
+      ...state,
+      shipToAddresses: state.shipToAddresses.map((address, index) =>
+        index === this.selectedShipToAddressIndex() ? { ...address, [field]: value } : address,
+      ),
+    }));
+  }
+
+  selectShipToAddress(index: number): void {
+    const address = this.headerForm().shipToAddresses[index];
+    if (!address) {
+      return;
+    }
+
+    this.selectedShipToAddressIndex.set(index);
+    this.updateHeaderField('shipToAddress', address.address);
   }
 
   addContentLine(): void {
@@ -260,7 +324,7 @@ export class AddDelivery {
     return index;
   }
 
-  scrollTo(section: 'header' | 'logistics' | 'items' | 'footer'): void {
+  scrollTo(section: 'header' | 'logistics' | 'items' | 'shipTo' | 'footer'): void {
     this.activeSection.set(section);
     document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
   }
@@ -675,6 +739,19 @@ export class AddDelivery {
       return;
     }
 
+    const shipToAddresses = Array.from(new Map(
+      orders
+        .flatMap((order) => order.shipToAddresses.length > 0
+          ? order.shipToAddresses.map((address) => this.toDeliveryAddress(address))
+          : [{ ...createEmptyDeliveryAddress(), address: order.address.trim() }])
+        .filter((address) => address.address.length > 0)
+        .map((address) => [this.addressKey(address), address]),
+    ).values());
+    const nextShipToAddresses = shipToAddresses.length > 0
+      ? shipToAddresses
+      : [createEmptyDeliveryAddress()];
+
+    this.selectedShipToAddressIndex.set(0);
     this.headerForm.update((state) => ({
       ...state,
       branchId: firstOrder.branchId || state.branchId,
@@ -685,6 +762,7 @@ export class AddDelivery {
       baseSalesOrderNumber: firstOrder.docNum,
       baseSalesOrderDocEntry: firstOrder.docEntry,
       shipToAddress: firstOrder.address,
+      shipToAddresses: nextShipToAddresses,
       driver: firstOrder.driverName || state.driver,
       vehicleNumber: firstOrder.vehicleNo || state.vehicleNumber,
       postingDate: firstOrder.docDate || state.postingDate,
@@ -714,6 +792,34 @@ export class AddDelivery {
 
     this.contentLines.set(mergedLines.length > 0 ? mergedLines : [createEmptyDeliveryLine()]);
     this.closeSalesOrderDialog();
+  }
+
+  private toDeliveryAddress(address: SalesOrderAddress): DeliveryAddress {
+    return {
+      address: address.address,
+      street: address.street,
+      streetNo: address.streetNo,
+      block: address.block,
+      building: address.building,
+      city: address.city,
+      zipCode: address.zipCode,
+      state: address.state,
+      country: address.country,
+    };
+  }
+
+  private addressKey(address: DeliveryAddress): string {
+    return [
+      address.address,
+      address.street,
+      address.streetNo,
+      address.block,
+      address.building,
+      address.city,
+      address.zipCode,
+      address.state,
+      address.country,
+    ].join('|').toLowerCase();
   }
 
   cancel(): void {

@@ -226,6 +226,52 @@
   margin-bottom: 12px;
 }
 
+.sir-search-field {
+  position: relative;
+  min-width: 0;
+}
+
+.sir-search-suggestions {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 300;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--sir-surface);
+  border: 1px solid var(--sir-border-strong);
+  border-radius: 4px;
+  box-shadow: var(--sir-shadow);
+}
+
+.sir-search-suggestions button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--sir-border);
+  background: transparent;
+  color: var(--sir-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sir-search-suggestions button:last-child {
+  border-bottom: 0;
+}
+
+.sir-search-suggestions button:hover,
+.sir-search-suggestions button:focus-visible {
+  background: var(--sir-surface-muted);
+}
+
+.sir-search-suggestion-empty {
+  padding: 8px 10px;
+  color: var(--sir-text-muted);
+  font-size: 12px;
+}
+
 .sir-header-inline .sir-field-row.sir-field-row--branch {
   grid-template-columns: 52px 165px;
   gap: 8px;

@@ -106,9 +106,20 @@ describe('AddDelivery batch selection', () => {
     const payload = buildCreateDeliveryPayload(header, [line]);
 
     expect(payload.items[0].batches).toEqual([
-      { batchNumber: 'B-100', quantity: 4 },
-      { batchNumber: 'B-200', quantity: 6 },
+      { batchNumber: 'B-100', quantity: 4, U_LegacyBatch: '' },
+      { batchNumber: 'B-200', quantity: 6, U_LegacyBatch: '' },
     ]);
+    expect(payload.shipToAddresses).toEqual([{
+      address: 'Bill To',
+      street: null,
+      streetNo: null,
+      block: null,
+      building: null,
+      city: null,
+      zipCode: null,
+      state: null,
+      country: null,
+    }]);
   });
 
   it('constrains batch issue quantity to the minimum of available and remaining required', () => {
@@ -124,7 +135,7 @@ describe('AddDelivery batch selection', () => {
       ],
     } as DeliveryLine;
 
-    const batch = line.availableBatches[0];
+    const batch = line.availableBatches![0];
     expect((component as any).getMaxAvailableForBatch(batch, line)).toBe(3);
   });
 

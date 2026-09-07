@@ -202,6 +202,19 @@ export interface ApplicationFormRecord {
   detail?: ApplicationFormDetail;
 }
 
+export interface EmployeeRosterRow {
+  employee_id: string;
+  shift_date: string;
+  shift: string;
+  role: string;
+  hub: string;
+  note: string | null;
+}
+
+export interface EmployeeRosterAddPayload {
+  data: EmployeeRosterRow[];
+}
+
 export interface EmployeeMasterDataRecord {
   EmployeeID: number;
   EmployeeName: string;
@@ -219,6 +232,7 @@ const EMPLOYEE_PROFILE_LIST_URL = apiUrl('employee-profile-list');
 const EMPLOYEE_PROFILE_VIEW_URL = apiUrl('employee-profile-detail');
 const EMPLOYEE_PROFILE_UPDATE_URL = apiUrl('employee-profile-update');
 const EMPLOYEE_PROFILE_DELETE_URL = apiUrl('employee-profile-delete');
+const EMPLOYEE_ROSTER_ADD_URL = apiUrl('employee-roster-add');
 
 export interface EmployeeProfileEducationPayload {
   institute: string;
@@ -731,6 +745,10 @@ export class ApplicationFormService {
 
   addEmployeeProfile(payload: EmployeeProfileAddPayload): Observable<unknown> {
     return this.http.post(EMPLOYEE_PROFILE_ADD_URL, this.serializeEmployeeProfilePayload(payload));
+  }
+
+  addEmployeeRoster(payload: EmployeeRosterAddPayload): Observable<unknown> {
+    return this.http.post(EMPLOYEE_ROSTER_ADD_URL, payload);
   }
 
   updateEmployeeProfile(id: string | number, payload: EmployeeProfileAddPayload): Observable<unknown> {

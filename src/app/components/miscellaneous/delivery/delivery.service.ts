@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
-import { DeliveryHeader, DeliveryLine } from './delivery.model';
+import { DeliveryAddress, DeliveryHeader, DeliveryLine } from './delivery.model';
 
 export interface CreateDeliveryBatchPayload {
   batchNumber: string;
@@ -33,6 +33,7 @@ export interface CreateDeliveryPayload {
   U_VehicleNo?: string;
   U_TransporterName?: string;
   U_IGP_DATE_CUS?: string;
+  shipToAddresses: DeliveryAddress[];
   items: CreateDeliveryItemPayload[];
 }
 
@@ -43,6 +44,11 @@ export interface CreateDeliveryResponse {
   error?: string;
   docEntry?: string | number;
   data?: Record<string, unknown>;
+}
+
+export interface DeliveryVendor {
+  code: string;
+  name: string;
 }
 
 export interface DeliveryListLineItem {
@@ -95,6 +101,17 @@ export function buildCreateDeliveryPayload(
     U_VehicleNo: header.vehicleNo.trim() || undefined,
     U_TransporterName: header.transporterName.trim() || undefined,
     U_IGP_DATE_CUS: header.igpDateCus.trim() || undefined,
+    shipToAddresses: header.shipToAddresses.map((address) => ({
+      address: address.address.trim(),
+      street: address.street?.trim() || null,
+      streetNo: address.streetNo?.trim() || null,
+      block: address.block?.trim() || null,
+      building: address.building?.trim() || null,
+      city: address.city?.trim() || null,
+      zipCode: address.zipCode?.trim() || null,
+      state: address.state?.trim() || null,
+      country: address.country?.trim() || null,
+    })),
     items: lines
       .filter((line) => line.itemCode.trim())
       .map((line) => {
@@ -143,6 +160,12 @@ export function buildCreateDeliveryPayload(
 export class DeliveryService {
   private readonly http = inject(HttpClient);
 
+  getDeliveryVendors(): Observable<DeliveryVendor[]> {
+    return this.http.get<unknown>(apiUrl('getDeliveryVendors')).pipe(
+      map((response) => this.parseDeliveryVendors(response)),
+    );
+  }
+
   list(): Observable<DeliveryListItem[]> {
     return this.http.get<unknown>(apiUrl('delivery')).pipe(
       map((response) => this.parseDeliveries(response)),
@@ -151,6 +174,27 @@ export class DeliveryService {
 
   create(payload: CreateDeliveryPayload): Observable<CreateDeliveryResponse> {
     return this.http.post<CreateDeliveryResponse>(apiUrl('createDelivery'), payload);
+  }
+
+  private parseDeliveryVendors(response: unknown): DeliveryVendor[] {
+    const records = this.extractDataArray(response, ['deliveryVendors', 'delivery_vendors', 'vendors', 'data']);
+    return records
+      .map((record) => {
+        if (typeof record === 'string') {
+          return { code: record.trim(), name: record.trim() };
+        }
+
+        if (!record || typeof record !== 'object' || Array.isArray(record)) {
+          return null;
+        }
+
+        const source = record as Record<string, unknown>;
+        const code = this.pickString(source, ['code', 'Code', 'vendorCode', 'VendorCode', 'CardCode']);
+        const name = this.pickString(source, ['name', 'Name', 'vendorName', 'VendorName', 'CardName', 'description', 'Description']);
+        return { code: code || name, name: name || code };
+      })
+      .filter((vendor): vendor is DeliveryVendor => !!vendor && !!vendor.name)
+      .filter((vendor, index, vendors) => vendors.findIndex((item) => item.name.toLowerCase() === vendor.name.toLowerCase()) === index);
   }
 
   private parseDeliveries(response: unknown): DeliveryListItem[] {

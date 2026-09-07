@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ApplicationFormRecord, ApplicationFormService } from '../../../services/application-form.service';
 import { AlertService } from '../../../services/alert.service';
+import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 
 type ShiftCode = 'M' | 'E' | 'N' | 'OFF' | 'L' | 'HOL' | '+';
@@ -181,12 +182,39 @@ export class EmployeeRosterComponent implements OnInit {
     if (!this.hasChanges() || this.saving()) {
       return;
     }
+
+    const payload = {
+      data: this.employees().flatMap((employee) =>
+        this.days.map((day, dayIndex) => ({
+          employee_id: employee.EmployeeCode,
+          shift_date: this.rosterDate(day.date),
+          shift: this.shiftFor(employee, dayIndex),
+          role: employee.role,
+          hub: this.selectedHub(),
+          note: null,
+        })),
+      ),
+    };
+
     this.saving.set(true);
-    setTimeout(() => {
-      this.saving.set(false);
-      this.hasChanges.set(false);
-      this.alertService.success('Roster Updated', 'Roster changes are ready for review.');
-    }, 350);
+    this.employeeService
+      .addEmployeeRoster(payload)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.hasChanges.set(false);
+          this.alertService.success('Roster Updated', 'Roster changes were saved successfully.');
+        },
+        error: (error) => {
+          this.alertService.error('Roster Save Failed', formatApiErrorMessage(error, 'Could not save roster changes.'));
+        },
+      });
+  }
+
+  private rosterDate(day: number): string {
+    const [monthName, year] = this.monthLabel().split(' ');
+    const month = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   private toRosterEmployee(record: ApplicationFormRecord, index: number): RosterEmployee {

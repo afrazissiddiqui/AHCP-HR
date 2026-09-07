@@ -23,6 +23,19 @@ export interface DeliveryHeader {
   vehicleNo: string;
   transporterName: string;
   igpDateCus: string;
+  shipToAddresses: DeliveryAddress[];
+}
+
+export interface DeliveryAddress {
+  address: string;
+  street: string | null;
+  streetNo: string | null;
+  block: string | null;
+  building: string | null;
+  city: string | null;
+  zipCode: string | null;
+  state: string | null;
+  country: string | null;
 }
 
 export interface DeliveryBatchSelection {
@@ -88,6 +101,21 @@ export function createEmptyDeliveryHeader(): DeliveryHeader {
     vehicleNo: '',
     transporterName: '',
     igpDateCus: '',
+    shipToAddresses: [createEmptyDeliveryAddress()],
+  };
+}
+
+export function createEmptyDeliveryAddress(): DeliveryAddress {
+  return {
+    address: 'Bill To',
+    street: null,
+    streetNo: null,
+    block: null,
+    building: null,
+    city: null,
+    zipCode: null,
+    state: null,
+    country: null,
   };
 }
 

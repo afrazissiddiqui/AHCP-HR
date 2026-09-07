@@ -14,6 +14,7 @@
         <ul class="sir-section-nav-list">
           <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'header'" (click)="scrollTo('header')">Header Info</li>
           <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'items'" (click)="scrollTo('items')">Row Level Info</li>
+          <li class="sir-section-nav-item" [class.sir-section-nav-item--active]="activeSection() === 'shipTo'" (click)="scrollTo('shipTo')">Ship To Address</li>
         </ul>
       </nav>
 
@@ -47,7 +48,32 @@
             </div>
             <div class="sir-field-row">
               <label>Transporter Name</label>
-              <input type="text" [ngModel]="headerForm().transporterName" (ngModelChange)="updateHeaderField('transporterName', $event)">
+              <div class="sir-search-field">
+                <input
+                  type="text"
+                  [ngModel]="headerForm().transporterName"
+                  (ngModelChange)="updateHeaderField('transporterName', $event)"
+                  (focus)="openTransporterSuggestions()"
+                  (blur)="closeTransporterSuggestions()"
+                  placeholder="Search transporter"
+                  autocomplete="off"
+                >
+                @if (transporterSuggestionsOpen()) {
+                  <div class="sir-search-suggestions" role="listbox">
+                    @if (deliveryVendorsLoading()) {
+                      <div class="sir-search-suggestion-empty">Loading transporters...</div>
+                    } @else {
+                      @for (vendor of filteredTransporterSuggestions(); track vendor.code + vendor.name) {
+                        <button type="button" role="option" (mousedown)="$event.preventDefault()" (click)="selectTransporter(vendor)">
+                          {{ vendor.name }}{{ vendor.code && vendor.code !== vendor.name ? ' (' + vendor.code + ')' : '' }}
+                        </button>
+                      } @empty {
+                        <div class="sir-search-suggestion-empty">No transporters found</div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
             </div>
             <div class="sir-field-row">
               <label>Builty Number</label>
@@ -172,6 +198,62 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="sir-form-section" id="shipTo">
+        <h2 class="sir-section-title">Ship To Address</h2>
+        @if (headerForm().shipToAddresses.length > 1) {
+          <div class="sir-field-row">
+            <label>Suggested Addresses</label>
+            <select [ngModel]="selectedShipToAddressIndex()" (ngModelChange)="selectShipToAddress(+$event)">
+              @for (address of headerForm().shipToAddresses; track address.address + $index; let addressIndex = $index) {
+                <option [value]="addressIndex">{{ address.address }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div class="sir-form-grid">
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Address</label>
+              <input type="text" [ngModel]="selectedShipToAddress().address" (ngModelChange)="updateShipToAddress('address', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Street</label>
+              <input type="text" [ngModel]="selectedShipToAddress().street" (ngModelChange)="updateShipToAddress('street', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Street No.</label>
+              <input type="text" [ngModel]="selectedShipToAddress().streetNo" (ngModelChange)="updateShipToAddress('streetNo', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Block</label>
+              <input type="text" [ngModel]="selectedShipToAddress().block" (ngModelChange)="updateShipToAddress('block', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Building</label>
+              <input type="text" [ngModel]="selectedShipToAddress().building" (ngModelChange)="updateShipToAddress('building', $event)">
+            </div>
+          </div>
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>City</label>
+              <input type="text" [ngModel]="selectedShipToAddress().city" (ngModelChange)="updateShipToAddress('city', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Zip Code</label>
+              <input type="text" [ngModel]="selectedShipToAddress().zipCode" (ngModelChange)="updateShipToAddress('zipCode', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>State</label>
+              <input type="text" [ngModel]="selectedShipToAddress().state" (ngModelChange)="updateShipToAddress('state', $event)">
+            </div>
+            <div class="sir-field-row">
+              <label>Country</label>
+              <input type="text" [ngModel]="selectedShipToAddress().country" (ngModelChange)="updateShipToAddress('country', $event)">
+            </div>
           </div>
         </div>
       </section>
