@@ -132,7 +132,11 @@ export class AddDelivery {
 
   constructor() {
     this.oitmItemsService.ensureLoaded().subscribe({ error: () => undefined });
-    this.taxCodesService.ensureLoaded().subscribe((taxCodes) => this.taxCodeOptions.set(taxCodes));
+    this.taxCodesService.ensureLoaded().subscribe((taxCodes) => {
+      this.taxCodeOptions.set(
+        taxCodes.filter((taxCode) => taxCode.code.trim().toUpperCase().startsWith('S')),
+      );
+    });
     this.loadDeliveryVendors();
   }
 
@@ -759,7 +763,7 @@ export class AddDelivery {
       customer: firstOrder.cardCode,
       customerName: firstOrder.cardName,
       customerRefNo: firstOrder.customerPoNo || state.customerRefNo,
-      baseSalesOrderNumber: firstOrder.docNum,
+      baseSalesOrderNumber: orders.map((order) => order.docNum).filter(Boolean).join(', '),
       baseSalesOrderDocEntry: firstOrder.docEntry,
       shipToAddress: firstOrder.address,
       shipToAddresses: nextShipToAddresses,

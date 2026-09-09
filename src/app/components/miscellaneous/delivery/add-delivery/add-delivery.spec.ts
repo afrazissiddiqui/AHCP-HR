@@ -170,4 +170,41 @@ describe('AddDelivery batch selection', () => {
 
     httpTesting.verify();
   });
+
+  it('displays all selected sales order numbers in the delivery header', () => {
+    component.applySalesOrders([
+      {
+        docEntry: '101',
+        docNum: 'SO-1001',
+        docDate: '2026-09-01',
+        docDueDate: '2026-09-08',
+        cardCode: 'CUST-01',
+        cardName: 'Customer One',
+        address: 'Address 1',
+        customerPoNo: '',
+        driverName: '',
+        vehicleNo: '',
+        branchId: '1',
+        shipToAddresses: [],
+        items: [],
+      },
+      {
+        docEntry: '102',
+        docNum: 'SO-1002',
+        docDate: '2026-09-02',
+        docDueDate: '2026-09-09',
+        cardCode: 'CUST-01',
+        cardName: 'Customer One',
+        address: 'Address 2',
+        customerPoNo: '',
+        driverName: '',
+        vehicleNo: '',
+        branchId: '1',
+        shipToAddresses: [],
+        items: [],
+      },
+    ]);
+
+    expect(component.headerForm().baseSalesOrderNumber).toBe('SO-1001, SO-1002');
+  });
 });

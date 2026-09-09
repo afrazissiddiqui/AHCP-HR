@@ -130,7 +130,6 @@
                     <th class="sir-col-price">Unit Price</th>
                   <th class="sir-col-qty">Discount %</th>
                   <th class="sir-col-tax-code">Tax Code</th>
-                  <th class="sir-col-text">Batch/Serial</th>
                   <th class="sir-col-text">Blanket Agreement No.</th>
           
                   <th class="sir-col-price">Line Total</th>
@@ -172,18 +171,6 @@
                       <option value=""></option>
                       @for (taxCode of taxCodeOptions(); track taxCode.code) {
                         <option [value]="taxCode.code">{{ taxCode.code }}{{ taxCode.name ? ' - ' + taxCode.name : '' }}</option>
-                      }
-                    </select>
-                  </td>
-                  <td class="sir-col-text">
-                    <select
-                      class="sir-table-input"
-                      [ngModel]="line.batchSerialNumber"
-                      (ngModelChange)="updateContentLine(i, 'batchSerialNumber', $event)"
-                    >
-                      <option value="">Select batch</option>
-                      @for (batch of batchOptionsForLine(line); track batch) {
-                        <option [value]="batch">{{ batch }}</option>
                       }
                     </select>
                   </td>
@@ -388,8 +375,8 @@
                           <input
                             type="text"
                             class="sir-table-input"
+                            readonly
                             [ngModel]="batch.legacyBatch ?? ''"
-                            (ngModelChange)="updateBatchLegacyBatch(batch, $event)"
                           />
                         </td>
                       </tr>

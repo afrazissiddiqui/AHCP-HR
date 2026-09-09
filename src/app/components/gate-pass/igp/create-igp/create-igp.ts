@@ -23,11 +23,12 @@ import {
 } from '../../gate-pass-business-partner.service';
 import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
-import { GATE_PASS_WAREHOUSE_OPTIONS, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
+import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
 import { ApplicationFormService } from '../../../../services/application-form.service';
 import { AuthService } from '../../../../services/auth.service';
+import { WarehouseService } from '../../../../services/warehouse.service';
 import { parseIgpBulkUploadCsv, type ParsedIgpCsvLine } from './csv-import.util';
 import { IgpBulkImportService } from '../igp-bulk-import.service';
 
@@ -123,7 +124,7 @@ export class CreateIgpComponent implements OnInit {
 
   readonly typeOptions = ['Purchase Order', 'Sales Return Request', 'Stand Alone Documents'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
-  readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
+  warehouseOptions: GatePassWarehouseOption[] = [];
   departmentOptions: string[] = [];
   private readonly maxReferenceRetry = 3;
 
@@ -139,12 +140,14 @@ export class CreateIgpComponent implements OnInit {
     private readonly authService: AuthService,
     private readonly bulkImportService: IgpBulkImportService,
     private readonly cdr: ChangeDetectorRef,
+    private readonly warehouseService: WarehouseService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
   }
 
   ngOnInit(): void {
+    this.loadWarehouseOptions();
     this.itemMasterService.ensureLoaded().subscribe();
     this.businessPartnerService.ensureLoaded().subscribe();
     this.departmentService.ensureLoaded().subscribe({
@@ -187,6 +190,20 @@ export class CreateIgpComponent implements OnInit {
         },
       });
   }
+
+    private loadWarehouseOptions(): void {
+      this.warehouseService.ensureLoaded().subscribe({
+        next: (warehouses) => {
+          this.warehouseOptions = warehouses.map((warehouse) => ({
+            code: warehouse.warehouseCode,
+            name: warehouse.warehouseName,
+          }));
+        },
+        error: () => {
+          this.warehouseOptions = [];
+        },
+      });
+    }
 
   private assignNextReferenceNo(): void {
     // Assign a default immediately so user sees a number right away

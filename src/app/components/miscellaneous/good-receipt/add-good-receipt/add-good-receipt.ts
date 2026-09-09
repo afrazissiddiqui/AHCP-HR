@@ -6,12 +6,11 @@ import { AlertService } from '../../../../services/alert.service';
 import { AuthService } from '../../../../services/auth.service';
 import { GoodReceiptService, buildCreateGoodReceiptPayload, InventoryAccountOption } from '../good-receipt.service';
 import { DepartmentsPrService, DepartmentPr } from '../../../../services/departments-pr.service';
-import { WarehouseOption } from '../../../../services/warehouse.service';
+import { WarehouseOption, WarehouseService } from '../../../../services/warehouse.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 import { MiscellaneousLayoutService } from '../../miscellaneous-layout.service';
 import { OitmItem } from '../../../../constants/oitm-items';
 import { OitmItemPickerDialogComponent } from '../../oitm-item-picker-dialog';
-import { ReceiptFromProductionService } from '../../receipt-from-production/receipt-from-production.service';
 import {
   GoodReceiptHeader,
   GoodReceiptLine,
@@ -34,7 +33,7 @@ export class AddGoodReceipt implements OnInit {
   private readonly alertService = inject(AlertService);
   private readonly goodReceiptService = inject(GoodReceiptService);
   private readonly departmentsPrService = inject(DepartmentsPrService);
-  private readonly receiptFromProductionService = inject(ReceiptFromProductionService);
+  private readonly warehouseService = inject(WarehouseService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
   readonly saving = signal(false);
@@ -71,17 +70,8 @@ export class AddGoodReceipt implements OnInit {
   );
 
   ngOnInit(): void {
-    this.receiptFromProductionService.list().subscribe({
-      next: (receipts) => {
-        const warehouses = new Map<string, WarehouseOption>();
-        receipts.flatMap((receipt) => receipt.items).forEach((item) => {
-          const code = item.warehouse.trim();
-          if (code && !warehouses.has(code)) {
-            warehouses.set(code, { warehouseCode: code, warehouseName: code });
-          }
-        });
-        this.warehouseOptions.set([...warehouses.values()]);
-      },
+    this.warehouseService.ensureLoaded().subscribe({
+      next: (warehouses) => this.warehouseOptions.set(warehouses),
       error: () => this.warehouseOptions.set([]),
     });
     this.loadAccountCodeOptions();

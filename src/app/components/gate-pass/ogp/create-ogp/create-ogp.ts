@@ -18,7 +18,7 @@ import { GATE_PASS_LOCATION_OPTIONS, resolveGatePassLocation } from '../../gate-
 import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
 import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
-import { GATE_PASS_WAREHOUSE_OPTIONS, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
+import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import {
   GatePassBusinessPartner,
   GatePassBusinessPartnerService,
@@ -31,6 +31,7 @@ import {
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
 import { ApplicationFormService } from '../../../../services/application-form.service';
 import { AuthService } from '../../../../services/auth.service';
+import { WarehouseService } from '../../../../services/warehouse.service';
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -98,7 +99,7 @@ export class CreateOgpComponent implements OnInit {
 
   readonly typeOptions = ['Delivery', 'Standalone'] as const;
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
-  readonly warehouseOptions = GATE_PASS_WAREHOUSE_OPTIONS;
+  warehouseOptions: GatePassWarehouseOption[] = [];
   departmentOptions: string[] = [];
 
   constructor(
@@ -111,12 +112,14 @@ export class CreateOgpComponent implements OnInit {
     private readonly departmentService: GatePassDepartmentService,
     private readonly applicationFormService: ApplicationFormService,
     private readonly authService: AuthService,
+    private readonly warehouseService: WarehouseService,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
   }
 
   ngOnInit(): void {
+    this.loadWarehouseOptions();
     this.itemMasterService.ensureLoaded().subscribe();
     this.businessPartnerService.ensureLoaded().subscribe();
     this.departmentService.ensureLoaded().subscribe({
@@ -157,6 +160,20 @@ export class CreateOgpComponent implements OnInit {
         },
       });
   }
+
+    private loadWarehouseOptions(): void {
+      this.warehouseService.ensureLoaded().subscribe({
+        next: (warehouses) => {
+          this.warehouseOptions = warehouses.map((warehouse) => ({
+            code: warehouse.warehouseCode,
+            name: warehouse.warehouseName,
+          }));
+        },
+        error: () => {
+          this.warehouseOptions = [];
+        },
+      });
+    }
 
   private assignNextReferenceNo(): void {
     const cached = this.ogpService.records().map((r) => r.referenceNo);

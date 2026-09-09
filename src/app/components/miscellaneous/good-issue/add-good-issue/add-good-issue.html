@@ -52,6 +52,7 @@
                   <th class="sir-col-sr">Sr. No</th>
                   <th class="sir-col-item-code">Item No.</th>
                   <th class="sir-col-item-name">Item Description</th>
+                  <th class="sir-col-warehouse">Warehouse</th>
                   <th class="sir-col-qty">Quantity</th>
                   <th class="sir-col-bin">Bin Location Allocation</th>
                   <th class="sir-col-account">Account Code</th>
@@ -78,6 +79,18 @@
                     </td>
                     <td class="sir-col-item-name">
                       <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
+                    </td>
+                    <td class="sir-col-warehouse">
+                      <select
+                        class="sir-table-input"
+                        [ngModel]="line.warehouse"
+                        (ngModelChange)="updateContentLine($index, 'warehouse', $event)"
+                      >
+                        <option value="">— Select warehouse —</option>
+                        @for (warehouse of warehouseOptions(); track warehouse.warehouseCode) {
+                          <option [value]="warehouse.warehouseCode">{{ warehouse.warehouseCode }} - {{ warehouse.warehouseName }}</option>
+                        }
+                      </select>
                     </td>
                     <td class="sir-col-qty">
                       <input type="number" class="sir-table-input" [ngModel]="line.quantity" (ngModelChange)="updateContentLine($index, 'quantity', $event)">

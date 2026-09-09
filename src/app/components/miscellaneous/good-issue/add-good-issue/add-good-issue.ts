@@ -37,6 +37,7 @@ export class AddGoodIssue implements OnInit {
   private readonly goodIssueService = inject(GoodIssueService);
   private readonly oitmItemsService = inject(OitmItemsService);
   private readonly warehouseService = inject(WarehouseService);
+  readonly warehouseOptions = this.warehouseService.warehouses;
   private readonly departmentsPrService = inject(DepartmentsPrService);
   protected readonly layout = inject(MiscellaneousLayoutService);
 
