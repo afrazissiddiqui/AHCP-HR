@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { BaseDocumentModalComponent } from '../../base-document-modal/base-document-modal';
 import { OpenBaseDocument } from '../../open-base-documents.service';
@@ -17,7 +17,10 @@ import {
 import { GATE_PASS_LOCATION_OPTIONS, resolveGatePassLocation } from '../../gate-pass-location.options';
 import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
-import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
+import {
+  nextGatePassReferenceNo,
+  reserveNextGatePassReferenceNo,
+} from '../../gate-pass-reference.util';
 import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import {
   GatePassBusinessPartner,
@@ -101,6 +104,7 @@ export class CreateOgpComponent implements OnInit {
   readonly locationOptions = GATE_PASS_LOCATION_OPTIONS;
   warehouseOptions: GatePassWarehouseOption[] = [];
   departmentOptions: string[] = [];
+  private readonly maxReferenceRetry = 3;
 
   constructor(
     private readonly router: Router,
@@ -193,6 +197,63 @@ export class CreateOgpComponent implements OnInit {
         this.referenceNo = nextGatePassReferenceNo('OGP', []);
       },
     });
+  }
+
+  private async ensureUniqueReferenceNo(): Promise<void> {
+    const records = await firstValueFrom(this.ogpService.fetchOutwardGatePasses());
+    this.referenceNo = reserveNextGatePassReferenceNo(
+      'OGP',
+      records.map((record) => record.referenceNo),
+    );
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private isReferenceDuplicateError(message: string | undefined | null): boolean {
+    if (!message) {
+      return false;
+    }
+
+    const text = String(message).toLowerCase();
+    return (
+      text.includes('duplicate') ||
+      text.includes('reference number') ||
+      text.includes('reference no') ||
+      text.includes('already exists') ||
+      text.includes('unique')
+    );
+  }
+
+  private async saveNewOgp(attempt = 1): Promise<void> {
+    try {
+      await this.ensureUniqueReferenceNo();
+      const response = await firstValueFrom(this.ogpService.addOutwardGatePass(this.buildPayload()));
+
+      if (response?.status === false || response?.success === false) {
+        if (attempt < this.maxReferenceRetry && this.isReferenceDuplicateError(response.message)) {
+          await this.delay(250);
+          return this.saveNewOgp(attempt + 1);
+        }
+
+        this.alertService.error('Error', response.message || 'Failed to save OGP.');
+        return;
+      }
+
+      await this.alertService.successAndWait('Success', response?.message || 'OGP record saved successfully.');
+      this.ogpService.fetchOutwardGatePasses().subscribe();
+      this.back();
+    } catch (error: unknown) {
+      const apiMessage = formatApiErrorMessage(error, 'Failed to save OGP.');
+      if (attempt < this.maxReferenceRetry && this.isReferenceDuplicateError(apiMessage)) {
+        await this.delay(250);
+        return this.saveNewOgp(attempt + 1);
+      }
+      this.alertService.error('Error', apiMessage);
+    } finally {
+      this.submitting = false;
+    }
   }
 
   private loadSignedInUserDetails(): void {
@@ -446,11 +507,14 @@ export class CreateOgpComponent implements OnInit {
     }
 
     const payload = this.buildPayload();
-    const request$ = this.editingId
-      ? this.ogpService.updateOutwardGatePass(this.editingId, payload)
-      : this.ogpService.addOutwardGatePass(payload);
-
     this.submitting = true;
+
+    if (!this.editingId) {
+      void this.saveNewOgp();
+      return;
+    }
+
+    const request$ = this.ogpService.updateOutwardGatePass(this.editingId, payload);
     request$
       .pipe(finalize(() => {
         this.submitting = false;
