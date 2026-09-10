@@ -368,6 +368,11 @@ export class AddDelivery {
   }
 
   openSalesOrderDialog(): void {
+    if (!this.headerForm().customer.trim()) {
+      this.alertService.validation('Select Customer First.');
+      return;
+    }
+
     this.salesOrderDialogOpen.set(true);
     this.salesOrdersLoading.set(true);
     this.salesOrdersError.set(null);

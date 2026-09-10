@@ -119,7 +119,6 @@
                 <tr>
                   <th class="sir-col-sr">Sr. No</th>
                   <th class="sir-col-item-code">Item No.</th>
-                  <th class="sir-col-text">BP Catalog No.</th>
                   <th class="sir-col-item-name">Item Description</th>
                   <th class="sir-col-warehouse">Warehouse</th>
                   <th class="sir-col-text">Bin Location</th>
@@ -130,8 +129,6 @@
                     <th class="sir-col-price">Unit Price</th>
                   <th class="sir-col-qty">Discount %</th>
                   <th class="sir-col-tax-code">Tax Code</th>
-                  <th class="sir-col-text">Blanket Agreement No.</th>
-          
                   <th class="sir-col-price">Line Total</th>
                   <th class="sir-col-actions">Action</th>
                 </tr>
@@ -150,7 +147,6 @@
                       (keydown.enter)="openItemPicker(i)"
                     />
                   </td>
-                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.bpCatalogNo" (ngModelChange)="updateContentLine(i, 'bpCatalogNo', $event)"></td>
                   <td class="sir-col-item-name"><input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription"></td>
                   <td class="sir-col-warehouse">
                     <app-warehouse-search-select
@@ -174,7 +170,6 @@
                       }
                     </select>
                   </td>
-                  <td class="sir-col-text"><input type="text" class="sir-table-input" [ngModel]="line.blanketAgreementNo" (ngModelChange)="updateContentLine(i, 'blanketAgreementNo', $event)"></td>
                   <td class="sir-col-price"><input type="text" class="sir-table-input" [value]="formatAmount(calculateLineTotal(line))" readonly></td>
                   <td class="sir-col-actions">
                     <div class="sir-row-action-buttons" data-ui5-compact-size>
