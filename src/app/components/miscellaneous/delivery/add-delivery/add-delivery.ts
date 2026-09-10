@@ -428,7 +428,8 @@ export class AddDelivery {
     this.customerSearchQuery.set('');
   }
 
-  searchCustomers(): void {
+  searchCustomers(searchText: string): void {
+    this.customerSearchQuery.set(searchText);
     const query = this.customerSearchQuery().trim();
     this.customerSearchResults.set(this.businessPartnerService.searchCustomers(query));
   }
@@ -447,7 +448,8 @@ export class AddDelivery {
     this.closeCustomerDialog();
   }
 
-  searchSalesOrders(): void {
+  searchSalesOrders(searchText: string): void {
+    this.salesOrderSearchQuery.set(searchText);
     const query = this.salesOrderSearchQuery().trim().toLowerCase();
     if (!query) {
       this.salesOrderSearchResults.set(this.salesOrders());
@@ -484,6 +486,13 @@ export class AddDelivery {
       return;
     }
 
+    this.oitmItemsService.ensureLoaded().subscribe({
+      next: () => this.prepareBatchSelectionDialog(),
+      error: () => this.prepareBatchSelectionDialog(),
+    });
+  }
+
+  private prepareBatchSelectionDialog(): void {
     this.contentLines.update((rows) =>
       rows.map((row) => {
         if (!row.itemCode.trim()) {

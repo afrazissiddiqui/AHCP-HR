@@ -417,9 +417,8 @@
                 class="sir-table-input"
                 placeholder="Search by customer code or name"
                 [ngModel]="customerSearchQuery()"
-                (ngModelChange)="customerSearchQuery.set($event)"
+                (ngModelChange)="searchCustomers($event)"
               />
-              <button type="button" class="sir-inline-button" (click)="searchCustomers()">Search</button>
             </div>
           </div>
           <div class="sir-data-table-wrapper">
@@ -495,9 +494,8 @@
                 class="sir-table-input"
                 placeholder="Search by SO no, customer, branch, PO"
                 [ngModel]="salesOrderSearchQuery()"
-                (ngModelChange)="salesOrderSearchQuery.set($event)"
+                (ngModelChange)="searchSalesOrders($event)"
               />
-              <button type="button" class="sir-inline-button" (click)="searchSalesOrders()">Search</button>
             </div>
           </div>
           <div class="sir-data-table-wrapper">
