@@ -132,13 +132,14 @@ export function buildCreateInventoryTransferRequestPayload(
 ): CreateInventoryTransferPayload {
   const fromWarehouse = header.fromWarehouse.trim();
   const toWarehouse = header.toWarehouse.trim();
+  const remarks = header.remarks.trim() || 'Inventory transfer request';
 
   return {
     DocDate: header.docDate.trim(),
     TaxDate: header.taxDate.trim(),
     from_warehouse: fromWarehouse,
     to_warehouse: toWarehouse,
-    Remarks: header.remarks.trim(),
+    Remarks: remarks,
     items: lines
       .filter((line) => line.itemCode.trim())
       .map((line) => {
@@ -201,9 +202,9 @@ export class InventoryTransferService {
               quantity: this.pickNumber(line, ['Quantity', 'quantity']),
               fromWarehouse: this.pickString(line, ['FromWhsCod', 'from_warehouse', 'fromWarehouse']),
               toWarehouse: this.pickString(line, ['WhsCode', 'ToWhsCode', 'to_warehouse', 'toWarehouse']),
-              batchNumber: firstBatch
-                ? this.pickString(firstBatch, ['batchNumber', 'BatchNum', 'batch_number'])
-                : '',
+              batchNumber:
+                (firstBatch ? this.pickString(firstBatch, ['batchNumber', 'BatchNum', 'batch_number']) : '') ||
+                this.pickString(line, ['batchNumber', 'BatchNum', 'batch_number', 'BatchNo', 'Batch']),
               uomCode: this.pickString(line, ['UomCode', 'uomCode', 'UOMCode', 'Uom', 'uom', 'UOM']),
               uomName: this.pickString(line, ['UomName', 'uomName', 'UOMName', 'UomCode', 'uomCode', 'UOMCode']),
             };

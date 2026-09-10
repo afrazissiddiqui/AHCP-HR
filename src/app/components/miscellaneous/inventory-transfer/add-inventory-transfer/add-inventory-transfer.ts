@@ -67,7 +67,7 @@ export class AddInventoryTransfer implements OnInit {
     { code: '2', name: 'AHCP_HO' },
     { code: '3', name: 'AHCP_Faisalabad' },
   ]);
-  readonly selectedBranchCode = signal('');
+  readonly selectedBranchCode = signal('1');
   readonly inventoryTransferUomMap = signal<Record<string, string>>({});
 
   readonly headerForm = signal<InventoryTransferHeader>(createEmptyInventoryTransferHeader());

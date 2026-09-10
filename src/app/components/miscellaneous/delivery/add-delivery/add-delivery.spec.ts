@@ -139,12 +139,13 @@ describe('AddDelivery batch selection', () => {
     expect((component as any).getMaxAvailableForBatch(batch, line)).toBe(3);
   });
 
-  it('maps NumAtCard from SAP sales orders into the customer reference number', () => {
+  it('maps sales-order UoM into copied delivery lines', () => {
     const httpTesting = TestBed.inject(HttpTestingController);
     const service = TestBed.inject(SalesOrderService);
 
     service.list().subscribe((orders) => {
       expect(orders[0].customerPoNo).toBe('0024');
+      expect(orders[0].items[0].uom).toBe('Pieces');
     });
 
     const req = httpTesting.expectOne((request) => request.url.includes('sales_orders'));
@@ -162,7 +163,19 @@ describe('AddDelivery batch selection', () => {
             Address: 'Some address',
             NumAtCard: '0024',
             BPLId: '1',
-            items: [],
+            items: [
+              {
+                DocEntry: '101',
+                LineNum: '0',
+                ItemCode: 'ITEM-001',
+                Dscription: 'Test item',
+                Quantity: 1,
+                Price: 10,
+                WhsCode: 'WH01',
+                uom: 'Pieces',
+                LineTotal: 10,
+              },
+            ],
           },
         ],
       },
@@ -206,5 +219,36 @@ describe('AddDelivery batch selection', () => {
     ]);
 
     expect(component.headerForm().baseSalesOrderNumber).toBe('SO-1001, SO-1002');
+  });
+
+  it('populates UoM when copying a sales-order line', () => {
+    component.applySalesOrders([{
+      docEntry: '101',
+      docNum: 'SO-1001',
+      docDate: '2026-09-01',
+      docDueDate: '2026-09-08',
+      docStatus: 'O',
+      cardCode: 'CUST-01',
+      cardName: 'Customer One',
+      address: 'Address 1',
+      customerPoNo: '',
+      driverName: '',
+      vehicleNo: '',
+      branchId: '1',
+      shipToAddresses: [],
+      items: [{
+        docEntry: '101',
+        lineNum: '0',
+        itemCode: 'ITEM-001',
+        itemDescription: 'Test item',
+        quantity: 1,
+        unitPrice: 10,
+        warehouse: 'WH01',
+        uom: 'Pieces',
+        lineTotal: 10,
+      }],
+    }]);
+
+    expect(component.contentLines()[0].unitOfMeasure).toBe('Pieces');
   });
 });

@@ -13,6 +13,7 @@ export interface SalesOrderLine {
   quantity: number;
   unitPrice: number;
   warehouse: string;
+  uom: string;
   lineTotal: number;
   qtyPerJumboCarton?: number;
   jumboCartonsCount?: number;
@@ -121,6 +122,7 @@ export class SalesOrderService {
         quantity: this.pickNumber(item, ['Quantity', 'quantity']),
         unitPrice: this.pickNumber(item, ['Price', 'price']),
         warehouse: this.pickString(item, ['WhsCode', 'warehouse', 'warehouseCode']),
+        uom: this.pickString(item, ['uom', 'UoM', 'UOM', 'Uom', 'unitOfMeasure']),
         lineTotal: this.pickNumber(item, ['LineTotal', 'lineTotal']),
         qtyPerJumboCarton: this.pickNumber(item, ['U_QtyPerJC', 'U_QtyPerJumboCarton', 'QtyPerJumboCarton', 'qtyPerJumboCarton', 'U_QtyPerJumbo', 'QtyPerJumbo']),
         jumboCartonsCount: this.pickNumber(item, ['U_NoJc', 'U_NoJC', 'U_JumboCartonsCount', 'JumboCartonsCount', 'jumboCartonsCount', '#JumboCartons', 'U_JumboCartons']),

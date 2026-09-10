@@ -797,7 +797,8 @@ export class AddDelivery {
             baseLine: line.lineNum,
             quantity: line.quantity,
             warehouse: line.warehouse,
-            unitOfMeasure: '',
+            unitOfMeasure: line.uom || this.oitmItemsService.getCatalog()
+              .find((item) => item.itemCode.trim().toLowerCase() === line.itemCode.trim().toLowerCase())?.uom || '',
             unitPrice: line.unitPrice,
             batchSerialNumber: '',
             taxCode: '',

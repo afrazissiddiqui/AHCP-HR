@@ -169,6 +169,39 @@ describe('IssueFromProductionComponent', () => {
     expect(component.contentLines()[0].availableBatches[0].issueQuantity).toBe(4);
   });
 
+  it('does not show items whose name starts with Resources in batch selection', () => {
+    component.contentLines.set([
+      {
+        itemCode: 'RM-001',
+        itemDescription: 'Resources - Resin',
+        warehouse: 'FSD-WH03',
+        quantity: 2,
+        requiredQuantity: 2,
+        batchNumber: 'B-100',
+        manufacturingDate: '',
+        expiryDate: '',
+        baseEntry: '17',
+        baseLine: '1',
+        availableBatches: [{ batchNo: 'B-100', quantity: 5 }],
+      },
+      {
+        itemCode: 'FG-001',
+        itemDescription: 'Finished Goods A',
+        warehouse: 'FSD-WH03',
+        quantity: 3,
+        requiredQuantity: 3,
+        batchNumber: 'B-200',
+        manufacturingDate: '',
+        expiryDate: '',
+        baseEntry: '17',
+        baseLine: '2',
+        availableBatches: [{ batchNo: 'B-200', quantity: 3 }],
+      },
+    ]);
+
+    expect(component.batchSelectionLines().map(({ line }) => line.itemCode)).toEqual(['FG-001']);
+  });
+
   it('marks a batch selection line as complete when one batch has issue quantity', () => {
     component.contentLines.set([
       {

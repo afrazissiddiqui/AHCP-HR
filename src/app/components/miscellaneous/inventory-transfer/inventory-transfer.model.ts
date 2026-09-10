@@ -54,7 +54,7 @@ export function createEmptyInventoryTransferHeader(): InventoryTransferHeader {
     toWarehouse: '',
     toBinLocation: '',
     journalRemarks: '',
-    remarks: '',
+    remarks: 'Inventory transfer request',
     baseItrDocEntry: '',
     baseItrDocNum: '',
   };

@@ -172,7 +172,7 @@ export class IssueFromProductionComponent implements OnInit {
   readonly batchSelectionLines = computed(() =>
     this.contentLines()
       .map((line, index) => ({ line, index }))
-      .filter(({ line }) => line.itemCode.trim()),
+      .filter(({ line }) => line.itemCode.trim() && !this.isResourceItem(line)),
   );
 
   readonly selectedProductionOrderItems = computed(() => {
@@ -356,6 +356,10 @@ export class IssueFromProductionComponent implements OnInit {
 
   selectBatchSelectionLine(index: number): void {
     this.activeBatchSelectionLineIndex.set(index);
+  }
+
+  private isResourceItem(line: IssueForProductionLine): boolean {
+    return line.itemDescription.trim().toLowerCase().startsWith('resources');
   }
 
   selectBatchForActiveLine(batch: ProductionOrderBatch): void {

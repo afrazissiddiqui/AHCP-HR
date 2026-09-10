@@ -21,6 +21,21 @@
         <div class="sir-form-grid">
           <div class="sir-form-column">
             <div class="sir-field-row">
+              <label>Inventory Transfer Request:</label>
+              <div class="sir-input-group">
+                <input type="text" [ngModel]="headerForm().baseItrDocNum" readonly placeholder="Not selected" />
+                <button type="button" class="sir-inline-button" (click)="openItrDialog()">Copy from ITR</button>
+              </div>
+            </div>
+            <div class="sir-field-row">
+              <label>Branch:</label>
+              <select [ngModel]="selectedBranchCode()" (ngModelChange)="selectBranch($event)">
+                @for (branch of branchOptions(); track branch.code) {
+                  <option [value]="branch.code">{{ branch.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="sir-field-row">
               <label>Business Partner:</label>
               <input type="text" [ngModel]="headerForm().businessPartner" (ngModelChange)="updateHeaderField('businessPartner', $event)">
             </div>
@@ -47,16 +62,6 @@
               <input type="date" [ngModel]="headerForm().docDate" (ngModelChange)="updateHeaderField('docDate', $event)">
             </div>
             <div class="sir-field-row">
-              <label>From Branch:</label>
-              <input
-                type="text"
-                class="sir-table-input"
-                [ngModel]="headerForm().fromBranch"
-                readonly
-                placeholder="Branch will copy from ITR or warehouse selection"
-              />
-            </div>
-            <div class="sir-field-row">
               <label>From Warehouse:</label>
               <div class="sir-warehouse-search">
                 <app-warehouse-search-select
@@ -66,7 +71,6 @@
                   [branchCode]="selectedBranchCode()"
                   (warehouseCodeChange)="updateHeaderField('fromWarehouse', $event)"
                 />
-                <button type="button" class="sir-inline-button" (click)="openItrDialog()">Copy From ITR</button>
               </div>
             </div>
             <div class="sir-field-row">
@@ -129,7 +133,7 @@
                       <input type="text" class="sir-table-input" readonly [ngModel]="line.itemDescription" />
                     </td>
                     <td>
-                      <input type="text" class="sir-table-input" [ngModel]="line.itemCost" (ngModelChange)="updateContentLine($index, 'itemCost', $event)" />
+                      <input type="text" class="sir-table-input" readonly [ngModel]="line.itemCost" />
                     </td>
                     <td>
                       <input type="text" class="sir-table-input" readonly [ngModel]="line.uomCode" />
@@ -209,22 +213,18 @@
       </section>
 
       <section class="sir-form-section" id="footer">
-        <div class="sir-form-grid">
-          <div class="sir-form-column">
-            <div class="sir-field-row">
-              <label>Journal Remarks:</label>
-              <textarea rows="3" [ngModel]="headerForm().journalRemarks" (ngModelChange)="updateHeaderField('journalRemarks', $event)"></textarea>
-            </div>
+        <div class="sir-footer-grid">
+          <div class="sir-field-row sir-field-row--top">
+            <label>Journal Remarks:</label>
+            <textarea rows="3" [ngModel]="headerForm().journalRemarks" (ngModelChange)="updateHeaderField('journalRemarks', $event)"></textarea>
           </div>
-          <div class="sir-form-column">
-            <div class="sir-field-row">
-              <label>Remarks:</label>
-              <input type="text" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" placeholder="Inventory transfer" />
-            </div>
-            <div class="sir-field-row">
-              <label>Submitted By:</label>
-              <input type="text" [ngModel]="submittedBy()" readonly />
-            </div>
+          <div class="sir-field-row">
+            <label>Remarks:</label>
+            <input type="text" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" placeholder="Inventory transfer" />
+          </div>
+          <div class="sir-field-row">
+            <label>Submitted By:</label>
+            <input type="text" [ngModel]="submittedBy()" readonly />
           </div>
         </div>
         <div class="sir-form-actions">
