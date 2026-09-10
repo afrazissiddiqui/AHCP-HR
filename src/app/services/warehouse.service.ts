@@ -6,6 +6,7 @@ import { apiUrl } from '../config/api.config';
 export interface WarehouseOption {
   warehouseCode: string;
   warehouseName: string;
+  bplId?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -177,7 +178,26 @@ export class WarehouseService {
         'whs_name',
         'description',
       ]),
+      bplId: this.pickNumber([item], ['BPLID', 'BPLId', 'bplId', 'bplid', 'bpl_id']),
     };
+  }
+
+  private pickNumber(sources: Array<Record<string, unknown>>, keys: string[]): number | undefined {
+    for (const source of sources) {
+      for (const key of keys) {
+        const value = source[key];
+        const normalized = String(value ?? '').trim();
+        if (!normalized) {
+          continue;
+        }
+
+        const parsed = Number(normalized);
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+    }
+    return undefined;
   }
 
   private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {

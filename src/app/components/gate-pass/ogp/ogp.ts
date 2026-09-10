@@ -86,6 +86,20 @@ export class OgpComponent implements OnInit {
     return this.ogpService.records();
   }
 
+  get duplicateReferenceNos(): string[] {
+    const counts = new Map<string, number>();
+    for (const record of this.rows) {
+      const referenceNo = record.referenceNo?.trim().toUpperCase();
+      if (referenceNo && referenceNo !== '—') {
+        counts.set(referenceNo, (counts.get(referenceNo) ?? 0) + 1);
+      }
+    }
+
+    return [...counts.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([referenceNo]) => referenceNo);
+  }
+
   get visibleColumnCount(): number {
     return this.columns.filter((col) => col.visible).length;
   }

@@ -99,17 +99,36 @@
                       <input type="text" class="sir-table-input" [ngModel]="line.binLocationAllocation" (ngModelChange)="updateContentLine($index, 'binLocationAllocation', $event)">
                     </td>
                     <td class="sir-col-account">
-                      <select
-                        class="sir-table-input"
-                        [ngModel]="line.accountCode"
-                        (ngModelChange)="updateContentLine($index, 'accountCode', $event)"
-                        [disabled]="accountCodeOptionsLoading()"
-                      >
-                        <option value="">{{ accountCodeOptionsLoading() ? 'Loading…' : 'Select account code' }}</option>
-                        @for (account of accountCodeOptions(); track account.code) {
-                          <option [value]="account.code">{{ account.name ? account.name + ' (' + account.code + ')' : account.code }}</option>
+                      <div class="sir-search-field">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          #accountInput
+                          [ngModel]="accountSearchTerms()[$index] || line.accountCode"
+                          (ngModelChange)="updateAccountSearch($index, $event, accountInput)"
+                          (focus)="focusAccountSearch($index, accountInput)"
+                          (blur)="scheduleHideAccountSuggestions()"
+                          [placeholder]="accountCodeOptionsLoading() ? 'Loading account codes…' : 'Search account code'"
+                          [disabled]="accountCodeOptionsLoading()"
+                          autocomplete="off"
+                        />
+                        @if (activeAccountSuggestionIndex() === $index) {
+                          <div
+                            class="sir-search-suggestions sir-good-issue-account-suggestions"
+                            [style.left.px]="accountSuggestionStyle()?.left"
+                            [style.top.px]="accountSuggestionStyle()?.top"
+                            [style.width.px]="accountSuggestionStyle()?.width"
+                          >
+                            @for (account of getFilteredAccountCodeOptions($index); track account.code) {
+                              <button type="button" (click)="selectAccountCode($index, account)">
+                                {{ account.name ? account.name + ' (' + account.code + ')' : account.code }}
+                              </button>
+                            } @empty {
+                              <div class="sir-search-suggestion-empty">No account codes found</div>
+                            }
+                          </div>
                         }
-                      </select>
+                      </div>
                     </td>
                     <td class="sir-col-uom-name">
                       <input type="text" class="sir-table-input" [ngModel]="line.uomName" (ngModelChange)="updateContentLine($index, 'uomName', $event)">

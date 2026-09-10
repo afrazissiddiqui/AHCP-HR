@@ -62,6 +62,9 @@ export class AddGoodIssue implements OnInit {
   readonly accountCodeOptions = signal<InventoryAccountOption[]>([]);
   readonly accountCodeOptionsLoading = signal(false);
   readonly accountCodeOptionsError = signal('');
+  readonly accountSearchTerms = signal<Record<number, string>>({});
+  readonly activeAccountSuggestionIndex = signal<number | null>(null);
+  readonly accountSuggestionStyle = signal<{ left: number; top: number; width: number } | null>(null);
   readonly departmentOptions = signal<DepartmentPr[]>([]);
   readonly batchSelectionDialogOpen = signal(false);
   readonly activeBatchSelectionLineIndex = signal<number | null>(null);
@@ -183,6 +186,52 @@ export class AddGoodIssue implements OnInit {
     }
 
     this.contentLines.update((rows) => updateGoodIssueLine(rows, index, field, value));
+  }
+
+  updateAccountSearch(index: number, value: string, input: HTMLInputElement): void {
+    this.accountSearchTerms.update((terms) => ({ ...terms, [index]: value }));
+    this.updateAccountSuggestionPosition(input);
+    this.activeAccountSuggestionIndex.set(index);
+  }
+
+  getFilteredAccountCodeOptions(index: number): InventoryAccountOption[] {
+    const query = (this.accountSearchTerms()[index] ?? '').trim().toLowerCase();
+    const options = this.accountCodeOptions();
+
+    if (!query) {
+      return options;
+    }
+
+    return options.filter((account) =>
+      `${account.code} ${account.name ?? ''}`.toLowerCase().includes(query),
+    );
+  }
+
+  selectAccountCode(index: number, account: InventoryAccountOption): void {
+    this.updateContentLine(index, 'accountCode', account.code);
+    this.accountSearchTerms.update((terms) => ({ ...terms, [index]: account.code }));
+    this.activeAccountSuggestionIndex.set(null);
+  }
+
+  focusAccountSearch(index: number, input: HTMLInputElement): void {
+    this.updateAccountSuggestionPosition(input);
+    this.activeAccountSuggestionIndex.set(index);
+  }
+
+  scheduleHideAccountSuggestions(): void {
+    window.setTimeout(() => {
+      this.activeAccountSuggestionIndex.set(null);
+      this.accountSuggestionStyle.set(null);
+    }, 150);
+  }
+
+  private updateAccountSuggestionPosition(input: HTMLInputElement): void {
+    const rect = input.getBoundingClientRect();
+    this.accountSuggestionStyle.set({
+      left: rect.left,
+      top: rect.bottom + 2,
+      width: rect.width,
+    });
   }
 
   openBatchSelectionDialog(): void {

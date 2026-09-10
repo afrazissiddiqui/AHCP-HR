@@ -42,7 +42,6 @@ import { EmployeeRosterComponent } from './components/setup/employee-roster/empl
 import { IssueFromProductionListComponent } from './components/setup/issue-from-production-list/issue-from-production-list';
 import { IssueFromProductionComponent } from './components/setup/issue-from-production/issue-from-production';
 import { PurchaseRequestComponent } from './components/setup/purchase-request/purchase-request';
-import { PurchaseOrderListComponent } from './components/setup/purchase-order-list/purchase-order-list';
 import { TerminationFormComponent } from './components/HR-Portal/termination/termination-form';
 import { AddTerminationComponent } from './components/HR-Portal/termination/add-termination/add-termination';
 
@@ -297,8 +296,8 @@ export const routes: Routes = [
   },
   {
     path: 'setup/purchase-order-list',
-    component: PurchaseOrderListComponent,
-    canActivate: [authGuard],
+    redirectTo: 'miscellaneous/purchase-request',
+    pathMatch: 'full',
   },
   {
     path: 'termination',

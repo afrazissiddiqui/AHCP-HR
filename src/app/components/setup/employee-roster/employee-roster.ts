@@ -38,12 +38,14 @@ export class EmployeeRosterComponent implements OnInit {
   readonly employees = signal<RosterEmployee[]>([]);
   readonly searchText = signal('');
   readonly selectedHub = signal('Lahore HQ');
-  readonly selectedDepartment = signal('Operations');
+  readonly selectedDepartment = signal('All Departments');
   readonly monthLabel = signal('September 2026');
   readonly selectedCell = signal<{ employeeCode: string; day: number } | null>(null);
   readonly shiftDialog = signal<{ employee: RosterEmployee; dayIndex: number; shift: ShiftCode } | null>(null);
   readonly shiftDialogPosition = signal({ top: 0, left: 0 });
   readonly hasChanges = signal(false);
+  readonly selectedEmployees = signal(new Set<string>());
+  readonly conflictsVisible = signal(true);
   readonly shiftOptions: Array<{ code: ShiftCode; title: string; hours: string; className: string }> = [
     { code: 'M', title: 'Morning Shift', hours: '08:00 AM - 04:00 PM', className: 'morning' },
     { code: 'E', title: 'Evening Shift', hours: '04:00 PM - 12:00 AM', className: 'evening' },
@@ -75,23 +77,29 @@ export class EmployeeRosterComponent implements OnInit {
 
   readonly filteredEmployees = computed(() => {
     const query = this.searchText().trim().toLowerCase();
-    if (!query) {
-      return this.employees();
-    }
-    return this.employees().filter((employee) =>
-      [employee.EmployeeName, employee.EmployeeCode, employee.Designation, employee.Department]
+    const department = this.selectedDepartment();
+    return this.employees().filter((employee) => {
+      const matchesDepartment = department === 'All Departments' || employee.Department === department;
+      const matchesSearch = !query || [employee.EmployeeName, employee.EmployeeCode, employee.Designation, employee.Department]
         .join(' ')
         .toLowerCase()
-        .includes(query),
-    );
+        .includes(query);
+      return matchesDepartment && matchesSearch;
+    });
   });
 
-  readonly totalEmployees = computed(() => this.employees().length || 124);
-  readonly morningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('M')).length || 52);
-  readonly eveningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('E')).length || 41);
-  readonly nightCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('N')).length || 31);
+  readonly totalEmployees = computed(() => this.employees().length);
+  readonly morningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('M')).length);
+  readonly eveningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('E')).length);
+  readonly nightCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('N')).length);
   readonly unassignedCount = computed(() => Math.max(0, this.totalEmployees() - this.morningCount() - this.eveningCount() - this.nightCount()));
   readonly activeCount = computed(() => this.filteredEmployees().length);
+
+  readonly allVisibleSelected = computed(() => {
+    const visible = this.filteredEmployees();
+    const selected = this.selectedEmployees();
+    return visible.length > 0 && visible.every((employee) => selected.has(employee.EmployeeCode));
+  });
 
   ngOnInit(): void {
     this.loadEmployees();
@@ -104,12 +112,47 @@ export class EmployeeRosterComponent implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (records) => this.employees.set(records.map((record, index) => this.toRosterEmployee(record, index))),
-        error: () => this.employees.set([]),
+        error: (error) => {
+          this.employees.set([]);
+          this.alertService.error('Roster Load Failed', formatApiErrorMessage(error, 'Could not load employee profiles.'));
+        },
       });
   }
 
   shiftFor(employee: RosterEmployee, dayIndex: number): ShiftCode {
-    return employee.shifts[dayIndex % employee.shifts.length] ?? '+';
+    return employee.shifts.length ? employee.shifts[dayIndex % employee.shifts.length] : '+';
+  }
+
+  toggleEmployee(employee: RosterEmployee, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.selectedEmployees.update((selected) => {
+      const next = new Set(selected);
+      if (checked) {
+        next.add(employee.EmployeeCode);
+      } else {
+        next.delete(employee.EmployeeCode);
+      }
+      return next;
+    });
+  }
+
+  toggleAllVisible(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.selectedEmployees.update((selected) => {
+      const next = new Set(selected);
+      this.filteredEmployees().forEach((employee) => {
+        if (checked) {
+          next.add(employee.EmployeeCode);
+        } else {
+          next.delete(employee.EmployeeCode);
+        }
+      });
+      return next;
+    });
+  }
+
+  isEmployeeSelected(employee: RosterEmployee): boolean {
+    return this.selectedEmployees().has(employee.EmployeeCode);
   }
 
   shiftClass(shift: ShiftCode): string {
@@ -159,6 +202,17 @@ export class EmployeeRosterComponent implements OnInit {
 
   assignShift(shift: ShiftCode): void {
     const selected = this.selectedCell();
+    const employeeCodes = this.selectedEmployees();
+    if (employeeCodes.size > 0) {
+      this.employees.update((employees) => employees.map((employee) => {
+        if (!employeeCodes.has(employee.EmployeeCode)) {
+          return employee;
+        }
+        return { ...employee, shifts: employee.shifts.map(() => shift) };
+      }));
+      this.hasChanges.set(true);
+      return;
+    }
     if (!selected) {
       this.alertService.validation('Select a roster cell first.');
       return;
@@ -174,8 +228,44 @@ export class EmployeeRosterComponent implements OnInit {
     this.hasChanges.set(true);
   }
 
+  assignDaysOff(): void {
+    this.assignShift('OFF');
+  }
+
+  applyRotation(): void {
+    const selected = this.selectedEmployees();
+    if (!selected.size) {
+      this.alertService.validation('Select at least one employee first.');
+      return;
+    }
+    this.employees.update((employees) => employees.map((employee) => {
+      if (!selected.has(employee.EmployeeCode) || !employee.shifts.length) {
+        return employee;
+      }
+      return { ...employee, shifts: [...employee.shifts.slice(1), employee.shifts[0]] };
+    }));
+    this.hasChanges.set(true);
+  }
+
+  changeMonth(offset: number): void {
+    const [monthName, yearText] = this.monthLabel().split(' ');
+    const date = new Date(`${monthName} 1, ${yearText}`);
+    date.setMonth(date.getMonth() + offset);
+    this.monthLabel.set(date.toLocaleString('en-US', { month: 'long', year: 'numeric' }));
+  }
+
+  jumpToToday(): void {
+    const today = new Date();
+    this.monthLabel.set(today.toLocaleString('en-US', { month: 'long', year: 'numeric' }));
+  }
+
+  dismissConflicts(): void {
+    this.conflictsVisible.set(false);
+  }
+
   clearSelection(): void {
     this.selectedCell.set(null);
+    this.selectedEmployees.set(new Set());
   }
 
   saveChanges(): void {

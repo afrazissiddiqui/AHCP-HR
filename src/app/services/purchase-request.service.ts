@@ -49,7 +49,7 @@ export interface CreatePurchaseRequestPayload {
   docDate: string;
   DocType: PurchaseRequestDocType;
   requiredDate?: string;
-  branch: string | number;
+  branch: number;
   remarks: string;
   items: CreatePurchaseRequestLine[];
 }

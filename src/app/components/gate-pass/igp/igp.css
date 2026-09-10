@@ -1,3 +1,12 @@
+.ogp-duplicate-warning {
+  margin: 12px 16px;
+  padding: 10px 14px;
+  border: 1px solid #e0a000;
+  background: #fff8dd;
+  color: #5f4300;
+  font-weight: 600;
+}
+
 /* =========================================================
    GLOBAL PAGE LAYOUT WITH SIDEBAR
 ========================================================= */

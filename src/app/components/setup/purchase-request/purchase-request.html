@@ -242,7 +242,7 @@
                           (click)="loadWarehouseOptions()"
                         >
                           <option value="">— Select warehouse —</option>
-                          @for (option of warehouseOptions(); track option.code) {
+                          @for (option of filteredWarehouseOptions(); track option.code) {
                             <option value="{{ option.code }}">{{ option.code }}{{ option.name ? ' - ' + option.name : '' }}</option>
                           }
                         </select>

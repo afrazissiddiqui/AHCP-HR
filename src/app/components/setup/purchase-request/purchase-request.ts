@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
@@ -57,6 +57,7 @@ interface PurchaseRequestLine {
 interface WarehouseDropdownOption {
   code: string;
   name: string;
+  bplId?: number;
 }
 
 interface GlAccountOption {
@@ -98,6 +99,12 @@ export class PurchaseRequestComponent implements OnInit {
   readonly vendorSuggestionPanelStyle = signal<{ left: number; width: number; top: number } | null>(null);
   readonly departmentOptions = signal<DepartmentPr[]>([]);
   readonly warehouseOptions = signal<WarehouseDropdownOption[]>([]);
+  readonly filteredWarehouseOptions = computed(() => {
+    const branch = this.parseBranchValue(this.headerForm().branch);
+    const options = this.warehouseOptions();
+
+    return branch === null ? options : options.filter((option) => option.bplId === branch);
+  });
   readonly glAccountOptionsByRow = signal<Record<number, GlAccountOption[]>>({});
   readonly branchOptions = signal([
     { label: 'AHCP_Peshawar', value: 'AHCP_Peshawar' },
@@ -160,6 +167,7 @@ export class PurchaseRequestComponent implements OnInit {
         const options = warehouses.map((warehouse) => ({
           code: warehouse.warehouseCode,
           name: warehouse.warehouseName,
+          bplId: warehouse.bplId,
         }));
         this.warehouseOptions.set(options);
       },
@@ -196,6 +204,10 @@ export class PurchaseRequestComponent implements OnInit {
 
   updateHeaderField<K extends keyof PurchaseRequestHeader>(field: K, value: string): void {
     this.headerForm.update((form) => ({ ...form, [field]: value }));
+
+    if (field === 'branch') {
+      this.contentLines.update((lines) => lines.map((line) => ({ ...line, warehouse: '' })));
+    }
   }
 
   updateContentLine(index: number, field: keyof PurchaseRequestLine, value: string | number | null): void {
@@ -466,18 +478,23 @@ export class PurchaseRequestComponent implements OnInit {
     this.contentLines.update((lines) => lines.filter((_, i) => i !== index));
   }
 
-  private parseBranchValue(value: string): number | string {
+  private parseBranchValue(value: string): number | null {
     const trimmed = value.trim().toLowerCase();
     switch (trimmed) {
+      case 'ahcp_peshawar':
       case 'peshawar':
+      case '1':
         return 1;
+      case 'ahcp_ho':
       case 'ho':
+      case '2':
         return 2;
+      case 'ahcp_faisalabad':
       case 'faisalabad':
+      case '3':
         return 3;
       default:
-        const parsed = Number(value.trim());
-        return Number.isFinite(parsed) ? parsed : value.trim();
+        return null;
     }
   }
 
@@ -583,13 +600,19 @@ export class PurchaseRequestComponent implements OnInit {
 
     const employeeCode = this.resolveEmployeeCode();
     const docType = normalizePurchaseRequestDocumentType(this.headerForm().requestType);
+    const branch = this.parseBranchValue(header.branch);
+
+    if (branch === null) {
+      this.alertService.validation('Please select a valid branch.');
+      return;
+    }
 
     const payload: CreatePurchaseRequestPayload = {
       employee_code: employeeCode,
       docDate: header.requestDate.trim(),
       DocType: docType,
       requiredDate: header.dueDate.trim(),
-      branch: this.parseBranchValue(header.branch),
+      branch,
       remarks: header.remarks.trim() || 'Purchase Request from Portal',
       items: lines.map((line) => {
         if (this.isServiceRequest) {
@@ -639,7 +662,7 @@ export class PurchaseRequestComponent implements OnInit {
           (response?.docEntry != null ? `Purchase request created (Doc #${response.docEntry}).` : 'Purchase request created successfully.');
         void this.alertService.success('Success', message);
         this.saving.set(false);
-        void this.router.navigate(['/setup/purchase-order-list']);
+        void this.router.navigate(['/miscellaneous/purchase-request']);
       },
       error: (error) => {
         this.saving.set(false);

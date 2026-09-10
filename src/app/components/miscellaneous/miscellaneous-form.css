@@ -245,6 +245,11 @@
   box-shadow: var(--sir-shadow);
 }
 
+.sir-good-issue-account-suggestions {
+  position: fixed;
+  z-index: 1000;
+}
+
 .sir-search-suggestions button {
   display: block;
   width: 100%;

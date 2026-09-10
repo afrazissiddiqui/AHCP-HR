@@ -5,6 +5,13 @@
       <button class="btn-default" type="button" pageToolbarActions (click)="createNew()">Add OGP</button>
     </app-page-toolbar>
 
+    @if (duplicateReferenceNos.length > 0) {
+      <div class="ogp-duplicate-warning" role="alert">
+        Duplicate OGP numbers detected: {{ duplicateReferenceNos.join(', ') }}.
+        Existing records require administrator cleanup; backend uniqueness enforcement is required for all users.
+      </div>
+    }
+
     <div
       id="table-toolbar"
       class="sapMIBar sapMTB sapMTBStandard sapMTB-Solid-CTX sapMOTB sapMTBHeader-CTX sapMListHdr sapMListHdrTBar"
