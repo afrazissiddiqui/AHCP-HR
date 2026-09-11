@@ -22,6 +22,7 @@ export interface CreatePurchaseRequestItemLine {
 }
 
 export interface CreatePurchaseRequestServiceLine {
+  Dscription: string;
   Vendor: string;
   department: string;
   AccountCode: string;

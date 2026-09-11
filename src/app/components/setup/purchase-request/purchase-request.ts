@@ -34,6 +34,7 @@ interface PurchaseRequestHeader {
 interface PurchaseRequestLine {
   itemCode: string;
   itemDescription: string;
+  Dscription: string;
   vendor: string;
   vendorName: string;
   requiredDate: string;
@@ -222,6 +223,7 @@ export class PurchaseRequestComponent implements OnInit {
     return this.contentLines().some((line) => {
       if (this.isServiceRequest) {
         return (
+          line.Dscription.trim().length > 0 ||
           line.vendor.trim().length > 0 ||
           line.department.trim().length > 0 ||
           line.glAccount.trim().length > 0 ||
@@ -440,6 +442,26 @@ export class PurchaseRequestComponent implements OnInit {
 
     this.updateContentLine(index, 'glAccount', '');
     this.glAccountSearchTerms.update((terms) => ({ ...terms, [index]: '' }));
+
+    const department = this.departmentOptions().find((option) => option.code === selectedDepartmentCode);
+    const ccTypeCode = department?.ccTypeCode?.trim() ?? '';
+
+    this.inventoryAccountOptions.set([]);
+    if (!ccTypeCode) {
+      return;
+    }
+
+    this.inventoryAccountOptionsLoading.set(true);
+    this.purchaseRequestService.getGlAccountsAgainstDistribution(ccTypeCode).subscribe({
+      next: (accounts) => {
+        this.inventoryAccountOptions.set(accounts);
+        this.inventoryAccountOptionsLoading.set(false);
+      },
+      error: () => {
+        this.inventoryAccountOptions.set([]);
+        this.inventoryAccountOptionsLoading.set(false);
+      },
+    });
   }
 
   getFilteredInventoryAccounts(index: number): InventoryAccountOption[] {
@@ -568,6 +590,7 @@ export class PurchaseRequestComponent implements OnInit {
     const lines = this.contentLines().filter((line) => {
       if (this.isServiceRequest) {
         return (
+          line.Dscription.trim() ||
           line.vendor.trim() ||
           line.department.trim() ||
           line.glAccount.trim() ||
@@ -657,6 +680,7 @@ export class PurchaseRequestComponent implements OnInit {
       items: lines.map((line) => {
         if (this.isServiceRequest) {
           return {
+            Dscription: line.Dscription.trim(),
             Vendor: line.vendor.trim(),
             department: line.department.trim(),
             AccountCode: line.glAccount.trim(),
@@ -718,6 +742,7 @@ export class PurchaseRequestComponent implements OnInit {
     return {
       itemCode: '',
       itemDescription: '',
+      Dscription: '',
       vendor: '',
       vendorName: '',
       requiredDate: '',

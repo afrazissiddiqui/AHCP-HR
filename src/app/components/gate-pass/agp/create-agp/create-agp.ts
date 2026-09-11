@@ -618,7 +618,7 @@ export class CreateAgpComponent implements OnInit {
 
   private buildPayload(): AgpAddPayload {
     return {
-      type: this.type.trim() || AGP_TYPE,
+      type: AGP_TYPE,
       baseDocNo: this.baseDocNo.trim(),
       documentDate: this.documentDate.trim(),
       referenceNo: this.referenceNo.trim(),
@@ -633,7 +633,7 @@ export class CreateAgpComponent implements OnInit {
       requestedBy: this.requestedBy.trim(),
       issuedTo: this.issuedTo.trim(),
       articleOutDate: this.articleOutDate.trim(),
-      articleReturnedDate: this.articleReturnedDate.trim(),
+      articleReturnedDate: this.articleReturnedDate.trim() || null,
       returnStatus: this.returnStatus,
       warrantyClaimable: this.warrantyClaimable,
       warrantyStartDate: this.warrantyStartDate.trim(),
@@ -642,11 +642,11 @@ export class CreateAgpComponent implements OnInit {
       location: this.location.trim(),
       store: this.store.trim(),
       kantaSlip: this.kantaSlip.trim(),
-      driverName: this.driverName.trim(),
-      driverCnic: this.driverCnic.trim(),
-      driverPhone: this.driverPhone.trim(),
+      transporterName: this.driverName.trim(),
+      transporterCnic: this.driverCnic.trim(),
+      transporterPhone: this.driverPhone.trim(),
       biltyNo: this.biltyNo.trim(),
-      weight: String(this.weight ?? '').trim(),
+      freightAmount: Number(this.weight) || 0,
       attachmentFileName: this.attachmentFileName.trim(),
       headOfSupplyChainApproval: this.headOfSupplyChainApproval,
       remarks: this.remarks.trim(),

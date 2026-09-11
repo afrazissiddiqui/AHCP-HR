@@ -57,6 +57,7 @@
                 <tr>
                   <th class="sir-col-sr">Sr. No</th>
                   @if (isServiceRequest) {
+                    <th class="sir-col-item-name">Description</th>
                     <th class="sir-col-item-name">Vendor</th>
                     <th class="sir-col-item-name">Department</th>
                     <th class="sir-col-item-name">GL Account</th>
@@ -83,6 +84,15 @@
                   <tr>
                     <td class="sir-col-sr">{{ $index + 1 }}</td>
                     @if (isServiceRequest) {
+                      <td class="sir-col-item-name">
+                        <input
+                          type="text"
+                          class="sir-table-input"
+                          [ngModel]="line.Dscription"
+                          (ngModelChange)="updateContentLine($index, 'Dscription', $event)"
+                          placeholder="Enter description"
+                        />
+                      </td>
                       <td class="sir-col-item-name">
                         <div style="position: relative;">
                           <input

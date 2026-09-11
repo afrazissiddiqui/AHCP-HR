@@ -52,7 +52,7 @@ export interface AgpAddPayload {
   requestedBy: string;
   issuedTo: string;
   articleOutDate: string;
-  articleReturnedDate: string;
+  articleReturnedDate: string | null;
   returnStatus: 'Yes' | 'No';
   warrantyClaimable: 'Yes' | 'No';
   warrantyStartDate: string;
@@ -61,11 +61,11 @@ export interface AgpAddPayload {
   location: string;
   store: string;
   kantaSlip: string;
-  driverName: string;
-  driverCnic: string;
-  driverPhone: string;
+  transporterName: string;
+  transporterCnic: string;
+  transporterPhone: string;
   biltyNo: string;
-  weight: string;
+  freightAmount: number;
   attachmentFileName: string;
   headOfSupplyChainApproval: boolean;
   remarks: string;
