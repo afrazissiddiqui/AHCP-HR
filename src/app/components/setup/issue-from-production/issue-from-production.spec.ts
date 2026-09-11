@@ -144,6 +144,31 @@ describe('IssueFromProductionComponent', () => {
     expect(component.selectedProductionOrderItemKeys().size).toBe(0);
   });
 
+  it('excludes production order items whose item code contains Resources', () => {
+    component.selectedProductionOrder.set({
+      docEntry: '18',
+      docNum: 'PO-101',
+      postDate: '2026-07-02',
+      dueDate: '2026-07-02',
+      warehouse: 'WH01',
+      branch: '3',
+      batchNumber: 'B1',
+      status: 'O',
+      items: [
+        {
+          itemCode: 'Resource-00000001',
+          itemDescription: 'Resource item',
+        },
+        {
+          itemCode: 'FG-003',
+          itemDescription: 'Finished Goods C',
+        },
+      ],
+    } as any);
+
+    expect(component.productionOrderItems().map((item) => item.itemCode)).toEqual(['FG-003']);
+  });
+
   it('updates the active batch line with the selected batch and a quantity', () => {
     component.contentLines.set([
       {

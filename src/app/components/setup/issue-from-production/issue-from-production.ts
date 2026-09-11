@@ -168,7 +168,9 @@ export class IssueFromProductionComponent implements OnInit {
     });
   });
 
-  readonly productionOrderItems = computed(() => this.selectedProductionOrder()?.items ?? []);
+  readonly productionOrderItems = computed(() =>
+    (this.selectedProductionOrder()?.items ?? []).filter((item) => !item.itemCode.toUpperCase().includes('RESOURCE')),
+  );
   readonly batchSelectionLines = computed(() =>
     this.contentLines()
       .map((line, index) => ({ line, index }))

@@ -17,7 +17,7 @@ import {
   CreatePurchaseRequestPayload,
   CreatePurchaseRequestItemLine,
   CreatePurchaseRequestServiceLine,
-  GlAccountAgainstDistributionOption,
+  InventoryAccountOption,
   normalizePurchaseRequestDocumentType,
 } from '../../../services/purchase-request.service';
 import { ApplicationFormService } from '../../../services/application-form.service';
@@ -44,7 +44,6 @@ interface PurchaseRequestLine {
   taxCodeName: string;
   department: string;
   glAccount: string;
-  glName: string;
   total: number | null;
   uomCode: string;
   warehouse: string;
@@ -60,11 +59,6 @@ interface WarehouseDropdownOption {
   bplId?: number;
 }
 
-interface GlAccountOption {
-  code: string;
-  name: string;
-}
-
 const DEFAULT_PURCHASE_REQUEST_EMPLOYEE_CODE = 'Emp-00000100';
 
 @Component({
@@ -78,6 +72,7 @@ export class PurchaseRequestComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly oitmItemsService = inject(OitmItemsService);
   protected readonly layout = inject(MiscellaneousLayoutService);
+  protected readonly authService = inject(AuthService);
 
   readonly headerForm = signal<PurchaseRequestHeader>({
     requestDate: '',
@@ -86,6 +81,7 @@ export class PurchaseRequestComponent implements OnInit {
     requestType: '',
     remarks: '',
   });
+  readonly submittedBy = signal(this.authService.getSessionUser()?.name ?? '');
 
   readonly contentLines = signal<PurchaseRequestLine[]>([this.createEmptyLine()]);
   readonly itemOptions = signal<OitmItem[]>([]);
@@ -93,6 +89,7 @@ export class PurchaseRequestComponent implements OnInit {
   readonly itemOptionsError = signal<string | null>(null);
   readonly itemSearchTerms = signal<Record<number, string | undefined>>({});
   readonly vendorSearchTerms = signal<Record<number, string | undefined>>({});
+  readonly glAccountSearchTerms = signal<Record<number, string | undefined>>({});
   readonly activeSuggestionIndex = signal<number | null>(null);
   readonly suggestionPanelStyle = signal<{ left: number; width: number; top: number } | null>(null);
   readonly activeVendorSuggestionIndex = signal<number | null>(null);
@@ -103,9 +100,32 @@ export class PurchaseRequestComponent implements OnInit {
     const branch = this.parseBranchValue(this.headerForm().branch);
     const options = this.warehouseOptions();
 
-    return branch === null ? options : options.filter((option) => option.bplId === branch);
+    if (branch === null) {
+      return options;
+    }
+
+    const optionsForBranch = options.filter((option) => option.bplId === branch);
+    if (optionsForBranch.length > 0) {
+      return optionsForBranch;
+    }
+
+    const branchKeywords: Record<number, string[]> = {
+      1: ['peshawar', 'psh'],
+      2: ['head office', 'headoffice', 'head-office', 'ho'],
+      3: ['faisalabad', 'fsd'],
+    };
+    const keywords = branchKeywords[branch] ?? [];
+
+    return options.filter((option) => {
+      const label = `${option.code} ${option.name}`.toLowerCase();
+      return keywords.some((keyword) =>
+        keyword === 'ho' ? /(^|[\s_-])ho\d*(?=[\s_-]|$)/.test(label) : label.includes(keyword),
+      );
+    });
   });
-  readonly glAccountOptionsByRow = signal<Record<number, GlAccountOption[]>>({});
+  readonly inventoryAccountOptions = signal<InventoryAccountOption[]>([]);
+  readonly inventoryAccountOptionsLoading = signal(false);
+  readonly activeGlAccountSuggestionIndex = signal<number | null>(null);
   readonly branchOptions = signal([
     { label: 'AHCP_Peshawar', value: 'AHCP_Peshawar' },
     { label: 'AHCP_HO', value: 'AHCP_HO' },
@@ -122,7 +142,6 @@ export class PurchaseRequestComponent implements OnInit {
   protected readonly taxCodesService = inject(TaxCodesService);
   protected readonly departmentsPrService = inject(DepartmentsPrService);
   protected readonly warehouseService = inject(WarehouseService);
-  protected readonly authService = inject(AuthService);
   protected readonly alertService = inject(AlertService);
   protected readonly applicationFormService = inject(ApplicationFormService);
   protected readonly purchaseRequestService = inject(PurchaseRequestService);
@@ -177,6 +196,24 @@ export class PurchaseRequestComponent implements OnInit {
     });
   }
 
+  loadInventoryAccountOptions(): void {
+    if (this.inventoryAccountOptions().length > 0 || this.inventoryAccountOptionsLoading()) {
+      return;
+    }
+
+    this.inventoryAccountOptionsLoading.set(true);
+    this.purchaseRequestService.listInventoryAccounts().subscribe({
+      next: (accounts) => {
+        this.inventoryAccountOptions.set(accounts);
+        this.inventoryAccountOptionsLoading.set(false);
+      },
+      error: () => {
+        this.inventoryAccountOptions.set([]);
+        this.inventoryAccountOptionsLoading.set(false);
+      },
+    });
+  }
+
   get isServiceRequest(): boolean {
     return this.headerForm().requestType.trim().toLowerCase() === 'service';
   }
@@ -188,7 +225,6 @@ export class PurchaseRequestComponent implements OnInit {
           line.vendor.trim().length > 0 ||
           line.department.trim().length > 0 ||
           line.glAccount.trim().length > 0 ||
-          line.glName.trim().length > 0 ||
           line.taxCode.trim().length > 0 ||
           line.total !== null
         );
@@ -207,6 +243,10 @@ export class PurchaseRequestComponent implements OnInit {
 
     if (field === 'branch') {
       this.contentLines.update((lines) => lines.map((line) => ({ ...line, warehouse: '' })));
+    }
+
+    if (field === 'requestType' && value.trim().toLowerCase() === 'service') {
+      this.loadInventoryAccountOptions();
     }
   }
 
@@ -381,12 +421,8 @@ export class PurchaseRequestComponent implements OnInit {
     return this.departmentOptions();
   }
 
-  getGlAccountOptionsForRow(index: number): GlAccountOption[] {
-    return this.glAccountOptionsByRow()[index] ?? [];
-  }
-
   getTaxCodes(): TaxCode[] {
-    return this.taxCodes();
+    return this.taxCodes().filter((tax) => tax.code.trim().toUpperCase().startsWith('PT'));
   }
 
   onTaxCodeChange(index: number, selectedCode: string): void {
@@ -403,42 +439,48 @@ export class PurchaseRequestComponent implements OnInit {
     }
 
     this.updateContentLine(index, 'glAccount', '');
-    this.updateContentLine(index, 'glName', '');
-
-    const department =
-      this.departmentOptions().find((item) => item.code === selectedDepartmentCode) ??
-      this.departmentOptions().find((item) => item.name === selectedDepartmentCode);
-
-    const ccTypeCode = department?.ccTypeCode?.trim();
-
-    console.log('Department selected for service row', {
-      rowIndex: index,
-      selectedDepartmentCode,
-      department,
-      ccTypeCode,
-    });
-
-    if (!ccTypeCode) {
-      this.glAccountOptionsByRow.update((record) => ({ ...record, [index]: [] }));
-      return;
-    }
-
-    this.purchaseRequestService.getGlAccountsAgainstDistribution(ccTypeCode).subscribe({
-      next: (accounts) => {
-        console.log('GL accounts loaded for row', { rowIndex: index, ccTypeCode, accounts });
-        this.glAccountOptionsByRow.update((record) => ({ ...record, [index]: accounts }));
-      },
-      error: (error) => {
-        console.error('GL account API failed for row', { rowIndex: index, ccTypeCode, error });
-        this.glAccountOptionsByRow.update((record) => ({ ...record, [index]: [] }));
-      },
-    });
+    this.glAccountSearchTerms.update((terms) => ({ ...terms, [index]: '' }));
   }
 
-  onGlAccountChange(index: number, selectedCode: string): void {
-    const selectedAccount = this.getGlAccountOptionsForRow(index).find((account) => account.code === selectedCode);
-    this.updateContentLine(index, 'glAccount', selectedCode);
-    this.updateContentLine(index, 'glName', selectedAccount?.name ?? '');
+  getFilteredInventoryAccounts(index: number): InventoryAccountOption[] {
+    const term = (this.glAccountSearchTerms()[index] ?? '').trim().toLowerCase();
+    if (!term) {
+      return this.inventoryAccountOptions();
+    }
+
+    return this.inventoryAccountOptions().filter((account) =>
+      `${account.code} ${account.name}`.toLowerCase().includes(term),
+    );
+  }
+
+  updateGlAccountSearch(index: number, value: string): void {
+    this.glAccountSearchTerms.update((terms) => ({ ...terms, [index]: value }));
+    this.activeGlAccountSuggestionIndex.set(index);
+  }
+
+  selectInventoryAccount(index: number, account: InventoryAccountOption): void {
+    this.updateContentLine(index, 'glAccount', account.code);
+    this.glAccountSearchTerms.update((terms) => ({ ...terms, [index]: `${account.name} (${account.code})` }));
+    this.activeGlAccountSuggestionIndex.set(null);
+  }
+
+  toggleGlAccountDropdown(index: number): void {
+    this.loadInventoryAccountOptions();
+    const current = this.activeGlAccountSuggestionIndex();
+    this.activeGlAccountSuggestionIndex.set(current === index ? null : index);
+  }
+
+  scheduleHideGlAccountDropdown(): void {
+    window.setTimeout(() => this.activeGlAccountSuggestionIndex.set(null), 150);
+  }
+
+  getGlAccountDropdownStyle(input: HTMLInputElement | null): string {
+    if (!input) {
+      return '';
+    }
+
+    const rect = input.getBoundingClientRect();
+    return `position: fixed; top: ${rect.bottom + 2}px; left: ${rect.left}px; width: ${rect.width}px; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10000;`;
   }
 
   selectItem(index: number, value: string): void {
@@ -529,7 +571,6 @@ export class PurchaseRequestComponent implements OnInit {
           line.vendor.trim() ||
           line.department.trim() ||
           line.glAccount.trim() ||
-          line.glName.trim() ||
           line.taxCode.trim() ||
           line.total !== null
         );
@@ -571,7 +612,6 @@ export class PurchaseRequestComponent implements OnInit {
           !line.vendor.trim() ||
           !line.department.trim() ||
           !line.glAccount.trim() ||
-          !line.glName.trim() ||
           !line.taxCode.trim() ||
           !line.requiredDate.trim() ||
           !line.total
@@ -592,7 +632,7 @@ export class PurchaseRequestComponent implements OnInit {
 
     if (invalidRow) {
       const message = this.isServiceRequest
-        ? 'Each service row must have vendor, department, GL account, GL name, tax code, required date, and total.'
+        ? 'Each service row must have vendor, department, GL account, tax code, required date, and total.'
         : 'Each row must have item, vendor, required date, quantity, price, tax code, department, and warehouse.';
       this.alertService.validation(message);
       return;
@@ -688,7 +728,6 @@ export class PurchaseRequestComponent implements OnInit {
       taxCodeName: '',
       department: '',
       glAccount: '',
-      glName: '',
       total: null,
       uomCode: '',
       warehouse: '',

@@ -60,7 +60,6 @@
                     <th class="sir-col-item-name">Vendor</th>
                     <th class="sir-col-item-name">Department</th>
                     <th class="sir-col-item-name">GL Account</th>
-                    <th class="sir-col-item-name">GL Name</th>
                     <th class="sir-col-item-name">Tax Code</th>
                     <th class="sir-col-date">Required Date</th>
                     <th class="sir-col-qty">Total</th>
@@ -114,19 +113,39 @@
                         </select>
                       </td>
                       <td class="sir-col-item-name">
-                        <select
-                          class="sir-table-input"
-                          [ngModel]="line.glAccount"
-                          (ngModelChange)="onGlAccountChange($index, $event)"
-                        >
-                          <option value="">— Select GL account —</option>
-                          @for (account of getGlAccountOptionsForRow($index); track account.code) {
-                            <option value="{{ account.code }}">{{ account.code }}</option>
+                        <div style="position: relative;">
+                          <input
+                            type="text"
+                            class="sir-table-input"
+                            placeholder="Search GL account"
+                            #glAccountInput
+                            [ngModel]="glAccountSearchTerms()[$index] ?? line.glAccount"
+                            (ngModelChange)="updateGlAccountSearch($index, $event)"
+                            (focus)="toggleGlAccountDropdown($index)"
+                            (blur)="scheduleHideGlAccountDropdown()"
+                            autocomplete="off"
+                          />
+                          @if (activeGlAccountSuggestionIndex() === $index) {
+                            <div [style]="getGlAccountDropdownStyle(glAccountInput)">
+                              @if (inventoryAccountOptionsLoading()) {
+                                <div style="padding: 8px; text-align: center;">Loading...</div>
+                              } @else if (getFilteredInventoryAccounts($index).length === 0) {
+                                <div style="padding: 8px; text-align: center; color: #999;">No results</div>
+                              } @else {
+                                @for (account of getFilteredInventoryAccounts($index); track account.code) {
+                                  <button
+                                    type="button"
+                                    style="display: block; width: 100%; padding: 8px; border: 0; border-bottom: 1px solid #eee; background: white; text-align: left; cursor: pointer;"
+                                    (mousedown)="$event.preventDefault()"
+                                    (click)="selectInventoryAccount($index, account)"
+                                  >
+                                    {{ account.name }} ({{ account.code }})
+                                  </button>
+                                }
+                              }
+                            </div>
                           }
-                        </select>
-                      </td>
-                      <td class="sir-col-item-name">
-                        <input type="text" class="sir-table-input" [ngModel]="line.glName" readonly placeholder="GL Name" />
+                        </div>
                       </td>
                       <td class="sir-col-item-name">
                         <div style="position: relative;">
@@ -292,6 +311,12 @@
             <div class="sir-field-row">
               <label>Remarks:</label>
               <input type="text" placeholder="Document level remarks" [ngModel]="headerForm().remarks" (ngModelChange)="updateHeaderField('remarks', $event)" />
+            </div>
+          </div>
+          <div class="sir-form-column">
+            <div class="sir-field-row">
+              <label>Submitted By:</label>
+              <input type="text" [ngModel]="submittedBy()" readonly />
             </div>
           </div>
         </div>

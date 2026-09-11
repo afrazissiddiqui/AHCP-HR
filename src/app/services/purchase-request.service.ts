@@ -59,6 +59,11 @@ export interface GlAccountAgainstDistributionOption {
   name: string;
 }
 
+export interface InventoryAccountOption {
+  code: string;
+  name: string;
+}
+
 export interface CreatePurchaseRequestResponse {
   status?: boolean;
   success?: boolean;
@@ -75,6 +80,39 @@ export class PurchaseRequestService {
 
   create(payload: CreatePurchaseRequestPayload): Observable<CreatePurchaseRequestResponse> {
     return this.http.post<CreatePurchaseRequestResponse>(apiUrl('createPurchaseRequest'), payload);
+  }
+
+  listInventoryAccounts(): Observable<InventoryAccountOption[]> {
+    return this.http.get<unknown>(apiUrl('inventory_accounts')).pipe(
+      map((response) => this.parseInventoryAccounts(response)),
+    );
+  }
+
+  private parseInventoryAccounts(response: unknown): InventoryAccountOption[] {
+    const accounts: InventoryAccountOption[] = [];
+    this.collectInventoryAccounts(response, accounts);
+    return accounts;
+  }
+
+  private collectInventoryAccounts(value: unknown, accounts: InventoryAccountOption[]): void {
+    if (Array.isArray(value)) {
+      value.forEach((item) => this.collectInventoryAccounts(item, accounts));
+      return;
+    }
+
+    if (!value || typeof value !== 'object') {
+      return;
+    }
+
+    const record = value as Record<string, unknown>;
+    const code = this.pickString(record, ['AcctCode', 'AccountCode', 'Code', 'code', 'accountCode', 'value', 'id']);
+    if (code) {
+      const name = this.pickString(record, ['Name', 'name', 'Description', 'description', 'AccountName', 'accountName']);
+      accounts.push({ code, name: name || code });
+      return;
+    }
+
+    Object.values(record).forEach((nestedValue) => this.collectInventoryAccounts(nestedValue, accounts));
   }
 
   /**
