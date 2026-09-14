@@ -44,23 +44,14 @@ export interface AgpAddPayload {
   businessPartnerCode: string;
   businessPartnerName: string;
   vehicleNo: string;
+  location: string;
   reasonForMovement: string;
-  natureOfItem: string;
-  natureOfRepair: string;
   requestingEmployee: string;
   requestingDepartment: string;
   requestedBy: string;
   issuedTo: string;
   articleOutDate: string;
   articleReturnedDate: string | null;
-  returnStatus: 'Yes' | 'No';
-  warrantyClaimable: 'Yes' | 'No';
-  warrantyStartDate: string;
-  warrantyDuration: string;
-  warrantyExpiryDate: string;
-  location: string;
-  store: string;
-  kantaSlip: string;
   transporterName: string;
   transporterCnic: string;
   transporterPhone: string;
@@ -209,11 +200,23 @@ export class AgpService {
       }),
       map((record) => {
         if (record.lines.length > 0 || !cached?.lines.length) {
-          return record;
+          return this.withCachedBaseDocumentNumber(record, cached);
         }
-        return { ...record, lines: cached.lines };
+        return this.withCachedBaseDocumentNumber({ ...record, lines: cached.lines }, cached);
       }),
     );
+  }
+
+  private withCachedBaseDocumentNumber(record: AgpRecord, cached: AgpRecord | undefined): AgpRecord {
+    if (record.baseDocNo !== '—' && record.baseDocNo.trim()) {
+      return record;
+    }
+
+    if (cached?.baseDocNo && cached.baseDocNo !== '—') {
+      return { ...record, baseDocNo: String(cached.baseDocNo) };
+    }
+
+    return record;
   }
 
   findCachedRecord(id: string | number): AgpRecord | undefined {
@@ -227,7 +230,15 @@ export class AgpService {
 
   updateArticleGatePass(id: string | number, payload: AgpAddPayload): Observable<AgpApiResponse> {
     const identifier = encodeURIComponent(String(id));
-    return this.http.post<AgpApiResponse>(`${ARTICLE_GATE_PASS_UPDATE_URL}/${identifier}`, payload);
+    const normalizedPayload: AgpAddPayload = {
+      ...payload,
+      baseDocNo: String(payload.baseDocNo ?? '').trim() || 'N/A',
+    };
+    return this.http.post<AgpApiResponse>(
+      `${ARTICLE_GATE_PASS_UPDATE_URL}/${identifier}`,
+      JSON.stringify(normalizedPayload),
+      { headers: { 'Content-Type': 'application/json' } },
+    );
   }
 
   deleteArticleGatePass(id: string | number): Observable<AgpApiResponse> {
@@ -416,10 +427,45 @@ export class AgpService {
         this.pickString(sources, ['documentDate', 'document_date', 'submittedDate', 'submitted_date']) || '—',
       remarks: this.pickString(sources, ['remarks', 'Remarks']) || undefined,
       selected: false,
-      type: this.pickString(sources, ['type', 'Type']) || '—',
+      type:
+        this.pickString(sources, [
+          'type',
+          'Type',
+          'agpType',
+          'AGPType',
+          'agp_type',
+          'gatePassType',
+          'GatePassType',
+          'documentType',
+          'DocumentType',
+          'document_type',
+          'docType',
+          'DocType',
+          'orderType',
+          'OrderType',
+          'type_name',
+          'document_type_name',
+          'pass_type',
+        ]) || '—',
       businessPartnerCode:
         this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode']) || '—',
-      baseDocNo: this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo', 'BaseDoc', 'baseDoc']) || '—',
+      baseDocNo:
+        this.pickString(sources, [
+          'baseDocNo',
+          'base_doc_no',
+          'BaseDocNo',
+          'BaseDoc',
+          'baseDoc',
+          'baseDocumentNo',
+          'base_document_no',
+          'BaseDocumentNo',
+          'baseDocNumber',
+          'base_doc_number',
+          'documentNumber',
+          'document_number',
+          'docNum',
+          'DocNum',
+        ]) || '—',
       businessPartnerName,
       vehicleNo: this.pickString(sources, ['vehicleNo', 'vehicle_no', 'VehicleNo']) || '—',
       reasonForMovement: this.pickString(sources, ['reasonForMovement', 'reason_for_movement', 'ReasonForMovement', 'reason']) || '—',
@@ -441,7 +487,31 @@ export class AgpService {
       warrantyStartDate: this.pickString(sources, ['warrantyStartDate', 'warranty_start_date', 'WarrantyStartDate']) || '—',
       warrantyDuration: this.pickString(sources, ['warrantyDuration', 'warranty_duration', 'WarrantyDuration']) || '—',
       warrantyExpiryDate: this.pickString(sources, ['warrantyExpiryDate', 'warranty_expiry_date', 'WarrantyExpiryDate']) || '—',
-      location: this.pickString(sources, ['location', 'Location', 'branch', 'Branch', 'branchName', 'branch_name']) || '—',
+      location:
+        this.pickString(sources, [
+          'location',
+          'Location',
+          'branch',
+          'Branch',
+          'branchName',
+          'branch_name',
+          'BranchName',
+          'branchLocation',
+          'branch_location',
+          'BranchLocation',
+          'BPLName',
+          'BPLNAME',
+          'bplName',
+          'BPLId',
+          'BPLID',
+          'bplId',
+          'branchId',
+          'branch_id',
+          'branchNameText',
+          'BranchNameText',
+          'locationName',
+          'location_name',
+        ]) || '—',
       store: this.pickString(sources, ['store', 'Store', 'warehouse', 'Warehouse', 'warehouseCode']) || '—',
       kantaSlip: this.pickString(sources, ['kantaSlip', 'kanta_slip', 'KantaSlip']) || '—',
       driverName:

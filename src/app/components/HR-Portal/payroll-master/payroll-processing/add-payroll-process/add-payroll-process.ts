@@ -1057,6 +1057,9 @@ export class AddPayrollProcessComponent implements OnInit {
         overtimeHours: row.overtimeHours,
         overtime: row.overtime,
         providentFund: row.providentFund,
+        providentFundEmployer: row.providentFundEmployer,
+        socialSecurityPunjab: row.socialSecurityPunjab,
+        socialSecurityKpk: row.socialSecurityKpk,
         gratuity: row.gratuity,
         eobiEmployee: row.eobiEmployee,
         eobiEmployer: row.eobiEmployer,
@@ -1068,6 +1071,8 @@ export class AddPayrollProcessComponent implements OnInit {
         taxDeduction: row.taxDeduction,
         totalEarnings: this.totalEarningsForRow(row),
         netPayable: this.netPayableAfterTaxForRow(row),
+        netPayableAfterTax: this.netPayableAfterTaxForRow(row),
+        finalGrossSalary: row.grossSalary,
         approved: row.approved,
       })),
     };

@@ -405,8 +405,12 @@ export class IgpService {
       'branch_location',
       'BranchLocation',
       'BPLName',
+      'BPLNAME',
       'bplName',
+      'branchNameText',
+      'BranchNameText',
       'BPLId',
+      'BPLID',
       'bplId',
       'branchId',
       'branch_id',
@@ -427,7 +431,22 @@ export class IgpService {
       remarks: this.pickString(sources, ['remarks', 'Remarks', 'remarksText', 'remarksText']) || undefined,
       selected: false,
       type:
-        this.pickString(sources, ['type', 'Type', 'igpType', 'IGPType', 'gatePassType', 'GatePassType', 'documentType']) ||
+        this.pickString(sources, [
+          'type',
+          'Type',
+          'igpType',
+          'IGPType',
+          'igp_type',
+          'gatePassType',
+          'GatePassType',
+          'documentType',
+          'DocumentType',
+          'document_type',
+          'docType',
+          'DocType',
+          'orderType',
+          'OrderType',
+        ]) ||
         '—',
       businessPartnerCode:
         this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode', 'bpCode', 'BPCode']) || '—',

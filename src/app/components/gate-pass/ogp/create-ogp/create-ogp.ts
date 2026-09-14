@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, firstValueFrom } from 'rxjs';
@@ -117,6 +117,7 @@ export class CreateOgpComponent implements OnInit {
     private readonly applicationFormService: ApplicationFormService,
     private readonly authService: AuthService,
     private readonly warehouseService: WarehouseService,
+    private readonly cdr: ChangeDetectorRef,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -151,6 +152,7 @@ export class CreateOgpComponent implements OnInit {
       .fetchOutwardGatePassDetail(editId)
       .pipe(finalize(() => {
         this.loading = false;
+        this.cdr.detectChanges();
       }))
       .subscribe({
         next: (record) => {

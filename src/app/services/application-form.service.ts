@@ -1843,7 +1843,6 @@ export class ApplicationFormService {
       this.pickNestedRecord(item['requisition']) ??
       this.pickNestedRecord(item['requisition_detail']) ??
       item;
-
     const employeeCode = this.resolveEmployeeCodeFromApiItem(item);
     const personName =
       pickFrom(personalInfoSource, 'personName', 'person_name') ||

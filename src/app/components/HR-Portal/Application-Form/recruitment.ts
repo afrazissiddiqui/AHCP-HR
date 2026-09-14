@@ -13,17 +13,17 @@ import {
   ApplicationFormRecord,
   ApplicationFormService,
 } from '../../../services/application-form.service';
-import {
-  APPLICATION_FORM_TABLE_FILTER,
-  TableFilterComponent,
-  TableFilterService,
-} from '../../table-filter';
 import { ShellbarSearchService } from '../../../services/shellbar-search.service';
 import { buildCompactPageNumbers } from '../../../utils/pagination.util';
 import { connectShellbarSearch } from '../../../utils/shellbar-search-connect.util';
 import { displayDateOnly } from '../../../utils/date-format.util';
 import { glAccountBranchLabel } from '../../setup/gl-account-determination/gl-account-branch.options';
 import { PermissionService } from '../../../services/permission.service';
+import {
+  APPLICATION_FORM_TABLE_FILTER,
+  TableFilterComponent,
+  TableFilterService,
+} from '../../table-filter';
 
 const APPLICATION_FORM_MODULE = 'application_form';
 
@@ -57,7 +57,8 @@ interface ApplicationDetailViewState {
 })
 export class RecruitmentComponent implements OnInit {
 
-  readonly applicationTableFilter = APPLICATION_FORM_TABLE_FILTER;
+  readonly applicationFormTableFilter = APPLICATION_FORM_TABLE_FILTER;
+
   readonly loading = signal(true);
   readonly skeletonRows = [1, 2, 3, 4, 5, 6];
   private readonly destroyRef = inject(DestroyRef);
@@ -73,7 +74,7 @@ export class RecruitmentComponent implements OnInit {
     private applicationFormService: ApplicationFormService,
     private readonly alertService: AlertService,
     private readonly permissionService: PermissionService,
-    readonly tableFilter: TableFilterService
+    readonly tableFilter: TableFilterService,
   ) {
     connectShellbarSearch(this.shellbarSearch, this.destroyRef, {
       getSearchText: () => this.searchText,
@@ -197,14 +198,6 @@ export class RecruitmentComponent implements OnInit {
     this.showDialog = false;
   }
 
-  hasActiveListFilters(): boolean {
-    return this.tableFilter.hasActive(this.applicationTableFilter);
-  }
-
-  onTableFilterApplied(): void {
-    this.currentPage = 1;
-  }
-
   toggleAll(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
     this.filteredList.forEach(s => s.selected = checked);
@@ -220,7 +213,7 @@ export class RecruitmentComponent implements OnInit {
 
   // Getters for searching, sorting, and pagination
   get filteredList(): ApplicationFormRecord[] {
-    let list = this.tableFilter.filterItems([...this.sirList], this.applicationTableFilter);
+    let list = this.tableFilter.filterItems([...this.sirList], this.applicationFormTableFilter);
 
     // Search
     if (this.searchText) {
@@ -272,6 +265,14 @@ export class RecruitmentComponent implements OnInit {
   onSearchChange() {
     this.shellbarSearch.syncQuery(this.searchText);
     this.currentPage = 1; // Reset to first page on search
+  }
+
+  onTableFilterApplied(): void {
+    this.currentPage = 1;
+  }
+
+  hasActiveListFilters(): boolean {
+    return this.tableFilter.hasActive(this.applicationFormTableFilter);
   }
 
   sortData(column: ApplicationFormColumnKey) {

@@ -296,8 +296,9 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
       this.scrollToSection('header-section');
       return;
     }
-    if (!employeeName || !lastWorkingDay) {
-      void this.alertService.validation('Please enter Employee Name and Last Working Day.');
+    const costCenter = this.costCenter().trim();
+    if (!employeeName || !lastWorkingDay || !costCenter) {
+      void this.alertService.validation('Please enter Employee Name, Cost Center, and Last Working Day.');
       this.scrollToSection('header-section');
       return;
     }
@@ -341,7 +342,9 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  protected isInvalid(field: 'employeeId' | 'employeeName' | 'lastWorkingDay' | 'yearOfService'): boolean {
+  protected isInvalid(
+    field: 'employeeId' | 'employeeName' | 'costCenter' | 'lastWorkingDay' | 'yearOfService',
+  ): boolean {
     if (!this.validationTouched()) {
       return false;
     }
@@ -351,6 +354,9 @@ export class AddTerminationComponent implements OnInit, AfterViewInit, OnDestroy
     }
     if (field === 'employeeName') {
       return !this.employeeName().trim();
+    }
+    if (field === 'costCenter') {
+      return !this.costCenter().trim();
     }
     if (field === 'lastWorkingDay') {
       return !this.lastWorkingDay().trim();

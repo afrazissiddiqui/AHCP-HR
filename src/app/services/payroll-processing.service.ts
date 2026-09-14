@@ -32,6 +32,9 @@ export interface PayrollProcessingDetailPayload {
   overtimeHours: number;
   overtime: number;
   providentFund: number;
+  providentFundEmployer: number;
+  socialSecurityPunjab: number;
+  socialSecurityKpk: number;
   gratuity: number;
   eobiEmployee: number;
   eobiEmployer: number;
@@ -43,6 +46,8 @@ export interface PayrollProcessingDetailPayload {
   taxDeduction: number;
   totalEarnings: number;
   netPayable: number;
+  netPayableAfterTax: number;
+  finalGrossSalary: number;
   approved: boolean;
 }
 
@@ -172,6 +177,9 @@ export class PayrollProcessingService {
       overtimeHours: this.pickAmount(item, ['overtimeHours', 'overtime_hours', 'OvertimeHours']),
       overtime: this.pickAmount(item, ['overtime', 'Overtime']),
       providentFund: this.pickAmount(item, ['providentFund', 'provident_fund', 'ProvidentFund']),
+      providentFundEmployer: this.pickAmount(item, ['providentFundEmployer', 'provident_fund_employer', 'ProvidentFundEmployer']),
+      socialSecurityPunjab: this.pickAmount(item, ['socialSecurityPunjab', 'social_security_punjab', 'SocialSecurityPunjab']),
+      socialSecurityKpk: this.pickAmount(item, ['socialSecurityKpk', 'social_security_kpk', 'SocialSecurityKpk']),
       gratuity: this.pickAmount(item, ['gratuity', 'Gratuity']),
       eobiEmployee: this.pickAmount(item, ['eobiEmployee', 'eobi_employee', 'EobiEmployee', 'eobi', 'EOBI']),
       eobiEmployer: this.pickAmount(item, ['eobiEmployer', 'eobi_employer', 'EobiEmployer']),
@@ -183,6 +191,8 @@ export class PayrollProcessingService {
       taxDeduction: this.pickAmount(item, ['taxDeduction', 'tax_deduction', 'TaxDeduction']),
       totalEarnings: this.pickAmount(item, ['totalEarnings', 'total_earnings', 'TotalEarnings']),
       netPayable: this.pickAmount(item, ['netPayable', 'net_payable', 'NetPayable']),
+      netPayableAfterTax: this.pickAmount(item, ['netPayableAfterTax', 'net_payable_after_tax', 'NetPayableAfterTax']),
+      finalGrossSalary: this.pickAmount(item, ['finalGrossSalary', 'final_gross_salary', 'FinalGrossSalary']),
       approved: this.pickBoolean(item, ['approved', 'Approved']),
     };
   }

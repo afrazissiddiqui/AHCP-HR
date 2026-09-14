@@ -51,6 +51,28 @@ describe('IgpService', () => {
     ]);
   });
 
+  it('maps SAP document type and branch fields for the listing columns', (done) => {
+    authService.getSessionUser.and.returnValue({ is_admin: true } as any);
+
+    service.fetchInwardGatePasses().subscribe({
+      next: (records) => {
+        expect(records[0].type).toBe('Purchase Order');
+        expect(records[0].location).toBe('AHCP_Peshawar');
+        done();
+      },
+      error: done.fail,
+    });
+
+    const req = httpMock.expectOne((request) => request.method === 'GET');
+    req.flush([
+      {
+        referenceNo: 'IGP-600',
+        DocType: 'Purchase Order',
+        BPLNAME: 'AHCP_Peshawar',
+      },
+    ]);
+  });
+
   it('filters records to the current user branch access', (done) => {
     authService.getSessionUser.and.returnValue({ is_admin: false, branch: '3' } as any);
 

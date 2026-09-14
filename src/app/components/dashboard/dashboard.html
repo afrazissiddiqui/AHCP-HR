@@ -3,7 +3,13 @@
   <!-- ACTION BAR — mirrors HR shellbar dropdown navigable sections -->
   <div class="action-bar">
     @for (action of menuActions; track action.value) {
-      <button type="button" class="action" (click)="openAction(action)">
+      <button
+        type="button"
+        class="action"
+        [attr.aria-label]="'Open ' + action.label"
+        [attr.title]="'Open ' + action.label"
+        (click)="openAction(action)"
+      >
         <ui5-icon [attr.name]="action.icon"></ui5-icon>
         <span>{{ action.label }}</span>
       </button>

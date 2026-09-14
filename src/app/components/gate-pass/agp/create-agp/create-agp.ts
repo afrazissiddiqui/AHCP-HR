@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -140,6 +140,7 @@ export class CreateAgpComponent implements OnInit {
     private readonly applicationFormService: ApplicationFormService,
     private readonly authService: AuthService,
     private readonly warehouseService: WarehouseService,
+    private readonly cdr: ChangeDetectorRef,
   ) {
     const d = new Date();
     this.documentDate = d.toISOString().slice(0, 10);
@@ -174,6 +175,7 @@ export class CreateAgpComponent implements OnInit {
       .fetchArticleGatePassDetail(editId)
       .pipe(finalize(() => {
         this.loading = false;
+        this.cdr.detectChanges();
       }))
       .subscribe({
         next: (record) => {
@@ -618,30 +620,21 @@ export class CreateAgpComponent implements OnInit {
 
   private buildPayload(): AgpAddPayload {
     return {
-      type: AGP_TYPE,
-      baseDocNo: this.baseDocNo.trim(),
+      type: this.type.trim(),
+      baseDocNo: String(this.baseDocNo ?? '').trim() || 'N/A',
       documentDate: this.documentDate.trim(),
       referenceNo: this.referenceNo.trim(),
       businessPartnerCode: this.businessPartnerCode.trim(),
       businessPartnerName: this.businessPartnerName.trim(),
       vehicleNo: this.vehicleNo.trim(),
+      location: this.location.trim(),
       reasonForMovement: this.reasonForMovement.trim(),
-      natureOfItem: this.natureOfItem.trim(),
-      natureOfRepair: this.natureOfRepair.trim(),
       requestingEmployee: this.requestingEmployee.trim(),
       requestingDepartment: this.requestingDepartment.trim(),
       requestedBy: this.requestedBy.trim(),
       issuedTo: this.issuedTo.trim(),
       articleOutDate: this.articleOutDate.trim(),
       articleReturnedDate: this.articleReturnedDate.trim() || null,
-      returnStatus: this.returnStatus,
-      warrantyClaimable: this.warrantyClaimable,
-      warrantyStartDate: this.warrantyStartDate.trim(),
-      warrantyDuration: this.warrantyDuration.trim(),
-      warrantyExpiryDate: this.warrantyExpiryDate.trim(),
-      location: this.location.trim(),
-      store: this.store.trim(),
-      kantaSlip: this.kantaSlip.trim(),
       transporterName: this.driverName.trim(),
       transporterCnic: this.driverCnic.trim(),
       transporterPhone: this.driverPhone.trim(),

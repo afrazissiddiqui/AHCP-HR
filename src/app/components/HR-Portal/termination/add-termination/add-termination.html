@@ -144,6 +144,16 @@
             <label>Branch / Location:</label>
             <input type="text" [ngModel]="branchLocation()" (ngModelChange)="branchLocation.set($event)" />
           </div>
+          <div class="cjr-row">
+            <label>Cost Center:</label>
+            <input
+              type="text"
+              [ngModel]="costCenter()"
+              (ngModelChange)="costCenter.set($event)"
+              [class.cjr-invalid]="isInvalid('costCenter')"
+              required
+            />
+          </div>
 
         </div>
 

@@ -68,6 +68,15 @@ export function normalizeNumberBound(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function normalizeFilterText(value: unknown): string {
+  return String(value ?? '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 export function normalizeFilterValues(config: TableFilterConfig, values: TableFilterValues): TableFilterValues {
   const normalized = cloneFilterValues(values);
   for (const field of config.fields) {
@@ -128,7 +137,7 @@ export function matchesTableFilterItem(
 
     if (field.type === 'select') {
       const selected = typeof applied === 'string' ? applied : '';
-      if (selected && String(raw ?? '') !== selected) {
+      if (selected && normalizeFilterText(raw) !== normalizeFilterText(selected)) {
         return false;
       }
       continue;
@@ -140,7 +149,11 @@ export function matchesTableFilterItem(
         continue;
       }
       const activeToken = (field.activeValue ?? 'active').toLowerCase();
-      const isActive = String(raw ?? '').toLowerCase() === activeToken;
+      const normalizedRaw = normalizeFilterText(raw);
+      const isActive =
+        normalizedRaw === activeToken ||
+        normalizedRaw === '1' ||
+        normalizedRaw === 'true';
       if (status === 'Active' && !isActive) {
         return false;
       }
