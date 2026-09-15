@@ -444,8 +444,12 @@ export class IgpService {
           'document_type',
           'docType',
           'DocType',
+          'doc_type',
           'orderType',
           'OrderType',
+          'type_name',
+          'document_type_name',
+          'pass_type',
         ]) ||
         '—',
       businessPartnerCode:

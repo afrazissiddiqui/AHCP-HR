@@ -441,6 +441,7 @@ export class AgpService {
           'document_type',
           'docType',
           'DocType',
+          'doc_type',
           'orderType',
           'OrderType',
           'type_name',
