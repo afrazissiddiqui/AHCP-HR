@@ -22,7 +22,10 @@ import {
   GatePassBusinessPartnerService,
 } from '../../gate-pass-business-partner.service';
 import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
-import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
+import {
+  nextGatePassReferenceNo,
+  reserveNextGatePassReferenceNo,
+} from '../../gate-pass-reference.util';
 import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
@@ -227,12 +230,12 @@ export class CreateIgpComponent implements OnInit {
   private async ensureUniqueReferenceNo(): Promise<void> {
     try {
       const records = await firstValueFrom(this.igpService.fetchInwardGatePasses());
-      this.referenceNo = nextGatePassReferenceNo(
+      this.referenceNo = reserveNextGatePassReferenceNo(
         'IGP',
-        records.map((r) => r.referenceNo),
+        records.map((record) => record.referenceNo),
       );
     } catch {
-      this.referenceNo = nextGatePassReferenceNo('IGP', []);
+      this.referenceNo = reserveNextGatePassReferenceNo('IGP', []);
     }
   }
 

@@ -20,6 +20,8 @@ export interface PayrollProcessingDetailPayload {
   personName: string;
   basicSalary: number;
   grossSalary: number;
+  grossSalaryInCash: number;
+  grossSalaryInBank: number;
   medicalAllowance: number;
   allowedLiters: number;
   monthlyFuelRate: number;
@@ -165,6 +167,8 @@ export class PayrollProcessingService {
       personName: this.pickString([item], ['personName', 'person_name', 'PersonName', 'employeeName', 'employee_name']),
       basicSalary: this.pickAmount(item, ['basicSalary', 'basic_salary', 'BasicSalary']),
       grossSalary: this.pickAmount(item, ['grossSalary', 'gross_salary', 'GrossSalary']),
+      grossSalaryInCash: this.pickAmount(item, ['grossSalaryInCash', 'gross_salary_in_cash', 'GrossSalaryInCash']),
+      grossSalaryInBank: this.pickAmount(item, ['grossSalaryInBank', 'gross_salary_in_bank', 'GrossSalaryInBank']),
       medicalAllowance: this.pickAmount(item, ['medicalAllowance', 'medical_allowance', 'MedicalAllowance']),
       allowedLiters: this.pickAmount(item, ['allowedLiters', 'allowed_liters', 'AllowedLiters']),
       monthlyFuelRate: this.pickAmount(item, ['monthlyFuelRate', 'monthly_fuel_rate', 'MonthlyFuelRate']),

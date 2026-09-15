@@ -222,10 +222,16 @@
             <dd>{{ displayDate(d.remuneration.effectiveDate) }}</dd>
             <dt>Percentage (for tax arrangement)</dt>
             <dd>{{ displayDash(d.remuneration.taxPercentage) }}</dd>
+            <dt>Percentage of salary in bank</dt>
+            <dd>{{ displayBankSalaryPercentage(d.remuneration) }}</dd>
+            <dt>Cash salary in bank</dt>
+            <dd>{{ displayBankSalaryAmount(d.remuneration) }}</dd>
             <dt>Effective joining date</dt>
             <dd>{{ displayDate(d.remuneration.dateOfJoining) }}</dd>
             <dt>Percentage of salary in cash</dt>
-            <dd>{{ displayDash(d.remuneration.cashSalaryPercentage) }}</dd>
+            <dd>{{ displayCashSalaryPercentage(d.remuneration) }}</dd>
+            <dt>Cash salary in cash</dt>
+            <dd>{{ displayCashSalaryAmount(d.remuneration) }}</dd>
             <dt>Advance % allowed</dt>
             <dd>{{ displayDash(d.remuneration.advancePercentAllowed) }}</dd>
             <dt>Maximum advance capacity</dt>

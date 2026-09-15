@@ -851,17 +851,35 @@
           </div>
 
           <div class="cjr-row">
-            <label>Effective Date:</label>
-            <input type="date" [ngModel]="effectiveDate()" (ngModelChange)="effectiveDate.set($event)"
-              [class.cjr-invalid]="showFieldError('effectiveDate')" (blur)="touch('effectiveDate')" />
+            <label>Percentage of Salary in Cash:</label>
+            <input type="text" inputmode="decimal" [ngModel]="cashSalaryPercentage()" readonly
+              [disabled]="paymentMode() !== 'Hybrid'" placeholder="Auto-calculated (100% − bank %)" tabindex="-1" />
           </div>
 
           <div class="cjr-row">
             <label>Percentage Of Salary In Bank:</label>
             <input type="text" inputmode="decimal" [ngModel]="taxPercentage()"
               (ngModelChange)="onBankSalaryPercentageChange($event)" (keydown)="onDecimalKeyDown($event)"
-              [disabled]="!isTaxPercentageEnabled()" (blur)="touch('taxPercentage')"
+              [disabled]="paymentMode() !== 'Hybrid'" (blur)="touch('taxPercentage')"
               placeholder="Available when payment mode is Hybrid" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Salary in Bank:</label>
+            <input type="text" [ngModel]="salaryInBank()" readonly tabindex="-1"
+              placeholder="Auto-calculated from gross salary and bank %" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Salary in Cash:</label>
+            <input type="text" [ngModel]="salaryInCash()" readonly tabindex="-1"
+              placeholder="Auto-calculated from gross salary and cash %" />
+          </div>
+
+          <div class="cjr-row">
+            <label>Effective Date:</label>
+            <input type="date" [ngModel]="effectiveDate()" (ngModelChange)="effectiveDate.set($event)"
+              [class.cjr-invalid]="showFieldError('effectiveDate')" (blur)="touch('effectiveDate')" />
           </div>
 
           <div class="cjr-row">
@@ -870,11 +888,6 @@
               [class.cjr-invalid]="showFieldError('dateOfJoining')" (blur)="touch('dateOfJoining')" />
           </div>
 
-          <div class="cjr-row">
-            <label>Percentage of Salary in Cash:</label>
-            <input type="text" inputmode="decimal" [ngModel]="cashSalaryPercentage()" readonly
-              placeholder="Auto-calculated (100% − bank %)" tabindex="-1" />
-          </div>
         </div>
 
         <div class="cjr-personal-col">
@@ -1113,8 +1126,9 @@
           </div>
 
           <div class="cjr-row">
-            <label>Leagacy Code:</label>
-            <input type="text" [ngModel]="legacyCode()" readonly placeholder="Legacy code" />
+            <label>Legacy Code:</label>
+            <input type="text" [ngModel]="legacyCode()" (ngModelChange)="legacyCode.set($event)"
+              placeholder="Legacy code" />
           </div>
 
           <div class="cjr-row">

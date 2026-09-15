@@ -269,6 +269,36 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     { leaveType: '', leavesAllocated: '', leavesAvailed: '' },
   ]);
   protected readonly leaveTypeOptions = signal<LeaveTypeRecord[]>([]);
+  protected readonly salaryInBank = computed(() => {
+    const grossSalary = Number.parseFloat(this.basicSalary().trim());
+    const bankPercent = Number.parseFloat(this.taxPercentage().trim());
+
+    if (!Number.isFinite(grossSalary) || grossSalary <= 0) {
+      return '';
+    }
+
+    const resolvedBankPercent = Number.isFinite(bankPercent) ? bankPercent : this.paymentMode() === 'Bank' ? 100 : this.paymentMode() === 'Cash' ? 0 : 0;
+    const amount = (grossSalary * resolvedBankPercent) / 100;
+    return this.formatCurrencyAmount(amount);
+  });
+  protected readonly salaryInCash = computed(() => {
+    const grossSalary = Number.parseFloat(this.basicSalary().trim());
+    const cashPercent = Number.parseFloat(this.cashSalaryPercentage().trim());
+
+    if (!Number.isFinite(grossSalary) || grossSalary <= 0) {
+      return '';
+    }
+
+    const resolvedCashPercent = Number.isFinite(cashPercent)
+      ? cashPercent
+      : this.paymentMode() === 'Cash'
+        ? 100
+        : this.paymentMode() === 'Bank'
+          ? 0
+          : 100 - (Number.parseFloat(this.taxPercentage().trim()) || 0);
+    const amount = (grossSalary * resolvedCashPercent) / 100;
+    return this.formatCurrencyAmount(amount);
+  });
   protected readonly totalRemainingLeaves = computed(() =>
     this.leaveManagementRows().reduce((sum, row) => {
       const remaining = this.computeRemainingLeave(row);
@@ -340,10 +370,33 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   protected onPaymentModeChange(value: string): void {
     this.paymentMode.set(value as 'Cash' | 'Bank' | 'Hybrid' | '');
-    if (value !== 'Hybrid') {
-      this.taxPercentage.set('');
-      this.cashSalaryPercentage.set('');
+    this.applyPaymentModeSplit(value as 'Cash' | 'Bank' | 'Hybrid' | '');
+  }
+
+  private applyPaymentModeSplit(mode: 'Cash' | 'Bank' | 'Hybrid' | ''): void {
+    if (mode === 'Cash') {
+      this.taxPercentage.set('0');
+      this.cashSalaryPercentage.set('100');
+      return;
     }
+
+    if (mode === 'Bank') {
+      this.taxPercentage.set('100');
+      this.cashSalaryPercentage.set('0');
+      return;
+    }
+
+    if (mode === 'Hybrid') {
+      if (!this.taxPercentage().trim()) {
+        this.cashSalaryPercentage.set('');
+      } else {
+        this.updateCashSalaryPercentageFromBank();
+      }
+      return;
+    }
+
+    this.taxPercentage.set('');
+    this.cashSalaryPercentage.set('');
   }
 
   protected onAllowancesApplicableChange(value: string): void {
@@ -594,16 +647,20 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
   }
 
   private buildRemunerationPayload(): ApplicationFormDetail['remuneration'] {
+    const paymentMode = this.paymentMode();
+    const bankPercentage = paymentMode === 'Bank' ? '100' : paymentMode === 'Cash' ? '0' : paymentMode === 'Hybrid' ? this.taxPercentage() : '';
+    const cashPercentage = paymentMode === 'Cash' ? '100' : paymentMode === 'Bank' ? '0' : paymentMode === 'Hybrid' ? this.cashSalaryPercentage() : '';
+
     return {
       basicSalary: this.basicSalary(),
-      paymentMode: this.paymentMode(),
+      paymentMode,
       accountTitle: this.accountTitle(),
       bankName: this.bankName(),
       branchName: this.branchName(),
       accountNo: this.accountNo(),
       accountType: this.accountType(),
       effectiveDate: this.effectiveDate(),
-      taxPercentage: this.isTaxPercentageEnabled() ? this.taxPercentage() : '',
+      taxPercentage: bankPercentage,
       dateOfJoining: this.dateOfJoining(),
       advancePercentAllowed: this.advancePercentAllowed(),
       loanAmountAllowed: this.maximumLoanCapacity(),
@@ -621,7 +678,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       maximumAdvanceCapacity: this.maximumAdvanceCapacity(),
       otherAllowances: this.areAllowancesEnabled() ? this.otherAllowances() : '',
       allowancesApplicable: this.allowancesApplicable(),
-      cashSalaryPercentage: this.cashSalaryPercentage(),
+      cashSalaryPercentage: cashPercentage,
       eobiApplicable: this.eobiApplicable(),
       providentApplicable: this.providentApplicable(),
       socialSecurityApplicable: this.socialSecurityApplicable(),
@@ -657,10 +714,20 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   private normalizePaymentMode(value: string): 'Cash' | 'Bank' | 'Hybrid' | '' {
     const normalized = value.trim().toLowerCase();
-    if (normalized === 'cash') {
+    if (
+      normalized === 'cash' ||
+      normalized === 'cash salary' ||
+      normalized === 'salary in cash'
+    ) {
       return 'Cash';
     }
-    if (normalized === 'bank' || normalized === 'bank transfer' || normalized === 'banktransfer') {
+    if (
+      normalized === 'bank' ||
+      normalized === 'bank salary' ||
+      normalized === 'salary in bank' ||
+      normalized === 'bank transfer' ||
+      normalized === 'banktransfer'
+    ) {
       return 'Bank';
     }
     if (normalized === 'hybrid') {
@@ -703,7 +770,14 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const medicalAllowance = (grossSalary / 1.1) * 0.1;
+    const bankPercentage =
+      this.paymentMode() === 'Bank'
+        ? 100
+        : this.paymentMode() === 'Cash'
+          ? 0
+          : Number.parseFloat(this.taxPercentage().trim()) || 0;
+    const grossSalaryInBank = (grossSalary * bankPercentage) / 100;
+    const medicalAllowance = (grossSalaryInBank / 110) * 10;
     this.medicalAllowances.set(this.formatCalculatedAmount(medicalAllowance));
   }
 
@@ -1772,16 +1846,29 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     );
 
     const remuneration = detail.remuneration;
+    const savedPaymentMode = this.normalizePaymentMode(remuneration.paymentMode ?? '');
     this.basicSalary.set(remuneration.basicSalary ?? '');
-    this.paymentMode.set(this.normalizePaymentMode(remuneration.paymentMode ?? ''));
+    this.paymentMode.set(savedPaymentMode);
     this.accountTitle.set(remuneration.accountTitle ?? '');
     this.bankName.set(remuneration.bankName ?? '');
     this.branchName.set(remuneration.branchName ?? '');
     this.accountNo.set(remuneration.accountNo ?? '');
     this.accountType.set(remuneration.accountType ?? '');
     this.effectiveDate.set(remuneration.effectiveDate ?? '');
-    this.taxPercentage.set(remuneration.taxPercentage ?? '');
-    this.updateCashSalaryPercentageFromBank();
+    this.taxPercentage.set(savedPaymentMode === 'Hybrid' ? (remuneration.taxPercentage ?? '') : '');
+    this.cashSalaryPercentage.set(savedPaymentMode === 'Hybrid' ? (remuneration.cashSalaryPercentage ?? '') : '');
+
+    if (savedPaymentMode === 'Cash') {
+      this.taxPercentage.set('0');
+      this.cashSalaryPercentage.set('100');
+    } else if (savedPaymentMode === 'Bank') {
+      this.taxPercentage.set('100');
+      this.cashSalaryPercentage.set('0');
+    } else if (savedPaymentMode === 'Hybrid') {
+      this.taxPercentage.set(remuneration.taxPercentage ?? '');
+      this.updateCashSalaryPercentageFromBank();
+    }
+
     this.dateOfJoining.set(remuneration.dateOfJoining ?? '');
     this.advancePercentAllowed.set(remuneration.advancePercentAllowed ?? '');
     this.maximumLoanCapacity.set(

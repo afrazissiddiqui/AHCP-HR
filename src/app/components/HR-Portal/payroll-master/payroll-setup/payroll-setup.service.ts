@@ -104,14 +104,48 @@ export function roundPayrollAmount(value: number): number {
 }
 
 /**
- * Medical Allowance = (Gross Salary / 110%) × 10%
+ * Medical Allowance = Gross Salary / 110 × 10
  * Matches Application Form: Gross is entered; medical is derived from gross.
  */
 export function computeMedicalAllowance(grossSalary: number): number {
   if (grossSalary <= 0) {
     return 0;
   }
-  return roundPayrollAmount((grossSalary / 1.1) * 0.1);
+  return roundPayrollAmount((grossSalary / 110) * 10);
+}
+
+export function computeGrossSalaryBreakdown(
+  grossSalary: number,
+  paymentMode: string,
+  cashPercentage: number | string = 0,
+  bankPercentage: number | string = 0,
+): { grossSalaryInCash: number; grossSalaryInBank: number } {
+  const salary = Math.max(0, Number(grossSalary) || 0);
+  const normalizedMode = (paymentMode ?? '').toString().trim().toLowerCase();
+  const cashRatio = Number(cashPercentage) || 0;
+  const bankRatio = Number(bankPercentage) || 0;
+
+  const isCashMode = ['cash', 'cash salary', 'salary in cash'].includes(normalizedMode);
+  const isBankMode = ['bank', 'bank salary', 'salary in bank', 'bank transfer', 'banktransfer'].includes(normalizedMode);
+
+  if (isCashMode) {
+    return { grossSalaryInCash: salary, grossSalaryInBank: 0 };
+  }
+
+  if (isBankMode) {
+    return { grossSalaryInCash: 0, grossSalaryInBank: salary };
+  }
+
+  const cashPercent = Number.isFinite(cashRatio) && cashRatio > 0 ? cashRatio : Math.max(0, 100 - bankRatio);
+  const bankPercent = Number.isFinite(bankRatio) && bankRatio > 0 ? bankRatio : Math.max(0, 100 - cashPercent);
+
+  const grossSalaryInCash = roundPayrollAmount((salary * cashPercent) / 100);
+  const grossSalaryInBank = roundPayrollAmount((salary * bankPercent) / 100);
+
+  return {
+    grossSalaryInCash,
+    grossSalaryInBank,
+  };
 }
 
 /** Basic Salary = Gross Salary − Medical Allowance */

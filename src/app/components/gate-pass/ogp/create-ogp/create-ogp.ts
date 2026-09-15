@@ -381,6 +381,17 @@ export class CreateOgpComponent implements OnInit {
     this.itemMasterService.applyToLine(line, item);
   }
 
+  private hydrateLinesFromItemMaster(): void {
+    this.itemMasterService.ensureLoaded().subscribe(() => {
+      this.lines = this.lines.map((line) => {
+        if (!line.deleted) {
+          this.itemMasterService.applyCatalogDefaultsToLine(line);
+        }
+        return line;
+      });
+    });
+  }
+
   applyBusinessPartner(partner: GatePassBusinessPartner): void {
     this.businessPartnerCode = partner.code;
     this.businessPartnerName = partner.name;
@@ -491,6 +502,7 @@ export class CreateOgpComponent implements OnInit {
         remarks: l.remarks ?? '',
         deleted: false,
       })) ?? [];
+    this.hydrateLinesFromItemMaster();
   }
 
   submitForm(): void {

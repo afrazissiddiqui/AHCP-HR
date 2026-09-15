@@ -337,6 +337,74 @@ export class RecruitmentComponent implements OnInit {
     return s === '' ? '—' : s;
   }
 
+  private parseCurrencyNumber(value: string | number | undefined | null): number | null {
+    if (value === undefined || value === null || value === '') {
+      return null;
+    }
+    const sanitized = String(value).replace(/,/g, '').trim();
+    if (!sanitized) {
+      return null;
+    }
+    const parsed = Number.parseFloat(sanitized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private formatCurrencyNumber(value: number): string {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+
+  displayBankSalaryPercentage(remuneration: ApplicationFormRemuneration): string {
+    const explicit = remuneration.taxPercentage?.trim();
+    if (explicit) {
+      return this.displayDash(explicit);
+    }
+    const bankPercent = this.parseCurrencyNumber(remuneration.taxPercentage);
+    const cashPercent = this.parseCurrencyNumber(remuneration.cashSalaryPercentage);
+    if (bankPercent !== null && cashPercent !== null) {
+      return this.displayDash(String(bankPercent));
+    }
+    if (cashPercent !== null) {
+      return this.displayDash(String(100 - cashPercent));
+    }
+    return '—';
+  }
+
+  displayCashSalaryPercentage(remuneration: ApplicationFormRemuneration): string {
+    const explicit = remuneration.cashSalaryPercentage?.trim();
+    if (explicit) {
+      return this.displayDash(explicit);
+    }
+    const bankPercent = this.parseCurrencyNumber(remuneration.taxPercentage);
+    if (bankPercent !== null) {
+      const remaining = Math.max(0, 100 - bankPercent);
+      return this.displayDash(String(remaining));
+    }
+    return '—';
+  }
+
+  displayBankSalaryAmount(remuneration: ApplicationFormRemuneration): string {
+    const salary = this.parseCurrencyNumber(remuneration.basicSalary);
+    const bankPercent = this.parseCurrencyNumber(remuneration.taxPercentage);
+    if (salary === null || bankPercent === null) {
+      return '—';
+    }
+    const amount = (salary * bankPercent) / 100;
+    return this.displayDash(this.formatCurrencyNumber(amount));
+  }
+
+  displayCashSalaryAmount(remuneration: ApplicationFormRemuneration): string {
+    const salary = this.parseCurrencyNumber(remuneration.basicSalary);
+    const bankPercent = this.parseCurrencyNumber(remuneration.taxPercentage);
+    if (salary === null || bankPercent === null) {
+      return '—';
+    }
+    const amount = salary - (salary * bankPercent) / 100;
+    return this.displayDash(this.formatCurrencyNumber(amount));
+  }
+
   branchLabel(code: string | undefined | null): string {
     const label = glAccountBranchLabel(code ?? '');
     return label ? this.displayDash(label) : this.displayDash(code);

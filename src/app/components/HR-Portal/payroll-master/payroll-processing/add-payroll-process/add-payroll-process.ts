@@ -37,6 +37,7 @@ import {
   computeFuelAllowance,
   computeGratuity,
   computeGrossSalary,
+  computeGrossSalaryBreakdown,
   computeMedicalAllowance,
   computeNetPayable,
   computeOvertimeAmount,
@@ -82,6 +83,9 @@ export interface PayrollProcessRow {
   providentApplicable: boolean;
   basicSalary: number;
   grossSalary: number;
+  grossSalaryInCash: number;
+  grossSalaryInBank: number;
+  paymentMode: string;
   medicalAllowance: number;
   allowedLiters: number;
   monthlyFuelRate: number;
@@ -228,6 +232,8 @@ export class AddPayrollProcessComponent implements OnInit {
   readonly payrollColumns: PayrollColumnDef[] = [
     { key: 'basicSalary', label: 'Basic Salary', groupId: 'salary', type: 'readonly', minWidth: 152 },
     { key: 'grossSalary', label: 'Gross Salary', groupId: 'salary', type: 'readonly', minWidth: 152 },
+    { key: 'grossSalaryInCash', label: 'Gross Salary in Cash', groupId: 'salary', type: 'readonly', minWidth: 176 },
+    { key: 'grossSalaryInBank', label: 'Gross Salary in Bank', groupId: 'salary', type: 'readonly', minWidth: 176 },
     { key: 'medicalAllowance', label: 'Medical', groupId: 'allowances', type: 'readonly', minWidth: 145 },
     { key: 'allowedLiters', label: 'Petrol Liters', groupId: 'allowances', type: 'readonly', minWidth: 120 },
     { key: 'fuelAllowance', label: 'Fuel', groupId: 'allowances', type: 'readonly', minWidth: 145 },
@@ -251,7 +257,8 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'costToCompany', label: 'Cost to Company', groupId: 'final', type: 'currency', minWidth: 168 },
     { key: 'netPayable', label: 'Gross Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'taxDeduction', label: 'Tax Deduction', groupId: 'final', type: 'readonly', minWidth: 160 },
-    { key: 'netpayable1', label: 'Net Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'netpayable1', label: 'Net Payable (TAX)', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'netpayable1', label: 'Net Payable (Management)', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 168 },
     { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 152 },
     { key: 'approved', label: 'Approval', groupId: 'approval', type: 'approval', minWidth: 96 },
@@ -323,6 +330,8 @@ export class AddPayrollProcessComponent implements OnInit {
     const totals = {
       basicSalary: 0,
       grossSalary: 0,
+      grossSalaryInCash: 0,
+      grossSalaryInBank: 0,
       medicalAllowance: 0,
       allowedLiters: 0,
       fuelAllowance: 0,
@@ -357,6 +366,8 @@ export class AddPayrollProcessComponent implements OnInit {
       }
       totals.basicSalary += row.basicSalary;
       totals.grossSalary += row.grossSalary;
+      totals.grossSalaryInCash += row.grossSalaryInCash;
+      totals.grossSalaryInBank += row.grossSalaryInBank;
       totals.medicalAllowance += row.medicalAllowance;
       totals.allowedLiters += row.allowedLiters;
       totals.fuelAllowance += row.fuelAllowance;
@@ -644,6 +655,12 @@ export class AddPayrollProcessComponent implements OnInit {
     if (column.key === 'grossSalary' || column.key === 'finalGrossSalary') {
       return row.grossSalary;
     }
+    if (column.key === 'grossSalaryInCash') {
+      return row.grossSalaryInCash;
+    }
+    if (column.key === 'grossSalaryInBank') {
+      return row.grossSalaryInBank;
+    }
     if (column.key === 'overtimeHours') {
       return row.overtimeHours;
     }
@@ -821,6 +838,8 @@ export class AddPayrollProcessComponent implements OnInit {
       ['Year', this.selectedYear()],
       ['Basic Salary', this.formatMoney(row.basicSalary)],
       ['Gross Salary', this.formatMoney(row.grossSalary)],
+      ['Gross Salary in Cash', this.formatMoney(row.grossSalaryInCash)],
+      ['Gross Salary in Bank', this.formatMoney(row.grossSalaryInBank)],
       ['Fuel Allowance', this.formatMoney(row.fuelAllowance)],
       ['Mobile Allowance', this.formatMoney(row.mobileAllowance)],
       ['Car Allowance', this.formatMoney(row.carAllowance)],
@@ -1045,6 +1064,8 @@ export class AddPayrollProcessComponent implements OnInit {
         personName: row.personName,
         basicSalary: row.basicSalary,
         grossSalary: row.grossSalary,
+        grossSalaryInCash: row.grossSalaryInCash,
+        grossSalaryInBank: row.grossSalaryInBank,
         medicalAllowance: row.medicalAllowance,
         allowedLiters: row.allowedLiters,
         monthlyFuelRate: row.monthlyFuelRate,
@@ -1225,6 +1246,9 @@ export class AddPayrollProcessComponent implements OnInit {
       providentApplicable: false,
       basicSalary: 0,
       grossSalary: 0,
+      grossSalaryInCash: 0,
+      grossSalaryInBank: 0,
+      paymentMode: '',
       medicalAllowance: 0,
       allowedLiters: 0,
       monthlyFuelRate: 0,
@@ -1260,8 +1284,23 @@ export class AddPayrollProcessComponent implements OnInit {
     const employeeName = detail?.personalInfo.personName || record.EmployeeName;
     // Application Form "Gross Salary" is stored in remuneration.basicSalary.
     const grossSalary = this.parseAmount(remuneration?.basicSalary ?? 0);
-    const medicalAllowance = computeMedicalAllowance(grossSalary);
-    const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
+    const paymentMode = String(remuneration?.paymentMode ?? '');
+    const cashPercentage = this.parseAmount(remuneration?.cashSalaryPercentage ?? 0);
+    const bankPercentage = this.parseAmount(remuneration?.taxPercentage ?? 0);
+    const grossSalaryBreakdown = computeGrossSalaryBreakdown(
+      grossSalary,
+      paymentMode,
+      cashPercentage,
+      bankPercentage,
+    );
+    const salaryBasis =
+      paymentMode.toLowerCase() === 'bank' || paymentMode.toLowerCase() === 'bank salary' || paymentMode.toLowerCase() === 'salary in bank'
+        ? grossSalaryBreakdown.grossSalaryInBank
+        : paymentMode.toLowerCase() === 'cash' || paymentMode.toLowerCase() === 'cash salary' || paymentMode.toLowerCase() === 'salary in cash'
+          ? grossSalaryBreakdown.grossSalaryInCash
+          : grossSalary;
+    const medicalAllowance = computeMedicalAllowance(grossSalaryBreakdown.grossSalaryInBank);
+    const basicSalary = computeBasicSalary(salaryBasis, medicalAllowance);
     const allowedLiters = this.parseFuelLiters(remuneration?.fuelLimit);
     const profileFuelAmount = this.parseAmount(remuneration?.fuelAllowances ?? 0);
     // Prefer a derived per-liter rate from profile fuel amount; otherwise Fuel Price Adjust is the rate.
@@ -1295,6 +1334,9 @@ export class AddPayrollProcessComponent implements OnInit {
       providentApplicable: this.isYesFlag(remuneration?.providentApplicable),
       basicSalary,
       grossSalary,
+      grossSalaryInCash: grossSalaryBreakdown.grossSalaryInCash,
+      grossSalaryInBank: grossSalaryBreakdown.grossSalaryInBank,
+      paymentMode,
       medicalAllowance,
       allowedLiters,
       monthlyFuelRate,
@@ -1326,8 +1368,19 @@ export class AddPayrollProcessComponent implements OnInit {
   private recalculateRow(row: PayrollProcessRow): PayrollProcessRow {
     // Gross comes from Application Form; medical and basic are derived from it.
     const grossSalary = row.grossSalary > 0 ? row.grossSalary : row.basicSalary;
-    const medicalAllowance = computeMedicalAllowance(grossSalary);
-    const basicSalary = computeBasicSalary(grossSalary, medicalAllowance);
+    const grossSalaryBreakdown = {
+      grossSalaryInCash: row.grossSalaryInCash || 0,
+      grossSalaryInBank: row.grossSalaryInBank || 0,
+    };
+
+    const salaryBasis =
+      row.paymentMode.toLowerCase() === 'bank' || row.paymentMode.toLowerCase() === 'bank salary' || row.paymentMode.toLowerCase() === 'salary in bank'
+        ? grossSalaryBreakdown.grossSalaryInBank
+        : row.paymentMode.toLowerCase() === 'cash' || row.paymentMode.toLowerCase() === 'cash salary' || row.paymentMode.toLowerCase() === 'salary in cash'
+          ? grossSalaryBreakdown.grossSalaryInCash
+          : grossSalary;
+    const medicalAllowance = computeMedicalAllowance(grossSalaryBreakdown.grossSalaryInBank);
+    const basicSalary = computeBasicSalary(salaryBasis, medicalAllowance);
     const providentFund = row.providentApplicable ? computeProvidentFund(basicSalary) : 0;
 
     const effectiveFuelRate = row.monthlyFuelRate + this.fuelPriceAdjust();
@@ -1343,7 +1396,11 @@ export class AddPayrollProcessComponent implements OnInit {
       ? computeOvertimeAmount(computeOvertimeRate(row.lastMonthGrossSalary), overtimeHours)
       : 0;
 
-    const gratuity = computeGratuity(grossSalary, row.dateOfJoining, this.getPayrollAsOfDate());
+    const gratuity = computeGratuity(
+      grossSalaryBreakdown.grossSalaryInBank,
+      row.dateOfJoining,
+      this.getPayrollAsOfDate(),
+    );
     const minimumWage = this.minimumWageAdjust();
     // Compute EOBI based on configured minimum wage so values are visible when set.
     // Applicability is still retained for display/validation, but EOBI amounts
@@ -1354,12 +1411,12 @@ export class AddPayrollProcessComponent implements OnInit {
     // Social Security calculation based on branch
     const socialSecurityPunjab = this.calculateSocialSecurityPunjab(
       minimumWage,
-      grossSalary,
+      grossSalaryBreakdown.grossSalaryInBank,
       row.location,
     );
     const socialSecurityKpk = this.calculateSocialSecurityKpk(
       minimumWage,
-      grossSalary,
+      grossSalaryBreakdown.grossSalaryInBank,
       row.location,
     );
     const costToCompany =
@@ -1375,13 +1432,18 @@ export class AddPayrollProcessComponent implements OnInit {
       gratuity +
       providentFund -
       (socialSecurityPunjab + socialSecurityKpk + eobiEmployee + providentFund + row.loanAdjustment + row.loanAdvForm + row.lateAttendDeduction);
-    const taxDeduction = computeMonthlyWithholdingTax(grossSalary, this.withholdingTaxBrackets());
+    const taxDeduction = computeMonthlyWithholdingTax(
+      grossSalaryBreakdown.grossSalaryInBank,
+      this.withholdingTaxBrackets(),
+    );
 
     return {
       ...row,
       basicSalary,
       medicalAllowance,
       grossSalary,
+      grossSalaryInCash: grossSalaryBreakdown.grossSalaryInCash,
+      grossSalaryInBank: grossSalaryBreakdown.grossSalaryInBank,
       fuelAllowance,
       mobileAllowance,
       carAllowance,
@@ -1427,12 +1489,12 @@ export class AddPayrollProcessComponent implements OnInit {
 
   private calculateSocialSecurityPunjab(
     minimumWage: number,
-    grossSalary: number,
+    grossSalaryInBank: number,
     location: string,
   ): number {
     const branchCode = resolveBranchCode(location || '');
     // AHCP_HO and AHCP_Faisalabad are Punjab branches.
-    if (['01', '03'].includes(branchCode) && minimumWage * 1.4 > grossSalary) {
+    if (['01', '03'].includes(branchCode) && grossSalaryInBank <= minimumWage * 1.4) {
       return this.parseAmount(minimumWage * 0.06);
     }
     return 0;
@@ -1440,12 +1502,12 @@ export class AddPayrollProcessComponent implements OnInit {
 
   private calculateSocialSecurityKpk(
     minimumWage: number,
-    grossSalary: number,
+    grossSalaryInBank: number,
     location: string,
   ): number {
     const branchCode = resolveBranchCode(location || '');
     // AHCP_Peshawar is the KPK branch.
-    if (branchCode === '02' && minimumWage * 1.6 > grossSalary) {
+    if (branchCode === '02' && grossSalaryInBank <= minimumWage * 1.6) {
       return this.parseAmount(minimumWage * 0.06);
     }
     return 0;
