@@ -18,7 +18,6 @@ import { GATE_PASS_LOCATION_OPTIONS, resolveGatePassLocation } from '../../gate-
 import { GatePassItemMaster, GatePassItemMasterService } from '../../gate-pass-item-master.service';
 import { GatePassItemSearchInputComponent } from '../../item-search-input/item-search-input';
 import {
-  nextGatePassReferenceNo,
   reserveNextGatePassReferenceNo,
 } from '../../gate-pass-reference.util';
 import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
@@ -78,7 +77,7 @@ export class CreateOgpComponent implements OnInit {
   documentDate = '';
   businessPartnerCode = '';
   baseDocNo = '';
-  referenceNo = '';
+  referenceNo = 'System Generated';
   businessPartnerName = '';
   vehicleNo = '';
   fromUnit = '';
@@ -182,34 +181,19 @@ export class CreateOgpComponent implements OnInit {
     }
 
   private assignNextReferenceNo(): void {
-    const cached = this.ogpService.records().map((r) => r.referenceNo);
-    if (cached.length > 0) {
-      this.referenceNo = nextGatePassReferenceNo('OGP', cached);
-      return;
-    }
-
-    this.ogpService.fetchOutwardGatePasses().subscribe({
-      next: (records) => {
-        this.referenceNo = nextGatePassReferenceNo(
-          'OGP',
-          records.map((r) => r.referenceNo),
-        );
-      },
-      error: () => {
-        this.referenceNo = nextGatePassReferenceNo('OGP', []);
-      },
-    });
+    // The number is allocated only when the document is submitted.
+    this.referenceNo = 'System Generated';
   }
 
-  private async ensureUniqueReferenceNo(): Promise<void> {
+  private async ensureUniqueReferenceNo(): Promise<string> {
     try {
       const records = await firstValueFrom(this.ogpService.fetchOutwardGatePasses());
-      this.referenceNo = reserveNextGatePassReferenceNo(
+      return reserveNextGatePassReferenceNo(
         'OGP',
         records.map((record) => record.referenceNo),
       );
     } catch {
-      this.referenceNo = reserveNextGatePassReferenceNo('OGP', []);
+      return reserveNextGatePassReferenceNo('OGP', []);
     }
   }
 
@@ -234,8 +218,13 @@ export class CreateOgpComponent implements OnInit {
 
   private async saveNewOgp(attempt = 1): Promise<void> {
     try {
-      await this.ensureUniqueReferenceNo();
-      const response = await firstValueFrom(this.ogpService.addOutwardGatePass(this.buildPayload()));
+      const allocatedReferenceNo = await this.ensureUniqueReferenceNo();
+      const response = await firstValueFrom(
+        this.ogpService.addOutwardGatePass({
+          ...this.buildPayload(),
+          referenceNo: allocatedReferenceNo,
+        }),
+      );
 
       if (response?.status === false || response?.success === false) {
         if (attempt < this.maxReferenceRetry && this.isReferenceDuplicateError(response.message)) {
@@ -247,6 +236,8 @@ export class CreateOgpComponent implements OnInit {
         return;
       }
 
+      this.referenceNo = allocatedReferenceNo;
+      this.cdr.detectChanges();
       await this.alertService.successAndWait('Success', response?.message || 'OGP record saved successfully.');
       this.ogpService.fetchOutwardGatePasses().subscribe();
       this.back();

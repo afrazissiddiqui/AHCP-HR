@@ -21,7 +21,6 @@ import {
 } from '../../gate-pass-business-partner.service';
 import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
 import {
-  nextGatePassReferenceNo,
   reserveNextGatePassReferenceNo,
 } from '../../gate-pass-reference.util';
 import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
@@ -90,7 +89,7 @@ export class CreateAgpComponent implements OnInit {
   documentDate = '';
   businessPartnerCode = '';
   baseDocNo = '';
-  referenceNo = '';
+  referenceNo = 'System Generated';
   businessPartnerName = '';
   vehicleNo = '';
 
@@ -209,34 +208,19 @@ export class CreateAgpComponent implements OnInit {
   }
 
   private assignNextReferenceNo(): void {
-    const cached = this.agpService.records().map((r) => r.referenceNo);
-    if (cached.length > 0) {
-      this.referenceNo = nextGatePassReferenceNo('AGP', cached);
-      return;
-    }
-
-    this.agpService.fetchArticleGatePasses().subscribe({
-      next: (records) => {
-        this.referenceNo = nextGatePassReferenceNo(
-          'AGP',
-          records.map((r) => r.referenceNo),
-        );
-      },
-      error: () => {
-        this.referenceNo = nextGatePassReferenceNo('AGP', []);
-      },
-    });
+    // The number is allocated only when the document is submitted.
+    this.referenceNo = 'System Generated';
   }
 
-  private async ensureUniqueReferenceNo(): Promise<void> {
+  private async ensureUniqueReferenceNo(): Promise<string> {
     try {
       const records = await firstValueFrom(this.agpService.fetchArticleGatePasses());
-      this.referenceNo = reserveNextGatePassReferenceNo(
+      return reserveNextGatePassReferenceNo(
         'AGP',
         records.map((record) => record.referenceNo),
       );
     } catch {
-      this.referenceNo = reserveNextGatePassReferenceNo('AGP', []);
+      return reserveNextGatePassReferenceNo('AGP', []);
     }
   }
 
@@ -261,8 +245,13 @@ export class CreateAgpComponent implements OnInit {
 
   private async saveNewAgp(attempt = 1): Promise<void> {
     try {
-      await this.ensureUniqueReferenceNo();
-      const response = await firstValueFrom(this.agpService.addArticleGatePass(this.buildPayload()));
+      const allocatedReferenceNo = await this.ensureUniqueReferenceNo();
+      const response = await firstValueFrom(
+        this.agpService.addArticleGatePass({
+          ...this.buildPayload(),
+          referenceNo: allocatedReferenceNo,
+        }),
+      );
 
       if (response?.status === false || response?.success === false) {
         if (attempt < MAX_REFERENCE_RETRY && this.isReferenceDuplicateError(response.message)) {
@@ -274,6 +263,8 @@ export class CreateAgpComponent implements OnInit {
         return;
       }
 
+      this.referenceNo = allocatedReferenceNo;
+      this.cdr.detectChanges();
       await this.alertService.successAndWait('Success', response?.message || 'AGP record saved successfully.');
       this.agpService.fetchArticleGatePasses().subscribe();
       this.back();

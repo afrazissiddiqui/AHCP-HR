@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
 import { AuthService } from '../../../services/auth.service';
 import { filterRecordsBySessionBranches } from '../../../utils/branch-filter.util';
@@ -154,11 +154,25 @@ export class OgpService {
         return record;
       }),
       map((record) => {
-        if (record.lines.length > 0 || !cached?.lines.length) {
+        if (!cached) {
           return record;
         }
-        return { ...record, lines: cached.lines };
+
+        const merged = { ...cached, ...record };
+        for (const key of Object.keys(cached) as Array<keyof OgpRecord>) {
+          const detailValue = record[key];
+          if (
+            (typeof detailValue === 'string' && (!detailValue.trim() || detailValue === '—')) ||
+            (key === 'lines' && !record.lines.length)
+          ) {
+            merged[key] = cached[key] as never;
+          }
+        }
+        return merged;
       }),
+      catchError((primaryError: unknown) =>
+        cached ? of(cached) : throwError(() => primaryError),
+      ),
     );
   }
 

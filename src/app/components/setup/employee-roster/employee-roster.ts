@@ -6,8 +6,11 @@ import { ApplicationFormRecord, ApplicationFormService } from '../../../services
 import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
+import { GatePassDepartmentService } from '../../gate-pass/gate-pass-department.service';
+import { WorkstationService } from '../../../services/workstation.service';
 
-type ShiftCode = 'M' | 'E' | 'N' | 'OFF' | 'L' | 'HOL' | '+';
+type ShiftCode = string;
+type MonthHalf = 'First Half' | 'Second Half';
 interface RosterDay {
   date: number;
   weekday: string;
@@ -32,48 +35,67 @@ interface RosterEmployee extends ApplicationFormRecord {
 export class EmployeeRosterComponent implements OnInit {
   private readonly employeeService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
+  private readonly departmentService = inject(GatePassDepartmentService);
+  readonly workstationService = inject(WorkstationService);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly employees = signal<RosterEmployee[]>([]);
   readonly searchText = signal('');
-  readonly selectedHub = signal('Lahore HQ');
+  readonly selectedHub = signal('Lahore HO');
   readonly selectedDepartment = signal('All Departments');
+  readonly selectedDepartmentCode = signal('');
+  readonly departmentOptions = this.departmentService.departments;
   readonly monthLabel = signal('September 2026');
+  readonly selectedMonthHalf = signal<MonthHalf>('First Half');
   readonly selectedCell = signal<{ employeeCode: string; day: number } | null>(null);
   readonly shiftDialog = signal<{ employee: RosterEmployee; dayIndex: number; shift: ShiftCode } | null>(null);
   readonly shiftDialogPosition = signal({ top: 0, left: 0 });
   readonly hasChanges = signal(false);
   readonly selectedEmployees = signal(new Set<string>());
   readonly conflictsVisible = signal(true);
-  readonly shiftOptions: Array<{ code: ShiftCode; title: string; hours: string; className: string }> = [
-    { code: 'M', title: 'Morning Shift', hours: '08:00 AM - 04:00 PM', className: 'morning' },
-    { code: 'E', title: 'Evening Shift', hours: '04:00 PM - 12:00 AM', className: 'evening' },
-    { code: 'N', title: 'Night Shift', hours: '12:00 AM - 08:00 AM', className: 'night' },
-    { code: 'OFF', title: 'Scheduled Day Off', hours: '', className: 'off' },
-  ];
+  readonly workstationLoading = signal(false);
+  readonly workstationLegendOpen = signal(false);
+  readonly shiftOptions = computed(() => {
+    const options = this.workstationService.workstations()
+      .map((workstation) => ({
+        code: workstation.shift.trim(),
+        title: workstation.description.trim() || workstation.name.trim() || workstation.shift.trim(),
+        className: 'dynamic',
+      }))
+      .filter((option) => option.code);
+    const uniqueOptions = options.filter(
+      (option, index, allOptions) => allOptions.findIndex((item) => item.code.toLowerCase() === option.code.toLowerCase()) === index,
+    );
 
-  readonly days: RosterDay[] = [
-    { date: 5, weekday: 'SAT', isToday: false, isHoliday: true },
-    { date: 6, weekday: 'SUN', isToday: false, isHoliday: true },
-    { date: 7, weekday: 'MON', isToday: true, isHoliday: false },
-    { date: 8, weekday: 'TUE', isToday: false, isHoliday: false },
-    { date: 9, weekday: 'WED', isToday: false, isHoliday: false },
-    { date: 10, weekday: 'THU', isToday: false, isHoliday: false },
-    { date: 11, weekday: 'FRI', isToday: false, isHoliday: false },
-    { date: 12, weekday: 'SAT', isToday: false, isHoliday: true },
-    { date: 13, weekday: 'SUN', isToday: false, isHoliday: true },
-    { date: 14, weekday: 'MON', isToday: false, isHoliday: false },
-    { date: 15, weekday: 'TUE', isToday: false, isHoliday: false },
-    { date: 16, weekday: 'WED', isToday: false, isHoliday: false },
-    { date: 17, weekday: 'THU', isToday: false, isHoliday: false },
-    { date: 18, weekday: 'FRI', isToday: false, isHoliday: false },
-    { date: 19, weekday: 'SAT', isToday: false, isHoliday: true },
-    { date: 20, weekday: 'SUN', isToday: false, isHoliday: true },
-    { date: 21, weekday: 'MON', isToday: false, isHoliday: false },
-    { date: 22, weekday: 'TUE', isToday: false, isHoliday: false },
-    { date: 23, weekday: 'WED', isToday: false, isHoliday: false },
-  ];
+    return [
+      ...uniqueOptions,
+      { code: 'OFF', title: 'Scheduled Day Off', hours: '', className: 'off' },
+    ];
+  });
+
+  readonly visibleDays = computed<RosterDay[]>(() => {
+    const [monthName, yearText] = this.monthLabel().split(' ');
+    const year = Number(yearText);
+    const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const firstHalf = this.selectedMonthHalf() === 'First Half';
+    const today = new Date();
+
+    return Array.from({ length: daysInMonth }, (_, index) => {
+      const date = index + 1;
+      const day = new Date(year, monthIndex, date);
+      return {
+        date,
+        weekday: day.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+        isToday:
+          today.getFullYear() === year &&
+          today.getMonth() === monthIndex &&
+          today.getDate() === date,
+        isHoliday: day.getDay() === 0 || day.getDay() === 6,
+      };
+    }).filter((day) => (firstHalf ? day.date <= 15 : day.date > 15));
+  });
 
   readonly filteredEmployees = computed(() => {
     const query = this.searchText().trim().toLowerCase();
@@ -102,7 +124,32 @@ export class EmployeeRosterComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.departmentService.ensureLoaded().subscribe();
+    this.loadWorkstations();
     this.loadEmployees();
+  }
+
+  private loadWorkstations(): void {
+    this.workstationLoading.set(true);
+    this.workstationService.fetchWorkstations().pipe(finalize(() => this.workstationLoading.set(false))).subscribe({
+      error: (error: unknown) => {
+        this.alertService.error('Shift Load Failed', formatApiErrorMessage(error, 'Could not load workstation shifts.'));
+      },
+    });
+  }
+
+  onDepartmentChange(departmentName: string): void {
+    this.selectedDepartment.set(departmentName);
+    const department = this.departmentOptions().find((item) => item.name === departmentName);
+    this.selectedDepartmentCode.set(department?.id ?? '');
+  }
+
+  openWorkstationLegend(): void {
+    this.workstationLegendOpen.set(true);
+  }
+
+  closeWorkstationLegend(): void {
+    this.workstationLegendOpen.set(false);
   }
 
   loadEmployees(): void {
@@ -161,11 +208,41 @@ export class EmployeeRosterComponent implements OnInit {
   }
 
   shiftClass(shift: ShiftCode): string {
-    return `roster-shift roster-shift--${shift.toLowerCase()}`;
+    return 'roster-shift';
+  }
+
+  shiftBackground(description: string): string {
+    return `hsl(${this.descriptionHue(description)} 88% 92%)`;
+  }
+
+  shiftForeground(description: string): string {
+    return `hsl(${this.descriptionHue(description)} 55% 28%)`;
   }
 
   shiftName(shift: ShiftCode): string {
-    return { M: 'Morning', E: 'Evening', N: 'Night', OFF: 'Day Off', L: 'Leave', HOL: 'Holiday', '+': 'Unassigned' }[shift];
+    return { M: 'Morning', E: 'Evening', N: 'Night', OFF: 'Day Off', L: 'Leave', HOL: 'Holiday', '+': 'Unassigned' }[shift] || shift;
+  }
+
+  shiftDescription(shift: string): string {
+    const workstation = this.workstationService
+      .workstations()
+      .find((item) => item.shift.trim().toLowerCase() === shift.trim().toLowerCase());
+    return workstation?.description.trim() || workstation?.name.trim() || shift;
+  }
+
+  private descriptionHue(description: string): number {
+    const normalizedDescription = description.trim().toLowerCase();
+    if (normalizedDescription === 'scheduled day off') {
+      return 215;
+    }
+
+    const descriptions = this.workstationService
+      .workstations()
+      .map((workstation) => workstation.description.trim() || workstation.name.trim() || workstation.shift.trim())
+      .filter(Boolean)
+      .filter((value, index, values) => values.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index);
+    const index = descriptions.findIndex((value) => value.trim().toLowerCase() === normalizedDescription);
+    return index >= 0 ? (28 + index * 137.508) % 360 : 215;
   }
 
   selectCell(employee: RosterEmployee, dayIndex: number): void {
@@ -175,13 +252,13 @@ export class EmployeeRosterComponent implements OnInit {
   openShiftDialog(employee: RosterEmployee, dayIndex: number, event: MouseEvent): void {
     this.selectedCell.set({ employeeCode: employee.EmployeeCode, day: dayIndex });
     this.shiftDialog.set({ employee, dayIndex, shift: this.shiftFor(employee, dayIndex) });
-    const popoverWidth = 320;
-    const popoverHeight = 370;
+    const popoverWidth = 350;
+    const popoverHeight = Math.min(560, Math.max(220, window.innerHeight - 16));
     const gap = 10;
     const left = event.clientX + gap + popoverWidth <= window.innerWidth
       ? event.clientX + gap
       : event.clientX - popoverWidth - gap;
-    const top = Math.min(Math.max(8, event.clientY - 70), window.innerHeight - popoverHeight - 8);
+    const top = Math.min(Math.max(8, event.clientY - 70), Math.max(8, window.innerHeight - popoverHeight - 8));
     this.shiftDialogPosition.set({
       top,
       left: Math.max(8, left),
@@ -264,6 +341,11 @@ export class EmployeeRosterComponent implements OnInit {
     this.monthLabel.set(today.toLocaleString('en-US', { month: 'long', year: 'numeric' }));
   }
 
+  onMonthHalfChange(value: string): void {
+    this.selectedMonthHalf.set(value as MonthHalf);
+    this.clearSelection();
+  }
+
   dismissConflicts(): void {
     this.conflictsVisible.set(false);
   }
@@ -280,7 +362,7 @@ export class EmployeeRosterComponent implements OnInit {
 
     const payload = {
       data: this.employees().flatMap((employee) =>
-        this.days.map((day, dayIndex) => ({
+        this.visibleDays().map((day, dayIndex) => ({
           employee_id: employee.EmployeeCode,
           shift_date: this.rosterDate(day.date),
           shift: this.shiftFor(employee, dayIndex),
@@ -322,7 +404,7 @@ export class EmployeeRosterComponent implements OnInit {
     ];
     return {
       ...record,
-      hub: 'Lahore HQ',
+      hub: 'Lahore HO',
       role: record.Designation || ['Ops', 'Supp', 'Logistics', 'Eng', 'Staff'][index % 5],
       shifts: patterns[index % patterns.length],
     };

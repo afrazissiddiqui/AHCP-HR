@@ -22,10 +22,7 @@ import {
   GatePassBusinessPartnerService,
 } from '../../gate-pass-business-partner.service';
 import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
-import {
-  nextGatePassReferenceNo,
-  reserveNextGatePassReferenceNo,
-} from '../../gate-pass-reference.util';
+import { reserveNextGatePassReferenceNo } from '../../gate-pass-reference.util';
 import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
@@ -94,7 +91,7 @@ export class CreateIgpComponent implements OnInit {
   businessPartnerCode = '';
   baseDocNo = '';
   poNumber = '';
-  referenceNo = '';
+  referenceNo = 'System Generated';
   businessPartnerName = '';
   vehicleNo = '';
   fromUnit = '';
@@ -199,36 +196,19 @@ export class CreateIgpComponent implements OnInit {
     }
 
   private assignNextReferenceNo(): void {
-    // Assign a default immediately so user sees a number right away
-    this.referenceNo = 'IGP-..loading..';
-    
-    // Then fetch actual records and update with the correct next number
-    this.igpService
-      .fetchInwardGatePasses()
-      .pipe(finalize(() => this.cdr.detectChanges()))
-      .subscribe({
-        next: (records) => {
-          this.referenceNo = nextGatePassReferenceNo(
-            'IGP',
-            records.map((r) => r.referenceNo),
-          );
-        },
-        error: () => {
-          // Fallback if fetch fails
-          this.referenceNo = nextGatePassReferenceNo('IGP', []);
-        },
-      });
+    // The number is allocated only when the document is submitted.
+    this.referenceNo = 'System Generated';
   }
 
-  private async ensureUniqueReferenceNo(): Promise<void> {
+  private async ensureUniqueReferenceNo(): Promise<string> {
     try {
       const records = await firstValueFrom(this.igpService.fetchInwardGatePasses());
-      this.referenceNo = reserveNextGatePassReferenceNo(
+      return reserveNextGatePassReferenceNo(
         'IGP',
         records.map((record) => record.referenceNo),
       );
     } catch {
-      this.referenceNo = reserveNextGatePassReferenceNo('IGP', []);
+      return reserveNextGatePassReferenceNo('IGP', []);
     }
   }
 
@@ -317,8 +297,13 @@ export class CreateIgpComponent implements OnInit {
 
   private async saveNewIgp(attempt = 1): Promise<void> {
     try {
-      await this.ensureUniqueReferenceNo();
-      const response = await firstValueFrom(this.igpService.addInwardGatePass(this.buildPayload()));
+      const allocatedReferenceNo = await this.ensureUniqueReferenceNo();
+      const response = await firstValueFrom(
+        this.igpService.addInwardGatePass({
+          ...this.buildPayload(),
+          referenceNo: allocatedReferenceNo,
+        }),
+      );
 
       if (response?.status === false || response?.success === false) {
         if (attempt < this.maxReferenceRetry && this.isReferenceDuplicateError(response.message)) {
@@ -333,6 +318,8 @@ export class CreateIgpComponent implements OnInit {
 
       const title = 'Success';
       const message = response?.message || 'IGP record saved successfully.';
+      this.referenceNo = allocatedReferenceNo;
+      this.cdr.detectChanges();
       await this.alertService.successAndWait(title, message);
       this.igpService.fetchInwardGatePasses().subscribe();
       this.back();

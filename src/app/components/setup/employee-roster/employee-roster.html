@@ -22,9 +22,10 @@
     </header>
 
     <section class="roster-controls" aria-label="Roster filters">
-      <label class="select-control"><ui5-icon name="building" aria-hidden="true"></ui5-icon><select [ngModel]="selectedHub()" (ngModelChange)="selectedHub.set($event)"><option>Lahore HQ</option><option>Faisalabad</option><option>Karachi</option></select><ui5-icon name="slim-arrow-down" aria-hidden="true"></ui5-icon></label>
-      <label class="select-control"><ui5-icon name="group" aria-hidden="true"></ui5-icon><select [ngModel]="selectedDepartment()" (ngModelChange)="selectedDepartment.set($event)"><option>All Departments</option><option>Operations</option><option>Support</option><option>Logistics</option></select><ui5-icon name="slim-arrow-down" aria-hidden="true"></ui5-icon></label>
+      <label class="select-control"><ui5-icon name="building" aria-hidden="true"></ui5-icon><select [ngModel]="selectedHub()" (ngModelChange)="selectedHub.set($event)"><option>Lahore HO</option><option>AHCP_Peshawar</option><option>AHCP_Faisalabad</option></select><ui5-icon name="slim-arrow-down" aria-hidden="true"></ui5-icon></label>
+      <label class="select-control"><ui5-icon name="group" aria-hidden="true"></ui5-icon><select [ngModel]="selectedDepartment()" (ngModelChange)="onDepartmentChange($event)"><option>All Departments</option>@for (department of departmentOptions(); track department.id) { <option [value]="department.name">{{ department.name }}</option> } </select><ui5-icon name="slim-arrow-down" aria-hidden="true"></ui5-icon></label>
       <div class="month-control"><button type="button" aria-label="Previous month" (click)="changeMonth(-1)">‹</button><span><ui5-icon name="calendar" aria-hidden="true"></ui5-icon> {{ monthLabel() }}</span><button type="button" aria-label="Next month" (click)="changeMonth(1)">›</button></div>
+      <label class="select-control month-half-control"><ui5-icon name="time-entry-request" aria-hidden="true"></ui5-icon><select [ngModel]="selectedMonthHalf()" (ngModelChange)="onMonthHalfChange($event)"><option>First Half</option><option>Second Half</option></select><ui5-icon name="slim-arrow-down" aria-hidden="true"></ui5-icon></label>
       <button type="button" class="today-button" (click)="jumpToToday()">Jump to Today</button>
       <label class="search-control"><ui5-icon name="search" aria-hidden="true"></ui5-icon><input type="search" placeholder="Search employee by name, ID, or role..." [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" /></label>
     </section>
@@ -35,7 +36,7 @@
       <article class="summary-card summary-card--evening"><div><span class="summary-label">Evening (16-00)</span><strong>{{ eveningCount() }}</strong><small>33% capacity</small></div><ui5-icon name="lateness" aria-hidden="true"></ui5-icon></article>
       <article class="summary-card summary-card--night"><div><span class="summary-label">Night (00-08)</span><strong>{{ nightCount() }}</strong><small>25% capacity</small></div><ui5-icon name="lateness" aria-hidden="true"></ui5-icon></article>
       <article class="summary-card summary-card--unassigned"><div><span class="summary-label">Unassigned</span><strong>{{ unassignedCount() }}</strong><small>Needs allocation</small></div><ui5-icon name="alert" aria-hidden="true"></ui5-icon></article>
-      <article class="legend-card"><span class="summary-label">Roster Legend</span><div class="legend-items"><span class="legend-chip legend-chip--m">M 08-16</span><span class="legend-chip legend-chip--e">E 16-00</span><span class="legend-chip legend-chip--n">N 00-08</span><span class="legend-chip legend-chip--off">OFF</span><span class="legend-chip legend-chip--hol">HOL</span><span class="legend-chip legend-chip--leave">L Leave</span></div></article>
+      <button type="button" class="legend-card" (click)="openWorkstationLegend()" aria-haspopup="dialog"><span class="summary-label">Roster Legend</span><span class="legend-card__hint">View workstation descriptions</span><div class="legend-items"><span class="legend-chip legend-chip--m">Shift</span><span class="legend-chip legend-chip--off">OFF</span><span class="legend-chip legend-chip--hol">HOL</span><span class="legend-chip legend-chip--leave">L Leave</span></div></button>
     </section>
 
     <section class="action-bar" aria-label="Roster actions">
@@ -54,11 +55,11 @@
     <section class="roster-table-panel" aria-label="Employee shift roster">
       <div class="table-scroll">
         <table class="roster-table">
-          <thead><tr><th class="employee-column"><label><input type="checkbox" [checked]="allVisibleSelected()" (change)="toggleAllVisible($event)" /> Staff Member ({{ activeCount() }})</label></th><th class="role-column">Role / Hub</th><th class="menu-column"></th><th *ngFor="let day of days" [class.today-column]="day.isToday" [class.weekend-column]="day.isHoliday"><span>{{ day.weekday }}</span><strong>{{ day.date | number:'2.0-0' }}</strong></th></tr></thead>
+          <thead><tr><th class="employee-column"><label><input type="checkbox" [checked]="allVisibleSelected()" (change)="toggleAllVisible($event)" /> Staff Member ({{ activeCount() }})</label></th><th class="role-column">Role / Hub</th><th class="menu-column"></th><th *ngFor="let day of visibleDays()" [class.today-column]="day.isToday" [class.weekend-column]="day.isHoliday"><span>{{ day.weekday }}</span><strong>{{ day.date | number:'2.0-0' }}</strong></th></tr></thead>
           <tbody>
-            @if (loading()) { <tr><td class="empty-state" [attr.colspan]="days.length + 3">Loading employees...</td></tr> }
-            @else if (!filteredEmployees().length) { <tr><td class="empty-state" [attr.colspan]="days.length + 3">No employees found for this search.</td></tr> }
-            @else { @for (employee of filteredEmployees(); track employee.EmployeeCode; let employeeIndex = $index) { <tr><td class="employee-cell"><label><input type="checkbox" [checked]="isEmployeeSelected(employee)" (change)="toggleEmployee(employee, $event)" /><span class="avatar">{{ (employee.EmployeeName || 'EM').slice(0, 2).toUpperCase() }}</span><span class="employee-name"><strong>{{ employee.EmployeeName || 'Employee ' + (employeeIndex + 1) }}</strong><small>{{ employee.EmployeeCode || 'EMP-' + (employeeIndex + 1) }} · {{ employeeIndex % 2 ? '160h' : '168h' }}</small></span></label></td><td class="role-cell"><span>{{ employee.role }}</span></td><td class="row-menu">⋮</td>@for (day of days; track day.date; let dayIndex = $index) { @let shift = shiftFor(employee, dayIndex); <td [class.today-column]="day.isToday" [class.weekend-column]="day.isHoliday" (click)="selectCell(employee, dayIndex)"><button type="button" [class]="shiftClass(shift)" [class.roster-shift--selected]="selectedCell()?.employeeCode === employee.EmployeeCode && selectedCell()?.day === dayIndex" [title]="shiftName(shift)" (click)="openShiftDialog(employee, dayIndex, $event); $event.stopPropagation()">{{ shift }}</button></td> }</tr> } }
+            @if (loading()) { <tr><td class="empty-state" [attr.colspan]="visibleDays().length + 3">Loading employees...</td></tr> }
+            @else if (!filteredEmployees().length) { <tr><td class="empty-state" [attr.colspan]="visibleDays().length + 3">No employees found for this search.</td></tr> }
+            @else { @for (employee of filteredEmployees(); track employee.EmployeeCode; let employeeIndex = $index) { <tr><td class="employee-cell"><label><input type="checkbox" [checked]="isEmployeeSelected(employee)" (change)="toggleEmployee(employee, $event)" /><span class="avatar">{{ (employee.EmployeeName || 'EM').slice(0, 2).toUpperCase() }}</span><span class="employee-name"><strong>{{ employee.EmployeeName || 'Employee ' + (employeeIndex + 1) }}</strong><small>{{ employee.EmployeeCode || 'EMP-' + (employeeIndex + 1) }} · {{ employeeIndex % 2 ? '160h' : '168h' }}</small></span></label></td><td class="role-cell"><span>{{ employee.role }}</span></td><td class="row-menu">⋮</td>@for (day of visibleDays(); track day.date; let dayIndex = $index) { @let shift = shiftFor(employee, dayIndex); <td [class.today-column]="day.isToday" [class.weekend-column]="day.isHoliday" (click)="selectCell(employee, dayIndex)"><button type="button" [class]="shiftClass(shift)" [style.background]="shiftBackground(shiftDescription(shift))" [style.color]="shiftForeground(shiftDescription(shift))" [class.roster-shift--selected]="selectedCell()?.employeeCode === employee.EmployeeCode && selectedCell()?.day === dayIndex" [title]="shiftName(shift)" (click)="openShiftDialog(employee, dayIndex, $event); $event.stopPropagation()">{{ shift }}</button></td> }</tr> } }
           </tbody>
         </table>
       </div>
@@ -68,15 +69,61 @@
   @if (shiftDialog(); as dialog) {
     <div class="dialog-backdrop" (click)="closeShiftDialog()"></div>
     <section class="shift-dialog" role="dialog" aria-modal="true" aria-labelledby="shift-dialog-title" [style.top.px]="shiftDialogPosition().top" [style.left.px]="shiftDialogPosition().left" (click)="$event.stopPropagation()">
-      <header class="shift-dialog__header"><div><h2 id="shift-dialog-title">Assign Shift</h2><p>{{ dialog.employee.EmployeeName }} · {{ days[dialog.dayIndex].weekday }} {{ days[dialog.dayIndex].date }}</p></div><button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeShiftDialog()">×</button></header>
+      <header class="shift-dialog__header"><div><h2 id="shift-dialog-title">Assign Shift</h2><p>{{ dialog.employee.EmployeeName }} · {{ visibleDays()[dialog.dayIndex].weekday }} {{ visibleDays()[dialog.dayIndex].date }}</p></div><button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeShiftDialog()">×</button></header>
       <div class="shift-options">
-        @for (option of shiftOptions; track option.code) {
-          <button type="button" class="shift-option" [class]="'shift-option shift-option--' + option.className" [class.shift-option--active]="dialog.shift === option.code" (click)="chooseDialogShift(option.code)">
-            <span class="shift-option__code">{{ option.code }}</span><span class="shift-option__copy"><strong>{{ option.title }}</strong>@if (option.hours) { <small>{{ option.hours }}</small> }</span><span class="radio-dot" aria-hidden="true"></span>
+        @if (workstationLoading()) {
+          <p class="shift-options__status">Loading workstation shifts...</p>
+        } @else if (shiftOptions().length === 1) {
+          <p class="shift-options__status">No workstation shifts found.</p>
+        } @else {
+        @for (option of shiftOptions(); track option.code) {
+          <button type="button" class="shift-option" [class]="'shift-option shift-option--' + option.className" [style.background]="shiftBackground(option.title)" [style.color]="shiftForeground(option.title)" [class.shift-option--active]="dialog.shift === option.code" [attr.title]="option.title" (click)="chooseDialogShift(option.code)">
+            <span class="shift-option__copy"><strong>{{ option.title }}</strong></span><span class="radio-dot" aria-hidden="true"></span>
           </button>
+        }
         }
       </div>
       <footer class="shift-dialog__footer"><span>Rotation Rule...</span><div><button type="button" class="dialog-button dialog-button--cancel" (click)="closeShiftDialog()">Cancel</button><button type="button" class="dialog-button dialog-button--apply" (click)="applyDialogShift()">Apply</button></div></footer>
+    </section>
+  }
+
+  @if (workstationLegendOpen()) {
+    <div class="dialog-backdrop" (click)="closeWorkstationLegend()"></div>
+    <section class="workstation-legend-dialog" role="dialog" aria-modal="true" aria-labelledby="workstation-legend-title" (click)="$event.stopPropagation()">
+      <header class="shift-dialog__header">
+        <div>
+          <h2 id="workstation-legend-title">Workstation Descriptions</h2>
+          <p>Available shifts for roster assignment</p>
+        </div>
+        <button type="button" class="dialog-close" aria-label="Close workstation descriptions" (click)="closeWorkstationLegend()">×</button>
+      </header>
+      <div class="workstation-legend-list">
+        @if (workstationLoading()) {
+          <p class="shift-options__status">Loading workstation descriptions...</p>
+        } @else if (!workstationService.workstations().length) {
+          <p class="shift-options__status">No workstation descriptions found.</p>
+        } @else {
+          @for (workstation of workstationService.workstations(); track workstation.id) {
+            @let description = workstation.description.trim() || workstation.name.trim() || workstation.shift.trim();
+            <article class="workstation-legend-item" [style.background]="shiftBackground(description)" [style.color]="shiftForeground(description)">
+              <span class="workstation-legend-item__marker" aria-hidden="true"></span>
+                     <div class="workstation-legend-item__content">
+                       <strong>{{ description }}</strong>
+                       <div class="workstation-detail-grid">
+                         <span><small>Workstation</small>{{ workstation.name || '—' }}</span>
+                         <span><small>Code</small>{{ workstation.code || '—' }}</span>
+                         <span><small>Shift</small>{{ workstation.shift || '—' }}</span>
+                         <span><small>Office time</small>{{ workstation.officeInTime || '—' }} - {{ workstation.officeOutTime || '—' }}</span>
+                         <span><small>In grace</small>{{ workstation.inGraceMinutes }} min</span>
+                         <span><small>Out grace</small>{{ workstation.outGraceMinutes }} min</span>
+                         <span><small>Status</small>{{ workstation.status === 1 || workstation.status === '1' ? 'Active' : 'Inactive' }}</span>
+                       </div>
+                     </div>
+            </article>
+          }
+        }
+      </div>
+      <footer class="shift-dialog__footer"><span>{{ workstationService.workstations().length }} workstation(s)</span><button type="button" class="dialog-button dialog-button--apply" (click)="closeWorkstationLegend()">Close</button></footer>
     </section>
   }
 </div>

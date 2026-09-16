@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
 import { AuthService } from '../../../services/auth.service';
 import { filterRecordsBySessionBranches } from '../../../utils/branch-filter.util';
@@ -96,7 +96,8 @@ export interface IgpRecord {
 
 const INWARD_GATE_PASS_LIST_URL = apiUrl('inward-gate-pass-list');
 const INWARD_GATE_PASS_ADD_URL = apiUrl('inward-gate-pass-add');
-const INWARD_GATE_PASS_DETAIL_URL = apiUrl('inward-gate-pass-detail');
+const IGP_DETAIL_URL = apiUrl('inward-gate-pass-detail');
+const IGP_DETAIL_FALLBACK_URL = apiUrl('outward-gate-pass-detail');
 const INWARD_GATE_PASS_UPDATE_URL = apiUrl('inward-gate-pass-update');
 const INWARD_GATE_PASS_DELETE_URL = apiUrl('inward-gate-pass-delete');
 
@@ -147,15 +148,26 @@ export class IgpService {
   fetchInwardGatePassDetail(id: string | number): Observable<IgpRecord> {
     const identifier = encodeURIComponent(String(id));
     const numericId = Number.parseInt(String(id), 10) || 0;
+    const cached = this.igpList().find((record) => record.Id === numericId);
 
-    return this.http.get<unknown>(`${INWARD_GATE_PASS_DETAIL_URL}/${identifier}`).pipe(
-      map((response) => {
-        const record = this.mapDetailResponse(response);
-        if (!record.Id && numericId) {
-          return { ...record, Id: numericId };
-        }
-        return record;
-      }),
+    const mapDetail = (response: unknown): IgpRecord => {
+      const record = this.mapDetailResponse(response);
+      if (!record.Id && numericId) {
+        return { ...record, Id: numericId };
+      }
+      return record;
+    };
+
+    return this.http.get<unknown>(`${IGP_DETAIL_URL}/${identifier}`).pipe(
+      map(mapDetail),
+      catchError((primaryError: unknown) =>
+        this.http.get<unknown>(`${IGP_DETAIL_FALLBACK_URL}/${identifier}`).pipe(
+          map(mapDetail),
+          catchError(() =>
+            cached ? of(cached) : throwError(() => primaryError),
+          ),
+        ),
+      ),
     );
   }
 
@@ -522,4 +534,4 @@ export class IgpService {
       totalQty,
     };
   }
-}
+} 
