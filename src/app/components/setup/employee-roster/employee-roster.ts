@@ -111,7 +111,12 @@ export class EmployeeRosterComponent implements OnInit {
       .fetchEmployeeProfiles()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (records) => this.employees.set(records.map((record, index) => this.toRosterEmployee(record, index))),
+        next: (records) => {
+          const shiftApplicableRecords = records.filter((record) =>
+            record.detail?.hrSettings.attendanceShiftManagement.trim().toLowerCase() === 'yes',
+          );
+          this.employees.set(shiftApplicableRecords.map((record, index) => this.toRosterEmployee(record, index)));
+        },
         error: (error) => {
           this.employees.set([]);
           this.alertService.error('Roster Load Failed', formatApiErrorMessage(error, 'Could not load employee profiles.'));

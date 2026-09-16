@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../utils/api-error.util';
 import {
@@ -20,7 +20,10 @@ import {
   GatePassBusinessPartnerService,
 } from '../../gate-pass-business-partner.service';
 import { GatePassBusinessPartnerSearchInputComponent } from '../../business-partner-search-input/business-partner-search-input';
-import { nextGatePassReferenceNo } from '../../gate-pass-reference.util';
+import {
+  nextGatePassReferenceNo,
+  reserveNextGatePassReferenceNo,
+} from '../../gate-pass-reference.util';
 import { GatePassWarehouseOption, resolveGatePassWarehouseCode } from '../../gate-pass-warehouse.options';
 import { formatGatePassCnic, formatGatePassPhoneDigits } from '../../gate-pass-input-format.util';
 import { GatePassDepartmentService } from '../../gate-pass-department.service';
@@ -31,6 +34,7 @@ import { AuthService } from '../../../../services/auth.service';
 import { WarehouseService } from '../../../../services/warehouse.service';
 
 const AGP_TYPE = 'Article Gate Pass';
+const MAX_REFERENCE_RETRY = 3;
 
 function emptyIfDash(value: string): string {
   return value === '—' ? '' : value;
@@ -222,6 +226,67 @@ export class CreateAgpComponent implements OnInit {
         this.referenceNo = nextGatePassReferenceNo('AGP', []);
       },
     });
+  }
+
+  private async ensureUniqueReferenceNo(): Promise<void> {
+    try {
+      const records = await firstValueFrom(this.agpService.fetchArticleGatePasses());
+      this.referenceNo = reserveNextGatePassReferenceNo(
+        'AGP',
+        records.map((record) => record.referenceNo),
+      );
+    } catch {
+      this.referenceNo = reserveNextGatePassReferenceNo('AGP', []);
+    }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private isReferenceDuplicateError(message: string | undefined | null): boolean {
+    if (!message) {
+      return false;
+    }
+
+    const text = String(message).toLowerCase();
+    return (
+      text.includes('duplicate') ||
+      text.includes('reference number') ||
+      text.includes('reference no') ||
+      text.includes('already exists') ||
+      text.includes('unique')
+    );
+  }
+
+  private async saveNewAgp(attempt = 1): Promise<void> {
+    try {
+      await this.ensureUniqueReferenceNo();
+      const response = await firstValueFrom(this.agpService.addArticleGatePass(this.buildPayload()));
+
+      if (response?.status === false || response?.success === false) {
+        if (attempt < MAX_REFERENCE_RETRY && this.isReferenceDuplicateError(response.message)) {
+          await this.delay(250);
+          return this.saveNewAgp(attempt + 1);
+        }
+
+        this.alertService.error('Error', response.message || 'Failed to save AGP.');
+        return;
+      }
+
+      await this.alertService.successAndWait('Success', response?.message || 'AGP record saved successfully.');
+      this.agpService.fetchArticleGatePasses().subscribe();
+      this.back();
+    } catch (error: unknown) {
+      const apiMessage = formatApiErrorMessage(error, 'Failed to save AGP.');
+      if (attempt < MAX_REFERENCE_RETRY && this.isReferenceDuplicateError(apiMessage)) {
+        await this.delay(250);
+        return this.saveNewAgp(attempt + 1);
+      }
+      this.alertService.error('Error', apiMessage);
+    } finally {
+      this.submitting = false;
+    }
   }
 
   private loadSignedInUserDetails(): void {
@@ -558,12 +623,13 @@ export class CreateAgpComponent implements OnInit {
       return;
     }
 
-    const payload = this.buildPayload();
-    const request$ = this.editingId
-      ? this.agpService.updateArticleGatePass(this.editingId, payload)
-      : this.agpService.addArticleGatePass(payload);
-
     this.submitting = true;
+    if (!this.editingId) {
+      void this.saveNewAgp();
+      return;
+    }
+
+    const request$ = this.agpService.updateArticleGatePass(this.editingId, this.buildPayload());
     request$
       .pipe(finalize(() => {
         this.submitting = false;

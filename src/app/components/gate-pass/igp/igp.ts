@@ -81,7 +81,6 @@ export class IgpComponent implements OnInit {
   Math = Math;
 
   columns: ColumnConfig[] = [
-    { key: 'Id', label: 'ID', visible: true },
     { key: 'referenceNo', label: 'IGP no.', visible: true },
     { key: 'type', label: 'Type', visible: true },
     { key: 'submittedDate', label: 'Date', visible: true },
@@ -102,7 +101,7 @@ export class IgpComponent implements OnInit {
   }
 
   searchText = '';
-  sortColumn: IgpSortableKey = 'submittedDate';
+  sortColumn: IgpSortableKey = 'Id';
   sortDirection: 'asc' | 'desc' = 'desc';
   currentPage = 1;
   pageSize = 10;

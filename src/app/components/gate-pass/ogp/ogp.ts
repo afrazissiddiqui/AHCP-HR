@@ -70,7 +70,6 @@ export class OgpComponent implements OnInit {
   Math = Math;
 
   columns: ColumnConfig[] = [
-    { key: 'Id', label: 'ID', visible: true },
     { key: 'referenceNo', label: 'OGP no.', visible: true },
     { key: 'type', label: 'Type', visible: true },
     { key: 'submittedDate', label: 'Date', visible: true },

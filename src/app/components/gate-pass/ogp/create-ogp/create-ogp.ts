@@ -202,11 +202,15 @@ export class CreateOgpComponent implements OnInit {
   }
 
   private async ensureUniqueReferenceNo(): Promise<void> {
-    const records = await firstValueFrom(this.ogpService.fetchOutwardGatePasses());
-    this.referenceNo = reserveNextGatePassReferenceNo(
-      'OGP',
-      records.map((record) => record.referenceNo),
-    );
+    try {
+      const records = await firstValueFrom(this.ogpService.fetchOutwardGatePasses());
+      this.referenceNo = reserveNextGatePassReferenceNo(
+        'OGP',
+        records.map((record) => record.referenceNo),
+      );
+    } catch {
+      this.referenceNo = reserveNextGatePassReferenceNo('OGP', []);
+    }
   }
 
   private delay(ms: number): Promise<void> {

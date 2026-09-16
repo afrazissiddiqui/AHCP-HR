@@ -36,6 +36,8 @@ export interface IgpAddPayload {
   baseDocNo: string;
   poNumber: string;
   documentDate: string;
+  date?: string;
+  submittedDate?: string;
   referenceNo: string;
   businessPartnerCode: string;
   businessPartnerName: string;
@@ -427,7 +429,16 @@ export class IgpService {
       department: this.pickString(sources, ['department', 'Department', 'DepartmentName']) || '—',
       status: this.pickString(sources, ['status', 'Status']) || '—',
       submittedDate:
-        this.pickString(sources, ['documentDate', 'document_date', 'submittedDate', 'submitted_date']) || '—',
+        this.pickString(sources, [
+          'date',
+          'Date',
+          'docDate',
+          'doc_date',
+          'documentDate',
+          'document_date',
+          'submittedDate',
+          'submitted_date',
+        ]) || '—',
       remarks: this.pickString(sources, ['remarks', 'Remarks', 'remarksText', 'remarksText']) || undefined,
       selected: false,
       type:

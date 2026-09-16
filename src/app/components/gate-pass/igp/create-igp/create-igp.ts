@@ -53,20 +53,11 @@ function numericFieldFromDoc(value: string | undefined): string {
   return Number.isFinite(parsed) ? String(parsed) : '';
 }
 
-function generateClientUniqueIgpReferenceNo(): string {
-  const now = new Date();
-  const timestamp = now.toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
-  let random = '';
-
-  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
-    const array = new Uint32Array(1);
-    window.crypto.getRandomValues(array);
-    random = String(array[0] % 100000000).padStart(8, '0');
-  } else {
-    random = String(Math.floor(Math.random() * 100000000)).padStart(8, '0');
-  }
-
-  return `IGP-${timestamp}-${random}`;
+function currentLocalDateString(): string {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
 }
 
 @Component({
@@ -145,8 +136,7 @@ export class CreateIgpComponent implements OnInit {
     private readonly cdr: ChangeDetectorRef,
     private readonly warehouseService: WarehouseService,
   ) {
-    const d = new Date();
-    this.documentDate = d.toISOString().slice(0, 10);
+    this.documentDate = currentLocalDateString();
   }
 
   ngOnInit(): void {
@@ -327,11 +317,7 @@ export class CreateIgpComponent implements OnInit {
 
   private async saveNewIgp(attempt = 1): Promise<void> {
     try {
-      if (attempt === 1) {
-        await this.ensureUniqueReferenceNo();
-      } else {
-        this.referenceNo = generateClientUniqueIgpReferenceNo();
-      }
+      await this.ensureUniqueReferenceNo();
       const response = await firstValueFrom(this.igpService.addInwardGatePass(this.buildPayload()));
 
       if (response?.status === false || response?.success === false) {
@@ -751,6 +737,8 @@ export class CreateIgpComponent implements OnInit {
       baseDocNo: normalizeGatePassString(this.baseDocNo),
       poNumber: normalizeGatePassString(this.poNumber),
       documentDate: normalizeGatePassString(this.documentDate),
+      date: normalizeGatePassString(this.documentDate),
+      submittedDate: normalizeGatePassString(this.documentDate),
       referenceNo: normalizeGatePassString(this.referenceNo),
       businessPartnerCode: normalizeGatePassString(this.businessPartnerCode),
       businessPartnerName: normalizeGatePassString(this.businessPartnerName),
