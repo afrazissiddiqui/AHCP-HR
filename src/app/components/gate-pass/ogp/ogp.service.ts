@@ -228,14 +228,17 @@ export class OgpService {
     const obj = response as Record<string, unknown>;
     const arrayKeys = [
       'data',
+      'Data',
       'items',
+      'Items',
       'results',
       'records',
       'list',
+      'List',
       'outward_gate_passes',
+      'outward_gate_pass_list',
       'outwardGatePasses',
       'outwardGatePassList',
-      'outward_gate_pass_list',
       'ogpList',
       'ogps',
     ];
@@ -245,24 +248,39 @@ export class OgpService {
       if (Array.isArray(value)) {
         return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
       }
+      if (value && typeof value === 'object') {
+        const nestedItems = this.extractApiItems(value);
+        if (nestedItems.length > 0) {
+          return nestedItems;
+        }
+      }
     }
 
-    const nestedData = obj['data'];
-    if (nestedData && typeof nestedData === 'object') {
-      const nestedItems = this.extractApiItems(nestedData);
-      if (nestedItems.length > 0) {
-        return nestedItems;
+    for (const value of Object.values(obj)) {
+      if (value && typeof value === 'object') {
+        const nestedItems = this.extractApiItems(value);
+        if (nestedItems.length > 0) {
+          return nestedItems;
+        }
       }
     }
 
     if (
       obj['referenceNo'] ||
       obj['reference_no'] ||
+      obj['ReferenceNo'] ||
       obj['type'] ||
+      obj['Type'] ||
       obj['baseDocNo'] ||
       obj['base_doc_no'] ||
+      obj['BaseDocNo'] ||
       obj['businessPartnerName'] ||
-      obj['business_partner_name']
+      obj['business_partner_name'] ||
+      obj['BusinessPartnerName'] ||
+      obj['id'] ||
+      obj['Id'] ||
+      obj['ogp_id'] ||
+      obj['outward_gate_pass_id']
     ) {
       return [obj];
     }
@@ -290,22 +308,22 @@ export class OgpService {
 
   private mapLineItem(raw: Record<string, unknown>): OgpLineItem {
     return {
-      itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode']),
-      itemName: this.pickString([raw], ['itemName', 'item_name', 'ItemName']),
-      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'batchNo', 'batch_no', 'BatchNo']),
-      category: this.pickString([raw], ['category', 'Category']),
-      packingCondition: this.pickString([raw], ['packingCondition', 'packing_condition']),
-      productQuality: this.pickString([raw], ['productQuality', 'product_quality']),
+      itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode', 'ItemCodeNo']),
+      itemName: this.pickString([raw], ['itemName', 'item_name', 'ItemName', 'ItemDescription']),
+      serialNumbers: this.pickString([raw], ['serialNumbers', 'serial_numbers', 'batchNo', 'batch_no', 'BatchNo', 'serialNo', 'SerialNo']),
+      category: this.pickString([raw], ['category', 'Category', 'itemCategory', 'ItemCategory']),
+      packingCondition: this.pickString([raw], ['packingCondition', 'packing_condition', 'PackingCondition', 'Packing']),
+      productQuality: this.pickString([raw], ['productQuality', 'product_quality', 'ProductQuality', 'Quality']),
       uom: this.pickString([raw], ['uom', 'UOM', 'Uom']),
-      qty: this.pickNumber([raw], ['qty', 'quantity', 'Qty']),
-      info: this.pickString([raw], ['info', 'Info']),
-      remarks: this.pickString([raw], ['remarks', 'Remarks']),
+      qty: this.pickNumber([raw], ['qty', 'quantity', 'Qty', 'quantityValue']),
+      info: this.pickString([raw], ['info', 'Info', 'lineInfo', 'LineInfo', 'description', 'Description']),
+      remarks: this.pickString([raw], ['remarks', 'Remarks', 'remark', 'Remark', 'notes', 'Notes', 'comment', 'Comment']),
       deleted: Boolean(raw['deleted'] ?? raw['Deleted'] ?? raw['isDeleted']),
     };
   }
 
   private mapLines(item: Record<string, unknown>): OgpLineItem[] {
-    const rawLines = item['lines'] ?? item['Lines'] ?? item['lineItems'] ?? item['line_items'];
+    const rawLines = item['lines'] ?? item['Lines'] ?? item['lineItems'] ?? item['line_items'] ?? item['items'] ?? item['Items'];
     if (!Array.isArray(rawLines)) {
       return [];
     }
@@ -321,6 +339,7 @@ export class OgpService {
 
     const businessPartnerName =
       this.pickString(sources, ['businessPartnerName', 'business_partner_name', 'BusinessPartnerName']) || '—';
+    const mappedType = this.pickString(sources, ['type', 'Type']);
     const lines = this.mapLines(item);
     const totalQty =
       this.pickNumber(sources, ['totalQty', 'total_qty', 'TotalQty']) ||
@@ -336,7 +355,7 @@ export class OgpService {
         this.pickString(sources, ['documentDate', 'document_date', 'submittedDate', 'submitted_date']) || '—',
       remarks: this.pickString(sources, ['remarks', 'Remarks']) || undefined,
       selected: false,
-      type: this.pickString(sources, ['type', 'Type']) || '—',
+      type: !mappedType || mappedType.toLowerCase() === 'null' ? 'Delivery' : mappedType,
       businessPartnerCode:
         this.pickString(sources, ['businessPartnerCode', 'business_partner_code', 'BusinessPartnerCode']) || '—',
       baseDocNo: this.pickString(sources, ['baseDocNo', 'base_doc_no', 'BaseDocNo']) || '—',

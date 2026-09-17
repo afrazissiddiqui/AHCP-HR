@@ -164,12 +164,16 @@ export function matchesTableFilterItem(
     }
 
     if (field.type === 'numberRange' && isRangeValue(applied)) {
+      const from = normalizeNumberBound(applied.from);
+      const to = normalizeNumberBound(applied.to);
+      if (from == null && to == null) {
+        continue;
+      }
+
       const num = normalizeNumberBound(raw);
       if (num == null) {
         return false;
       }
-      const from = normalizeNumberBound(applied.from);
-      const to = normalizeNumberBound(applied.to);
       if (from != null && num < from) {
         return false;
       }
