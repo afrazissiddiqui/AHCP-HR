@@ -4,6 +4,7 @@ import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { apiUrl } from '../../../config/api.config';
 import { AuthService } from '../../../services/auth.service';
 import { filterRecordsBySessionBranches } from '../../../utils/branch-filter.util';
+import { resolveGatePassLocation } from '../gate-pass-location.options';
 
 export interface OgpLineItem {
   itemCode: string;
@@ -306,6 +307,48 @@ export class OgpService {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
+  private pickLocation(sources: Array<Record<string, unknown>>): string {
+    const rawValues = [
+      this.pickString(sources, ['location', 'Location']),
+      this.pickString(sources, [
+        'branchName',
+        'branch_name',
+        'BranchName',
+        'branch',
+        'Branch',
+        'branchLocation',
+        'branch_location',
+        'BranchLocation',
+        'BPLName',
+        'BPLNAME',
+        'bplName',
+        'branchNameText',
+        'BranchNameText',
+      ]),
+      this.pickString(sources, ['BPLId', 'BPLID', 'bplId', 'branchId', 'branch_id']),
+    ];
+    let fallback = '';
+
+    for (const rawValue of rawValues) {
+      if (!rawValue) {
+        continue;
+      }
+
+      if (rawValue === '0') {
+        return 'Peshawar';
+      }
+
+      fallback ||= rawValue;
+
+      const resolved = resolveGatePassLocation(rawValue);
+      if (resolved) {
+        return resolved;
+      }
+    }
+
+    return fallback;
+  }
+
   private mapLineItem(raw: Record<string, unknown>): OgpLineItem {
     return {
       itemCode: this.pickString([raw], ['itemCode', 'item_code', 'ItemCode', 'ItemCodeNo']),
@@ -396,7 +439,7 @@ export class OgpService {
           'transporter_phone',
         ]) || '—',
       weight: this.pickString(sources, ['weight', 'Weight']) || '—',
-      location: this.pickString(sources, ['location', 'Location']) || '—',
+      location: this.pickLocation(sources) || '—',
       employee: this.pickString(sources, ['employee', 'Employee']) || '—',
       lines,
       totalQty,
