@@ -12,7 +12,7 @@
 
 .setup-body {
   margin: 0 auto;
-  max-width: 1200px;
+  max-width: 1600px;
   padding: 18px 20px 32px;
   width: 100%;
 }
@@ -113,13 +113,59 @@
 }
 
 .table-wrap {
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .entry-table {
   border-collapse: collapse;
-  min-width: 960px;
+  min-width: 0;
+  table-layout: fixed;
   width: 100%;
+}
+
+.entry-table th:nth-child(2),
+.entry-table td:nth-child(2) {
+  width: 14%;
+}
+
+.entry-table th:nth-child(3),
+.entry-table td:nth-child(3) {
+  width: 12%;
+}
+
+.entry-table th:nth-child(4),
+.entry-table td:nth-child(4) {
+  width: 14%;
+}
+
+.entry-table th:nth-child(5),
+.entry-table td:nth-child(5) {
+  width: 15%;
+}
+
+.entry-table th:nth-child(6),
+.entry-table td:nth-child(6) {
+  width: 14%;
+}
+
+.entry-table th:nth-child(7),
+.entry-table td:nth-child(7) {
+  width: 11%;
+}
+
+.entry-table th:nth-child(8),
+.entry-table td:nth-child(8) {
+  width: 10%;
+}
+
+.entry-table th:nth-child(9),
+.entry-table td:nth-child(9) {
+  width: 8%;
+}
+
+.entry-table th,
+.entry-table td {
+  min-width: 0;
 }
 
 .entry-table th,
@@ -139,13 +185,13 @@
 
 .col-sr {
   text-align: center;
-  width: 72px;
+  width: 5%;
 }
 
 .col-action {
   text-align: center;
   white-space: nowrap;
-  width: 112px;
+  width: 7%;
 }
 
 .field-input,

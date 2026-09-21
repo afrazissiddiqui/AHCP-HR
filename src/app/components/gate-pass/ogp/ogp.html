@@ -164,7 +164,7 @@
               </div>
               <div class="js-detail-item">
                 <label>Date</label>
-                <span>{{ selectedRow()?.submittedDate || '—' }}</span>
+                <span>{{ selectedRow()?.submittedDate ? (selectedRow()?.submittedDate | date: 'dd/MM/yyyy') : '—' }}</span>
               </div>
               <div class="js-detail-item">
                 <label>Type</label>

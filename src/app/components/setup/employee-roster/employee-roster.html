@@ -47,7 +47,7 @@
       <button type="button" class="action-button" (click)="applyRotation()">Apply Rotation</button>
       <button type="button" class="action-button" (click)="loadEmployees()" [disabled]="loading() || hasChanges()">Reload Employees</button>
       <button type="button" class="action-button action-button--danger" (click)="clearSelection()">Clear Selection</button>
-      <div class="action-row action-row--secondary"><button type="button" class="action-button"><ui5-icon name="process" aria-hidden="true"></ui5-icon> Shift Rotation Engine (3 Active)</button><button type="button" class="action-button"><ui5-icon name="calendar" aria-hidden="true"></ui5-icon> Days Off Patterns</button><button type="button" class="action-button action-button--holiday"><ui5-icon name="accept" aria-hidden="true"></ui5-icon> Branch Holidays (2)</button><button type="button" class="action-button action-button--danger"><ui5-icon name="alert" aria-hidden="true"></ui5-icon> 4 Conflicts</button></div>
+      <div class="action-row action-row--secondary"><button type="button" class="action-button"><ui5-icon name="process" aria-hidden="true"></ui5-icon> Shift Rotation Engine (3 Active)</button><button type="button" class="action-button"><ui5-icon name="calendar" aria-hidden="true"></ui5-icon> Days Off Patterns</button><button type="button" class="action-button action-button--holiday" (click)="openBranchHolidays()" aria-haspopup="dialog"><ui5-icon name="accept" aria-hidden="true"></ui5-icon> Branch Holidays ({{ branchHolidays().length }})</button><button type="button" class="action-button action-button--danger"><ui5-icon name="alert" aria-hidden="true"></ui5-icon> 4 Conflicts</button></div>
     </section>
 
     @if (conflictsVisible()) { <section class="conflict-banner"><div class="conflict-icon"><ui5-icon name="alert" aria-hidden="true"></ui5-icon></div><div><strong>Scheduling conflicts detected in {{ monthLabel() }}</strong><p>Review assignments for unassigned gaps and shift transitions before saving.</p></div><button type="button" class="resolve-button" (click)="applyRotation()">Review Conflicts</button><button type="button" class="close-button" aria-label="Dismiss conflicts" (click)="dismissConflicts()">×</button></section> }
@@ -68,8 +68,8 @@
 
   @if (shiftDialog(); as dialog) {
     <div class="dialog-backdrop" (click)="closeShiftDialog()"></div>
-    <section class="shift-dialog" role="dialog" aria-modal="true" aria-labelledby="shift-dialog-title" [style.top.px]="shiftDialogPosition().top" [style.left.px]="shiftDialogPosition().left" (click)="$event.stopPropagation()">
-      <header class="shift-dialog__header"><div><h2 id="shift-dialog-title">Assign Shift</h2><p>{{ dialog.employee.EmployeeName }} · {{ visibleDays()[dialog.dayIndex].weekday }} {{ visibleDays()[dialog.dayIndex].date }}</p></div><button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeShiftDialog()">×</button></header>
+    <section class="shift-dialog" [class.shift-dialog--dragging]="shiftDialogDragging()" role="dialog" aria-modal="true" aria-labelledby="shift-dialog-title" [style.top.px]="shiftDialogPosition().top" [style.left.px]="shiftDialogPosition().left" (click)="$event.stopPropagation()" (pointermove)="moveShiftDialog($event)" (pointerup)="endShiftDialogDrag($event)" (pointercancel)="endShiftDialogDrag($event)">
+      <header class="shift-dialog__header" (pointerdown)="startShiftDialogDrag($event)"><div><h2 id="shift-dialog-title">Assign Shift</h2><p>{{ dialog.employee.EmployeeName }} · {{ visibleDays()[dialog.dayIndex].weekday }} {{ visibleDays()[dialog.dayIndex].date }}</p></div><button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeShiftDialog()">×</button></header>
       <div class="shift-options">
         @if (workstationLoading()) {
           <p class="shift-options__status">Loading workstation shifts...</p>
@@ -124,6 +124,30 @@
         }
       </div>
       <footer class="shift-dialog__footer"><span>{{ workstationService.workstations().length }} workstation(s)</span><button type="button" class="dialog-button dialog-button--apply" (click)="closeWorkstationLegend()">Close</button></footer>
+    </section>
+  }
+
+  @if (branchHolidaysOpen()) {
+    <div class="dialog-backdrop" (click)="closeBranchHolidays()"></div>
+    <section class="branch-holidays-dialog" role="dialog" aria-modal="true" aria-labelledby="branch-holidays-title" (click)="$event.stopPropagation()">
+      <header class="shift-dialog__header">
+        <div>
+          <h2 id="branch-holidays-title">Branch Holidays</h2>
+          <p>{{ monthLabel() }} · {{ branchHolidays().length }} holiday(s)</p>
+        </div>
+        <button type="button" class="dialog-close" aria-label="Close branch holidays" (click)="closeBranchHolidays()">×</button>
+      </header>
+      <div class="branch-holidays-list">
+        @for (holiday of branchHolidays(); track holiday.date) {
+          <article class="branch-holiday-item">
+            <span class="branch-holiday-item__date">{{ holiday.date | number:'2.0-0' }}</span>
+            <div><strong>{{ holiday.weekday }}</strong><small>{{ holiday.label }}</small></div>
+          </article>
+        } @empty {
+          <p class="shift-options__status">No branch holidays found for this month.</p>
+        }
+      </div>
+      <footer class="shift-dialog__footer"><span>{{ selectedHub() }}</span><button type="button" class="dialog-button dialog-button--apply" (click)="closeBranchHolidays()">Close</button></footer>
     </section>
   }
 </div>

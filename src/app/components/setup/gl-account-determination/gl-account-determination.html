@@ -18,53 +18,16 @@
           </div>
         </div>
 
-        <div class="vendor-fields">
-          <label class="vendor-field">
-            <span>Vendor for Expense Reimbursment</span>
-            <app-gate-pass-business-partner-search-input
-              [value]="vendorForExpenseReimbursement"
-              inputId="vendor-for-expense-reimbursement"
-              placeholder="Search vendor code or name"
-              [supplierOnly]="true"
-              [disabled]="saving()"
-              (valueChange)="vendorForExpenseReimbursement = $event"
-              (partnerSelected)="selectExpenseReimbursementVendor($event)"
-            />
-          </label>
-          <label class="vendor-field">
-            <span>Vendor for Loans</span>
-            <app-gate-pass-business-partner-search-input
-              [value]="vendorForLoans"
-              inputId="vendor-for-loans"
-              placeholder="Search vendor code or name"
-              [supplierOnly]="true"
-              [disabled]="saving()"
-              (valueChange)="vendorForLoans = $event"
-              (partnerSelected)="selectLoanVendor($event)"
-            />
-          </label>
-          <label class="vendor-field">
-            <span>Vendor for Advances</span>
-            <app-gate-pass-business-partner-search-input
-              [value]="vendorForAdvances"
-              inputId="vendor-for-advances"
-              placeholder="Search vendor code or name"
-              [supplierOnly]="true"
-              [disabled]="saving()"
-              (valueChange)="vendorForAdvances = $event"
-              (partnerSelected)="selectAdvanceVendor($event)"
-            />
-          </label>
-        </div>
-
         <div class="table-wrap">
           <table class="entry-table">
             <thead>
               <tr>
                 <th class="col-sr">SR No.</th>
+                <th>Form</th>
                 <th>G/L Item Types</th>
                 <th>Salary G/L Account Codes</th>
                 <th>Salary G/L Account Names</th>
+                <th>Business Partner</th>
                 <th>Branches</th>
                 <th>Debit / Credit</th>
                 <th class="col-action">Action</th>
@@ -74,6 +37,34 @@
               @for (row of rows; track row.id; let index = $index) {
                 <tr>
                   <td class="col-sr">{{ formRowSrNo(index) }}</td>
+                  <td>
+                    <div class="account-search-wrap">
+                      <input
+                        type="search"
+                        class="field-input"
+                        role="combobox"
+                        [ngModel]="row.formName"
+                        [name]="'form-' + row.id"
+                        [attr.aria-expanded]="formSearchIsOpen(row.id)"
+                        placeholder="Search form"
+                        autocomplete="off"
+                        (ngModelChange)="updateFormSearch(row, $event)"
+                        (focus)="openFormSearchAt(row.id)"
+                        (blur)="closeFormSearchSoon()"
+                      />
+                      @if (formSearchIsOpen(row.id)) {
+                        <ul class="account-search-suggestions" role="listbox">
+                          @for (option of formOptionsFor(row); track option.value) {
+                            <li role="option" (mousedown)="selectForm(row, option)">
+                              {{ option.name }}
+                            </li>
+                          } @empty {
+                            <li class="account-search-empty">No matching forms</li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  </td>
                   <td>
                     <input
                       type="text"
@@ -152,6 +143,16 @@
                     </div>
                   </td>
                   <td>
+                    <app-gate-pass-business-partner-search-input
+                      [inputId]="'gl-business-partner-' + row.id"
+                      placeholder="Search business partner"
+                      [allPartners]="true"
+                      [value]="row.businessPartner"
+                      (valueChange)="row.businessPartner = $event"
+                      (partnerSelected)="selectBusinessPartner(row, $event)"
+                    />
+                  </td>
+                  <td>
                     <select
                       class="field-select"
                       [(ngModel)]="row.branch"
@@ -214,6 +215,7 @@
               <thead>
                 <tr>
                   <th class="col-sr">SR No.</th>
+                  <th>Business Partner</th>
                   <th>G/L Item Types</th>
                   <th>Salary G/L Account Codes</th>
                   <th>Salary G/L Account Names</th>
@@ -226,6 +228,8 @@
                 @for (record of savedRecords(); track record.Id; let index = $index) {
                   <tr>
                     <td class="col-sr">{{ index + 1 }}</td>
+                    <td>{{ formNameForValue(record.Form) }}</td>
+                    <td>{{ record.BusinessPartner }}</td>
                     <td>{{ record.Type }}</td>
                     <td>{{ record.Code }}</td>
                     <td>{{ record.Name }}</td>

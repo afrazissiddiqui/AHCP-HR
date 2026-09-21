@@ -18,6 +18,12 @@ interface RosterDay {
   isHoliday: boolean;
 }
 
+interface BranchHoliday {
+  date: number;
+  weekday: string;
+  label: string;
+}
+
 interface RosterEmployee extends ApplicationFormRecord {
   hub: string;
   role: string;
@@ -51,11 +57,14 @@ export class EmployeeRosterComponent implements OnInit {
   readonly selectedCell = signal<{ employeeCode: string; day: number } | null>(null);
   readonly shiftDialog = signal<{ employee: RosterEmployee; dayIndex: number; shift: ShiftCode } | null>(null);
   readonly shiftDialogPosition = signal({ top: 0, left: 0 });
+  readonly shiftDialogDragging = signal(false);
+  private shiftDialogDrag: { pointerId: number; startX: number; startY: number; startTop: number; startLeft: number } | null = null;
   readonly hasChanges = signal(false);
   readonly selectedEmployees = signal(new Set<string>());
   readonly conflictsVisible = signal(true);
   readonly workstationLoading = signal(false);
   readonly workstationLegendOpen = signal(false);
+  readonly branchHolidaysOpen = signal(false);
   readonly shiftOptions = computed(() => {
     const options = this.workstationService.workstations()
       .map((workstation) => ({
@@ -70,6 +79,7 @@ export class EmployeeRosterComponent implements OnInit {
 
     return [
       ...uniqueOptions,
+      { code: 'HOL', title: 'Holiday', hours: '', className: 'holiday' },
       { code: 'OFF', title: 'Scheduled Day Off', hours: '', className: 'off' },
     ];
   });
@@ -95,6 +105,23 @@ export class EmployeeRosterComponent implements OnInit {
         isHoliday: day.getDay() === 0 || day.getDay() === 6,
       };
     }).filter((day) => (firstHalf ? day.date <= 15 : day.date > 15));
+  });
+
+  readonly branchHolidays = computed<BranchHoliday[]>(() => {
+    const [monthName, yearText] = this.monthLabel().split(' ');
+    const year = Number(yearText);
+    const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+    return Array.from({ length: daysInMonth }, (_, index) => {
+      const date = new Date(year, monthIndex, index + 1);
+      const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+      return {
+        date: index + 1,
+        weekday,
+        label: weekday === 'Sunday' ? 'Weekly holiday' : 'Weekend holiday',
+      };
+    }).filter((holiday) => holiday.weekday === 'Saturday' || holiday.weekday === 'Sunday');
   });
 
   readonly filteredEmployees = computed(() => {
@@ -150,6 +177,14 @@ export class EmployeeRosterComponent implements OnInit {
 
   closeWorkstationLegend(): void {
     this.workstationLegendOpen.set(false);
+  }
+
+  openBranchHolidays(): void {
+    this.branchHolidaysOpen.set(true);
+  }
+
+  closeBranchHolidays(): void {
+    this.branchHolidaysOpen.set(false);
   }
 
   loadEmployees(): void {
@@ -227,12 +262,18 @@ export class EmployeeRosterComponent implements OnInit {
     const workstation = this.workstationService
       .workstations()
       .find((item) => item.shift.trim().toLowerCase() === shift.trim().toLowerCase());
-    return workstation?.description.trim() || workstation?.name.trim() || shift;
+    return workstation?.description.trim() || workstation?.name.trim() || this.shiftName(shift);
   }
 
   private descriptionHue(description: string): number {
     const normalizedDescription = description.trim().toLowerCase();
-    if (normalizedDescription === 'scheduled day off') {
+    if (normalizedDescription === 'morning') {
+      return 45;
+    }
+    if (normalizedDescription === 'holiday') {
+      return 145;
+    }
+    if (normalizedDescription === 'scheduled day off' || normalizedDescription === 'day off') {
       return 215;
     }
 
@@ -263,6 +304,49 @@ export class EmployeeRosterComponent implements OnInit {
       top,
       left: Math.max(8, left),
     });
+  }
+
+  startShiftDialogDrag(event: PointerEvent): void {
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+
+    const element = event.currentTarget as HTMLElement;
+    element.setPointerCapture(event.pointerId);
+    const position = this.shiftDialogPosition();
+    this.shiftDialogDrag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startTop: position.top,
+      startLeft: position.left,
+    };
+    this.shiftDialogDragging.set(true);
+    event.preventDefault();
+  }
+
+  moveShiftDialog(event: PointerEvent): void {
+    const drag = this.shiftDialogDrag;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const dialog = event.currentTarget as HTMLElement;
+    const maxTop = Math.max(8, window.innerHeight - dialog.offsetHeight - 8);
+    const maxLeft = Math.max(8, window.innerWidth - dialog.offsetWidth - 8);
+    this.shiftDialogPosition.set({
+      top: Math.min(Math.max(8, drag.startTop + event.clientY - drag.startY), maxTop),
+      left: Math.min(Math.max(8, drag.startLeft + event.clientX - drag.startX), maxLeft),
+    });
+  }
+
+  endShiftDialogDrag(event: PointerEvent): void {
+    if (!this.shiftDialogDrag || this.shiftDialogDrag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    this.shiftDialogDrag = null;
+    this.shiftDialogDragging.set(false);
   }
 
   chooseDialogShift(shift: ShiftCode): void {

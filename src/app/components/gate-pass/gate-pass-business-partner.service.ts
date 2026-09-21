@@ -15,11 +15,14 @@ const BUSINESS_PARTNERS_URL = apiUrl('business_partners');
 export class GatePassBusinessPartnerService {
   private readonly http = inject(HttpClient);
   private readonly partners = signal<GatePassBusinessPartner[]>([]);
+  private readonly allPartners = signal<GatePassBusinessPartner[]>([]);
   private readonly customers = signal<GatePassBusinessPartner[]>([]);
   private readonly suppliers = signal<GatePassBusinessPartner[]>([]);
   private loaded = false;
   private loading = false;
   private load$?: Observable<GatePassBusinessPartner[]>;
+  private allLoaded = false;
+  private allLoad$?: Observable<GatePassBusinessPartner[]>;
   private customerLoaded = false;
   private customerLoading = false;
   private customerLoad$?: Observable<GatePassBusinessPartner[]>;
@@ -57,6 +60,33 @@ export class GatePassBusinessPartnerService {
     }
 
     return this.load$;
+  }
+
+  ensureAllLoaded(): Observable<GatePassBusinessPartner[]> {
+    if (this.allLoaded) {
+      return of(this.allPartners());
+    }
+
+    if (!this.allLoad$) {
+      this.allLoad$ = this.http.get<unknown>(BUSINESS_PARTNERS_URL).pipe(
+        map((response) =>
+          this.extractApiItems(response)
+            .map((item) => this.mapPartner(item))
+            .filter((partner) => partner.code || partner.name),
+        ),
+        tap((records) => {
+          this.allPartners.set(records);
+          this.allLoaded = true;
+        }),
+        catchError(() => {
+          this.allPartners.set([]);
+          this.allLoaded = true;
+          return of([]);
+        }),
+      );
+    }
+
+    return this.allLoad$;
   }
 
   ensureCustomersLoaded(): Observable<GatePassBusinessPartner[]> {
@@ -112,6 +142,17 @@ export class GatePassBusinessPartnerService {
           partner.code.toLowerCase().includes(q) ||
           partner.name.toLowerCase().includes(q),
       )
+      .slice(0, limit);
+  }
+
+  searchAll(query: string, limit = 8): GatePassBusinessPartner[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [];
+    }
+
+    return this.allPartners()
+      .filter((partner) => partner.code.toLowerCase().includes(q) || partner.name.toLowerCase().includes(q))
       .slice(0, limit);
   }
 
@@ -203,7 +244,14 @@ export class GatePassBusinessPartnerService {
       }
     }
 
-    if (obj['code'] || obj['name'] || obj['businessPartnerCode'] || obj['business_partner_code']) {
+    if (
+      obj['code'] ||
+      obj['name'] ||
+      obj['businessPartnerCode'] ||
+      obj['business_partner_code'] ||
+      obj['CardCode'] ||
+      obj['CardName']
+    ) {
       return [obj];
     }
 

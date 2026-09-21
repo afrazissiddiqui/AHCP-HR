@@ -23,7 +23,6 @@
         </div>
 
         <div class="sir-toolbar-actions">
-          <button type="button" class="sir-icon-button" title="Filter" (click)="openDialog()">⏷</button>
           <button type="button" class="sir-icon-button" title="View settings" (click)="openDialog()">⚙</button>
         </div>
       </div>
@@ -86,7 +85,7 @@
                       <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate }}</td>
                       <td [hidden]="!isColumnVisible('fromWarehouse')">{{ row.fromWarehouse }}</td>
                       <td [hidden]="!isColumnVisible('toWarehouse')">{{ row.toWarehouse }}</td>
-                      <td [hidden]="!isColumnVisible('itemCount')" style="text-align: center;">{{ row.items.length }}</td>
+                      <td [hidden]="!isColumnVisible('itemCount')" style="text-align: left;">{{ row.items.length }}</td>
                       <td [hidden]="!isColumnVisible('docStatus')">
                         <span class="status-badge" [class.status-open]="!isClosed(row.docStatus)" [class.status-close]="isClosed(row.docStatus)">
                           {{ statusLabel(row.docStatus) }}

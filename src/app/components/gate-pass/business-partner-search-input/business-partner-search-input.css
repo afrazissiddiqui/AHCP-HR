@@ -31,8 +31,8 @@
 }
 
 .gp-item-suggestions {
-  position: absolute;
-  z-index: 20;
+  position: fixed;
+  z-index: 1000;
   left: 0;
   right: 0;
   top: calc(100% + 2px);

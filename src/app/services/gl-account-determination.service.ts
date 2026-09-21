@@ -5,11 +5,13 @@ import { glAccountBranchLabel } from '../components/setup/gl-account-determinati
 import { apiUrl } from '../config/api.config';
 
 export interface GlAccountDeterminationAddPayload {
+  form: number;
   type: string;
   code: string;
   name: string;
   branch: string;
   debit_credit_type: string;
+  business_partner: string;
   vendor_for_expense_reimbursement: string;
   vendor_for_loans: string;
   vendor_for_advances: string;
@@ -17,11 +19,13 @@ export interface GlAccountDeterminationAddPayload {
 
 export interface GlAccountDeterminationRecord {
   Id: number;
+  Form: number;
   Type: string;
   Code: string;
   Name: string;
   Branch: string;
   DebitCreditType: string;
+  BusinessPartner: string;
   VendorForExpenseReimbursement: string;
   VendorForLoans: string;
   VendorForAdvances: string;
@@ -69,6 +73,20 @@ export class GlAccountDeterminationService {
     return this.http.get<unknown>(GL_ACCOUNT_DETERMINATION_LIST_URL).pipe(
       map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToRecord(item))),
       tap((records) => this.recordList.set(records)),
+    );
+  }
+
+  fetchExpenseTypeOptions(): Observable<string[]> {
+    return this.fetchGlAccountDeterminations().pipe(
+      map((records) =>
+        Array.from(
+          new Set(
+            records
+              .filter((record) => record.Type.trim().toLowerCase() === 'item')
+              .map((record) => record.Type.trim()),
+          ),
+        ),
+      ),
     );
   }
 
@@ -172,6 +190,7 @@ export class GlAccountDeterminationService {
     const sources = [item];
     return {
       Id: this.pickNumber(sources, ['Id', 'id', 'ID']),
+      Form: this.pickNumber(sources, ['Form', 'form', 'FormId', 'form_id']),
       Type: this.pickString(sources, ['Type', 'type', 'glItemType', 'gl_item_type']),
       Code: this.pickString(sources, ['Code', 'code', 'salaryGlAccountCode', 'salary_gl_account_code']),
       Name: this.pickString(sources, ['Name', 'name', 'salaryGlAccountName', 'salary_gl_account_name']),
@@ -180,6 +199,11 @@ export class GlAccountDeterminationService {
         'DebitCreditType',
         'debitCreditType',
         'debit_credit_type',
+      ]),
+      BusinessPartner: this.pickString(sources, [
+        'BusinessPartner',
+        'businessPartner',
+        'business_partner',
       ]),
       VendorForExpenseReimbursement: this.pickString(sources, [
         'VendorForExpenseReimbursement',

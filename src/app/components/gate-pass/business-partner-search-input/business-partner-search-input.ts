@@ -21,6 +21,7 @@ export class GatePassBusinessPartnerSearchInputComponent {
   @Input() inputId = '';
   @Input() disabled = false;
   @Input() supplierOnly = false;
+  @Input() allPartners = false;
 
   @Output() valueChange = new EventEmitter<string>();
   @Output() partnerSelected = new EventEmitter<GatePassBusinessPartner>();
@@ -28,21 +29,22 @@ export class GatePassBusinessPartnerSearchInputComponent {
   suggestionsOpen = false;
   suggestions: GatePassBusinessPartner[] = [];
   loadingSuggestions = false;
+  suggestionPosition = { top: 0, left: 0, width: 0 };
 
-  onInput(next: string): void {
+  onInput(next: string, event: Event): void {
     if (this.disabled) {
       return;
     }
     this.valueChange.emit(next);
-    this.refreshSuggestions(next);
+    this.refreshSuggestions(next, event.currentTarget as HTMLInputElement);
   }
 
-  openSuggestions(): void {
+  openSuggestions(event: FocusEvent): void {
     if (this.disabled) {
       return;
     }
     if (this.value.trim()) {
-      this.refreshSuggestions(this.value);
+      this.refreshSuggestions(this.value, event.currentTarget as HTMLInputElement);
     }
   }
 
@@ -60,7 +62,7 @@ export class GatePassBusinessPartnerSearchInputComponent {
     this.suggestionsOpen = false;
   }
 
-  private refreshSuggestions(query: string): void {
+  private refreshSuggestions(query: string, input: HTMLInputElement): void {
     if (!query.trim()) {
       this.suggestions = [];
       this.suggestionsOpen = false;
@@ -68,14 +70,24 @@ export class GatePassBusinessPartnerSearchInputComponent {
       return;
     }
 
+    const bounds = input.getBoundingClientRect();
+    this.suggestionPosition = {
+      top: bounds.bottom + 2,
+      left: bounds.left,
+      width: bounds.width,
+    };
     this.suggestionsOpen = true;
     this.loadingSuggestions = true;
-    const load$ = this.supplierOnly
+    const load$ = this.allPartners
+      ? this.businessPartnerService.ensureAllLoaded()
+      : this.supplierOnly
       ? this.businessPartnerService.ensureSuppliersLoaded()
       : this.businessPartnerService.ensureLoaded();
     load$.subscribe({
       next: () => {
-        this.suggestions = this.supplierOnly
+        this.suggestions = this.allPartners
+          ? this.businessPartnerService.searchAll(query)
+          : this.supplierOnly
           ? this.businessPartnerService.searchSuppliers(query)
           : this.businessPartnerService.search(query);
         this.loadingSuggestions = false;

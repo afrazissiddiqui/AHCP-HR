@@ -227,7 +227,7 @@
                 [class.cjr-invalid]="isFieldInvalid('expenseType')"
               >
                 <option value="">Select expense type</option>
-                @for (type of expenseTypeOptions; track type) {
+                @for (type of expenseTypeOptions(); track type) {
                   <option [value]="type">{{ type }}</option>
                 }
               </select>

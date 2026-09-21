@@ -268,6 +268,10 @@ export class AddGoodReceipt implements OnInit {
     this.itemPickerOpen.set(true);
   }
 
+  private firstBatchWithNumber(item: OitmItem) {
+    return (item.batches ?? []).find((batch) => !!batch?.batchNumber?.trim());
+  }
+
   onItemsSelected(items: OitmItem[]): void {
     const index = this.itemPickerRowIndex();
     if (index === null || items.length === 0) {
@@ -277,19 +281,36 @@ export class AddGoodReceipt implements OnInit {
     this.contentLines.update((rows) => {
       const updated = [...rows];
       const first = items[0];
+      const firstBatch = this.firstBatchWithNumber(first);
+
       updated[index] = {
         ...updated[index],
         itemCode: first.itemCode,
         itemDescription: first.itemName,
+        warehouse: firstBatch?.warehouse || updated[index].warehouse,
+        batchNumber: firstBatch?.batchNumber || updated[index].batchNumber,
+        manufacturingDate: firstBatch?.manufacturingDate
+          ? String(firstBatch.manufacturingDate).split(' ')[0]
+          : updated[index].manufacturingDate,
+        expiryDate: firstBatch?.expiryDate
+          ? String(firstBatch.expiryDate).split(' ')[0]
+          : updated[index].expiryDate,
         uomName: first.uom,
       };
 
-      const extras = items.slice(1).map((item) => ({
-        ...createEmptyGoodReceiptLine(),
-        itemCode: item.itemCode,
-        itemDescription: item.itemName,
-        uomName: item.uom,
-      }));
+      const extras = items.slice(1).map((item) => {
+        const batch = this.firstBatchWithNumber(item);
+        return {
+          ...createEmptyGoodReceiptLine(),
+          itemCode: item.itemCode,
+          itemDescription: item.itemName,
+          warehouse: batch?.warehouse || '',
+          batchNumber: batch?.batchNumber || '',
+          manufacturingDate: batch?.manufacturingDate ? String(batch.manufacturingDate).split(' ')[0] : '',
+          expiryDate: batch?.expiryDate ? String(batch.expiryDate).split(' ')[0] : createEmptyGoodReceiptLine().expiryDate,
+          uomName: item.uom,
+        };
+      });
 
       return [...updated, ...extras];
     });

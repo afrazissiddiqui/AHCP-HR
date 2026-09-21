@@ -6,14 +6,21 @@
     [attr.aria-expanded]="suggestionsOpen"
     aria-autocomplete="list"
     [ngModel]="value"
-    (ngModelChange)="onInput($event)"
-    (focus)="openSuggestions()"
+    (input)="onInput($any($event.target).value, $event)"
+    (focus)="openSuggestions($event)"
     (blur)="onBlur()"
     [placeholder]="placeholder"
     [readonly]="disabled"
     autocomplete="off"
   />
-  <ul class="gp-item-suggestions" role="listbox" *ngIf="suggestionsOpen && value.trim()">
+  <ul
+    class="gp-item-suggestions"
+    role="listbox"
+    *ngIf="suggestionsOpen && value.trim()"
+    [style.top.px]="suggestionPosition.top"
+    [style.left.px]="suggestionPosition.left"
+    [style.width.px]="suggestionPosition.width"
+  >
     <li *ngIf="loadingSuggestions" class="gp-item-suggestion-empty" role="presentation">
       Loading business partners…
     </li>

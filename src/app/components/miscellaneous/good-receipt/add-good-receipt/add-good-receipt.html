@@ -65,6 +65,9 @@
                   <th class="sir-col-item-code">Item No.</th>
                   <th class="sir-col-item-name">Item Description</th>
                   <th class="sir-col-warehouse">Warehouse</th>
+                  <th class="sir-col-batch">Batch</th>
+                  <th class="sir-col-date">Manufacturing Date</th>
+                  <th class="sir-col-date">Expiry Date</th>
                   <th class="sir-col-qty">Quantity</th>
                   <th class="sir-col-cost">Item Cost</th>
                   <th class="sir-col-total">Total</th>
@@ -100,6 +103,15 @@
                           <option [value]="warehouse.warehouseCode">{{ warehouse.warehouseCode }} - {{ warehouse.warehouseName }}</option>
                         }
                       </select>
+                    </td>
+                    <td class="sir-col-batch">
+                      <input type="text" class="sir-table-input" [ngModel]="line.batchNumber" (ngModelChange)="updateContentLine(lineIndex, 'batchNumber', $event)" placeholder="Batch" />
+                    </td>
+                    <td class="sir-col-date">
+                      <input type="date" class="sir-table-input" [ngModel]="line.manufacturingDate" (ngModelChange)="updateContentLine(lineIndex, 'manufacturingDate', $event)" />
+                    </td>
+                    <td class="sir-col-date">
+                      <input type="date" class="sir-table-input" [ngModel]="line.expiryDate" (ngModelChange)="updateContentLine(lineIndex, 'expiryDate', $event)" />
                     </td>
                     <td class="sir-col-qty">
                       <input type="number" class="sir-table-input" min="0" [ngModel]="line.quantity" (ngModelChange)="updateContentLine(lineIndex, 'quantity', $event)">

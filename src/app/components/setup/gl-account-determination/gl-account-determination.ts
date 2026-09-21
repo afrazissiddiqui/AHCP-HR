@@ -22,14 +22,34 @@ import {
 
 export type GlAccountDeterminationRow = {
   id: string;
+  formName: string;
+  formValue: number | null;
   glItemType: string;
   salaryGlAccountCode: string;
   salaryGlAccountName: string;
+  businessPartner: string;
   branch: string;
   debitCreditType: string;
 };
 
 export const GL_ACCOUNT_DEBIT_CREDIT_OPTIONS = ['Debit', 'Credit'] as const;
+
+export const GL_ACCOUNT_FORM_OPTIONS = [
+  { value: 1, name: 'Job Specification Form' },
+  { value: 2, name: 'Application Form' },
+  { value: 3, name: 'Probation Evaluation Form' },
+  { value: 4, name: 'Training & Development Form' },
+  { value: 5, name: 'Performance Appraisal Form' },
+  { value: 6, name: 'Expense Reimbursement Form' },
+  { value: 7, name: 'Loan/Advance Form' },
+  { value: 8, name: 'Leave Application Form' },
+  { value: 9, name: 'Payroll Processing' },
+  { value: 10, name: 'Attendance Management' },
+  { value: 11, name: 'Tax Allowance Form' },
+  { value: 12, name: 'Tax Computation' },
+  { value: 13, name: 'Employee Separation Form' },
+  {value: 14, name: 'Overtime List' },
+] as const;
 
 function newId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -41,9 +61,12 @@ function newId(): string {
 function emptyRow(): GlAccountDeterminationRow {
   return {
     id: newId(),
+    formName: '',
+    formValue: null,
     glItemType: '',
     salaryGlAccountCode: '',
     salaryGlAccountName: '',
+    businessPartner: '',
     branch: '',
     debitCreditType: '',
   };
@@ -67,6 +90,7 @@ export class GlAccountDeterminationComponent implements OnInit {
 
   readonly branchOptions = GL_ACCOUNT_BRANCH_OPTIONS;
   readonly debitCreditOptions = GL_ACCOUNT_DEBIT_CREDIT_OPTIONS;
+  readonly formOptions = GL_ACCOUNT_FORM_OPTIONS;
   readonly saving = signal(false);
   readonly deleting = signal(false);
   readonly loadingList = signal(false);
@@ -76,6 +100,7 @@ export class GlAccountDeterminationComponent implements OnInit {
   readonly accountSearchPosition = signal({ top: 0, left: 0, width: 0 });
   readonly savedRecords = signal<GlAccountDeterminationRecord[]>([]);
   readonly editingId = signal<number | null>(null);
+  readonly openFormSearch = signal<string | null>(null);
 
   vendorForExpenseReimbursement = '';
   vendorForLoans = '';
@@ -85,7 +110,7 @@ export class GlAccountDeterminationComponent implements OnInit {
   ngOnInit(): void {
     this.loadAccountOptions();
     this.loadSavedRecords();
-    this.businessPartnerService.ensureSuppliersLoaded().subscribe();
+    this.businessPartnerService.ensureAllLoaded().subscribe();
   }
 
   selectExpenseReimbursementVendor(partner: GatePassBusinessPartner): void {
@@ -98,6 +123,45 @@ export class GlAccountDeterminationComponent implements OnInit {
 
   selectAdvanceVendor(partner: GatePassBusinessPartner): void {
     this.vendorForAdvances = partner.code;
+  }
+
+  selectBusinessPartner(row: GlAccountDeterminationRow, partner: GatePassBusinessPartner): void {
+    row.businessPartner = partner.code;
+  }
+
+  formOptionsFor(row: GlAccountDeterminationRow): typeof GL_ACCOUNT_FORM_OPTIONS[number][] {
+    const query = row.formName.trim().toLowerCase();
+    if (!query) {
+      return [...this.formOptions];
+    }
+    return this.formOptions.filter((option) => option.name.toLowerCase().includes(query));
+  }
+
+  formSearchIsOpen(rowId: string): boolean {
+    return this.openFormSearch() === rowId;
+  }
+
+  openFormSearchAt(rowId: string): void {
+    this.openFormSearch.set(rowId);
+  }
+
+  updateFormSearch(row: GlAccountDeterminationRow, value: string): void {
+    row.formName = value;
+    const selected = this.formOptions.find(
+      (option) => option.name.toLowerCase() === value.trim().toLowerCase(),
+    );
+    row.formValue = selected?.value ?? null;
+    this.openFormSearch.set(row.id);
+  }
+
+  selectForm(row: GlAccountDeterminationRow, option: (typeof GL_ACCOUNT_FORM_OPTIONS)[number]): void {
+    row.formName = option.name;
+    row.formValue = option.value;
+    this.openFormSearch.set(null);
+  }
+
+  closeFormSearchSoon(): void {
+    setTimeout(() => this.openFormSearch.set(null), 150);
   }
 
   accountOptionsFor(row: GlAccountDeterminationRow, field: 'code' | 'name'): GlAccountOption[] {
@@ -216,9 +280,12 @@ export class GlAccountDeterminationComponent implements OnInit {
     this.rows = [
       {
         id: newId(),
+        formName: this.formNameForValue(record.Form),
+        formValue: record.Form || null,
         glItemType: record.Type,
         salaryGlAccountCode: record.Code,
         salaryGlAccountName: record.Name,
+        businessPartner: record.BusinessPartner,
         branch: record.Branch,
         debitCreditType: debitCreditLabel(record.DebitCreditType),
       },
@@ -311,6 +378,9 @@ export class GlAccountDeterminationComponent implements OnInit {
   }
 
   private validateRow(row: GlAccountDeterminationRow, srNo: number): string | null {
+    if (!row.formValue) {
+      return `Row ${srNo}: select Form.`;
+    }
     if (!row.glItemType.trim()) {
       return `Row ${srNo}: enter G/L Item Types.`;
     }
@@ -331,15 +401,21 @@ export class GlAccountDeterminationComponent implements OnInit {
 
   private toPayload(row: GlAccountDeterminationRow): GlAccountDeterminationAddPayload {
     return {
+      form: row.formValue ?? 0,
       type: row.glItemType.trim(),
       code: row.salaryGlAccountCode.trim(),
       name: row.salaryGlAccountName.trim(),
+      business_partner: row.businessPartner.trim(),
       branch: glAccountBranchCode(row.branch),
       debit_credit_type: row.debitCreditType.trim().toUpperCase(),
       vendor_for_expense_reimbursement: this.vendorForExpenseReimbursement.trim(),
       vendor_for_loans: this.vendorForLoans.trim(),
       vendor_for_advances: this.vendorForAdvances.trim(),
     };
+  }
+
+  formNameForValue(value: number): string {
+    return this.formOptions.find((option) => option.value === value)?.name ?? '';
   }
 
   private updateRecord(id: number, row: GlAccountDeterminationRow): void {

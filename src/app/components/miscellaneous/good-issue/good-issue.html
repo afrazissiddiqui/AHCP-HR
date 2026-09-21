@@ -23,7 +23,6 @@
         </div>
 
         <div class="sir-toolbar-actions">
-          <button type="button" class="sir-icon-button" title="Filter" (click)="openDialog()">⏷</button>
           <button type="button" class="sir-icon-button" title="View settings" (click)="openDialog()">⚙</button>
         </div>
       </div>
@@ -73,7 +72,6 @@
                     <th [hidden]="!isColumnVisible('issueNo')">Issue No</th>
                     <th [hidden]="!isColumnVisible('postingDate')">Posting Date</th>
                     <th [hidden]="!isColumnVisible('fromWarehouse')">From Warehouse</th>
-                    <th [hidden]="!isColumnVisible('issuedTo')">Issued To</th>
                     <th [hidden]="!isColumnVisible('itemCount')">Items</th>
                     <th [hidden]="!isColumnVisible('status')">Status</th>
                     <th class="sir-col-action">Action</th>
@@ -85,8 +83,7 @@
                       <td [hidden]="!isColumnVisible('issueNo')">{{ row.docNum }}</td>
                       <td [hidden]="!isColumnVisible('postingDate')">{{ row.docDate || '—' }}</td>
                       <td [hidden]="!isColumnVisible('fromWarehouse')">{{ row.fromWarehouse }}</td>
-                      <td [hidden]="!isColumnVisible('issuedTo')">{{ row.issuedTo }}</td>
-                      <td [hidden]="!isColumnVisible('itemCount')" style="text-align: center;">{{ row.itemCount }}</td>
+                      <td [hidden]="!isColumnVisible('itemCount')" style="text-align: left;">{{ row.itemCount }}</td>
                       <td [hidden]="!isColumnVisible('status')">
                         <span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">
                           {{ statusLabel(row.status) }}
@@ -144,7 +141,6 @@
         <div class="misc-detail-field"><label>Series</label><div>{{ row.seriesName || '—' }}</div></div>
         <div class="misc-detail-field"><label>Branch</label><div>{{ row.branch || '—' }}</div></div>
         <div class="misc-detail-field"><label>From Warehouse</label><div>{{ row.fromWarehouse || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Issued To</label><div>{{ row.issuedTo || '—' }}</div></div>
         <div class="misc-detail-field"><label>Items</label><div>{{ row.itemCount }}</div></div>
         <div class="misc-detail-field misc-detail-field--full"><label>Remarks</label><div>{{ row.remarks || '—' }}</div></div>
       </div>

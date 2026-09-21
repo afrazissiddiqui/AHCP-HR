@@ -27,6 +27,7 @@ import {
   formatDateForInput,
   formatDateOfBirthToApi,
 } from '../../../../../utils/date-format.util';
+import { GlAccountDeterminationService } from '../../../../../services/gl-account-determination.service';
 
 interface ExpenseEmployeeOption {
   code: string;
@@ -63,7 +64,7 @@ export class AddExpenseReimbursmentComponent implements OnInit {
       : 'Submit employee expense claims with header and expense detail information.';
   }
 
-  protected readonly expenseTypeOptions = ['Fuel', 'Travel', 'Medical', 'Meals', 'Utilities', 'Lodging', 'Other'] as const;
+  protected readonly expenseTypeOptions = signal<string[]>([]);
 
   protected readonly employeeCode = signal('');
   protected readonly headerEmployeeName = signal('');
@@ -104,11 +105,25 @@ export class AddExpenseReimbursmentComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly alertService: AlertService,
     private readonly expenseService: ExpenseReimbursementService,
+    private readonly glAccountDeterminationService: GlAccountDeterminationService,
     private readonly applicationFormService: ApplicationFormService,
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
+    this.glAccountDeterminationService.fetchExpenseTypeOptions().subscribe({
+      next: (options) => {
+        this.expenseTypeOptions.set(options);
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load expense types.'),
+        );
+      },
+    });
+
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => {
         this.employeeOptions.set(this.buildEmployeeOptions());
