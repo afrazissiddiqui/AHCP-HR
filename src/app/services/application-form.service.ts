@@ -215,6 +215,19 @@ export interface EmployeeRosterAddPayload {
   data: EmployeeRosterRow[];
 }
 
+export interface EmployeeRosterListRecord {
+  employee_id: string;
+  employee_name: string;
+  department: string;
+  designation: string;
+  employment_status: string;
+  shift_date: string;
+  shift: string;
+  role: string;
+  hub: string;
+  note: string | null;
+}
+
 export interface EmployeeMasterDataRecord {
   EmployeeID: number;
   EmployeeName: string;
@@ -233,6 +246,7 @@ const EMPLOYEE_PROFILE_VIEW_URL = apiUrl('employee-profile-detail');
 const EMPLOYEE_PROFILE_UPDATE_URL = apiUrl('employee-profile-update');
 const EMPLOYEE_PROFILE_DELETE_URL = apiUrl('employee-profile-delete');
 const EMPLOYEE_ROSTER_ADD_URL = apiUrl('employee-roster-add');
+const EMPLOYEE_ROSTER_LIST_URL = apiUrl('employee-roster-list');
 
 export interface EmployeeProfileEducationPayload {
   institute: string;
@@ -749,6 +763,12 @@ export class ApplicationFormService {
 
   addEmployeeRoster(payload: EmployeeRosterAddPayload): Observable<unknown> {
     return this.http.post(EMPLOYEE_ROSTER_ADD_URL, payload);
+  }
+
+  fetchEmployeeRosterList(): Observable<EmployeeRosterListRecord[]> {
+    return this.http.get<unknown>(EMPLOYEE_ROSTER_LIST_URL).pipe(
+      map((response) => this.extractApiItems(response).map((item) => this.mapApiItemToEmployeeRoster(item))),
+    );
   }
 
   updateEmployeeProfile(id: string | number, payload: EmployeeProfileAddPayload): Observable<unknown> {
@@ -1747,6 +1767,31 @@ export class ApplicationFormService {
     return [];
   }
 
+  private mapApiItemToEmployeeRoster(item: Record<string, unknown>): EmployeeRosterListRecord {
+    const pick = (...keys: string[]): string => {
+      for (const key of keys) {
+        const value = item[key];
+        if (value !== undefined && value !== null && String(value).trim()) {
+          return String(value).trim();
+        }
+      }
+      return '';
+    };
+
+    return {
+      employee_id: pick('employee_id', 'employeeId', 'employeeID', 'EmployeeCode', 'employee_code'),
+      employee_name: pick('employee_name', 'employeeName', 'EmployeeName', 'person_name', 'personName'),
+      department: pick('department', 'Department'),
+      designation: pick('designation', 'Designation'),
+      employment_status: pick('employment_status', 'employmentStatus', 'EmploymentStatus'),
+      shift_date: pick('shift_date', 'shiftDate'),
+      shift: pick('shift', 'Shift'),
+      role: pick('role', 'Role'),
+      hub: pick('hub', 'Hub'),
+      note: pick('note', 'Note', 'notes', 'Notes') || null,
+    };
+  }
+
   private resolveEmployeeCodeFromApiItem(item: Record<string, unknown>): string {
     const asString = (value: unknown): string =>
       value === undefined || value === null ? '' : String(value).trim();
@@ -1846,8 +1891,11 @@ export class ApplicationFormService {
     const employeeCode = this.resolveEmployeeCodeFromApiItem(item);
     const personName =
       pickFrom(personalInfoSource, 'personName', 'person_name') ||
+      pickFrom(personalInfoSource, 'employeeName', 'employee_name') ||
       asString(item['personName']) ||
-      asString(item['person_name']);
+      asString(item['person_name']) ||
+      asString(item['employeeName']) ||
+      asString(item['employee_name']);
     const composedName = [
       pickFrom(personalInfoSource, 'firstName', 'first_name') || asString(item['firstName']),
       pickFrom(personalInfoSource, 'middleName', 'middle_name') || asString(item['middleName']),

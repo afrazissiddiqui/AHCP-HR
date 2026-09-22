@@ -358,8 +358,8 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
     return this.employeeRecords()
       .filter(
         (employee) =>
-          employee.EmployeeCode.toLowerCase().includes(normalizedQuery) ||
-          employee.EmployeeName.toLowerCase().includes(normalizedQuery),
+          employee.EmployeeCode?.toLowerCase().includes(normalizedQuery) ||
+          employee.EmployeeName?.toLowerCase().includes(normalizedQuery),
       )
       .slice(0, 10);
   }

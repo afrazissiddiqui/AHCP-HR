@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { ApplicationFormRecord, ApplicationFormService } from '../../../services/application-form.service';
+import { ApplicationFormRecord, ApplicationFormService, EmployeeRosterListRecord } from '../../../services/application-form.service';
 import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
@@ -190,14 +190,11 @@ export class EmployeeRosterComponent implements OnInit {
   loadEmployees(): void {
     this.loading.set(true);
     this.employeeService
-      .fetchEmployeeProfiles()
+      .fetchEmployeeRosterList()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (records) => {
-          const shiftApplicableRecords = records.filter((record) =>
-            record.detail?.hrSettings.attendanceShiftManagement.trim().toLowerCase() === 'yes',
-          );
-          this.employees.set(shiftApplicableRecords.map((record, index) => this.toRosterEmployee(record, index)));
+        next: (records: EmployeeRosterListRecord[]) => {
+          this.employees.set(records.map((record, index) => this.toRosterEmployee(this.toApplicationRecord(record), index)));
         },
         error: (error) => {
           this.employees.set([]);
@@ -491,6 +488,21 @@ export class EmployeeRosterComponent implements OnInit {
       hub: 'Lahore HO',
       role: record.Designation || ['Ops', 'Supp', 'Logistics', 'Eng', 'Staff'][index % 5],
       shifts: patterns[index % patterns.length],
+    };
+  }
+
+  private toApplicationRecord(record: EmployeeRosterListRecord): ApplicationFormRecord {
+    return {
+      EmployeeCode: record.employee_id,
+      EmployeeName: record.employee_name || record.employee_id,
+      Department: record.department,
+      EmployeeNature: '',
+      Designation: record.designation || record.role,
+      ReportingManager: '',
+      EmploymentType: '',
+      EmploymentStatus: record.employment_status,
+      EmploymentCategory: '',
+      status: '',
     };
   }
 }

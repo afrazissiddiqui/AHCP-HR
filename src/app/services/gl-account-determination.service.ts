@@ -82,8 +82,8 @@ export class GlAccountDeterminationService {
         Array.from(
           new Set(
             records
-              .filter((record) => record.Type.trim().toLowerCase() === 'item')
-              .map((record) => record.Type.trim()),
+              .map((record) => record.Type.trim())
+              .filter((type) => type),
           ),
         ),
       ),

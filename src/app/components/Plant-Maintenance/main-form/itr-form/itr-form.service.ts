@@ -1555,17 +1555,51 @@ function mapSectionsToFormParts(sections: ItrFormSectionPayload[]): {
   };
 }
 
+function firstNestedObject(
+  source: Record<string, unknown>,
+  keys: string[],
+): Record<string, unknown> | null {
+  for (const key of keys) {
+    const value = source[key];
+    if (Array.isArray(value)) {
+      const first = value.find(
+        (entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object',
+      );
+      if (first) {
+        return first;
+      }
+    }
+  }
+  return null;
+}
+
 function mapApiItemToRecord(item: Record<string, unknown>): ItrFormRecord {
   const sources = [item];
+  const firstItem = firstNestedObject(item, ['items', 'lines', 'DocumentLines']);
   const sections = extractSections(item);
   const sectionParts = mapSectionsToFormParts(sections);
-  const status = pickStringValue(sources, ['status', 'Status']) as ItrFormStatus;
+  const status = pickStringValue(sources, ['status', 'Status', 'DocStatus', 'docStatus']) as ItrFormStatus;
 
   return {
-    id: pickStringValue(sources, ['id', 'Id', 'itr_form_id', 'itrFormId']),
+    id: pickStringValue(sources, [
+      'id',
+      'Id',
+      'itr_form_id',
+      'itrFormId',
+      'DocEntry',
+      'docEntry',
+    ]),
     selected: false,
-    machineId: pickStringValue(sources, ['machine_id', 'machineId', 'MachineId']),
-    machineName: pickStringValue(sources, ['machine_name', 'machineName', 'MachineName']),
+    machineId:
+      pickStringValue(sources, ['machine_id', 'machineId', 'MachineId']) ||
+      pickStringValue(firstItem ? [firstItem] : [], ['ItemCode', 'itemCode']),
+    machineName:
+      pickStringValue(sources, ['machine_name', 'machineName', 'MachineName']) ||
+      pickStringValue(firstItem ? [firstItem] : [], [
+        'Dscription',
+        'itemDescription',
+        'description',
+      ]),
     maintenanceType: pickStringValue(sources, ['maintenance_type', 'maintenanceType', 'MaintenanceType']),
     maintenanceFrequency: pickStringValue(sources, [
       'maintenance_frequency',
@@ -1588,24 +1622,34 @@ function mapApiItemToRecord(item: Record<string, unknown>): ItrFormRecord {
     robotSerialNo: pickStringValue(sources, ['robot_serial_no', 'robotSerialNo', 'RobotSerialNo']),
     inspector: pickStringValue(sources, ['inspector', 'Inspector']),
     inspectionDate: pickStringValue(sources, ['inspection_date', 'inspectionDate', 'InspectionDate']),
-    postingDate: pickStringValue(sources, ['posting_date', 'postingDate', 'PostingDate']),
-    dueDate: pickStringValue(sources, ['due_date', 'dueDate', 'DueDate']),
+    postingDate: pickStringValue(sources, ['posting_date', 'postingDate', 'PostingDate', 'DocDate']),
+    dueDate: pickStringValue(sources, ['due_date', 'dueDate', 'DueDate', 'DocDueDate']),
     docDate: pickStringValue(sources, ['doc_date', 'docDate', 'DocDate']),
     fromWarehouseCode: pickStringValue(sources, [
       'from_warehouse_code',
       'fromWarehouseCode',
       'from_warehouse',
       'fromWarehouse',
-    ]),
-    toWarehouseCode: pickStringValue(sources, [
-      'to_warehouse_code',
-      'toWarehouseCode',
-      'to_warehouse',
-      'toWarehouse',
-    ]),
+      'FromWhsCod',
+    ]) || pickStringValue(firstItem ? [firstItem] : [], ['FromWhsCod', 'from_warehouse', 'fromWarehouse']),
+    toWarehouseCode:
+      pickStringValue(sources, [
+        'to_warehouse_code',
+        'toWarehouseCode',
+        'to_warehouse',
+        'toWarehouse',
+        'WhsCode',
+        'ToWhsCode',
+      ]) || pickStringValue(firstItem ? [firstItem] : [], ['WhsCode', 'ToWhsCode', 'toWarehouse']),
     remarks: pickStringValue(sources, ['remarks', 'Remarks']),
     submitDate: pickStringValue(sources, ['submit_date', 'submitDate', 'SubmitDate']),
-    documentNo: pickStringValue(sources, ['document_no', 'documentNo', 'DocumentNo']),
+    documentNo: pickStringValue(sources, [
+      'document_no',
+      'documentNo',
+      'DocumentNo',
+      'DocNum',
+      'docNum',
+    ]),
     status: (status || 'Draft') as ItrFormStatus,
     kpiRows: sectionParts.kpiRows,
     safetyCheckpoints: sectionParts.safetyCheckpoints,
@@ -1745,6 +1789,12 @@ export class ItrFormService {
       const value = obj[key];
       if (Array.isArray(value)) {
         return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+      }
+      if (value && typeof value === 'object') {
+        const nestedItems = this.extractApiItems(value as Record<string, unknown>);
+        if (nestedItems.length > 0) {
+          return nestedItems;
+        }
       }
     }
 
