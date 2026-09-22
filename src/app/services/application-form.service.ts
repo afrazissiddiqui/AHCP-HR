@@ -2316,9 +2316,9 @@ export class ApplicationFormService {
       ...summary,
       userId: detail.loginDetails.userId?.trim() || summary.userId,
       EmployeeCode:
-        detail.loginDetails.employeeCode && detail.loginDetails.employeeCode !== '—'
-          ? detail.loginDetails.employeeCode
-          : summary.EmployeeCode,
+        summary.EmployeeCode && summary.EmployeeCode !== '—'
+          ? summary.EmployeeCode
+          : detail.loginDetails.employeeCode,
       EmployeeName: detail.personalInfo.personName || summary.EmployeeName,
       detail,
     };

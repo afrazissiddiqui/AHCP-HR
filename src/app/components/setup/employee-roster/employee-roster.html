@@ -11,14 +11,6 @@
         </div>
         <p>Monthly Shift Allocation &amp; Roster Planning</p>
       </div>
-      <div class="header-actions">
-        <button type="button" class="button button--generate" (click)="loadEmployees()" [disabled]="loading() || hasChanges()">
-          <ui5-icon name="validate" aria-hidden="true"></ui5-icon> Generate Roster
-        </button>
-        <button type="button" class="button button--save" (click)="saveChanges()" [disabled]="!hasChanges() || saving()">
-          <ui5-icon name="save" aria-hidden="true"></ui5-icon> {{ saving() ? 'Saving...' : 'Save Changes' }}
-        </button>
-      </div>
     </header>
 
     <section class="roster-controls" aria-label="Roster filters">

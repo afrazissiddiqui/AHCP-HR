@@ -1607,7 +1607,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       leaveManagement: this.buildLeaveManagementPayload(),
       hrSettings: this.buildHrSettingsPayload(),
       loginDetails: {
-        employeeCode: this.employeeCode(),
+        employeeCode: displayEmployeeCode,
         legacyCode: this.legacyCode(),
         employeeName: this.loginEmployeeName(),
         userId: this.userId(),

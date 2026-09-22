@@ -91,6 +91,7 @@ export class EmployeeRosterComponent implements OnInit {
   readonly unassignedEmployees = signal<ApplicationFormRecord[]>([]);
   readonly unassignedCalendarEmployee = signal<RosterEmployee | null>(null);
   readonly unassignedSelectedShift = signal<ShiftCode | null>(null);
+  private originalRosterShifts = new Map<string, string[]>();
   readonly searchText = signal('');
   readonly selectedHub = signal('Lahore HO');
   readonly selectedDepartment = signal('All Departments');
@@ -263,7 +264,11 @@ export class EmployeeRosterComponent implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: ({ roster, profiles }: { roster: EmployeeRosterListRecord[]; profiles: ApplicationFormRecord[] }) => {
-          this.employees.set(this.toRosterEmployees(roster));
+          const rosterEmployees = this.toRosterEmployees(roster);
+          this.employees.set(rosterEmployees);
+          this.originalRosterShifts = new Map(
+            rosterEmployees.map((employee) => [employee.EmployeeCode, [...employee.shifts]]),
+          );
           this.unassignedEmployees.set(findUnassignedEmployees(profiles, roster));
         },
         error: (error) => {
@@ -345,6 +350,7 @@ export class EmployeeRosterComponent implements OnInit {
             ...employees.filter((item) => item.EmployeeCode !== employee.EmployeeCode),
             employee,
           ]);
+          this.originalRosterShifts.set(employee.EmployeeCode, [...employee.shifts]);
           this.unassignedEmployees.update((employees) =>
             employees.filter((item) => item.EmployeeCode !== employee.EmployeeCode),
           );
@@ -590,7 +596,43 @@ export class EmployeeRosterComponent implements OnInit {
       };
       this.unassignedCalendarEmployee.set(updatedEmployee);
     } else {
-      this.assignShift(dialog.shift);
+      const payload: EmployeeRosterAddPayload = {
+        data: [{
+          employee_id: this.toApiEmployeeId(dialog.employee.EmployeeCode),
+          shift_date: this.rosterDate(dialog.dayDate),
+          shift: this.toApiShift(dialog.shift),
+          role: dialog.employee.role,
+          hub: dialog.employee.hub || this.selectedHub(),
+          note: null,
+        }],
+      };
+      this.saving.set(true);
+      this.employeeService
+        .addEmployeeRoster(payload)
+        .pipe(finalize(() => this.saving.set(false)))
+        .subscribe({
+          next: () => {
+            this.employees.update((employees) => employees.map((employee) => {
+              if (employee.EmployeeCode !== dialog.employee.EmployeeCode) {
+                return employee;
+              }
+              const shifts = [...employee.shifts];
+              shifts[dialog.dayDate - 1] = dialog.shift;
+              return { ...employee, shifts };
+            }));
+            const employee = this.employees().find((item) => item.EmployeeCode === dialog.employee.EmployeeCode);
+            if (employee) {
+              this.originalRosterShifts.set(employee.EmployeeCode, [...employee.shifts]);
+            }
+            this.hasChanges.set(false);
+            this.closeShiftDialog();
+            this.alertService.success('Roster Updated', 'The selected shift was saved.');
+          },
+          error: (error: unknown) => {
+            this.alertService.error('Roster Update Failed', formatApiErrorMessage(error, 'Could not save the selected shift.'));
+          },
+        });
+      return;
     }
     this.closeShiftDialog();
   }
@@ -673,17 +715,32 @@ export class EmployeeRosterComponent implements OnInit {
       return;
     }
 
-    const payload = {
-      data: this.employees().flatMap((employee) =>
-        this.visibleDays().map((day) => ({
-          employee_id: this.toApiEmployeeId(employee.EmployeeCode),
-          shift_date: this.rosterDate(day.date),
-          shift: this.toApiShift(this.shiftFor(employee, day.date - 1)),
-          role: employee.role,
-          hub: this.selectedHub(),
-          note: null,
-        })),
-      ),
+    const changedRows = this.employees().flatMap((employee) => {
+      const originalShifts = this.originalRosterShifts.get(employee.EmployeeCode) ?? [];
+      return this.visibleDays().flatMap((day) => {
+        const dayIndex = day.date - 1;
+        const currentShift = this.shiftForDate(employee, day.date);
+        const originalShift = originalShifts[dayIndex] ?? '+';
+        return currentShift === originalShift
+          ? []
+          : [{
+              employee_id: this.toApiEmployeeId(employee.EmployeeCode),
+              shift_date: this.rosterDate(day.date),
+              shift: this.toApiShift(currentShift),
+              role: employee.role,
+              hub: this.selectedHub(),
+              note: null,
+            }];
+      });
+    });
+
+    if (changedRows.length === 0) {
+      this.hasChanges.set(false);
+      return;
+    }
+
+    const payload: EmployeeRosterAddPayload = {
+      data: changedRows,
     };
 
     this.saving.set(true);
@@ -692,6 +749,9 @@ export class EmployeeRosterComponent implements OnInit {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
+          this.originalRosterShifts = new Map(
+            this.employees().map((employee) => [employee.EmployeeCode, [...employee.shifts]]),
+          );
           this.hasChanges.set(false);
           this.alertService.success('Roster Updated', 'Roster changes were saved successfully.');
         },
@@ -705,6 +765,12 @@ export class EmployeeRosterComponent implements OnInit {
     const [monthName, year] = this.monthLabel().split(' ');
     const month = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+
+  private shiftForDate(employee: RosterEmployee, day: number): ShiftCode {
+    return employee.shifts.length === this.fullMonthDays().length
+      ? employee.shifts[day - 1] ?? '+'
+      : this.shiftFor(employee, day - 1);
   }
 
   private toRosterEmployee(record: ApplicationFormRecord, index: number): RosterEmployee {
@@ -755,6 +821,8 @@ export class EmployeeRosterComponent implements OnInit {
 
     return Array.from(grouped.values()).map(({ record, shifts }, index) => ({
       ...this.toRosterEmployee(this.toApplicationRecord(record), index),
+      hub: record.hub || this.selectedHub(),
+      role: record.role || record.designation || this.toRosterEmployee(this.toApplicationRecord(record), index).role,
       shifts,
     }));
   }
