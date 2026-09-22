@@ -861,15 +861,35 @@
 }
 
 .pmm-line-employee input {
-  width: 180px;
-  min-height: 34px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid #b8c5d6;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #172b4d;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.pmm-line-employee input:focus {
+  outline: none;
+  border-color: #0070f2;
+  box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.14);
+}
+
+.pmm-line-employee__control {
+  position: relative;
+  width: min(280px, 100%);
+  min-width: 0;
 }
 
 .pmm-line-employee__suggestions {
   top: calc(100% + 4px);
-  right: 0;
-  left: auto;
-  width: 300px;
+  right: auto;
+  left: 0;
+  width: 100%;
   z-index: 20;
 }
 

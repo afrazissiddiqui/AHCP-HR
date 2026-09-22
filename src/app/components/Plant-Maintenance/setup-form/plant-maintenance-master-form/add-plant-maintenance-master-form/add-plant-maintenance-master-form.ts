@@ -332,6 +332,7 @@ export class AddPlantMaintenanceMasterFormComponent implements OnInit {
       field !== 'status' &&
       field !== 'recommendation' &&
       field !== 'replacement' &&
+      field !== 'employee' &&
       this.hasLoadedActivityData()
     ) {
       return;

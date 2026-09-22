@@ -35,7 +35,7 @@
       <article class="summary-card summary-card--morning"><div><span class="summary-label">Morning (08-16)</span><strong>{{ morningCount() }}</strong><small>42% capacity</small></div><ui5-icon name="day-protection" aria-hidden="true"></ui5-icon></article>
       <article class="summary-card summary-card--evening"><div><span class="summary-label">Evening (16-00)</span><strong>{{ eveningCount() }}</strong><small>33% capacity</small></div><ui5-icon name="lateness" aria-hidden="true"></ui5-icon></article>
       <article class="summary-card summary-card--night"><div><span class="summary-label">Night (00-08)</span><strong>{{ nightCount() }}</strong><small>25% capacity</small></div><ui5-icon name="lateness" aria-hidden="true"></ui5-icon></article>
-      <article class="summary-card summary-card--unassigned"><div><span class="summary-label">Unassigned</span><strong>{{ unassignedCount() }}</strong><small>Needs allocation</small></div><ui5-icon name="alert" aria-hidden="true"></ui5-icon></article>
+      <button type="button" class="summary-card summary-card--unassigned" (click)="openUnassignedDialog()" aria-haspopup="dialog"><div><span class="summary-label">Unassigned</span><strong>{{ unassignedCount() }}</strong><small>Needs allocation</small></div><ui5-icon name="alert" aria-hidden="true"></ui5-icon></button>
       <button type="button" class="legend-card" (click)="openWorkstationLegend()" aria-haspopup="dialog"><span class="summary-label">Roster Legend</span><span class="legend-card__hint">View workstation descriptions</span><div class="legend-items"><span class="legend-chip legend-chip--m">Shift</span><span class="legend-chip legend-chip--off">OFF</span><span class="legend-chip legend-chip--hol">HOL</span><span class="legend-chip legend-chip--leave">L Leave</span></div></button>
     </section>
 
@@ -69,7 +69,7 @@
   @if (shiftDialog(); as dialog) {
     <div class="dialog-backdrop" (click)="closeShiftDialog()"></div>
     <section class="shift-dialog" [class.shift-dialog--dragging]="shiftDialogDragging()" role="dialog" aria-modal="true" aria-labelledby="shift-dialog-title" [style.top.px]="shiftDialogPosition().top" [style.left.px]="shiftDialogPosition().left" (click)="$event.stopPropagation()" (pointermove)="moveShiftDialog($event)" (pointerup)="endShiftDialogDrag($event)" (pointercancel)="endShiftDialogDrag($event)">
-      <header class="shift-dialog__header" (pointerdown)="startShiftDialogDrag($event)"><div><h2 id="shift-dialog-title">Assign Shift</h2><p>{{ dialog.employee.EmployeeName }} · {{ visibleDays()[dialog.dayIndex].weekday }} {{ visibleDays()[dialog.dayIndex].date }}</p></div><button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeShiftDialog()">×</button></header>
+      <header class="shift-dialog__header" (pointerdown)="startShiftDialogDrag($event)"><div><h2 id="shift-dialog-title">Assign Shift</h2><p>{{ dialog.employee.EmployeeName }} · {{ monthDayLabel(dialog.dayDate) }}</p></div><button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeShiftDialog()">×</button></header>
       <div class="shift-options">
         @if (workstationLoading()) {
           <p class="shift-options__status">Loading workstation shifts...</p>
@@ -124,6 +124,63 @@
         }
       </div>
       <footer class="shift-dialog__footer"><span>{{ workstationService.workstations().length }} workstation(s)</span><button type="button" class="dialog-button dialog-button--apply" (click)="closeWorkstationLegend()">Close</button></footer>
+    </section>
+  }
+
+  @if (unassignedDialogOpen()) {
+    <div class="dialog-backdrop" (click)="closeUnassignedDialog()"></div>
+    <section class="unassigned-dialog" role="dialog" aria-modal="true" aria-labelledby="unassigned-dialog-title" (click)="$event.stopPropagation()">
+      <header class="shift-dialog__header">
+        <div>
+          <h2 id="unassigned-dialog-title">Unassigned Employees</h2>
+          <p>Shift-applicable employees missing from the roster</p>
+        </div>
+        <button type="button" class="dialog-close" aria-label="Close unassigned employees" (click)="closeUnassignedDialog()">×</button>
+      </header>
+      <div class="unassigned-list">
+        @if (!unassignedEmployees().length) {
+          <p class="shift-options__status">All shift-applicable employees are in the roster.</p>
+        } @else {
+          @for (employee of unassignedEmployees(); track employee.EmployeeCode) {
+            <button type="button" class="unassigned-item" (click)="openUnassignedCalendar(employee)">
+              <span class="avatar">{{ (employee.EmployeeName || 'EM').slice(0, 2).toUpperCase() }}</span>
+              <div>
+                <strong>{{ employee.EmployeeName || 'Unnamed employee' }}</strong>
+                <small>{{ employee.EmployeeCode || '—' }} · {{ employee.Department || 'No department' }}</small>
+              </div>
+              <span class="unassigned-item__role">{{ employee.Designation || 'No designation' }}</span>
+            </button>
+          }
+        }
+      </div>
+    </section>
+  }
+
+  @if (unassignedCalendarEmployee(); as employee) {
+    <div class="dialog-backdrop" (click)="closeUnassignedCalendar()"></div>
+    <section class="unassigned-calendar-dialog" role="dialog" aria-modal="true" aria-labelledby="unassigned-calendar-title" (click)="$event.stopPropagation()">
+      <header class="shift-dialog__header">
+        <div>
+          <h2 id="unassigned-calendar-title">Assign Employee Shift</h2>
+          <p>{{ employee.EmployeeName }} · {{ monthLabel() }}</p>
+        </div>
+        <button type="button" class="dialog-close" aria-label="Close calendar" (click)="closeUnassignedCalendar()">×</button>
+      </header>
+      <div class="unassigned-shift-picker" aria-label="Select shift to assign">
+        <span>Choose shift, then click dates:</span>
+        @for (option of shiftOptions(); track option.code) {
+          <button type="button" class="unassigned-shift-option" [class.unassigned-shift-option--selected]="unassignedSelectedShift() === option.code" [style.background]="shiftBackground(option.title)" [style.color]="shiftForeground(option.title)" (click)="selectUnassignedShift(option.code)">{{ option.title }}</button>
+        }
+      </div>
+      <div class="unassigned-calendar-grid">
+        @for (day of fullMonthDays(); track day.date; let dayIndex = $index) {
+          @let shift = shiftForFullMonth(employee, dayIndex);
+          <button type="button" class="unassigned-calendar-day" [class.today-column]="day.isToday" [class.unassigned-calendar-day--ready]="!!unassignedSelectedShift()" (click)="assignUnassignedDay(dayIndex)">
+            <span>{{ day.weekday }}</span><strong>{{ day.date }}</strong><em [style.background]="isAssignedShift(shift) ? shiftBackground(shiftDescription(shift)) : '#f1f1f1'" [style.color]="isAssignedShift(shift) ? shiftForeground(shiftDescription(shift)) : '#000'">{{ isAssignedShift(shift) ? shift : 'Unassigned' }}</em>
+          </button>
+        }
+      </div>
+      <footer class="shift-dialog__footer"><span>Select a day to assign a shift</span><div><button type="button" class="dialog-button dialog-button--cancel" (click)="closeUnassignedCalendar()">Close</button><button type="button" class="dialog-button dialog-button--apply" [disabled]="saving()" (click)="submitUnassignedCalendar()">{{ saving() ? 'Submitting...' : 'Submit Month' }}</button></div></footer>
     </section>
   }
 

@@ -1991,6 +1991,10 @@ export class ApplicationFormService {
       this.pickNestedRecord(item['requisition']) ??
       this.pickNestedRecord(item['requisition_detail']) ??
       item;
+    const hrSettingsSource =
+      this.pickNestedRecord(item['hrSettings']) ??
+      this.pickNestedRecord(item['hr_settings']) ??
+      item;
     const pick = (camel: string, snake?: string): string =>
       pickFrom(personalInfoSource, camel, snake) ||
       pickFrom(requisitionSource, camel, snake) ||
@@ -2256,7 +2260,17 @@ export class ApplicationFormService {
       hrSettings: {
         employeeMaster: asNumberString(item['employeeMaster'] ?? item['employee_master']),
         salaryStructure,
-        attendanceShiftManagement: pick('attendanceShiftManagement', 'attendance_shift_management'),
+        attendanceShiftManagement:
+          pickFrom(hrSettingsSource, 'attendanceShiftManagement', 'attendance_shift_management') ||
+          this.yesNoFromApi(
+            hrSettingsSource['EmployeeShiftApplicable'] ??
+              hrSettingsSource['employeeShiftApplicable'] ??
+              hrSettingsSource['employee_shift_applicable'] ??
+              item['EmployeeShiftApplicable'] ??
+              item['employeeShiftApplicable'] ??
+              item['employee_shift_applicable'],
+          ) ||
+          pick('attendanceShiftManagement', 'attendance_shift_management'),
         leaveManagement: pick('leaveManagement', 'leave_management'),
         loanAdvancesForm: pick('loanAdvancesForm', 'loan_advances_form'),
         requestStatus: pick('requestStatus', 'request_status'),
@@ -2682,6 +2696,7 @@ export class ApplicationFormService {
     }
     return normalized;
   }
+
 }
 
 function pickFrom(row: Record<string, unknown>, camel: string, snake?: string): string {

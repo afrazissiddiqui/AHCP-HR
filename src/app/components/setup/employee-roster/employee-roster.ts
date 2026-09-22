@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
-import { ApplicationFormRecord, ApplicationFormService, EmployeeRosterListRecord } from '../../../services/application-form.service';
+import { finalize, forkJoin } from 'rxjs';
+import { ApplicationFormRecord, ApplicationFormService, EmployeeRosterAddPayload, EmployeeRosterListRecord } from '../../../services/application-form.service';
 import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
@@ -30,6 +30,47 @@ interface RosterEmployee extends ApplicationFormRecord {
   shifts: ShiftCode[];
 }
 
+export function findUnassignedEmployees(
+  employees: ApplicationFormRecord[],
+  roster: EmployeeRosterListRecord[],
+): ApplicationFormRecord[] {
+  const assignedEmployeeCodes = new Set<string>();
+  for (const rosterEntry of roster) {
+    const employeeCode = normalizeEmployeeCodeForRoster(rosterEntry.employee_id);
+    if (employeeCode && hasValidRosterShift(rosterEntry.shift)) {
+      assignedEmployeeCodes.add(employeeCode);
+    }
+  }
+
+  const seenEmployeeCodes = new Set<string>();
+  return employees.filter((employee) => {
+    const employeeCode = normalizeEmployeeCodeForRoster(employee.EmployeeCode);
+    const rawApplicability = (employee as ApplicationFormRecord & { EmployeeShiftApplicable?: unknown }).EmployeeShiftApplicable;
+    const explicitlyApplicable = rawApplicability === true || ['true', 'yes', '1'].includes(String(rawApplicability ?? '').trim().toLowerCase())
+      ? true
+      : rawApplicability === false || ['false', 'no', '0'].includes(String(rawApplicability ?? '').trim().toLowerCase())
+        ? false
+        : undefined;
+    const applicable = explicitlyApplicable ?? employee.detail?.hrSettings.attendanceShiftManagement.trim().toLowerCase() === 'yes';
+    if (!applicable || !employeeCode || assignedEmployeeCodes.has(employeeCode) || seenEmployeeCodes.has(employeeCode)) {
+      return false;
+    }
+    seenEmployeeCodes.add(employeeCode);
+    return true;
+  });
+}
+
+function hasValidRosterShift(shift: string | null | undefined): boolean {
+  const normalized = String(shift ?? '').trim().toLowerCase();
+  return normalized !== '' && normalized !== 'null' && normalized !== 'undefined';
+}
+
+function normalizeEmployeeCodeForRoster(value: string | null | undefined): string {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  const numericCode = normalized.match(/^(?:emp[-\s]?)?(\d+)$/)?.[1];
+  return numericCode ? `emp-${numericCode.padStart(8, '0')}` : normalized;
+}
+
 @Component({
   selector: 'app-employee-roster',
   imports: [CommonModule, FormsModule, PageToolbarComponent],
@@ -47,6 +88,9 @@ export class EmployeeRosterComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly employees = signal<RosterEmployee[]>([]);
+  readonly unassignedEmployees = signal<ApplicationFormRecord[]>([]);
+  readonly unassignedCalendarEmployee = signal<RosterEmployee | null>(null);
+  readonly unassignedSelectedShift = signal<ShiftCode | null>(null);
   readonly searchText = signal('');
   readonly selectedHub = signal('Lahore HO');
   readonly selectedDepartment = signal('All Departments');
@@ -55,7 +99,7 @@ export class EmployeeRosterComponent implements OnInit {
   readonly monthLabel = signal('September 2026');
   readonly selectedMonthHalf = signal<MonthHalf>('First Half');
   readonly selectedCell = signal<{ employeeCode: string; day: number } | null>(null);
-  readonly shiftDialog = signal<{ employee: RosterEmployee; dayIndex: number; shift: ShiftCode } | null>(null);
+  readonly shiftDialog = signal<{ employee: RosterEmployee; dayIndex: number; dayDate: number; shift: ShiftCode } | null>(null);
   readonly shiftDialogPosition = signal({ top: 0, left: 0 });
   readonly shiftDialogDragging = signal(false);
   private shiftDialogDrag: { pointerId: number; startX: number; startY: number; startTop: number; startLeft: number } | null = null;
@@ -65,6 +109,7 @@ export class EmployeeRosterComponent implements OnInit {
   readonly workstationLoading = signal(false);
   readonly workstationLegendOpen = signal(false);
   readonly branchHolidaysOpen = signal(false);
+  readonly unassignedDialogOpen = signal(false);
   readonly shiftOptions = computed(() => {
     const options = this.workstationService.workstations()
       .map((workstation) => ({
@@ -107,6 +152,28 @@ export class EmployeeRosterComponent implements OnInit {
     }).filter((day) => (firstHalf ? day.date <= 15 : day.date > 15));
   });
 
+  readonly fullMonthDays = computed<RosterDay[]>(() => {
+    const [monthName, yearText] = this.monthLabel().split(' ');
+    const year = Number(yearText);
+    const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const today = new Date();
+
+    return Array.from({ length: daysInMonth }, (_, index) => {
+      const date = index + 1;
+      const day = new Date(year, monthIndex, date);
+      return {
+        date,
+        weekday: day.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+        isToday:
+          today.getFullYear() === year &&
+          today.getMonth() === monthIndex &&
+          today.getDate() === date,
+        isHoliday: day.getDay() === 0 || day.getDay() === 6,
+      };
+    });
+  });
+
   readonly branchHolidays = computed<BranchHoliday[]>(() => {
     const [monthName, yearText] = this.monthLabel().split(' ');
     const year = Number(yearText);
@@ -141,7 +208,7 @@ export class EmployeeRosterComponent implements OnInit {
   readonly morningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('M')).length);
   readonly eveningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('E')).length);
   readonly nightCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('N')).length);
-  readonly unassignedCount = computed(() => Math.max(0, this.totalEmployees() - this.morningCount() - this.eveningCount() - this.nightCount()));
+  readonly unassignedCount = computed(() => this.unassignedEmployees().length);
   readonly activeCount = computed(() => this.filteredEmployees().length);
 
   readonly allVisibleSelected = computed(() => {
@@ -189,22 +256,174 @@ export class EmployeeRosterComponent implements OnInit {
 
   loadEmployees(): void {
     this.loading.set(true);
-    this.employeeService
-      .fetchEmployeeRosterList()
+    forkJoin({
+      roster: this.employeeService.fetchEmployeeRosterList(),
+      profiles: this.employeeService.fetchEmployeeProfiles(),
+    })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (records: EmployeeRosterListRecord[]) => {
-          this.employees.set(records.map((record, index) => this.toRosterEmployee(this.toApplicationRecord(record), index)));
+        next: ({ roster, profiles }: { roster: EmployeeRosterListRecord[]; profiles: ApplicationFormRecord[] }) => {
+          this.employees.set(this.toRosterEmployees(roster));
+          this.unassignedEmployees.set(findUnassignedEmployees(profiles, roster));
         },
         error: (error) => {
           this.employees.set([]);
+          this.unassignedEmployees.set([]);
           this.alertService.error('Roster Load Failed', formatApiErrorMessage(error, 'Could not load employee profiles.'));
         },
       });
   }
 
+  openUnassignedDialog(): void {
+    this.unassignedDialogOpen.set(true);
+  }
+
+  closeUnassignedDialog(): void {
+    this.unassignedDialogOpen.set(false);
+  }
+
+  openUnassignedCalendar(employee: ApplicationFormRecord): void {
+    this.closeUnassignedDialog();
+    this.unassignedCalendarEmployee.set({
+      ...this.toRosterEmployee(employee, 0),
+      shifts: this.fullMonthDays().map(() => '+'),
+    });
+    this.unassignedSelectedShift.set(null);
+  }
+
+  closeUnassignedCalendar(): void {
+    this.unassignedCalendarEmployee.set(null);
+    this.unassignedSelectedShift.set(null);
+  }
+
+  selectUnassignedShift(shift: ShiftCode): void {
+    this.unassignedSelectedShift.set(shift);
+  }
+
+  assignUnassignedDay(dayIndex: number): void {
+    const shift = this.unassignedSelectedShift();
+    if (!shift) {
+      this.alertService.validation('Select a shift first.');
+      return;
+    }
+    this.unassignedCalendarEmployee.update((employee) => {
+      if (!employee) {
+        return employee;
+      }
+      const shifts = [...employee.shifts];
+      shifts[dayIndex] = shift;
+      return { ...employee, shifts };
+    });
+  }
+
+  submitUnassignedCalendar(): void {
+    const employee = this.unassignedCalendarEmployee();
+    const days = this.fullMonthDays();
+    if (!employee || days.some((_, index) => !this.isAssignedShift(this.shiftForFullMonth(employee, index)))) {
+      this.alertService.validation('Assign a shift for every day before submitting.');
+      return;
+    }
+
+    const payload: EmployeeRosterAddPayload = {
+      data: days.map((day, index) => ({
+        employee_id: this.toApiEmployeeId(employee.EmployeeCode),
+        shift_date: this.rosterDate(day.date),
+        shift: this.toApiShift(this.shiftForFullMonth(employee, index)),
+        role: employee.role,
+        hub: employee.hub,
+        note: null,
+      })),
+    };
+
+    this.saving.set(true);
+    this.employeeService
+      .addEmployeeRoster(payload)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.employees.update((employees) => [
+            ...employees.filter((item) => item.EmployeeCode !== employee.EmployeeCode),
+            employee,
+          ]);
+          this.unassignedEmployees.update((employees) =>
+            employees.filter((item) => item.EmployeeCode !== employee.EmployeeCode),
+          );
+          this.closeUnassignedCalendar();
+          this.alertService.success('Roster Submitted', `${employee.EmployeeName} was added for ${this.monthLabel()}.`);
+        },
+        error: (error: unknown) => {
+          this.alertService.error('Roster Submit Failed', formatApiErrorMessage(error, 'Could not submit employee roster.'));
+        },
+      });
+  }
+
+  isAssignedShift(shift: ShiftCode): boolean {
+    const normalized = shift.trim().toLowerCase();
+    return normalized !== '' && normalized !== '+' && normalized !== 'null' && normalized !== 'undefined';
+  }
+
+  private toApiShift(shift: ShiftCode): string {
+    const normalized = shift.trim();
+    const lower = normalized.toLowerCase();
+    const workstation = this.workstationService.workstations().find((item) =>
+      [item.shift, item.code, item.name, item.description]
+        .some((value) => value.trim().toLowerCase() === lower),
+    );
+    const workstationCode = workstation?.code.trim() || '';
+    if (workstationCode && workstationCode.length <= 8) {
+      return workstationCode;
+    }
+    if (['m', 'morning', 'morning shift'].includes(lower)) {
+      return 'M';
+    }
+    if (['e', 'evening', 'evening shift'].includes(lower)) {
+      return 'E';
+    }
+    if (['n', 'night', 'night shift'].includes(lower)) {
+      return 'N';
+    }
+    if (['off', 'day off', 'scheduled day off'].includes(lower)) {
+      return 'OFF';
+    }
+    if (['hol', 'holiday'].includes(lower)) {
+      return 'HOL';
+    }
+    if (['l', 'leave'].includes(lower)) {
+      return 'L';
+    }
+    const compactCode = normalized
+      .split(/[^a-z0-9]+/i)
+      .filter(Boolean)
+      .map((word) => word[0])
+      .join('')
+      .slice(0, 3)
+      .toUpperCase();
+    return compactCode || normalized.slice(0, 3).toUpperCase();
+  }
+
+  private toApiEmployeeId(employeeCode: string): string {
+    const normalized = this.employeeService.normalizeEmployeeCodeValue(employeeCode).trim();
+    const numericCode = normalized.match(/^(?:emp[-\s]?)?(\d+)$/i)?.[1];
+    return numericCode ? `Emp-${numericCode.padStart(8, '0')}` : normalized;
+  }
+
+  openUnassignedShiftDialog(employee: RosterEmployee, dayIndex: number): void {
+    this.assignUnassignedDay(dayIndex);
+  }
+
   shiftFor(employee: RosterEmployee, dayIndex: number): ShiftCode {
-    return employee.shifts.length ? employee.shifts[dayIndex % employee.shifts.length] : '+';
+    if (!employee.shifts.length) {
+      return '+';
+    }
+    if (employee.shifts.length === this.fullMonthDays().length) {
+      const date = this.visibleDays()[dayIndex]?.date ?? dayIndex + 1;
+      return employee.shifts[date - 1] ?? '+';
+    }
+    return employee.shifts[dayIndex % employee.shifts.length];
+  }
+
+  shiftForFullMonth(employee: RosterEmployee, dayIndex: number): ShiftCode {
+    return employee.shifts[dayIndex] ?? '+';
   }
 
   toggleEmployee(employee: RosterEmployee, event: Event): void {
@@ -262,6 +481,11 @@ export class EmployeeRosterComponent implements OnInit {
     return workstation?.description.trim() || workstation?.name.trim() || this.shiftName(shift);
   }
 
+  monthDayLabel(dayDate: number): string {
+    const day = this.fullMonthDays().find((item) => item.date === dayDate);
+    return day ? `${day.weekday} ${day.date}` : String(dayDate);
+  }
+
   private descriptionHue(description: string): number {
     const normalizedDescription = description.trim().toLowerCase();
     if (normalizedDescription === 'morning') {
@@ -289,7 +513,7 @@ export class EmployeeRosterComponent implements OnInit {
 
   openShiftDialog(employee: RosterEmployee, dayIndex: number, event: MouseEvent): void {
     this.selectedCell.set({ employeeCode: employee.EmployeeCode, day: dayIndex });
-    this.shiftDialog.set({ employee, dayIndex, shift: this.shiftFor(employee, dayIndex) });
+    this.shiftDialog.set({ employee, dayIndex, dayDate: this.visibleDays()[dayIndex].date, shift: this.shiftFor(employee, dayIndex) });
     const popoverWidth = 350;
     const popoverHeight = Math.min(560, Math.max(220, window.innerHeight - 16));
     const gap = 10;
@@ -359,7 +583,15 @@ export class EmployeeRosterComponent implements OnInit {
     if (!dialog) {
       return;
     }
-    this.assignShift(dialog.shift);
+    if (this.unassignedCalendarEmployee()?.EmployeeCode === dialog.employee.EmployeeCode) {
+      const updatedEmployee = {
+        ...dialog.employee,
+        shifts: dialog.employee.shifts.map((shift, index) => index === dialog.dayIndex ? dialog.shift : shift),
+      };
+      this.unassignedCalendarEmployee.set(updatedEmployee);
+    } else {
+      this.assignShift(dialog.shift);
+    }
     this.closeShiftDialog();
   }
 
@@ -443,10 +675,10 @@ export class EmployeeRosterComponent implements OnInit {
 
     const payload = {
       data: this.employees().flatMap((employee) =>
-        this.visibleDays().map((day, dayIndex) => ({
-          employee_id: employee.EmployeeCode,
+        this.visibleDays().map((day) => ({
+          employee_id: this.toApiEmployeeId(employee.EmployeeCode),
           shift_date: this.rosterDate(day.date),
-          shift: this.shiftFor(employee, dayIndex),
+          shift: this.toApiShift(this.shiftFor(employee, day.date - 1)),
           role: employee.role,
           hub: this.selectedHub(),
           note: null,
@@ -491,6 +723,48 @@ export class EmployeeRosterComponent implements OnInit {
     };
   }
 
+  private toRosterEmployees(records: EmployeeRosterListRecord[]): RosterEmployee[] {
+    const grouped = new Map<string, { record: EmployeeRosterListRecord; shifts: string[] }>();
+    const monthDays = this.fullMonthDays();
+
+    for (const record of records) {
+      const employeeCode = this.normalizeRosterEmployeeCode(record.employee_id);
+      if (!employeeCode) {
+        continue;
+      }
+
+      const existing = grouped.get(employeeCode);
+      if (!existing) {
+        grouped.set(employeeCode, {
+          record,
+          shifts: monthDays.map(() => '+'),
+        });
+      }
+
+      const employee = grouped.get(employeeCode);
+      if (!employee) {
+        continue;
+      }
+
+      const date = record.shift_date ? new Date(record.shift_date).getDate() : 0;
+      const dayIndex = date - 1;
+      if (dayIndex >= 0 && dayIndex < employee.shifts.length && this.isAssignedShift(record.shift)) {
+        employee.shifts[dayIndex] = record.shift;
+      }
+    }
+
+    return Array.from(grouped.values()).map(({ record, shifts }, index) => ({
+      ...this.toRosterEmployee(this.toApplicationRecord(record), index),
+      shifts,
+    }));
+  }
+
+  private normalizeRosterEmployeeCode(value: string | null | undefined): string {
+    const normalized = this.employeeService.normalizeEmployeeCodeValue(String(value ?? '')).trim();
+    const numericCode = normalized.match(/^(?:emp[-\s]?)?(\d+)$/i)?.[1];
+    return numericCode ? `emp-${numericCode.padStart(8, '0')}` : normalized.toLowerCase();
+  }
+
   private toApplicationRecord(record: EmployeeRosterListRecord): ApplicationFormRecord {
     return {
       EmployeeCode: record.employee_id,
@@ -505,4 +779,6 @@ export class EmployeeRosterComponent implements OnInit {
       status: '',
     };
   }
+
+
 }
