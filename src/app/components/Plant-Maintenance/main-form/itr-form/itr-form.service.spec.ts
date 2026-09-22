@@ -55,4 +55,21 @@ describe('ItrFormService', () => {
     expect(records[0].documentNo).toBe('42');
     expect(records[0].machineId).toBe('ITEM-1');
   });
+
+  it('rejects a HTTP success response when the API reports failure', () => {
+    let errorMessage = '';
+    service.addItrForm({} as never).subscribe({
+      error: (error: Error) => {
+        errorMessage = error.message;
+      },
+    });
+
+    const req = httpMock.expectOne(apiUrl('itr_submit_in_sap'));
+    req.flush({
+      success: false,
+      error: "Item is not defined as an Inventory Item , 'FA-00000340'",
+    });
+
+    expect(errorMessage).toBe("Item is not defined as an Inventory Item , 'FA-00000340'");
+  });
 });

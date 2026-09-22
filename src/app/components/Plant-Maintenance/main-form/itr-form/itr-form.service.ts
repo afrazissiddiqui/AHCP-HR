@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { apiUrl } from '../../../../config/api.config';
+import { formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
 export type ItrFormStatus = 'Draft' | 'Submitted' | 'In Review' | 'Approved' | 'Rejected';
 
@@ -926,6 +927,7 @@ export interface ItrFormApiResponse {
   status?: boolean;
   success?: boolean;
   message?: string;
+  error?: string;
   data?: Record<string, unknown>;
 }
 
@@ -1700,7 +1702,7 @@ export class ItrFormService {
     return this.http.post<ItrFormApiResponse>(
       ITR_FORM_SAP_SUBMIT_URL,
       buildItrSapSubmitPayload(entry),
-    );
+    ).pipe(map((response) => this.ensureSuccessfulResponse(response)));
   }
 
   updateItrForm(id: string | number, entry: ItrFormAddInput): Observable<ItrFormApiResponse> {
@@ -1708,7 +1710,7 @@ export class ItrFormService {
     return this.http.post<ItrFormApiResponse>(
       `${ITR_FORM_UPDATE_URL}/${identifier}`,
       buildItrFormAddPayload(entry),
-    );
+    ).pipe(map((response) => this.ensureSuccessfulResponse(response)));
   }
 
   deleteItrForm(id: string | number): Observable<ItrFormApiResponse> {
@@ -1738,6 +1740,16 @@ export class ItrFormService {
 
   getById(id: string): ItrFormRecord | undefined {
     return this._records().find((r) => r.id === id);
+  }
+
+  private ensureSuccessfulResponse(response: ItrFormApiResponse): ItrFormApiResponse {
+    if (response?.status === false || response?.success === false) {
+      throw new Error(
+        formatSapApiFailureMessage(response, 'The ITR Form could not be submitted.'),
+      );
+    }
+
+    return response;
   }
 
   private mapDetailResponse(response: unknown, id: string | number): ItrFormRecord {
