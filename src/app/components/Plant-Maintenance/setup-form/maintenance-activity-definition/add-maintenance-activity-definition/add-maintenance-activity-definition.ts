@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
+import { resolveBranchNameFromBplId } from '../../../../../utils/branch-name.util';
 import { MachineSearchOption, resolveMachineIdentity } from '../../plant-maintenance-machine.model';
 import { PlantMaintenanceMachineItemService } from '../../plant-maintenance-machine-item.service';
 import { SubComponentDefinitionService } from '../../sub-component-definition/sub-component-definition.service';
@@ -1001,7 +1002,11 @@ export class AddMaintenanceActivityDefinitionComponent implements OnInit {
     if (!trimmed || trimmed === '—') {
       return '';
     }
-    return (LOCATION_OPTIONS as readonly string[]).includes(trimmed) ? trimmed : '';
+
+    const resolved = resolveBranchNameFromBplId(trimmed);
+    return LOCATION_OPTIONS.includes(resolved as (typeof LOCATION_OPTIONS)[number])
+      ? resolved
+      : '';
   }
 
 }

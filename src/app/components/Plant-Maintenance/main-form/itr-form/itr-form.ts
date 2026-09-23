@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
@@ -64,9 +65,9 @@ export class ItrFormComponent implements OnInit {
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
-  showViewDialog = false;
-  detailLoading = false;
-  selectedRecord: ItrFormRecord | null = null;
+  readonly showViewDialog = signal(false);
+  readonly detailLoading = signal(false);
+  readonly selectedRecord = signal<ItrFormRecord | null>(null);
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
   ngOnInit(): void {
@@ -175,18 +176,24 @@ export class ItrFormComponent implements OnInit {
       return;
     }
 
-    this.showViewDialog = true;
-    this.selectedRecord = null;
-    this.detailLoading = true;
+    this.showViewDialog.set(true);
+    this.selectedRecord.set(null);
+    this.detailLoading.set(true);
 
     this.itrService.fetchItrFormDetail(item.id).subscribe({
       next: (detail) => {
-        this.selectedRecord = detail;
-        this.detailLoading = false;
+        this.selectedRecord.set(detail);
+        this.detailLoading.set(false);
       },
       error: (error: unknown) => {
-        this.detailLoading = false;
-        this.showViewDialog = false;
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          this.selectedRecord.set(item);
+          this.detailLoading.set(false);
+          return;
+        }
+
+        this.detailLoading.set(false);
+        this.showViewDialog.set(false);
         void this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load ITR Form details.'),
@@ -196,9 +203,9 @@ export class ItrFormComponent implements OnInit {
   }
 
   closeViewDialog(): void {
-    this.showViewDialog = false;
-    this.selectedRecord = null;
-    this.detailLoading = false;
+    this.showViewDialog.set(false);
+    this.selectedRecord.set(null);
+    this.detailLoading.set(false);
   }
 
   updateRecord(item: ItrFormRecord): void {

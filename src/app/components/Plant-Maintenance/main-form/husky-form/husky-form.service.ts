@@ -853,6 +853,7 @@ export interface HuskyFormAddInput {
   robotCheckpoints: HuskySectionCheckpoint[];
   measurements: HuskyMeasurementsData;
   levelParallelism: HuskyLevelParallelismData;
+  recommendations: string;
 }
 
 export interface HuskyFormSectionPayload {
@@ -876,6 +877,7 @@ export interface HuskyFormAddPayload {
   submit_date: string;
   document_no: string;
   status: string;
+  recommendations: string;
   sections: HuskyFormSectionPayload[];
 }
 
@@ -1077,6 +1079,7 @@ export function buildHuskyFormAddPayload(entry: HuskyFormAddInput): HuskyFormAdd
     submit_date: entry.submitDate?.trim() || formatDateValue(new Date()),
     document_no: entry.documentNo?.trim() || '',
     status: entry.status?.trim() || 'Draft',
+    recommendations: entry.recommendations.trim(),
     sections,
   };
 }

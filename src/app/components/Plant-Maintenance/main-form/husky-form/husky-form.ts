@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
@@ -11,6 +11,7 @@ import { PlantMaintenanceMainLayoutService } from '../plant-maintenance-main-lay
 import { HuskyFormRecord, HuskyFormService } from './husky-form.service';
 
 type HuskyTableColumnKey =
+  | 'id'
   | 'machineId'
   | 'machineName'
   | 'maintenanceType'
@@ -64,9 +65,9 @@ export class HuskyFormComponent implements OnInit {
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
-  showViewDialog = false;
-  detailLoading = false;
-  selectedRecord: HuskyFormRecord | null = null;
+  readonly showViewDialog = signal(false);
+  readonly detailLoading = signal(false);
+  readonly selectedRecord = signal<HuskyFormRecord | null>(null);
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
   ngOnInit(): void {
@@ -83,6 +84,7 @@ export class HuskyFormComponent implements OnInit {
   readonly rowActions: RowActionKey[] = ['view', 'update', 'delete'];
 
   readonly columns: Array<{ key: HuskyTableColumnKey; label: string; visible: boolean }> = [
+    { key: 'id', label: 'ID', visible: true },
     { key: 'machineId', label: 'Machine ID', visible: true },
     { key: 'machineName', label: 'Machine Name', visible: true },
     { key: 'maintenanceType', label: 'Maintenance Type', visible: true },
@@ -175,18 +177,18 @@ export class HuskyFormComponent implements OnInit {
       return;
     }
 
-    this.showViewDialog = true;
-    this.selectedRecord = null;
-    this.detailLoading = true;
+    this.showViewDialog.set(true);
+    this.selectedRecord.set(null);
+    this.detailLoading.set(true);
 
     this.huskyService.fetchHuskyFormDetail(item.id).subscribe({
       next: (detail) => {
-        this.selectedRecord = detail;
-        this.detailLoading = false;
+        this.selectedRecord.set(detail);
+        this.detailLoading.set(false);
       },
       error: (error: unknown) => {
-        this.detailLoading = false;
-        this.showViewDialog = false;
+        this.detailLoading.set(false);
+        this.showViewDialog.set(false);
         void this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load Husky form details.'),
@@ -196,9 +198,9 @@ export class HuskyFormComponent implements OnInit {
   }
 
   closeViewDialog(): void {
-    this.showViewDialog = false;
-    this.selectedRecord = null;
-    this.detailLoading = false;
+    this.showViewDialog.set(false);
+    this.selectedRecord.set(null);
+    this.detailLoading.set(false);
   }
 
   updateRecord(item: HuskyFormRecord): void {

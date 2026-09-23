@@ -170,53 +170,53 @@
   </div>
 </div>
 
-<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog">
+<div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+<div class="js-detail-modal" *ngIf="showViewDialog()">
   <div class="js-modal-header">
-    <h2>ITR Form{{ selectedRecord ? ' — ' + selectedRecord.machineName : '' }}</h2>
+    <h2>ITR Form{{ selectedRecord() ? ' — ' + selectedRecord()!.machineName : '' }}</h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">
-    <p *ngIf="detailLoading">Loading ITR Form details...</p>
-    <ng-container *ngIf="!detailLoading && selectedRecord">
+    <p *ngIf="detailLoading()">Loading ITR Form details...</p>
+    <ng-container *ngIf="!detailLoading() && selectedRecord()">
     <div class="js-detail-section">
       <h3>Machine Information</h3>
       <div class="js-detail-grid">
         <div class="js-detail-item">
           <label>Machine ID:</label>
-          <span>{{ selectedRecord.machineId }}</span>
+          <span>{{ selectedRecord()!.machineId }}</span>
         </div>
         <div class="js-detail-item">
           <label>Machine Name:</label>
-          <span>{{ selectedRecord.machineName }}</span>
+          <span>{{ selectedRecord()!.machineName }}</span>
         </div>
         <div class="js-detail-item">
           <label>Maintenance Type:</label>
-          <span>{{ selectedRecord.maintenanceType }}</span>
+          <span>{{ selectedRecord()!.maintenanceType }}</span>
         </div>
         <div class="js-detail-item">
           <label>Maintenance Frequency:</label>
-          <span>{{ selectedRecord.maintenanceFrequency }}</span>
+          <span>{{ selectedRecord()!.maintenanceFrequency }}</span>
         </div>
         <div class="js-detail-item">
           <label>SN# (Machine Serial No.):</label>
-          <span>{{ selectedRecord.serialNo || '—' }}</span>
+          <span>{{ selectedRecord()!.serialNo || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Mold #:</label>
-          <span>{{ selectedRecord.moldNo || '—' }}</span>
+          <span>{{ selectedRecord()!.moldNo || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Hot Runner Job #:</label>
-          <span>{{ selectedRecord.hotRunnerJobNo || '—' }}</span>
+          <span>{{ selectedRecord()!.hotRunnerJobNo || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Hour Meter Reading:</label>
-          <span>{{ selectedRecord.hourMeterReading || '—' }}</span>
+          <span>{{ selectedRecord()!.hourMeterReading || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Robot Serial #:</label>
-          <span>{{ selectedRecord.robotSerialNo || '—' }}</span>
+          <span>{{ selectedRecord()!.robotSerialNo || '—' }}</span>
         </div>
       </div>
     </div>
@@ -225,23 +225,23 @@
       <div class="js-detail-grid">
         <div class="js-detail-item">
           <label>Inspector:</label>
-          <span>{{ selectedRecord.inspector || '—' }}</span>
+          <span>{{ selectedRecord()!.inspector || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Inspection Date:</label>
-          <span>{{ selectedRecord.inspectionDate || '—' }}</span>
+          <span>{{ selectedRecord()!.inspectionDate || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Submit Date:</label>
-          <span>{{ selectedRecord.submitDate || '—' }}</span>
+          <span>{{ selectedRecord()!.submitDate || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Document No.:</label>
-          <span>{{ selectedRecord.documentNo || '—' }}</span>
+          <span>{{ selectedRecord()!.documentNo || '—' }}</span>
         </div>
         <div class="js-detail-item">
           <label>Status:</label>
-          <span>{{ selectedRecord.status || '—' }}</span>
+          <span>{{ selectedRecord()!.status || '—' }}</span>
         </div>
       </div>
     </div>
@@ -250,10 +250,10 @@
   <div class="js-modal-footer">
     <button type="button" class="btn-secondary scd-modal-close-btn" (click)="closeViewDialog()">Close</button>
     <button
-      *ngIf="hasRowAction('update') && !detailLoading && selectedRecord"
+      *ngIf="hasRowAction('update') && !detailLoading() && selectedRecord()"
       type="button"
       class="scd-update-btn"
-      (click)="updateRecord(selectedRecord); closeViewDialog()"
+      (click)="updateRecord(selectedRecord()!); closeViewDialog()"
     >
       Update
     </button>

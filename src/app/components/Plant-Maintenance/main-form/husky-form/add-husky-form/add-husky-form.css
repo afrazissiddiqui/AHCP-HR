@@ -813,12 +813,39 @@
   width: 24%;
 }
 
+.husky-measurement-table:not(.husky-measurement-table--wide) th:nth-child(1),
+.husky-measurement-table:not(.husky-measurement-table--wide) td:nth-child(1) {
+  width: 34%;
+}
+
+.husky-measurement-table:not(.husky-measurement-table--wide) th:nth-child(2),
+.husky-measurement-table:not(.husky-measurement-table--wide) td:nth-child(2) {
+  width: 18%;
+}
+
+.husky-measurement-table:not(.husky-measurement-table--wide) th:nth-child(3),
+.husky-measurement-table:not(.husky-measurement-table--wide) td:nth-child(3),
+.husky-measurement-table:not(.husky-measurement-table--wide) th:nth-child(4),
+.husky-measurement-table:not(.husky-measurement-table--wide) td:nth-child(4) {
+  width: 24%;
+}
+
 .husky-measurement-table--wide .husky-measurement-table__label-col {
   width: 30%;
 }
 
 .husky-measurement-table--wide .husky-measurement-table__reference-col,
 .husky-measurement-table--wide .husky-measurement-table__entry-col {
+  width: 17.5%;
+}
+
+.husky-measurement-table--wide th:nth-child(1),
+.husky-measurement-table--wide td:nth-child(1) {
+  width: 30%;
+}
+
+.husky-measurement-table--wide th:nth-child(n + 2),
+.husky-measurement-table--wide td:nth-child(n + 2) {
   width: 17.5%;
 }
 

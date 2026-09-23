@@ -579,6 +579,12 @@
                   <h4 class="husky-measurement-block__title">Accumulator Nitrogen Pressure</h4>
                   <div class="husky-measurement-table-wrap">
                     <table class="mountain-table husky-measurement-table">
+                      <colgroup>
+                        <col style="width: 34%" />
+                        <col style="width: 18%" />
+                        <col style="width: 24%" />
+                        <col style="width: 24%" />
+                      </colgroup>
                       <thead>
                         <tr>
                           <th class="husky-measurement-table__label-col">Accumulator</th>
@@ -659,8 +665,10 @@
                         @for (row of measurements().extruderSpeedControl; track row.key) {
                           <tr>
                             <td class="husky-measurement-table__label">{{ row.item }}</td>
-                            <td class="husky-measurement-table__reference">{{ row.setValue }}</td>
-                            <td class="husky-measurement-table__entry">
+                            <td class="husky-measurement-table__reference husky-measurement-table__set-value">
+                              {{ row.setValue }}
+                            </td>
+                            <td class="husky-measurement-table__entry husky-measurement-table__actual-value">
                               <input
                                 type="text"
                                 class="husky-measurement-input"
@@ -670,7 +678,7 @@
                                 placeholder="Manual entry"
                               />
                             </td>
-                            <td class="husky-measurement-table__entry">
+                            <td class="husky-measurement-table__entry husky-measurement-table__pressure-value">
                               <input
                                 type="text"
                                 class="husky-measurement-input"
@@ -691,6 +699,13 @@
                   <h4 class="husky-measurement-block__title">Tonnage Test</h4>
                   <div class="husky-measurement-table-wrap">
                     <table class="mountain-table husky-measurement-table husky-measurement-table--wide">
+                      <colgroup>
+                        <col style="width: 30%" />
+                        <col style="width: 17.5%" />
+                        <col style="width: 17.5%" />
+                        <col style="width: 17.5%" />
+                        <col style="width: 17.5%" />
+                      </colgroup>
                       <thead>
                         <tr>
                           <th class="husky-measurement-table__label-col">Item</th>
@@ -704,10 +719,16 @@
                         @for (row of measurements().tonnageTest; track row.key) {
                           <tr>
                             <td class="husky-measurement-table__label">{{ row.item }}</td>
-                            <td class="husky-measurement-table__reference">{{ row.t0Min }}</td>
-                            <td class="husky-measurement-table__reference">{{ row.t10Min }}</td>
-                            <td class="husky-measurement-table__reference">{{ row.authorizedLossTons }}</td>
-                            <td class="husky-measurement-table__entry">
+                            <td class="husky-measurement-table__reference husky-measurement-table__t0-value">
+                              {{ row.t0Min }}
+                            </td>
+                            <td class="husky-measurement-table__reference husky-measurement-table__t10-value">
+                              {{ row.t10Min }}
+                            </td>
+                            <td class="husky-measurement-table__reference husky-measurement-table__authorized-loss-value">
+                              {{ row.authorizedLossTons }}
+                            </td>
+                            <td class="husky-measurement-table__entry husky-measurement-table__actual-loss-value">
                               <input
                                 type="text"
                                 class="husky-measurement-input"

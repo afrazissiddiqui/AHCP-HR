@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ColumnResizeDirective } from '../../../../column-resize';
@@ -46,9 +46,9 @@ export class MaintenanceActivityDefinitionComponent implements OnInit {
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   showDialog = false;
-  showViewDialog = false;
-  detailLoading = false;
-  selectedRecord: MaintenanceActivityMachineRecord | null = null;
+  readonly showViewDialog = signal(false);
+  readonly detailLoading = signal(false);
+  readonly selectedRecord = signal<MaintenanceActivityMachineRecord | null>(null);
   activeTab: 'sort' | 'filter' | 'group' = 'filter';
 
   ngOnInit(): void {
@@ -157,18 +157,18 @@ export class MaintenanceActivityDefinitionComponent implements OnInit {
       return;
     }
 
-    this.showViewDialog = true;
-    this.selectedRecord = null;
-    this.detailLoading = true;
+    this.showViewDialog.set(true);
+    this.selectedRecord.set(null);
+    this.detailLoading.set(true);
 
     this.activityService.fetchMaintenanceActivityDefinitionDetail(item.id).subscribe({
       next: (detail) => {
-        this.selectedRecord = detail;
-        this.detailLoading = false;
+        this.selectedRecord.set(detail);
+        this.detailLoading.set(false);
       },
       error: (error: unknown) => {
-        this.detailLoading = false;
-        this.showViewDialog = false;
+        this.detailLoading.set(false);
+        this.showViewDialog.set(false);
         void this.alertService.error(
           'Load Failed',
           formatApiErrorMessage(error, 'Failed to load maintenance activity definition details.'),
@@ -178,9 +178,9 @@ export class MaintenanceActivityDefinitionComponent implements OnInit {
   }
 
   closeViewDialog(): void {
-    this.showViewDialog = false;
-    this.selectedRecord = null;
-    this.detailLoading = false;
+    this.showViewDialog.set(false);
+    this.selectedRecord.set(null);
+    this.detailLoading.set(false);
   }
 
   updateRecord(item: MaintenanceActivityMachineRecord): void {

@@ -170,41 +170,41 @@
   </div>
 </div>
 
-<div class="dialog-backdrop" *ngIf="showViewDialog" (click)="closeViewDialog()"></div>
-<div class="js-detail-modal" *ngIf="showViewDialog">
+<div class="dialog-backdrop" *ngIf="showViewDialog()" (click)="closeViewDialog()"></div>
+<div class="js-detail-modal" *ngIf="showViewDialog()">
   <div class="js-modal-header">
-    <h2>Master Form{{ selectedRecord ? ' — ' + selectedRecord.machineName : '' }}</h2>
+    <h2>Master Form{{ selectedRecord() ? ' — ' + selectedRecord()!.machineName : '' }}</h2>
     <button type="button" class="js-close-modal" (click)="closeViewDialog()">×</button>
   </div>
   <div class="js-modal-body">
-    <p *ngIf="detailLoading">Loading plant maintenance master form details...</p>
-    <ng-container *ngIf="!detailLoading && selectedRecord">
+    <p *ngIf="detailLoading()">Loading plant maintenance master form details...</p>
+    <ng-container *ngIf="!detailLoading() && selectedRecord()">
       <div class="js-detail-section">
         <h3>Machine Information</h3>
         <div class="js-detail-grid">
           <div class="js-detail-item">
             <label>Machine ID:</label>
-            <span>{{ selectedRecord.machineId }}</span>
+            <span>{{ selectedRecord()!.machineId }}</span>
           </div>
           <div class="js-detail-item">
             <label>Machine Name:</label>
-            <span>{{ selectedRecord.machineName }}</span>
+            <span>{{ selectedRecord()!.machineName }}</span>
           </div>
           <div class="js-detail-item">
             <label>Machine Type:</label>
-            <span>{{ selectedRecord.machineType }}</span>
+            <span>{{ selectedRecord()!.machineType }}</span>
           </div>
           <div class="js-detail-item">
             <label>Maintenance Nature:</label>
-            <span>{{ selectedRecord.maintenanceNature }}</span>
+            <span>{{ selectedRecord()!.maintenanceNature }}</span>
           </div>
           <div class="js-detail-item">
             <label>Plant Maintenance Frequency:</label>
-            <span>{{ selectedRecord.plantMaintenanceFrequency }}</span>
+            <span>{{ selectedRecord()!.plantMaintenanceFrequency }}</span>
           </div>
           <div class="js-detail-item">
             <label>Plant Maintenance Type:</label>
-            <span>{{ selectedRecord.plantMaintenanceType }}</span>
+            <span>{{ selectedRecord()!.plantMaintenanceType }}</span>
           </div>
         </div>
       </div>
@@ -213,21 +213,21 @@
         <div class="js-detail-grid">
           <div class="js-detail-item">
             <label>Start Date:</label>
-            <span>{{ selectedRecord.startDate || '—' }}</span>
+            <span>{{ selectedRecord()!.startDate || '—' }}</span>
           </div>
           <div class="js-detail-item">
             <label>End Date:</label>
-            <span>{{ selectedRecord.endDate || '—' }}</span>
+            <span>{{ selectedRecord()!.endDate || '—' }}</span>
           </div>
           <div class="js-detail-item">
             <label>Duration (days):</label>
-            <span>{{ selectedRecord.duration ?? '—' }}</span>
+            <span>{{ selectedRecord()!.duration ?? '—' }}</span>
           </div>
         </div>
       </div>
       <div class="js-detail-section">
         <h3>Spare Parts</h3>
-        <div *ngIf="selectedRecord.spareParts.length; else noSpareParts">
+        <div *ngIf="selectedRecord()!.spareParts.length; else noSpareParts">
           <table class="mountain-table pmm-view-spare-parts-table">
             <thead>
               <tr>
@@ -239,7 +239,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let row of selectedRecord.spareParts">
+              <tr *ngFor="let row of selectedRecord()!.spareParts">
                 <td>{{ row.sparePartId }}</td>
                 <td>{{ row.sparePartDescription }}</td>
                 <td>{{ row.quantity }}</td>
@@ -349,10 +349,10 @@
   <div class="js-modal-footer">
     <button type="button" class="btn-secondary scd-modal-close-btn" (click)="closeViewDialog()">Close</button>
     <button
-      *ngIf="hasRowAction('update') && !detailLoading && selectedRecord"
+      *ngIf="hasRowAction('update') && !detailLoading() && selectedRecord()"
       type="button"
       class="scd-update-btn"
-      (click)="updateRecord(selectedRecord); closeViewDialog()"
+      (click)="updateRecord(selectedRecord()!); closeViewDialog()"
     >
       Update
     </button>

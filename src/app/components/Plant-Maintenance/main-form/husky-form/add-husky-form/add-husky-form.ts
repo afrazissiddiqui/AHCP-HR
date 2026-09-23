@@ -577,6 +577,7 @@ export class AddHuskyFormComponent implements OnInit, AfterViewInit, OnDestroy {
       submitDate: this.submitDate().trim(),
       documentNo: this.documentNo().trim(),
       status: this.status().trim() || 'Draft',
+      recommendations: this.recommendations().trim(),
       kpiRows: this.cloneKpiRows(this.kpiRows()),
       safetyCheckpoints: this.cloneSafetyCheckpoints(this.safetyCheckpoints()),
       hydraulicCheckpoints: this.cloneHydraulicCheckpoints(this.hydraulicCheckpoints()),
