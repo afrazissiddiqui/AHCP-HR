@@ -115,8 +115,9 @@
               <label class="cjr-label-required">Request Type:</label>
               <select [ngModel]="requestType()" (ngModelChange)="onRequestTypeChange($event)">
                 <option value="">Select Type</option>
-                <option value="Loan">Loan</option>
-                <option value="Salary Advance">Salary Advance</option>
+                @for (type of requestTypeOptions(); track type) {
+                  <option [value]="type">{{ type }}</option>
+                }
               </select>
             </div>
           </div>

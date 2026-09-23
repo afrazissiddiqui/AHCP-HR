@@ -13,6 +13,7 @@ import { finalize } from 'rxjs';
 import { AlertService } from '../../../../../services/alert.service';
 import { LoanAdvanceRecord, LoanAdvancePayload, LoanAdvanceService } from '../../../../../services/loan-advance.service';
 import { ApplicationFormService, ApplicationFormRecord } from '../../../../../services/application-form.service';
+import { GlAccountDeterminationService } from '../../../../../services/gl-account-determination.service';
 import { formatApiErrorMessage } from '../../../../../utils/api-error.util';
 import { formatApiToDateSlash, formatDateForInput, formatDateSlashToApi } from '../../../../../utils/date-format.util';
 import {
@@ -63,6 +64,7 @@ export class AddLoanAdvanceComponent implements OnInit {
     private readonly alertService: AlertService,
     private readonly loanAdvanceService: LoanAdvanceService,
     private readonly applicationFormService: ApplicationFormService,
+    private readonly glAccountDeterminationService: GlAccountDeterminationService,
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
@@ -91,6 +93,7 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly employeeCategory = signal('');
   protected readonly reportingManager = signal('');
   protected readonly requestType = signal('');
+  protected readonly requestTypeOptions = signal<string[]>([]);
   protected readonly requestDate = signal(this.getTodayDateDisplay());
   protected readonly status = signal('');
   protected readonly joiningDate = signal('');
@@ -185,6 +188,19 @@ export class AddLoanAdvanceComponent implements OnInit {
   protected readonly saving = signal(false);
 
   ngOnInit(): void {
+    this.glAccountDeterminationService.fetchLoanAdvanceRequestTypeOptions().subscribe({
+      next: (options) => {
+        this.requestTypeOptions.set(options);
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        void this.alertService.error(
+          'Load Failed',
+          formatApiErrorMessage(error, 'Failed to load loan/advance request types.'),
+        );
+      },
+    });
+
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       next: () => {
         this.employeeOptions.set(this.buildEmployeeOptions());

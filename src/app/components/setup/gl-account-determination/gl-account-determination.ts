@@ -276,12 +276,15 @@ export class GlAccountDeterminationComponent implements OnInit {
       return;
     }
 
+    const formName = this.formNameForValue(record.Form);
+    const formValue = typeof record.Form === 'number' ? record.Form : this.formOptions.find((option) => option.name.toLowerCase() === String(record.Form).trim().toLowerCase())?.value ?? null;
+
     this.editingId.set(record.Id);
     this.rows = [
       {
         id: newId(),
-        formName: this.formNameForValue(record.Form),
-        formValue: record.Form || null,
+        formName,
+        formValue,
         glItemType: record.Type,
         salaryGlAccountCode: record.Code,
         salaryGlAccountName: record.Name,
@@ -400,9 +403,12 @@ export class GlAccountDeterminationComponent implements OnInit {
   }
 
   private toPayload(row: GlAccountDeterminationRow): GlAccountDeterminationAddPayload {
+    const formName = row.formName.trim();
+    const itemType = row.glItemType.trim() || 'item';
+
     return {
-      form: row.formValue ?? 0,
-      type: row.glItemType.trim(),
+      form: formName || (row.formValue ?? 0),
+      type: itemType,
       code: row.salaryGlAccountCode.trim(),
       name: row.salaryGlAccountName.trim(),
       business_partner: row.businessPartner.trim(),
@@ -414,8 +420,11 @@ export class GlAccountDeterminationComponent implements OnInit {
     };
   }
 
-  formNameForValue(value: number): string {
-    return this.formOptions.find((option) => option.value === value)?.name ?? '';
+  formNameForValue(value: number | string): string {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+    return this.formOptions.find((option) => option.value === Number(value))?.name ?? '';
   }
 
   private updateRecord(id: number, row: GlAccountDeterminationRow): void {

@@ -5,21 +5,21 @@ import { glAccountBranchLabel } from '../components/setup/gl-account-determinati
 import { apiUrl } from '../config/api.config';
 
 export interface GlAccountDeterminationAddPayload {
-  form: number;
+  form: number | string;
   type: string;
   code: string;
   name: string;
   branch: string;
   debit_credit_type: string;
   business_partner: string;
-  vendor_for_expense_reimbursement: string;
-  vendor_for_loans: string;
-  vendor_for_advances: string;
+  vendor_for_expense_reimbursement?: string;
+  vendor_for_loans?: string;
+  vendor_for_advances?: string;
 }
 
 export interface GlAccountDeterminationRecord {
   Id: number;
-  Form: number;
+  Form: number | string;
   Type: string;
   Code: string;
   Name: string;
@@ -41,6 +41,8 @@ const GL_ACCOUNT_DETERMINATION_ADD_URL = apiUrl('gl-account-determination-add');
 const GL_ACCOUNT_DETERMINATION_UPDATE_URL = apiUrl('gl-account-determination-update');
 const GL_ACCOUNT_DETERMINATION_DELETE_URL = apiUrl('gl-account-determination-delete');
 const INVENTORY_ACCOUNTS_URL = apiUrl('inventory_accounts');
+const EXPENSE_REIMBURSEMENT_FORM_VALUE = 6;
+const LOAN_ADVANCE_FORM_VALUE = 7;
 
 @Injectable({
   providedIn: 'root',
@@ -82,6 +84,22 @@ export class GlAccountDeterminationService {
         Array.from(
           new Set(
             records
+              .filter((record) => this.isExpenseReimbursementRecord(record))
+              .map((record) => record.Type.trim())
+              .filter((type) => type),
+          ),
+        ),
+      ),
+    );
+  }
+
+  fetchLoanAdvanceRequestTypeOptions(): Observable<string[]> {
+    return this.fetchGlAccountDeterminations().pipe(
+      map((records) =>
+        Array.from(
+          new Set(
+            records
+              .filter((record) => this.isFormRecord(record, LOAN_ADVANCE_FORM_VALUE, 'loan/advance form'))
               .map((record) => record.Type.trim())
               .filter((type) => type),
           ),
@@ -188,9 +206,12 @@ export class GlAccountDeterminationService {
 
   private mapApiItemToRecord(item: Record<string, unknown>): GlAccountDeterminationRecord {
     const sources = [item];
+    const formValueRaw = this.pickString(sources, ['Form', 'form', 'FormName', 'form_name', 'FormId', 'form_id']);
+    const formValue = formValueRaw !== '' && /^\d+$/.test(formValueRaw) ? Number.parseInt(formValueRaw, 10) : formValueRaw;
+
     return {
       Id: this.pickNumber(sources, ['Id', 'id', 'ID']),
-      Form: this.pickNumber(sources, ['Form', 'form', 'FormId', 'form_id']),
+      Form: formValue,
       Type: this.pickString(sources, ['Type', 'type', 'glItemType', 'gl_item_type']),
       Code: this.pickString(sources, ['Code', 'code', 'salaryGlAccountCode', 'salary_gl_account_code']),
       Name: this.pickString(sources, ['Name', 'name', 'salaryGlAccountName', 'salary_gl_account_name']),
@@ -221,6 +242,22 @@ export class GlAccountDeterminationService {
         'vendor_for_advances',
       ]),
     };
+  }
+
+  private isExpenseReimbursementRecord(record: GlAccountDeterminationRecord): boolean {
+    return this.isFormRecord(record, EXPENSE_REIMBURSEMENT_FORM_VALUE, 'expense reimbursement form');
+  }
+
+  private isFormRecord(
+    record: GlAccountDeterminationRecord,
+    formValue: number,
+    formName: string,
+  ): boolean {
+    if (record.Form === formValue) {
+      return true;
+    }
+
+    return String(record.Form).trim().toLowerCase() === formName;
   }
 
   private pickString(sources: Array<Record<string, unknown>>, keys: string[]): string {

@@ -4,9 +4,9 @@ export type GlAccountBranchOption = {
 };
 
 export const GL_ACCOUNT_BRANCH_OPTIONS: GlAccountBranchOption[] = [
-  { code: '02', name: 'AHCP_Peshawar' },
-  { code: '01', name: 'AHCP_HO' },
-  { code: '03', name: 'AHCP_Faisalabad' },
+  { code: '1', name: 'AHCP_Peshawar' },
+  { code: '2', name: 'AHCP_HO' },
+  { code: '3', name: 'AHCP_Faisalabad' },
 ];
 
 export function glAccountBranchCode(name: string): string {
@@ -26,9 +26,9 @@ export function glAccountBranchLabel(codeOrName: string): string {
 }
 
 const LEGACY_BRANCH_ALIASES: Record<string, string> = {
-  'AHCP_ Peshawar': '02',
-  'AHCP_ HO': '01',
-  'AHCP_ Faisalabad': '03',
+  'AHCP_ Peshawar': '1',
+  'AHCP_ HO': '2',
+  'AHCP_ Faisalabad': '3',
 };
 
 /** Resolves a branch display name or legacy label to the API branch code. */
