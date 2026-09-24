@@ -3,6 +3,7 @@ import {
   computeGratuity,
   computeGrossSalaryBreakdown,
   computeMedicalAllowance,
+  computeNetPayable,
 } from '../../payroll-setup/payroll-setup.service';
 
 describe('computeGrossSalaryBreakdown', () => {
@@ -63,5 +64,28 @@ describe('computeGrossSalaryBreakdown', () => {
 
     expect(computeGratuity(breakdown.grossSalaryInBank, '2024-01-01', asOf)).toBeCloseTo(45500, 2);
     expect(computeGratuity(1092000, '2024-01-01', asOf)).toBeCloseTo(91000, 2);
+  });
+});
+
+describe('computeNetPayable', () => {
+  it('calculates gross payable using allowances, gratuity, and deductions', () => {
+    expect(
+      computeNetPayable({
+        basicSalary: 100000,
+        medicalAllowance: 10000,
+        fuelAllowance: 5000,
+        mobileAllowance: 2000,
+        carAllowance: 3000,
+        otherAllowances: 1000,
+        bonus: 4000,
+        overtime: 6000,
+        providentFund: 8000,
+        eobi: 1000,
+        arrears: 7000,
+        gratuity: 2500,
+        loanInstallment: 3000,
+        otherDeductions: 1500,
+      }),
+    ).toBe(127000);
   });
 });

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
@@ -68,6 +68,7 @@ const DEFAULT_PURCHASE_REQUEST_EMPLOYEE_CODE = 'Emp-00000100';
   imports: [CommonModule, FormsModule, PageToolbarComponent],
   templateUrl: './purchase-request.html',
   styleUrls: ['../../sample-inspection-request/sample-inspection-request.css', '../../miscellaneous/miscellaneous-form.css', './purchase-request.css'],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class PurchaseRequestComponent implements OnInit {
   private readonly router = inject(Router);

@@ -83,6 +83,7 @@ export type PayrollSetupAmounts = Pick<
 export function computeNetPayable(amounts: PayrollSetupAmounts): number {
   const earnings =
     amounts.basicSalary +
+    amounts.medicalAllowance +
     amounts.fuelAllowance +
     amounts.mobileAllowance +
     amounts.carAllowance +
@@ -93,10 +94,9 @@ export function computeNetPayable(amounts: PayrollSetupAmounts): number {
   const deductions =
     amounts.providentFund +
     amounts.eobi +
-    amounts.gratuity +
     amounts.loanInstallment +
     amounts.otherDeductions;
-  return Math.max(0, earnings - deductions);
+  return Math.max(0, earnings - deductions + amounts.gratuity);
 }
 
 export function roundPayrollAmount(value: number): number {

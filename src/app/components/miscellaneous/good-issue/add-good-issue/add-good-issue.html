@@ -104,7 +104,7 @@
                           type="text"
                           class="sir-table-input"
                           #accountInput
-                          [ngModel]="accountSearchTerms()[$index] || line.accountCode"
+                          [ngModel]="accountSearchTerms()[$index] ?? line.accountCode"
                           (ngModelChange)="updateAccountSearch($index, $event, accountInput)"
                           (focus)="focusAccountSearch($index, accountInput)"
                           (blur)="scheduleHideAccountSuggestions()"
@@ -120,7 +120,11 @@
                             [style.width.px]="accountSuggestionStyle()?.width"
                           >
                             @for (account of getFilteredAccountCodeOptions($index); track account.code) {
-                              <button type="button" (click)="selectAccountCode($index, account)">
+                              <button
+                                type="button"
+                                (pointerdown)="$event.preventDefault(); selectAccountCode($index, account)"
+                                (click)="selectAccountCode($index, account)"
+                              >
                                 {{ account.name ? account.name + ' (' + account.code + ')' : account.code }}
                               </button>
                             } @empty {

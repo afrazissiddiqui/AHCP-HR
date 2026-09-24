@@ -62,7 +62,7 @@ export class AddGoodIssue implements OnInit {
   readonly accountCodeOptions = signal<InventoryAccountOption[]>([]);
   readonly accountCodeOptionsLoading = signal(false);
   readonly accountCodeOptionsError = signal('');
-  readonly accountSearchTerms = signal<Record<number, string>>({});
+  readonly accountSearchTerms = signal<Record<number, string | undefined>>({});
   readonly activeAccountSuggestionIndex = signal<number | null>(null);
   readonly accountSuggestionStyle = signal<{ left: number; top: number; width: number } | null>(null);
   readonly departmentOptions = signal<DepartmentPr[]>([]);
@@ -190,6 +190,9 @@ export class AddGoodIssue implements OnInit {
 
   updateAccountSearch(index: number, value: string, input: HTMLInputElement): void {
     this.accountSearchTerms.update((terms) => ({ ...terms, [index]: value }));
+    if (!value.trim()) {
+      this.updateContentLine(index, 'accountCode', '');
+    }
     this.updateAccountSuggestionPosition(input);
     this.activeAccountSuggestionIndex.set(index);
   }

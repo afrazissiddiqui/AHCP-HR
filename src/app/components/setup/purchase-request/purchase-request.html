@@ -77,6 +77,7 @@
                     <th class="sir-col-item-name">UOM Code</th>
                     <th class="sir-col-warehouse">Warehouse</th>
                   }
+                  <th class="sir-col-actions">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -277,6 +278,12 @@
                         </select>
                       </td>
                     }
+                    <td class="sir-col-actions">
+                      <div class="sir-row-action-buttons" data-ui5-compact-size>
+                        <ui5-button design="Transparent" icon="add" accessible-name="Add row" (click)="addContentLine()"></ui5-button>
+                        <ui5-button design="Negative" icon="delete" accessible-name="Delete row" [disabled]="contentLines().length <= 1" (click)="deleteContentLine($index)"></ui5-button>
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
