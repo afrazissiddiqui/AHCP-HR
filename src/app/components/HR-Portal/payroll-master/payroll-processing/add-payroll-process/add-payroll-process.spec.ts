@@ -68,7 +68,7 @@ describe('computeGrossSalaryBreakdown', () => {
 });
 
 describe('computeNetPayable', () => {
-  it('calculates gross payable using allowances, gratuity, and deductions', () => {
+  it('calculates gross payable without medical allowance in earnings', () => {
     expect(
       computeNetPayable({
         basicSalary: 100000,
@@ -86,6 +86,6 @@ describe('computeNetPayable', () => {
         loanInstallment: 3000,
         otherDeductions: 1500,
       }),
-    ).toBe(127000);
+    ).toBe(117000);
   });
 });

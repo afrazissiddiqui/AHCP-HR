@@ -52,6 +52,7 @@ export interface AgpAddPayload {
   issuedTo: string;
   articleOutDate: string;
   articleReturnedDate: string | null;
+  issueResolved: 'Yes' | 'No';
   transporterName: string;
   transporterCnic: string;
   transporterPhone: string;
@@ -100,6 +101,7 @@ export interface AgpRecord {
 
   articleOutDate: string;
   articleReturnedDate: string;
+  issueResolved: 'Yes' | 'No';
   returnStatus: 'Yes' | 'No';
   warrantyClaimable: 'Yes' | 'No';
   warrantyStartDate: string;
@@ -477,6 +479,10 @@ export class AgpService {
       issuedTo: this.pickString(sources, ['issuedTo', 'issued_to', 'IssuedTo']) || '—',
       articleOutDate: this.pickString(sources, ['articleOutDate', 'article_out_date', 'ArticleOutDate', 'articleOutDateDoc']) || '—',
       articleReturnedDate: this.pickString(sources, ['articleReturnedDate', 'article_returned_date', 'ArticleReturnedDate']) || '—',
+      issueResolved: normalizeReturnStatus(
+        this.pickString(sources, ['issueResolved', 'issue_resolved', 'IssueResolved']),
+        '',
+      ),
       returnStatus: normalizeReturnStatus(
         this.pickString(sources, ['returnStatus', 'return_status', 'ReturnStatus']),
         this.pickString(sources, ['articleReturnedDate', 'article_returned_date', 'ArticleReturnedDate']),

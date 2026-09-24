@@ -103,6 +103,7 @@ export class CreateAgpComponent implements OnInit {
 
   articleOutDate = '';
   articleReturnedDate = '';
+  issueResolved: 'Yes' | 'No' = 'No';
   returnStatus: 'Yes' | 'No' = 'No';
   warrantyClaimable: 'Yes' | 'No' = 'No';
   warrantyStartDate = '';
@@ -473,6 +474,7 @@ export class CreateAgpComponent implements OnInit {
     this.issuedTo = '';
     this.articleOutDate = '';
     this.articleReturnedDate = '';
+    this.issueResolved = 'No';
     this.returnStatus = 'No';
     this.warrantyClaimable = 'No';
     this.warrantyStartDate = '';
@@ -530,6 +532,7 @@ export class CreateAgpComponent implements OnInit {
     this.issuedTo = doc.issuedTo?.trim() ?? '';
     this.articleOutDate = doc.articleOutDate?.trim() ?? '';
     this.articleReturnedDate = doc.articleReturnedDate?.trim() ?? '';
+    this.issueResolved = 'No';
     this.returnStatus = normalizeReturnStatus(undefined, this.articleReturnedDate);
     this.warrantyClaimable = 'No';
     this.warrantyStartDate = '';
@@ -665,6 +668,7 @@ export class CreateAgpComponent implements OnInit {
     this.issuedTo = emptyIfDash(record.issuedTo);
     this.articleOutDate = emptyIfDash(record.articleOutDate);
     this.articleReturnedDate = emptyIfDash(record.articleReturnedDate);
+    this.issueResolved = normalizeReturnStatus(record.issueResolved, '');
     this.returnStatus = normalizeReturnStatus(record.returnStatus, this.articleReturnedDate);
     this.warrantyClaimable = normalizeReturnStatus(record.warrantyClaimable, record.warrantyStartDate);
     this.warrantyStartDate = emptyIfDash(record.warrantyStartDate);
@@ -704,6 +708,7 @@ export class CreateAgpComponent implements OnInit {
       issuedTo: this.issuedTo.trim(),
       articleOutDate: this.articleOutDate.trim(),
       articleReturnedDate: this.articleReturnedDate.trim() || null,
+      issueResolved: this.issueResolved,
       transporterName: this.driverName.trim(),
       transporterCnic: this.driverCnic.trim(),
       transporterPhone: this.driverPhone.trim(),

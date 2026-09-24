@@ -62,9 +62,8 @@ export class AddGoodIssue implements OnInit {
   readonly accountCodeOptions = signal<InventoryAccountOption[]>([]);
   readonly accountCodeOptionsLoading = signal(false);
   readonly accountCodeOptionsError = signal('');
-  readonly accountSearchTerms = signal<Record<number, string | undefined>>({});
-  readonly activeAccountSuggestionIndex = signal<number | null>(null);
-  readonly accountSuggestionStyle = signal<{ left: number; top: number; width: number } | null>(null);
+  readonly accountCodeSearchText = signal<{ [key: number]: string }>({});
+  readonly openAccountCodeDropdown = signal<number | null>(null);
   readonly departmentOptions = signal<DepartmentPr[]>([]);
   readonly batchSelectionDialogOpen = signal(false);
   readonly activeBatchSelectionLineIndex = signal<number | null>(null);
@@ -188,53 +187,54 @@ export class AddGoodIssue implements OnInit {
     this.contentLines.update((rows) => updateGoodIssueLine(rows, index, field, value));
   }
 
-  updateAccountSearch(index: number, value: string, input: HTMLInputElement): void {
-    this.accountSearchTerms.update((terms) => ({ ...terms, [index]: value }));
-    if (!value.trim()) {
-      this.updateContentLine(index, 'accountCode', '');
-    }
-    this.updateAccountSuggestionPosition(input);
-    this.activeAccountSuggestionIndex.set(index);
-  }
-
-  getFilteredAccountCodeOptions(index: number): InventoryAccountOption[] {
-    const query = (this.accountSearchTerms()[index] ?? '').trim().toLowerCase();
-    const options = this.accountCodeOptions();
-
-    if (!query) {
-      return options;
+  getFilteredAccountCodes(searchText: string): InventoryAccountOption[] {
+    if (!searchText.trim()) {
+      return this.accountCodeOptions();
     }
 
-    return options.filter((account) =>
-      `${account.code} ${account.name ?? ''}`.toLowerCase().includes(query),
+    const lower = searchText.toLowerCase();
+    return this.accountCodeOptions().filter(
+      (account) =>
+        account.code.toLowerCase().includes(lower) ||
+        (account.name && account.name.toLowerCase().includes(lower)),
     );
   }
 
-  selectAccountCode(index: number, account: InventoryAccountOption): void {
-    this.updateContentLine(index, 'accountCode', account.code);
-    this.accountSearchTerms.update((terms) => ({ ...terms, [index]: account.code }));
-    this.activeAccountSuggestionIndex.set(null);
+  updateAccountCodeSearch(index: number, value: string): void {
+    this.accountCodeSearchText.update((state) => ({
+      ...state,
+      [index]: value,
+    }));
   }
 
-  focusAccountSearch(index: number, input: HTMLInputElement): void {
-    this.updateAccountSuggestionPosition(input);
-    this.activeAccountSuggestionIndex.set(index);
+  selectAccountCode(index: number, code: string, name?: string): void {
+    this.updateContentLine(index, 'accountCode', code);
+    this.accountCodeSearchText.update((state) => ({
+      ...state,
+      [index]: name ? `${name} (${code})` : code,
+    }));
+    this.openAccountCodeDropdown.set(null);
   }
 
-  scheduleHideAccountSuggestions(): void {
-    window.setTimeout(() => {
-      this.activeAccountSuggestionIndex.set(null);
-      this.accountSuggestionStyle.set(null);
-    }, 150);
+  toggleAccountCodeDropdown(index: number): void {
+    const current = this.openAccountCodeDropdown();
+    this.openAccountCodeDropdown.set(current === index ? null : index);
   }
 
-  private updateAccountSuggestionPosition(input: HTMLInputElement): void {
+  onAccountCodeItemHover(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    target.style.background = '#f5f5f5';
+  }
+
+  onAccountCodeItemLeave(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    target.style.background = 'white';
+  }
+
+  getDropdownStyle(lineIndex: number, input: HTMLInputElement | null): string {
+    if (!input) return '';
     const rect = input.getBoundingClientRect();
-    this.accountSuggestionStyle.set({
-      left: rect.left,
-      top: rect.bottom + 2,
-      width: rect.width,
-    });
+    return `position: fixed; top: ${rect.bottom + 2}px; left: ${rect.left}px; width: ${rect.width}px; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10000;`;
   }
 
   openBatchSelectionDialog(): void {

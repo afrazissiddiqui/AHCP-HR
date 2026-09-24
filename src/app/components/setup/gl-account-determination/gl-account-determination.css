@@ -104,10 +104,27 @@
   background: #f5f3ff;
 }
 
+.btn-duplicate-row {
+  background: #eef2ff;
+  border: 1px solid #818cf8;
+  border-radius: 6px;
+  color: #3730a3;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 6px;
+  padding: 6px 8px;
+}
+
+.btn-duplicate-row:hover:not(:disabled) {
+  background: #e0e7ff;
+}
+
 .btn-add-row:disabled,
 .btn-submit-form:disabled,
 .btn-remove-row:disabled,
-.btn-edit-row:disabled {
+.btn-edit-row:disabled,
+.btn-duplicate-row:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }

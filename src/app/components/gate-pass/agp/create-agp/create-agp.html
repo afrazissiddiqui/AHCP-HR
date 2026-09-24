@@ -365,6 +365,13 @@
                 </select>
               </div>
               <div class="cjr-row">
+                <label for="agp-issue-resolved">Issue Resolved:</label>
+                <select id="agp-issue-resolved" [(ngModel)]="issueResolved" name="issueResolved">
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div class="cjr-row">
                 <label for="agp-article-returned">Date of return:</label>
                 <input
                   id="agp-article-returned"

@@ -257,8 +257,8 @@ export class AddPayrollProcessComponent implements OnInit {
     { key: 'costToCompany', label: 'Cost to Company', groupId: 'final', type: 'currency', minWidth: 168 },
     { key: 'netPayable', label: 'Gross Payable', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'taxDeduction', label: 'Tax Deduction', groupId: 'final', type: 'readonly', minWidth: 160 },
-    { key: 'netpayable1', label: 'Net Payable (TAX)', groupId: 'final', type: 'readonly', minWidth: 160 },
-    { key: 'netpayable1', label: 'Net Payable (Management)', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'netPayableAfterTax', label: 'Net Payable (TAX)', groupId: 'final', type: 'readonly', minWidth: 160 },
+    { key: 'netPayableManagement', label: 'Net Payable (Management)', groupId: 'final', type: 'readonly', minWidth: 160 },
     { key: 'totalEarnings', label: 'Total Earnings', groupId: 'final', type: 'readonly-pill', minWidth: 168 },
     { key: 'finalGrossSalary', label: 'Gross Salary', groupId: 'final', type: 'readonly', minWidth: 152 },
     { key: 'approved', label: 'Approval', groupId: 'approval', type: 'approval', minWidth: 96 },
@@ -356,6 +356,7 @@ export class AddPayrollProcessComponent implements OnInit {
       taxDeduction: 0,
       netPayable: 0,
       netPayableAfterTax: 0,
+      netPayableManagement: 0,
       totalEarnings: 0,
       finalGrossSalary: 0,
     };
@@ -392,6 +393,7 @@ export class AddPayrollProcessComponent implements OnInit {
       totals.taxDeduction += row.taxDeduction;
       totals.netPayable += this.grossPayableForRow(row);
       totals.netPayableAfterTax += this.netPayableAfterTaxForRow(row);
+      totals.netPayableManagement += this.netPayableManagementForRow(row);
       totals.totalEarnings += this.totalEarningsForRow(row);
       totals.finalGrossSalary += row.grossSalary;
     }
@@ -635,6 +637,10 @@ export class AddPayrollProcessComponent implements OnInit {
     return Math.max(0, this.grossPayableForRow(row) - row.taxDeduction);
   }
 
+  netPayableManagementForRow(row: PayrollProcessRow): number {
+    return this.netPayableAfterTaxForRow(row) + row.grossSalaryInCash;
+  }
+
   earningsRatioForRow(row: PayrollProcessRow): number {
     if (row.basicSalary <= 0) {
       return 0;
@@ -646,8 +652,11 @@ export class AddPayrollProcessComponent implements OnInit {
     if (column.key === 'netPayable') {
       return this.grossPayableForRow(row);
     }
-    if (column.key === 'netpayable1') {
+    if (column.key === 'netPayableAfterTax') {
       return this.netPayableAfterTaxForRow(row);
+    }
+    if (column.key === 'netPayableManagement') {
+      return this.netPayableManagementForRow(row);
     }
     if (column.key === 'totalEarnings') {
       return this.totalEarningsForRow(row);
@@ -723,8 +732,11 @@ export class AddPayrollProcessComponent implements OnInit {
     if (column.key === 'netPayable') {
       return this.groupTotals().netPayable;
     }
-    if (column.key === 'netpayable1') {
+    if (column.key === 'netPayableAfterTax') {
       return this.groupTotals().netPayableAfterTax;
+    }
+    if (column.key === 'netPayableManagement') {
+      return this.groupTotals().netPayableManagement;
     }
     if (column.key === 'totalEarnings') {
       return this.groupTotals().totalEarnings;

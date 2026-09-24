@@ -225,6 +225,24 @@ export class GlAccountDeterminationComponent implements OnInit {
     this.rows = [...this.rows, emptyRow()];
   }
 
+  duplicateRow(rowId: string): void {
+    const rowToDuplicate = this.rows.find((row) => row.id === rowId);
+    if (!rowToDuplicate) {
+      return;
+    }
+
+    const duplicateRow: GlAccountDeterminationRow = {
+      ...rowToDuplicate,
+      id: newId(),
+    };
+
+    this.rows = [
+      ...this.rows.slice(0, this.rows.findIndex((row) => row.id === rowId) + 1),
+      duplicateRow,
+      ...this.rows.slice(this.rows.findIndex((row) => row.id === rowId) + 1),
+    ];
+  }
+
   removeRow(rowId: string): void {
     if (this.rows.length <= 1) {
       this.alertService.validation('At least one row is required.');
