@@ -87,7 +87,7 @@ export class PurchaseOrderListComponent implements OnInit {
   }
 
   private loadSubmittedPurchaseRequests(): void {
-    this.openBaseDocumentsService.fetchPurchaseOrders().subscribe({
+    this.openBaseDocumentsService.fetchPurchaseRequests().subscribe({
       next: (documents) => {
         const mapped = documents.map((document) => this.mapOpenDocumentToListItem(document));
         this.orders.set(mapped.length > 0 ? mapped : []);
@@ -99,6 +99,7 @@ export class PurchaseOrderListComponent implements OnInit {
   }
 
   private mapOpenDocumentToListItem(document: OpenBaseDocument): PurchaseOrderListItem {
+    const rawDocument = document as unknown as Record<string, unknown>;
     const items = (document.lines ?? []).map((line, index) => {
       const record = line as unknown as Record<string, unknown>;
       const itemCode = this.asString(
@@ -126,10 +127,20 @@ export class PurchaseOrderListComponent implements OnInit {
       };
     });
 
+    const docNum = this.asString(
+      rawDocument['DocNum'] ?? rawDocument['docNum'] ?? document.docNum ?? document.number ?? '—',
+    );
+    const docDate = this.asString(
+      rawDocument['DocDate'] ?? rawDocument['docDate'] ?? document.docDate ?? document.date ?? '',
+    );
+    const vendor = this.asString(
+      rawDocument['CardName'] ?? rawDocument['cardName'] ?? document.businessPartnerName ?? document.partner ?? document.businessPartnerCode ?? '—',
+    );
+
     return {
-      docNum: this.asString(document.docNum ?? document.number ?? '—'),
-      docDate: displayDateSlash(this.asString(document.docDate ?? document.date ?? '')),
-      vendor: this.asString(document.businessPartnerName ?? document.partner ?? document.businessPartnerCode ?? '—'),
+      docNum,
+      docDate: displayDateSlash(docDate),
+      vendor,
       warehouse: this.asString(document.store ?? ''),
       itemCount: items.length,
       status: this.asString(document.status ?? 'O'),

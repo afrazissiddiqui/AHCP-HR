@@ -24,13 +24,17 @@ export interface BaseDocLinePayload {
 export interface OpenBaseDocument {
   number: string;
   docNum?: string;
+  DocNum?: string;
   title: string;
   partner?: string;
   date?: string;
   docDate?: string;
+  DocDate?: string;
   bplId?: string;
   businessPartnerCode?: string;
   businessPartnerName?: string;
+  CardName?: string;
+  cardName?: string;
   vehicleNo?: string;
   fromUnit?: string;
   originalDeliveryDestination?: string;

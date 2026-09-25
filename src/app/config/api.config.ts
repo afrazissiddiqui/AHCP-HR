@@ -1,16 +1,16 @@
 const INTERNAL_API_BASE_URL = 'http://ahcp.hr:8084';
-const EXTERNAL_API_BASE_URL = 'http://alhafiz.vdc.services:8084/ahcp/public';
+const PROXIED_API_BASE_URL = '/ahcp-api';
 
 function resolveApiBaseUrl(): string {
   if (typeof window === 'undefined') {
-    return EXTERNAL_API_BASE_URL;
+    return PROXIED_API_BASE_URL;
   }
 
   const hostname = window.location.hostname.toLowerCase();
   const isInternalServer =
     hostname === 'ahcp.hr' || hostname.endsWith('.ahcp.hr');
 
-  return isInternalServer ? INTERNAL_API_BASE_URL : EXTERNAL_API_BASE_URL;
+  return isInternalServer ? INTERNAL_API_BASE_URL : PROXIED_API_BASE_URL;
 }
 
 /** Pioneer attendance API (proxied in local dev via proxy.conf.json). */
