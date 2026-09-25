@@ -133,6 +133,7 @@ describe('AddReceiptFromProduction', () => {
       dueDate: '2026-07-20',
       startDate: '2026-07-20',
       status: 'R',
+      U_DocTaxStatus: 'R',
       warehouse: 'FSD-WH03',
       branch: '3',
       batchNumber: 'Toll-FSD-2026-00000003',
@@ -161,6 +162,24 @@ describe('AddReceiptFromProduction', () => {
     expect(component.contentLines()[0].itemCode).toBe('FG-Toll-P-00000069');
     expect(component.contentLines()[0].itemDescription).toBe('Toll Flint - Preform 45 Gram');
     expect(component.contentLines()[0].warehouse).toBe('FSD-WH06');
+  });
+
+  it('marks the document tax status as UnRegistered when U_DocTaxStatus is not R', () => {
+    component.applyProductionOrder({
+      docEntry: '54',
+      docNum: '5',
+      postDate: '2026-07-20',
+      dueDate: '2026-07-20',
+      startDate: '2026-07-20',
+      status: 'R',
+      U_DocTaxStatus: 'U',
+      warehouse: 'FSD-WH03',
+      branch: '3',
+      batchNumber: '',
+      items: [],
+    } as any);
+
+    expect(component.headerForm().documentTaxStatus).toBe('UnRegistered');
   });
 
   it('defaults the row warehouse from the production order warehouse prefix', () => {

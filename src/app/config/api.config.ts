@@ -1,17 +1,4 @@
-const INTERNAL_API_BASE_URL = 'http://ahcp.hr:8084';
-const PROXIED_API_BASE_URL = '/ahcp-api';
-
-function resolveApiBaseUrl(): string {
-  if (typeof window === 'undefined') {
-    return PROXIED_API_BASE_URL;
-  }
-
-  const hostname = window.location.hostname.toLowerCase();
-  const isInternalServer =
-    hostname === 'ahcp.hr' || hostname.endsWith('.ahcp.hr');
-
-  return isInternalServer ? INTERNAL_API_BASE_URL : PROXIED_API_BASE_URL;
-}
+const API_BASE_URL = 'http://alhafiz.vdc.services:8084/ahcp/public';
 
 /** Pioneer attendance API (proxied in local dev via proxy.conf.json). */
 export const BIOMETRICS_API_BASE_URL = resolveBiometricsApiBaseUrl();
@@ -26,9 +13,6 @@ function resolveBiometricsApiBaseUrl(): string {
   // Deployed IIS: public/web.config rewrites /biometrics-api → pioneerattendance.com.
   return '/biometrics-api';
 }
-
-/** Backend server root — resolved from where the app is accessed. */
-export const API_BASE_URL = resolveApiBaseUrl();
 
 /** Builds a full API URL: `{API_BASE_URL}/api/{endpoint}` */
 export function apiUrl(endpoint: string): string {

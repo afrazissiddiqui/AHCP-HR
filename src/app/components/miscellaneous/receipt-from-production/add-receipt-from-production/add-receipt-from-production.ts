@@ -322,11 +322,9 @@ export class AddReceiptFromProduction implements OnInit {
       customerName: order.customerName || state.customerName || '',
       noBinReceived: order.U_NoBinReceived ?? state.noBinReceived ?? null,
       documentTaxStatus:
-        order.status.trim().toUpperCase() === 'R'
+        order.U_DocTaxStatus?.trim().toUpperCase() === 'R'
           ? 'Registered'
-          : order.status.trim().toUpperCase() === 'UR'
-            ? 'Unregistered'
-            : state.documentTaxStatus || '',
+          : 'UnRegistered',
     }));
 
     const nextLine = createEmptyReceiptFromProductionLine();
