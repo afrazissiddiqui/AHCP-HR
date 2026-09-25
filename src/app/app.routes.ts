@@ -59,14 +59,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/HR-Portal/job-specification-form/create-job-specification/create-job-specification').then((m) => m.CreateJobSpecificationComponent),
     canActivate: [authGuard, requirePermission('job_specification', 'update')],
   },
-  ...gatePassRoutes.map((route) =>
-    route.redirectTo
-      ? route
-      : {
-          ...route,
-          canActivate: [...(route.canActivate ?? []), authGuard],
-        },
-  ),
+  {
+    path: 'gate-pass',
+    loadChildren: () => import('./components/gate-pass/gate-pass.routes').then((m) => m.gatePassRoutes),
+    canActivate: [authGuard],
+  },
   {
     path: 'employee-action',
     loadComponent: () => import('./components/HR-Portal/employee-action/employee-action').then((m) => m.EmployeeActionComponent),
@@ -88,9 +85,11 @@ export const routes: Routes = [
       ),
     ],
   },
-  ...payrollMasterRoutes.map((route) =>
-    route.redirectTo ? route : { ...route, canActivate: [authGuard] },
-  ),
+  {
+    path: 'payroll-master',
+    loadChildren: () => import('./components/HR-Portal/payroll-master/payroll-master.routes').then((m) => m.payrollMasterRoutes),
+    canActivate: [authGuard],
+  },
   {
     path: 'employee-action/probation-evaluation-form',
     loadComponent: () => import('./components/HR-Portal/employee-action/probation-evaluation-form/probation-evaluation-form').then((m) => m.ProbationEvaluationFormComponent),
@@ -276,10 +275,14 @@ export const routes: Routes = [
     loadComponent: () => import('./components/HR-Portal/termination/add-termination/add-termination').then((m) => m.AddTerminationComponent),
     canActivate: [authGuard, requirePermission('termination_form', 'update')],
   },
-  ...plantMaintenanceRoutes.map((route) =>
-    route.redirectTo ? route : { ...route, canActivate: [authGuard] },
-  ),
-  ...miscellaneousRoutes.map((route) =>
-    route.redirectTo ? route : { ...route, canActivate: [authGuard] },
-  ),
+  {
+    path: 'plant-maintenance',
+    loadChildren: () => import('./components/Plant-Maintenance/plant-maintenance.routes').then((m) => m.plantMaintenanceRoutes),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'miscellaneous',
+    loadChildren: () => import('./components/miscellaneous/miscellaneous.routes').then((m) => m.miscellaneousRoutes),
+    canActivate: [authGuard],
+  },
 ];
