@@ -1,11 +1,7 @@
 import { Routes } from '@angular/router';
-import { gatePassRoutes } from './components/gate-pass/gate-pass.routes';
-import { payrollMasterRoutes } from './components/HR-Portal/payroll-master/payroll-master.routes';
 import { loginRoutes } from './components/login/login.routes';
-import { plantMaintenanceRoutes } from './components/Plant-Maintenance/plant-maintenance.routes';
 import { authGuard } from './guards/auth.guard';
 import { requireAccess, requirePermission } from './guards/permission.guard';
-import { miscellaneousRoutes } from './components/miscellaneous/miscellaneous.routes';
 
 export const routes: Routes = [
   {
