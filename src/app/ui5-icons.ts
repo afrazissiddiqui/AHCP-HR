@@ -1,9 +1,3 @@
-/**
- * Register SAP icon collection loaders (required for ui5-button / ShellBar icon tooltips).
- * Individual icon imports below tree-shake the SVG paths actually used in templates.
- */
-import '@ui5/webcomponents-icons/dist/json-imports/Icons.js';
-
 import '@ui5/webcomponents-icons/dist/accept.js';
 import '@ui5/webcomponents-icons/dist/account.js';
 import '@ui5/webcomponents-icons/dist/activity-items.js';

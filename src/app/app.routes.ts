@@ -60,7 +60,7 @@ export const routes: Routes = [
     canActivate: [authGuard, requirePermission('job_specification', 'update')],
   },
   {
-    path: 'gate-pass',
+    path: '',
     loadChildren: () => import('./components/gate-pass/gate-pass.routes').then((m) => m.gatePassRoutes),
     canActivate: [authGuard],
   },
@@ -86,7 +86,7 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'payroll-master',
+    path: '',
     loadChildren: () => import('./components/HR-Portal/payroll-master/payroll-master.routes').then((m) => m.payrollMasterRoutes),
     canActivate: [authGuard],
   },
@@ -276,12 +276,12 @@ export const routes: Routes = [
     canActivate: [authGuard, requirePermission('termination_form', 'update')],
   },
   {
-    path: 'plant-maintenance',
+    path: '',
     loadChildren: () => import('./components/Plant-Maintenance/plant-maintenance.routes').then((m) => m.plantMaintenanceRoutes),
     canActivate: [authGuard],
   },
   {
-    path: 'miscellaneous',
+    path: '',
     loadChildren: () => import('./components/miscellaneous/miscellaneous.routes').then((m) => m.miscellaneousRoutes),
     canActivate: [authGuard],
   },
