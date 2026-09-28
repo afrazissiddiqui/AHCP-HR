@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
@@ -70,7 +70,7 @@ const DEFAULT_PURCHASE_REQUEST_EMPLOYEE_CODE = 'Emp-00000100';
   styleUrls: ['../../sample-inspection-request/sample-inspection-request.css', '../../miscellaneous/miscellaneous-form.css', './purchase-request.css'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class PurchaseRequestComponent implements OnInit {
+export class PurchaseRequestComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly oitmItemsService = inject(OitmItemsService);
   protected readonly layout = inject(MiscellaneousLayoutService);
@@ -94,6 +94,13 @@ export class PurchaseRequestComponent implements OnInit {
   readonly glAccountSearchTerms = signal<Record<number, string | undefined>>({});
   readonly activeSuggestionIndex = signal<number | null>(null);
   readonly suggestionPanelStyle = signal<{ left: number; width: number; top: number } | null>(null);
+  private activeItemCodeInput: HTMLInputElement | null = null;
+  private readonly repositionSuggestionPanel = (): void => {
+    const index = this.activeSuggestionIndex();
+    if (index !== null && this.activeItemCodeInput?.isConnected) {
+      this.updateSuggestionPanelPosition(index, this.activeItemCodeInput);
+    }
+  };
   readonly activeVendorSuggestionIndex = signal<number | null>(null);
   readonly vendorSuggestionPanelStyle = signal<{ left: number; width: number; top: number } | null>(null);
   readonly departmentOptions = signal<DepartmentPr[]>([]);
@@ -149,6 +156,8 @@ export class PurchaseRequestComponent implements OnInit {
   protected readonly purchaseRequestService = inject(PurchaseRequestService);
 
   ngOnInit(): void {
+    window.addEventListener('scroll', this.repositionSuggestionPanel, true);
+    window.addEventListener('resize', this.repositionSuggestionPanel);
     this.businessPartnerService.ensureLoaded().subscribe();
     this.applicationFormService.fetchEmployeeProfiles().subscribe({
       error: () => undefined,
@@ -156,6 +165,11 @@ export class PurchaseRequestComponent implements OnInit {
     this.loadTaxCodes();
     this.loadDepartmentOptions();
     this.loadWarehouseOptions();
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('scroll', this.repositionSuggestionPanel, true);
+    window.removeEventListener('resize', this.repositionSuggestionPanel);
   }
 
   loadTaxCodes(): void {
@@ -297,10 +311,11 @@ export class PurchaseRequestComponent implements OnInit {
     }
 
     const rect = input.getBoundingClientRect();
+    this.activeItemCodeInput = input;
     this.activeSuggestionIndex.set(index);
     this.suggestionPanelStyle.set({
-      left: rect.left + window.scrollX,
-      top: rect.bottom + window.scrollY,
+      left: rect.left,
+      top: rect.bottom,
       width: rect.width,
     });
   }
@@ -308,6 +323,7 @@ export class PurchaseRequestComponent implements OnInit {
   scheduleHideSuggestionPanel(): void {
     window.setTimeout(() => {
       this.activeSuggestionIndex.set(null);
+      this.activeItemCodeInput = null;
     }, 150);
   }
 

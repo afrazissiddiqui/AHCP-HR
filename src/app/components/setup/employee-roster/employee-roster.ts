@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
-import { ApplicationFormRecord, ApplicationFormService, EmployeeRosterAddPayload, EmployeeRosterListRecord } from '../../../services/application-form.service';
+import { ApplicationFormRecord, ApplicationFormService, canonicalizeEmployeeCodeValue, EmployeeRosterAddPayload, EmployeeRosterListRecord } from '../../../services/application-form.service';
 import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
@@ -37,7 +37,7 @@ export function findUnassignedEmployees(
   const assignedEmployeeCodes = new Set<string>();
   for (const rosterEntry of roster) {
     const employeeCode = normalizeEmployeeCodeForRoster(rosterEntry.employee_id);
-    if (employeeCode && hasValidRosterShift(rosterEntry.shift)) {
+    if (employeeCode) {
       assignedEmployeeCodes.add(employeeCode);
     }
   }
@@ -60,13 +60,8 @@ export function findUnassignedEmployees(
   });
 }
 
-function hasValidRosterShift(shift: string | null | undefined): boolean {
-  const normalized = String(shift ?? '').trim().toLowerCase();
-  return normalized !== '' && normalized !== 'null' && normalized !== 'undefined';
-}
-
 function normalizeEmployeeCodeForRoster(value: string | null | undefined): string {
-  const normalized = String(value ?? '').trim().toLowerCase();
+  const normalized = canonicalizeEmployeeCodeValue(String(value ?? '')).trim().toLowerCase();
   const numericCode = normalized.match(/^(?:emp[-\s]?)?(\d+)$/)?.[1];
   return numericCode ? `emp-${numericCode.padStart(8, '0')}` : normalized;
 }

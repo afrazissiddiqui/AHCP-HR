@@ -553,13 +553,6 @@
             </div>
 
             <div class="cjr-row">
-              <label>Awarded Qualification:</label>
-              <input type="text" [ngModel]="educationSections()[i].awardedQualification"
-                (ngModelChange)="updateEducationField(i, 'awardedQualification', $event)"
-                (blur)="touch('educationAwardedQualification')" />
-            </div>
-
-            <div class="cjr-row">
               <label>Marks / Grades:</label>
               <input type="text" [ngModel]="educationSections()[i].marksGrades"
                 (ngModelChange)="updateEducationField(i, 'marksGrades', $event)"

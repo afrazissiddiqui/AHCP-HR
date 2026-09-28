@@ -245,6 +245,35 @@ const EMPLOYEE_PROFILE_LIST_URL = apiUrl('employee-profile-list');
 const EMPLOYEE_PROFILE_VIEW_URL = apiUrl('employee-profile-detail');
 const EMPLOYEE_PROFILE_UPDATE_URL = apiUrl('employee-profile-update');
 const EMPLOYEE_PROFILE_DELETE_URL = apiUrl('employee-profile-delete');
+
+const LEGACY_EMPLOYEE_CODE_OVERRIDES = new Map<string, string>([
+  ['Emp-00003283', 'Emp-00000254'],
+  ['Emp-00003312', 'Emp-00000255'],
+  ['Emp-00003313', 'Emp-00000256'],
+  ['Emp-00003314', 'Emp-00000257'],
+]);
+
+export function canonicalizeEmployeeCodeValue(value: string): string {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed || trimmed === '—') {
+    return trimmed;
+  }
+
+  const overridden = LEGACY_EMPLOYEE_CODE_OVERRIDES.get(trimmed);
+  if (overridden) {
+    return overridden;
+  }
+
+  const prefixMatch = trimmed.match(/^Emp[-\\s]?(\\d+)$/i);
+  if (prefixMatch) {
+    const code = Number.parseInt(prefixMatch[1], 10);
+    if (Number.isFinite(code) && code > 0) {
+      return `Emp-${String(code).padStart(8, '0')}`;
+    }
+  }
+
+  return trimmed;
+}
 const EMPLOYEE_ROSTER_ADD_URL = apiUrl('employee-roster-add');
 const EMPLOYEE_ROSTER_LIST_URL = apiUrl('employee-roster-list');
 
@@ -671,31 +700,7 @@ export class ApplicationFormService {
   }
 
   normalizeEmployeeCodeValue(value: string): string {
-    const trimmed = String(value ?? '').trim();
-    if (!trimmed || trimmed === '—') {
-      return trimmed;
-    }
-
-    const legacyOverrides = new Map<string, string>([
-      ['Emp-00003283', 'Emp-00000254'],
-      ['Emp-00003312', 'Emp-00000255'],
-      ['Emp-00003313', 'Emp-00000256'],
-      ['Emp-00003314', 'Emp-00000257'],
-    ]);
-    const overridden = legacyOverrides.get(trimmed);
-    if (overridden) {
-      return overridden;
-    }
-
-    const prefixMatch = trimmed.match(/^Emp[-\s]?(\d+)$/i);
-    if (prefixMatch) {
-      const code = Number.parseInt(prefixMatch[1], 10);
-      if (Number.isFinite(code) && code > 0) {
-        return this.formatEmployeeUserId(code);
-      }
-    }
-
-    return trimmed;
+    return canonicalizeEmployeeCodeValue(value);
   }
 
   parseEmployeeCodeSequence(value: string): number {
