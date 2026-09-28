@@ -3,6 +3,7 @@ import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   TableFilterConfig,
+  TableFilterDateRangeValue,
   TableFilterField,
   TableFilterNumberRangeValue,
   TableFilterSelectField,
@@ -100,6 +101,24 @@ export class TableFilterComponent {
   setRangeTo(field: TableFilterField, value: number | null): void {
     const current = this.getRangeValue(field);
     this.tableFilter.setDraftField(this.cfg, field.key, { ...current, to: value });
+  }
+
+  getDateRangeValue(field: TableFilterField): TableFilterDateRangeValue {
+    const v = this.draft[field.key];
+    if (v && typeof v === 'object' && 'from' in v && (typeof v.from === 'string' || v.from === null)) {
+      return v as TableFilterDateRangeValue;
+    }
+    return { from: null, to: null };
+  }
+
+  setDateFrom(field: TableFilterField, value: string): void {
+    const current = this.getDateRangeValue(field);
+    this.tableFilter.setDraftField(this.cfg, field.key, { ...current, from: value || null });
+  }
+
+  setDateTo(field: TableFilterField, value: string): void {
+    const current = this.getDateRangeValue(field);
+    this.tableFilter.setDraftField(this.cfg, field.key, { ...current, to: value || null });
   }
 
   fieldDomId(field: TableFilterField, suffix: string): string {

@@ -103,6 +103,36 @@
               </div>
             </div>
           </fieldset>
+
+          <fieldset *ngIf="field.type === 'dateRange'" class="table-filter-field table-filter-field--range">
+            <legend class="table-filter-field__label">{{ field.label }}</legend>
+            <div class="table-filter-range">
+              <div class="table-filter-range__item">
+                <label class="table-filter-range__label" [attr.for]="fieldDomId(field, 'from')">
+                  {{ field.fromLabel || 'From' }}
+                </label>
+                <input
+                  class="table-filter-field__control"
+                  [id]="fieldDomId(field, 'from')"
+                  type="date"
+                  [ngModel]="getDateRangeValue(field).from"
+                  (ngModelChange)="setDateFrom(field, $event)"
+                />
+              </div>
+              <div class="table-filter-range__item">
+                <label class="table-filter-range__label" [attr.for]="fieldDomId(field, 'to')">
+                  {{ field.toLabel || 'To' }}
+                </label>
+                <input
+                  class="table-filter-field__control"
+                  [id]="fieldDomId(field, 'to')"
+                  type="date"
+                  [ngModel]="getDateRangeValue(field).to"
+                  (ngModelChange)="setDateTo(field, $event)"
+                />
+              </div>
+            </div>
+          </fieldset>
         </ng-container>
       </div>
 

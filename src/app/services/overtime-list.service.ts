@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map, of, tap } from 'rxjs';
 import { ApplicationFormRecord, ApplicationFormService } from './application-form.service';
 
 export interface OvertimeListRecord {
@@ -21,13 +21,21 @@ export interface OvertimeListRecord {
 export class OvertimeListService {
   private readonly applicationFormService = inject(ApplicationFormService);
   private readonly overtimeListSignal = signal<OvertimeListRecord[]>([]);
+  private cachedRecords: OvertimeListRecord[] | null = null;
 
   readonly overtimeList = this.overtimeListSignal.asReadonly();
 
-  fetchOvertimeList(): Observable<OvertimeListRecord[]> {
+  fetchOvertimeList(forceRefresh = false): Observable<OvertimeListRecord[]> {
+    if (!forceRefresh && this.cachedRecords) {
+      return of(this.cachedRecords);
+    }
+
     return this.applicationFormService.fetchEmployeeProfiles().pipe(
       map((records) => records.filter((record) => this.isOvertimeApplicable(record)).map((record) => this.mapEmployee(record))),
-      tap((records) => this.overtimeListSignal.set(records)),
+      tap((records) => {
+        this.cachedRecords = records;
+        this.overtimeListSignal.set(records);
+      }),
     );
   }
 
@@ -46,6 +54,7 @@ export class OvertimeListService {
   }
 
   private isOvertimeApplicable(record: ApplicationFormRecord): boolean {
-    return record.detail?.remuneration.overTimeApplicable.trim().toLowerCase() === 'yes';
+    return record.detail?.remuneration.overTimeApplicable.trim().toLowerCase() === 'yes'
+      && record.detail?.hrSettings.attendanceShiftManagement.trim().toLowerCase() === 'yes';
   }
 }

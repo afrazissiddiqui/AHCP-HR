@@ -71,6 +71,34 @@ export const APPLICATION_FORM_TABLE_FILTER: TableFilterConfig = {
   ],
 };
 
+/** Overtime List filters. */
+export const OVERTIME_TABLE_FILTER: TableFilterConfig = {
+  id: 'overtime-list',
+  title: 'Filter overtime records',
+  fields: [
+    { type: 'select', key: 'department', label: 'Department', fieldKey: 'departmentName' },
+    { type: 'select', key: 'branch', label: 'Branch', fieldKey: 'branchName' },
+    { type: 'select', key: 'reportingManager', label: 'Reporting manager', fieldKey: 'reportingManager' },
+    { type: 'select', key: 'employeeId', label: 'Employee ID', fieldKey: 'employeeId' },
+    {
+      type: 'numberRange',
+      key: 'employeeIdRange',
+      label: 'Employee ID range',
+      fieldKey: 'employeeIdNumber',
+      fromPlaceholder: 'From employee ID',
+      toPlaceholder: 'To employee ID',
+    },
+    {
+      type: 'dateRange',
+      key: 'attendanceDate',
+      label: 'Attendance date',
+      fieldKey: 'attendanceDate',
+      fromLabel: 'From date',
+      toLabel: 'To date',
+    },
+  ],
+};
+
 /** Leave Application Form list. */
 export const LEAVE_APPLICATION_TABLE_FILTER: TableFilterConfig = {
   id: 'leave-application-form',

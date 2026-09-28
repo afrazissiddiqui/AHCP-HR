@@ -2,6 +2,7 @@ import {
   TableFilterConfig,
   TableFilterField,
   TableFilterFieldValue,
+  TableFilterDateRangeValue,
   TableFilterNumberRangeValue,
   TableFilterStatusValue,
   TableFilterValues,
@@ -11,6 +12,8 @@ export function createEmptyFilterValues(config: TableFilterConfig): TableFilterV
   const values: TableFilterValues = {};
   for (const field of config.fields) {
     if (field.type === 'numberRange') {
+      values[field.key] = { from: null, to: null };
+    } else if (field.type === 'dateRange') {
       values[field.key] = { from: null, to: null };
     } else {
       values[field.key] = '';
@@ -23,7 +26,7 @@ export function cloneFilterValues(values: TableFilterValues): TableFilterValues 
   const clone: TableFilterValues = {};
   for (const [key, value] of Object.entries(values)) {
     if (value && typeof value === 'object' && 'from' in value) {
-      clone[key] = { ...(value as TableFilterNumberRangeValue) };
+      clone[key] = { ...value } as TableFilterNumberRangeValue | TableFilterDateRangeValue;
     } else {
       clone[key] = value;
     }
@@ -80,10 +83,19 @@ function normalizeFilterText(value: unknown): string {
 export function normalizeFilterValues(config: TableFilterConfig, values: TableFilterValues): TableFilterValues {
   const normalized = cloneFilterValues(values);
   for (const field of config.fields) {
-    if (field.type !== 'numberRange') {
+    if (field.type !== 'numberRange' && field.type !== 'dateRange') {
       continue;
     }
-    const raw = normalized[field.key] as TableFilterNumberRangeValue | undefined;
+    const raw = normalized[field.key] as TableFilterNumberRangeValue | TableFilterDateRangeValue | undefined;
+    if (field.type === 'dateRange') {
+      let from = typeof raw?.from === 'string' ? raw.from : null;
+      let to = typeof raw?.to === 'string' ? raw.to : null;
+      if (from && to && from > to) {
+        [from, to] = [to, from];
+      }
+      normalized[field.key] = { from, to };
+      continue;
+    }
     let from = normalizeNumberBound(raw?.from);
     let to = normalizeNumberBound(raw?.to);
     if (from != null && to != null && from > to) {
@@ -102,6 +114,10 @@ function isRangeValue(value: TableFilterFieldValue | undefined): value is TableF
   return !!value && typeof value === 'object' && 'from' in value;
 }
 
+function isDateRangeValue(value: TableFilterFieldValue | undefined): value is TableFilterDateRangeValue {
+  return isRangeValue(value) && (typeof value.from === 'string' || value.from === null);
+}
+
 export function hasActiveFilterValues(config: TableFilterConfig, values: TableFilterValues): boolean {
   for (const field of config.fields) {
     const value = values[field.key];
@@ -114,6 +130,10 @@ export function hasActiveFilterValues(config: TableFilterConfig, values: TableFi
         return true;
       }
     } else if (field.type === 'numberRange' && isRangeValue(value)) {
+      if (value.from != null || value.to != null) {
+        return true;
+      }
+    } else if (field.type === 'dateRange' && isDateRangeValue(value)) {
       if (value.from != null || value.to != null) {
         return true;
       }
@@ -178,6 +198,19 @@ export function matchesTableFilterItem(
         return false;
       }
       if (to != null && num > to) {
+        return false;
+      }
+      continue;
+    }
+
+    if (field.type === 'dateRange' && isDateRangeValue(applied)) {
+      const from = applied.from;
+      const to = applied.to;
+      if (!from && !to) {
+        continue;
+      }
+      const date = typeof raw === 'string' ? raw.slice(0, 10) : '';
+      if (!date || (from && date < from) || (to && date > to)) {
         return false;
       }
     }

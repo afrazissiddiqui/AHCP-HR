@@ -98,9 +98,10 @@ export class AttendanceManagementService {
 
   loadSession(query: AttendanceQuery): Observable<number> {
     this.lastQuery = this.normalizeQuery(query);
+    const cachedEmployees = this.applicationFormService.getApplicationRecords();
 
     return forkJoin({
-      employees: this.applicationFormService.fetchEmployeeProfiles(),
+      employees: cachedEmployees.length ? of(cachedEmployees) : this.applicationFormService.fetchEmployeeProfiles(),
       punches: this.fetchPunches(this.lastQuery),
     }).pipe(
       map(({ punches, employees }) => {

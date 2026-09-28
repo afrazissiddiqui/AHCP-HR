@@ -169,6 +169,62 @@
   vertical-align: top;
 }
 
+.table-pagination {
+  align-items: center;
+  border-top: 1px solid #e4e9f0;
+  color: #5f6b7a;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 12px 18px;
+  justify-content: space-between;
+  padding: 12px 0 0;
+}
+
+.pagination-controls,
+.page-numbers,
+.page-size-selector {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+
+.pagination-controls button,
+.page-size-selector select {
+  background: #ffffff;
+  border: 1px solid #c7d3e3;
+  border-radius: 5px;
+  color: #1f2d3d;
+  font: inherit;
+  min-height: 32px;
+  padding: 5px 10px;
+}
+
+.pagination-controls button {
+  cursor: pointer;
+}
+
+.pagination-controls button:hover:not(:disabled),
+.pagination-controls button.active {
+  background: #4f46b8;
+  border-color: #4f46b8;
+  color: #ffffff;
+}
+
+.pagination-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pagination-ellipsis {
+  min-width: 32px;
+}
+
+.page-size-selector select {
+  cursor: pointer;
+  min-width: 62px;
+}
+
 .entry-table th {
   background: #f8fafc;
   color: #1d2d3e;
@@ -209,5 +265,14 @@
   .search-input {
     flex: 1;
     min-width: 0;
+  }
+
+  .table-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pagination-controls {
+    justify-content: space-between;
   }
 }
