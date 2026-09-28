@@ -58,12 +58,6 @@
     </div>
 
     <div class="table-wrapper">
-      <div *ngIf="duplicateIgpNumbers().length" class="duplicate-igp-notice" role="status" aria-live="polite">
-        <strong>Duplicate IGP numbers detected.</strong>
-        <span>
-          {{ duplicateIgpNumbers().map((item) => item.number + ' (' + item.count + ' records)').join(', ') }}
-        </span>
-      </div>
       <div class="table-scroll">
         <table class="mountain-table">
           <thead>
@@ -98,14 +92,7 @@
                 <input type="checkbox" [(ngModel)]="j.selected" />
               </td>
               <td *ngFor="let col of columns" [hidden]="!col.visible">
-                <span
-                  class="mountain-table-cell-text"
-                  [class.duplicate-igp-number]="col.key === 'referenceNo' && isDuplicateIgpNumber(j)"
-                  [attr.title]="col.key === 'referenceNo' && isDuplicateIgpNumber(j) ? 'Duplicate IGP number' : formatCell(j, col.key)"
-                >
-                  {{ formatCell(j, col.key) }}
-                  <span *ngIf="col.key === 'referenceNo' && isDuplicateIgpNumber(j)" class="duplicate-igp-badge">Duplicate</span>
-                </span>
+                <span class="mountain-table-cell-text" [title]="formatCell(j, col.key)">{{ formatCell(j, col.key) }}</span>
               </td>
               <td class="table-action-cell application-actions-cell">
                 <div class="action-buttons">

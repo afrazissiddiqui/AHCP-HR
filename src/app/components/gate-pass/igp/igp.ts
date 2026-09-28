@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -42,28 +42,6 @@ export class IgpComponent implements OnInit {
   readonly warehouseLabel = gatePassWarehouseLabel;
   readonly records = this.igpService.records;
   readonly listLoading = signal(true);
-  readonly duplicateIgpNumbers = computed(() => {
-    const counts = new Map<string, { number: string; count: number }>();
-    for (const record of this.records()) {
-      const number = record.referenceNo?.trim();
-      if (!number) {
-        continue;
-      }
-
-      const key = number.toLocaleLowerCase();
-      const existing = counts.get(key);
-      counts.set(key, { number: existing?.number ?? number, count: (existing?.count ?? 0) + 1 });
-    }
-
-    return Array.from(counts.values()).filter((item) => item.count > 1);
-  });
-
-  isDuplicateIgpNumber(record: IgpRecord): boolean {
-    const number = record.referenceNo?.trim();
-    return !!number && this.duplicateIgpNumbers().some(
-      (item) => item.number.toLocaleLowerCase() === number.toLocaleLowerCase(),
-    );
-  }
 
   formatCell(record: IgpRecord, key: IgpSortableKey): string {
     return formatGatePassListCell(record[key] as string | number | null | undefined, key);

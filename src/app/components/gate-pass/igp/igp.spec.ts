@@ -12,18 +12,16 @@ describe('IgpComponent', () => {
   let component: IgpComponent;
   let fixture: ComponentFixture<IgpComponent>;
   let router: Router;
-  let igpRecords: ReturnType<typeof signal<IgpRecord[]>>;
   let navigatedRoute: unknown[] | null = null;
 
   beforeEach(async () => {
-    igpRecords = signal<IgpRecord[]>([]);
     await TestBed.configureTestingModule({
       imports: [IgpComponent],
       providers: [
         {
           provide: IgpService,
           useValue: {
-            records: igpRecords,
+            records: signal<IgpRecord[]>([]),
             fetchInwardGatePasses: () => of([]),
             fetchInwardGatePassDetail: () => of({} as IgpRecord),
             deleteInwardGatePass: () => of({}),
@@ -130,18 +128,5 @@ describe('IgpComponent', () => {
     component.onUpdate(record);
 
     expect(navigatedRoute).toEqual(['/gate-pass/igp/edit', 101]);
-  });
-
-  it('detects duplicate IGP numbers without treating blank values as duplicates', () => {
-    igpRecords.set([
-      { referenceNo: ' IGP-101 ' } as IgpRecord,
-      { referenceNo: 'igp-101' } as IgpRecord,
-      { referenceNo: '' } as IgpRecord,
-      { referenceNo: 'IGP-202' } as IgpRecord,
-    ]);
-
-    expect(component.duplicateIgpNumbers()).toEqual([{ number: 'IGP-101', count: 2 }]);
-    expect(component.isDuplicateIgpNumber(igpRecords()[0])).toBe(true);
-    expect(component.isDuplicateIgpNumber(igpRecords()[3])).toBe(false);
   });
 });

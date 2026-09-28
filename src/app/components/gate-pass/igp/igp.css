@@ -237,30 +237,6 @@ app-root {
   flex-direction: column;
 }
 
-.duplicate-igp-notice {
-  align-items: baseline;
-  background: #fff4e5;
-  border: 1px solid #e9a23b;
-  border-left: 4px solid #b54708;
-  border-radius: 4px;
-  color: #7a2e0e;
-  display: flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  margin-bottom: 8px;
-  padding: 8px 12px;
-}
-
-.duplicate-igp-notice strong {
-  font-size: 13px;
-}
-
-.duplicate-igp-notice span {
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
 /* Only rows scroll */
 .table-scroll {
   flex: 1;
@@ -485,24 +461,6 @@ app-root {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.duplicate-igp-badge {
-  background: #b54708;
-  border-radius: 3px;
-  color: #ffffff;
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.4;
-  margin-left: 6px;
-  padding: 1px 4px;
-  vertical-align: 1px;
-}
-
-.duplicate-igp-number {
-  color: #8a2c0d;
-  font-weight: 700;
 }
 
 .mountain-table th.sortable-header {
