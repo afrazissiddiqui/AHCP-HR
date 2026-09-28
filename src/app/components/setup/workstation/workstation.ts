@@ -36,6 +36,9 @@ export class WorkstationComponent implements OnInit {
   readonly formOutGraceMinutes = signal<string | number>('0');
   readonly formShift = signal('');
   readonly formDescription = signal('');
+  readonly formWorkingHours = computed(() =>
+    this.calculateWorkingHours(this.formOfficeInTime(), this.formOfficeOutTime()),
+  );
   readonly totalWorkstations = computed(() => this.workstations().length);
 
   ngOnInit(): void {
@@ -204,6 +207,19 @@ export class WorkstationComponent implements OnInit {
     return String(value);
   }
 
+  calculateWorkingHours(officeInTime: string, officeOutTime: string): string {
+    const startMinutes = this.timeToMinutes(officeInTime);
+    const endMinutes = this.timeToMinutes(officeOutTime);
+    if (startMinutes === null || endMinutes === null) {
+      return '\u2014';
+    }
+
+    const durationMinutes = (endMinutes - startMinutes + 24 * 60) % (24 * 60);
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
+    return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
+  }
+
   private validateForm(): string | null {
     if (!this.formName().trim()) {
       return 'Workstation name is required.';
@@ -290,6 +306,21 @@ export class WorkstationComponent implements OnInit {
       return text;
     }
     return `${match[1].padStart(2, '0')}:${match[2]}`;
+  }
+
+  private timeToMinutes(value: string): number | null {
+    const match = value.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (!match) {
+      return null;
+    }
+
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (hours > 23 || minutes > 59) {
+      return null;
+    }
+
+    return hours * 60 + minutes;
   }
 
   private formatDisplayTime(value: string): string {

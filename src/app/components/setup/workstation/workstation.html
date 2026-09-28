@@ -59,6 +59,11 @@
           </label>
 
           <label class="field-block">
+            <span class="field-label">Working Hours</span>
+            <output class="field-output">{{ formWorkingHours() }}</output>
+          </label>
+
+          <label class="field-block">
             <span class="field-label">In Grace Time (Minutes)</span>
             <input
               type="number"
@@ -143,6 +148,7 @@
                   <th>Name</th>
                   <th>Office In</th>
                   <th>Office Out</th>
+                  <th>Working Hours</th>
                   <th>In Grace</th>
                   <th>Out Grace</th>
                   <th>Shift</th>
@@ -158,6 +164,7 @@
                     <td>{{ cellValue(record, 'name') }}</td>
                     <td>{{ cellValue(record, 'officeInTime') }}</td>
                     <td>{{ cellValue(record, 'officeOutTime') }}</td>
+                    <td>{{ calculateWorkingHours(record.officeInTime, record.officeOutTime) }}</td>
                     <td>{{ cellValue(record, 'inGraceMinutes') }}</td>
                     <td>{{ cellValue(record, 'outGraceMinutes') }}</td>
                     <td>{{ cellValue(record, 'shift') }}</td>

@@ -91,6 +91,13 @@ describe('WorkstationComponent', () => {
     expect(workstationService.addWorkstation).toHaveBeenCalled();
   });
 
+  it('calculates working hours from office in and out times', () => {
+    expect(component.calculateWorkingHours('09:00', '18:00')).toBe('9h');
+    expect(component.calculateWorkingHours('09:15', '17:45')).toBe('8h 30m');
+    expect(component.calculateWorkingHours('22:00', '06:00')).toBe('8h');
+    expect(component.calculateWorkingHours('', '18:00')).toBe('\u2014');
+  });
+
   it('renders the shift returned by the workstation list', () => {
     workstationService.fetchWorkstations.and.returnValue(
       of([
