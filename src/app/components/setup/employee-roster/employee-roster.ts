@@ -66,6 +66,29 @@ function normalizeEmployeeCodeForRoster(value: string | null | undefined): strin
   return numericCode ? `emp-${numericCode.padStart(8, '0')}` : normalized;
 }
 
+export function rosterDayIndexForMonth(shiftDate: string, monthLabel: string): number | null {
+  const [monthName, yearText] = monthLabel.split(' ');
+  const targetYear = Number(yearText);
+  const targetMonth = new Date(`${monthName} 1, ${targetYear}`).getMonth();
+  const isoDate = shiftDate.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+  const date = isoDate
+    ? new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]))
+    : new Date(shiftDate);
+
+  if (Number.isNaN(date.getTime()) || date.getFullYear() !== targetYear || date.getMonth() !== targetMonth) {
+    return null;
+  }
+
+  return date.getDate() - 1;
+}
+
+export function rosterPeriodForDate(date: Date): { monthLabel: string; monthHalf: MonthHalf } {
+  return {
+    monthLabel: date.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+    monthHalf: date.getDate() <= 15 ? 'First Half' : 'Second Half',
+  };
+}
+
 @Component({
   selector: 'app-employee-roster',
   imports: [CommonModule, FormsModule, PageToolbarComponent],
@@ -78,6 +101,7 @@ export class EmployeeRosterComponent implements OnInit {
   private readonly employeeService = inject(ApplicationFormService);
   private readonly alertService = inject(AlertService);
   private readonly departmentService = inject(GatePassDepartmentService);
+  private readonly initialCalendarPeriod = rosterPeriodForDate(new Date());
   readonly workstationService = inject(WorkstationService);
 
   readonly loading = signal(false);
@@ -92,8 +116,8 @@ export class EmployeeRosterComponent implements OnInit {
   readonly selectedDepartment = signal('All Departments');
   readonly selectedDepartmentCode = signal('');
   readonly departmentOptions = this.departmentService.departments;
-  readonly monthLabel = signal('September 2026');
-  readonly selectedMonthHalf = signal<MonthHalf>('First Half');
+  readonly monthLabel = signal(this.initialCalendarPeriod.monthLabel);
+  readonly selectedMonthHalf = signal<MonthHalf>(this.initialCalendarPeriod.monthHalf);
   readonly selectedCell = signal<{ employeeCode: string; day: number } | null>(null);
   readonly shiftDialog = signal<{ employee: RosterEmployee; dayIndex: number; dayDate: number; shift: ShiftCode } | null>(null);
   readonly shiftDialogPosition = signal({ top: 0, left: 0 });
@@ -259,7 +283,7 @@ export class EmployeeRosterComponent implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: ({ roster, profiles }: { roster: EmployeeRosterListRecord[]; profiles: ApplicationFormRecord[] }) => {
-          const rosterEmployees = this.toRosterEmployees(roster);
+          const rosterEmployees = this.toRosterEmployees(roster, profiles);
           this.employees.set(rosterEmployees);
           this.originalRosterShifts = new Map(
             rosterEmployees.map((employee) => [employee.EmployeeCode, [...employee.shifts]]),
@@ -784,8 +808,14 @@ export class EmployeeRosterComponent implements OnInit {
     };
   }
 
-  private toRosterEmployees(records: EmployeeRosterListRecord[]): RosterEmployee[] {
+  private toRosterEmployees(
+    records: EmployeeRosterListRecord[],
+    profiles: ApplicationFormRecord[],
+  ): RosterEmployee[] {
     const grouped = new Map<string, { record: EmployeeRosterListRecord; shifts: string[] }>();
+    const profilesByCode = new Map(
+      profiles.map((profile) => [this.normalizeRosterEmployeeCode(profile.EmployeeCode), profile]),
+    );
     const monthDays = this.fullMonthDays();
 
     for (const record of records) {
@@ -807,19 +837,23 @@ export class EmployeeRosterComponent implements OnInit {
         continue;
       }
 
-      const date = record.shift_date ? new Date(record.shift_date).getDate() : 0;
-      const dayIndex = date - 1;
-      if (dayIndex >= 0 && dayIndex < employee.shifts.length && this.isAssignedShift(record.shift)) {
+      const dayIndex = rosterDayIndexForMonth(record.shift_date, this.monthLabel());
+      if (dayIndex !== null && dayIndex < employee.shifts.length && this.isAssignedShift(record.shift)) {
         employee.shifts[dayIndex] = record.shift;
       }
     }
 
-    return Array.from(grouped.values()).map(({ record, shifts }, index) => ({
-      ...this.toRosterEmployee(this.toApplicationRecord(record), index),
-      hub: record.hub || this.selectedHub(),
-      role: record.role || record.designation || this.toRosterEmployee(this.toApplicationRecord(record), index).role,
-      shifts,
-    }));
+    return Array.from(grouped.values()).map(({ record, shifts }, index) => {
+      const employeeCode = this.normalizeRosterEmployeeCode(record.employee_id);
+      const profile = profilesByCode.get(employeeCode);
+      const rosterEmployee = this.toRosterEmployee(this.toApplicationRecord(record, profile), index);
+      return {
+        ...rosterEmployee,
+        hub: record.hub || this.selectedHub(),
+        role: record.role || record.designation || rosterEmployee.role,
+        shifts,
+      };
+    });
   }
 
   private normalizeRosterEmployeeCode(value: string | null | undefined): string {
@@ -828,13 +862,16 @@ export class EmployeeRosterComponent implements OnInit {
     return numericCode ? `emp-${numericCode.padStart(8, '0')}` : normalized.toLowerCase();
   }
 
-  private toApplicationRecord(record: EmployeeRosterListRecord): ApplicationFormRecord {
+  private toApplicationRecord(
+    record: EmployeeRosterListRecord,
+    profile?: ApplicationFormRecord,
+  ): ApplicationFormRecord {
     return {
-      EmployeeCode: record.employee_id,
-      EmployeeName: record.employee_name || record.employee_id,
-      Department: record.department,
+      EmployeeCode: profile?.EmployeeCode || record.employee_id,
+      EmployeeName: profile?.EmployeeName || record.employee_name || record.employee_id,
+      Department: profile?.Department || record.department,
       EmployeeNature: '',
-      Designation: record.designation || record.role,
+      Designation: profile?.Designation || record.designation || record.role,
       ReportingManager: '',
       EmploymentType: '',
       EmploymentStatus: record.employment_status,

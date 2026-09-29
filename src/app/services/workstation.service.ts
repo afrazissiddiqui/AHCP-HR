@@ -134,8 +134,12 @@ export class WorkstationService {
       id: this.pickString(item, ['id', 'Id', 'ID', 'workstation_id']) || '',
       name: this.pickString(item, ['name', 'Name', 'workstation_name']) || '',
       code: this.pickString(item, ['code', 'Code']) || '',
-      officeInTime: this.pickString(item, ['office_in_time', 'officeInTime', 'in_time', 'start_time']) || '',
-      officeOutTime: this.pickString(item, ['office_out_time', 'officeOutTime', 'out_time', 'end_time']) || '',
+      officeInTime: this.pickString(item, [
+        'office_in_time', 'officeInTime', 'OfficeInTime', 'in_time', 'inTime', 'start_time', 'startTime',
+      ]) || '',
+      officeOutTime: this.pickString(item, [
+        'office_out_time', 'officeOutTime', 'OfficeOutTime', 'out_time', 'outTime', 'end_time', 'endTime',
+      ]) || '',
       inGraceMinutes:
         this.pickString(item, ['in_grace_minutes', 'inGraceMinutes', 'late_grace_minutes', 'grace_in']) || 0,
       outGraceMinutes:

@@ -36,9 +36,10 @@
 
         @if (loading()) {
           <div class="panel-message">Loading overtime list…</div>
-        } @else if (attendanceFilterLoading()) {
-          <div class="panel-message">Loading attendance for the selected dates…</div>
         } @else {
+          @if (attendanceFilterLoading()) {
+            <div class="panel-message">Loading attendance hours…</div>
+          }
           <div class="table-wrap">
             <table class="entry-table">
               <thead>
@@ -67,7 +68,17 @@
                     <tr>
                       <td class="col-sr">{{ (currentPage() - 1) * pageSize() + index + 1 }}</td>
                       @for (column of columns; track column.key) {
-                        <td>{{ cellValue(record, column.key) }}</td>
+                        <td>
+                          @if (column.key === 'shift' && record.shiftLookupLoading) {
+                            <span>Loading shift…</span>
+                          } @else if (column.key === 'shift' && record.shiftLookupFailed) {
+                            <span class="shift-warning" role="status">Warning: Shift assignment unavailable</span>
+                          } @else if (column.key === 'shift' && !record.shift) {
+                            <span class="shift-warning" role="status">Warning: No shift allotted</span>
+                          } @else {
+                            {{ cellValue(record, column.key) }}
+                          }
+                        </td>
                       }
                     </tr>
                   }
