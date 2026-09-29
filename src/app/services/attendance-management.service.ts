@@ -65,6 +65,7 @@ interface BiometricsPunchApiRecord {
   No?: number;
   id?: string | number;
   card_no?: string;
+  hours_worked?: unknown;
   punch_in?: string | null;
   punch_out?: string | null;
   machine_id?: string | number;
@@ -396,6 +397,34 @@ export class AttendanceManagementService {
     return this.buildQueryUrl(query);
   }
 
+  fetchCalculatedWorkingHours(query: AttendanceQuery, extEmpNo: string): Observable<string | null> {
+    if (!extEmpNo.trim()) {
+      return of(null);
+    }
+
+    return this.http
+      .get(this.buildQueryUrl(query, extEmpNo), {
+        headers: new HttpHeaders({ 'X-API-Key': BIOMETRICS_API_KEY }),
+        responseType: 'text',
+      })
+      .pipe(
+        map((response) => {
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(response) as unknown;
+          } catch {
+            return null;
+          }
+
+          const hours = this.extractApiItems(parsed)
+            .map((item) => item.hours_worked)
+            .find((value): value is string => typeof value === 'string' && !!value.trim());
+          return hours?.trim() ?? null;
+        }),
+        catchError(() => of(null)),
+      );
+  }
+
   private fetchPunches(query: AttendanceQuery): Observable<AttendancePunchRecord[]> {
     const normalized = this.normalizeQuery(query);
     const requestedCardNo = normalized.userId?.trim();
@@ -551,12 +580,19 @@ export class AttendanceManagementService {
       if (Array.isArray(candidate)) {
         return candidate.filter((item): item is BiometricsPunchApiRecord => !!item && typeof item === 'object');
       }
+      if (candidate && typeof candidate === 'object') {
+        const nestedItems = this.extractApiItems(candidate);
+        if (nestedItems.length) {
+          return nestedItems;
+        }
+      }
     }
 
     if (
       root['Employee ID'] ||
       root['EmployeeId'] ||
       root['employeeId'] ||
+      root['hours_worked'] !== undefined ||
       root['PunchDatetime'] ||
       root['punchDatetime']
     ) {
@@ -1064,8 +1100,12 @@ export function formatPunchTime(value: string): string {
 
   const match = trimmed.match(/T(\d{2}):(\d{2})(?::(\d{2}))?/);
   if (match) {
+    const hours24 = Number(match[1]);
+    const minutes = match[2];
     const seconds = match[3] ? `:${match[3]}` : '';
-    return `${match[1]}:${match[2]}${seconds}`;
+    const period = hours24 >= 12 ? 'PM' : 'AM';
+    const hours12 = hours24 % 12 || 12;
+    return `${hours12}:${minutes}${seconds} ${period}`;
   }
 
   const parsed = new Date(trimmed);
@@ -1073,8 +1113,11 @@ export function formatPunchTime(value: string): string {
     return trimmed;
   }
 
-  const hours = String(parsed.getHours()).padStart(2, '0');
+  const hours24 = parsed.getHours();
   const minutes = String(parsed.getMinutes()).padStart(2, '0');
   const seconds = String(parsed.getSeconds()).padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
+  const period = hours24 >= 12 ? 'PM' : 'AM';
+  const hours12 = hours24 % 12 || 12;
+  const hasSeconds = parsed.getSeconds() > 0 || trimmed.includes(':');
+  return `${hours12}:${minutes}${hasSeconds ? `:${seconds}` : ''} ${period}`;
 }

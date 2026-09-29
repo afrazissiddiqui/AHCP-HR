@@ -37,7 +37,7 @@
         @if (loading()) {
           <div class="panel-message">Loading overtime list…</div>
         } @else {
-          @if (attendanceFilterLoading()) {
+          @if (attendanceFilterLoading() || workingHoursLoading()) {
             <div class="panel-message">Loading attendance hours…</div>
           }
           <div class="table-wrap">

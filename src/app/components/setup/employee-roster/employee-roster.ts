@@ -7,7 +7,7 @@ import { AlertService } from '../../../services/alert.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { PageToolbarComponent } from '../../page-toolbar/page-toolbar';
 import { GatePassDepartmentService } from '../../gate-pass/gate-pass-department.service';
-import { WorkstationService } from '../../../services/workstation.service';
+import { WorkstationRecord, WorkstationService } from '../../../services/workstation.service';
 
 type ShiftCode = string;
 type MonthHalf = 'First Half' | 'Second Half';
@@ -89,6 +89,29 @@ export function rosterPeriodForDate(date: Date): { monthLabel: string; monthHalf
   };
 }
 
+export function rosterShiftOptions(workstations: WorkstationRecord[]) {
+  const options = workstations
+    .map((workstation) => {
+      const code = workstation.code.trim() || String(workstation.id).trim() || workstation.shift.trim();
+      const description = workstation.description.trim() || workstation.name.trim() || workstation.shift.trim();
+      return {
+        code,
+        title: `${description} (${code})`,
+        className: 'dynamic',
+      };
+    })
+    .filter((option) => option.code);
+  const uniqueOptions = options.filter(
+    (option, index, allOptions) => allOptions.findIndex((item) => item.code.toLowerCase() === option.code.toLowerCase()) === index,
+  );
+
+  return [
+    ...uniqueOptions,
+    { code: 'HOL', title: 'Holiday', className: 'holiday' },
+    { code: 'OFF', title: 'Scheduled Day Off', className: 'off' },
+  ];
+}
+
 @Component({
   selector: 'app-employee-roster',
   imports: [CommonModule, FormsModule, PageToolbarComponent],
@@ -130,24 +153,7 @@ export class EmployeeRosterComponent implements OnInit {
   readonly workstationLegendOpen = signal(false);
   readonly branchHolidaysOpen = signal(false);
   readonly unassignedDialogOpen = signal(false);
-  readonly shiftOptions = computed(() => {
-    const options = this.workstationService.workstations()
-      .map((workstation) => ({
-        code: workstation.shift.trim(),
-        title: workstation.description.trim() || workstation.name.trim() || workstation.shift.trim(),
-        className: 'dynamic',
-      }))
-      .filter((option) => option.code);
-    const uniqueOptions = options.filter(
-      (option, index, allOptions) => allOptions.findIndex((item) => item.code.toLowerCase() === option.code.toLowerCase()) === index,
-    );
-
-    return [
-      ...uniqueOptions,
-      { code: 'HOL', title: 'Holiday', hours: '', className: 'holiday' },
-      { code: 'OFF', title: 'Scheduled Day Off', hours: '', className: 'off' },
-    ];
-  });
+  readonly shiftOptions = computed(() => rosterShiftOptions(this.workstationService.workstations()));
 
   readonly visibleDays = computed<RosterDay[]>(() => {
     const [monthName, yearText] = this.monthLabel().split(' ');
@@ -225,9 +231,9 @@ export class EmployeeRosterComponent implements OnInit {
   });
 
   readonly totalEmployees = computed(() => this.employees().length);
-  readonly morningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('M')).length);
-  readonly eveningCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('E')).length);
-  readonly nightCount = computed(() => this.employees().filter((employee) => employee.shifts.includes('N')).length);
+  readonly morningCount = computed(() => this.employees().filter((employee) => employee.shifts.some((shift) => this.shiftName(shift) === 'Morning')).length);
+  readonly eveningCount = computed(() => this.employees().filter((employee) => employee.shifts.some((shift) => this.shiftName(shift) === 'Evening')).length);
+  readonly nightCount = computed(() => this.employees().filter((employee) => employee.shifts.some((shift) => this.shiftName(shift) === 'Night')).length);
   readonly unassignedCount = computed(() => this.unassignedEmployees().length);
   readonly activeCount = computed(() => this.filteredEmployees().length);
 
@@ -390,13 +396,19 @@ export class EmployeeRosterComponent implements OnInit {
   private toApiShift(shift: ShiftCode): string {
     const normalized = shift.trim();
     const lower = normalized.toLowerCase();
-    const workstation = this.workstationService.workstations().find((item) =>
+    const workstations = this.workstationService.workstations();
+    const workstation = workstations.find((item) =>
+      [item.code, String(item.id)].some((value) => value.trim().toLowerCase() === lower),
+    ) ?? workstations.find((item) =>
       [item.shift, item.code, item.name, item.description]
         .some((value) => value.trim().toLowerCase() === lower),
     );
     const workstationCode = workstation?.code.trim() || '';
     if (workstationCode && workstationCode.length <= 8) {
       return workstationCode;
+    }
+    if (workstation && String(workstation.id).trim()) {
+      return String(workstation.id).trim();
     }
     if (['m', 'morning', 'morning shift'].includes(lower)) {
       return 'M';
@@ -496,13 +508,18 @@ export class EmployeeRosterComponent implements OnInit {
   }
 
   shiftName(shift: ShiftCode): string {
-    return { M: 'Morning', E: 'Evening', N: 'Night', OFF: 'Day Off', L: 'Leave', HOL: 'Holiday', '+': 'Unassigned' }[shift] || shift;
+    const lower = shift.trim().toLowerCase();
+    const workstation = this.workstationService.workstations().find((item) =>
+      [item.code, String(item.id)].some((value) => value.trim().toLowerCase() === lower),
+    );
+    const label = workstation?.shift.trim() || shift;
+    return { M: 'Morning', E: 'Evening', N: 'Night', OFF: 'Day Off', L: 'Leave', HOL: 'Holiday', '+': 'Unassigned' }[label] || label;
   }
 
   shiftDescription(shift: string): string {
     const workstation = this.workstationService
       .workstations()
-      .find((item) => item.shift.trim().toLowerCase() === shift.trim().toLowerCase());
+      .find((item) => [item.code, String(item.id), item.shift].some((value) => value.trim().toLowerCase() === shift.trim().toLowerCase()));
     return workstation?.description.trim() || workstation?.name.trim() || this.shiftName(shift);
   }
 

@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, from, map, mergeMap, toArray } from 'rxjs';
 import {
   AttendanceManagementService,
   AttendanceQuery,
   canonicalAttendanceKey,
+  formatIsoDate,
   formatWorkingDuration,
 } from '../../../services/attendance-management.service';
 import { AlertService } from '../../../services/alert.service';
@@ -56,6 +57,7 @@ export class OvertimeListComponent implements OnInit {
   private readonly alertService = inject(AlertService);
   readonly tableFilter = inject(TableFilterService);
   readonly attendanceFilterLoading = signal(false);
+  readonly workingHoursLoading = signal(false);
   readonly workstationLoading = signal(false);
   readonly workstations = signal<WorkstationRecord[]>([]);
 
@@ -71,8 +73,9 @@ export class OvertimeListComponent implements OnInit {
     fields: OVERTIME_TABLE_FILTER.fields.filter((field) => field.key !== 'attendanceDate'),
   };
   private readonly attendanceEmployeeKeys = signal<Set<string> | null>(null);
-  private readonly attendanceWorkingMinutes = signal<Map<string, number> | null>(null);
+  private readonly attendanceWorkingHours = signal<Map<string, string>>(new Map());
   private attendanceStarted = false;
+  private workingHoursRequestId = 0;
 
   readonly columns: OvertimeTableColumn[] = [
     { key: 'employeeId', label: 'Employee ID' },
@@ -116,7 +119,7 @@ export class OvertimeListComponent implements OnInit {
         record.shift,
         this.workingHourValue(record),
         this.shiftHoursValue(record),
-        this.formatNumber(record.overtimeHours),
+        this.overtimeHoursValue(record),
         this.formatNumber(record.overtimeRate),
         this.formatNumber(record.exceptionalOt),
       ]
@@ -158,9 +161,13 @@ export class OvertimeListComponent implements OnInit {
           this.records.set(records);
           this.currentPage.set(1);
           this.loading.set(false);
-          if (!this.attendanceStarted) {
-            this.attendanceStarted = true;
-            this.loadAttendanceForDateFilter(false);
+          if (!records.some((record) => record.shiftLookupLoading)) {
+            if (!this.attendanceStarted) {
+              this.attendanceStarted = true;
+              this.loadAttendanceForDateFilter(false);
+            } else {
+              this.loadEmployeeWorkingHours(this.attendanceQueryForAppliedDateFilter());
+            }
           }
         },
         error: (error: unknown) => {
@@ -208,6 +215,7 @@ export class OvertimeListComponent implements OnInit {
       case 'shiftHours':
         return this.shiftHoursValue(record);
       case 'overtimeHours':
+        return this.overtimeHoursValue(record);
       case 'overtimeRate':
       case 'exceptionalOt':
         return this.formatNumber(record[key]);
@@ -232,11 +240,41 @@ export class OvertimeListComponent implements OnInit {
   }
 
   private workingHourValue(record: OvertimeListRecord): string {
-    if (this.attendanceFilterLoading()) {
+    if (this.workingHoursLoading()) {
       return 'Loading…';
     }
-    const minutes = this.attendanceWorkingMinutes()?.get(canonicalAttendanceKey(record.employeeId)) ?? 0;
-    return formatWorkingDuration(minutes);
+    return this.attendanceWorkingHours().get(canonicalAttendanceKey(record.employeeId)) ?? '—';
+  }
+
+  private overtimeHoursValue(record: OvertimeListRecord): string {
+    if (this.workingHoursLoading() || record.shiftLookupLoading || this.workstationLoading()) {
+      return 'Loading…';
+    }
+
+    const workingHours = this.attendanceWorkingHours().get(canonicalAttendanceKey(record.employeeId));
+    const workingMinutes = workingHours ? this.durationTextToMinutes(workingHours) : null;
+    const shiftMinutes = this.shiftDurationMinutes(record);
+    if (workingMinutes === null || shiftMinutes === null) {
+      return '—';
+    }
+
+    const overtimeMinutes = shiftMinutes - workingMinutes;
+    if (overtimeMinutes === 0) {
+      return '0h';
+    }
+    const duration = formatWorkingDuration(Math.abs(overtimeMinutes));
+    return overtimeMinutes < 0 ? `-${duration}` : duration;
+  }
+
+  private durationTextToMinutes(value: string): number | null {
+    const normalized = value.trim();
+    const durationMatch = normalized.match(/^(?:(\d+)h)?\s*(?:(\d+)m)?$/i);
+    if (durationMatch && (durationMatch[1] || durationMatch[2])) {
+      return Number(durationMatch[1] ?? 0) * 60 + Number(durationMatch[2] ?? 0);
+    }
+
+    const clockMatch = normalized.match(/^(\d+):([0-5]\d)$/);
+    return clockMatch ? Number(clockMatch[1]) * 60 + Number(clockMatch[2]) : null;
   }
 
   private shiftHoursValue(record: OvertimeListRecord): string {
@@ -248,27 +286,70 @@ export class OvertimeListComponent implements OnInit {
     }
 
     const shiftDurations = record.shift.split(',').map((shiftCode) => {
-      const normalizedCode = this.normalizeShiftCode(shiftCode);
-      const workstations = this.workstations();
-      const workstation = workstations.find((item) =>
-        [item.code, item.shift, item.name, item.description]
-          .some((value) => this.normalizeShiftCode(value) === normalizedCode),
-      ) ?? workstations.find((item) => this.shiftCodeMatches(normalizedCode, item.shift));
+      const workstation = this.workstationForShiftCode(shiftCode);
       if (!workstation) {
         return '—';
       }
 
-      const startMinutes = this.timeToMinutes(workstation.officeInTime);
-      const endMinutes = this.timeToMinutes(workstation.officeOutTime);
-      if (startMinutes === null || endMinutes === null) {
+      const schedule = this.shiftScheduleFor(workstation);
+      if (!schedule) {
         return '—';
       }
 
-      const durationMinutes = (endMinutes - startMinutes + 24 * 60) % (24 * 60);
-      return formatWorkingDuration(durationMinutes);
+      const endDisplayMinutes = (schedule.startMinutes + schedule.durationMinutes) % (24 * 60);
+      return `${formatWorkingDuration(schedule.durationMinutes)} (${this.formatShiftTime(schedule.startMinutes)} - ${this.formatShiftTime(endDisplayMinutes)})`;
     });
 
     return shiftDurations.length === 1 ? shiftDurations[0] : shiftDurations.join(', ');
+  }
+
+  private shiftDurationMinutes(record: OvertimeListRecord): number | null {
+    if (!record.shift) {
+      return null;
+    }
+
+    const shiftDurations = record.shift.split(',').map((shiftCode) => {
+      const workstation = this.workstationForShiftCode(shiftCode);
+      return workstation ? this.shiftScheduleFor(workstation)?.durationMinutes ?? null : null;
+    });
+    if (shiftDurations.some((duration) => duration === null)) {
+      return null;
+    }
+
+    return shiftDurations.reduce<number>((total, duration) => total + (duration ?? 0), 0);
+  }
+
+  private workstationForShiftCode(shiftCode: string): WorkstationRecord | undefined {
+    const normalizedCode = this.normalizeShiftCode(shiftCode);
+    const workstations = this.workstations();
+    return workstations.find((item) =>
+      [String(item.id), item.code, item.shift, item.name, item.description]
+        .some((value) => this.normalizeShiftCode(value) === normalizedCode),
+    ) ?? workstations.find((item) => this.shiftCodeMatches(normalizedCode, item.shift));
+  }
+
+  private shiftScheduleFor(workstation: WorkstationRecord): { startMinutes: number; durationMinutes: number } | null {
+    const startMinutes = this.timeToMinutes(workstation.officeInTime);
+    const endMinutes = this.timeToMinutes(workstation.officeOutTime);
+    if (startMinutes === null || endMinutes === null) {
+      return null;
+    }
+
+    let durationMinutes = (endMinutes - startMinutes + 24 * 60) % (24 * 60);
+    const hasExplicitMeridiem = /\s*(AM|PM)\s*$/i.test(workstation.officeInTime)
+      || /\s*(AM|PM)\s*$/i.test(workstation.officeOutTime);
+    if (!hasExplicitMeridiem && durationMinutes > 12 * 60) {
+      durationMinutes -= 12 * 60;
+    }
+    return durationMinutes > 0 ? { startMinutes, durationMinutes } : null;
+  }
+
+  private formatShiftTime(minutes: number): string {
+    const hour = Math.floor(minutes / 60) % 24;
+    const displayHour = hour % 12 || 12;
+    const minute = String(minutes % 60).padStart(2, '0');
+    const meridiem = hour < 12 ? 'AM' : 'PM';
+    return `${displayHour}:${minute} ${meridiem}`;
   }
 
   private normalizeShiftCode(value: string): string {
@@ -353,44 +434,24 @@ export class OvertimeListComponent implements OnInit {
 
   private loadAttendanceForDateFilter(filterByAttendanceDate = true): void {
     const appliedDateRange = this.tableFilter.getApplied(this.overtimeTableFilter)['attendanceDate'];
-    if (!appliedDateRange || typeof appliedDateRange !== 'object' || !('from' in appliedDateRange)) {
-      if (filterByAttendanceDate) {
-        this.attendanceEmployeeKeys.set(null);
-        this.attendanceWorkingMinutes.set(null);
-        return;
-      }
+    const hasDateRange = !!(
+      appliedDateRange && typeof appliedDateRange === 'object' && 'from' in appliedDateRange
+      && ((typeof appliedDateRange.from === 'string' && appliedDateRange.from)
+        || ('to' in appliedDateRange && typeof appliedDateRange.to === 'string' && appliedDateRange.to))
+    );
+    const query = this.attendanceQueryForAppliedDateFilter();
+    if (!hasDateRange && filterByAttendanceDate) {
+      this.attendanceEmployeeKeys.set(null);
+      this.loadEmployeeWorkingHours(query);
+      return;
     }
 
-    const fromDate = appliedDateRange && typeof appliedDateRange === 'object' && 'from' in appliedDateRange
-      && typeof appliedDateRange.from === 'string'
-      ? appliedDateRange.from
-      : '';
-    const toDate = appliedDateRange && typeof appliedDateRange === 'object' && 'to' in appliedDateRange
-      && typeof appliedDateRange.to === 'string'
-      ? appliedDateRange.to
-      : '';
-    if (!fromDate && !toDate) {
-      if (filterByAttendanceDate) {
-        this.attendanceEmployeeKeys.set(null);
-        this.attendanceWorkingMinutes.set(null);
-        return;
-      }
-    }
-
-    const startDate = fromDate || toDate;
-    const endDate = toDate || fromDate;
-    const query: AttendanceQuery = startDate && endDate
-      ? startDate === endDate
-        ? { mode: 'date', date: startDate }
-        : { mode: 'dateRange', fromDate: startDate, toDate: endDate }
-      : { mode: 'today' };
-
+    this.loadEmployeeWorkingHours(query);
     this.attendanceFilterLoading.set(true);
     this.attendanceService.loadSession(query)
       .pipe(finalize(() => this.attendanceFilterLoading.set(false)))
       .subscribe({
         next: () => {
-          const workingMinutes = new Map<string, number>();
           const employeeKeys = new Set<string>();
           for (const slot of this.attendanceService.slots()) {
             const employeeKey = canonicalAttendanceKey(slot.employeeKey);
@@ -398,9 +459,7 @@ export class OvertimeListComponent implements OnInit {
               continue;
             }
             employeeKeys.add(employeeKey);
-            workingMinutes.set(employeeKey, (workingMinutes.get(employeeKey) ?? 0) + slot.workingMinutes);
           }
-          this.attendanceWorkingMinutes.set(workingMinutes);
           if (filterByAttendanceDate) {
             this.attendanceEmployeeKeys.set(employeeKeys);
           }
@@ -409,13 +468,62 @@ export class OvertimeListComponent implements OnInit {
           if (filterByAttendanceDate) {
             this.attendanceEmployeeKeys.set(new Set());
           }
-          this.attendanceWorkingMinutes.set(null);
           void this.alertService.error(
             'Attendance Load Failed',
             formatApiErrorMessage(error, 'Failed to load attendance for the selected dates.'),
           );
         },
       });
+  }
+
+  private attendanceQueryForAppliedDateFilter(): AttendanceQuery {
+    const appliedDateRange = this.tableFilter.getApplied(this.overtimeTableFilter)['attendanceDate'];
+    const fromDate = appliedDateRange && typeof appliedDateRange === 'object' && 'from' in appliedDateRange
+      && typeof appliedDateRange.from === 'string'
+      ? appliedDateRange.from
+      : '';
+    const toDate = appliedDateRange && typeof appliedDateRange === 'object' && 'to' in appliedDateRange
+      && typeof appliedDateRange.to === 'string'
+      ? appliedDateRange.to
+      : '';
+    const startDate = fromDate || toDate;
+    const endDate = toDate || fromDate;
+    if (!startDate || !endDate) {
+      return { mode: 'date', date: formatIsoDate(new Date()) };
+    }
+
+    return startDate === endDate
+      ? { mode: 'date', date: startDate }
+      : { mode: 'dateRange', fromDate: startDate, toDate: endDate };
+  }
+
+  private loadEmployeeWorkingHours(query: AttendanceQuery): void {
+    const requestId = ++this.workingHoursRequestId;
+    const employees = this.records().filter((record) => record.extEmpNo);
+    this.workingHoursLoading.set(true);
+
+    from(employees).pipe(
+      mergeMap((record) => this.attendanceService
+        .fetchCalculatedWorkingHours(query, record.extEmpNo)
+        .pipe(map((hours) => ({ employeeId: record.employeeId, hours }))), 6),
+      toArray(),
+      finalize(() => {
+        if (requestId === this.workingHoursRequestId) {
+          this.workingHoursLoading.set(false);
+        }
+      }),
+    ).subscribe((results) => {
+      if (requestId !== this.workingHoursRequestId) {
+        return;
+      }
+      const workingHours = new Map<string, string>();
+      for (const result of results) {
+        if (result.hours) {
+          workingHours.set(canonicalAttendanceKey(result.employeeId), result.hours);
+        }
+      }
+      this.attendanceWorkingHours.set(workingHours);
+    });
   }
 
 }

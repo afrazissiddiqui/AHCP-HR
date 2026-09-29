@@ -1075,9 +1075,22 @@ export class OpenBaseDocumentsService {
         'transporter_phone',
       ]),
       transporterName: this.pickString(sources, ['transporterName', 'transporter_name', 'U_TransporterName']),
-      status: this.pickString(sources, ['DocStatus', 'docStatus', 'status']),
+      status: this.normalizeOpenDocumentStatus(
+        this.pickString(sources, ['DocStatus', 'docStatus', 'status']),
+      ),
       lines: this.mapDocumentLines(item),
     };
+  }
+
+  private normalizeOpenDocumentStatus(value: string): string {
+    const normalized = value.trim().toUpperCase();
+    if (normalized === 'O' || normalized === 'OPEN' || normalized === 'BOST_OPEN') {
+      return 'O';
+    }
+    if (normalized === 'C' || normalized === 'CLOSED' || normalized === 'BOST_CLOSED') {
+      return 'C';
+    }
+    return value.trim();
   }
 
   /** Prefer header values, then first document line (WhsCode / BPLId often live on lines). */

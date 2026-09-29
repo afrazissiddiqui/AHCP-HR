@@ -1,5 +1,17 @@
 import { ApplicationFormRecord, EmployeeRosterListRecord } from '../../../services/application-form.service';
-import { findUnassignedEmployees, rosterDayIndexForMonth, rosterPeriodForDate } from './employee-roster';
+import { findUnassignedEmployees, rosterDayIndexForMonth, rosterPeriodForDate, rosterShiftOptions } from './employee-roster';
+import { WorkstationRecord } from '../../../services/workstation.service';
+
+describe('rosterShiftOptions', () => {
+  it('keeps distinct workstations when their shift labels are the same', () => {
+    const workstations: WorkstationRecord[] = [
+      { id: 1, name: 'Morning East', code: 'ME', officeInTime: '', officeOutTime: '', inGraceMinutes: 0, outGraceMinutes: 0, shift: 'M', description: '', status: 1 },
+      { id: 2, name: 'Morning West', code: 'MW', officeInTime: '', officeOutTime: '', inGraceMinutes: 0, outGraceMinutes: 0, shift: 'M', description: '', status: 1 },
+    ];
+
+    expect(rosterShiftOptions(workstations).slice(0, 2).map((option) => option.code)).toEqual(['ME', 'MW']);
+  });
+});
 
 describe('findUnassignedEmployees', () => {
   it('does not mark an employee unassigned when a roster record has no shift value', () => {

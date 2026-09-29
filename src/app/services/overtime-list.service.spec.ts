@@ -46,6 +46,7 @@ describe('OvertimeListService', () => {
     applicationFormService.fetchEmployeeProfiles.and.returnValue(of([
       {
         EmployeeCode: 'EMP-001',
+        ExtEmpNo: '4023',
         EmployeeName: 'Ayesha Khan',
         Department: '',
         EmployeeNature: '',
@@ -126,6 +127,7 @@ describe('OvertimeListService', () => {
 
     expect(records.map((record) => record.employeeId)).toEqual(['EMP-001', 'EMP-004']);
     expect(records[0].shift).toBe('M');
+    expect(records[0].extEmpNo).toBe('4023');
     expect(records[0].shiftLookupFailed).toBeFalse();
     expect(records[1].shift).toBe('');
     expect(records[1].shiftLookupFailed).toBeFalse();

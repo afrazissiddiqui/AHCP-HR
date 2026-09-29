@@ -10,6 +10,7 @@ import { formatIsoDate } from './attendance-management.service';
 export interface OvertimeListRecord {
   id: string | number;
   employeeId: string;
+  extEmpNo: string;
   employeeName: string;
   shift: string;
   shiftLookupLoading: boolean;
@@ -101,6 +102,7 @@ export class OvertimeListService {
     return {
       id: record.apiId || record.EmployeeCode,
       employeeId: record.EmployeeCode,
+      extEmpNo: record.ExtEmpNo?.trim() || '',
       employeeName: record.EmployeeName || record.detail?.personalInfo.personName || '',
       shift: [...(shiftsByEmployee.get(employeeCode) ?? [])].join(', '),
       shiftLookupLoading,
