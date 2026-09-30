@@ -779,7 +779,7 @@ export class OpenBaseDocumentsService {
 
   fetchDeliveries(): Observable<OpenBaseDocument[]> {
     return this.http.get<unknown>(DELIVERY_URL).pipe(
-      timeout(30_000),
+      timeout(60_000),
       map((response) =>
         this.extractApiItems(response).map((item) => this.mapApiRecordToOpenBaseDocument(item)),
       ),

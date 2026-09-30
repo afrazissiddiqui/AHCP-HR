@@ -2,8 +2,13 @@ import { createEmptyGoodReceiptHeader, createEmptyGoodReceiptLine, GoodReceiptLi
 import { buildCreateGoodReceiptPayload } from './good-receipt.service';
 
 describe('buildCreateGoodReceiptPayload', () => {
-  it('maps row account code to AcctCode in payload items', () => {
+  it('uses the edited item cost as unitPrice and sends the expected item shape', () => {
     const header = createEmptyGoodReceiptHeader();
+    header.branchId = '3';
+    header.documentDate = '2026-09-30';
+    header.postingDate = '2026-09-30';
+    header.dueDate = '2026-07-28';
+    header.remarks = 'Post By Afraz';
     const lines: GoodReceiptLine[] = [
       {
         ...createEmptyGoodReceiptLine(),
@@ -11,6 +16,7 @@ describe('buildCreateGoodReceiptPayload', () => {
         warehouse: 'WH01',
         quantity: 10,
         unitPrice: 250,
+        itemCost: 50,
         batchNumber: 'BATCH-01',
         manufacturingDate: '2026-07-02',
         expiryDate: '2029-07-28',
@@ -21,9 +27,22 @@ describe('buildCreateGoodReceiptPayload', () => {
 
     const payload = buildCreateGoodReceiptPayload(header, lines);
 
-    expect(payload.items[0]).toEqual(jasmine.objectContaining({
+    expect(payload).toEqual({
+      branch: 3,
+      docDate: '2026-09-30',
+      taxDate: '2026-09-30',
+      docDueDate: '2026-07-28',
+      remarks: 'Post By Afraz',
+      items: [{
+        itemCode: 'FG-001',
+        quantity: 10,
+        warehouse: 'WH01',
+        unitPrice: 50,
+        batchNumber: 'BATCH-01',
+        manufacturingDate: '2026-07-02',
+        expiryDate: '2029-07-28',
       AcctCode: 'T01001005000050',
-    }));
-    expect(payload.items[0]).not.toHaveProperty('accountCode');
+      }],
+    });
   });
 });

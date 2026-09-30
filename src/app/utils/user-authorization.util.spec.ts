@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getGatePassDefaultRoute } from '../components/gate-pass/gate-pass-access.util';
-import { buildAuthorizationTemplate, isPermissionGranted, permissionKey } from './user-authorization.util';
+import { AUTHORIZATION_MODULE_DEFINITIONS, buildAuthorizationTemplate, isPermissionGranted, permissionKey } from './user-authorization.util';
 
 describe('user authorization template', () => {
   it('keeps KPI and ITR setup permissions available for the user setup form', () => {
@@ -23,6 +23,16 @@ describe('user authorization template', () => {
 
     expect(isPermissionGranted(template, 'kpi_setup_form', 'list')).toBe(true);
     expect(isPermissionGranted(template, 'itr_setup_form', 'add')).toBe(false);
+  });
+
+  it('includes employee shift allocation and roster in user authorization', () => {
+    expect(AUTHORIZATION_MODULE_DEFINITIONS.find((module) => module.slug === 'master_form')?.name)
+      .toBe('Employee Shift Allocation Form');
+    expect(AUTHORIZATION_MODULE_DEFINITIONS.some((module) => module.slug === 'employee_roster_form'))
+      .toBe(true);
+
+    const template = buildAuthorizationTemplate([]);
+    expect(isPermissionGranted(template, 'employee_roster_form', 'list')).toBe(false);
   });
 
   it('redirects AGP-only users to the AGP route instead of IGP', () => {

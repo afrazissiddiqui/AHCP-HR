@@ -234,7 +234,7 @@ export const routes: Routes = [
   {
     path: 'setup/employee-roster',
     loadComponent: () => import('./components/setup/employee-roster/employee-roster').then((m) => m.EmployeeRosterComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, requirePermission('employee_roster_form', 'list')],
   },
   {
     path: 'setup/issue-from-production-list',

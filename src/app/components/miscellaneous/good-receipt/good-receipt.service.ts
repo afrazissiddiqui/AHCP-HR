@@ -10,8 +10,6 @@ export interface InventoryAccountOption {
 }
 
 export interface CreateGoodReceiptItemPayload {
-  baseEntry?: string | number;
-  baseLine?: string | number;
   itemCode: string;
   quantity: number;
   warehouse: string;
@@ -19,13 +17,7 @@ export interface CreateGoodReceiptItemPayload {
   batchNumber: string;
   manufacturingDate: string;
   expiryDate: string;
-  binLocationAllocation?: string;
   AcctCode?: string;
-  itemCost?: number;
-  uomCode?: string;
-  uomName?: string;
-  departmentsLocations?: string;
-  branch?: string;
 }
 
 export interface CreateGoodReceiptPayload {
@@ -98,17 +90,11 @@ export function buildCreateGoodReceiptPayload(
       itemCode: line.itemCode.trim(),
       quantity: line.quantity ?? 0,
       warehouse: line.warehouse.trim(),
-      unitPrice: line.unitPrice ?? 0,
+      unitPrice: line.itemCost ?? 0,
       batchNumber: line.batchNumber.trim(),
       manufacturingDate: line.manufacturingDate.trim(),
       expiryDate: line.expiryDate.trim(),
-      binLocationAllocation: line.binLocationAllocation.trim(),
       AcctCode: line.accountCode.trim(),
-      itemCost: line.itemCost ?? 0,
-      uomCode: line.uomCode.trim(),
-      uomName: line.uomName.trim(),
-      departmentsLocations: line.departmentsLocations.trim(),
-      branch: line.branch.trim(),
     })),
   };
 }

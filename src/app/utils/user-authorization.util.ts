@@ -254,7 +254,12 @@ export const AUTHORIZATION_MODULE_DEFINITIONS = [
   },
   {
     slug: 'master_form',
-    name: 'Master Form',
+    name: 'Employee Shift Allocation Form',
+    actions: ['add', 'view', 'list', 'update', 'delete'] as const,
+  },
+  {
+    slug: 'employee_roster_form',
+    name: 'Employee Roster Form',
     actions: ['add', 'view', 'list', 'update', 'delete'] as const,
   },
   {

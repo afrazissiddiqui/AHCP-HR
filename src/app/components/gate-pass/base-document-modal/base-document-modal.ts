@@ -184,7 +184,10 @@ export class BaseDocumentModalComponent implements OnChanges, OnDestroy {
   }
 
   private filterOpenDocuments(documents: OpenBaseDocument[], branchCodes: string[]): OpenBaseDocument[] {
-    const openDocs = documents.filter((doc) => doc.status === undefined || doc.status === 'O');
+    const isOgpDelivery = this.gatePassModule === 'ogp' && this.documentType === 'Delivery';
+    const openDocs = isOgpDelivery
+      ? documents
+      : documents.filter((doc) => doc.status === undefined || doc.status === 'O');
     if (!branchCodes.length) {
       return openDocs;
     }

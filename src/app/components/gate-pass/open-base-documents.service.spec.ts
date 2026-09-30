@@ -52,19 +52,27 @@ describe('OpenBaseDocumentsService', () => {
   it('normalizes open delivery status so OGP can show the document', () => {
     service.fetchDeliveries().subscribe((documents) => {
       expect(documents).toHaveLength(1);
-      expect(documents[0].number).toBe('DEL-1001');
+      expect(documents[0].number).toBe('1');
+      expect(documents[0].partner).toBe('Test Customer');
       expect(documents[0].status).toBe('O');
     });
 
     const req = httpMock.expectOne(apiUrl('delivery'));
     req.flush({
-      delivery: [
-        {
-          deliveryNo: 'DEL-1001',
-          DocStatus: 'bost_Open',
-          CardName: 'Test Customer',
-        },
-      ],
+      status: true,
+      delivery: {
+        count: 1,
+        data: [
+          {
+            DocNum: '1',
+            DocType: 'I',
+            DocDate: '2026-07-01 00:00:00.0000000',
+            DocStatus: 'O',
+            CardCode: 'CC-000006',
+            CardName: 'Test Customer',
+          },
+        ],
+      },
     });
   });
 });

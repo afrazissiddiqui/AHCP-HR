@@ -7,7 +7,7 @@ import { OitmItemsService } from '../../../../services/oitm-items.service';
 import { SalesOrderService } from '../../../../services/sales-order.service';
 import { TaxCodesService } from '../../../../services/tax-codes.service';
 import { GatePassBusinessPartnerService } from '../../../gate-pass/gate-pass-business-partner.service';
-import { DeliveryLine, createEmptyDeliveryHeader } from '../delivery.model';
+import { DeliveryLine, createEmptyDeliveryHeader, createEmptyDeliveryLine, updateDeliveryLine } from '../delivery.model';
 import { buildCreateDeliveryPayload } from '../delivery.service';
 import { AddDelivery } from './add-delivery';
 
@@ -120,6 +120,32 @@ describe('AddDelivery batch selection', () => {
       state: null,
       country: null,
     }]);
+  });
+
+  it('sends edited jumbo-carton values in the delivery item payload', () => {
+    const header = createEmptyDeliveryHeader();
+    header.customer = 'CUST-001';
+    header.baseSalesOrderDocEntry = '10';
+
+    const line: DeliveryLine = {
+      ...createEmptyDeliveryLine(),
+      itemCode: 'FG-001',
+      baseDocEntry: '10',
+      baseLine: '0',
+      warehouse: 'WH01',
+      quantity: 12000,
+      qtyPerJumboCarton: 12000,
+      jumboCartonsCount: 1,
+    };
+    const editedPerCarton = updateDeliveryLine([line], 0, 'qtyPerJumboCarton', '10');
+    const editedCartonCount = updateDeliveryLine(editedPerCarton, 0, 'jumboCartonsCount', '3');
+    const payload = buildCreateDeliveryPayload(header, editedCartonCount);
+
+    expect(payload.items[0]).toEqual(jasmine.objectContaining({
+      quantity: 30,
+      U_QtyPerJC: 10,
+      U_NoJC: 3,
+    }));
   });
 
   it('constrains batch issue quantity to the minimum of available and remaining required', () => {

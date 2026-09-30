@@ -16,6 +16,8 @@ export interface CreateDeliveryItemPayload {
   itemCode: string;
   warehouse: string;
   quantity: number;
+  U_QtyPerJC: number | null;
+  U_NoJC: number | null;
   discountPercent?: number;
   batches: CreateDeliveryBatchPayload[];
 }
@@ -149,6 +151,8 @@ export function buildCreateDeliveryPayload(
           itemCode: line.itemCode.trim(),
           warehouse: line.warehouse.trim(),
           quantity: line.quantity ?? 0,
+          U_QtyPerJC: line.qtyPerJumboCarton,
+          U_NoJC: line.jumboCartonsCount,
           discountPercent: Math.max(0, Math.min(100, line.discountPercent ?? 0)),
           batches: selectedBatches.length > 0 ? selectedBatches : fallbackBatches,
         };
