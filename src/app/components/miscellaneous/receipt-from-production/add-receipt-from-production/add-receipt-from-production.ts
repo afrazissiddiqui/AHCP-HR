@@ -337,6 +337,7 @@ export class AddReceiptFromProduction implements OnInit {
     nextLine.itemDescription = orderItemName || firstItem?.itemDescription || '';
     nextLine.warehouse = defaultWarehouse || order.warehouse || nextLine.warehouse;
     nextLine.batchNumber = order.batchNumber || nextLine.batchNumber;
+    nextLine.legacyBatch = firstItem?.legacyBatch || order.U_LegacyBatch || nextLine.legacyBatch;
     nextLine.quantity = order.receiptQty > 0 ? order.receiptQty : (firstItem?.quantity ?? null);
     nextLine.plannedQty = Number.isFinite(order.plannedQty) ? order.plannedQty : (firstItem?.plannedQty ?? null);
     nextLine.completedQty = Number.isFinite(order.completedQty) ? order.completedQty : (firstItem?.completedQty ?? null);

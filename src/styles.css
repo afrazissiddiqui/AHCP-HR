@@ -83,6 +83,10 @@ body {
   overflow-y: auto;
 }
 
+.swal2-container {
+  z-index: 2001 !important;
+}
+
 /* Profile spotlight drawer — lock page scroll while open */
 html.profile-drawer-open,
 html.profile-drawer-open body {

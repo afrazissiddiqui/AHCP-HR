@@ -534,4 +534,4 @@ export class IgpService {
       totalQty,
     };
   }
-} 
+}

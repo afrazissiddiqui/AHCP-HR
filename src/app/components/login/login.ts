@@ -42,18 +42,10 @@ export class LoginComponent implements OnInit {
     this.isSubmitting = true;
     this.authService.loginWithApi(email, this.password).subscribe({
       next: (response) => {
-        this.permissionService.reloadForCurrentUser().subscribe({
-          next: () => {
-            this.isSubmitting = false;
-            void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
-            void this.router.navigateByUrl('/dashboard');
-          },
-          error: () => {
-            this.isSubmitting = false;
-            void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
-            void this.router.navigateByUrl('/dashboard');
-          },
-        });
+        this.isSubmitting = false;
+        void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
+        this.permissionService.reloadForCurrentUser().subscribe();
+        void this.router.navigateByUrl('/dashboard');
       },
       error: (error: unknown) => {
         this.isSubmitting = false;

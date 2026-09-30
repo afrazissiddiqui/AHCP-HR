@@ -382,6 +382,7 @@ export class AddGoodIssue implements OnInit {
       .map((batch) => ({
         batchNo: batch.batchNumber.trim(),
         quantity: Number(batch.quantity ?? 0),
+        legacyBatch: batch.legacyBatch ?? '',
         issueQuantity: batch.batchNumber.trim() === line.batchSerialNumber.trim() ? line.quantity ?? 0 : null,
       }))
       .filter((batch) => batch.batchNo.length > 0);

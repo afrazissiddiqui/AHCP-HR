@@ -1,4 +1,4 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   getNavigableHrMenuActions,
@@ -15,13 +15,8 @@ import { PermissionService } from '../../services/permission.service';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class dashboardComponent {
-  readonly menuActions: HrMenuAction[];
-
-  constructor(
-    private readonly router: Router,
-    private readonly permissionService: PermissionService,
-  ) {
-    this.menuActions = getNavigableHrMenuActions()
+  readonly menuActions = computed(() =>
+    getNavigableHrMenuActions()
       .filter((action) => this.permissionService.canAccess(action.access))
       .map((action) =>
         action.value === 'recruitment'
@@ -32,7 +27,14 @@ export class dashboardComponent {
               ),
             }
           : action,
-      );
+      ),
+  );
+
+  constructor(
+    private readonly router: Router,
+    private readonly permissionService: PermissionService,
+  ) {
+    this.permissionService.ensureLoaded().subscribe();
   }
 
   openAction(action: HrMenuAction): void {

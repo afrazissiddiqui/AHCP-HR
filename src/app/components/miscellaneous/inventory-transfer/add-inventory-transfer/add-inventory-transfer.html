@@ -107,7 +107,6 @@
                   <th class="sir-col-bin">From Bin Locations</th>
                   <th class="sir-col-warehouse">To Warehouse</th>
                   <th class="sir-col-bin">To Bin Locations</th>
-                  <th class="sir-col-dept-loc">First To-Bin-Location</th>
                   <th class="sir-col-branch">To Branch</th>
                   <th class="sir-col-batch">Batch</th>
                   <th class="sir-col-qty">Quantity</th>
@@ -169,14 +168,6 @@
                         class="sir-table-input"
                         [ngModel]="line.toBinLocation"
                         (ngModelChange)="updateContentLine($index, 'toBinLocation', $event)"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        class="sir-table-input"
-                        [ngModel]="line.firstToBinLocation"
-                        (ngModelChange)="updateContentLine($index, 'firstToBinLocation', $event)"
                       />
                     </td>
                     <td>

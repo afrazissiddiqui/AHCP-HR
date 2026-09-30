@@ -259,9 +259,9 @@ export class InventoryTransferService {
               fromWarehouse: this.pickString(line, ['FromWhsCod', 'from_warehouse', 'fromWarehouse']),
               toWarehouse: this.pickString(line, ['ToWhsCode', 'WhsCode', 'to_warehouse', 'toWarehouse']),
               lineTotal: this.pickNumber(line, ['LineTotal', 'lineTotal']),
-              batchNumber: firstBatch
-                ? this.pickString(firstBatch, ['batchNumber', 'BatchNum', 'batch_number'])
-                : '',
+              batchNumber:
+                (firstBatch ? this.pickString(firstBatch, ['batchNumber', 'BatchNum', 'batch_number']) : '') ||
+                this.pickString(line, ['batchNumber', 'BatchNum', 'batch_number', 'BatchNo', 'Batch']),
               uomCode: this.pickString(line, ['UomCode', 'uomCode', 'UOMCode', 'Uom', 'uom', 'UOM']),
               uomName: this.pickString(line, ['UomName', 'uomName', 'UOMName', 'UomCode', 'uomCode', 'UOMCode']),
             };

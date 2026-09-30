@@ -134,6 +134,7 @@ describe('AddReceiptFromProduction', () => {
       startDate: '2026-07-20',
       status: 'R',
       U_DocTaxStatus: 'R',
+      U_LegacyBatch: '1-45G-H5-2026-000000005',
       warehouse: 'FSD-WH03',
       branch: '3',
       batchNumber: 'Toll-FSD-2026-00000003',
@@ -162,6 +163,7 @@ describe('AddReceiptFromProduction', () => {
     expect(component.contentLines()[0].itemCode).toBe('FG-Toll-P-00000069');
     expect(component.contentLines()[0].itemDescription).toBe('Toll Flint - Preform 45 Gram');
     expect(component.contentLines()[0].warehouse).toBe('FSD-WH06');
+    expect(component.contentLines()[0].legacyBatch).toBe('1-45G-H5-2026-000000005');
   });
 
   it('marks the document tax status as UnRegistered when U_DocTaxStatus is not R', () => {
@@ -216,6 +218,16 @@ describe('AddReceiptFromProduction', () => {
     expect(payload.warehouse).toBe('FSD-WH03');
   });
 
+  it('normalizes unregistered Pass UR tax status values to UR in the payload', () => {
+    for (const documentTaxStatus of ['UR', 'Pass UR', 'UnRegistered Pass UR']) {
+      component.headerForm.update((header) => ({ ...header, documentTaxStatus }));
+
+      const payload = buildCreateReceiptFromProductionPayload(component.headerForm(), component.contentLines());
+
+      expect(payload.U_DocTaxStatus).toBe('UR');
+    }
+  });
+
   it('includes the legacy batch in the item batch payload', () => {
     component.headerForm.update((header) => ({ ...header, productionTime: '08:30' }));
     component.contentLines.set([
@@ -231,6 +243,7 @@ describe('AddReceiptFromProduction', () => {
 
     const payload = buildCreateReceiptFromProductionPayload(component.headerForm(), component.contentLines());
 
+    expect(payload.U_LegacyBatch).toBe('LEGACY-001');
     expect(payload.items?.[0].batches).toEqual([
       {
         BatchNum: 'FSD-26-000001',

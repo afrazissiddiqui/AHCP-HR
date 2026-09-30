@@ -31,8 +31,14 @@ function normalizeDocumentTaxStatus(value: string | undefined | null): string {
   if (normalized === 'registered' || normalized === 'r') {
     return 'R';
   }
-  if (normalized === 'unregistered' || normalized === 'u') {
-    return 'U';
+  if (
+    normalized === 'unregistered' ||
+    normalized === 'u' ||
+    normalized === 'ur' ||
+    normalized === 'pass ur' ||
+    normalized === 'unregistered pass ur'
+  ) {
+    return 'UR';
   }
   return `${value ?? ''}`.trim();
 }
@@ -112,6 +118,7 @@ export interface CreateReceiptFromProductionPayload {
   U_MoldNo: string;
   U_Cavity_NUM: string;
   U_DocTaxStatus: string;
+  U_LegacyBatch: string | null;
   items?: Array<{
     line_num: number;
     item_code: string;
@@ -149,6 +156,7 @@ export interface ProductionOrderItem {
   lineNum: string;
   itemCode: string;
   itemDescription: string;
+  legacyBatch?: string;
   manBtchNum?: string;
   quantity: number;
   plannedQty?: number;
@@ -190,6 +198,7 @@ export interface ProductionOrderRecord {
   U_EmployeeShift?: string;
   U_Shift?: string;
   U_DocTaxStatus?: string;
+  U_LegacyBatch?: string;
   U_NoBinReceived?: string | null;
   items?: ProductionOrderItem[];
 }
@@ -276,6 +285,7 @@ export function buildCreateReceiptFromProductionPayload(
     U_MoldNo: (header.moldNumber ?? '').trim(),
     U_Cavity_NUM: (header.cavityNumber ?? '').trim(),
     U_DocTaxStatus: normalizeDocumentTaxStatus(header.documentTaxStatus),
+    U_LegacyBatch: ((line?.legacyBatch ?? '') as string).trim() || null,
     items: normalizedLines,
   };
 }
@@ -355,6 +365,10 @@ export class ReceiptFromProductionService {
       lineNum,
       itemCode,
       itemDescription,
+      legacyBatch:
+        this.pickString(item, ['U_LegacyBatch', 'legacyBatch', 'LegacyBatch']) ||
+        this.pickString(fallback, ['U_LegacyBatch', 'legacyBatch', 'LegacyBatch']) ||
+        (firstBatch ? this.pickString(firstBatch, ['U_LegacyBatch', 'legacyBatch', 'LegacyBatch']) : ''),
       manBtchNum: this.pickString(item, ['ManBtchNum', 'manBtchNum', 'ManBatchNum']),
       quantity,
       issuedQuantity: normalizedIssuedQuantity > 0 ? normalizedIssuedQuantity : undefined,
@@ -438,6 +452,7 @@ export class ReceiptFromProductionService {
           U_EmployeeShift: this.pickString(item, ['U_EmployeeShift', 'employeeShift', 'Shift', 'shift']),
           U_Shift: this.pickString(item, ['U_Shift', 'shift', 'Shift']),
           U_DocTaxStatus: this.pickString(item, ['U_DocTaxStatus', 'documentTaxStatus', 'DocTaxStatus']),
+          U_LegacyBatch: this.pickString(item, ['U_LegacyBatch', 'legacyBatch', 'LegacyBatch']),
           U_NoBinReceived: this.pickString(item, ['U_NoBinReceived', 'NoBinReceived']) || null,
           items,
         };
