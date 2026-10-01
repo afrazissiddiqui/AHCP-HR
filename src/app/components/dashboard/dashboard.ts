@@ -33,9 +33,7 @@ export class dashboardComponent {
   constructor(
     private readonly router: Router,
     private readonly permissionService: PermissionService,
-  ) {
-    this.permissionService.ensureLoaded().subscribe();
-  }
+  ) {}
 
   openAction(action: HrMenuAction): void {
     void this.router.navigateByUrl(action.route);

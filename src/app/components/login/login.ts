@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../services/alert.service';
 import { AuthService } from '../../services/auth.service';
 import { PermissionService } from '../../services/permission.service';
@@ -22,6 +22,7 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly alertService: AlertService,
     private readonly authService: AuthService,
     private readonly permissionService: PermissionService,
@@ -29,7 +30,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
-      void this.router.navigateByUrl('/dashboard');
+      void this.router.navigateByUrl(this.getRedirectUrl());
     }
   }
 
@@ -44,8 +45,8 @@ export class LoginComponent implements OnInit {
       next: (response) => {
         this.isSubmitting = false;
         void this.alertService.success('Welcome', response.message || `Signed in as ${email}.`);
-        this.permissionService.reloadForCurrentUser().subscribe();
-        void this.router.navigateByUrl('/dashboard');
+        void this.router.navigateByUrl(this.getRedirectUrl());
+        this.permissionService.refreshInBackground();
       },
       error: (error: unknown) => {
         this.isSubmitting = false;
@@ -55,5 +56,14 @@ export class LoginComponent implements OnInit {
         );
       },
     });
+  }
+
+  private getRedirectUrl(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl?.startsWith('/') && !returnUrl.startsWith('//') && !returnUrl.startsWith('/login')) {
+      return returnUrl;
+    }
+
+    return '/dashboard';
   }
 }

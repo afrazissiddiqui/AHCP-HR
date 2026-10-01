@@ -86,6 +86,10 @@ export class App {
     private readonly authService: AuthService,
     private readonly applicationFormService: ApplicationFormService,
   ) {
+    if (this.authService.isLoggedIn()) {
+      this.permissionService.ensureLoaded().subscribe();
+    }
+
     const initialKey = (this.router.url.split('?')[0] ?? '').replace(/^\//, '');
     this.showMainChrome.set(initialKey !== 'login');
     this.shellbarSearch.setPlaceholder(resolveShellbarSearchPlaceholder(initialKey));

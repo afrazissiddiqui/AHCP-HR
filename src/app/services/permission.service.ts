@@ -85,6 +85,20 @@ export class PermissionService {
     return this.ensureLoaded();
   }
 
+  refreshInBackground(): void {
+    queueMicrotask(() => {
+      if (!this.authService.getSessionUser()) {
+        return;
+      }
+
+      this.reloadForCurrentUser().subscribe({
+        error: () => {
+          // Permission refresh is intentionally non-blocking for redirect flow.
+        },
+      });
+    });
+  }
+
   loadForCurrentUser(): Observable<void> {
     const sessionUser = this.authService.getSessionUser();
     if (!sessionUser) {
