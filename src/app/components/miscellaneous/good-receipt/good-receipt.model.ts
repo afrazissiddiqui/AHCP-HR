@@ -5,6 +5,7 @@ export interface GoodReceiptHeader {
   postingDate: string;
   documentDate: string;
   dueDate: string;
+  issueReceiptReason: string;
 }
 
 export interface GoodReceiptLine {
@@ -46,6 +47,7 @@ export function createEmptyGoodReceiptHeader(): GoodReceiptHeader {
     postingDate: today,
     documentDate: today,
     dueDate: today,
+    issueReceiptReason: '',
   };
 }
 

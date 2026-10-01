@@ -6,6 +6,7 @@ export interface GoodIssueHeader {
   taxDate: string;
   docDate: string;
   docDueDate: string;
+  issueReceiptReason: string;
   remarks: string;
   status: string;
 }
@@ -56,6 +57,7 @@ export function createEmptyGoodIssueHeader(): GoodIssueHeader {
     taxDate: today,
     docDate: today,
     docDueDate: today,
+    issueReceiptReason: '',
     remarks: '',
     status: 'Draft',
   };
