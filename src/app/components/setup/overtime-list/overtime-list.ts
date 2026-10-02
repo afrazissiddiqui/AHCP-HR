@@ -10,7 +10,11 @@ import {
   formatWorkingDuration,
 } from '../../../services/attendance-management.service';
 import { AlertService } from '../../../services/alert.service';
-import { OvertimeListRecord, OvertimeListService } from '../../../services/overtime-list.service';
+import {
+  OvertimeListRecord,
+  OvertimeListService,
+  OvertimeRecordPayload,
+} from '../../../services/overtime-list.service';
 import { formatApiErrorMessage } from '../../../utils/api-error.util';
 import { buildPaginationFooterItems, paginationItemTrack, PaginationFooterItem } from '../../../utils/pagination.util';
 import { GatePassDepartmentService } from '../../gate-pass/gate-pass-department.service';
@@ -62,6 +66,7 @@ export class OvertimeListComponent implements OnInit {
   readonly workstations = signal<WorkstationRecord[]>([]);
 
   readonly loading = signal(false);
+  readonly posting = signal(false);
   readonly records = signal<OvertimeListRecord[]>([]);
   readonly searchText = signal('');
   readonly currentPage = signal(1);
@@ -229,6 +234,63 @@ export class OvertimeListComponent implements OnInit {
     }
   }
 
+  updateEntryValue(record: OvertimeListRecord, key: 'overtimeRate' | 'exceptionalOt', value: number | string): void {
+    const numericValue = Number(value);
+    this.records.update((records) => records.map((item) => item.id === record.id
+      ? { ...item, [key]: Number.isFinite(numericValue) && numericValue >= 0 ? numericValue : 0 }
+      : item));
+  }
+
+  postEntries(): void {
+    const query = this.attendanceQueryForAppliedDateFilter();
+    if (query.mode === 'dateRange') {
+      void this.alertService.validation('Select one attendance date before posting overtime entries.');
+      return;
+    }
+
+    const rows = this.filteredRecords();
+    if (!rows.length) {
+      void this.alertService.validation('There are no overtime entries to post.');
+      return;
+    }
+
+    const payload: OvertimeRecordPayload[] = [];
+    for (const record of rows) {
+      const shiftCodes = record.shift.split(',').map((value) => value.trim()).filter(Boolean);
+      const shift = shiftCodes.length === 1 ? this.workstationForShiftCode(shiftCodes[0]) : undefined;
+      const workingHours = this.attendanceWorkingHours().get(canonicalAttendanceKey(record.employeeId));
+      const workingMinutes = workingHours ? this.durationTextToMinutes(workingHours) : null;
+      const shiftMinutes = this.shiftDurationMinutes(record);
+      if (!record.employeeId || !record.employeeName || !shift || workingMinutes === null || shiftMinutes === null) {
+        void this.alertService.validation(`Complete employee, shift, and attendance data for ${record.employeeId || 'each row'} before posting.`);
+        return;
+      }
+
+      payload.push({
+        employee_code: record.employeeId,
+        employee_name: record.employeeName,
+        overtime_date: query.mode === 'date' ? query.date ?? formatIsoDate(new Date()) : formatIsoDate(new Date()),
+        shift_id: String(shift.id),
+        working_hours: this.hoursFromMinutes(workingMinutes),
+        shift_hours: this.hoursFromMinutes(shiftMinutes),
+        overtime_hours: this.hoursFromMinutes(Math.max(0, workingMinutes - shiftMinutes)),
+        overtime_rate: Number(record.overtimeRate) || 0,
+        exceptional_ot: Number(record.exceptionalOt) || 0,
+      });
+    }
+
+    this.posting.set(true);
+    this.overtimeListService.addOvertimeRecords(payload)
+      .pipe(finalize(() => this.posting.set(false)))
+      .subscribe({
+        next: () => this.alertService.success('Posted', `${payload.length} overtime entr${payload.length === 1 ? 'y' : 'ies'} posted successfully.`),
+        error: (error: unknown) => void this.alertService.error(
+          'Post Failed',
+          formatApiErrorMessage(error, 'Failed to post overtime entries.'),
+        ),
+      });
+  }
+
   private formatNumber(value: number): string {
     if (value === null || value === undefined || Number.isNaN(value)) {
       return '—';
@@ -237,6 +299,10 @@ export class OvertimeListComponent implements OnInit {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     });
+  }
+
+  private hoursFromMinutes(minutes: number): number {
+    return Math.round((minutes / 60) * 100) / 100;
   }
 
   private workingHourValue(record: OvertimeListRecord): string {
@@ -258,7 +324,7 @@ export class OvertimeListComponent implements OnInit {
       return '—';
     }
 
-    const overtimeMinutes = shiftMinutes - workingMinutes;
+    const overtimeMinutes = Math.max(0, workingMinutes - shiftMinutes);
     if (overtimeMinutes === 0) {
       return '0h';
     }

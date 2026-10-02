@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { formatBranchNameForDisplay } from '../../../utils/branch-name.util';
 import { DeliveryListItem, DeliveryService } from './delivery.service';
 import { MiscellaneousLayoutService } from '../miscellaneous-layout.service';
 
@@ -30,6 +31,7 @@ export class Delivery implements OnInit {
   readonly loadError = signal<string | null>(null);
   readonly showDetailDialog = signal(false);
   readonly selectedRow = signal<DeliveryListItem | null>(null);
+  readonly branchNameForDisplay = formatBranchNameForDisplay;
   readonly deliveries = signal<DeliveryListItem[]>([]);
   readonly columns = signal<DeliveryColumn[]>([
     { key: 'docNum', label: 'Delivery No.', visible: true },

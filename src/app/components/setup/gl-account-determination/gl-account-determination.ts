@@ -8,6 +8,7 @@ import {
 import { GatePassBusinessPartnerSearchInputComponent } from '../../gate-pass/business-partner-search-input/business-partner-search-input';
 import { finalize } from 'rxjs';
 import { AlertService } from '../../../services/alert.service';
+import { formatBranchNameForDisplay } from '../../../utils/branch-name.util';
 import {
   GlAccountDeterminationAddPayload,
   GlAccountOption,
@@ -28,6 +29,7 @@ export type GlAccountDeterminationRow = {
   salaryGlAccountCode: string;
   salaryGlAccountName: string;
   businessPartner: string;
+  costCenterType: string;
   branch: string;
   debitCreditType: string;
 };
@@ -67,6 +69,7 @@ function emptyRow(): GlAccountDeterminationRow {
     salaryGlAccountCode: '',
     salaryGlAccountName: '',
     businessPartner: '',
+    costCenterType: '',
     branch: '',
     debitCreditType: '',
   };
@@ -88,6 +91,7 @@ export class GlAccountDeterminationComponent implements OnInit {
   private readonly glAccountService = inject(GlAccountDeterminationService);
   private readonly businessPartnerService = inject(GatePassBusinessPartnerService);
 
+  readonly branchNameForDisplay = formatBranchNameForDisplay;
   readonly branchOptions = GL_ACCOUNT_BRANCH_OPTIONS;
   readonly debitCreditOptions = GL_ACCOUNT_DEBIT_CREDIT_OPTIONS;
   readonly formOptions = GL_ACCOUNT_FORM_OPTIONS;
@@ -307,6 +311,7 @@ export class GlAccountDeterminationComponent implements OnInit {
         salaryGlAccountCode: record.Code,
         salaryGlAccountName: record.Name,
         businessPartner: record.BusinessPartner,
+        costCenterType: record.CostCenterType,
         branch: record.Branch,
         debitCreditType: debitCreditLabel(record.DebitCreditType),
       },
@@ -411,6 +416,12 @@ export class GlAccountDeterminationComponent implements OnInit {
     if (!row.salaryGlAccountName.trim()) {
       return `Row ${srNo}: enter Salary G/L Account Names.`;
     }
+    if (!row.businessPartner.trim()) {
+      return `Row ${srNo}: enter Business Partner.`;
+    }
+    if (!row.costCenterType.trim()) {
+      return `Row ${srNo}: enter Cost Center Type.`;
+    }
     if (!row.branch) {
       return `Row ${srNo}: select Branches.`;
     }
@@ -430,6 +441,7 @@ export class GlAccountDeterminationComponent implements OnInit {
       code: row.salaryGlAccountCode.trim(),
       name: row.salaryGlAccountName.trim(),
       business_partner: row.businessPartner.trim(),
+      cost_center_type: row.costCenterType.trim(),
       branch: glAccountBranchCode(row.branch),
       debit_credit_type: row.debitCreditType.trim().toUpperCase(),
       vendor_for_expense_reimbursement: this.vendorForExpenseReimbursement.trim(),

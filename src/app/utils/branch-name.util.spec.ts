@@ -1,4 +1,4 @@
-import { resolveBranchNameFromBplId } from './branch-name.util';
+import { formatBranchNameForDisplay, resolveBranchNameFromBplId } from './branch-name.util';
 
 describe('resolveBranchNameFromBplId', () => {
   it('maps BPLID 1 to AHCP_Peshawar', () => {
@@ -23,5 +23,17 @@ describe('resolveBranchNameFromBplId', () => {
 
   it('maps FSD to AHCP_Faisalabad', () => {
     expect(resolveBranchNameFromBplId('FSD')).toBe('AHCP_Faisalabad');
+  });
+});
+
+describe('formatBranchNameForDisplay', () => {
+  it('maps branch IDs to display labels', () => {
+    expect(formatBranchNameForDisplay('1')).toBe('AHCP Peshawar');
+    expect(formatBranchNameForDisplay('2')).toBe('AHCP_HO');
+    expect(formatBranchNameForDisplay('3')).toBe('AHCP_Faisalabad');
+  });
+
+  it('preserves unknown branch labels', () => {
+    expect(formatBranchNameForDisplay('Custom Branch')).toBe('Custom Branch');
   });
 });

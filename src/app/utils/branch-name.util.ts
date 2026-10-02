@@ -52,3 +52,8 @@ export function resolveBranchNameFromBplId(value: string | number | undefined | 
 
   return raw;
 }
+
+export function formatBranchNameForDisplay(value: string | number | undefined | null): string {
+  const branchName = resolveBranchNameFromBplId(value);
+  return branchName === 'AHCP_Peshawar' ? 'AHCP Peshawar' : branchName;
+}

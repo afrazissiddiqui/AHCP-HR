@@ -31,6 +31,14 @@
             <button type="button" class="btn-refresh" [disabled]="loading()" (click)="loadOvertimeList(true)">
               {{ loading() ? 'Loading…' : 'Refresh' }}
             </button>
+            <button
+              type="button"
+              class="btn-post"
+              [disabled]="posting() || loading() || attendanceFilterLoading() || workingHoursLoading() || workstationLoading() || !filteredRecords().length"
+              (click)="postEntries()"
+            >
+              {{ posting() ? 'Posting…' : 'Post Entries' }}
+            </button>
           </div>
         </div>
 
@@ -75,6 +83,10 @@
                             <span class="shift-warning" role="status">Warning: Shift assignment unavailable</span>
                           } @else if (column.key === 'shift' && !record.shift) {
                             <span class="shift-warning" role="status">Warning: No shift allotted</span>
+                          } @else if (column.key === 'overtimeRate') {
+                            <input type="number" class="entry-number" min="0" step="0.01" [ngModel]="record.overtimeRate" (ngModelChange)="updateEntryValue(record, 'overtimeRate', $event)" [attr.aria-label]="'Overtime rate for ' + record.employeeName" />
+                          } @else if (column.key === 'exceptionalOt') {
+                            <input type="number" class="entry-number" min="0" step="0.01" [ngModel]="record.exceptionalOt" (ngModelChange)="updateEntryValue(record, 'exceptionalOt', $event)" [attr.aria-label]="'Exceptional overtime for ' + record.employeeName" />
                           } @else {
                             {{ cellValue(record, column.key) }}
                           }

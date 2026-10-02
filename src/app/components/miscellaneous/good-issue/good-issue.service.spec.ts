@@ -4,6 +4,18 @@ import { buildCreateGoodIssuePayload } from './good-issue.service';
 import { createEmptyGoodIssueHeader, createEmptyGoodIssueLine } from './good-issue.model';
 
 describe('GoodIssueService', () => {
+  it('uses the default account code when a row account is not changed', () => {
+    const header = createEmptyGoodIssueHeader();
+    const line = {
+      ...createEmptyGoodIssueLine(),
+      itemCode: 'ITEM-001',
+    };
+
+    const payload = buildCreateGoodIssuePayload(header, [line]);
+
+    expect(payload.items[0].AcctCode).toBe('A02022900100010');
+  });
+
   it('includes row-level detail fields in the payload', () => {
     const header = createEmptyGoodIssueHeader();
     const lines = [
@@ -31,7 +43,7 @@ describe('GoodIssueService', () => {
       warehouse: 'WH-01',
       quantity: 2,
       binLocationAllocation: 'BIN-01',
-      accountCode: 'ACCT-100',
+      AcctCode: 'ACCT-100',
       itemCost: 20,
       uomCode: 'EA',
       uomName: 'Each',

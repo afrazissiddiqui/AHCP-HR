@@ -151,6 +151,36 @@
   opacity: 0.65;
 }
 
+.btn-post {
+  background: #176b55;
+  border: 1px solid #176b55;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.btn-post:hover:not(:disabled) {
+  background: #10533f;
+}
+
+.btn-post:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.entry-number {
+  border: 1px solid #c7d3e3;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font: inherit;
+  min-width: 84px;
+  padding: 5px 6px;
+  width: 100%;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

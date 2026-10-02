@@ -22,6 +22,7 @@ import {
   JobSpecificationService,
 } from '../../../../services/job-specification.service';
 import { LeaveTypeRecord, LeaveTypeService } from '../../../../services/leave-type.service';
+import { DepartmentsPrService, DepartmentPr } from '../../../../services/departments-pr.service';
 import {
   GatePassItemMaster,
   GatePassItemMasterService,
@@ -240,6 +241,8 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
 
   // Remuneration fields
   protected readonly basicSalary = signal('');
+  protected readonly costCenter = signal('');
+  protected readonly costCenterOptions = signal<DepartmentPr[]>([]);
   protected readonly paymentMode = signal<'Cash' | 'Bank' | 'Hybrid' | ''>('');
   protected readonly accountTitle = signal('');
   protected readonly bankName = signal('');
@@ -1274,6 +1277,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     this.loadJobSpecificationOptions();
     this.loadLeaveTypeOptions();
     this.loadDepartmentOptions();
+    this.loadCostCenterOptions();
     const editId = this.route.snapshot.paramMap.get('id');
     if (!editId) {
       const nextCode = this.applicationFormService.getNextEmployeeCode();
@@ -1313,6 +1317,7 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
     private readonly leaveTypeService: LeaveTypeService,
     private readonly itemMasterService: GatePassItemMasterService,
     private readonly departmentService: GatePassDepartmentService,
+    private readonly departmentsPrService: DepartmentsPrService,
     private readonly alertService: AlertService,
     private readonly cdr: ChangeDetectorRef,
   ) {
@@ -1410,6 +1415,19 @@ export class CreateJobRequisitionComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.departmentOptions.set([]);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private loadCostCenterOptions(): void {
+    this.departmentsPrService.ensureLoaded().subscribe({
+      next: (options) => {
+        this.costCenterOptions.set(options);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.costCenterOptions.set([]);
         this.cdr.markForCheck();
       },
     });

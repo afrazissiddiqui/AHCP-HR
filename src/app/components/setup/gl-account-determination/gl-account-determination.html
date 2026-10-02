@@ -28,6 +28,7 @@
                 <th>Salary G/L Account Codes</th>
                 <th>Salary G/L Account Names</th>
                 <th>Business Partner</th>
+                <th>Cost Center Type</th>
                 <th>Branches</th>
                 <th>Debit / Credit</th>
                 <th class="col-action">Action</th>
@@ -153,6 +154,15 @@
                     />
                   </td>
                   <td>
+                    <input
+                      type="text"
+                      class="field-input"
+                      [(ngModel)]="row.costCenterType"
+                      [name]="'costCenterType-' + row.id"
+                      placeholder="Cost Center Type"
+                    />
+                  </td>
+                  <td>
                     <select
                       class="field-select"
                       [(ngModel)]="row.branch"
@@ -229,6 +239,7 @@
                   <th>G/L Item Types</th>
                   <th>Salary G/L Account Codes</th>
                   <th>Salary G/L Account Names</th>
+                  <th>Cost Center Type</th>
                   <th>Branches</th>
                   <th>Debit / Credit</th>
                   <th class="col-action">Action</th>
@@ -243,7 +254,8 @@
                     <td>{{ record.Type }}</td>
                     <td>{{ record.Code }}</td>
                     <td>{{ record.Name }}</td>
-                    <td>{{ record.Branch }}</td>
+                    <td>{{ record.CostCenterType }}</td>
+                    <td>{{ branchNameForDisplay(record.Branch) }}</td>
                     <td>{{ record.DebitCreditType }}</td>
                     <td class="col-action">
                       <button

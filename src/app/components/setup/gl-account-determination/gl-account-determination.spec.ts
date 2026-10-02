@@ -59,6 +59,7 @@ describe('GlAccountDeterminationComponent', () => {
         salaryGlAccountCode: '1000',
         salaryGlAccountName: 'Cash',
         businessPartner: 'BP-01',
+        costCenterType: 'Department',
         branch: 'Islamabad',
         debitCreditType: 'Debit',
       },
@@ -70,6 +71,7 @@ describe('GlAccountDeterminationComponent', () => {
         salaryGlAccountCode: '2000',
         salaryGlAccountName: 'Expense',
         businessPartner: 'BP-02',
+        costCenterType: 'Project',
         branch: 'Karachi',
         debitCreditType: 'Credit',
       },
@@ -84,6 +86,7 @@ describe('GlAccountDeterminationComponent', () => {
     expect(duplicate.glItemType).toBe('Salary');
     expect(duplicate.salaryGlAccountCode).toBe('1000');
     expect(duplicate.businessPartner).toBe('BP-01');
+    expect(duplicate.costCenterType).toBe('Department');
     expect(component.rows[0].salaryGlAccountCode).toBe('1000');
   });
 });

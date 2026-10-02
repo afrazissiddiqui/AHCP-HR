@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { formatBranchNameForDisplay } from '../../../utils/branch-name.util';
 import { GoodIssueListItem, GoodIssueService } from '../../miscellaneous/good-issue/good-issue.service';
 import { MiscellaneousLayoutService } from '../../miscellaneous/miscellaneous-layout.service';
 
@@ -30,6 +31,7 @@ export class IssueFromProductionListComponent implements OnInit {
   readonly loadError = signal<string | null>(null);
   readonly showDetailDialog = signal(false);
   readonly selectedRow = signal<GoodIssueListItem | null>(null);
+  readonly branchNameForDisplay = formatBranchNameForDisplay;
   readonly issues = signal<GoodIssueListItem[]>([]);
   readonly columns = signal<IssueFromProductionListColumn[]>([
     { key: 'docNum', label: 'Issue No', visible: true },

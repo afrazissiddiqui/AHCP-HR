@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { formatBranchNameForDisplay } from '../../../utils/branch-name.util';
 import { MiscellaneousLayoutService } from '../miscellaneous-layout.service';
 import { ReceiptFromProductionListItem, ReceiptFromProductionService } from './receipt-from-production.service';
 
@@ -30,6 +31,7 @@ export class ReceiptFromProduction implements OnInit {
   readonly loadError = signal<string | null>(null);
   readonly showDetailDialog = signal(false);
   readonly selectedRow = signal<ReceiptFromProductionListItem | null>(null);
+  readonly branchNameForDisplay = formatBranchNameForDisplay;
   readonly rows = signal<ReceiptFromProductionListItem[]>([]);
   readonly columns = signal<ReceiptFromProductionColumn[]>([
     { key: 'docNum', label: 'Receipt No', visible: true },

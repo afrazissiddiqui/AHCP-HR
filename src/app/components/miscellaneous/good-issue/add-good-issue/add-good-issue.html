@@ -32,8 +32,9 @@
               <label>Good Issue or Receipt Reason:</label>
               <select [ngModel]="headerForm().issueReceiptReason" (ngModelChange)="updateHeaderField('issueReceiptReason', $event)">
                 <option value="">— Select reason —</option>
-                <option value="Good Issue">Good Issue</option>
-                <option value="Good Receipt">Good Receipt</option>
+                <option value="Toll to Own Conversion of Goods">Toll to Own Conversion of Goods</option>
+                <option value="Toll to Own Resin Conversion">Toll to Own Resin Conversion</option>
+                <option value="Msc CGS Receipts Issues">Msc CGS Receipts Issues</option>
               </select>
             </div>
           </div>
@@ -71,7 +72,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (line of contentLines(); track $index) {
+                @for (line of contentLines(); track $index; let lineIndex = $index) {
                   <tr>
                     <td class="sir-col-sr">{{ $index + 1 }}</td>
                     <td class="sir-col-item-code">
@@ -113,9 +114,9 @@
                           class="sir-table-input"
                           placeholder="Search account code"
                           #accountCodeInput
-                          [ngModel]="accountCodeSearchText()[$index] || line.accountCode"
+                          [ngModel]="accountCodeSearchText()[$index] || getAccountCodeDisplay(line.accountCode)"
                           (ngModelChange)="updateAccountCodeSearch($index, $event)"
-                          (focus)="toggleAccountCodeDropdown($index)"
+                          (focus)="openAccountCodeSearch($index, accountCodeInput)"
                           [disabled]="accountCodeOptionsLoading()"
                         >
                         @if (openAccountCodeDropdown() === $index) {
@@ -127,14 +128,15 @@
                                 <div style="padding: 8px; text-align: center; color: #999;">No results</div>
                               } @else {
                                 @for (account of getFilteredAccountCodes(accountCodeSearchText()[$index] || ''); track account.code) {
-                                  <div
-                                    style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;"
-                                    (click)="selectAccountCode($index, account.code, account.name)"
-                                    (mouseenter)="onAccountCodeItemHover($event)"
-                                    (mouseleave)="onAccountCodeItemLeave($event)"
+                                  <button
+                                    type="button"
+                                    style="display: block; width: 100%; padding: 8px; border: 0; border-bottom: 1px solid #eee; text-align: left; cursor: pointer; font: inherit;"
+                                    [style.background]="account.code.trim() === line.accountCode.trim() ? '#e8f1ff' : 'white'"
+                                    (mousedown)="$event.preventDefault()"
+                                    (click)="selectAccountCode(lineIndex, account.code)"
                                   >
                                     {{ account.name ? account.name + ' (' + account.code + ')' : account.code }}
-                                  </div>
+                                  </button>
                                 }
                               }
                             }

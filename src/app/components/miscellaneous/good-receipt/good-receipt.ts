@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { formatBranchNameForDisplay } from '../../../utils/branch-name.util';
 import { GoodReceiptListItem, GoodReceiptService } from './good-receipt.service';
 import { MiscellaneousLayoutService } from '../miscellaneous-layout.service';
 
@@ -131,6 +132,10 @@ export class GoodReceipt implements OnInit {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  }
+
+  branchDisplayName(branch: string): string {
+    return formatBranchNameForDisplay(branch);
   }
 
   loadReceipts(): void {

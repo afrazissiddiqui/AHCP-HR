@@ -101,7 +101,7 @@ describe('OvertimeListComponent', () => {
     expect(component.cellValue(record, 'shiftHours')).toBe('12h (9:00 AM - 9:00 PM)');
   });
 
-  it('calculates overtime as shift hours minus working hours', () => {
+  it('reports zero overtime when working hours are below shift hours', () => {
     const record = {
       employeeId: 'EMP-001',
       shift: '1',
@@ -127,6 +127,6 @@ describe('OvertimeListComponent', () => {
       new Map([[canonicalAttendanceKey(record.employeeId), '7h 55m']]),
     );
 
-    expect(component.cellValue(record, 'overtimeHours')).toBe('4h 5m');
+    expect(component.cellValue(record, 'overtimeHours')).toBe('0h');
   });
 });

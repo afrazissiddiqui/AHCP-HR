@@ -218,7 +218,14 @@ export class GoodReceiptService {
   private parseInventoryAccounts(response: unknown): InventoryAccountOption[] {
     const collected: InventoryAccountOption[] = [];
     this.collectInventoryAccounts(response, collected);
-    return collected;
+    const unique = new Map<string, InventoryAccountOption>();
+    for (const account of collected) {
+      const code = account.code.trim();
+      if (code && !unique.has(code)) {
+        unique.set(code, { ...account, code });
+      }
+    }
+    return [...unique.values()];
   }
 
   private collectInventoryAccounts(value: unknown, collected: InventoryAccountOption[]): void {

@@ -19,6 +19,12 @@ import {
   updateGoodReceiptLine,
 } from '../good-receipt.model';
 
+const RECEIPT_REASON_ACCOUNT_CODES: Record<string, string> = {
+  'Toll to Own Conversion of Goods': 'A02022000100030',
+  'Toll to Own Resin Conversion': 'A02022000100140',
+  'Msc CGS Receipts Issues': 'C01001000100920',
+};
+
 @Component({
   selector: 'app-add-good-receipt',
   standalone: true,
@@ -121,13 +127,20 @@ export class AddGoodReceipt implements OnInit {
 
   updateHeaderField(field: keyof GoodReceiptHeader, value: string): void {
     this.headerForm.update((state) => ({ ...state, [field]: value }));
+    if (field === 'issueReceiptReason') {
+      const emptyLine = createEmptyGoodReceiptLine();
+      const accountCode = RECEIPT_REASON_ACCOUNT_CODES[value] ?? emptyLine.accountCode;
+      this.contentLines.update((rows) => rows.map((line) => ({ ...line, accountCode })));
+      this.accountCodeSearchText.set({});
+      this.openAccountCodeDropdown.set(null);
+    }
     if (field === 'documentDate' || field === 'postingDate' || field === 'dueDate') {
       this.loadAccountCodeOptions();
     }
   }
 
   addContentLine(): void {
-    this.contentLines.update((lines) => [...lines, createEmptyGoodReceiptLine()]);
+    this.contentLines.update((lines) => [...lines, this.createGoodReceiptLine()]);
   }
 
   deleteContentLine(index: number): void {
@@ -165,6 +178,10 @@ export class AddGoodReceipt implements OnInit {
   }
 
   updateAccountCodeSearch(index: number, value: string): void {
+    if (!value.trim()) {
+      this.updateContentLine(index, 'accountCode', '');
+    }
+
     this.accountCodeSearchText.update((state) => ({
       ...state,
       [index]: value,
@@ -180,9 +197,9 @@ export class AddGoodReceipt implements OnInit {
     this.openAccountCodeDropdown.set(null);
   }
 
-  toggleAccountCodeDropdown(index: number): void {
-    const current = this.openAccountCodeDropdown();
-    this.openAccountCodeDropdown.set(current === index ? null : index);
+  openAccountCodeSearch(index: number, input: HTMLInputElement): void {
+    this.openAccountCodeDropdown.set(index);
+    input.select();
   }
 
   onAccountCodeItemHover(event: MouseEvent): void {
@@ -272,6 +289,14 @@ export class AddGoodReceipt implements OnInit {
     return (item.batches ?? []).find((batch) => !!batch?.batchNumber?.trim());
   }
 
+  private createGoodReceiptLine(): GoodReceiptLine {
+    const line = createEmptyGoodReceiptLine();
+    return {
+      ...line,
+      accountCode: RECEIPT_REASON_ACCOUNT_CODES[this.headerForm().issueReceiptReason] ?? line.accountCode,
+    };
+  }
+
   onItemsSelected(items: OitmItem[]): void {
     const index = this.itemPickerRowIndex();
     if (index === null || items.length === 0) {
@@ -301,7 +326,7 @@ export class AddGoodReceipt implements OnInit {
       const extras = items.slice(1).map((item) => {
         const batch = this.firstBatchWithNumber(item);
         return {
-          ...createEmptyGoodReceiptLine(),
+          ...this.createGoodReceiptLine(),
           itemCode: item.itemCode,
           itemDescription: item.itemName,
           warehouse: batch?.warehouse || '',

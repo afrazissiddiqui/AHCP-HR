@@ -802,6 +802,16 @@
           </div>
 
           <div class="cjr-row">
+            <label>Cost Center:</label>
+            <select [ngModel]="costCenter()" (ngModelChange)="costCenter.set($event)" (blur)="touch('costCenter')">
+              <option value="">No Selection</option>
+              @for (option of costCenterOptions(); track option.code) {
+                <option [value]="option.code">{{ option.code }} - {{ option.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="cjr-row">
             <label>Payment Mode:</label>
             <select [ngModel]="paymentMode()" (ngModelChange)="onPaymentModeChange($event)"
               [class.cjr-invalid]="showFieldError('paymentMode')" (blur)="touch('paymentMode')">

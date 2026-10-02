@@ -75,7 +75,7 @@ export function createEmptyGoodIssueLine(): GoodIssueLine {
     manufacturingDate: '',
     expiryDate: plusDaysDateString(10),
     binLocationAllocation: '',
-    accountCode: '',
+    accountCode: 'A02022900100010',
     itemCost: null,
     uomCode: '',
     uomName: '',

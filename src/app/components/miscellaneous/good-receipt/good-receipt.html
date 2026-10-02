@@ -143,6 +143,7 @@
         <div class="misc-detail-field"><label>Due Date</label><div>{{ row.docDueDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Status</label><div><span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">{{ statusLabel(row.status) }}</span></div></div>
         <div class="misc-detail-field"><label>Series</label><div>{{ row.seriesName || '—' }}</div></div>
+        <div class="misc-detail-field"><label>Branch</label><div>{{ branchDisplayName(row.branch) || '—' }}</div></div>
         <div class="misc-detail-field"><label>Warehouse</label><div>{{ row.warehouse || '—' }}</div></div>
         <div class="misc-detail-field misc-detail-field--full"><label>Remarks</label><div>{{ row.remarks || '—' }}</div></div>
       </div>

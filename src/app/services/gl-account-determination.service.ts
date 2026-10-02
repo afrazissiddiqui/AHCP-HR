@@ -12,6 +12,7 @@ export interface GlAccountDeterminationAddPayload {
   branch: string;
   debit_credit_type: string;
   business_partner: string;
+  cost_center_type: string;
   vendor_for_expense_reimbursement?: string;
   vendor_for_loans?: string;
   vendor_for_advances?: string;
@@ -26,6 +27,7 @@ export interface GlAccountDeterminationRecord {
   Branch: string;
   DebitCreditType: string;
   BusinessPartner: string;
+  CostCenterType: string;
   VendorForExpenseReimbursement: string;
   VendorForLoans: string;
   VendorForAdvances: string;
@@ -225,6 +227,11 @@ export class GlAccountDeterminationService {
         'BusinessPartner',
         'businessPartner',
         'business_partner',
+      ]),
+      CostCenterType: this.pickString(sources, [
+        'CostCenterType',
+        'costCenterType',
+        'cost_center_type',
       ]),
       VendorForExpenseReimbursement: this.pickString(sources, [
         'VendorForExpenseReimbursement',

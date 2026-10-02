@@ -145,7 +145,7 @@
         <div class="misc-detail-field"><label>Series</label><div>{{ row.seriesName || '—' }}</div></div>
         <div class="misc-detail-field"><label>From Warehouse</label><div>{{ row.fromWarehouse || '—' }}</div></div>
         <div class="misc-detail-field"><label>Issued To</label><div>{{ row.issuedTo || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Branch</label><div>{{ row.branch || '—' }}</div></div>
+        <div class="misc-detail-field"><label>Branch</label><div>{{ branchNameForDisplay(row.branch) || '—' }}</div></div>
         <div class="misc-detail-field misc-detail-field--full"><label>Remarks</label><div>{{ row.remarks || '—' }}</div></div>
       </div>
 

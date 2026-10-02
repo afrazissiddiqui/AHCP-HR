@@ -16,6 +16,7 @@ export interface BaseDocLinePayload {
   productQuality: string;
   uom: string;
   qty: number;
+  lineTotal?: number;
   info: string;
   remarks: string;
 }
@@ -1078,7 +1079,7 @@ export class OpenBaseDocumentsService {
       status: this.normalizeOpenDocumentStatus(
         this.pickString(sources, ['DocStatus', 'docStatus', 'status']),
       ),
-      lines: this.mapDocumentLines(item),
+      lines: this.mapDocumentLines(item, nestedDocument ?? undefined),
     };
   }
 
@@ -1139,14 +1140,19 @@ export class OpenBaseDocumentsService {
     return iso ? iso[1] : cleaned.slice(0, 10);
   }
 
-  private mapDocumentLines(item: Record<string, unknown>): BaseDocLinePayload[] | undefined {
-    const rawLines = item['lines'] ?? item['Lines'] ?? item['items'] ?? item['lineItems'] ?? item['line_items'];
-    if (!Array.isArray(rawLines)) {
+  private mapDocumentLines(
+    item: Record<string, unknown>,
+    nestedDocument?: Record<string, unknown>,
+  ): BaseDocLinePayload[] | undefined {
+    const rawLines = [
+      ...this.extractDocumentLineSources(item),
+      ...(nestedDocument ? this.extractDocumentLineSources(nestedDocument) : []),
+    ];
+    if (rawLines.length === 0) {
       return undefined;
     }
 
     return rawLines
-      .filter((line): line is Record<string, unknown> => !!line && typeof line === 'object')
       .map((line) => ({
         itemCode: this.pickString([line], ['itemCode', 'item_code', 'ItemCode', 'code', 'Code']),
         itemName: this.pickString([line], [
@@ -1164,6 +1170,7 @@ export class OpenBaseDocumentsService {
         productQuality: this.pickString([line], ['productQuality', 'product_quality', 'ProductQuality']),
         uom: this.pickString([line], ['uom', 'UOM', 'Uom', 'unit']),
         qty: this.pickNumber([line], ['qty', 'quantity', 'Qty', 'Quantity']),
+        lineTotal: this.pickNumber([line], ['lineTotal', 'LineTotal', 'total', 'Total']),
         info: this.pickString([line], ['info', 'Info']),
         remarks: this.pickString([line], ['remarks', 'Remarks']),
       }));

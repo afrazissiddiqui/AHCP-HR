@@ -48,8 +48,9 @@
               <label>Good Issue or Receipt Reason:</label>
               <select [ngModel]="headerForm().issueReceiptReason" (ngModelChange)="updateHeaderField('issueReceiptReason', $event)">
                 <option value="">— Select reason —</option>
-                <option value="Good Issue">Good Issue</option>
-                <option value="Good Receipt">Good Receipt</option>
+                <option value="Toll to Own Conversion of Goods">Toll to Own Conversion of Goods</option>
+                <option value="Toll to Own Resin Conversion">Toll to Own Resin Conversion</option>
+                <option value="Msc CGS Receipts Issues">Msc CGS Receipts Issues</option>
               </select>
             </div>
           </div>
@@ -142,7 +143,7 @@
                           #accountCodeInput
                           [ngModel]="accountCodeSearchText()[lineIndex] || line.accountCode"
                           (ngModelChange)="updateAccountCodeSearch(lineIndex, $event)"
-                          (focus)="toggleAccountCodeDropdown(lineIndex)"
+                          (focus)="openAccountCodeSearch(lineIndex, accountCodeInput)"
                           [disabled]="accountCodeOptionsLoading()"
                         >
                         @if (openAccountCodeDropdown() === lineIndex) {
@@ -156,6 +157,7 @@
                                 @for (account of getFilteredAccountCodes(accountCodeSearchText()[lineIndex] || ''); track account.code) {
                                   <div
                                     style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;"
+                                    (mousedown)="$event.preventDefault()"
                                     (click)="selectAccountCode(lineIndex, account.code, account.name)"
                                     (mouseenter)="onAccountCodeItemHover($event)"
                                     (mouseleave)="onAccountCodeItemLeave($event)"

@@ -21,6 +21,12 @@ import {
 import { GoodIssueService, buildCreateGoodIssuePayload, InventoryAccountOption } from '../good-issue.service';
 import { formatApiErrorMessage, formatSapApiFailureMessage } from '../../../../utils/api-error.util';
 
+const ISSUE_REASON_ACCOUNT_CODES: Record<string, string> = {
+  'Toll to Own Conversion of Goods': 'A02022000100030',
+  'Toll to Own Resin Conversion': 'A02022000100140',
+  'Msc CGS Receipts Issues': 'C01001000100920',
+};
+
 @Component({
   selector: 'app-add-good-issue',
   standalone: true,
@@ -134,13 +140,20 @@ export class AddGoodIssue implements OnInit {
 
   updateHeaderField(field: keyof GoodIssueHeader, value: string): void {
     this.headerForm.update((state) => ({ ...state, [field]: value }));
+    if (field === 'issueReceiptReason') {
+      const defaultLine = createEmptyGoodIssueLine();
+      const accountCode = ISSUE_REASON_ACCOUNT_CODES[value] ?? defaultLine.accountCode;
+      this.contentLines.update((rows) => rows.map((line) => ({ ...line, accountCode })));
+      this.accountCodeSearchText.set({});
+      this.openAccountCodeDropdown.set(null);
+    }
     if (field === 'docDate' || field === 'taxDate' || field === 'docDueDate') {
       this.loadAccountCodeOptions();
     }
   }
 
   addContentLine(): void {
-    this.contentLines.update((rows) => [...rows, createEmptyGoodIssueLine()]);
+    this.contentLines.update((rows) => [...rows, this.createGoodIssueLine()]);
   }
 
   deleteContentLine(index: number): void {
@@ -200,35 +213,41 @@ export class AddGoodIssue implements OnInit {
     );
   }
 
+  getAccountCodeDisplay(code: string): string {
+    const account = this.accountCodeOptions().find((option) => option.code.trim() === code.trim());
+    if (!account) {
+      return code;
+    }
+
+    return account.name && account.name !== account.code
+      ? `${account.name} (${account.code})`
+      : account.code;
+  }
+
   updateAccountCodeSearch(index: number, value: string): void {
+    if (!value.trim()) {
+      this.updateContentLine(index, 'accountCode', '');
+    }
+
     this.accountCodeSearchText.update((state) => ({
       ...state,
       [index]: value,
     }));
   }
 
-  selectAccountCode(index: number, code: string, name?: string): void {
+  selectAccountCode(index: number, code: string): void {
     this.updateContentLine(index, 'accountCode', code);
-    this.accountCodeSearchText.update((state) => ({
-      ...state,
-      [index]: name ? `${name} (${code})` : code,
-    }));
+    this.accountCodeSearchText.update((state) => {
+      const next = { ...state };
+      delete next[index];
+      return next;
+    });
     this.openAccountCodeDropdown.set(null);
   }
 
-  toggleAccountCodeDropdown(index: number): void {
-    const current = this.openAccountCodeDropdown();
-    this.openAccountCodeDropdown.set(current === index ? null : index);
-  }
-
-  onAccountCodeItemHover(event: MouseEvent): void {
-    const target = event.currentTarget as HTMLElement;
-    target.style.background = '#f5f5f5';
-  }
-
-  onAccountCodeItemLeave(event: MouseEvent): void {
-    const target = event.currentTarget as HTMLElement;
-    target.style.background = 'white';
+  openAccountCodeSearch(index: number, input: HTMLInputElement): void {
+    this.openAccountCodeDropdown.set(index);
+    input.select();
   }
 
   getDropdownStyle(lineIndex: number, input: HTMLInputElement | null): string {
@@ -440,7 +459,7 @@ export class AddGoodIssue implements OnInit {
         const batch = this.firstBatchWithNumber(item);
         const selectedUom = item.uom?.trim() || '';
         return {
-          ...createEmptyGoodIssueLine(),
+          ...this.createGoodIssueLine(),
           itemCode: item.itemCode,
           itemDescription: item.itemName,
           warehouse: batch?.warehouse || '',
@@ -566,10 +585,18 @@ export class AddGoodIssue implements OnInit {
     return [...aliases];
   }
 
+  private createGoodIssueLine(): GoodIssueLine {
+    const line = createEmptyGoodIssueLine();
+    return {
+      ...line,
+      accountCode: ISSUE_REASON_ACCOUNT_CODES[this.headerForm().issueReceiptReason] ?? line.accountCode,
+    };
+  }
+
   private removeRow(index: number): void {
     this.contentLines.update((rows) => {
       if (rows.length <= 1) {
-        return [createEmptyGoodIssueLine()];
+        return [this.createGoodIssueLine()];
       }
       return rows.filter((_, rowIndex) => rowIndex !== index);
     });

@@ -84,7 +84,7 @@
                       <td [hidden]="!isColumnVisible('docNum')">{{ row.docNum || '—' }}</td>
                       <td [hidden]="!isColumnVisible('docDate')">{{ row.docDate || '—' }}</td>
                       <td [hidden]="!isColumnVisible('warehouse')">{{ row.warehouse || '—' }}</td>
-                      <td [hidden]="!isColumnVisible('branch')">{{ row.branch || '—' }}</td>
+                      <td [hidden]="!isColumnVisible('branch')">{{ branchNameForDisplay(row.branch) || '—' }}</td>
                       <td [hidden]="!isColumnVisible('itemCount')" style="text-align: left;">{{ row.itemCount }}</td>
                       <td [hidden]="!isColumnVisible('status')">
                         <span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">
@@ -143,7 +143,7 @@
         <div class="misc-detail-field"><label>Due Date</label><div>{{ row.docDueDate || '—' }}</div></div>
         <div class="misc-detail-field"><label>Status</label><div><span class="status-badge" [class.status-open]="!isClosed(row.status)" [class.status-close]="isClosed(row.status)">{{ statusLabel(row.status) }}</span></div></div>
         <div class="misc-detail-field"><label>Warehouse</label><div>{{ row.warehouse || '—' }}</div></div>
-        <div class="misc-detail-field"><label>Branch</label><div>{{ row.branch || '—' }}</div></div>
+        <div class="misc-detail-field"><label>Branch</label><div>{{ branchNameForDisplay(row.branch) || '—' }}</div></div>
         <div class="misc-detail-field misc-detail-field--full"><label>Remarks</label><div>{{ row.remarks || '—' }}</div></div>
       </div>
 
